@@ -1,0 +1,21 @@
+This example illustrates the top level control script representing a simulation pipeline made of two simle applications. 
+The overall simulation is performed in a time loop, where one application provides data for the second application, 
+which computes the arithmetical average value of given data.
+
+The main difference to Example01 is that this example uses Pyro communication and thus the client and server parts can be executed on 
+different computers. Pyro version 4.15 is required.
+
+To run this distributed example:
+
+1) start pyro name server:
+python -m Pyro4.naming -n hostname -p 9090
+
+2) start server script
+python Example0server.py
+
+note: the server connects to Pyro name server running at host with ip address 147.32.130.150 by default.
+
+3) run client script
+python Example02.client.py
+
+note: the client and server scripts can run on different computers.
