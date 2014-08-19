@@ -143,6 +143,10 @@ class Application:
         """
         Returns the supported API version.
         """
+    def getApplicationSignature(self):
+        """
+        Returns the application identification (string)
+        """
     def terminate(self):
         """
         Terminates the application.
