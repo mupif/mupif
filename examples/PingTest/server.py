@@ -7,6 +7,10 @@ from mupif import APIError
 from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
+import os
+os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
+
+
 import Pyro4
 
 # required firewall settings (on ubuntu):

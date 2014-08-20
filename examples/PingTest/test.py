@@ -7,6 +7,9 @@ from mupif import APIError
 from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
+import os
+os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
+
 import Pyro4
 
 time  = 0
@@ -24,8 +27,14 @@ serverApp = Pyro4.Proxy(uri)
 
 #app2.__init__(None)
 
+try:
+    appsig=serverApp.getApplicationSignature()
+    print "Connected to ", appsig
+except Exception as e:
+    print "Connection to server failed"
+    sys.exit(e)
+    
 
-print "Connected to ", serverApp.getApplicationSignature()
 print "Generating test sequence ...",
 
 for i in range (10):
@@ -50,4 +59,4 @@ else:
     print "Test FAILED"
 
 serverApp.terminate();
-print "Ping test terminated"
+print "Ping test finished"

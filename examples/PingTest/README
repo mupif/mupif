@@ -71,7 +71,7 @@ ssh  -L 5555:mech.fsv.cvut.cz:44382 mmp@mech.fsv.cvut.cz -N
 
 2) Open a new terminal window
 4) run a ping test 
-PYRO_HMAC_KEY="mmp-secret-key" python test.py
+python test.py
 
 You should obtain the following output:
 ...
