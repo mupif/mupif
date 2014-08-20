@@ -67,7 +67,7 @@ To run a ping test on your computer, following steps are required:
 Establish a ssh tunnel forwarding (and encrypting) the local port 5050 to remote port 9090 (pyro 
 nameserver service) and local port 5555 to remote port 44382 (pyro daemon on remote server):
 1) In a terminal window enter 
-ssh  -L 5555:mech.fsv.cvut.cz:44382 mech.fsv.cvut.cz -N
+ssh  -L 5555:mech.fsv.cvut.cz:44382 mmp@mech.fsv.cvut.cz -N
 
 2) Open a new terminal window
 4) run a ping test 
