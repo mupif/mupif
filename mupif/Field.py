@@ -1,3 +1,36 @@
+# 
+#           MuPIF: Multi-Physics Integration Framework 
+#               Copyright (C) 2010-2014 Borek Patzak
+# 
+#    Czech Technical University, Faculty of Civil Engineering,
+#  Department of Structural Mechanics, 166 29 Prague, Czech Republic
+# 
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Boston, MA  02110-1301  USA
+#
+import BBox
+import Cell
+import FieldID
+import ValueType
+from numpy import array, arange, random, zeros
+import copy
+
+#debug flag
+debug = 0
+
+
 class Field:
     """
     Representation of field. Field is a scalar, vector, or tensorial 
@@ -20,6 +53,26 @@ class Field:
             time(double): time
             values(tuple): field values (format dependent of particular field type)
         """
+        self.mesh = mesh
+        self.fieldID = fieldID
+        self.valueType = valueType
+        self.time = time
+        self.units = units
+        self.uri = None   #pyro uri; used in distributed setting
+        if values == None:
+            ncomponents = mesh.getNumberOfVertices()
+            if valueType == ValueType.Scalar:
+                recsize = 1
+            elif valueType == ValueType.Vector:
+                recsize = 3
+            elif valueType == ValueType.Tensor:
+                recsize = 9
+            else:
+                raise TypeError("Unknown valueType")
+            self.values=zeros((ncomponents, recsize))
+        else:
+            self.values = values
+
     def getMesh(self):
         """
         Returns representation of underlying discretization.
@@ -32,13 +85,13 @@ class Field:
         """
         Returns value type (ValueType) of the receiver.
         """
-        return self.value_type
+        return self.valueType
 
     def getFieldID(self):
         """
         Returns field ID (FieldID type).
         """
-        return self.field_id
+        return self.fieldID
 
     def evaluate(self, position, eps=0.001):
         """
@@ -50,12 +103,40 @@ class Field:
         RETURNS:
             tuple. 
         """
+        cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([ c-eps for c in position], [c+eps for c in position]))
+        if len(cells):
+            for icell in cells:
+                try:
+                    if icell.containsPoint(position):
+                        if debug:
+                            print icell.getVertices() 
+                        answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                        return answer
+
+                except ZeroDivisionError:
+                    print icell.number, position,
+                    cell.debug=1
+                    print icell.containsPoint(position), icell.glob2loc(position)
+
+            print "Field evaluate -no source cell found for position ",position
+            for icell in cells:
+                print icell.number, icell.containsPoint(position), icell.glob2loc(position)
+
+            raise ValueError
+                
+        else:
+            #no source cell found
+            print "Field evaluate - no source cell found for position ",position
+            raise ValueError
+
     def giveValue(self, componentID):
         """
         Returns the value associated to given component (vertex or cell IP).
         ARGS:
             componentID(tuple): identifies the component (vertexID,) or (CellID, IPID)
         """
+        return self.values[componentID]
+
     def setValue(self, componentID, value):
         """
         Sets the value associated to given component (vertex or cell IP).
@@ -67,6 +148,8 @@ class Field:
             locally and record change.
             The source field values are updated after commit() method is invoked.
         """
+        self.values[componentID] = value
+
     def commit(self):
         """
         Commits the recorded changes (via setValue method) to primary field.
@@ -75,6 +158,8 @@ class Field:
         """
         Returns units of the receiver.
         """
+        return self.units
+
     def merge(self, field):
         """
         Merges the receiver with given field together. 
@@ -82,6 +167,24 @@ class Field:
         but should refer to same underlying discretization, 
         otherwise unpredictable results can occur.
         """
+        # first merge meshes 
+        mesh = copy.deepcopy(self.mesh)
+        mesh.merge(field.mesh)
+        print mesh
+        # merge the field values 
+        # some type checking first
+        if (self.field_type != field.field_type):
+            raise TypeError("Field::merge: field_type of receiver and parameter is different")
+        values=[0]*mesh.getNumberOfVertices()
+        for v in xrange(self.mesh.getNumberOfVertices()):
+            values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)]=self.values[v]
+        for v in xrange(field.mesh.getNumberOfVertices()):
+            values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.values[v]
+
+        self.mesh=mesh
+        self.values=values
+
+
     def field2VTKData (self):
         """
         Returns VTK representation of the receiver. Useful for visualization.
