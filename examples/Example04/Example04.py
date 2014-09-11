@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+#
+# This example reequires pyvtk module, install it using
+# pip install pyvtk
+#
+
 import sys
 sys.path.append('../..')
 
@@ -36,7 +42,9 @@ def main():
     value=field.evaluate(position)
     print "Field value at position ", position, " is ", value
 
-
+    field.getMesh().getVTKRepresentation()
+    field.field2VTKData().tofile('example')
+    
 
 
 
