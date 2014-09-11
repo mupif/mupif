@@ -119,7 +119,7 @@ class Triangle_2d_lin(Cell):
         """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
         return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
-    def giveGeometryType(self):
+    def getGeometryType(self):
         """Returns geometry type of receiver"""
         return CellGeometryType.CGT_TRANGLE_1
 
@@ -162,7 +162,7 @@ class Quad_2d_lin(Cell):
         """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
         return Quad_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
-    def giveGeometryType(self):
+    def getGeometryType(self):
         """Returns geometry type of receiver"""
         return CellGeometryType.CGT_QUAD
 
@@ -280,7 +280,7 @@ class Tetrahedron_3d_lin(Cell):
         """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
         return Tetrahedron_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
-    def giveGeometryType(self):
+    def getGeometryType(self):
         """Returns geometry type of receiver"""
         return CellGeometryType.CGT_TETRA
 
@@ -343,7 +343,7 @@ class Brick_3d_lin(Cell):
         """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
         return Brick_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
-    def giveGeometryType(self):
+    def getGeometryType(self):
         """Returns geometry type of receiver"""
         return CellGeometryType.CGT_HEXAHEDRON
 
