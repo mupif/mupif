@@ -191,3 +191,14 @@ class Field:
         RETURNS:
             VTKDataSource
         """
+        import pyvtk
+
+        if (self.getValueType() == ValueType.Scalar):
+            return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                 pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values])),
+                                 'Unstructured Grid Example')
+        elif (self.getValueType() == ValueType.Vector):
+            return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                 pyvtk.PointData(pyvtk.Vectors(self.values)),
+                                 'Unstructured Grid Example')
+            

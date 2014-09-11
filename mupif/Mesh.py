@@ -21,9 +21,11 @@
 # Boston, MA  02110-1301  USA
 #
 
+import APIError
 import Octree
 import copy
 import time
+import CellGeometryType
 
 #enum to distinguish iterartors provided by domain
 VERTICES=0; CELLS=1
@@ -354,5 +356,38 @@ class UnstructuredMesh(Mesh):
         self.vertexOctree = None
         self.cellOctree = None
 
+    def getVTKRepresentation (self):
+        """
+        Returns:  the VVTK representation of the receiver (pyvtk.UnstructuredGrid).
+        Note: Requires pyvtk module
+        """
+        import pyvtk
+
+        vertices = []
+        hexahedrons = []
+        tetrahedrons= []
+        quads = []
+        triangles = []
+        
+        #loop over receiver vertices and create list of vertex coordinates 
+        for v in xrange(len(self.vertexList)):
+            vertices.append(self.vertexList[v].coords)
+        #loop over receiver cells 
+        for c in xrange(len(self.cellList)):
+            cell = self.cellList[c]
+            cgt = cell.getGeometryType()
+            if (cgt == CellGeometryType.CGT_TRIANGLE_1):
+                triangles.append(cell.vertices)
+            elif (cgt == CellGeometryType.CGT_QUAD):
+                quads.append(cell.vertices)
+            elif (cgt == CellGeometryType.CGT_TETRA):
+                tetrahedrons.append(cell.vertices)
+            elif (cgt == CellGeometryType.CGT_HEXAHEDRON):
+                hexahedrons.append(cell.vertices)
+            else:
+                msg = "Unsupported cell geometry type encountered: "+str(cgt)
+                raise APIError.APIError (msg) 
+
+        return pyvtk.UnstructuredGrid(vertices, hexahedron=hexahedrons, tetra=tetrahedrons, quad=quads, triangle=triangles)
 
 
