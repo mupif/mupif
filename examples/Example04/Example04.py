@@ -42,7 +42,6 @@ def main():
     value=field.evaluate(position)
     print "Field value at position ", position, " is ", value
 
-    field.getMesh().getVTKRepresentation()
     field.field2VTKData().tofile('example')
     
 
