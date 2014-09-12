@@ -30,6 +30,13 @@ import copy
 #debug flag
 debug = 0
 
+class FieldType:
+    """
+    Represent the supported values of FieldType. 
+    """
+    FT_vertexBased = 1
+    FT_cellBased   = 2
+
 
 class Field:
     """
@@ -41,7 +48,7 @@ class Field:
     Derived classes will implement fields defined on common discretizations, 
     like fields defined on structured/unstructured FE meshes, FD grids, etc.
     """
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None):
+    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased):
         """
         Initializes the field instance.
 
@@ -52,6 +59,7 @@ class Field:
             units: units of the field values
             time(double): time
             values(tuple): field values (format dependent of particular field type)
+            fieldType(FieldType): determines field type (vaues specified as vertex or cell values)
         """
         self.mesh = mesh
         self.fieldID = fieldID
@@ -59,6 +67,7 @@ class Field:
         self.time = time
         self.units = units
         self.uri = None   #pyro uri; used in distributed setting
+        self.fieldType = fieldType
         if values == None:
             ncomponents = mesh.getNumberOfVertices()
             if valueType == ValueType.Scalar:
@@ -110,7 +119,11 @@ class Field:
                     if icell.containsPoint(position):
                         if debug:
                             print icell.getVertices() 
-                        answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                                                    
+                        if (self.fieldType == FieldType.FT_vertexBased):
+                            answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                        else:
+                            answer = self.values[icell.number]
                         return answer
 
                 except ZeroDivisionError:
@@ -175,11 +188,18 @@ class Field:
         # some type checking first
         if (self.field_type != field.field_type):
             raise TypeError("Field::merge: field_type of receiver and parameter is different")
-        values=[0]*mesh.getNumberOfVertices()
-        for v in xrange(self.mesh.getNumberOfVertices()):
-            values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)]=self.values[v]
-        for v in xrange(field.mesh.getNumberOfVertices()):
-            values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.values[v]
+        if (self.fieldType == FieldType.FT_vertexBased):
+            values=[0]*mesh.getNumberOfVertices()
+            for v in xrange(self.mesh.getNumberOfVertices()):
+                values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)]=self.values[v]
+            for v in xrange(field.mesh.getNumberOfVertices()):
+                values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.values[v]
+        else:
+            values=[0]*mesh.giveNumberOfCells()
+            for v in xrange(self.mesh.giveNumberOfCells()):
+                values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)]=self.values[v]
+            for v in xrange(field.mesh.giveNumberOfCells()):
+                values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)]=field.values[v]
 
         self.mesh=mesh
         self.values=values
@@ -192,13 +212,23 @@ class Field:
             VTKDataSource
         """
         import pyvtk
-
-        if (self.getValueType() == ValueType.Scalar):
-            return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                 pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values])),
-                                 'Unstructured Grid Example')
-        elif (self.getValueType() == ValueType.Vector):
-            return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                 pyvtk.PointData(pyvtk.Vectors(self.values)),
-                                 'Unstructured Grid Example')
+        if (self.fieldType == FieldType.FT_vertexBased):
+            if (self.getValueType() == ValueType.Scalar):
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values])),
+                                     'Unstructured Grid Example')
+            elif (self.getValueType() == ValueType.Vector):
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                     pyvtk.PointData(pyvtk.Vectors(self.values)),
+                                     'Unstructured Grid Example')
+        else:
+            if (self.getValueType() == ValueType.Scalar):
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values])),
+                                     'Unstructured Grid Example')
+            elif (self.getValueType() == ValueType.Vector):
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                     pyvtk.CellData(pyvtk.Vectors(self.values)),
+                                     'Unstructured Grid Example')
+            
             
