@@ -77,13 +77,11 @@ class EnsightReader():
         def giveValueAtPoint(self, fieldName, componentID):
 		uGrid = vtk.vtkUnstructuredGrid()
 		uGrid.ShallowCopy(self.grid)
-		print componentID
 		return uGrid.GetPointData().GetScalars(fieldName).GetValue( componentID )
 
-	def giveValueAtCell(self, fieldName, cellID):
+	def giveValueAtCell(self, fieldName, componentID):
 		uGrid = vtk.vtkUnstructuredGrid()
 		uGrid.ShallowCopy(self.grid)
-		print cellID
 		return uGrid.GetCellData().GetScalars(fieldName).GetValue( componentID )
 
         def getNumberOfCells(self):
