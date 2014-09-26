@@ -1,0 +1,26 @@
+# Ensight6 case file created by GTM-X
+
+FORMAT
+type: ensight
+
+GEOMETRY
+model: MMPTestCase_v1.geo
+
+VARIABLE
+scalar per element:    PRESSURE                            fld_PRESSURE.escl
+scalar per element:    MASS_IMBALANCE                      fld_MASS_IMBALANCE.escl
+scalar per element:    ENRG_IMBALANCE                      fld_ENRG_IMBALANCE.escl
+scalar per element:    VISCOSITY                           fld_VISCOSITY.escl
+scalar per element:    DENSITY                             fld_DENSITY.escl
+scalar per element:    SPECIFIC_HEAT                       fld_SPECIFIC_HEAT.escl
+scalar per element:    THERMAL_CONDUCTIVITY                fld_THERMAL_CONDUCTIVITY.escl
+scalar per element:    TEMPERATURE                         fld_TEMPERATURE.escl
+scalar per element:    HEAT_FLUX                           sfld_HEAT_FLUX.escl
+scalar per element:    RADIATIVE_FLUX                      sfld_RADIATIVE_FLUX.escl
+scalar per element:    CONVECTIVE_FLUX                     sfld_CONVECTIVE_FLUX.escl
+scalar per element:    DIFFUSIVE_FLUX                      sfld_DIFFUSIVE_FLUX.escl
+scalar per element:    BOUND_TEMPERATURE                   sfld_BOUND_TEMPERATURE.escl
+vector per element:    VELOCITY                            fld_VELOCITY.evect
+vector per node:       NODE_VELOCITY                       fld_NODE_VELOCITY.nvect
+vector per node:       COORDINATES                         fld_COORDINATES.nvect
+vector per node:       SCALING                             fld_SCALING.nvect

@@ -4,10 +4,15 @@
 import sys
 sys.path.append('../')
 
-from mupif import *
 import vtk
-from vtk import *
 from mupif import Timer
+import numpy as np
+from mupif import Mesh
+from mupif import Vertex
+from mupif import Cell
+from mupif import Field
+from mupif import FieldID
+from mupif import ValueType
 
 #debug flag
 debug = 0
@@ -16,10 +21,6 @@ class EnsightReader():
 
 	def __init__(self):
 		self.grid = None
-		#self.nx = 0 #numberOfNodesX
-		#self.ny = 0
-		#self.nz = 0 
-		#self.dim = 0 #dimension see mupif
 		return
 
 	def readVtkFile(self, fileName):
@@ -37,13 +38,11 @@ class EnsightReader():
 
 		output = reader.GetOutput()
 		num_blocks =  output.GetNumberOfBlocks()	
-		#print "numb : ", num_blocks
 
 		#blocks_unstructured is a list of objects of vtkUnstructuredGrid
 		blocks_unstructured = []
 		for i in range(num_blocks):
 			blocks_unstructured.append(output.GetBlock(i))
-		#print "blocks :", blocks_unstructured   
 
 		appendFilter = vtk.vtkAppendFilter()
 		i = 0
@@ -61,18 +60,37 @@ class EnsightReader():
 		self.readVtkFile(fileName+'.vtk')
 
 
-	def readField (self, fileName, fieldName, componentID):
-		# Read the source file.
-		#self.reader = vtk.vtkUnstructuredGridReader()
-		#self.reader.SetFileName(fileName)
-		#self.reader.ReadAllScalarsOn()
-		#self.reader.Update()
+        def getMesh (self, cellFilter):
+                mesh = Mesh.UnstructuredMesh()
+                vertices=[]
+                coords = np.zeros((3), dtype='f')
+                for i in xrange(0, self.getNumberOfVertices()): 
+                        coords=self.getCoords(i,coords)
+                        tuple = (coords)
+                        vertices.append(Vertex.Vertex(i,i+1, tuple))
 
-                uGrid = vtk.vtkUnstructuredGrid()
-		uGrid.ShallowCopy(self.reader.GetOutput())
-		#return uGrid.GetPointData().GetScalars(fieldName).GetValue( componentID )
-		return uGrid.GetCellData().GetScalars(fieldName).GetValue( componentID )
+                cells = []
+                for i in xrange(0, self.getNumberOfCells()):
+                        if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
+                                cells.append(Cell.Brick_3d_lin(mesh, i, i, (int(self.giveVertex(i,0)), int(self.giveVertex(i,1)), int(self.giveVertex(i,2)), int(self.giveVertex(i,3)), int(self.giveVertex(i,4)), int(self.giveVertex(i,5)), int(self.giveVertex(i,6)), int(self.giveVertex(i,7))) )) 
+                        elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
+                                cells.append(Cell.Quad_2d_lin(mesh, i, i,(int(self.giveVertex(i,0)),int(self.giveVertex(i,1)),int(self.giveVertex(i,2)),int(self.giveVertex(i,3))) ))
+                        
+                mesh.setup(vertices, cells)
+                return mesh
 
+        def getField(self, mesh, fileName, fieldName, vertexBasedFlag, cellFilter):
+                values=[]
+                if (vertexBasedFlag == True):
+                        for i in xrange(0, self.getNumberOfVertices()): 
+                                values.append ((self.giveValueAtPoint(fieldName, i), ))
+                elif(vertexBasedFlag == False):
+                        for i in xrange(0, self.getNumberOfCells()):
+                                if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
+                                        values.append ((self.giveValueAtCell(fieldName, i), ))
+                                elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
+                                        values.append ((self.giveValueAtCell(fieldName, i), ))
+                return Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values, Field.FieldType.FT_cellBased)
                 
         def giveValueAtPoint(self, fieldName, componentID):
 		uGrid = vtk.vtkUnstructuredGrid()
@@ -84,17 +102,36 @@ class EnsightReader():
 		uGrid.ShallowCopy(self.grid)
 		return uGrid.GetCellData().GetScalars(fieldName).GetValue( componentID )
 
+	def giveVectorAtPoint(self, fieldName, i):
+		uGrid = vtk.vtkUnstructuredGrid()
+		uGrid.ShallowCopy(self.grid)
+		return uGrid.GetPointData().GetVectors(fieldName).GetTuple3(i)
+
+	def giveVectorAtCell(self, fieldName, i):
+		uGrid = vtk.vtkUnstructuredGrid()
+		uGrid.ShallowCopy(self.grid)
+		return uGrid.GetCellData().GetVectors(fieldName).GetTuple3(i)
+
+	def giveTensorAtPoint(self, fieldName, i):
+		uGrid = vtk.vtkUnstructuredGrid()
+		uGrid.ShallowCopy(self.grid)
+		return uGrid.GetPointData().GetTensors(fieldName).GetTuple9(i)
+
+	def giveTensorAtCell(self, fieldName, i):
+		uGrid = vtk.vtkUnstructuredGrid()
+		uGrid.ShallowCopy(self.grid)
+		return uGrid.GetCellData().GetTensors(fieldName).GetTuple9(i)
+
         def getNumberOfCells(self):
 		"""Returns the number of Cells."""
 		geomData = self.reader.GetOutput();
 		numCells = geomData.GetNumberOfCells()
-		print "number of cells : ", numCells
 		return numCells;
 
 	def getNumberOfVertices(self):
+		"""Returns the number of Vertices."""
 		geomData = self.reader.GetOutput();
 		numPts = geomData.GetNumberOfPoints()
-		print "number of points : ",numPts
 		return numPts;
 
 	def getCoords(self, i, coords):
@@ -113,16 +150,14 @@ class EnsightReader():
 		geomData.GetBounds(b)
 		return b
 
-	def giveCellDimension(self):
+	def giveCellDimension(self, i):
 		geomData = self.reader.GetOutput();
-		dim=geomData.GetCell(0).GetCellDimension()
-		print "dim :",dim 
+		dim=geomData.GetCell(i).GetCellDimension()
 		return dim
 
 	def giveCellType(self, i):
 		geomData = self.reader.GetOutput();
 		type=geomData.GetCellType(i)
-		#print "type of cells: ", type
 		return type
 
 	def giveNumberOfVertices(self, cellid):
