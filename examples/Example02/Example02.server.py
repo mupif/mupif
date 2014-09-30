@@ -1,6 +1,11 @@
 import sys
 sys.path.append('../..')
 
+#host running nameserver
+nshost = "127.0.0.1"
+#adress where server will listen
+localhost = "127.0.0.1"
+
 from mupif import Application
 from mupif import TimeStep
 from mupif import APIError
@@ -8,6 +13,10 @@ from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
 import Pyro4
+
+Pyro4.config.SERIALIZER="pickle"
+Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -44,12 +53,12 @@ class application2(Application.Application):
         return 1.0
 
 
-daemon = Pyro4.Daemon(host='147.32.130.150', port=44382)
-ns     = Pyro4.locateNS(host='147.32.130.150', port=9090)
+daemon = Pyro4.Daemon(host=localhost, port=44382)
+ns     = Pyro4.locateNS(host=nshost, port=9090)
 
 app2 = application2("input2.in")
 #register agent
 uri    = daemon.register(app2)
 ns.register("Mupif.application2", uri)
-print uri
+print (uri)
 daemon.requestLoop()

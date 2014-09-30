@@ -7,15 +7,22 @@ different computers. Pyro version 4.15 is required.
 
 To run this distributed example:
 
-1) start pyro name server:
+1) start pyro name server
 python -m Pyro4.naming -n hostname -p 9090
 
-2) start server script
-python Example0server.py
+where hostname is ip adress where nameserver will listen, typically
+it should be either "127.0.0.1" when listening locally, or should be set 
+to your public IP adress. Note that in the later case, your firewall has to be configured to accept connections at port 9090.
 
-note: the server connects to Pyro name server running at host with ip address 147.32.130.150 by default.
+2) start server script
+python Example02server.py
+
+By default, the server will listen on internal ip adress "127.0.0.1". If you want your server to listen on your public IP adress, edit the Example02.server.py script by modifying localhost variable. Note that in the later case, your firewall has to be configured to accept connections at port 44382.
+Similarly, by default the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the Example02.server.py script by modifying nshost variable.
 
 3) run client script
 python Example02.client.py
+By default, the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the Example02.client.py script by modifying nshost variable.
+
 
 note: the client and server scripts can run on different computers.
