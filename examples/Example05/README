@@ -1,0 +1,11 @@
+This example illustrates a skeleton for Celsian API (defined in Celsian.py). 
+It shows how to import Ensight data files into internal framework
+representation using fields defined on general unstructured grid.
+
+Prerequisities:
+---------------
+the EnsightReader requires vtk python module. This module requires Python 2.x 
+
+To run the example:
+-------------------
+> python Example05.py

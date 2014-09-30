@@ -53,12 +53,13 @@ MuPIF_TOP_DIR - contains source code of the MuPIF package
 
 [3] Pre-requisites
 ===============================================================================
-The MuPIF requires the python interpreter.
+The MuPIF requires the python interpreter. 
+Some examples rely on vtk python module which requires Python 2.x version.
 
 MuPIF depends on application interfaces, which typically require that 
 corresponding package is installed properly. 
 To support parallel and distributed simulation scenarios, MuPIF requires Pyro
-module (version 4.15)
+module.
 
 [4] Running Mupif examples
 ===============================================================================

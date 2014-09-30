@@ -1,12 +1,25 @@
-This example illustrates the top level control script representing a simulation pipeline made of two simle applications. 
-The overall simulation is performed in a time loop, where one application provides data for the second application, 
+This example illustrates the top level control script 
+representing a simulation pipeline made of two simle applications. 
+
+The overall simulation is performed in a time loop, 
+where one application provides data for the second application, 
 which computes the arithmetical average value of given data.
 
-The main difference to Example01 is that this example uses Pyro communication and thus the client and server parts can be executed on 
-different computers. Pyro version 4.15 is required.
+The main difference to Example01 is that this example uses Pyro
+communication and thus the client and server parts can be executed on 
+different computers. 
+
+Prerequisities:
+---------------
+Python (preferably Python 2.x) interpreter
+Pyro module installed. To install Pyro, we reccomend to use pip: 
+a tool for installing and managing Python packages:
+     
+> pip install Pyro4
+
 
 To run this distributed example:
-
+--------------------------------
 1) start pyro name server
 python -m Pyro4.naming -n hostname -p 9090
 
