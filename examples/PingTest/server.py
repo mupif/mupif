@@ -12,6 +12,9 @@ os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change
 
 
 import Pyro4
+Pyro4.config.SERIALIZER="pickle"
+Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -58,5 +61,5 @@ app2 = PingServerApplication("/dev/null")
 #register agent
 uri    = daemon.register(app2)
 ns.register("Mupif.PingServerApplication", uri)
-print uri
+print (uri)
 daemon.requestLoop()

@@ -1,37 +1,45 @@
-
-This example performs a simple ping test, that can be used to verify connection between 
-any client and server (currently hosted at CTU resources).
-The example illustrates, how to establish a connection to a remote application and how
-the secure connection can be extablished using ssh tunnel.
-
-
-
-=======================================================================================================
-Prerequisities:
-=======================================================================================================
-To establish secure connection to a server, you have to send your public ssh key to info@mmp-project.eu
-For a description, on how to generate your ssh key, follow the section "Generating ssh keys"
-Note: the ping server will be available only for a limmited time. However, the server script is provided 
-and can be hosted on any server with MuPIF installed.
+This example performs a simple ping test, that can be used 
+to verify connection between any client and server
+(currently hosted at CTU resources).
+The example illustrates, how to establish a connection to
+a remote application and how the secure connection can be
+extablished using ssh tunnel.
 
 
-=======================================================================================================
+
+================================================================================Prerequisities:
+================================================================================
+To establish secure connection to a server, you have to send your 
+public ssh key to info@mmp-project.eu
+For a description, on how to generate your ssh key, follow the section
+"Generating ssh keys"
+Note: the ping server will be available only for a limmited time. 
+However, the server script is provided and can be hosted on any
+server with MuPIF installed.
+
+
+================================================================================
 Generating Your SSH Public Key
-=======================================================================================================
-In order to provide a public key, each user in your system must generate one if they don’t already have one. 
-This process is similar across all operating systems. First, you should check to make sure you don’t already have a key. 
-By default, a user’s SSH keys are stored in that user’s ~/.ssh directory. 
-You can easily check to see if you have a key already by going to that directory and listing the contents:
+================================================================================
+In order to provide a public key, each user in your system must generate 
+one if they don’t already have one. This process is similar across all
+operating systems. First, you should check to make sure you don’t already
+have a key. By default, a user’s SSH keys are stored in that user’s ~/.ssh 
+directory. You can easily check to see if you have a key already by going
+to that directory and listing the contents:
 
 $ cd ~/.ssh
 $ ls
 authorized_keys2  id_dsa       known_hosts
 config            id_dsa.pub
 
-You’re looking for a pair of files named something and something.pub, where the something is usually id_dsa or id_rsa. 
-The .pub file is your public key, and the other file is your private key. If you don’t have these files 
-(or you don’t even have a .ssh directory), you can create them by running a program called ssh-keygen, 
-which is provided with the SSH package on Linux/Mac systems and comes with the MSysGit package on Windows:
+You’re looking for a pair of files named something and something.pub, 
+where the something is usually id_dsa or id_rsa. The .pub file is your
+public key, and the other file is your private key. If you don’t have
+these files (or you don’t even have a .ssh directory), you can create 
+them by running a program called ssh-keygen, which is provided with 
+the SSH package on Linux/Mac systems and comes with the MSysGit package
+on Windows:
 
 $ ssh-keygen
 Generating public/private rsa key pair.
@@ -43,11 +51,13 @@ Your public key has been saved in /Users/schacon/.ssh/id_rsa.pub.
 The key fingerprint is:
 43:c5:5b:5f:b1:f1:50:43:ad:20:a6:92:6a:1f:9a:3a schacon@agadorlaptop.local
 
-First it confirms where you want to save the key (.ssh/id_rsa), and then it asks twice for a passphrase, 
-which you can leave empty if you don’t want to type a password when you use the key.
+First it confirms where you want to save the key (.ssh/id_rsa), 
+and then it asks twice for a passphrase, which you can leave empty
+if you don’t want to type a password when you use the key.
 
-Now, each user that does this has to send their public key to server administrator. 
-All they have to do is copy the contents of the .pub file and e-mail it. The public keys look something like this:
+Now, each user that does this has to send their public key to server
+administrator. All they have to do is copy the contents of the .pub file
+and e-mail it. The public keys look something like this:
 
 $ cat ~/.ssh/id_rsa.pub
 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAklOUpkDHrfHY17SbrmTIpNLTGK9Tjom/BWDSU
@@ -59,13 +69,15 @@ NrRFi9wrf+M7Q== schacon@agadorlaptop.local
 
 
 
-=======================================================================================================
+================================================================================
 Running a test
-=======================================================================================================
+================================================================================
 
 To run a ping test on your computer, following steps are required:
-Establish a ssh tunnel forwarding (and encrypting) the local port 5050 to remote port 9090 (pyro 
-nameserver service) and local port 5555 to remote port 44382 (pyro daemon on remote server):
+Establish a ssh tunnel forwarding (and encrypting) the local port 5050
+to remote port 9090 (pyro nameserver service) and local port 5555 to
+remote port 44382 (pyro daemon on remote server):
+
 1) In a terminal window enter 
 ssh  -L 5555:mech.fsv.cvut.cz:44382 mmp@mech.fsv.cvut.cz -N
 
@@ -73,6 +85,9 @@ ssh  -L 5555:mech.fsv.cvut.cz:44382 mmp@mech.fsv.cvut.cz -N
 4) run a ping test 
 python test.py
 
+================================================================================
+EXPECTED OUTPUT:
+================================================================================
 You should obtain the following output:
 ...
 Connected to  CTU Ping server, version 1.0

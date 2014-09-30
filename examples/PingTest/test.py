@@ -11,6 +11,9 @@ import os
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
 import Pyro4
+Pyro4.config.SERIALIZER="pickle"
+Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
 time  = 0
 dt    = 1
@@ -22,20 +25,20 @@ ns     = Pyro4.locateNS('mech.fsv.cvut.cz', 9090)
 
 # locate remote PingServer application, request remote proxy
 uri = ns.lookup("Mupif.PingServerApplication")
-print uri
+print (uri)
 serverApp = Pyro4.Proxy(uri)
 
 #app2.__init__(None)
 
 try:
     appsig=serverApp.getApplicationSignature()
-    print "Connected to ", appsig
+    print ("Connected to ", appsig)
 except Exception as e:
-    print "Connection to server failed"
+    print ("Connection to server failed")
     sys.exit(e)
     
 
-print "Generating test sequence ...",
+print ("Generating test sequence ...")
 
 for i in range (10):
     time = i
@@ -47,16 +50,16 @@ for i in range (10):
         serverApp.solveStep(istep)
 
     except APIError.APIError as e:
-        print "Following API error occurred:",e
+        print ("Following API error occurred:",e)
         break
 
-print "done"
+print ("done")
 prop = serverApp.getProperty(PropertyID.PID_CumulativeConcentration, i)
-print "Received ", prop.getValue(), " expected ", expectedValue
+print ("Received ", prop.getValue(), " expected ", expectedValue)
 if (prop.getValue() == expectedValue):
-    print "Test PASSED"
+    print ("Test PASSED")
 else:
-    print "Test FAILED"
+    print ("Test FAILED")
 
 serverApp.terminate();
-print "Ping test finished"
+print ("Ping test finished")
