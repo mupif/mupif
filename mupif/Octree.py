@@ -22,8 +22,8 @@
 #
 
 import math
-import BBox
-import Localizer
+from . import BBox
+from . import Localizer
 
 debug = 0
 refineLimit = 400 # refine cell if number of items exceeds this treshold value
@@ -41,7 +41,7 @@ class Octant:
         self.parent = parent
         self.origin = origin
         self.size   = size
-        if debug: print "Octree init: origin:", origin, "size:", size
+        if debug: print ("Octree init: origin:", origin, "size:", size)
 
     def isTerminal (self):
         return (len(self.children) == 0)
@@ -49,7 +49,7 @@ class Octant:
     def divide (self):
         """ Divides receiver locally. 
         """
-        if debug: print "Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask
+        if debug: print ("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
         if not self.isTerminal(): assert("Could not divide non terminal octant")
         self.children=[]
         for i in range(self.octree.mask[0]+1):
@@ -59,7 +59,7 @@ class Octant:
                 for k in range(self.octree.mask[2]+1):
                     origin=(self.origin[0]+i*self.size/2.,self.origin[1]+j*self.size/2., self.origin[2]+k*self.size/2.) 
                     self.children[i][j].append(Octant (self.octree, self, origin, self.size/2.))
-                    if debug: print "  Children: ", self.children[i][j][k].giveMyBBox()
+                    if debug: print ("  Children: ", self.children[i][j][k].giveMyBBox())
 
 
     def giveMyBBox(self):
@@ -91,7 +91,7 @@ class Octant:
             if self.isTerminal():
                 self.data.append(item)
                 if (len(self.data) > refineLimit):
-                    if debug: print "Octant insert: data limit reached, subdivision"
+                    if debug: print ("Octant insert: data limit reached, subdivision")
                     self.divide()
                     for item2 in self.data:
                         for i in range(self.octree.mask[0]+1):
@@ -130,22 +130,22 @@ class Octant:
         if debug: tab='  '*int(math.ceil ( math.log( self.octree.root.size / self.size) / math.log(2.0)))
         if self.containsBBox(bbox):
             if self.isTerminal():
-                if debug: print tab,"Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data)
+                if debug: print (tab,"Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data))
                 for i in self.data:
                     if debug: 
-                        print tab,"checking ...", i
-                        print i.getBBox(), bbox
+                        print (tab,"checking ...", i)
+                        print (i.getBBox(), bbox)
                     if i.getBBox().intersects(bbox):
                         if isinstance(itemList, set):
                             itemList.add(i)
                         else:
                             itemList.append(i)
             else:
-                if debug: print tab,"Parent containing bbox found ....", self.giveMyBBox()
+                if debug: print (tab,"Parent containing bbox found ....", self.giveMyBBox())
                 for i in range(self.octree.mask[0]+1):
                     for j in range(self.octree.mask[1]+1):
                         for k in range(self.octree.mask[2]+1):
-                            if debug: print tab,"  Checking child .....", self.children[i][j][k].giveMyBBox()
+                            if debug: print (tab,"  Checking child .....", self.children[i][j][k].giveMyBBox())
                             self.children[i][j][k].giveItemsInBBox(itemList, bbox)
       
 
@@ -197,9 +197,9 @@ class Octree(Localizer.Localizer):
     def giveItemsInBBox (self, bbox):
         answer=set()
         # answer = []
-        if debug: print "Octree: Looking for items containing bbox:", bbox
+        if debug: print ("Octree: Looking for items containing bbox:", bbox)
         self.root.giveItemsInBBox(answer,bbox)
-        if debug: print "Octree: Items found:", answer
+        if debug: print ("Octree: Items found:", answer)
         return answer
 
     def evaluate(self, functor):

@@ -20,11 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import BBox
-import Util
+from . import BBox
+from . import Util
 import math
-import Mesh
-import CellGeometryType
+from . import Mesh
+from . import CellGeometryType
 
 #debug flag
 debug = 0
@@ -190,7 +190,7 @@ class Quad_2d_lin(Cell):
 
         #solve quadratic equation
         ksi=Util.quadratic_real(a,b,c)
-        if debug: print "quadratic_real returned ",ksi, "for a,b,c ", a,b,c
+        if debug: print ("quadratic_real returned ",ksi, "for a,b,c ", a,b,c)
         if len(ksi)==0:
             return 0,(0.,0.)
         else:
@@ -398,7 +398,7 @@ class Brick_3d_lin(Cell):
             nite=nite+1
             if nite > 10:
                 if debug: 
-                    print "Brick_3d_lin :: global2local: no convergence after 10 iterations"
+                    print ("Brick_3d_lin :: global2local: no convergence after 10 iterations")
                 return (0, (0.,0.,0.))
 
             u = answer[0]

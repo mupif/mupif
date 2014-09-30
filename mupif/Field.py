@@ -20,10 +20,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import BBox
-import Cell
-import FieldID
-import ValueType
+from . import Cell
+from . import FieldID
+from . import ValueType
+from . import BBox
 from numpy import array, arange, random, zeros
 import copy
 
@@ -118,7 +118,7 @@ class Field:
                 try:
                     if icell.containsPoint(position):
                         if debug:
-                            print icell.getVertices() 
+                            print (icell.getVertices())
                                                     
                         if (self.fieldType == FieldType.FT_vertexBased):
                             answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
@@ -127,19 +127,19 @@ class Field:
                         return answer
 
                 except ZeroDivisionError:
-                    print icell.number, position,
+                    print (icell.number, position)
                     cell.debug=1
-                    print icell.containsPoint(position), icell.glob2loc(position)
+                    print (icell.containsPoint(position), icell.glob2loc(position))
 
-            print "Field evaluate -no source cell found for position ",position
+            print ("Field evaluate -no source cell found for position ",position)
             for icell in cells:
-                print icell.number, icell.containsPoint(position), icell.glob2loc(position)
+                print (icell.number, icell.containsPoint(position), icell.glob2loc(position))
 
             raise ValueError
                 
         else:
             #no source cell found
-            print "Field evaluate - no source cell found for position ",position
+            print ("Field evaluate - no source cell found for position ",position)
             raise ValueError
 
     def giveValue(self, componentID):
@@ -183,7 +183,7 @@ class Field:
         # first merge meshes 
         mesh = copy.deepcopy(self.mesh)
         mesh.merge(field.mesh)
-        print mesh
+        print (mesh)
         # merge the field values 
         # some type checking first
         if (self.field_type != field.field_type):
