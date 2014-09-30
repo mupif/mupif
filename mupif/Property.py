@@ -30,12 +30,12 @@ class Property:
                 objectID(int): optional ID of problem object/subdomain to which 
                   property is related.
             """
-	    self.value = value
-	    self.propID = propID
-	    self.time = time
-	    self.units = units
-	    self.valueType = valueType
-	    self.objectID = objectID
+            self.value = value
+            self.propID = propID
+            self.time = time
+            self.units = units
+            self.valueType = valueType
+            self.objectID = objectID
 
         def getValue(self):
             """
@@ -43,7 +43,7 @@ class Property:
             Returns:
                 Property value as array (tuple); 
             """
-	    return self.value
+            return self.value
 
         def getPropertID(self):
             """
@@ -51,7 +51,7 @@ class Property:
             RETURNS:
                 Receiver property id (PropertyID)
             """
-	    return self.propID
+            return self.propID
 
         def getObjectID(self):
             """
@@ -59,7 +59,7 @@ class Property:
             RETURNS:
                 int
             """
-	    return self.objectID
+            return self.objectID
 
         def getUnits(self):
             """
@@ -67,4 +67,4 @@ class Property:
 	    Returns:
 	        Returns receiver's units (Units)
             """
-	    return self.units
+            return self.units
