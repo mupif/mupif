@@ -1,11 +1,24 @@
+# This script starts a server for Pyro4 on this machine with Application2
+# Works with Pyro4 version 4.28
+# Tested on Ubuntu 14.04 and Win XP
+# Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
+
+# If firewall is blocking daemonPort, run on Ubuntu
+# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
+
+#where is a running nameserver
+nshost = "127.0.0.1"
+nsport = 9090
+#address where this server will listen through a daemon
+daemonHost = "127.0.0.1"
+daemonPort = 44382
+
 import sys
 sys.path.append('../..')
-
-#host running nameserver
-nshost = "127.0.0.1"
-#adress where server will listen
-localhost = "127.0.0.1"
-
+import os
+import logging
+logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
+logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 from mupif import Application
 from mupif import TimeStep
 from mupif import APIError
@@ -13,16 +26,11 @@ from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
 import Pyro4
+import socket
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-
-# required firewall settings (on ubuntu):
-# for computer running daemon (this script)
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
-# for computer running a nameserver
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
 
 class application2(Application.Application):
@@ -53,8 +61,23 @@ class application2(Application.Application):
         return 1.0
 
 
-daemon = Pyro4.Daemon(host=localhost, port=44382)
-ns     = Pyro4.locateNS(host=nshost, port=9090)
+#Check connection to a LISTENING port of the nameserver
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(3.0)
+    s.connect((nshost, nsport))
+    s.shutdown(2)
+    print ("Can connect to LISTENING port on " + nshost + ":" + str(nsport))
+except Exception as e:
+    print ("Cannot connect to LISTENING port on " + nshost + ":" + str(nsport) + ". Is a Pyro4 nameserver running there? Does a firewall block INPUT or OUTPUT on the port?")
+    logging.exception(e)
+    exit(0)
+
+#locate nameserver
+ns = Pyro4.locateNS(host=nshost, port=nsport)
+
+#Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
+daemon = Pyro4.Daemon(host=daemonHost, port=daemonPort)
 
 app2 = application2("input2.in")
 #register agent
