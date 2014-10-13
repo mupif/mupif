@@ -25,6 +25,7 @@ from mupif import APIError
 from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
+from mupif import PyroUtil
 import Pyro4
 import socket
 
@@ -60,21 +61,8 @@ class application2(Application.Application):
     def getCriticalTimeStep(self):
         return 1.0
 
-
-#Check connection to a LISTENING port of the nameserver
-try:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(3.0)
-    s.connect((nshost, nsport))
-    s.shutdown(2)
-    print ("Can connect to LISTENING port on " + nshost + ":" + str(nsport))
-except Exception as e:
-    print ("Cannot connect to LISTENING port on " + nshost + ":" + str(nsport) + ". Is a Pyro4 nameserver running there? Does a firewall block INPUT or OUTPUT on the port?")
-    logging.exception(e)
-    exit(0)
-
 #locate nameserver
-ns = Pyro4.locateNS(host=nshost, port=nsport)
+ns = PyroUtil.connectNameServer(nshost, nsport)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
 daemon = Pyro4.Daemon(host=daemonHost, port=daemonPort)
