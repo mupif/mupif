@@ -1,5 +1,9 @@
 import sys
 sys.path.append('../..')
+import os
+os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
+os.environ['PYRO_LOGLEVEL'] = 'DEBUG'
+os.environ['PYRO_LOGFILE'] = 'Pyro_log.txt'
 
 from mupif import Application
 from mupif import TimeStep
@@ -7,32 +11,37 @@ from mupif import APIError
 from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
-import os
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
-os.environ['PYRO_LOGLEVEL'] = 'DEBUG'
-os.environ['PYRO_LOGFILE'] = 'Pyro_log.txt'
-
-import Pyro4
-import Pyro4.util
+from mupif import PyroUtil
 import time as timeTime
+import Pyro4
 
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
+sshtmode = 1
+if (sshtmode == 0):
+    from sshtunnel import SSHTunnelForwarder
+
+    server = SSHTunnelForwarder(
+        ssh_address=('mech.fsv.cvut.cz', 22),
+        ssh_username="mmp",
+        ssh_password="mmp2014mmp",
+        remote_bind_address=('127.0.0.1', 44382),
+        local_bind_address=('127.0.0.1', 5555))
+
+    server.start()
+    print (server)
+    print("server.local_bind_port:%d "% server.local_bind_port)
+    timeTime.sleep(0.1)
+elif (sshtmode==1):
+    tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44382)
 
 time  = 0
 dt    = 1
 expectedValue = 4.5
 
 start = timeTime.time()
-
-daemon = Pyro4.Daemon()
-ns     = Pyro4.locateNS('mech.fsv.cvut.cz', 9090)
-
+#locate nameserver
+ns     = PyroUtil.connectNameServer('mech.fsv.cvut.cz', 9090)
 # locate remote PingServer application, request remote proxy
-uri = ns.lookup("Mupif.PingServerApplication")
-print (uri)
-serverApp = Pyro4.Proxy(uri)
+serverApp = PyroUtil.connectApp (ns, 'Mupif.PingServerApplication')
 
 #app2.__init__(None)
 
@@ -70,3 +79,10 @@ else:
 serverApp.terminate();
 print ("Time consumed %f s" % (timeTime.time()-start))
 print ("Ping test finished")
+
+if (sshtmode==0):
+    server.terminate()
+elif (sshtmode ==1):
+    tunnel.terminate()
+
+
