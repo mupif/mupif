@@ -10,7 +10,8 @@ extablished using ssh tunnel.
 ================================================================================
 Prerequisities:
 ================================================================================
-The available servers are configured in conf.py file/
+The available servers are configured in conf.py file
+The application servers should be set up and started in advance at remote locations.
 
 To establish secure connection to a server, you have to send your 
 public ssh key to server administrator. The administrator must run

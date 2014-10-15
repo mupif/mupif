@@ -4,6 +4,7 @@ import os
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 os.environ['PYRO_LOGLEVEL'] = 'DEBUG'
 os.environ['PYRO_LOGFILE'] = 'Pyro_log.txt'
+import socket
 
 from mupif import Application
 from mupif import PyroUtil
@@ -22,7 +23,7 @@ class celsian(Application.Application):
     def __init__(self, file):
         return
     def getApplicationSignature(self):
-        return "Celsian API, version 1.0"
+        return "Celsian@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 
 
 
