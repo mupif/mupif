@@ -23,41 +23,20 @@
 import logging
 import Pyro4
 import socket
-
-import sshtunnel
-
+import subprocess
+import time 
 #debug flag
 debug = 0
-
 
 logging.basicConfig(filename='mupif.pyro.log',filemode='w',level=logging.DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
 
-class SSHTunnel:
-    def __init__(self, host, port, rhost, rport, userName, userPsswd, pkey=None):
-        self.host=host
-        self.port=port
-        self.rhost=rhost
-        self.rport=rport
-        self.uname=userName
-        self.pwd=userPsswd
-        self.pkey=pkey
-        
-    def start(self):
-        self.server = sshtunnel.SSHTunnelForwarder(
-            ssh_address=(self.host, self.port),
-            ssh_host_key=None,
-            ssh_username=self.uname,
-            ssh_password=self.pwd,
-            ssh_private_key=self.pkey,
-            remote_bind_address=(self.rhost, self.rport))
-        server.start()
-    def stop(self):
-        self.server.stop()
+
 
 def connectNameServer(nshost, nsport):
     try:
@@ -78,13 +57,20 @@ def connectNameServer(nshost, nsport):
 
 
 def connectApp(ns, name):
-    uri = ns.lookup("Mupif.application2")
+    uri = ns.lookup(name)
     app2 = Pyro4.Proxy(uri)
     try:
         sig = app2.getApplicationSignature()
+        if debug:
+            print ("Connected to "+sig)
     except Exception as e:
         print ("Cannot connect to application" + name + ". Is the server running?" )
         logging.exception(e)
         exit(0)
     return app2
         
+
+def sshTunnel(remoteHost, userName, localPort, remotePort):
+    tunnel = subprocess.Popen(['ssh','-L', '{}:{}:{}'.format(localPort, remoteHost, remotePort), '{}@{}'.format(userName, remoteHost),'-N'])
+    time.sleep(0.1)
+    return tunnel
