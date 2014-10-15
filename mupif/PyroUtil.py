@@ -64,13 +64,45 @@ def connectApp(ns, name):
         if debug:
             print ("Connected to "+sig)
     except Exception as e:
-        print ("Cannot connect to application" + name + ". Is the server running?" )
+        print ("Cannot connect to application " + name + ". Is the server running?" )
         logging.exception(e)
         exit(0)
     return app2
+
+
+def getNSAppName(jobname, appname):
+    return 'Mupif'+'.'+jobname+'.'+appname
+
+def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, app):
+    """
+    Runs a simple application server
+    ARGS:
+       server(string) host name of the server
+       port(int) port number on the server where daemon will listen
+       nathost(string) hostname of the server as reported by nameserver 
+         For secure ssh tunnel it should be set to 'localhost'
+         For direct (or VPN) connections 'None'
+       natport(int) server port as reported by nameserver
+       ns(string) hostname of the computer running nameserver
+       nsport(string) nameserver port
+       nsname(string) nameserver name to register application
+       app (Application) application instance
+       """
+    print ('runAppServer: server:%s, port:%d, nathost:%s, natport:%d, ns:%s, nsport:%d' % (server, port, nathost, natport, nshost, nsport))
+    daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
+    ns     = connectNameServer(nshost, nsport)
+    
+    #register agent
+    uri    = daemon.register(app)
+    ns.register(nsname, uri)
+    print (nsname, uri)
+    daemon.requestLoop()
+
         
 
 def sshTunnel(remoteHost, userName, localPort, remotePort):
+    if debug:
+        print("sshTunnel command: %s" % ('ssh '+'-L '+ '{}:{}:{} '.format(localPort, remoteHost, remotePort)+ '{}@{} '.format(userName, remoteHost)+'-N'))
     tunnel = subprocess.Popen(['ssh','-L', '{}:{}:{}'.format(localPort, remoteHost, remotePort), '{}@{}'.format(userName, remoteHost),'-N'])
-    time.sleep(0.1)
+    time.sleep(0.5)
     return tunnel
