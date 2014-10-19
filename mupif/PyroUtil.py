@@ -21,38 +21,35 @@
 # Boston, MA  02110-1301  USA
 #
 import logging
+logger = logging.getLogger('mupif')
+logger.setLevel(logging.DEBUG)
 import Pyro4
 import socket
 import subprocess
 import time 
-#debug flag
-debug = 0
-
-logging.basicConfig(filename='mupif.pyro.log',filemode='w',level=logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
+#First, check that we can connect to a listening port of a name server
+#Second, connect there
 
-
-
-def connectNameServer(nshost, nsport):
+def connectNameServer(nshost, nsport, timeOut=3.0):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(3.0)
+        s.settimeout(timeOut)
         s.connect((nshost, nsport))
         s.shutdown(2)
-        if debug: 
-            print ("Connected to nameserver's LISTENING port on " + nshost + ":" + str(nsport))
+        logger.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
     except Exception as e:
-        print ("Cannot connect to nameserver's LISTENING port on " + nshost + ":" + str(nsport) + ". Is a Pyro4 nameserver running there? Does a firewall block INPUT or OUTPUT on the port?")
-        logging.exception(e)
+        msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
+        logger.debug(msg)
+        logger.exception(e)
         exit(0)
 
     #locate nameserver
-    ns     = Pyro4.locateNS(host=nshost, port=nsport)
+    ns = Pyro4.locateNS(host=nshost, port=nsport)
     return ns
 
 
@@ -61,12 +58,11 @@ def connectApp(ns, name):
     app2 = Pyro4.Proxy(uri)
     try:
         sig = app2.getApplicationSignature()
-        if debug:
-            print ("Connected to "+sig)
+        logger.debug("Connected to "+sig)
     except Exception as e:
-        print ("Cannot connect to application " + name + ". Is the server running?" )
-        logging.exception(e)
-        exit(0)
+        logger.debug("Cannot connect to application " + name + ". Is the server running?")
+        logger.exception(e)
+        exit(e)
     return app2
 
 
@@ -98,11 +94,19 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, app):
     print (nsname, uri)
     daemon.requestLoop()
 
-        
 
-def sshTunnel(remoteHost, userName, localPort, remotePort):
-    if debug:
-        print("sshTunnel command: %s" % ('ssh '+'-L '+ '{}:{}:{} '.format(localPort, remoteHost, remotePort)+ '{}@{} '.format(userName, remoteHost)+'-N'))
-    tunnel = subprocess.Popen(['ssh','-L', '{}:{}:{}'.format(localPort, remoteHost, remotePort), '{}@{}'.format(userName, remoteHost),'-N'])
-    time.sleep(0.5)
-    return tunnel
+def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options=''):
+    #use direct system command. Paramiko or sshtunnel do not work.
+    #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
+    if sshClient=='ssh':
+        cmd = 'ssh -L %d:%s:%d %s@%s -N' % (localPort, remoteHost, remotePort, userName, remoteHost)
+    elif sshClient=='putty':
+        #need to create a public key *.ppk using puttygen. It can be creased by importing Linux private key. The path to that key is given as -i option
+        cmd = 'putty -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+    else:
+        logger.debug("Unknown ssh client, exiting")
+        exit(0)
+    logger.debug("Creating ssh tunnel: " + cmd)
+    tunnel = subprocess.Popen(cmd.split())
+    time.sleep(1.0)
+    return tunnel 
