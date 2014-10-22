@@ -26,6 +26,7 @@ from . import ValueType
 from . import BBox
 from numpy import array, arange, random, zeros
 import copy
+import collections
 
 #debug flag
 debug = 0
@@ -102,10 +103,28 @@ class Field:
         """
         return self.fieldID
 
-    def evaluate(self, position, eps=0.001):
+    def evaluate(self, positions, eps=0.001):
         """
-        Evaluates the receiver at given spatial position.
+        Evaluates the receiver at given spatial position(s).
+        ARGS:
+            position (tuple or list of tuples): 3D position vectors
+            eps(double): Optional tolerance
+        RETURNS:
+            tuple or list of tuples. 
+        """
+        # test if positions is a list of positions
+        if isinstance(positions, list):
+            ans=[]
+            for pos in positions:
+                ans.append(self._evaluate(pos, eps))
+            return ans
+        else:
+            # single position passed
+            return self._evaluate(positions, eps)
 
+    def _evaluate(self, position, eps=0.001):
+        """
+        Evaluates the receiver at given (single) spatial position.
         ARGS:
             position (tuple): 3D position vector
             eps(double): Optional tolerance
@@ -203,7 +222,6 @@ class Field:
 
         self.mesh=mesh
         self.values=values
-
 
     def field2VTKData (self):
         """
