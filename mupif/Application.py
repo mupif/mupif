@@ -1,4 +1,4 @@
-class Application:
+class Application(object):
     """
     An abstract class representing an application and its interface (API).
 
@@ -9,13 +9,20 @@ class Application:
     New abstract data types (properties, fields) allow to hide all implementation details 
     related to discretization and data storage.
     """
-    def __init__ (self, file):
+    def __init__ (self, file, pyroName=None,pyroDaemon=None, pyroNS=None):
         """
         Constructor. Initializes the application.
 
         ARGS:
             file (str): path to application initialization file.
+            pyroName(str): optional unique pyro name (i.e. application name)
+            pyroDaemon(Pyro4.Daemon): optional  pyro daemon
+            pyroNS(Pyro4.naming.Nameserver): optional nameserver
         """
+        self.pyroName = pyroName
+        self.pyroDaemon = pyroDaemon
+        self.pyroNS = pyroNS
+
     def getField(self, fieldID, time):
         """
         Returns the requested field at given time. Field is identified by fieldID.
@@ -26,6 +33,21 @@ class Application:
         Returns:
             Returns requested field (Field).
         """
+    def getFieldURI(self, fieldID, time):
+        """
+        Returns the uri of requested field at given time. Field is identified by fieldID.
+
+        ARGS:
+            fieldID (FieldID):  identifier
+            time (double): target time
+        Returns:
+            Returns requested field uri (Pyro4.core.URI).
+        """
+        field = self.getField(fieldID, time)
+        uri    = self.pyroDaemon.register(field, force=True)
+        #self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
+        return uri
+    
     def setField(self, field):
         """
         Registers the given (remote) field in application. 
