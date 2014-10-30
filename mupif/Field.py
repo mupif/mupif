@@ -29,7 +29,7 @@ import copy
 import collections
 
 #debug flag
-debug = 1
+debug = 0
 
 class FieldType:
     """
