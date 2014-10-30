@@ -21,7 +21,7 @@
 # Boston, MA  02110-1301  USA
 #
 
-class Localizer:
+class Localizer(object):
     """
     A Localizer is an abstract class representing an algorithm used to 
     partition space and quicly localize the contained objects.

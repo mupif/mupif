@@ -21,8 +21,8 @@
 # Boston, MA  02110-1301  USA
 #
 import logging
+logging.basicConfig(filename='mupif.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger('mupif')
-logger.setLevel(logging.DEBUG)
 import Pyro4
 import socket
 import subprocess
@@ -87,7 +87,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, app):
     print ('runAppServer: server:%s, port:%d, nathost:%s, natport:%d, ns:%s, nsport:%d' % (server, port, nathost, natport, nshost, nsport))
     daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
     ns     = connectNameServer(nshost, nsport)
-    
+    app.registerPyro (daemon, ns)
     #register agent
     uri    = daemon.register(app)
     ns.register(nsname, uri)

@@ -1,4 +1,4 @@
-class Function:
+class Function(object):
         """
         Represents a function.
 

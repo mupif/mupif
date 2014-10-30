@@ -27,7 +27,7 @@ from . import Localizer
 
 debug = 0
 refineLimit = 400 # refine cell if number of items exceeds this treshold value
-class Octant:
+class Octant(object):
     """
     Defines Octree Octant: a cell containing either terminal data or its child octants.
     """

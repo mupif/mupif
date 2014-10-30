@@ -1,4 +1,4 @@
-class Vertex:
+class Vertex(object):
     """
     Represent vertex.
     Vertices in general define the geometry of interpolation cells.

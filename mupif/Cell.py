@@ -33,7 +33,7 @@ debug = 0
 tolerance = 0.01
 
 
-class Cell:
+class Cell(object):
     """
     Representation of computational cell. 
     
@@ -98,16 +98,21 @@ class Cell:
         Returns bounding box of the receiver (BBox)
         """
         init=True
-        for vertex in self.vertices:
-            c = self.mesh.getVertex(vertex).coords
-            if init:
-                min_coords = list(c)
-                max_coords = list(c)
-                init = False
-            else:
-                for i in range(len(c)):
-                    min_coords[i] = min(min_coords[i], c[i])
-                    max_coords[i] = max(max_coords[i], c[i])
+        try:
+            for vertex in self.vertices:
+                c = self.mesh.getVertex(vertex).coords
+                if init:
+                    min_coords = list(c)
+                    max_coords = list(c)
+                    init = False
+                else:
+                    for i in range(len(c)):
+                        min_coords[i] = min(min_coords[i], c[i])
+                        max_coords[i] = max(max_coords[i], c[i])
+        except IndexError:
+            print ("getBBox failed: cell-no: ", self.number, "vertices: ", self.vertices, "vertex: ", vertex)
+            exit (1)
+
         return BBox.BBox (tuple(min_coords), tuple(max_coords))
 
 

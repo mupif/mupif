@@ -1,4 +1,4 @@
-class Property:
+class Property(object):
         """
         Property is a characteristic value of a problem, 
         that does not depend on spatial variable.

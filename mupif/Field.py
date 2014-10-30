@@ -29,7 +29,7 @@ import copy
 import collections
 
 #debug flag
-debug = 0
+debug = 1
 
 class FieldType:
     """
@@ -39,7 +39,7 @@ class FieldType:
     FT_cellBased   = 2
 
 
-class Field:
+class Field(object):
     """
     Representation of field. Field is a scalar, vector, or tensorial 
     quantity defined on spatial domain. The field, however is assumed
@@ -249,4 +249,21 @@ class Field:
                                      pyvtk.CellData(pyvtk.Vectors(self.values)),
                                      'Unstructured Grid Example')
             
-            
+#    def __deepcopy__(self, memo):
+#        """ Deepcopy operatin modified not to include attributes starting with underscore.
+#            These are supposed to be the ones valid only to s specific copy of the receiver.
+#            An example of these attributes are _PyroURI (injected by Application), 
+#            where _PyroURI contains the URI of specific object, the copy should receive  
+#            its own URI
+#        """
+#        cls = self.__class__
+#        dpcpy = cls.__new__(cls)
+#
+#        memo[id(self)] = dpcpy
+#        for attr in dir(self):
+#            if not attr.startswith('_'):
+#                value = getattr(self, attr)
+#                setattr(dpcpy, attr, copy.deepcopy(value, memo))
+#        return dpcpy
+
+

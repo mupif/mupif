@@ -23,7 +23,7 @@
 
 debug = 0
 
-class BBox:
+class BBox(object):
     """
     Represents an axis aligned bounding box - a rectange in 2d and prism in 3d. 
     Its geometry is described using two points - lover left and upper right.

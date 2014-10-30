@@ -9,19 +9,27 @@ class Application(object):
     New abstract data types (properties, fields) allow to hide all implementation details 
     related to discretization and data storage.
     """
-    def __init__ (self, file, pyroName=None,pyroDaemon=None, pyroNS=None):
+    def __init__ (self, file):
         """
         Constructor. Initializes the application.
 
         ARGS:
             file (str): path to application initialization file.
-            pyroName(str): optional unique pyro name (i.e. application name)
+        """
+        self.pyroDaemon = None
+        self.pyroNS = None
+
+    def registerPyro (self, pyroDaemon, pyroNS):
+        """
+        Register the Pyro daemon and nameserver. Required by getFieldURI service
+
+        ARGS:
             pyroDaemon(Pyro4.Daemon): optional  pyro daemon
             pyroNS(Pyro4.naming.Nameserver): optional nameserver
         """
-        self.pyroName = pyroName
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
+        
 
     def getField(self, fieldID, time):
         """
@@ -43,10 +51,18 @@ class Application(object):
         Returns:
             Returns requested field uri (Pyro4.core.URI).
         """
+        if (self.pyroDaemon == None):
+            raise APIError.APIError ('Error: getFieldURI requires to register pyroDaemon in application')
         field = self.getField(fieldID, time)
-        uri    = self.pyroDaemon.register(field, force=True)
-        #self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
-        return uri
+        if (hasattr(field, '_PyroURI')):
+            return field._PyroURI
+        else:
+            uri    = self.pyroDaemon.register(field)
+            #inject uri into field attributes, note: _PyroURI is avoided 
+            #for deepcopy operation
+            field._PyroURI = uri
+            #self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
+            return uri
     
     def setField(self, field):
         """
@@ -169,6 +185,7 @@ class Application(object):
         """
         Returns the application identification (string)
         """
+        return "Application"
     def terminate(self):
         """
         Terminates the application.

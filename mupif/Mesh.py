@@ -33,7 +33,7 @@ VERTICES=0; CELLS=1
 #debug flag
 debug = 0
 
-class MeshIterator:
+class MeshIterator(object):
     """
     Class implementing iterator on Mesh components (vertices, cells).
     """
@@ -69,7 +69,7 @@ class MeshIterator:
     def next (self):
             return self.__next__()   #Python 2.x compatibility
 
-class Mesh:
+class Mesh(object):
     """
     Abstract representation of a computational domain.
     Described using computational cells and vertices, determining the cell geometry.
