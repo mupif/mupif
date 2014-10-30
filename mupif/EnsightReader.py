@@ -17,7 +17,7 @@ from mupif import ValueType
 #debug flag
 debug = 0
 
-class EnsightReader():
+class EnsightReader(object):
 
   def __init__(self):
     self.grid = None
@@ -69,15 +69,15 @@ class EnsightReader():
       tuple = (coords)
       vertices.append(Vertex.Vertex(i,i+1, tuple))
 
-      cells = []
-      for i in xrange(0, self.getNumberOfCells()):
-        if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
-          cells.append(Cell.Brick_3d_lin(mesh, i, i, (int(self.giveVertex(i,0)), int(self.giveVertex(i,1)), int(self.giveVertex(i,2)), int(self.giveVertex(i,3)), int(self.giveVertex(i,4)), int(self.giveVertex(i,5)), int(self.giveVertex(i,6)), int(self.giveVertex(i,7))) )) 
-        elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
-          cells.append(Cell.Quad_2d_lin(mesh, i, i,(int(self.giveVertex(i,0)),int(self.giveVertex(i,1)),int(self.giveVertex(i,2)),int(self.giveVertex(i,3))) ))
+    cells = []
+    for i in xrange(0, self.getNumberOfCells()):
+      if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
+        cells.append(Cell.Brick_3d_lin(mesh, i, i, (int(self.giveVertex(i,0)), int(self.giveVertex(i,1)), int(self.giveVertex(i,2)), int(self.giveVertex(i,3)), int(self.giveVertex(i,4)), int(self.giveVertex(i,5)), int(self.giveVertex(i,6)), int(self.giveVertex(i,7))) )) 
+      elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
+        cells.append(Cell.Quad_2d_lin(mesh, i, i,(int(self.giveVertex(i,0)),int(self.giveVertex(i,1)),int(self.giveVertex(i,2)),int(self.giveVertex(i,3))) ))
                         
-        mesh.setup(vertices, cells)
-        return mesh
+    mesh.setup(vertices, cells)
+    return mesh
 
   def getField(self, mesh, fileName, fieldName, vertexBasedFlag, cellFilter):
     values=[]
