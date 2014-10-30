@@ -45,7 +45,7 @@ except Exception as e:
     logger.debug("Connection to server failed, exiting")
     logger.exception(e)
     sys.exit(e)
-    
+
 logger.info("Generating test sequence ...")
 
 for i in range (10):
