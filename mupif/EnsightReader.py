@@ -33,7 +33,9 @@ class EnsightReader():
 	def readEnsightFile(self, fileName):
 		#read the ensight file
 		reader = vtk.vtkGenericEnSightReader()
-		reader.SetCaseFileName(fileName)
+		#reader = vtk.vtkEnSight6BinaryReader()
+		#reader = vtk.vtkEnSightGoldBinaryReader()
+                reader.SetCaseFileName(fileName)
 		reader.Update()
 
 		output = reader.GetOutput()
@@ -47,15 +49,22 @@ class EnsightReader():
 		appendFilter = vtk.vtkAppendFilter()
 		i = 0
 		while i < len(blocks_unstructured):
-			appendFilter.AddInput(blocks_unstructured[i])
+			if(vtk.VTK_MAJOR_VERSION <= 5):
+                                appendFilter.AddInput(blocks_unstructured[i])
+                        else:
+                                appendFilter.AddInputData(blocks_unstructured[i])  
 			i=i+1
 		appendFilter.Update();
 
 		unstructuredGrid=vtk.vtkUnstructuredGrid()
 		unstructuredGrid.ShallowCopy(appendFilter.GetOutput());
 		w = vtk.vtkUnstructuredGridWriter()
-		w.SetInput(unstructuredGrid)
+                if(vtk.VTK_MAJOR_VERSION <= 5):
+                        w.SetInput(unstructuredGrid)
+                else:
+                        w.SetInputData(unstructuredGrid)
 		w.SetFileName(fileName+'.vtk')
+                #w.SetFileTypeToBinary()
 		w.Write()
 		self.readVtkFile(fileName+'.vtk')
 
