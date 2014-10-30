@@ -20,6 +20,7 @@ class micress(Application.Application):
 
     """
     def __init__(self, file):
+        super(micress, self).__init__(file) #call base
         return
     def getApplicationSignature(self):
         return "Micress@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"

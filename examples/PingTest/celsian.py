@@ -21,7 +21,7 @@ class celsian(Application.Application):
 
     """
     def __init__(self, file):
-        return
+        super(celsian, self).__init__(file) #call basereturn
     def getApplicationSignature(self):
         return "Celsian@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 
