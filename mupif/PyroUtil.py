@@ -62,7 +62,8 @@ def connectApp(ns, name):
     except Exception as e:
         logger.debug("Cannot connect to application " + name + ". Is the server running?")
         logger.exception(e)
-        exit(e)
+        return None
+        #exit(e)
     return app2
 
 
@@ -100,13 +101,21 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
         cmd = 'ssh -L %d:%s:%d %s@%s -N' % (localPort, remoteHost, remotePort, userName, remoteHost)
+        logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='putty':
         #need to create a public key *.ppk using puttygen. It can be creased by importing Linux private key. The path to that key is given as -i option
         cmd = 'putty -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        logger.debug("Creating ssh tunnel via command: " + cmd)
+    elif sshClient=='manual':
+        #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
+        cmd1 = 'ssh -L %d:%s:%d %s@%s' % (localPort, remoteHost, remotePort, userName, remoteHost)
+        cmd2 = 'putty -L %d:%s:%d %s@%s %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        logger.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
+        return None
     else:
-        logger.debug("Unknown ssh client, exiting")
+        logger.error("Unknown ssh client, exiting")
         exit(0)
-    logger.debug("Creating ssh tunnel: " + cmd)
     tunnel = subprocess.Popen(cmd.split())
     time.sleep(1.0)
+
     return tunnel 
