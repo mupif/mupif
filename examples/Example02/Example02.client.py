@@ -1,13 +1,22 @@
+# This script starts a client for Pyro4 on this machine with Application1
+# Works with Pyro4 version 4.28
+# Tested on Ubuntu 14.04 and Win XP
+# Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
+
+#where is a running nameserver
+nshost = "127.0.0.1"
+nsport = 9090
+
 import sys
 sys.path.append('../..')
-
+import os
 from mupif import Application
 from mupif import TimeStep
 from mupif import APIError
 from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
-import Pyro4
+from mupif import PyroUtil
 
 class application1(Application.Application):
     """
@@ -30,29 +39,25 @@ time  = 0
 timestepnumber=0
 targetTime = 10.0
 
-
-daemon = Pyro4.Daemon()
-ns     = Pyro4.locateNS('147.32.130.150', 9090)
+#locate nameserver
+ns = PyroUtil.connectNameServer(nshost, nsport)
 
 # application1 is local, create its instance
 app1 = application1(None)
 # application2 is remote, request remote proxy
-uri = ns.lookup("Mupif.application2")
-app2 = Pyro4.Proxy(uri)
-
-#app2.__init__(None)
+app2=PyroUtil.connectApp(ns, "Mupif.application2")
 
 while (abs(time -targetTime) > 1.e-6):
-
     #determine critical time step
-    dt = min(app1.getCriticalTimeStep(), app2.getCriticalTimeStep())
+    dt2 = app2.getCriticalTimeStep()
+    dt = min(app1.getCriticalTimeStep(), dt2)
     #update time
     time = time+dt
     if (time > targetTime):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print "Step: ", timestepnumber, time, dt
+    print ("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -68,11 +73,11 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        print "Following API error occurred:",e
+        print ("Following API error occurred:",e)
         break
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-print  "Result: ", prop.getValue()
+print  ("Result: ", prop.getValue())
 # terminate
 app1.terminate();
 app2.terminate();

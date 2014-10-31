@@ -20,11 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import BBox
-import Util
+from . import BBox
+from . import Util
 import math
-import Mesh
-import CellGeometryType
+from . import Mesh
+from . import CellGeometryType
 
 #debug flag
 debug = 0
@@ -33,7 +33,7 @@ debug = 0
 tolerance = 0.01
 
 
-class Cell:
+class Cell(object):
     """
     Representation of computational cell. 
     
@@ -98,16 +98,21 @@ class Cell:
         Returns bounding box of the receiver (BBox)
         """
         init=True
-        for vertex in self.vertices:
-            c = self.mesh.getVertex(vertex).coords
-            if init:
-                min_coords = list(c)
-                max_coords = list(c)
-                init = False
-            else:
-                for i in range(len(c)):
-                    min_coords[i] = min(min_coords[i], c[i])
-                    max_coords[i] = max(max_coords[i], c[i])
+        try:
+            for vertex in self.vertices:
+                c = self.mesh.getVertex(vertex).coords
+                if init:
+                    min_coords = list(c)
+                    max_coords = list(c)
+                    init = False
+                else:
+                    for i in range(len(c)):
+                        min_coords[i] = min(min_coords[i], c[i])
+                        max_coords[i] = max(max_coords[i], c[i])
+        except IndexError:
+            print ("getBBox failed: cell-no: ", self.number, "vertices: ", self.vertices, "vertex: ", vertex)
+            exit (1)
+
         return BBox.BBox (tuple(min_coords), tuple(max_coords))
 
 
@@ -190,7 +195,7 @@ class Quad_2d_lin(Cell):
 
         #solve quadratic equation
         ksi=Util.quadratic_real(a,b,c)
-        if debug: print "quadratic_real returned ",ksi, "for a,b,c ", a,b,c
+        if debug: print ("quadratic_real returned ",ksi, "for a,b,c ", a,b,c)
         if len(ksi)==0:
             return 0,(0.,0.)
         else:
@@ -398,7 +403,7 @@ class Brick_3d_lin(Cell):
             nite=nite+1
             if nite > 10:
                 if debug: 
-                    print "Brick_3d_lin :: global2local: no convergence after 10 iterations"
+                    print ("Brick_3d_lin :: global2local: no convergence after 10 iterations")
                 return (0, (0.,0.,0.))
 
             u = answer[0]

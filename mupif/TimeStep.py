@@ -1,4 +1,4 @@
-class TimeStep:
+class TimeStep(object):
     """
     Class representing time step.
     Attributes:

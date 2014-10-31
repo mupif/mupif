@@ -3,6 +3,7 @@
 #
 # This example reequires pyvtk module, install it using
 # pip install pyvtk
+# Note: pyvtk is only available in Python 2.x (Sept, 2014)
 #
 
 import sys
@@ -45,10 +46,10 @@ def main():
     # evaluate field at given point
     position=(20., 7.5, 0.0)
     value=field1.evaluate(position)
-    print "Field1 value at position ", position, " is ", value
+    print ("Field1 value at position ", position, " is ", value)
     position=(20., 7.5, 0.0)
     value=field2.evaluate(position)
-    print "Field2 value at position ", position, " is ", value
+    print ("Field2 value at position ", position, " is ", value)
 
     field1.field2VTKData().tofile('example1')
     field2.field2VTKData().tofile('example2')

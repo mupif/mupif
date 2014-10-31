@@ -20,12 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import BBox
-import Cell
-import FieldID
-import ValueType
+from . import Cell
+from . import FieldID
+from . import ValueType
+from . import BBox
 from numpy import array, arange, random, zeros
 import copy
+import collections
 
 #debug flag
 debug = 0
@@ -38,7 +39,7 @@ class FieldType:
     FT_cellBased   = 2
 
 
-class Field:
+class Field(object):
     """
     Representation of field. Field is a scalar, vector, or tensorial 
     quantity defined on spatial domain. The field, however is assumed
@@ -102,10 +103,28 @@ class Field:
         """
         return self.fieldID
 
-    def evaluate(self, position, eps=0.001):
+    def evaluate(self, positions, eps=0.001):
         """
-        Evaluates the receiver at given spatial position.
+        Evaluates the receiver at given spatial position(s).
+        ARGS:
+            position (tuple or list of tuples): 3D position vectors
+            eps(double): Optional tolerance
+        RETURNS:
+            tuple or list of tuples. 
+        """
+        # test if positions is a list of positions
+        if isinstance(positions, list):
+            ans=[]
+            for pos in positions:
+                ans.append(self._evaluate(pos, eps))
+            return ans
+        else:
+            # single position passed
+            return self._evaluate(positions, eps)
 
+    def _evaluate(self, position, eps=0.001):
+        """
+        Evaluates the receiver at given (single) spatial position.
         ARGS:
             position (tuple): 3D position vector
             eps(double): Optional tolerance
@@ -118,7 +137,7 @@ class Field:
                 try:
                     if icell.containsPoint(position):
                         if debug:
-                            print icell.getVertices() 
+                            print (icell.getVertices())
                                                     
                         if (self.fieldType == FieldType.FT_vertexBased):
                             answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
@@ -127,19 +146,19 @@ class Field:
                         return answer
 
                 except ZeroDivisionError:
-                    print icell.number, position,
+                    print (icell.number, position)
                     cell.debug=1
-                    print icell.containsPoint(position), icell.glob2loc(position)
+                    print (icell.containsPoint(position), icell.glob2loc(position))
 
-            print "Field evaluate -no source cell found for position ",position
+            print ("Field evaluate -no source cell found for position ",position)
             for icell in cells:
-                print icell.number, icell.containsPoint(position), icell.glob2loc(position)
+                print (icell.number, icell.containsPoint(position), icell.glob2loc(position))
 
             raise ValueError
                 
         else:
             #no source cell found
-            print "Field evaluate - no source cell found for position ",position
+            print ("Field evaluate - no source cell found for position ",position)
             raise ValueError
 
     def giveValue(self, componentID):
@@ -183,7 +202,7 @@ class Field:
         # first merge meshes 
         mesh = copy.deepcopy(self.mesh)
         mesh.merge(field.mesh)
-        print mesh
+        print (mesh)
         # merge the field values 
         # some type checking first
         if (self.field_type != field.field_type):
@@ -203,7 +222,6 @@ class Field:
 
         self.mesh=mesh
         self.values=values
-
 
     def field2VTKData (self):
         """
@@ -231,4 +249,21 @@ class Field:
                                      pyvtk.CellData(pyvtk.Vectors(self.values)),
                                      'Unstructured Grid Example')
             
-            
+#    def __deepcopy__(self, memo):
+#        """ Deepcopy operatin modified not to include attributes starting with underscore.
+#            These are supposed to be the ones valid only to s specific copy of the receiver.
+#            An example of these attributes are _PyroURI (injected by Application), 
+#            where _PyroURI contains the URI of specific object, the copy should receive  
+#            its own URI
+#        """
+#        cls = self.__class__
+#        dpcpy = cls.__new__(cls)
+#
+#        memo[id(self)] = dpcpy
+#        for attr in dir(self):
+#            if not attr.startswith('_'):
+#                value = getattr(self, attr)
+#                setattr(dpcpy, attr, copy.deepcopy(value, memo))
+#        return dpcpy
+
+

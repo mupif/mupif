@@ -79,7 +79,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print "Step: ", timestepnumber, time, dt
+    print ("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -95,11 +95,11 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        print "Following API error occurred:",e
+        print ("Following API error occurred:",e)
         break
 
 prop = app3.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-print  "Result: ", prop.getValue()
+print  ("Result: ", prop.getValue())
 # terminate
 app1.terminate();
 app3.terminate();

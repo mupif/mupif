@@ -38,7 +38,7 @@ class Celsian(Application.Application):
         if (fieldID == FieldID.FID_Temperature):
             fieldName = "TEMPERATURE"
         else:
-            print "error: no fieldName specified"
+            print ("error: no fieldName specified")
         return self.reader.getField(self.mesh, fileName, fieldName, False, (12,))
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime()

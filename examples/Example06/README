@@ -1,35 +1,32 @@
-This example performs ping test, that can be used 
-to verify connection between any client and multiple servers
-running simulation tools.
-
+This example performs a simple ping test, that can be used 
+to verify connection between any client and server
+(currently hosted at CTU resources).
 The example illustrates, how to establish a connection to
-a remote applications and how the secure connection can be
-extablished using ssh tunnel.
-
+a remote application and how a secure connection can be
+extablished using a ssh tunnel.
 
 ================================================================================
-Prerequisities:
+Prerequisities
 ================================================================================
-The available servers are configured in conf.py file
-The application servers should be set up and started in advance at remote locations.
+Authentication to a ssh server is based on a public ssh key. It is not easy 
+and comfortable to enter password on login every time you connect to a server
+(problems with TTY input and interaction when running a command on python's 
+backround). 
 
 To establish secure connection to a server, you have to send your 
-public ssh key to server administrator. The administrator must run
-the server application and will add your public ssh key into the list 
-of authorized_keys. Note that the application servers can be operational 
-for limitted time only.
+public ssh key to info@mmp-project.eu.
 For a description, on how to generate your ssh key, follow the section
-"Generating ssh keys".
-
-The nameserver is hosted at CTU resources and will be operational 
-for a limited time only.
+"Generating SSH Public Key"
+Note: the ping server will be available only for a limmited time. 
+However, the server script is provided and can be hosted on any
+server with MuPIF installed.
 
 ================================================================================
-Generating Your SSH Public Key
+Generating SSH Public Key on Unix
 ================================================================================
 In order to provide a public key, each user in your system must generate 
 one if they don’t already have one. This process is similar across all
-operating systems. First, you should check to make sure you don’t already
+Unix-based operating systems. First, you should check to make sure you don’t already
 have a key. By default, a user’s SSH keys are stored in that user’s ~/.ssh 
 directory. You can easily check to see if you have a key already by going
 to that directory and listing the contents:
@@ -44,7 +41,7 @@ where the something is usually id_dsa or id_rsa. The .pub file is your
 public key, and the other file is your private key. If you don’t have
 these files (or you don’t even have a .ssh directory), you can create 
 them by running a program called ssh-keygen, which is provided with 
-the SSH package on Linux/Mac systems and comes with the MSysGit package
+the SSH package on Unix/Mac systems and comes with the MSysGit package
 on Windows:
 
 $ ssh-keygen
@@ -73,26 +70,40 @@ t3FaoJoAsncM1Q9x5+3V0Ww68/eIFmb1zuUFljQJKprrX88XypNDvjYNby6vw/Pb0rwert/En
 mZ+AW4OZPnTPI89ZPmVMLuayrD2cE86Z/il8b+gw3r3+1nKatmIkjn2so1d01QraTlMqVSsbx
 NrRFi9wrf+M7Q== schacon@agadorlaptop.local
 
-
+================================================================================
+Generating SSH Public Key on Windows
+================================================================================
+Download PuTTYgen. Default key type is SSH-2 (RSA). Click Generate button and move
+your mouse to generate some randomness. Save Private and Public keys. The public key
+is also displayed in the top window. Send this public key to info@mmp-project.eu,
+so a client is recognized on a server.
+Alternatively, it is possible to import id_dsa private key from Unix and generate 
+a public key for putty client. This *.ppk key is slightly different than id_dsa.pub
+key.
 
 ================================================================================
-Running a test
+Running a test.py
 ================================================================================
+ssh client needs to be installed on a system. Unix-based systems use "ssh" client,
+windows users need "putty" client. These clients establish a ssh tunnel 
+forwarding (and encrypting) the local port port 5555 to
+remote port 44382 (pyro daemon on remote server). Data are transmitted securely.
 
-To run a ping test on your computer, following steps are required:
-The ssh tunnels will be created authomatically for you,
-provided you have ssh client installed. 
+You need to comment/uncomment line calling the method PyroUtil.sshTunnel, 
+depending on Unix/Windows. For windows, you need to specify a filename with a 
+public ssh key.
 
-1) Open a new terminal window
-2) run a ping test 
-python test.py
+Run a command: python test.py
 
 ================================================================================
 EXPECTED OUTPUT:
 ================================================================================
-
-Connected to Celsian API, version 1.0
-Connected to Micress API, version 1.0
+You should obtain the following output:
+...
+Working application on server CTU Ping server, version 1.0
+Generating test sequence ...
 done
-Time consumed 1.100570 s
+Received 4.5 expected 4.5
+Test PASSED
+Time consumed 0.710026 s
 Ping test finished

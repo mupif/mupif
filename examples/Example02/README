@@ -1,21 +1,39 @@
-This example illustrates the top level control script representing a simulation pipeline made of two simle applications. 
-The overall simulation is performed in a time loop, where one application provides data for the second application, 
+This example illustrates the top level control script 
+representing a simulation pipeline made of two simle applications. 
+
+The overall simulation is performed in a time loop, 
+where one application provides data for the second application, 
 which computes the arithmetical average value of given data.
 
-The main difference to Example01 is that this example uses Pyro communication and thus the client and server parts can be executed on 
-different computers. Pyro version 4.15 is required.
+The main difference to Example01 is that this example uses Pyro
+communication and thus the client and server parts can be executed on 
+different computers. 
+
+Prerequisities:
+---------------
+Python (preferably Python 2.x) interpreter
+Pyro module installed. To install Pyro, we reccomend to use pip: 
+a tool for installing and managing Python packages:
+     
+> pip install Pyro4
+
 
 To run this distributed example:
+--------------------------------
+1) start pyro name server by executing Example02.nameserver.py
 
-1) start pyro name server:
-python -m Pyro4.naming -n hostname -p 9090
+The nameserver will listen on "127.0.0.1" locally, or should be set 
+to your public IP adress. Note that in the later case, your firewall has to be configured to accept connections at port 9090.
 
 2) start server script
-python Example0server.py
+python Example02.server.py
 
-note: the server connects to Pyro name server running at host with ip address 147.32.130.150 by default.
+By default, the server will listen on internal ip adress "127.0.0.1". If you want your server to listen on your public IP adress, edit the Example02.server.py script by modifying localhost variable. Note that in the later case, your firewall has to be configured to accept connections at port 44382.
+Similarly, by default the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the Example02.server.py script by modifying nshost variable.
 
 3) run client script
 python Example02.client.py
+By default, the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the Example02.client.py script by modifying nshost variable.
+
 
 note: the client and server scripts can run on different computers.

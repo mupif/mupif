@@ -1,15 +1,18 @@
-This example illustrates the top level control script representing a simulation pipeline made of two simle applications. 
-The overall simulation is performed in a time loop, where one application provides data for the second application, 
+This example illustrates the top level control script representing
+simulation pipeline made of two simle applications. 
+The overall simulation is performed in a time loop, 
+where one application provides data for the second application, 
 which computes the arithmetical average value of given data.
 
-The main difference to Example01 is that the second application, computing the avarage is considered as external. 
-The Python wrapper implementing Application interface around this application is created. Its role is to cache the
- mapped properties, execute the external application and parse its output, when data are requested. 
-Even though its simplicity, it illustrates the basic concept of steering, mutual data exchange, and error handling
- using the proposed API. 
+The main difference to Example01 is that the second application, 
+computing the avarage is considered as external. The Python wrapper
+implementing Application interface around this application is created. 
+Its role is to cache the mapped properties, execute the external
+application and parse its output, when data are requested. 
 
-To run the example, the application3 should be compiled on your system using any c compiler. 
-For example, on unix/linux use following command to create an executable:
+To run the example, the application3 should be compiled on your system
+using any c compiler. For example, on unix/linux use following command
+to create an executable:
 
 > gcc -o application03 application03.c
 

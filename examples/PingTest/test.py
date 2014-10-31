@@ -1,62 +1,44 @@
 import sys
 sys.path.append('../..')
-
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
 import os
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
+os.environ['PYRO_LOGLEVEL'] = 'DEBUG'
+os.environ['PYRO_LOGFILE'] = 'Pyro_log.txt'
+import time as timeTime
+
+from mupif import Application
+from mupif import APIError
+from mupif import PyroUtil
+import conf
 
 import Pyro4
+Pyro4.config.SERIALIZER="pickle"
+Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
-time  = 0
-dt    = 1
-expectedValue = 4.5
+import logging
+logging.getLogger().setLevel(logging.WARNING)
+#logging.getLogger().setLevel(logging.DEBUG)
 
 
-daemon = Pyro4.Daemon()
-ns     = Pyro4.locateNS('mech.fsv.cvut.cz', 9090)
+start = timeTime.time()
+#locate nameserver
+ns     = PyroUtil.connectNameServer('mech.fsv.cvut.cz', 9090)
 
-# locate remote PingServer application, request remote proxy
-uri = ns.lookup("Mupif.PingServerApplication")
-print uri
-serverApp = Pyro4.Proxy(uri)
+for appname,apprecord in conf.apps.iteritems():
+    tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName], userName=apprecord[conf.appIndx_UserName], 
+                                localPort=apprecord[conf.appIndx_NATPort], remotePort=apprecord[conf.appIndx_RemotePort])
 
-#app2.__init__(None)
+    # connect to individual applications
+    app = PyroUtil.connectApp(ns, PyroUtil.getNSAppName(conf.jobname, appname))
 
-try:
-    appsig=serverApp.getApplicationSignature()
-    print "Connected to ", appsig
-except Exception as e:
-    print "Connection to server failed"
-    sys.exit(e)
-    
+    appsig=app.getApplicationSignature()
+    print ("Connected to "+ appsig)
+    tunnel.terminate()
 
-print "Generating test sequence ...",
+print ("done")
+print ("Time consumed %f s" % (timeTime.time()-start))
+print ("Ping test finished")
 
-for i in range (10):
-    time = i
-    timestepnumber = i
-    # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
-    try:
-        serverApp.setProperty (Property.Property(i, PropertyID.PID_Concentration, ValueType.Scalar, i, None, 0))
-        serverApp.solveStep(istep)
 
-    except APIError.APIError as e:
-        print "Following API error occurred:",e
-        break
 
-print "done"
-prop = serverApp.getProperty(PropertyID.PID_CumulativeConcentration, i)
-print "Received ", prop.getValue(), " expected ", expectedValue
-if (prop.getValue() == expectedValue):
-    print "Test PASSED"
-else:
-    print "Test FAILED"
-
-serverApp.terminate();
-print "Ping test finished"

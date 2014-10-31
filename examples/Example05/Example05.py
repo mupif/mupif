@@ -26,7 +26,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print "Step: ", timestepnumber, time, dt
+    print ("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -38,7 +38,7 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        print "Following API error occurred:",e
+        print ("Following API error occurred:",e)
         break
 
 # evaluate field at given point
@@ -46,7 +46,7 @@ position=(0.0, 0.0, 0.0)
 value=field.evaluate(position)
         
 # Result
-print "Field value at position ", position, " is ", value
+print ("Field value at position ", position, " is ", value)
 
 # terminate
 app1.terminate();

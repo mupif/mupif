@@ -1,19 +1,37 @@
+# This script starts a server for Pyro4 on this machine with Application2
+# Works with Pyro4 version 4.28
+# Tested on Ubuntu 14.04 and Win XP
+# Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
+
+# If firewall is blocking daemonPort, run on Ubuntu
+# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
+
+#where is a running nameserver
+nshost = "127.0.0.1"
+nsport = 9090
+#address where this server will listen through a daemon
+daemonHost = "127.0.0.1"
+daemonPort = 44382
+
 import sys
 sys.path.append('../..')
-
+import os
+import logging
+logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
+logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 from mupif import Application
 from mupif import TimeStep
 from mupif import APIError
 from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
+from mupif import PyroUtil
 import Pyro4
+import socket
 
-# required firewall settings (on ubuntu):
-# for computer running daemon (this script)
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
-# for computer running a nameserver
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
+Pyro4.config.SERIALIZER="pickle"
+Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
 
 class application2(Application.Application):
@@ -43,13 +61,15 @@ class application2(Application.Application):
     def getCriticalTimeStep(self):
         return 1.0
 
+#locate nameserver
+ns = PyroUtil.connectNameServer(nshost, nsport)
 
-daemon = Pyro4.Daemon(host='147.32.130.150', port=44382)
-ns     = Pyro4.locateNS(host='147.32.130.150', port=9090)
+#Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
+daemon = Pyro4.Daemon(host=daemonHost, port=daemonPort)
 
 app2 = application2("input2.in")
 #register agent
 uri    = daemon.register(app2)
 ns.register("Mupif.application2", uri)
-print uri
+print (uri)
 daemon.requestLoop()

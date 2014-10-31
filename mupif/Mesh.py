@@ -21,11 +21,11 @@
 # Boston, MA  02110-1301  USA
 #
 
-import APIError
-import Octree
+from . import APIError
+from . import Octree
 import copy
 import time
-import CellGeometryType
+from . import CellGeometryType
 
 #enum to distinguish iterartors provided by domain
 VERTICES=0; CELLS=1
@@ -33,7 +33,7 @@ VERTICES=0; CELLS=1
 #debug flag
 debug = 0
 
-class MeshIterator:
+class MeshIterator(object):
     """
     Class implementing iterator on Mesh components (vertices, cells).
     """
@@ -42,14 +42,14 @@ class MeshIterator:
             self.type = type
             self.mesh = mesh
         else:
-            print "Unsupported iterator type"
+            print ("Unsupported iterator type")
             abort(0)
 
     def __iter__(self):
         self.i = 0
         return self
 
-    def next(self):
+    def __next__(self):
         if self.type == VERTICES:
             if self.i+1 <= self.mesh.getNumberOfVertices():
                 item = self.mesh.getVertex(self.i)
@@ -66,7 +66,10 @@ class MeshIterator:
             else:
                  raise StopIteration()
 
-class Mesh:
+    def next (self):
+            return self.__next__()   #Python 2.x compatibility
+
+class Mesh(object):
     """
     Abstract representation of a computational domain.
     Described using computational cells and vertices, determining the cell geometry.
@@ -221,11 +224,11 @@ class UnstructuredMesh(Mesh):
             self.vertexOctree = Octree.Octree(minc, size, mask) 
             if debug: 
                 t0=time.clock()
-                print "Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n",
+                print ("Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n")
             # add mesh vertices into octree
             for vertex in self.vertices():
                 self.vertexOctree.insert(vertex)
-            if debug: print "done in ", time.clock() - t0, "[s]"
+            if debug: print ("done in ", time.clock() - t0, "[s]")
 
             return self.vertexOctree
 
@@ -255,10 +258,10 @@ class UnstructuredMesh(Mesh):
        self.cellOctree = Octree.Octree(minc, size, mask) 
        if debug: 
            t0=time.clock()
-           print "Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n",
+           print ("Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n")
        for cell in self.cells():
            self.cellOctree.insert(cell)
-       if debug: print "done in ", time.clock() - t0, "[s]"
+       if debug: print ("done in ", time.clock() - t0, "[s]")
        return self.cellOctree
 
     def __buildVertexLabelMap(self):
@@ -267,7 +270,7 @@ class UnstructuredMesh(Mesh):
         for v in xrange(len(self.vertexList)):
             if (self.vertexDict.has_key(self.vertexList[v].label)):
                 if debug:
-                    print "UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",  self.vertexList[v].label
+                    print ("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",  self.vertexList[v].label)
             else:
                 self.vertexDict[self.vertexList[v].label]=v
        
@@ -277,7 +280,7 @@ class UnstructuredMesh(Mesh):
         for v in xrange(len(self.cellList)):
             if (self.cellDict.has_key(self.cellList[v].label)):
                 if debug:
-                    print "UnstructuredMesh::buildCellLabelMap: multiple entry detected, cell label ",  self.cellList[v].label
+                    print ("UnstructuredMesh::buildCellLabelMap: multiple entry detected, cell label ",  self.cellList[v].label)
             else:
                 self.cellDict[self.cellList[v].label]=v
 
@@ -313,11 +316,11 @@ class UnstructuredMesh(Mesh):
         #
         #merge vertexLists
         #
-        if debug: print "UnstructuredMesh::merge: merged vertices with label:",
+        if debug: print ("UnstructuredMesh::merge: merged vertices with label:")
         for v in mesh.vertices():
             if (self.vertexDict.has_key(v.label)):
                 if debug:
-                    print v.label,
+                    print (v.label)
             else:
                 indx=len(self.vertexList)
                 self.vertexList[indx:]=[copy.deepcopy(v)]
@@ -335,11 +338,11 @@ class UnstructuredMesh(Mesh):
         if (not self.cellDict):
             self.__buildCellLabelMap()
 
-        if debug: print "UnstructuredMesh::merge: merged cells with label:",
+        if debug: print ("UnstructuredMesh::merge: merged cells with label:")
         for c in mesh.cells():
             if (self.cellDict.has_key(c.label)):
                 if debug:
-                    print c.label,
+                    print (c.label)
             else:
                 # update c vertex list according to new numbering
                 updatedVertices=[]
@@ -351,7 +354,7 @@ class UnstructuredMesh(Mesh):
                 indx=len(self.cellList)
                 self.cellList[indx:]=[ccopy]
                 self.cellDict[ccopy.label]=indx
-        print
+        print ()
         #last step: invalidate receiver 
         self.vertexOctree = None
         self.cellOctree = None
