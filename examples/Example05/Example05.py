@@ -9,7 +9,6 @@ from mupif import FieldID
 from mupif import TimeStep
 from mupif import APIError
 
-
 time  = 0
 timestepnumber = 0
 targetTime = 0.1
@@ -35,12 +34,10 @@ while (abs(time -targetTime) > 1.e-6):
         app1.solveStep(istep)
         #request Concentration property from app1
         field = app1.getField(FieldID.FID_Temperature, istep)
-
         
     except APIError.APIError as e:
         print ("Following API error occurred:",e)
         break
-
 # evaluate field at given point
 position=(0.0, 0.0, 0.0)
 value=field.evaluate(position)
