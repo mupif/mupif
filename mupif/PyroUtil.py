@@ -104,7 +104,7 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='putty':
         #need to create a public key *.ppk using puttygen. It can be creased by importing Linux private key. The path to that key is given as -i option
-        cmd = 'putty -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        cmd = 'putty.exe -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
