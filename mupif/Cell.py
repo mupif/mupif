@@ -126,7 +126,7 @@ class Triangle_2d_lin(Cell):
 
     def getGeometryType(self):
         """Returns geometry type of receiver"""
-        return CellGeometryType.CGT_TRANGLE_1
+        return CellGeometryType.CGT_TRIANGLE_1
 
     def glob2loc(self, coords):
         """Converts global coordinates to local (area) coordinates"""
