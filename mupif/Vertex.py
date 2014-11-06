@@ -22,6 +22,7 @@ class Vertex(object):
         """
         Returns the receiver coordinates.
         """
+        return self.coords
     def __repr__(self):
         return '['+repr(self.number)+','+repr(self.label)+','+repr(self.coords)+']'
 
