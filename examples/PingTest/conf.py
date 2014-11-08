@@ -1,7 +1,7 @@
 # List of job applications - server details
 # Do not use a dictionary - items are in arbitrary order
 # The format is (name, serverName, username, localNATPort, serverPort,sshClient)
-apps=[('local','localhost', 'username', 44380, 44380, 'manual'),
+apps=[('local','localhost', 'username', 5554, 44380, 'manual'),
       ('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh'),
       ('micress','jaja.fsv.cvut.cz', 'bp', 5556, 44382,'ssh')]
 

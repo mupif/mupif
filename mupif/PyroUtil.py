@@ -100,16 +100,16 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     #use direct system command. Paramiko or sshtunnel do not work.
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
-        cmd = 'ssh -L %d:%s:%d %s@%s -N' % (localPort, remoteHost, remotePort, userName, remoteHost)
+        cmd = 'ssh -L %d:127.0.0.1:%d %s@%s -N' % (localPort, remotePort, userName, remoteHost)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='putty':
         #need to create a public key *.ppk using puttygen. It can be creased by importing Linux private key. The path to that key is given as -i option
-        cmd = 'putty.exe -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        cmd = 'putty.exe -L %d:127.0.0.1:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-        cmd1 = 'ssh -L %d:%s:%d %s@%s' % (localPort, remoteHost, remotePort, userName, remoteHost)
-        cmd2 = 'putty -L %d:%s:%d %s@%s %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        cmd1 = 'ssh -L %d:127.0.0.1:%d %s@%s' % (localPort, remotePort, userName, remoteHost)
+        cmd2 = 'putty.exe -L %d:127.0.0.1:%d %s@%s %s' % (localPort, remotePort, userName, remoteHost, options)
         logger.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
         return None
     else:

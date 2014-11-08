@@ -8,7 +8,7 @@
 
 #where is a running nameserver
 nshost = "127.0.0.1"
-nsport = 9090
+nsport = 9091
 #address where this server will listen through a daemon
 daemonHost = "127.0.0.1"
 daemonPort = 44382

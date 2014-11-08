@@ -3,8 +3,6 @@ sys.path.append('../..')
 import os
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
-import socket
-
 from mupif import Application
 from mupif import PyroUtil
 

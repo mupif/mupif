@@ -10,13 +10,16 @@
 
 import os
 import subprocess
+nsport = 9091
 
 os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
 
 cmd = 'pyro4-check-config'
 p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-print p1.communicate()[0]
+output, error = p1.communicate()
+print output if output else "", error if error else ""
 
-cmd = 'pyro4-ns -n 127.0.0.1 -p 9090'
+cmd = 'pyro4-ns -n 127.0.0.1 -p %d' % nsport
 p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
-print p2.communicate()[0]
+output, error = p2.communicate()
+print output if output else "", error if error else ""

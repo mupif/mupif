@@ -3,8 +3,6 @@ sys.path.append('../..')
 import os
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
-import socket
-
 from mupif import Application
 from mupif import PyroUtil
 
@@ -15,7 +13,7 @@ appname='local'
 
 class local(Application.Application):
     """
-    Mupif interface to Celsian Computational Fluid Dynamics (CFD) tool
+    Mupif interface to Local dummy task
 
     """
     def __init__(self, file):

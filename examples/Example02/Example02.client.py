@@ -5,7 +5,7 @@
 
 #where is a running nameserver
 nshost = "127.0.0.1"
-nsport = 9090
+nsport = 9091
 
 import sys
 sys.path.append('../..')
