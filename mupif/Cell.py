@@ -22,6 +22,7 @@
 #
 from . import BBox
 from . import Util
+from . import APIError
 import math
 from . import Mesh
 from . import CellGeometryType
@@ -115,6 +116,19 @@ class Cell(object):
 
         return BBox.BBox (tuple(min_coords), tuple(max_coords))
 
+    def getTransformationJacobian(self, coords):
+        """
+        Returns the transformation jacobian (the determinant of jacobian) of the receiver
+        Params:
+        coords(tuple): local (parametric) coordinates of the point
+        """
+        #raise APIError.APIError("getTransformationJacobian not implemented")
+
+
+##############################################################
+# Implementation of individual cells follows
+##############################################################
+
 
 
 class Triangle_2d_lin(Cell):
@@ -145,6 +159,15 @@ class Triangle_2d_lin(Cell):
 
         return (l1,l2,l3)
 
+    def loc2glob(self, lc):
+        """ Converts local (parametric) coordinates to global ones"""
+        c1=self.mesh.getVertex(self.vertices[0]).coords
+        c2=self.mesh.getVertex(self.vertices[1]).coords
+        c3=self.mesh.getVertex(self.vertices[2]).coords
+        l1 = lc[0]
+        l2 = lc[1]
+        l3 = 1.-l1-l2
+        return (l1*c1[0]+l2*c2[0]+l3*c3[0], l1*c1[1]+l2*c2[1]+l3*c3[1], l1*c1[2]+l2*c2[2]+l3*c3[2])
         
     def interpolate(self, point, vertexValues):
         
@@ -158,6 +181,20 @@ class Triangle_2d_lin(Cell):
             if li < -tolerance or li > 1.0+tolerance:
                 return False
         return True;
+
+    def getTransformationJacobian(self, coords):
+        """
+        Returns the transformation jacobian (the determinant of jacobian) of the receiver
+        Params:
+        coords(tuple): local (parametric) coordinates of the point
+        """
+        c1=self.mesh.getVertex(self.vertices[0]).coords
+        c2=self.mesh.getVertex(self.vertices[1]).coords
+        c3=self.mesh.getVertex(self.vertices[2]).coords
+
+        return ( c1[0] * ( c2[1] - c3[1] ) + c2[0]* ( -c1[1] + c3[1] ) + 
+                 c3[0] * ( c1[1] - c2[1] ) )
+
 
     
 class Quad_2d_lin(Cell):
@@ -261,7 +298,19 @@ class Quad_2d_lin(Cell):
                 inside=False
         return inside, answer
     
+    def loc2glob(self, lc):
+        """ Converts local (parametric) coordinates to global ones"""
+        c1=self.mesh.getVertex(self.vertices[0]).coords
+        c2=self.mesh.getVertex(self.vertices[1]).coords
+        c3=self.mesh.getVertex(self.vertices[2]).coords
+        c4=self.mesh.getVertex(self.vertices[3]).coords
 
+        n1 = 0.25*(1.0+lc[0])*(1.0+lc[1])
+        n2 = 0.25*(1.0-lc[0])*(1.0+lc[1])
+        n3 = 0.25*(1.0-lc[0])*(1.0-lc[1])
+        n4 = 0.25*(1.0+lc[0])*(1.0-lc[1])
+
+        return (n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1], n1*c1[2]+n2*c2[2]+n3*c3[2]+n4*c4[2])
         
     def interpolate(self, point, vertexValues):
         
@@ -277,6 +326,38 @@ class Quad_2d_lin(Cell):
     def containsPoint(self, point):
         (inside, ac) = self.glob2loc(point)
         return inside
+
+
+
+    def getTransformationJacobian(self, coords):
+        """
+        Returns the transformation jacobian (the determinant of jacobian) of the receiver
+        Params:
+        coords(tuple): local (parametric) coordinates of the point
+        """
+        ksi=coords[0]
+        eta=coords[1]
+        # dN/dksi
+        dnk = (0.25 * ( 1. + eta ), -0.25 * ( 1. + eta ), -0.25 * ( 1. - eta ), 0.25 * ( 1. - eta ))
+        # dN/deta
+        dne = (0.25 * ( 1. + ksi ),  0.25 * ( 1. - ksi ), -0.25 * ( 1. - ksi ),-0.25 * ( 1. + ksi ))
+     
+        j11 = 0
+        j12 = 0
+        j21 = 0
+        j22 = 0
+        for i in range(4):
+            v = self.mesh.getVertex(self.vertices[i])
+            x = v.coords[0]
+            y = v.coords[1]
+            j11 = j11+dnk[i]*x
+            j12 = j12+dnk[i]*y
+            j21 = j21+dne[i]*x
+            j22 = j22+dne[i]*y
+
+        return j11*j22-j12*j21
+
+
 
 class Tetrahedron_3d_lin(Cell):
     """Unstructured 3d tetrahedral element with linear interpolation"""
@@ -322,6 +403,19 @@ class Tetrahedron_3d_lin(Cell):
 
         return (l1,l2,l3,l4)
 
+    def loc2glob(self, lc):
+        """ Converts local (parametric) coordinates to global ones"""
+        c1=self.mesh.getVertex(self.vertices[0]).coords
+        c2=self.mesh.getVertex(self.vertices[1]).coords
+        c3=self.mesh.getVertex(self.vertices[2]).coords
+        c4=self.mesh.getVertex(self.vertices[3]).coords
+
+        l1 = lc[0]
+        l2 = lc[1]
+        l3 = lc[2]
+        l4 = 1.-l1-l2-l3
+
+        return (l1*c1[0]+l2*c2[0]+l3*c3[0]+l4*c4[0], l1*c1[1]+l2*c2[1]+l3*c3[1]+l4*c4[1], l1*c1[2]+l2*c2[2]+l3*c3[2]+l4*c4[2])
         
     def interpolate(self, point, vertexValues):
         
@@ -336,6 +430,23 @@ class Tetrahedron_3d_lin(Cell):
                 return False
         return True;
 
+    def getTransformationJacobian(self, coords):
+        """
+        Returns the transformation jacobian (the determinant of jacobian) of the receiver
+        Params:
+        coords(tuple): local (parametric) coordinates of the point
+        """
+        c1=self.mesh.getVertex(self.vertices[0]).coords
+        c2=self.mesh.getVertex(self.vertices[1]).coords
+        c3=self.mesh.getVertex(self.vertices[2]).coords
+        c4=self.mesh.getVertex(self.vertices[3]).coords
+
+        return ( ( c4[0] - c1[0] ) * ( c2[1] - c1[1] ) * ( c3[2] - c1[2] ) - 
+                 ( c4[0] - c1[0] ) * ( c3[1] - c1[1] ) * ( c2[2] - c1[2] ) +
+                 ( c3[0] - c1[0] ) * ( c4[1] - c1[1] ) * ( c2[2] - c1[2] ) - 
+                 ( c2[0] - c1[0] ) * ( c4[1] - c1[1] ) * ( c3[2] - c1[2] ) +
+                 ( c2[0] - c1[0] ) * ( c3[1] - c1[1] ) * ( c4[2] - c1[2] ) - 
+                 ( c3[0] - c1[0] ) * ( c2[1] - c1[1] ) * ( c4[2] - c1[2] ) )
 
 
 import numpy
@@ -443,20 +554,101 @@ class Brick_3d_lin(Cell):
         #inside
         return (1, tuple(answer))
         
+    def _evalN(self, lc):
+        """Evaluates shape functions at given point (given in parametric coordinates)"""
+        return (0.125 * ( 1. - lc[0] ) * ( 1. - lc[1] ) * ( 1. + lc[2] ),
+                0.125 * ( 1. - lc[0] ) * ( 1. + lc[1] ) * ( 1. + lc[2] ),
+                0.125 * ( 1. + lc[0] ) * ( 1. + lc[1] ) * ( 1. + lc[2] ),
+                0.125 * ( 1. + lc[0] ) * ( 1. - lc[1] ) * ( 1. + lc[2] ),
+                0.125 * ( 1. - lc[0] ) * ( 1. - lc[1] ) * ( 1. - lc[2] ),
+                0.125 * ( 1. - lc[0] ) * ( 1. + lc[1] ) * ( 1. - lc[2] ),
+                0.125 * ( 1. + lc[0] ) * ( 1. + lc[1] ) * ( 1. - lc[2] ),
+                0.125 * ( 1. + lc[0] ) * ( 1. - lc[1] ) * ( 1. - lc[2] ))
+                
+
+    def loc2glob(self, lc):
+        n = _evalN(lc)
+        x = 0
+        y = 0
+        z = 0
+        for i in range(8):
+                v=self.mesh.getVertex(self.vertices[i])
+                x=x+n[i]*c.coords[0]
+                y=y+n[i]*c.coords[1]
+                z=z+n[i]*c.coords[2]
+        return (x,y,z)
+
     def interpolate(self, point, vertexValues):
         
         (inside, ac) = self.glob2loc(point)
-        n = (0.125 * ( 1. - ac[0] ) * ( 1. - ac[1] ) * ( 1. + ac[2] ),
-             0.125 * ( 1. - ac[0] ) * ( 1. + ac[1] ) * ( 1. + ac[2] ),
-             0.125 * ( 1. + ac[0] ) * ( 1. + ac[1] ) * ( 1. + ac[2] ),
-             0.125 * ( 1. + ac[0] ) * ( 1. - ac[1] ) * ( 1. + ac[2] ),
-             0.125 * ( 1. - ac[0] ) * ( 1. - ac[1] ) * ( 1. - ac[2] ),
-             0.125 * ( 1. - ac[0] ) * ( 1. + ac[1] ) * ( 1. - ac[2] ),
-             0.125 * ( 1. + ac[0] ) * ( 1. + ac[1] ) * ( 1. - ac[2] ),
-             0.125 * ( 1. + ac[0] ) * ( 1. - ac[1] ) * ( 1. - ac[2] ))
+        n = _evalN(ac)
         
         return tuple([n[0]*v0+n[1]*v1+n[2]*v2+n[3]*v3+n[4]*v4+n[5]*v5+n[6]*v6+n[7]*v7 for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3] for v4 in vertexValues[4] for v5 in vertexValues[5] for v6 in vertexValues[6] for v7 in vertexValues[7]])
 
     def containsPoint(self, point):
         (inside, ac) = self.glob2loc(point)
         return inside
+
+    def getTransformationJacobian(self, coords):
+        """
+        Returns the transformation jacobian (the determinant of jacobian) of the receiver
+        Params:
+        coords(tuple): local (parametric) coordinates of the point
+        """
+        u=coords[0]
+        v=coords[1]
+        w=coords[2]
+        # dN/dksi
+        dNu[0] = -0.125 * ( 1. - v ) * ( 1. + w )
+        dNu[1] = -0.125 * ( 1. + v ) * ( 1. + w )
+        dNu[2] =  0.125 * ( 1. + v ) * ( 1. + w )
+        dNu[3] =  0.125 * ( 1. - v ) * ( 1. + w )
+        dNu[4] = -0.125 * ( 1. - v ) * ( 1. - w )
+        dNu[5] = -0.125 * ( 1. + v ) * ( 1. - w )
+        dNu[6] =  0.125 * ( 1. + v ) * ( 1. - w )
+        dNu[7] =  0.125 * ( 1. - v ) * ( 1. - w )
+        
+        dNv[0] = -0.125 * ( 1. - u ) * ( 1. + w )
+        dNv[1] =  0.125 * ( 1. - u ) * ( 1. + w )
+        dNv[2] =  0.125 * ( 1. + u ) * ( 1. + w )
+        dNv[3] = -0.125 * ( 1. + u ) * ( 1. + w )
+        dNv[4] = -0.125 * ( 1. - u ) * ( 1. - w )
+        dNv[5] =  0.125 * ( 1. - u ) * ( 1. - w )
+        dNv[6] =  0.125 * ( 1. + u ) * ( 1. - w )
+        dNv[7] = -0.125 * ( 1. + u ) * ( 1. - w )
+        
+        dNw[0] =  0.125 * ( 1. - u ) * ( 1. - v )
+        dNw[1] =  0.125 * ( 1. - u ) * ( 1. + v )
+        dNw[2] =  0.125 * ( 1. + u ) * ( 1. + v )
+        dNw[3] =  0.125 * ( 1. + u ) * ( 1. - v )
+        dNw[4] = -0.125 * ( 1. - u ) * ( 1. - v )
+        dNw[5] = -0.125 * ( 1. - u ) * ( 1. + v )
+        dNw[6] = -0.125 * ( 1. + u ) * ( 1. + v )
+        dNw[7] = -0.125 * ( 1. + u ) * ( 1. - v )
+
+        j11 = 0
+        j12 = 0
+        j13 = 0
+        j21 = 0
+        j22 = 0
+        j23 = 0
+        j31 = 0
+        j32 = 0
+        j33 = 0
+        for i in range(8):
+            v = self.mesh.getVertex(self.vertices[i])
+            x = v.coords[0]
+            y = v.coords[1]
+            z = v.coords[2]
+            j11 = j11+dnu[i]*x
+            j12 = j12+dnu[i]*y
+            j13 = j13+dnu[i]*z
+            j21 = j21+dnv[i]*x
+            j22 = j22+dnv[i]*y
+            j23 = j23+dnv[i]*z
+            j31 = j31+dnw[i]*x
+            j32 = j32+dnw[i]*y
+            j33 = j33+dnw[i]*z
+
+        return (j11*j22*j33+j21*j32*j13+j31*j12*j23-j13*j22*j31-j23*j32*j11-j33*j12*j21)
+        
