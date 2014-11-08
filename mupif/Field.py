@@ -140,7 +140,11 @@ class Field(object):
                             print (icell.getVertices())
                                                     
                         if (self.fieldType == FieldType.FT_vertexBased):
-                            answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                            try:
+                                answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                            except IndexError:
+                                print ("Field::evaluate failed, inconsistent data at cell %d"%(icell.label))
+                                raise
                         else:
                             answer = self.values[icell.number]
                         return answer
@@ -153,7 +157,7 @@ class Field(object):
             print ("Field evaluate -no source cell found for position ",position)
             for icell in cells:
                 print (icell.number, icell.containsPoint(position), icell.glob2loc(position))
-
+                
             raise ValueError
                 
         else:
