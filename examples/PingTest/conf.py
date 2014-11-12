@@ -1,16 +1,16 @@
 # List of job applications - server details
 # Do not use a dictionary - items are in arbitrary order
 # The format is (name, serverName, username, localNATPort, serverPort,sshClient)
-apps=[('local','localhost', 'username', 5554, 44380, 'manual',''),
-      ('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
-      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'putty','-i D:\\mykey\\my_private_key.ppk')]
+apps=[('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'ssh',''),
+      #('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
+      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5558, 44382,'ssh','')]
 
 #jobname - do not change 
 jobname = 'PingTest'
 #nathost - do not change
 nathost='localhost'
 #nameserver - do not change
-nshost = 'mech.fsv.cvut.cz'
+nshost = 'ksm.fsv.cvut.cz'
 #name server port - do not change
 nsport  = 9090
 
