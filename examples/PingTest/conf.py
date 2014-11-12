@@ -1,10 +1,9 @@
 # List of job applications - server details
 # Do not use a dictionary - items are in arbitrary order
 # The format is (name, serverName, username, localNATPort, serverPort,sshClient)
-apps=[('local','localhost', 'username', 5554, 44380, 'manual'),
-      ('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh'),
-      ('micress','jaja.fsv.cvut.cz', 'bp', 5556, 44382,'ssh')]
-
+apps=[('local','localhost', 'username', 5554, 44380, 'manual',''),
+      ('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
+      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'putty','-i D:\\mykey\\my_private_key.ppk')]
 
 #jobname - do not change 
 jobname = 'PingTest'
@@ -22,6 +21,7 @@ appIndx_UserName = 2
 appIndx_NATPort = 3
 appIndx_RemotePort = 4
 appIndx_SshClient = 5
+appIndx_Options = 6
 
 import logging
 #put logging before Pyro4 module

@@ -11,7 +11,7 @@ import conf
 
 start = timeTime.time()
 #locate nameserver
-ns     = PyroUtil.connectNameServer('mech.fsv.cvut.cz', 9090)
+ns     = PyroUtil.connectNameServer(conf.nshost, 9090)
 
 results=[]
 for apprecord in conf.apps:
@@ -19,7 +19,7 @@ for apprecord in conf.apps:
     conf.logger.info("Trying to connect to server " + str(apprecord[conf.appIndx_Name]))
     tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName], userName=apprecord[conf.appIndx_UserName], 
                                 localPort=apprecord[conf.appIndx_NATPort], remotePort=apprecord[conf.appIndx_RemotePort],
-                                sshClient=apprecord[conf.appIndx_SshClient])
+                                sshClient=apprecord[conf.appIndx_SshClient], options=apprecord[conf.appIndx_Options])
 
     # connect to individual applications
     app = PyroUtil.connectApp(ns, PyroUtil.getNSAppName(conf.jobname, apprecord[conf.appIndx_Name]))
