@@ -22,10 +22,12 @@ from mupif import PyroUtil
 import time as timeTime
 import Pyro4
 
-#Windows tunnel using putty
-#tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44382, sshClient='putty', options='-i L:\.ssh\putty.ppk')
-#Linux tunnel using ssh
-tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44382, sshClient='ssh')
+if(sys.platform.lower().startswith('win')):
+    #Windows tunnel using putty
+    tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44382, sshClient='C:\\Program Files\\Putty\putty.exe', options='-i C:\\tmp\\id_rsa-putty-private.ppk')
+else:
+    #Linux tunnel using ssh
+    tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44382, sshClient='ssh')
 
 time  = 0
 dt    = 1

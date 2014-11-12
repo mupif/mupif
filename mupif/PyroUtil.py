@@ -54,7 +54,11 @@ def connectNameServer(nshost, nsport, timeOut=3.0):
 
 
 def connectApp(ns, name):
-    uri = ns.lookup(name)
+    try:
+        uri = ns.lookup(name)
+    except Exception as e:
+        logger.error("Cannot find registered server %s on %s" % (name, ns) )
+        return None
     app2 = Pyro4.Proxy(uri)
     try:
         sig = app2.getApplicationSignature()
@@ -102,9 +106,9 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     if sshClient=='ssh':
         cmd = 'ssh -L %d:%s:%d %s@%s -N' % (localPort, remoteHost, remotePort, userName, remoteHost)
         logger.debug("Creating ssh tunnel via command: " + cmd)
-    elif sshClient=='putty':
+    elif 'putty' in sshClient.lower():
         #need to create a public key *.ppk using puttygen. It can be creased by importing Linux private key. The path to that key is given as -i option
-        cmd = 'putty.exe -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        cmd = '%s -L %d:%s:%d %s@%s -N %s' % (sshClient, localPort, remoteHost, remotePort, userName, remoteHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
