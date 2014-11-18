@@ -3,7 +3,8 @@
 # The format is (name, serverName, username, localNATPort, serverPort,sshClient)
 apps=[('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'ssh',''),
       #('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
-      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh','')]
+      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh',''),
+      ('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, 'ssh','')]
 
 #jobname - do not change 
 jobname = 'PingTest'
