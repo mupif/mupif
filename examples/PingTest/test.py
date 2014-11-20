@@ -3,11 +3,13 @@ sys.path.append('../..')
 import os
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
+
+import conf
 from mupif import Application
 from mupif import APIError
 from mupif import PyroUtil
 import time as timeTime
-import conf
+
 
 start = timeTime.time()
 #locate nameserver

@@ -46,10 +46,18 @@ def connectNameServer(nshost, nsport, timeOut=3.0):
         msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
         logger.debug(msg)
         logger.exception(e)
-        exit(0)
+        exit(1)
 
     #locate nameserver
-    ns = Pyro4.locateNS(host=nshost, port=nsport)
+    try:
+        ns = Pyro4.locateNS(host=nshost, port=nsport)
+        msg = "Connected to NameServer on %s:%s. Pyro4 version on your local computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
+        logger.info(msg)
+    except Exception as e:
+        msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Exiting." %(nshost, nsport, Pyro4.constants.VERSION)
+        logger.debug(msg)
+        logger.exception(e)
+        exit(1)
     return ns
 
 
@@ -104,10 +112,13 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     #use direct system command. Paramiko or sshtunnel do not work.
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
-        cmd = 'ssh -L %d:%s:%d %s@%s -N' % (localPort, remoteHost, remotePort, userName, remoteHost)
+        cmd = 'ssh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost,options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
+    elif sshClient=='autossh':
+        cmd = 'autossh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost,options)
+        logger.debug("Creating autossh tunnel via command: " + cmd)
     elif 'putty' in sshClient.lower():
-        #need to create a public key *.ppk using puttygen. It can be creased by importing Linux private key. The path to that key is given as -i option
+        #need to create a public key *.ppk using puttygen. It can be created by importing Linux private key. The path to that key is given as -i option
         cmd = '%s -L %d:%s:%d %s@%s -N %s' % (sshClient, localPort, remoteHost, remotePort, userName, remoteHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':

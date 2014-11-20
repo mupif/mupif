@@ -1,9 +1,13 @@
 # List of job applications - server details
 # Do not use a dictionary - items are in arbitrary order
 # The format is (name, serverName, username, localNATPort, serverPort,sshClient)
-apps=[('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'ssh',''),
+apps=[('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'ssh','-oStrictHostKeyChecking=no'),
+      #('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'C:\\Program Files (x86)\\Putty\\putty.exe','-i C:\\Users\mmp\mupif-code\\id_rsa-putty-private.ppk'),
       #('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
+      #('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'C:\\Program Files\\Putty\putty.exe','-i C:\\tmp\\id_rsa-putty-private.ppk')]
+      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh','-oStrictHostKeyChecking=no -i /home/smilauer/.ssh/mech/id_rsa'),
       ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh','')]
+
 
 #jobname - do not change 
 jobname = 'PingTest'
