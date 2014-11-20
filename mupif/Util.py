@@ -23,7 +23,6 @@
 import math
 
 
-
 debug = False
 
 """ 

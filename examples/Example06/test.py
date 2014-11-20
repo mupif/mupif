@@ -22,7 +22,7 @@ from mupif import PyroUtil
 import time as timeTime
 
 
-try:#tunnel must be closed
+try:#tunnel must be closed at the end, otherwise bound socket may persist on system
     if(sys.platform.lower().startswith('win')):
         #Windows tunnel using putty
         tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44361, sshClient='C:\\Program Files\\Putty\putty.exe', options='-i C:\\tmp\\id_rsa-putty-private.ppk')
@@ -77,6 +77,6 @@ try:#tunnel must be closed
     logger.info("Ping test finished")
 
 finally:
-    logger.info("Closing ssh tunnel")
+    logger.debug("Closing ssh tunnel")
     tunnel.terminate()
 

@@ -52,7 +52,7 @@ def connectNameServer(nshost, nsport, timeOut=3.0):
     try:
         ns = Pyro4.locateNS(host=nshost, port=nsport)
         msg = "Connected to NameServer on %s:%s. Pyro4 version on your local computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
-        logger.info(msg)
+        logger.debug(msg)
     except Exception as e:
         msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Exiting." %(nshost, nsport, Pyro4.constants.VERSION)
         logger.debug(msg)
@@ -97,15 +97,21 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, app):
        nsname(string) nameserver name to register application
        app (Application) application instance
        """
-    print ('runAppServer: server:%s, port:%d, nathost:%s, natport:%d, ns:%s, nsport:%d' % (server, port, nathost, natport, nshost, nsport))
-    daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-    ns     = connectNameServer(nshost, nsport)
-    app.registerPyro (daemon, ns)
+    try:
+        daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
+        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (server, port, nathost, natport))
+    except Exception as e:
+        logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (server, port, nathost, natport))
+        logger.exception(e)
+        exit(1)
+    ns = connectNameServer(nshost, nsport)
+    app.registerPyro(daemon, ns)
     #register agent
-    uri    = daemon.register(app)
+    uri = daemon.register(app)
     ns.register(nsname, uri)
-    print (nsname, uri)
+    logger.debug('NameServer %s registered uri %s' % (nsname, uri) )
     daemon.requestLoop()
+    logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, nameServerName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport,nsname,uri) )
 
 
 def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options=''):

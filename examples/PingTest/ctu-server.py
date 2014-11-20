@@ -4,11 +4,10 @@ import os
 import socket
 os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
+import conf
 from mupif import Application
 from mupif import PyroUtil
 
-# import basic definitions -> need to be customized
-import conf
 #nameserver app name
 appname='ctu-server'
 
