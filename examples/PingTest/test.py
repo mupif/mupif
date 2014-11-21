@@ -1,8 +1,6 @@
 import sys
 sys.path.append('../..')
 import os
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
-
 
 import conf
 from mupif import Application
@@ -13,7 +11,7 @@ import time as timeTime
 
 start = timeTime.time()
 #locate nameserver
-ns     = PyroUtil.connectNameServer(conf.nshost, 9090)
+ns = PyroUtil.connectNameServer(conf.nshost, 9090, conf.hkey)
 
 results=[]
 for apprecord in conf.apps:

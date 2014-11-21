@@ -35,7 +35,7 @@ Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
 
-def connectNameServer(nshost, nsport, timeOut=3.0):
+def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(timeOut)
@@ -50,11 +50,11 @@ def connectNameServer(nshost, nsport, timeOut=3.0):
 
     #locate nameserver
     try:
-        ns = Pyro4.locateNS(host=nshost, port=nsport)
+        ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
         msg = "Connected to NameServer on %s:%s. Pyro4 version on your local computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
         logger.debug(msg)
     except Exception as e:
-        msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Exiting." %(nshost, nsport, Pyro4.constants.VERSION)
+        msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Do you have the correct hmac_key (password is now %s)? Exiting." %(nshost, nsport, Pyro4.constants.VERSION, hkey)
         logger.debug(msg)
         logger.exception(e)
         exit(1)
@@ -82,7 +82,7 @@ def connectApp(ns, name):
 def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, app):
+def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app):
     """
     Runs a simple application server
     ARGS:
@@ -99,12 +99,12 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, app):
        """
     try:
         daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (server, port, nathost, natport))
+        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hmac %s' % (server, port, nathost, natport, hkey))
     except Exception as e:
-        logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (server, port, nathost, natport))
+        logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
         logger.exception(e)
         exit(1)
-    ns = connectNameServer(nshost, nsport)
+    ns = connectNameServer(nshost, nsport, hkey)
     app.registerPyro(daemon, ns)
     #register agent
     uri = daemon.register(app)

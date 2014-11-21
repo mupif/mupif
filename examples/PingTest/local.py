@@ -8,7 +8,7 @@ from mupif import Application
 from mupif import PyroUtil
 
 #nameserver app name
-appname='ctu-server'
+appname='local'
 
 class local(Application.Application):
     """
@@ -18,7 +18,7 @@ class local(Application.Application):
     def __init__(self, file):
         super(local, self).__init__(file) #call basereturn
     def getApplicationSignature(self):
-        return "CTU-server@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
+        return "local@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 
 #create application
 app = local("/dev/null")

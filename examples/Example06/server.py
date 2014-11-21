@@ -8,13 +8,12 @@ from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
 import os
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
-
 
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
+hkey = 'mmp-secret-key'
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -54,8 +53,8 @@ class PingServerApplication(Application.Application):
         return "CTU Ping server, version 1.0"
 
 
-daemon = Pyro4.Daemon(host='mech.fsv.cvut.cz', port=44382, nathost="localhost", natport=5555)
-ns     = Pyro4.locateNS(host='mech.fsv.cvut.cz', port=9090)
+daemon = Pyro4.Daemon(host='mech.fsv.cvut.cz', port=44361, nathost="localhost", natport=5555)
+ns = Pyro4.locateNS(host='mech.fsv.cvut.cz', port=9090, hkey)
 
 app2 = PingServerApplication("/dev/null")
 #register agent

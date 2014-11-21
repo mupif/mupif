@@ -1,7 +1,6 @@
 import sys
 sys.path.append('../..')
 import os
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
 import logging
 #put logging before Pyro4 module
@@ -10,6 +9,7 @@ logging.getLogger('Pyro4').setLevel(logging.DEBUG)
 logger = logging.getLogger('test.py')
 logger.setLevel(logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler()) #display logging also on screen
+hkey = 'mmp-secret-key'
 
 import Pyro4
 from mupif import Application
@@ -20,7 +20,6 @@ from mupif import Property
 from mupif import ValueType
 from mupif import PyroUtil
 import time as timeTime
-
 
 try:#tunnel must be closed at the end, otherwise bound socket may persist on system
     if(sys.platform.lower().startswith('win')):
@@ -36,10 +35,10 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
 
     start = timeTime.time()
     #locate nameserver
-    ns = PyroUtil.connectNameServer('mech.fsv.cvut.cz', 9090)
+    ns = PyroUtil.connectNameServer('mech.fsv.cvut.cz', 9090, hkey)
 
     # locate remote PingServer application, request remote proxy
-    serverApp = PyroUtil.connectApp (ns, 'Mupif.PingServerApplication')
+    serverApp = PyroUtil.connectApp(ns, 'Mupif.PingServerApplication')
 
     try:
         appsig=serverApp.getApplicationSignature()

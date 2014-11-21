@@ -2,7 +2,6 @@ import sys
 sys.path.append('../..')
 import os
 import socket
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
 
 from mupif import Application
 from mupif import PyroUtil
@@ -32,4 +31,4 @@ appRecord = [item for item in conf.apps if item[0] == appname][0]
 PyroUtil.runAppServer(server=appRecord[conf.appIndx_ServerName], port=appRecord[conf.appIndx_RemotePort], 
                       nathost=conf.nathost, natport=appRecord[conf.appIndx_NATPort], 
                       nshost=conf.nshost, nsport=conf.nsport, 
-                      nsname=PyroUtil.getNSAppName(conf.jobname, appname),app=app)
+                      nsname=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)

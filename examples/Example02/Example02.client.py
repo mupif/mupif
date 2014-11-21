@@ -6,10 +6,19 @@
 #where is a running nameserver
 nshost = "127.0.0.1"
 nsport = 9091
+hkey = 'mmp-secret-key'
 
 import sys
 sys.path.append('../..')
 import os
+import logging
+#put logging before Pyro4 module
+logging.basicConfig(filename='mupif.pyro.log',filemode='w',datefmt="%Y-%m-%d %H:%M:%S",level=logging.DEBUG)
+logging.getLogger('Pyro4').setLevel(logging.INFO)
+logger = logging.getLogger('client.py')
+logger.setLevel(logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler()) #display logging also on screen
+
 from mupif import Application
 from mupif import TimeStep
 from mupif import APIError
@@ -40,7 +49,7 @@ timestepnumber=0
 targetTime = 10.0
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost, nsport)
+ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
 
 # application1 is local, create its instance
 app1 = application1(None)
@@ -57,7 +66,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
+    logger.info("Step: %d %f %f" % (timestepnumber, time, dt) )
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -73,11 +82,11 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        print ("Following API error occurred:",e)
+        logger.error("Following API error occurred: %s" % e )
         break
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-print  ("Result: ", prop.getValue())
+logger.info("Result: %f" % prop.getValue() )
 # terminate
 app1.terminate();
 app2.terminate();

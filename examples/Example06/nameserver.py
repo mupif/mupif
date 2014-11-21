@@ -10,7 +10,7 @@
 
 import os
 import subprocess
-nsport = 9091
+nsport = 9090
 hkey = 'mmp-secret-key'
 
 os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'

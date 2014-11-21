@@ -12,6 +12,7 @@ nsport = 9091
 #address where this server will listen through a daemon
 daemonHost = "127.0.0.1"
 daemonPort = 44382
+hkey = 'mmp-secret-key'
 
 import sys
 sys.path.append('../..')
@@ -62,14 +63,14 @@ class application2(Application.Application):
         return 1.0
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost, nsport)
+ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
 daemon = Pyro4.Daemon(host=daemonHost, port=daemonPort)
 
 app2 = application2("input2.in")
 #register agent
-uri    = daemon.register(app2)
+uri = daemon.register(app2)
 ns.register("Mupif.application2", uri)
 print (uri)
 daemon.requestLoop()
