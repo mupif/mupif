@@ -40,7 +40,7 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(timeOut)
         s.connect((nshost, nsport))
-        s.shutdown(2)
+        s.close()
         logger.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
     except Exception as e:
         msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
@@ -64,13 +64,14 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 def connectApp(ns, name):
     try:
         uri = ns.lookup(name)
+        logger.debug("Found URI %s from a nameServer %s" % (uri, ns) )
     except Exception as e:
         logger.error("Cannot find registered server %s on %s" % (name, ns) )
         return None
     app2 = Pyro4.Proxy(uri)
     try:
         sig = app2.getApplicationSignature()
-        logger.debug("Connected to "+sig)
+        logger.debug("Connected to %s" % sig )
     except Exception as e:
         logger.debug("Cannot connect to application " + name + ". Is the server running?")
         logger.exception(e)
