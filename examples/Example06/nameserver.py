@@ -20,7 +20,7 @@ p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 output, error = p1.communicate()
 print output if output else "", error if error else ""
 
-cmd = 'pyro4-ns -n 127.0.0.1 -p %d -k %s' % (nsport, hkey)
+cmd = 'pyro4-ns -n 147.32.130.137 -p %d -k %s' % (nsport, hkey)
 p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
 output, error = p2.communicate()
 print output if output else "", error if error else ""
