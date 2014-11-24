@@ -6,10 +6,10 @@ apps=[('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'ssh','-oStrictHostKe
       #('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'C:\\Program Files (x86)\\Putty\\putty.exe','-i C:\\Users\mmp\mupif-code\\id_rsa-putty-private.ppk'),
       #('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
       #('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'C:\\Program Files\\Putty\putty.exe','-i C:\\tmp\\id_rsa-putty-private.ppk')]
-      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh','-oStrictHostKeyChecking=no -i /home/smilauer/.ssh/mech/id_rsa'),
+      #('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh','-oStrictHostKeyChecking=no -i /home/smilauer/.ssh/mech/id_rsa'),
       ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'ssh',''),
       ('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, 'ssh',''),
-      ('local','localhost', 'mmp', 44382, 44382, 'manual','-oStrictHostKeyChecking=no')
+      #('local','localhost', 'mmp', 44382, 44382, 'manual','-oStrictHostKeyChecking=no')
       ]
 
 #jobname - do not change 
