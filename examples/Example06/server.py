@@ -54,7 +54,7 @@ class PingServerApplication(Application.Application):
 
 
 daemon = Pyro4.Daemon(host='mech.fsv.cvut.cz', port=44361, nathost="localhost", natport=5555)
-ns = Pyro4.locateNS(host='mech.fsv.cvut.cz', port=9090, hkey)
+ns = Pyro4.locateNS(host='ksm.fsv.cvut.cz', port=9090, hmac_key=hkey)
 
 app2 = PingServerApplication("/dev/null")
 #register agent
