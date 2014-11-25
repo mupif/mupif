@@ -92,7 +92,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
        nathost(string) hostname of the server as reported by nameserver 
          For secure ssh tunnel it should be set to 'localhost'
          For direct (or VPN) connections 'None'
-       natport(int) server port as reported by nameserver
+       natport(int) server NAT port as reported by nameserver
        ns(string) hostname of the computer running nameserver
        nsport(string) nameserver port
        nsname(string) nameserver name to register application
