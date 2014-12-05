@@ -115,23 +115,26 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, nameServerName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport,nsname,uri) )
 
 
-def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options=''):
+def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost=''):
+    if sshHost =='':
+        sshHost = remoteHost
+    
     #use direct system command. Paramiko or sshtunnel do not work.
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
-        cmd = 'ssh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost,options)
+        cmd = 'ssh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost,options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='autossh':
-        cmd = 'autossh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, remoteHost,options)
+        cmd = 'autossh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost,options)
         logger.debug("Creating autossh tunnel via command: " + cmd)
     elif 'putty' in sshClient.lower():
         #need to create a public key *.ppk using puttygen. It can be created by importing Linux private key. The path to that key is given as -i option
-        cmd = '%s -L %d:%s:%d %s@%s -N %s' % (sshClient, localPort, remoteHost, remotePort, userName, remoteHost, options)
+        cmd = '%s -L %d:%s:%d %s@%s -N %s' % (sshClient, localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-        cmd1 = 'ssh -L %d:%s:%d %s@%s' % (localPort, remoteHost, remotePort, userName, remoteHost)
-        cmd2 = 'putty.exe -L %d:%s:%d %s@%s %s' % (localPort, remoteHost, remotePort, userName, remoteHost, options)
+        cmd1 = 'ssh -L %d:%s:%d %s@%s' % (localPort, remoteHost, remotePort, userName, sshHost)
+        cmd2 = 'putty.exe -L %d:%s:%d %s@%s %s' % (localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
         return None
     else:
