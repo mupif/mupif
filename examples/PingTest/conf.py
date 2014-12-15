@@ -1,12 +1,8 @@
 # List of job applications - server details
-# Do not use a dictionary - items are in arbitrary order
 # The format is (name, serverName, username, localNATPort, serverPort,sshClient, options, sshHost)
-
-#      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'C:\\Program Files\\Putty\putty.exe','-i C:\\tmp\\FIT-public-SSH2.ppk')]
 import sys
 
-
-
+#Edit these paths for your SSH-client and location of private key
 if(sys.platform.lower().startswith('win')):
     sshClient = 'C:\\Program Files\\Putty\\putty.exe'
     options = '-i L:\\.ssh\\mech\id_rsa.ppk'
@@ -16,13 +12,13 @@ else:
     options = '-oStrictHostKeyChecking=no -i /home/smilauer/.ssh/mech/id_rsa'
     sshPortSpec = ' -p '
 
-
+#There should be no need to edit futher lines
 apps=[('ctu-server','147.32.130.137', 'mmp', 5554, 44382, sshClient,options,''),
       ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382, sshClient, options, ''),
       ('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, sshClient, options, ''),
-      ('celsian','192.168.16.6', 'ctu', 5555, 44381, sshClient, options+sshPortSpec+'223', 'remote.celsian.nl')
+      ('celsian','192.168.16.6', 'mmp', 5555, 44381, sshClient, options+sshPortSpec+'223', 'remote.celsian.nl')
       ]
-      
+      #Missing TNO server
       
       #('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'C:\\Program Files (x86)\\Putty\\putty.exe','-i C:\\Users\mmp\mupif-code\\id_rsa-putty-private.ppk'),
       #('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
