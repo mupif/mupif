@@ -1,0 +1,8 @@
+This example illustrates a skeleton for Micress API (defined in Micress.py). 
+It shows how to import vtk data files into internal framework
+representation using fields defined on general structured grid.
+
+
+To run the example:
+-------------------
+> python Example07.py
