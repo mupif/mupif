@@ -6,3 +6,12 @@ representation using fields defined on general structured grid.
 To run the example:
 -------------------
 > python Example07.py
+
+
+If you have this error when you run the example:
+> SyntaxError: unexpected EOF while parsing
+
+it comes from pyvtk package. You have to open the PolyData.py and Scalars.py source code files, and replace all split(' ') by split().
+
+This error is explain in details here:
+http://code.google.com/p/pyvtk/wiki/unexpectedEOF
