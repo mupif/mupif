@@ -13,5 +13,5 @@ If you have this error when you run the example:
 
 it comes from pyvtk package. You have to open the PolyData.py and Scalars.py source code files, and replace all split(' ') by split().
 
-This error is explain in details here:
+This error is explained in details here:
 http://code.google.com/p/pyvtk/wiki/unexpectedEOF
