@@ -60,8 +60,8 @@ class Cell(object):
 
     def copy(self):
         """
-        This will copy the receiver, making deep copy of all 
-        attributes EXCEPT mesh attribute
+        This will copy the receiver, making deep copy of all attributes EXCEPT mesh attribute
+        
         Returns:
             the copy of receiver (Cell)
         """
@@ -82,6 +82,7 @@ class Cell(object):
     def interpolate (self, point, vertexValues):
         """
         Interpolates given vertex values to given point)
+        
         ARGS:
            point(tuple) position vector
            vertexValues(tuple) A tuple containing vertex values 
@@ -135,15 +136,21 @@ class Triangle_2d_lin(Cell):
     """Unstructured 2d triangular element with linear interpolation"""
 
     def copy(self):
-        """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
+        """
+        This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute
+        """
         return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getGeometryType(self):
-        """Returns geometry type of receiver"""
+        """
+        Returns geometry type of receiver
+        """
         return CellGeometryType.CGT_TRIANGLE_1
 
     def glob2loc(self, coords):
-        """Converts global coordinates to local (area) coordinates"""
+        """
+        Converts global coordinates to local (area) coordinates
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords

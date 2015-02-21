@@ -1,0 +1,16 @@
+#A reference manual could be automatically generated using Sphinx
+#Generate Sphinx's initial template. It will automatically include all python source files 
+sphinx-apidoc -A "B. Patzak, G. Pacquaut, V. Smilauer" -H "MuPIF" -R "0.1" -f -F  -o . ../../mupif/
+
+#Add path to conf.py so Sphinx can find *.py modules. Insert just after import os (like line 17)
+sys.path.append(os.path.abspath('../..'))
+
+#Since the source directory contains __init__.py file, sphinx treats all *.py files as a part of mupif module. Once __init__.py is removed, sphinx treats all classes individually.
+
+#Create documentation, e.g. html works the best for initial debugging
+make html
+
+#Create pdf documentation
+make latexpdf
+
+#Conf.py could be edited further if needed. Keep out -F in sphinx-apidoc command otherwise conf.py becomes overwritten.

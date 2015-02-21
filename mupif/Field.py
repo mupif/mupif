@@ -86,6 +86,7 @@ class Field(object):
     def getMesh(self):
         """
         Returns representation of underlying discretization.
+        
         RETURNS:
             Mesh
         """
@@ -106,6 +107,7 @@ class Field(object):
     def evaluate(self, positions, eps=0.001):
         """
         Evaluates the receiver at given spatial position(s).
+        
         ARGS:
             position (tuple or list of tuples): 3D position vectors
             eps(double): Optional tolerance
@@ -125,6 +127,7 @@ class Field(object):
     def _evaluate(self, position, eps=0.001):
         """
         Evaluates the receiver at given (single) spatial position.
+        
         ARGS:
             position (tuple): 3D position vector
             eps(double): Optional tolerance
@@ -168,6 +171,7 @@ class Field(object):
     def giveValue(self, componentID):
         """
         Returns the value associated to given component (vertex or cell IP).
+        
         ARGS:
             componentID(tuple): identifies the component (vertexID,) or (CellID, IPID)
         """
@@ -176,6 +180,7 @@ class Field(object):
     def setValue(self, componentID, value):
         """
         Sets the value associated to given component (vertex or cell IP).
+        
         ARGS:
             componentID(tuple):  The componentID is a tuple: (vertexID,) or (CellID, IPID)
             value(tuple):        Value to be set for given component
@@ -230,6 +235,7 @@ class Field(object):
     def field2VTKData (self):
         """
         Returns VTK representation of the receiver. Useful for visualization.
+        
         RETURNS:
             VTKDataSource
         """

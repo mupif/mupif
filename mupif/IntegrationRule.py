@@ -31,6 +31,7 @@ class IntegrationRule(object):
     def getIntegrationPoints(self,cgt, npt):
         """
         Returns a list of  integration points and corresponding weights
+        
         Params:
           cgt(CellGeometryType): type of underlying cell geometry
           npt(int): number of desired intagration points
@@ -43,6 +44,7 @@ class IntegrationRule(object):
         """
         Returns required number of integration points to exactly integrate
         polynomial of order approxOrder on given cell type.
+        
         Params:
           cgt(CellGeometryType): type of underlying cell geometry
           order(int): target polynomial order
