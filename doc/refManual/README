@@ -1,3 +1,10 @@
+=== Documentation using Pydoc ===
+Run from a bash terminal:  sh pydoc.sh
+It creates all documentation automatically, mupif.html is the main html file
+
+
+
+=== Documentation using Sphinx ===
 #A reference manual could be automatically generated using Sphinx
 #Generate Sphinx's initial template. It will automatically include all python source files 
 sphinx-apidoc -A "B. Patzak, G. Pacquaut, V. Smilauer" -H "MuPIF" -R "0.1" -f -F  -o . ../../mupif/
