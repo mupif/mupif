@@ -1,0 +1,235 @@
+% MuPIF User Guide
+\documentclass[a4paper,11pt]{article}
+%\usepackage{cmap}
+%\usepackage[czech]{babel}
+\usepackage[justification=centering]{caption} %Centrování popisků u obrázků
+\usepackage[T1]{fontenc}  % Output fonts. For searching in Czech language
+\usepackage[utf8]{inputenc}   % Input coding for UTF-8
+\usepackage{chngcntr} % Changing numbering of Examples
+\usepackage[pdftex,unicode]{hyperref} % pdf links
+\hypersetup{colorlinks, bookmarksopen, linkcolor = blue, citecolor = blue}
+
+\usepackage{amsmath}
+\usepackage[usenames,dvipsnames,table]{xcolor}
+\usepackage[pdftex]{graphicx}
+\usepackage{xspace}
+\usepackage{mdwlist}
+\usepackage{enumitem}
+\usepackage{psfrag}
+
+\usepackage{lmodern}
+%\usepackage{txfonts}
+\usepackage{type1cm} %Support for scal­able ver­sions of the cm fonts
+
+%for point in a filename, make default the pdf type
+\DeclareGraphicsRule{*}{pdf}{*}{}
+
+%Page size
+\voffset 0mm
+\hoffset 0mm
+\topmargin 0mm %no effect
+\headheight 12mm
+\headsep 6mm %Distance between title and text
+\textwidth 145mm %Originally 125 mm
+\textheight 232mm
+\oddsidemargin 7.1mm
+\evensidemargin 7.1mm
+\marginparwidth 0mm
+\marginparsep 0mm
+\topmargin -10mm
+\footskip 6mm
+
+\renewcommand{\topfraction}{0.99}    % 99% of page top can be a float
+\renewcommand{\bottomfraction}{0.99} % 99% of page bottom can be a float
+\renewcommand{\textfraction}{0.01}   % only 1% of page must to be text
+
+%Makra
+\newcommand{\fig}[1]{obr.~\ref{#1}}
+\newcommand{\Fig}[1]{Obr.~\ref{#1}}
+\newcommand{\tab}[1]{tab.~\ref{#1}}
+\newcommand{\Tab}[1]{Tab.~\ref{#1}}
+\newcommand{\eq}[1]{(\ref{#1})}
+\newcommand{\eqsr}[2]{(\ref{#1})-(\ref{#2})}
+\newcommand{\beql}[1]{\begin{equation}\label{#1}}
+\newcommand{\eeq}{\end{equation}}
+\def\bea#1\eea{\begin{align}#1\end{align}}
+\def\beal#1#2\eea{\begin{align}\label{#1}#2\end{align}}
+
+\newcommand{\eps}{\varepsilon}
+\newcommand{\sig}{\sigma}
+\newcommand{\Ce}{$^{\circ}\mathrm{C}$\xspace}
+\newcommand{\degr}{$^{\circ}$\xspace}
+\newcommand{\degrn}{$^{\circ}$}
+\newcommand{\tento}[1]{\cdot10^{#1}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\Reseni}{\noindent{\it Řešení:}\xspace}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mbf}[1]{\mbox{\boldmath$#1$}}
+\newcommand{\mtrx}[1]{\mbf{#1}}
+
+\newcommand{\m}{\mathrm{m}}
+\newcommand{\mm}{\mathrm{mm}}
+\newcommand{\kPa}{\mathrm{kPa}}
+\newcommand{\MPa}{\mathrm{MPa}}
+\newcommand{\GPa}{\mathrm{GPa}}
+\newcommand{\Pa}{\mathrm{Pa}}
+\newcommand{\kN}{\mathrm{kN}}
+\newcommand{\MN}{\mathrm{MN}}
+\newcommand{\kNm}{\mathrm{kNm}}
+\newcommand{\MNm}{\mathrm{MNm}}
+
+
+\newcommand{\refeq}[1]{(\ref{#1})}
+\newcommand{\dz}{{\rm d}z}
+\newcommand{\dx}{{\rm d}x}
+\newcommand{\dxi}{{\rm d}\xi}
+
+%Create arbitrary text on a reference
+\makeatletter
+\def\labelWithName#1#2{\begingroup
+   \def\@currentlabel{#2}%
+   \label{#1}\endgroup
+}
+\makeatother
+
+
+\begin{document}
+\begin{center}
+\thispagestyle{empty}
+
+{\huge\bf MuPIF: Multi-Physics Integration Framework}
+
+\vspace{5 mm}
+
+{\large MuPIF version 0.1}\\
+
+\vspace{30 mm}
+
+{\huge User's guide - initial draft}\\
+
+\vspace{30 mm}
+
+{\Large \today}\\
+
+\vspace{30 mm}
+
+{\Large Bořek Patzák\\Guillaume Pacquaut\\Vít Šmilauer}\\
+
+\vspace{60 mm}
+
+\noindent Czech Technical University in Prague\\
+Faculty of Civil Engineering\\
+Department of Mechanics\\
+Th\'akurova 7\\
+166 29 Praha 6\\
+Czech Republic\\
+
+\vspace{20 mm}
+
+\end{center}
+
+\clearpage
+\pdfbookmark{\contentsname}{toc}%add tableofcontents into pdf bookmarks
+\tableofcontents
+
+\clearpage
+
+%Used document D1.1–Application Interface specification
+
+\section{What is MuPIF}
+MuPIF stands for Multi-Physics Integration Framework. Imagine you need to compute a multiphysical model, such as termo-mechanical model with thermal and displacements fields. These two fields need to be linked  since thermal field has obvious influence on displacements. The development of a new multi-physics tool for such a particular problem would be extremely time and resource consuming.
+
+MuPIF offers a more viable approach which lies in combining existing, usually single-physics tools for termal and mechanical parts, to build a customized multiphysics simulation chain for a particular problem. The most important advantage of this modular approach stays in reusing of existing tools. In order to achieve a full potential of such a modular approach, an Integration framework is needed to provide underlying infrastructure that enables to integrate individual applications. The framework also provides tools for application steering and mutual data exchange. 
+
+Diagram
+
+The integration framework has been implemented in Python 2.7. Python is an interpreted, interactive, object-oriented programming language. It runs on many Unix/Linux platforms, on the Mac, and on PCs under MS-DOS, Windows, Windows NT, and OS/2. The Python language will be enriched by new objects/classes to describe and to represent complex simulation chains. Such approach allows profiting from the capabilities of established scripting environment, including numerical libraries, serialization/persistence support, and remote communication.
+
+MuPIF repository \url{http://sourceforge.net/projects/mupif/}
+
+API and interfaces to other programs - commertial and open-source.
+
+\section{MuPIF installation}
+
+setup.py, pip, repository
+
+\section{``Hello world'' example}
+
+
+\section{MuPIF structure}
+The proposed abstract classes are designed to represent the entities in a model space, including simulation tools, fields, discretizations, properties, etc. The purpose of these abstract classes is to define a common interface that needs to be implemented by any derived class. Such interface concept allows using any derived class on a very abstract level, using common interface for services, without being concerned with the implementation details of an individual software component. 
+
+\subsection{Application class}
+\subsection{Property class}
+\subsection{Field class}
+\subsection{Function class}
+\subsection{TimeStep class}
+\subsection{Mesh class}
+\subsection{Cell class}
+\subsection{Vertex class}
+\subsection{BoundingBox class}
+\subsection{APIError class}
+\subsection{EnumeratioAPIErrorns class}
+
+
+\section{MuPIF on a single computer}
+
+General structure
+
+\subsection{Example01}
+\subsection{Example03}
+
+
+
+
+\section{MuPIF on distributed system}
+Distributed structure
+
+\subsection{Pyro library}
+\subsection{Example02}
+
+
+
+
+\section{VTK input/output support}
+\subsection{Example04}
+
+
+\section{Units}
+When different simulation tools are combined, it is important to take care of units used in individual applications and to provide tools for unit conversion to insure proper handling of data. Therefore, a mechanism for tracking the units is implemented.
+
+The proposed approach does not track the units externally (the value plus unit representation) but rather internally, by doing calculations with physical quantities that carry information about the units of a numerical value. Where appropriate, one can carry around the units in which a quantity is expressed together with the numerical value, instead of assuming some units. This can significantly reduce errors introduced by incorrect/missing units or misunderstandings.
+
+This can be done by encapsulating physical quantity and unit representation (usually based on combination of basic SI units) into a new object and define corresponding arithmetic operators and unit conversion services. In this way, the user doesn't have to keep track of units, the compatibility is checked on background and the units of new quantities are obtained by arithmetic operations from the existing ones automatically. This feature allows introducing the unit tracking transparently into the framework.
+
+There are many existing python modules for a unit representation based on the approach described, namely:
+Pint library (http://pint.readthedocs.org/en/latest/index.html),
+Units (https://bitbucket.org/adonohue/units/src),
+Scimath (https://github.com/enthought/scimath). 
+All these modules offer integration with NumPy arrays [4]. The particular choice of the unit representation library has to be decided, but also a new representation can be developed following the idea outlined.
+
+\section{Security}
+
+The framework must ensure safe operation in distributed environments. Most of the concerns are naturally related to the use of communication layer built in a Pyro library.
+
+Pyro doesn’t encrypt the data it sends over the network. This means that sending sensitive data on untrusted networks (especially user data, passwords, and such) should be avoided as the data can be easily eavesdropped. When the data security is a concern, a Pyro can be run over a secure network (VPN, ssl/ssh tunnel), at the increased cost for the data transfer and coding.
+
+When local objects are published (made available remotely), Pyro starts listening for incoming requests and process them. This is handled by the Pyro daemon. To prevent malicious requests to the daemon from the unauthorized source, pyro provides a concept of HMAC signature that is attached to every network transfer to allow only legitimate connections. Using the HMAC signature ensures that only clients with the correct secret key can create valid requests, and that it is impossible to modify valid requests (even though the network data is not encrypted). The hashing algorithm that is used in the HMAC is SHA-1.
+
+Additionally, the firewall rules can be set up on the servers to allow remote connection to Pyro network ports only from trusted or authorized clients.
+
+
+\section{Error handling and reporting}
+
+The Python uses exceptions to handle errors and other exceptional events. When an error occurs within a function, it creates an object and hands it off to the runtime system. The object, called an exception object, contains information about the error, including its type and the state of the program when the error occurred. Creating an exception object and handling it to the runtime system is called throwing an exception. Exceptions in general have some advantages over traditional error reporting and handling. They allow separating the details of what to do when an error occurs from the main logic of a program. A second advantage of exceptions is the ability to propagate an error reporting up the call stack of the methods. Because all exceptions thrown within a program are objects, the grouping or categorizing of exceptions is a natural outcome of the class hierarchy.
+
+The error reporting in the proposed framework will use exceptions as well. The new class APIException, defined as a part of proposed API, is designed to be a base class for all exceptions thrown by the framework. The Pyro handles the exceptions transparently over the network. The exceptions thrown by remote objects are raised in the caller, as if they were local and one can extract detailed remote trace back information.
+
+While MMP will certainly benefit from the advantages from exception-based error handling, it can be optionally considered to support other error mechanisms such as integer exit codes, tuple return types (tuple=a sequence of immutable Python objects) and even dynamic typing since Python allows them. This might prove useful in a situation where the framework user is unfamiliar with the advanced error handling mechanisms and has to stick to the ones in old programming paradigms (typically as in FORTRAN). In that case an automatic program transformation and wrapper generation from other mechanisms into Python code should be implemented. 
+
+
+\bibliographystyle{abbrv}
+\bibliography{referen}
+
+
+\end{document}

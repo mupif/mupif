@@ -40,6 +40,7 @@ class Property(object):
         def getValue(self):
             """
             Returns the value of property in a tuple.
+
             Returns:
                 Property value as array (tuple); 
             """
@@ -48,6 +49,7 @@ class Property(object):
         def getPropertID(self):
             """
             Returns type of property.
+
             RETURNS:
                 Receiver property id (PropertyID)
             """
@@ -56,6 +58,7 @@ class Property(object):
         def getObjectID(self):
             """
             Returns property objectID.
+
             RETURNS:
                 int
             """
@@ -64,7 +67,8 @@ class Property(object):
         def getUnits(self):
             """
             Returns representation of property units.
-	    Returns:
-	        Returns receiver's units (Units)
+
+            Returns:
+            Returns receiver's units (Units)
             """
             return self.units

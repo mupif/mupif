@@ -34,17 +34,18 @@ from mupif import Field
 from mupif import FieldID
 from mupif import ValueType
 
-def readEnsightGeo (name,partFilter, partRec):
+def readEnsightGeo(name, partFilter, partRec):
     """
-    Reads Ensight geometry file (Ensight6 format ) and returns corresponding Mesh object instance.
-    Supports only unstructured meshes
+    Reads Ensight geometry file (Ensight6 format) and returns corresponding Mesh object instance. Supports only unstructured meshes.
 
     PARAMS:
-    name(string): path to Ensight geometry file (*.geo)
-    partFiler(tuple): only parts with id contained in partFiler will be imported
-    partRec(out) - list containing info about individual parts (number of elements). Needed by readEnsightField
+        name(string): path to Ensight geometry file (\*.geo)
+        partFiler(tuple): only parts with id contained in partFiler will be imported
+        partRec(out) - list containing info about individual parts (number of elements). Needed by readEnsightField
+
+    Returns:
+        mesh
     """
-    
     vertexMapping = {}
     vertices = []
     cells = []
@@ -112,23 +113,25 @@ def readEnsightGeo (name,partFilter, partRec):
     mesh.setup(vertices, cells)
     print partRec
     return mesh
-                
+
 
 def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, partdesc, partRec):
-    """ 
+    """
     Reads single cell part geometry from Ensight file.
+
     Param:
-      f(File):  file object
-      line(string): current line to process (should contain element type)
-      mesh(Mesh.Mesh): Mupif mesh object to accomodate new cells
-      enum(int): accumulated cell number
-      cells(list): list of individual Cells
-      vertexMapping(dict): map from vertex label (as given in Ensight file) to local number
-      partnum(int): part number
-      partdesc(list): partition description record
-      partRec(list) - output agrument (list) containing info about individual parts (number of elements). Needed by readEnsightField
+        f(File):  file object
+        line(string): current line to process (should contain element type)
+        mesh(Mesh.Mesh): Mupif mesh object to accomodate new cells
+        enum(int): accumulated cell number
+        cells(list): list of individual Cells
+        vertexMapping(dict): map from vertex label (as given in Ensight file) to local number
+        partnum(int): part number
+        partdesc(list): partition description record
+        partRec(list) - output agrument (list) containing info about individual parts (number of elements). Needed by readEnsightField
+
     Returns:
-      (line, enum)
+        (line, enum)
     """
     # if the next line is not next part record, then should be element section
     while (not re.search('\s*part\s+(\d+)', line)):
@@ -177,6 +180,7 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
 def readEnsightField (name,parts,partRec, type, mesh):
     """
     Reads either Per-node or Per-element variable file and returns corresponding Field representation.
+    
     PARAMS:
     name(string): input field name with variable data
     type(int): determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor

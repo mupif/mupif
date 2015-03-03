@@ -83,6 +83,7 @@ class Mesh(object):
     def copy(self):
         """
         This will return a copy of the receiver. 
+        
         NOTE: 
             DeepCopy will not work, as individual cells contain mesh link attributes, 
             leading to underlying mesh duplication in every cell!
@@ -90,16 +91,21 @@ class Mesh(object):
             Copy of receiver (Mesh)
         """
     def getNumberOfVertices(self):
-        """Returns the number of Vertices."""
+        """
+        Returns the number of Vertices.
+        """
         return 0;
 
     def getNumberOfCells(self):
-        """Returns the number of Cells."""
+        """
+        Returns the number of Cells.
+        """
         return 0;
-        
+
     def getVertex(self, i):
         """
         Returns i-th vertex.
+
         Returns:
              vertex (Vertex)
         """
@@ -107,18 +113,22 @@ class Mesh(object):
     def getCell(self, i):
         """
         Returns i-th cell.
+
         Returns:
              cell (Cell)
         """
-        
+
     def getMapping(self):
-        """Returns the mapping associated to mesh."""
+        """
+        Returns the mapping associated to mesh.
+        """
         return self.mapping
 
     def vertexLabel2Number(self, label):
         """
         Returns local vertex number corresponding to given label.
         If no label corresponds, throws an exception
+        
         Returns:
            vertex number (int)
         """
@@ -143,6 +153,7 @@ class Mesh(object):
 class UnstructuredMesh(Mesh):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
+    
     Attributes:
       vertexList: list of vertices
       cellList: list of interpolation cells   
@@ -171,9 +182,11 @@ class UnstructuredMesh(Mesh):
     def copy(self):
         """
         This will return a copy of the receiver. 
+        
         Note:
              DeepCopy will not work, as individual cells contain mesh link attributes, leading to 
              underliing mesh duplication in every cell!
+        
         Returns:
              Copy of receiver (UnstructuredMesh)
         """
@@ -287,15 +300,17 @@ class UnstructuredMesh(Mesh):
 
     def vertexLabel2Number(self, label):
         """Returns local vertex number corresponding to given label.
-        If no label corresponds, thows an exception"""
+        If no label corresponds, thows an exception
+        """
         if (not self.vertexDict):
             self.__buildVertexLabelMap()
         return self.vertexDict[label]
 
-        
+
     def cellLabel2Number(self, label):
         """Returns local cell number corresponding to given label.
-        If no label corresponds, thows an exception"""
+        If no label corresponds, thows an exception
+        """
         if (not self.cellDict):
             self.__buildCellLabelMap()
         return self.cellDict[label]

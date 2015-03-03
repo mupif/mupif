@@ -26,7 +26,7 @@ logger = logging.getLogger('mupif')
 import Pyro4
 import socket
 import subprocess
-import time 
+import time
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
@@ -36,6 +36,18 @@ Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 #Second, connect there
 
 def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
+    """
+    Connects to a NameServer
+    
+    | Args:
+    |   nshost (string): IP address of nameServer.
+    |   nsport (int): Nameserver port.
+    |   hkey (string): A password string
+    |   timeOut (float): Waiting time for response in seconds
+        
+    Returns:
+        Instance of a nameServer
+    """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(timeOut)
@@ -62,6 +74,15 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 
 
 def connectApp(ns, name):
+    """
+    Connects to a remote application
+    
+    | Args:
+    |    ns (instance): Instance of a nameServer
+    |    name (string): name of the application to be connected to
+    Returns:
+        Instance of application
+    """
     try:
         uri = ns.lookup(name)
         logger.debug("Found URI %s from a nameServer %s" % (uri, ns) )
@@ -81,23 +102,32 @@ def connectApp(ns, name):
 
 
 def getNSAppName(jobname, appname):
+    """
+    Get application name.
+    
+    | Args:
+    |    jobname (string): arbitrary string concatenated in the outut
+    |    appname (string): arbitrary string concatenated in the outut
+    Returns:
+        string of concatenated arguments
+    """
     return 'Mupif'+'.'+jobname+'.'+appname
 
 def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app):
     """
     Runs a simple application server
-    ARGS:
-       server(string) host name of the server
-       port(int) port number on the server where daemon will listen
-       nathost(string) hostname of the server as reported by nameserver 
-         For secure ssh tunnel it should be set to 'localhost'
-         For direct (or VPN) connections 'None'
-       natport(int) server NAT port as reported by nameserver
-       ns(string) hostname of the computer running nameserver
-       nsport(string) nameserver port
-       nsname(string) nameserver name to register application
-       app (Application) application instance
-       """
+
+    | Args:
+    |   server (string): host name of the server
+    |   port (int): port number on the server where daemon will listen
+    |   nathost (string): hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' 
+    |   natport (int): server NAT port as reported by nameserver
+    |   nshost (string): hostname of the computer running nameserver
+    |   nsport (int): nameserver port
+    |   nsname (string): nameserver name to register application
+    |   hkey (string): a password string
+    |   app (Application): application instance
+    """
     try:
         daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
         logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hmac %s' % (server, port, nathost, natport, hkey))
@@ -116,16 +146,30 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
 
 
 def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost=''):
+    """
+    Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux
+    
+    | Args:
+    |    remoteHost (string): IP of remote host
+    |    userName (string): user name
+    |    localPort (int): local port
+    |    remotePort (int): remote port
+    |    sshClient (string): path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
+    |    options (string): arguments to ssh clinent, e.g. the location of private ssh keyboard
+    |    sshHost (string): computer used for tunelling
+    Returns:
+        instance of subprocess.Popen running the tunneling command
+    """
+    
     if sshHost =='':
         sshHost = remoteHost
-    
     #use direct system command. Paramiko or sshtunnel do not work.
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
-        cmd = 'ssh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost,options)
+        cmd = 'ssh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='autossh':
-        cmd = 'autossh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost,options)
+        cmd = 'autossh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.debug("Creating autossh tunnel via command: " + cmd)
     elif 'putty' in sshClient.lower():
         #need to create a public key *.ppk using puttygen. It can be created by importing Linux private key. The path to that key is given as -i option

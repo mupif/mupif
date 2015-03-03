@@ -1,6 +1,7 @@
 class TimeStep(object):
     """
     Class representing time step.
+    
     Attributes:
       time - time at the end of time step.
       delta_t - time step length

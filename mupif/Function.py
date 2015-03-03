@@ -20,13 +20,15 @@ class Function(object):
         def evaluate (self, d):
             """
             Evaluates the function for given parameters packed as dictionary.
-	    A dictionary is container type that can store any number of Python objects, 
-	    including other container types. Dictionaries consist of pairs (called items) 
-	    of keys and their corresponding values.
-	    Example: d={'x':(1,2,3), 't':0.005} initializes dictionary contaning tuple (vector) under 'x' key, 
-	             double value 0.005 under 't' key.
-	    Some common keys: 'x': position vector 
-	                      't': time
+            
+            A dictionary is container type that can store any number of Python objects, 
+            including other container types. Dictionaries consist of pairs (called items) 
+            of keys and their corresponding values.
+            
+            Example: d={'x':(1,2,3), 't':0.005} initializes dictionary contaning tuple (vector) under 'x' key, 
+                     double value 0.005 under 't' key.
+            Some common keys: 'x': position vector 
+                              't': time
 
             ARGS:
                 d(dictionary): dictionaty containing function arguments (number and type depends on particular function)
@@ -36,11 +38,12 @@ class Function(object):
         def getID (self):
             """
             Returns reciver's ID.
-	    Returns:
-	       id (FunctionID)
+
+            Returns
+                id (FunctionID)
             """
         def getObjectID(self):
             """
-	    Returns:
-	        returns receiver's object id (int)
+            Returns:
+                returns receiver's object id (int)
             """

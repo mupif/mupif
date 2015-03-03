@@ -86,6 +86,7 @@ class Application(object):
     def setProperty(self, property, objectID=0):
         """
         Register given property in the application
+        
         ARGS:
             property (Property): the property class
             objectID (int):identifies object/submesh on which property is evaluated (optional)
@@ -93,6 +94,7 @@ class Application(object):
     def getFunction(self, funcID, objectID=0):
         """
         Returns function identified by its ID
+        
         ARGS:
             funcID (FunctionID):   function ID
             objectID (int): identifies optional object/submesh
@@ -102,6 +104,7 @@ class Application(object):
     def setFunction(self, func, objectID=0):
         """
         Register given function in the application
+        
         ARGS:
             func(Function): function to register
             objectID (int): identifies optional object/submesh
@@ -109,6 +112,7 @@ class Application(object):
     def getMesh (self, tstep):
         """
         Returns the computational mesh for given solution step.
+
         ARGS:
             tstep(TimeStep): solution step
         RETURNS:
@@ -130,8 +134,7 @@ class Application(object):
         ARGS:
             tstep(TimeStep): solution step
             stageID(int): optional argument identifying solution stage
-            runInBackground(bool): if set to True, the solution will run in background 
-              (in separate thread or remotely), if supported.
+            runInBackground(bool): if set to True, the solution will run in background (in separate thread or remotely), if supported.
 
         """
     def wait(self):
