@@ -37,16 +37,15 @@ Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 
 def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     """
-    Connects to a NameServer
+    Connects to a NameServer.
     
-    | Args:
-    |   nshost (string): IP address of nameServer.
-    |   nsport (int): Nameserver port.
-    |   hkey (string): A password string
-    |   timeOut (float): Waiting time for response in seconds
-        
-    Returns:
-        Instance of a nameServer
+    :param str nshost: IP address of nameServer
+    :param int nsport: Nameserver port.
+    :param str hkey: A password string
+    :param float timeOut: Waiting time for response in seconds
+    :return: NameServer
+    :rtype: Pyro4.naming.Nameserver
+    :except: Can not connect to a LISTENING port of nameserver
     """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,13 +74,13 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 
 def connectApp(ns, name):
     """
-    Connects to a remote application
+    Connects to a remote application.
     
-    | Args:
-    |    ns (instance): Instance of a nameServer
-    |    name (string): name of the application to be connected to
-    Returns:
-        Instance of application
+    :param Pyro4.naming.Nameserver ns: Instance of a nameServer
+    :param str name: Name of the application to be connected to
+    :return: Application
+    :rtype: Instance of an application
+    :except: Cannot find registered server or Cannot connect to application
     """
     try:
         uri = ns.lookup(name)
@@ -105,11 +104,10 @@ def getNSAppName(jobname, appname):
     """
     Get application name.
     
-    | Args:
-    |    jobname (string): arbitrary string concatenated in the outut
-    |    appname (string): arbitrary string concatenated in the outut
-    Returns:
-        string of concatenated arguments
+    :param str jobname: Arbitrary string concatenated in the outut
+    :param str appname: Arbitrary string concatenated in the outut
+    :return: String of concatenated arguments
+    :rtype: str
     """
     return 'Mupif'+'.'+jobname+'.'+appname
 
@@ -117,16 +115,17 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     """
     Runs a simple application server
 
-    | Args:
-    |   server (string): host name of the server
-    |   port (int): port number on the server where daemon will listen
-    |   nathost (string): hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' 
-    |   natport (int): server NAT port as reported by nameserver
-    |   nshost (string): hostname of the computer running nameserver
-    |   nsport (int): nameserver port
-    |   nsname (string): nameserver name to register application
-    |   hkey (string): a password string
-    |   app (Application): application instance
+    :param str server: Host name of the server
+    :param int port: Port number on the server where daemon will listen
+    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' 
+    :param int natport: Server NAT port as reported by nameserver
+    :param str nshost: Hostname of the computer running nameserver
+    :param int nsport: Nameserver port
+    :param str nsname: Nameserver name to register application
+    :param str hkey: A password string
+    :param instance app: Application instance
+    
+    :except: Can not run Pyro4 daemon
     """
     try:
         daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
@@ -149,16 +148,16 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     """
     Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux
     
-    | Args:
-    |    remoteHost (string): IP of remote host
-    |    userName (string): user name
-    |    localPort (int): local port
-    |    remotePort (int): remote port
-    |    sshClient (string): path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
-    |    options (string): arguments to ssh clinent, e.g. the location of private ssh keyboard
-    |    sshHost (string): computer used for tunelling
-    Returns:
-        instance of subprocess.Popen running the tunneling command
+    :param str remoteHost: IP of remote host
+    :param str userName: User name
+    :param int localPort: Local port
+    :param int remotePort: Remote port
+    :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
+    :param str options: Arguments to ssh clinent, e.g. the location of private ssh keyboard
+    :param str sshHost: Computer used for tunelling
+    
+    :return: Instance of subprocess.Popen running the tunneling command
+    :rtype: subprocess.Popen
     """
     
     if sshHost =='':

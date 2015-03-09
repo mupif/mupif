@@ -376,7 +376,7 @@ class UnstructuredMesh(Mesh):
 
     def getVTKRepresentation (self):
         """
-        Returns:  the VVTK representation of the receiver (pyvtk.UnstructuredGrid).
+        Returns:  the VTK representation of the receiver (pyvtk.UnstructuredGrid).
         Note: Requires pyvtk module
         """
         import pyvtk

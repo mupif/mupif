@@ -157,7 +157,7 @@ class Field(object):
                     cell.debug=1
                     print (icell.containsPoint(position), icell.glob2loc(position))
 
-            print ("Field evaluate -no source cell found for position ",position)
+            print ("Field::evaluate - no source cell found for position ",position)
             for icell in cells:
                 print (icell.number, icell.containsPoint(position), icell.glob2loc(position))
                 
@@ -165,7 +165,7 @@ class Field(object):
                 
         else:
             #no source cell found
-            print ("Field evaluate - no source cell found for position ",position)
+            print ("Field::evaluate - no source cell found for position ",position)
             raise ValueError
 
     def giveValue(self, componentID):
