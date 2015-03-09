@@ -1,0 +1,9 @@
+This example illustrates the use of units in MuPIF. 
+It shows the use of a function to see if the units can be converted (function which returns: True or False) and another function to give the conversion.
+
+
+To run the example:
+-------------------
+> python Example09.py
+
+
