@@ -25,6 +25,7 @@ logging.basicConfig(filename='mupif.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger('mupif')
 import Pyro4
 import socket
+import getpass
 import subprocess
 import time 
 
@@ -146,3 +147,9 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     time.sleep(1.0)
 
     return tunnel 
+
+
+def getUserInfo ():
+    username = getpass.getuser()
+    hostname = socket.gethostname()
+    return username+"@"+hostname
