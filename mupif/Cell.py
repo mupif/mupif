@@ -60,8 +60,8 @@ class Cell(object):
 
     def copy(self):
         """
-        This will copy the receiver, making deep copy of all 
-        attributes EXCEPT mesh attribute
+        This will copy the receiver, making deep copy of all attributes EXCEPT mesh attribute
+        
         Returns:
             the copy of receiver (Cell)
         """
@@ -82,6 +82,7 @@ class Cell(object):
     def interpolate (self, point, vertexValues):
         """
         Interpolates given vertex values to given point)
+        
         ARGS:
            point(tuple) position vector
            vertexValues(tuple) A tuple containing vertex values 
@@ -135,15 +136,21 @@ class Triangle_2d_lin(Cell):
     """Unstructured 2d triangular element with linear interpolation"""
 
     def copy(self):
-        """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
+        """
+        This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute
+        """
         return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getGeometryType(self):
-        """Returns geometry type of receiver"""
+        """
+        Returns geometry type of receiver
+        """
         return CellGeometryType.CGT_TRIANGLE_1
 
     def glob2loc(self, coords):
-        """Converts global coordinates to local (area) coordinates"""
+        """
+        Converts global coordinates to local (area) coordinates
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
@@ -567,7 +574,7 @@ class Brick_3d_lin(Cell):
                 
 
     def loc2glob(self, lc):
-        n = _evalN(lc)
+        n = self._evalN(lc)
         x = 0
         y = 0
         z = 0
@@ -581,7 +588,7 @@ class Brick_3d_lin(Cell):
     def interpolate(self, point, vertexValues):
         
         (inside, ac) = self.glob2loc(point)
-        n = _evalN(ac)
+        n = self._evalN(ac)
         
         return tuple([n[0]*v0+n[1]*v1+n[2]*v2+n[3]*v3+n[4]*v4+n[5]*v5+n[6]*v6+n[7]*v7 for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3] for v4 in vertexValues[4] for v5 in vertexValues[5] for v6 in vertexValues[6] for v7 in vertexValues[7]])
 

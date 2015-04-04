@@ -35,7 +35,7 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
 
     start = timeTime.time()
     #locate nameserver
-    ns = PyroUtil.connectNameServer('mech.fsv.cvut.cz', 9090, hkey)
+    ns = PyroUtil.connectNameServer('147.32.130.137', 9090, hkey)
 
     # locate remote PingServer application, request remote proxy
     serverApp = PyroUtil.connectApp(ns, 'Mupif.PingServerApplication')

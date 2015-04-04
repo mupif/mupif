@@ -17,14 +17,14 @@ hkey = 'mmp-secret-key'
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
+# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44361 -j ACCEPT
 # for computer running a nameserver
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
 
 class PingServerApplication(Application.Application):
     """
-    Simple application that computes an arithmetical average of mapped property
+    Simple application that computes an aritmetical average of a mapped property
     """
     def __init__(self, file):
         self.value = 0.0
@@ -53,8 +53,8 @@ class PingServerApplication(Application.Application):
         return "CTU Ping server, version 1.0"
 
 
-daemon = Pyro4.Daemon(host='mech.fsv.cvut.cz', port=44361, nathost="localhost", natport=5555)
-ns = Pyro4.locateNS(host='ksm.fsv.cvut.cz', port=9090, hmac_key=hkey)
+daemon = Pyro4.Daemon(host='147.32.130.137', port=44361, nathost="localhost", natport=5555)
+ns = Pyro4.locateNS(host='147.32.130.137', port=9090, hmac_key=hkey)
 
 app2 = PingServerApplication("/dev/null")
 #register agent

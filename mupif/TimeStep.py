@@ -1,6 +1,7 @@
 class TimeStep(object):
     """
     Class representing time step.
+    
     Attributes:
       time - time at the end of time step.
       delta_t - time step length
@@ -19,7 +20,8 @@ class TimeStep(object):
     
     def getTime(self):
         """
-        Returns time step time (double)
+        :return: Returns time step time
+        :rtype: double
         """
         return self.time
     def getTimeIncrement(self):

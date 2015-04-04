@@ -17,10 +17,19 @@ results=[]
 for apprecord in conf.apps:
     starti = timeTime.time()
     conf.logger.info("Trying to connect to server " + str(apprecord[conf.appIndx_Name]))
+    
+    #Find if we need different ssh server for authentication
+    if apprecord[conf.appIndx_SshHost] == '':
+        sshHost = apprecord[conf.appIndx_ServerName]
+    else:
+        sshHost = apprecord[conf.appIndx_SshHost]
+    
     try:
-        tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName], userName=apprecord[conf.appIndx_UserName], 
+        tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
+                                    userName=apprecord[conf.appIndx_UserName],
                                     localPort=apprecord[conf.appIndx_NATPort], remotePort=apprecord[conf.appIndx_RemotePort],
-                                    sshClient=apprecord[conf.appIndx_SshClient], options=apprecord[conf.appIndx_Options])
+                                    sshClient=apprecord[conf.appIndx_SshClient], options=apprecord[conf.appIndx_Options],
+                                    sshHost=sshHost)
 
         # connect to individual applications
         app = PyroUtil.connectApp(ns, PyroUtil.getNSAppName(conf.jobname, apprecord[conf.appIndx_Name]))
