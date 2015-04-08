@@ -36,22 +36,22 @@ tolerance = 0.01
 
 class Cell(object):
     """
-    Representation of computational cell. 
+    Representation of a computational cell. 
     
-    The solution domain is composed of cells, whose geometry is defined using vertices.
+    The solution domain is composed of cells (e.g. finite element), whose geometry is defined using vertices (e.g. nodes).
     Cells provide interpolation over their associated volume, based on given vertex values.
-    Derived classes will be implemented to support common interpolation cells 
-    (finite elements, FD stencils, etc.)
+    Derived classes will be implemented to support common interpolation cells (finite elements, FD stencils, etc.)
+    
+    .. automethod:: __init__
     """
     def __init__(self, mesh, number, label, vertices):
         """
-        Initialize the cell.
+        Initializes the cell.
 
-        ARGS:
-            mesh(Mesh): the mesh to which cell belongs.
-            number(int): local cell number
-            label(int):  cell label
-            vertices(tuple): cell vertices (local numbers)
+        :param Mesh mesh: The mesh to which a cell belongs to
+        :param int number: A local cell number
+        :param int label: A cell label
+        :param tuple vertices: A cell vertices (local numbers)
         """
         self.mesh=mesh
         self.number=number
@@ -60,44 +60,51 @@ class Cell(object):
 
     def copy(self):
         """
-        This will copy the receiver, making deep copy of all attributes EXCEPT mesh attribute
+        This will copy the receiver, making a deep copy of all attributes EXCEPT a mesh attribute
         
-        Returns:
-            the copy of receiver (Cell)
+        :return: A deep copy of a receiver
+        :rtype: Cell
         """
         return self.__class__(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getVertices (self):
         """
-        Returns:
-           the list of cell vertices (tuple of Vertex instances)
+        :return: The list of cell vertices
+        :rtype: tuple
         """
         if all(isinstance(v,int) for v in self.vertices):
             return [self.mesh.getVertex(i) for i in self.vertices]
         return self.vertices
 
     def containsPoint (self, point):
-        """Returns true if cell contains given point"""
+        """
+        Check if a cell contains a point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if cell contains a given point
+        :rtype: bool
+        """
     
     def interpolate (self, point, vertexValues):
         """
-        Interpolates given vertex values to given point)
+        Interpolates given vertex values to a given point.
         
-        ARGS:
-           point(tuple) position vector
-           vertexValues(tuple) A tuple containing vertex values 
-        Returns:
-           interpolated value (tuple) at given point
+        :param tuple point: 1D/2D/3D position vector
+        :param tuple vertexValues: A tuple containing vertex values
+        :return: Interpolated value at a given point
+        :rtype: tuple
         """
     
     def getGeometryType(self):
         """
-        Returns geometry type of receiver (CellGeometryType)
+        :return: Returns geometry type of receiver
+        :rtype: CellGeometryType
         """
 
     def getBBox(self):
         """ 
-        Returns bounding box of the receiver (BBox)
+        :return: Returns a bounding box of the receiver
+        :rtype: BBox
         """
         init=True
         try:
@@ -120,8 +127,10 @@ class Cell(object):
     def getTransformationJacobian(self, coords):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
-        Params:
-        coords(tuple): local (parametric) coordinates of the point
+        
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian
+        :rtype: float
         """
         #raise APIError.APIError("getTransformationJacobian not implemented")
 
@@ -133,23 +142,30 @@ class Cell(object):
 
 
 class Triangle_2d_lin(Cell):
-    """Unstructured 2d triangular element with linear interpolation"""
+    """
+    Unstructured 2D triangular element with linear interpolation
+    """
 
     def copy(self):
         """
-        This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute
+        This will copy the receiver, making a deep copy of all atributes EXCEPT mesh attribute
         """
         return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getGeometryType(self):
         """
-        Returns geometry type of receiver
+        :return: Returns geometry type of receiver
+        :rtype: CellGeometryType
         """
         return CellGeometryType.CGT_TRIANGLE_1
 
     def glob2loc(self, coords):
         """
-        Converts global coordinates to local (area) coordinates
+        Converts global coordinate to local (area) coordinate.
+        
+        :param tuple coords: A coordinate in global system
+        :return: local (area) coordinate
+        :rtype: tuple
         """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
@@ -167,7 +183,13 @@ class Triangle_2d_lin(Cell):
         return (l1,l2,l3)
 
     def loc2glob(self, lc):
-        """ Converts local (parametric) coordinates to global ones"""
+        """
+        Converts local (parametric) coordinates to global ones
+        
+        :param tuple lc: A local coordinate
+        :return: global coordinate
+        :rtype: tuple
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
@@ -177,11 +199,25 @@ class Triangle_2d_lin(Cell):
         return (l1*c1[0]+l2*c2[0]+l3*c3[0], l1*c1[1]+l2*c2[1]+l3*c3[1], l1*c1[2]+l2*c2[2]+l3*c3[2])
         
     def interpolate(self, point, vertexValues):
+        """
+        Interpolates given vertex values to a given point.
         
+        :param tuple point: 1D/2D/3D position vector
+        :param tuple vertexValues: A tuple containing vertex values
+        :return: Interpolated value at a given point
+        :rtype: tuple
+        """
         ac = self.glob2loc(point)
         return tuple([v0*ac[0]+v1*ac[1]+v2*ac[2] for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2]])
 
     def containsPoint(self, point):
+        """
+        Check if a cell contains a point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if cell contains a given point
+        :rtype: bool
+        """
         ac = self.glob2loc(point)
         
         for li in ac:
@@ -192,8 +228,10 @@ class Triangle_2d_lin(Cell):
     def getTransformationJacobian(self, coords):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
-        Params:
-        coords(tuple): local (parametric) coordinates of the point
+        
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian
+        :rtype: float
         """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
@@ -205,19 +243,31 @@ class Triangle_2d_lin(Cell):
 
     
 class Quad_2d_lin(Cell):
-    """Unstructured 2d quad element with linear interpolation"""
+    """
+    Unstructured 2d quad element with linear interpolation
+    """
 
     def copy(self):
-        """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
+        """
+        This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute
+        """
         return Quad_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getGeometryType(self):
-        """Returns geometry type of receiver"""
+        """
+        :return: Returns geometry type of receiver
+        :rtype: CellGeometryType
+        """
         return CellGeometryType.CGT_QUAD
 
     def glob2loc(self, coords):
-        """Converts global coordinates to local (area) coordinates"""
-        #get vertex coordinates
+        """
+        Converts global coordinate to local (area) coordinate.
+        
+        :param tuple coords: A coordinate in global system
+        :return: local (area) coordinate
+        :rtype: tuple
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
@@ -306,7 +356,13 @@ class Quad_2d_lin(Cell):
         return inside, answer
     
     def loc2glob(self, lc):
-        """ Converts local (parametric) coordinates to global ones"""
+        """
+        Converts local (parametric) coordinates to global ones
+        
+        :param tuple lc: A local coordinate
+        :return: global coordinate
+        :rtype: tuple
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
@@ -320,6 +376,14 @@ class Quad_2d_lin(Cell):
         return (n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1], n1*c1[2]+n2*c2[2]+n3*c3[2]+n4*c4[2])
         
     def interpolate(self, point, vertexValues):
+        """
+        Interpolates given vertex values to a given point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :param tuple vertexValues: A tuple containing vertex values
+        :return: Interpolated value at a given point
+        :rtype: tuple
+        """
         
         (inside, ac) = self.glob2loc(point)
         #print "glob:",point,"->loc:",ac
@@ -331,6 +395,13 @@ class Quad_2d_lin(Cell):
 
 
     def containsPoint(self, point):
+        """
+        Check if a cell contains a point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if cell contains a given point
+        :rtype: bool
+        """
         (inside, ac) = self.glob2loc(point)
         return inside
 
@@ -339,8 +410,10 @@ class Quad_2d_lin(Cell):
     def getTransformationJacobian(self, coords):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
-        Params:
-        coords(tuple): local (parametric) coordinates of the point
+        
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian
+        :rtype: float
         """
         ksi=coords[0]
         eta=coords[1]
@@ -367,18 +440,31 @@ class Quad_2d_lin(Cell):
 
 
 class Tetrahedron_3d_lin(Cell):
-    """Unstructured 3d tetrahedral element with linear interpolation"""
+    """
+    Unstructured 3d tetrahedral element with linear interpolation.
+    """
 
     def copy(self):
-        """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
+        """
+        This will copy the receiver, making a deep copy of all atributes EXCEPT mesh attribute
+        """
         return Tetrahedron_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getGeometryType(self):
-        """Returns geometry type of receiver"""
+        """
+        :return: Returns geometry type of receiver
+        :rtype: CellGeometryType
+        """
         return CellGeometryType.CGT_TETRA
 
     def glob2loc(self, coords):
-        """Converts global coordinates to local (area) coordinates"""
+        """
+        Converts global coordinate to local (area) coordinate.
+        
+        :param tuple coords: A coordinate in global system
+        :return: local (area) coordinate
+        :rtype: tuple
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
@@ -411,7 +497,13 @@ class Tetrahedron_3d_lin(Cell):
         return (l1,l2,l3,l4)
 
     def loc2glob(self, lc):
-        """ Converts local (parametric) coordinates to global ones"""
+        """
+        Converts local (parametric) coordinates to global ones
+        
+        :param tuple lc: A local coordinate
+        :return: global coordinate
+        :rtype: tuple
+        """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
@@ -425,11 +517,26 @@ class Tetrahedron_3d_lin(Cell):
         return (l1*c1[0]+l2*c2[0]+l3*c3[0]+l4*c4[0], l1*c1[1]+l2*c2[1]+l3*c3[1]+l4*c4[1], l1*c1[2]+l2*c2[2]+l3*c3[2]+l4*c4[2])
         
     def interpolate(self, point, vertexValues):
+        """
+        Interpolates given vertex values to a given point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :param tuple vertexValues: A tuple containing vertex values
+        :return: Interpolated value at a given point
+        :rtype: tuple
+        """
         
         ac = self.glob2loc(point)
         return tuple([v0*ac[0]+v1*ac[1]+v2*ac[2]+v3*ac[3] for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3]])
 
     def containsPoint(self, point):
+        """
+        Check if a cell contains a point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if cell contains a given point
+        :rtype: bool
+        """
         ac = self.glob2loc(point)
         
         for li in ac:
@@ -440,8 +547,10 @@ class Tetrahedron_3d_lin(Cell):
     def getTransformationJacobian(self, coords):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
-        Params:
-        coords(tuple): local (parametric) coordinates of the point
+        
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian
+        :rtype: float
         """
         c1=self.mesh.getVertex(self.vertices[0]).coords
         c2=self.mesh.getVertex(self.vertices[1]).coords
@@ -460,18 +569,33 @@ import numpy
 import numpy.linalg
 
 class Brick_3d_lin(Cell):
-    """Unstructured 3d tetrahedral element with linear interpolation"""
+    """
+    Unstructured 3d tetrahedral element with linear interpolation
+    
+    .. automethod:: _evalN
+    """
 
     def copy(self):
-        """This will copy the receiver, making deep copy of all atributes EXCEPT mesh attribute"""
+        """
+        This will copy the receiver, making a deep copy of all atributes EXCEPT mesh attribute
+        """
         return Brick_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     def getGeometryType(self):
-        """Returns geometry type of receiver"""
+        """
+        :return: Returns geometry type of receiver
+        :rtype: CellGeometryType
+        """
         return CellGeometryType.CGT_HEXAHEDRON
 
     def glob2loc(self, coords):
-        """Converts global coordinates to local (area) coordinates"""
+        """
+        Converts global coordinate to local (area) coordinate.
+        
+        :param tuple coords: A coordinate in global system
+        :return: local (area) coordinate
+        :rtype: tuple
+        """
         x=[0]*8
         y=[0]*8
         z=[0]*8
@@ -562,7 +686,12 @@ class Brick_3d_lin(Cell):
         return (1, tuple(answer))
         
     def _evalN(self, lc):
-        """Evaluates shape functions at given point (given in parametric coordinates)"""
+        """
+        Evaluates shape functions at given point (given in parametric coordinates)
+        :param tuple lc: A local coordinate
+        :return: shape function
+        :rtype: float
+        """
         return (0.125 * ( 1. - lc[0] ) * ( 1. - lc[1] ) * ( 1. + lc[2] ),
                 0.125 * ( 1. - lc[0] ) * ( 1. + lc[1] ) * ( 1. + lc[2] ),
                 0.125 * ( 1. + lc[0] ) * ( 1. + lc[1] ) * ( 1. + lc[2] ),
@@ -574,6 +703,13 @@ class Brick_3d_lin(Cell):
                 
 
     def loc2glob(self, lc):
+        """
+        Converts local (parametric) coordinates to global ones
+        
+        :param tuple lc: A local coordinate
+        :return: global coordinate
+        :rtype: tuple
+        """
         n = self._evalN(lc)
         x = 0
         y = 0
@@ -586,21 +722,37 @@ class Brick_3d_lin(Cell):
         return (x,y,z)
 
     def interpolate(self, point, vertexValues):
+        """
+        Interpolates given vertex values to a given point.
         
+        :param tuple point: 1D/2D/3D position vector
+        :param tuple vertexValues: A tuple containing vertex values
+        :return: Interpolated value at a given point
+        :rtype: tuple
+        """
         (inside, ac) = self.glob2loc(point)
         n = self._evalN(ac)
         
         return tuple([n[0]*v0+n[1]*v1+n[2]*v2+n[3]*v3+n[4]*v4+n[5]*v5+n[6]*v6+n[7]*v7 for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3] for v4 in vertexValues[4] for v5 in vertexValues[5] for v6 in vertexValues[6] for v7 in vertexValues[7]])
 
     def containsPoint(self, point):
+        """
+        Check if a cell contains a point.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if cell contains a given point
+        :rtype: bool
+        """
         (inside, ac) = self.glob2loc(point)
         return inside
 
     def getTransformationJacobian(self, coords):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
-        Params:
-        coords(tuple): local (parametric) coordinates of the point
+        
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian
+        :rtype: float
         """
         u=coords[0]
         v=coords[1]

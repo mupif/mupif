@@ -25,28 +25,38 @@ debug = 0
 
 class BBox(object):
     """
-    Represents an axis aligned bounding box - a rectange in 2d and prism in 3d. 
-    Its geometry is described using two points - lover left and upper right.
-    The bounding box class provides fast and efficient  methods for testing whether
-    point is inside and whether intersection with other bbox exist.
+    Represents a bounding box - a rectange in 2D and prism in 3D.
+    Its geometry is described using two points - lover left and upper right corners.
+    The bounding box class provides fast and efficient methods for testing whether
+    point is inside it and whether intersection with other BBox exist.
+    
+    .. automethod:: __init__
+    .. automethod:: __str__
     """
     def __init__(self, coords_ll, coords_ur):
-        """Constructor.
+        """
+        Constructor.
 
-        coords_ll -- tuple with coordinates of lower left corner
-        coords_ur -- tuple with coordinates of uper right corner
+        :param tuple coords_ll: Tuple with coordinates of lower left corner
+        :param tuple coords_ur: Tuple with coordinates of uper right corner
         """
         self.coords_ll = coords_ll
         self.coords_ur = coords_ur
         
     def __str__ (self):
-        """ Defines a __str__ method, Python will call it when you call str() or print
+        """
+        :return: Returns lower left and upper right coordinate of the bounding box
+        :rtype: str
         """
         return "BBox ["+str(self.coords_ll)+"-"+str(self.coords_ur)+"]"
 
     def containsPoint (self, point):
         """
-        Returns true if point inside receiver.
+        Check whether a point lies within a receiver.
+        
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if point is inside receiver, otherwise False
+        :rtype: bool
         """
         for l, u, x in zip (self.coords_ll, self.coords_ur, point):
             if (x<l or x>u):
@@ -55,7 +65,11 @@ class BBox(object):
 
     def intersects (self, bbox):
         """ 
-        Returns true if receiver intersects given bounding box.
+        Check intersection of a receiver with a bounding box
+        
+        :param BBox bbox: an instance of BBox class
+        :return: Returns True if receiver intersects given bounding box, otherwise False
+        :rtype: bool
         """
         nsd = len(self.coords_ll)
         for i in range(nsd):
@@ -65,19 +79,21 @@ class BBox(object):
                 return False
         return True
 
-
     def merge (self, entity):
         """
-        merges receiver with given entity (position or bbox)
+        Merges receiver with given entity (position vector or a BBox).
+        
+        :param tuple entity: 1D/2D/3D position vector or
+        :param BBox entity: an instance of BBox class
         """
         nsd = len(self.coords_ll)
         if isinstance(entity, BBox):
-            # merge with given bbox
+            # Merge with given bbox
             for i in range(nsd):
                 self.coords_ll[i]=min(self.coords_ll[i], entity.coords_ll[i])
                 self.coords_ur[i]=max(self.coords_ur[i], entity.coords_ur[i])
         else:
-            # merge with given coordinates
+            # Merge with given coordinates
             for i in range(nsd):
                 self.coords_ll[i]=min(self.coords_ll[i], entity[i])
                 self.coords_ur[i]=max(self.coords_ur[i], entity[i])

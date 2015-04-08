@@ -27,7 +27,7 @@ class APIError(Exception):
         """
         Returns error message from the constructor.
         
-        :return: Returns string representation of the exception, ie. error message (string).
+        :return: Returns string representation of the exception, ie. error message (string)
         :rtype: str
         """
         return repr(self.msg)

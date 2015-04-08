@@ -51,7 +51,7 @@ class JobManager(object):
     """
     An abstract class representing simple job manager. 
 
-    The purpose of the job manager is  following:
+    The purpose of the job manager is the following:
      - to allocate and register the new instance of application (called job)
      - to query the status of job
      - ro cancel the given job

@@ -36,8 +36,18 @@ debug = 0
 class MeshIterator(object):
     """
     Class implementing iterator on Mesh components (vertices, cells).
+    
+    .. automethod:: __init__
+    .. automethod:: __iter__
+    .. automethod:: __next__
     """
     def __init__(self, mesh, type):
+        """
+        Constructor.
+        
+        :param Mesh mesh: Given mesh
+        :param str type: Type of mesh, e.g. VERTICES or CELLS
+        """
         if ((type == VERTICES) or (type == CELLS)):
             self.type = type
             self.mesh = mesh
@@ -46,10 +56,18 @@ class MeshIterator(object):
             abort(0)
 
     def __iter__(self):
+        """
+        :return: Itself
+        :rtype: MeshIterator
+        """
         self.i = 0
         return self
 
     def __next__(self):
+        """
+        :return: Returns next Mesh components.
+        :rtype: MeshIterator
+        """
         if self.type == VERTICES:
             if self.i+1 <= self.mesh.getNumberOfVertices():
                 item = self.mesh.getVertex(self.i)
@@ -67,38 +85,44 @@ class MeshIterator(object):
                  raise StopIteration()
 
     def next (self):
-            return self.__next__()   #Python 2.x compatibility
+        """
+        Python 2.x compatibility, see :func:`MeshIterator.__next__`
+        """
+        return self.__next__()   #Python 2.x compatibility
 
 class Mesh(object):
     """
     Abstract representation of a computational domain.
-    Described using computational cells and vertices, determining the cell geometry.
+    Mesh contains computational cells and vertices.
     Derived classes represent structured, unstructured FE grids, FV grids, etc.
 
     Mesh is assumed to provide a suitable instance of cell and vertex localizers.
+    
+    .. automethod:: __init__
     """
     def __init__(self):
         self.mapping = None
 
     def copy(self):
         """
-        This will return a copy of the receiver. 
-        
-        NOTE: 
-            DeepCopy will not work, as individual cells contain mesh link attributes, 
-            leading to underlying mesh duplication in every cell!
-        Returns:
-            Copy of receiver (Mesh)
+        Returns a copy of the receiver.
+
+        :return: A copy of the receiver
+        :rtype: Copy of the receiver, e.g. Mesh
+
+        .. Note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh duplication in every cell!
         """
     def getNumberOfVertices(self):
         """
-        Returns the number of Vertices.
+        :return: Number of Vertices
+        :rtype: int
         """
         return 0;
 
     def getNumberOfCells(self):
         """
-        Returns the number of Cells.
+        :return: The number of Cells
+        :rtype: int
         """
         return 0;
 
@@ -106,62 +130,85 @@ class Mesh(object):
         """
         Returns i-th vertex.
 
-        Returns:
-             vertex (Vertex)
+        :param int i: i-th vertex
+        :return: vertex
+        :rtype: Vertex
         """
 
     def getCell(self, i):
         """
         Returns i-th cell.
 
-        Returns:
-             cell (Cell)
+        :param int i: i-th cell
+        :return: cell
+        :rtype: Cell
         """
 
     def getMapping(self):
         """
-        Returns the mapping associated to mesh.
+        :return: The mapping associated to a mesh
+        :rtype: ??
         """
         return self.mapping
 
     def vertexLabel2Number(self, label):
         """
-        Returns local vertex number corresponding to given label.
-        If no label corresponds, throws an exception
-        
-        Returns:
-           vertex number (int)
-        """
-        
-    def cellLabel2Number(self, label):
-        """
-        Returns local cell number corresponding to given label.
-        If no label corresponds, throws an exception
-        
-        Returns:
-            cell number (int)
+        Returns local vertex number corresponding to given label. If no label found, throws an exception.
+
+        :param str label: Vertex label
+        :return: Vertex number
+        :rtype: int
+        :except: Label not found
         """
 
-    # some basic iterators
+    def cellLabel2Number(self, label):
+        """
+        Returns local cell number corresponding to given label. If no label found, throws an exception.
+
+        :param str label: Cell label
+        :return: Cell number
+        :rtype: int
+        :except: Label not found
+        """
+
     def vertices(self):
+        """
+        :return: Iterator over vertices
+        :rtype: MeshIterator
+        """
+
         return MeshIterator(self, VERTICES) 
 
     def cells(self):
+        """
+        :return: Iterator over cells
+        :rtype: MeshIterator
+        """
         return MeshIterator(self, CELLS)
 
 
 class UnstructuredMesh(Mesh):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
-    
-    Attributes:
-      vertexList: list of vertices
-      cellList: list of interpolation cells   
-      vertexOctree: vertex spatial localizer 
-      cellOctree: cell spatial localizer
+
+    The class contains:
+
+    * vertexList: list of vertices
+    * cellList: list of interpolation cells
+    * vertexOctree: vertex spatial localizer
+    * cellOctree: cell spatial localizer
+    * vertexDict: vertex dictionary
+    * cellDict: cell dictionary
+
+    .. automethod:: __init__
+    .. automethod:: __buildVertexLabelMap__
+    .. automethod:: __buildCellLabelMap__
     """
 
     def __init__(self):
+        """
+        Constructor.
+        """
         Mesh.__init__(self)
         self.vertexList = []
         self.cellList    = []
@@ -170,25 +217,21 @@ class UnstructuredMesh(Mesh):
         #label2local_number maps
         self.vertexDict   = None
         self.cellDict     = None
-        
 
     def setup (self, vertexList, cellList):
         """
-        Initialize the receicer according to given vertex and cell lists.
+        Initializes the receicer according to given vertex and cell lists.
+
+        :param tuple vertexList: A tuple of vertices Type of tuple??
+        :param tuple cellList: A tuple of cells Type of tuple??
+
         """
         self.vertexList = vertexList
         self.cellList = cellList
 
     def copy(self):
         """
-        This will return a copy of the receiver. 
-        
-        Note:
-             DeepCopy will not work, as individual cells contain mesh link attributes, leading to 
-             underliing mesh duplication in every cell!
-        
-        Returns:
-             Copy of receiver (UnstructuredMesh)
+        See :func:`Mesh.copy`
         """
         vertexList = []
         cellList   = []
@@ -200,21 +243,34 @@ class UnstructuredMesh(Mesh):
 
 
     def getNumberOfVertices(self):
-        """Returns the number of Vertices."""
+        """
+        See :func:`Mesh.getNumberOfVertices`
+        """
         return len(self.vertexList)
 
     def getNumberOfCells(self):
-        """Returns the number of Cells."""
+        """
+        See :func:`Mesh.getNumberOfCells`
+        """
         return len(self.cellList)
 
     def getVertex(self, i):
+        """
+        See :func:`Mesh.getVertex`
+        """
         return self.vertexList[i]
 
     def getCell(self, i):
+        """
+        See :func:`Mesh.getCell`
+        """
         return self.cellList[i]
 
     def giveVertexLocalizer(self):
-        """Returns the vertex localizer."""
+        """
+        :return: Returns the vertex localizer.
+        :rtype: Octree
+        """
         if self.vertexOctree: 
             return self.vertexOctree
         else:
@@ -246,7 +302,10 @@ class UnstructuredMesh(Mesh):
             return self.vertexOctree
 
     def giveCellLocalizer(self):
-       """Returns the cell localizer."""
+       """
+       :return: Returns the cell localizer.
+       :rtype: Octree
+       """
        if self.cellOctree: 
            return self.cellOctree
        else:
@@ -264,7 +323,7 @@ class UnstructuredMesh(Mesh):
                    for i in range(len(cell.getBBox().coords_ll)):
                        minc[i]=min(minc[i], cell.getBBox().coords_ll[i])
                        maxc[i]=max(maxc[i], cell.getBBox().coords_ur[i])
-                       
+
        #setup vertex localizer
        size = max ( y-x for x,y in zip (minc,maxc))
        mask = [(y-x)>0.0 for x,y in zip (minc,maxc)]
@@ -277,7 +336,10 @@ class UnstructuredMesh(Mesh):
        if debug: print ("done in ", time.clock() - t0, "[s]")
        return self.cellOctree
 
-    def __buildVertexLabelMap(self):
+    def __buildVertexLabelMap__(self):
+        """
+        Create a custom dictionary between vertex's label and Vertex instance.
+        """
         self.vertexDict = {}
         # loop over vertex lists in both meshes
         for v in xrange(len(self.vertexList)):
@@ -287,7 +349,10 @@ class UnstructuredMesh(Mesh):
             else:
                 self.vertexDict[self.vertexList[v].label]=v
        
-    def __buildCellLabelMap(self):
+    def __buildCellLabelMap__(self):
+        """
+        Create a custom dictionary between cell's label and Cell instance.
+        """
         self.cellDict = {}
         # loop over vertex lists in both meshes
         for v in xrange(len(self.cellList)):
@@ -299,35 +364,34 @@ class UnstructuredMesh(Mesh):
 
 
     def vertexLabel2Number(self, label):
-        """Returns local vertex number corresponding to given label.
-        If no label corresponds, thows an exception
+        """
+        See :func:`Mesh.vertexLabel2Number`
         """
         if (not self.vertexDict):
-            self.__buildVertexLabelMap()
+            self.__buildVertexLabelMap__()
         return self.vertexDict[label]
 
 
     def cellLabel2Number(self, label):
-        """Returns local cell number corresponding to given label.
-        If no label corresponds, thows an exception
+        """
+        See :func:`Mesh.cellLabel2Number`
         """
         if (not self.cellDict):
-            self.__buildCellLabelMap()
+            self.__buildCellLabelMap__()
         return self.cellDict[label]
 
 
     def merge (self, mesh):
         """
-        Merges receiver with given mesh. This is based on merging mesh entities (vertices, cells) based on their labels,
-        as they refer to global ids of each entity, that should be unique
+        Merges receiver with a given mesh. This is based on merging mesh entities (vertices, cells) based on their labels, as they refer to global IDs of each entity, that should be unique.
         
-        The procedure used here is based on creating a dictionary for every componenet from both meshes, where the key is component label
-        so that the entities wth the same id could be easily identified.
+        The procedure used here is based on creating a dictionary for every componenet from both meshes, where the key is component label so that the entities with the same ID could be easily identified.
+        
+        :param Mesh mesh: Source mesh for merging
         """
-
         #build vertex2local reciver map first
         if (not self.vertexDict):
-            self.__buildVertexLabelMap()
+            self.__buildVertexLabelMap__()
         #
         #merge vertexLists
         #
@@ -349,9 +413,9 @@ class UnstructuredMesh(Mesh):
         #
         # now merge cell lists
         #
-        
+
         if (not self.cellDict):
-            self.__buildCellLabelMap()
+            self.__buildCellLabelMap__()
 
         if debug: print ("UnstructuredMesh::merge: merged cells with label:")
         for c in mesh.cells():
@@ -376,8 +440,8 @@ class UnstructuredMesh(Mesh):
 
     def getVTKRepresentation (self):
         """
-        Returns:  the VTK representation of the receiver (pyvtk.UnstructuredGrid).
-        Note: Requires pyvtk module
+        :return: VTK representation of the receiver .Requires pyvtk module.
+        :rtype: pyvtk.UnstructuredGrid
         """
         import pyvtk
 
@@ -386,7 +450,7 @@ class UnstructuredMesh(Mesh):
         tetrahedrons= []
         quads = []
         triangles = []
-        
+
         #loop over receiver vertices and create list of vertex coordinates 
         for v in xrange(len(self.vertexList)):
             vertices.append(self.vertexList[v].coords)

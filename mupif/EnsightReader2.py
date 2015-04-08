@@ -37,14 +37,13 @@ from mupif import ValueType
 def readEnsightGeo(name, partFilter, partRec):
     """
     Reads Ensight geometry file (Ensight6 format) and returns corresponding Mesh object instance. Supports only unstructured meshes.
+    Why are these functions not under EnsightReader class in EnsightReader.py??
 
-    PARAMS:
-        name(string): path to Ensight geometry file (\*.geo)
-        partFiler(tuple): only parts with id contained in partFiler will be imported
-        partRec(out) - list containing info about individual parts (number of elements). Needed by readEnsightField
-
-    Returns:
-        mesh
+    :param str name: Path to Ensight geometry file (\*.geo)
+    :param tuple partFiler: Only parts with id contained in partFiler will be imported
+    :param list partRec: A list containing info about individual parts (number of elements). Needed by readEnsightField
+    :return: mesh
+    :rtype: Mesh
     """
     vertexMapping = {}
     vertices = []
@@ -117,21 +116,19 @@ def readEnsightGeo(name, partFilter, partRec):
 
 def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, partdesc, partRec):
     """
-    Reads single cell part geometry from Ensight file.
+    Reads single cell part geometry from an Ensight file.
 
-    Param:
-        f(File):  file object
-        line(string): current line to process (should contain element type)
-        mesh(Mesh.Mesh): Mupif mesh object to accomodate new cells
-        enum(int): accumulated cell number
-        cells(list): list of individual Cells
-        vertexMapping(dict): map from vertex label (as given in Ensight file) to local number
-        partnum(int): part number
-        partdesc(list): partition description record
-        partRec(list) - output agrument (list) containing info about individual parts (number of elements). Needed by readEnsightField
-
-    Returns:
-        (line, enum)
+    :param File f: File object
+    :param str line: Current line to process (should contain element type)
+    :param Mesh mesh: Mupif mesh object to accommodate new cells
+    :param int enum: Accumulated cell number
+    :param list cells: List of individual Cells
+    :param dict vertexMapping: Map from vertex label (as given in Ensight file) to local number
+    :param int partnum: Part number
+    :param list partdesc: Partition description record
+    :param list partRec: Output agrument (list) containing info about individual parts (number of elements). Needed by readEnsightField
+    :return: line and line number??
+    :rtype: tuple (line, enum)
     """
     # if the next line is not next part record, then should be element section
     while (not re.search('\s*part\s+(\d+)', line)):
@@ -172,23 +169,19 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
         line = f.readline()
     # next part record found
     return (line, enum)
-
-
-
-            
     
-def readEnsightField (name,parts,partRec, type, mesh):
+def readEnsightField (name, parts, partRec, type, mesh):
     """
     Reads either Per-node or Per-element variable file and returns corresponding Field representation.
     
-    PARAMS:
-    name(string): input field name with variable data
-    type(int): determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
-    parts(tuple): only parts with id contained in partFiler will be imported
-    partRec(out): list containing info about individual parts (number of elements per each element type).
-    mesh(Mesh): correspond mesh
+    :param str name: Input field name with variable data
+    :param tuple parts: Only parts with id contained in partFiler will be imported
+    :param list partRec: A list containing info about individual parts (number of elements per each element type).
+    :param int type: Determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
+    :param Mesh mesh: Corresponding mesh
+    :return: Field of unknowns??, why is FID_Temperature??
+    :rtype: Field
     """
-    
     vertexVals = []
     cellVals=[]
     indx = range(6)
@@ -294,6 +287,4 @@ def readEnsightField (name,parts,partRec, type, mesh):
         # so this should be per-cell variable file -> cell based field
         field = Field.Field(mesh, FieldID.FID_Temperature ,ftype, None, None, values, Field.FieldType.FT_cellBased )
         return field
-       
-
     

@@ -33,7 +33,7 @@ debug = 0
 
 class FieldType:
     """
-    Represent the supported values of FieldType. 
+    Represent the supported values of FieldType, i.e. FT_vertexBased or FT_cellBased. 
     """
     FT_vertexBased = 1
     FT_cellBased   = 2
@@ -42,25 +42,27 @@ class FieldType:
 class Field(object):
     """
     Representation of field. Field is a scalar, vector, or tensorial 
-    quantity defined on spatial domain. The field, however is assumed
-    to be fixed in time. The field can be evaluated in any spatial point 
+    quantity defined on a spatial domain. The field, however is assumed
+    to be fixed at certain time. The field can be evaluated in any spatial point 
     belonging to underlying domain. 
 
     Derived classes will implement fields defined on common discretizations, 
     like fields defined on structured/unstructured FE meshes, FD grids, etc.
+    
+    .. automethod:: __init__
+    .. automethod:: _evaluate
     """
     def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased):
         """
         Initializes the field instance.
 
-        ARGS:
-            mesh(Mesh): Instance of Mesh class representing underlying discretization.
-            fieldID(FieldID): field type
-            valueType(ValueType): type of field values 
-            units: units of the field values
-            time(double): time
-            values(tuple): field values (format dependent of particular field type)
-            fieldType(FieldType): determines field type (vaues specified as vertex or cell values)
+        :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
+        :param FieldID fieldID: Field type (displacement, strain, temperature ...)
+        :param ValueType valueType: Type of field values (scalear, vector, tensor)
+        :param ?? units: Units of the field values
+        :param float time: Time associated with filed values
+        :param tuple values: Field values (format dependent on a particular field type)
+        :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
         self.mesh = mesh
         self.fieldID = fieldID
@@ -85,34 +87,34 @@ class Field(object):
 
     def getMesh(self):
         """
-        Returns representation of underlying discretization.
-        
-        RETURNS:
-            Mesh
+        :return: Returns a mesh of underlying discretization
+        :rtype: Mesh
         """
         return self.mesh
 
     def getValueType(self):
         """
-        Returns value type (ValueType) of the receiver.
+        :return: Returns value type of the receiver
+        :rtype: ValueType
         """
         return self.valueType
 
     def getFieldID(self):
         """
-        Returns field ID (FieldID type).
+        :return: Returns field ID
+        :rtype: FieldID
         """
         return self.fieldID
 
     def evaluate(self, positions, eps=0.001):
         """
         Evaluates the receiver at given spatial position(s).
-        
-        ARGS:
-            position (tuple or list of tuples): 3D position vectors
-            eps(double): Optional tolerance
-        RETURNS:
-            tuple or list of tuples. 
+
+        :param position: 1D/2D/3D position vectors
+        :type position: tuple, a list of tuples
+        :param float eps: Optional tolerance, default 0.001
+        :return: field value(s)
+        :rtype: tuple or a list of tuples
         """
         # test if positions is a list of positions
         if isinstance(positions, list):
@@ -126,13 +128,12 @@ class Field(object):
 
     def _evaluate(self, position, eps=0.001):
         """
-        Evaluates the receiver at given (single) spatial position.
-        
-        ARGS:
-            position (tuple): 3D position vector
-            eps(double): Optional tolerance
-        RETURNS:
-            tuple. 
+        Evaluates the receiver at a single spatial position.
+
+        :param tuple position: 1D/2D/3D position vector
+        :param float eps: Optional tolerance, default 0.001
+        :return: field value
+        :rtype: tuple
         """
         cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([ c-eps for c in position], [c+eps for c in position]))
         if len(cells):
@@ -141,7 +142,7 @@ class Field(object):
                     if icell.containsPoint(position):
                         if debug:
                             print (icell.getVertices())
-                                                    
+
                         if (self.fieldType == FieldType.FT_vertexBased):
                             try:
                                 answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
@@ -160,53 +161,51 @@ class Field(object):
             print ("Field::evaluate - no source cell found for position ",position)
             for icell in cells:
                 print (icell.number, icell.containsPoint(position), icell.glob2loc(position))
-                
+
             raise ValueError
-                
+
         else:
             #no source cell found
-            print ("Field::evaluate - no source cell found for position ",position)
+            print ("Field::evaluate - no source cell found for position ", position)
             raise ValueError
 
     def giveValue(self, componentID):
         """
-        Returns the value associated to given component (vertex or cell IP).
-        
-        ARGS:
-            componentID(tuple): identifies the component (vertexID,) or (CellID, IPID)
+        Returns the value associated with a given component (vertex or integration point on a cell).
+
+        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :return: The value
+        :rtype: tuple
         """
         return self.values[componentID]
 
     def setValue(self, componentID, value):
         """
-        Sets the value associated to given component (vertex or cell IP).
+        Sets the value associated with a given component (vertex or integration point on a cell).
         
-        ARGS:
-            componentID(tuple):  The componentID is a tuple: (vertexID,) or (CellID, IPID)
-            value(tuple):        Value to be set for given component
-        NOTE:
-            If mesh has mapping attached (a mesh view) then we have to remember value 
-            locally and record change.
-            The source field values are updated after commit() method is invoked.
+        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :param tuple value: Value to be set for a given component
+        
+        .. Note:: If a mesh has mapping attached (a mesh view) then we have to remember value locally and record change. The source field values are updated after commit() method is invoked.
         """
         self.values[componentID] = value
 
     def commit(self):
         """
-        Commits the recorded changes (via setValue method) to primary field.
+        Commits the recorded changes (via setValue method) to a primary field.
         """
     def getUnits(self):
         """
-        Returns units of the receiver.
+        :return: Returns units of the receiver
+        :rtype: ??
         """
         return self.units
 
     def merge(self, field):
         """
-        Merges the receiver with given field together. 
-        Both fields should be on different parts of the domain (can also overlap),
-        but should refer to same underlying discretization, 
-        otherwise unpredictable results can occur.
+        Merges the receiver with given field together. Both fields should be on different parts of the domain (can also overlap), but should refer to same underlying discretization, otherwise unpredictable results can occur.
+        
+        :param Field field: given field to merge with.
         """
         # first merge meshes 
         mesh = copy.deepcopy(self.mesh)
@@ -234,10 +233,10 @@ class Field(object):
 
     def field2VTKData (self):
         """
-        Returns VTK representation of the receiver. Useful for visualization.
+        Creates VTK representation of the receiver. Useful for visualization.
         
-        RETURNS:
-            VTKDataSource
+        :return: Instance of pyvtk
+        :rtype: pyvtk
         """
         import pyvtk
         if (self.fieldType == FieldType.FT_vertexBased):

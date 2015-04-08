@@ -1,5 +1,5 @@
 """ 
-This classenumeration represent the supported values of FunctionID
+This classenumeration represent the supported values of FunctionID, e.g. FuncID_ProbabilityDistribution
 """
-FuncID_ProbabilityDistrubution = 1
+FuncID_ProbabilityDistribution = 1
 

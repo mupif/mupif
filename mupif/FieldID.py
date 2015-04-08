@@ -1,5 +1,5 @@
 """ 
-This class represent the supported values of field IDs
+This class represent the supported values of field IDs, e.g. displacement, strain, temperature.
 """
 FID_Displacement = 1
 FID_Strain = 2

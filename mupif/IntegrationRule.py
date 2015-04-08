@@ -2,7 +2,7 @@
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
 # 
-#    Czech Technical University, Faculty of Civil Engineering,
+#  Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
 # 
 # This library is free software; you can redistribute it and/or
@@ -24,30 +24,27 @@ from . import CellGeometryType
 
 class IntegrationRule(object):
     """ 
-    Represent integration rule to be used on cells
+    Represent integration rule to be used on cells.
+    
+    .. automethod:: __init__
     """
     def __init__(self):
         return
-    def getIntegrationPoints(self,cgt, npt):
+    def getIntegrationPoints(self, cgt, npt):
         """
-        Returns a list of  integration points and corresponding weights
+        Returns a list of integration points and corresponding weights.
         
-        Params:
-          cgt(CellGeometryType): type of underlying cell geometry
-          npt(int): number of desired intagration points
-        Return:
-          points(list): on output contains  list of tuples containing natural coordinates of 
-                        integration point and weights. 
-                        Example [((c1_ksi, c1_eta), weight1), ((c2_ksi, c2_eta), weight2)]
+        :param CellGeometryType cgt: Type of underlying cell geometry (e.g. linear triangle CGT_TRIANGLE_1)
+        :param int npt: Number of desired integration points
+        :return: A list of tuples containing natural coordinates of integration point and weights, i.e. [((c1_ksi, c1_eta), weight1), ((c2_ksi, c2_eta), weight2)]
+        :rtype: a list of tuples
         """
-    def getRequiredNumberOfPoints(self,cgt, order):
+    def getRequiredNumberOfPoints(self, cgt, order):
         """
-        Returns required number of integration points to exactly integrate
-        polynomial of order approxOrder on given cell type.
+        Returns required number of integration points to exactly integrate polynomial of order approxOrder on a given cell type.
         
-        Params:
-          cgt(CellGeometryType): type of underlying cell geometry
-          order(int): target polynomial order
+        :param CellGeometryType cgt: Type of underlying cell geometry (e.g. linear triangle CGT_TRIANGLE_1)
+        :param int order: Target polynomial order
         """
 
 class GaussIntegrationRule(IntegrationRule):
@@ -55,6 +52,9 @@ class GaussIntegrationRule(IntegrationRule):
     Gauss integration rule.
     """
     def getIntegrationPoints(self, cgt, npt):
+        """
+        See :func:`IntegrationRule.getIntegrationPoints`.
+        """
         if (cgt == CellGeometryType.CGT_TRIANGLE_1):
             if (npt == 1):
                 return [((0.333333333333, 0.333333333333), 0.5)]
@@ -83,6 +83,9 @@ class GaussIntegrationRule(IntegrationRule):
             raise APIError.APIError("getIntegrationPoints: geometry not supported")
 
     def getRequiredNumberOfPoints(self, cgt, order):
+        """
+        See :func:`IntegrationRule.getRequiredNumberOfPoints`.
+        """
         if (cgt == CellGeometryType.CGT_TRIANGLE_1):
             if ( order <= 1 ):
                 return 1
@@ -99,4 +102,4 @@ class GaussIntegrationRule(IntegrationRule):
             else:
                 return requiredNIP*2
 
-    
+

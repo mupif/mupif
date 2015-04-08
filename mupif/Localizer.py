@@ -23,31 +23,38 @@
 
 class Localizer(object):
     """
-    A Localizer is an abstract class representing an algorithm used to 
-    partition space and quicly localize the contained objects.
+    A Localizer is an abstract class representing an algorithm used to partition space and quicly localize the contained objects.
     """
     def insert (self, item):
         """
-        Inserts given object to Localizer. Object is assume to 
-        provide giveBBox() method returning bounding volume if itself.
+        Inserts given object to Localizer. Object is assume to provide giveBBox() method returning bounding volume if itself.
+        
+        :param object item: Inserted object
         """
 
     def delete (self, item):
         """
         Deletes the given object from Localizer data structure.
+        
+        :param object item: Object to be removed
         """
     
     def giveItemsInBBox (self, bbox):
         """
-        Returns the list of all objects which bbox intersects with given bbox
+        :param BBox bbox: Bounding box
+        
+        :return: List of all objects which bbox contains and intersects
+        :rtype: tuple
         """
         return []
 
     def evaluate(self, functor):
         """
         Returns the list of all objects for which the functor is satisfied.
-        The functor is a class with two methods:
-        giveBBox() which returns an initial functor bbox 
-        evaluate(obj) which should return true if functor is satisfied for given object.
+        
+        :param object functor: The functor is a class which defines two methods: giveBBox() which returns an initial functor bbox and evaluate(obj) which should return True if the functor is satisfied for a given object.
+        
+        :return: List of all objects
+        :rtype: tuple
         """
         return []

@@ -36,7 +36,7 @@ class Application(object):
         Returns the requested field at given time. Field is identified by fieldID.
 
         :param FieldID fieldID: Identifier of the field
-        :param double time: Target time
+        :param float time: Target time
         
         :return: Returns requested field.
         :rtype: Field
@@ -46,7 +46,7 @@ class Application(object):
         Returns the uri of requested field at given time. Field is identified by fieldID.
 
         :param FieldID fieldID: Identifier of the field
-        :param double time: Target time
+        :param float time: Target time
         
         :return: Requested field uri
         :rtype: Pyro4.core.URI
@@ -75,7 +75,7 @@ class Application(object):
         Returns property identified by its ID evaluated at given time.
 
         :param PropertyID propID: property ID
-        :param double time: Time when property should to be evaluated
+        :param float time: Time when property should to be evaluated
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
 
         :return: Returns representation of requested property 
@@ -149,7 +149,7 @@ class Application(object):
     def getCriticalTimeStep(self):
         """
         :return: Returns the actual (related to current state) critical time step increment
-        :rtype: double
+        :rtype: float
         """
     def getAssemblyTime(self, tstep):
         """
@@ -158,7 +158,7 @@ class Application(object):
 
         :param TimeStep tstep: Solution step
         :return: Assembly time
-        :rtype: double, TimeStep
+        :rtype: float, TimeStep
         """
     def storeState(self, tstep):
         """
