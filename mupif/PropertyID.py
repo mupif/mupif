@@ -1,5 +1,5 @@
 """
-Module defining PropertyID as enumeration
+Module defining PropertyID as enumeration, e.g. concentration, velocity.
 """
 
 PID_Concentration = 1

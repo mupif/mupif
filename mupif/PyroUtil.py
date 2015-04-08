@@ -39,7 +39,7 @@ Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     """
     Connects to a NameServer.
-    
+
     :param str nshost: IP address of nameServer
     :param int nsport: Nameserver port.
     :param str hkey: A password string
@@ -76,7 +76,7 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 def connectApp(ns, name):
     """
     Connects to a remote application.
-    
+
     :param Pyro4.naming.Nameserver ns: Instance of a nameServer
     :param str name: Name of the application to be connected to
     :return: Application
@@ -104,7 +104,7 @@ def connectApp(ns, name):
 def getNSAppName(jobname, appname):
     """
     Get application name.
-    
+
     :param str jobname: Arbitrary string concatenated in the outut
     :param str appname: Arbitrary string concatenated in the outut
     :return: String of concatenated arguments
@@ -148,7 +148,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
 def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost=''):
     """
     Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux
-    
+
     :param str remoteHost: IP of remote host
     :param str userName: User name
     :param int localPort: Local port
@@ -156,11 +156,11 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
     :param str options: Arguments to ssh clinent, e.g. the location of private ssh keyboard
     :param str sshHost: Computer used for tunelling
-    
+
     :return: Instance of subprocess.Popen running the tunneling command
     :rtype: subprocess.Popen
     """
-    
+
     if sshHost =='':
         sshHost = remoteHost
     #use direct system command. Paramiko or sshtunnel do not work.
@@ -196,6 +196,10 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
 
 
 def getUserInfo ():
+    """
+    :return: String assembled from username+"@"+hostname
+    :rtype: str
+    """
     username = getpass.getuser()
     hostname = socket.gethostname()
     return username+"@"+hostname

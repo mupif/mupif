@@ -1,18 +1,17 @@
 class Vertex(object):
     """
-    Represent vertex.
-    Vertices in general define the geometry of interpolation cells.
-    Vertex is characterized by its position, number and label.
-    Vertex number is locally assigned number, while label is unique number referring
-    to source application.
+    Represent a vertex. Vertices define the geometry of interpolation cells. Vertex is characterized by its position, number and label. Vertex number is locally assigned number, while label is a unique number referring to source application.
+
+    .. automethod:: __init__
+    .. automethod:: __repr__
     """
     def __init__(self, number, label, coords=None):
         """
         Initializes the vertex.
-        ARGS:
-            number(int): local vertex number 
-            label(int):  vertex label 
-            coords(tuple): 3D position vector of vertex.
+
+        :param int number: Local vertex number
+        :param int label: Vertex label
+        :param tuple coords: 3D position vector of a vertex
         """
         self.number=number
         self.label=label
@@ -20,9 +19,15 @@ class Vertex(object):
 
     def getCoordinates(self):
         """
-        Returns the receiver coordinates.
+        :return: Receiver's coordinates
+        :rtype: tuple
         """
         return self.coords
+
     def __repr__(self):
+        """
+        :return: Receiver's number, label, coordinates
+        :rtype: string
+        """
         return '['+repr(self.number)+','+repr(self.label)+','+repr(self.coords)+']'
 

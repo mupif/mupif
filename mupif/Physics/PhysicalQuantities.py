@@ -48,9 +48,9 @@ class PhysicalQuantity:
     operand. A limited set of mathematical functions (from module
     Numeric) is applicable as well:
 
-      - sqrt: equivalent to exponentiation with 0.5.
+    * sqrt: equivalent to exponentiation with 0.5.
 
-      - sin, cos, tan: applicable only to objects whose unit is
+    * sin, cos, tan: applicable only to objects whose unit is
         compatible with 'rad'.
 
     See the documentation of the PhysicalQuantities module for a list
@@ -93,25 +93,25 @@ class PhysicalQuantity:
     >>> str(freeze)
     '32.0 degF'
     >>> 
-m = PQ(12,'kg')
-a = PQ('0.88 km/s**2')
-F = m*a
-print F 
+    m = PQ(12,'kg')
+    a = PQ('0.88 km/s**2')
+    F = m*a
+    print F 
 
-F = F.inBaseUnits()
-print F
+    F = F.inBaseUnits()
+    print F
 
-print F.isCompatible('MN')
-print F.isCompatible('m')
+    print F.isCompatible('MN')
+    print F.isCompatible('m')
 
-F.convertToUnit('MN') # convert to Mega Newton
-print F
-F = F + PQ(0.1, 'kPa*m**2') # kilo Pascal m^2
-print F
-print str(F)
+    F.convertToUnit('MN') # convert to Mega Newton
+    print F
+    F = F + PQ(0.1, 'kPa*m**2') # kilo Pascal m^2
+    print F
+    print str(F)
 
-value = float(str(F).split()[0])
-print value
+    value = float(str(F).split()[0])
+    print value
     """
 
     def __init__(self, *args):
@@ -487,8 +487,7 @@ class PhysicalUnit:
         """
         @param other: another unit
         @type other: L{PhysicalUnit}
-        @returns: the conversion factor and offset from this unit to
-                  another unit
+        @returns: the conversion factor and offset from this unit to another unit
         @rtype: (C{float}, C{float})
         @raises TypeError: if the units are not compatible
         """
@@ -518,8 +517,7 @@ class PhysicalUnit:
         """
         @param other: another unit
         @type other: L{PhysicalUnit}
-        @returns: C{True} if the units are compatible, i.e. if the powers of
-                  the base units are the same
+        @returns: C{True} if the units are compatible, i.e. if the powers of the base units are the same
         @rtype: C{bool}
         """
         return self.powers == other.powers

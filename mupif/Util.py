@@ -20,20 +20,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import math
-
 
 debug = False
 
-""" 
-Finds a real roots of quadratic equation:
-ax^2 + bx + c = 0
-
-By substituting x = y-t and t = a/2, 
-the equation reduces to y^2 + (b-t^2) = 0 
-which has easy solution y = +/- sqrt(t^2-b) 
-""" 
 def quadratic_real (a, b, c): 
+    """ 
+    Finds a real roots of quadratic equation: ax^2 + bx + c = 0
+
+    By substituting x = y-t and t = a/2, the equation reduces to y^2 + (b-t^2) = 0 which has easy solution y = +/-sqrt(t^2-b)
+    """ 
     import math, cmath 
     if math.fabs(a) <= 1.e-10:
         if math.fabs(b) <= 1.e-10:
@@ -41,7 +36,6 @@ def quadratic_real (a, b, c):
         else:
             return (-c/float(b),)
     else:
-        
         a, b = b / float(a), c / float(a) 
         t = a / 2.0 
         r = t**2 - b 

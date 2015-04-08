@@ -36,7 +36,7 @@ debug = 0
 class MeshIterator(object):
     """
     Class implementing iterator on Mesh components (vertices, cells).
-    
+
     .. automethod:: __init__
     .. automethod:: __iter__
     .. automethod:: __next__
@@ -44,7 +44,7 @@ class MeshIterator(object):
     def __init__(self, mesh, type):
         """
         Constructor.
-        
+
         :param Mesh mesh: Given mesh
         :param str type: Type of mesh, e.g. VERTICES or CELLS
         """

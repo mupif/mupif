@@ -13,8 +13,18 @@ from mupif import ValueType
 #debug flag
 debug = 0
 
-
 def readMesh(numNodes,nx,ny,nz,coords):
+    """
+    Reads structured 3D mesh??
+
+    :param int numNodes: Number of nodes
+    :param int nx: Number of elements in x direction
+    :param int ny: Number of elements in y direction
+    :param int nz: Number of elements in z direction
+    :param tuple coords: Coordinates for each nodes
+    :return: Mesh??
+    :rtype: Mesh
+    """
     mesh = Mesh.UnstructuredMesh()
     vertices = []
     cells = []
@@ -35,12 +45,12 @@ def readMesh(numNodes,nx,ny,nz,coords):
 
     for e in xrange(0,numElts):
         #print "elem :",e
-	i = e % (nx-1)
-	#print "ligne i :", i
-	j = (e/(nx-1))%(ny-1) 
-	#print "col j :", j
-	k = e/((nx-1)*(ny-1)) 
-	#print "k :", k
+        i = e % (nx-1)
+        #print "ligne i :", i
+        j = (e/(nx-1))%(ny-1) 
+        #print "col j :", j
+        k = e/((nx-1)*(ny-1)) 
+        #print "k :", k
 
         n1=i + j*nx + k*nx*ny
         n2=n1+1
@@ -64,7 +74,15 @@ def readMesh(numNodes,nx,ny,nz,coords):
     mesh.setup(vertices, cells)
     return mesh
 
-def readField(mesh, Data,name, type):
+def readField(mesh, Data, name, type):
+    """
+    :param Mesh mesh: Source mesh??
+    :param ?? Data: ??
+    :param str name: ??
+    :param int type: ??
+    :return: Field of unknowns
+    :rtype: Field
+    """
     values=[]
 
     if (type == 1):
@@ -105,6 +123,6 @@ def readField(mesh, Data,name, type):
         for i in xrange(0,numNodes):
             values.append((scalar[i],))
             #print "values : ", values
-        
+
     field = Field.Field(mesh, FieldID.FID_Temperature ,ftype, None, None, values, Field.FieldType.FT_vertexBased )
     return field

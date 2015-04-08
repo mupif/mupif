@@ -1,34 +1,21 @@
 class Property(object):
         """
-        Property is a characteristic value of a problem, 
-        that does not depend on spatial variable.
+        Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain.
 
-        Property represents characteristic value  of the problem. 
-        It can represent value of scalar, vector, or tensorial type. 
-        Property keeps its value, objectID, time and type.
+        Property represents characteristic value  of the problem. It can represent value of scalar, vector, or tensorial type. Property keeps its value, objectID, time and type.
 
-        Attributes:
-            value(tuple): A tuple(array) representing property value
-            time(double): Time 
-            type(int): Determines type of a property
-            objectID(int): Determines optional ID of problem object/subdomain
-            units: Property units
+        .. automethod:: __init__
         """
         def __init__(self, value, propID, valueType, time, units, objectID=0):
             """
             Initializes the property.
 
-            ARGS:
-                value(tuple): value of property.
-                  Scalar value is represented as array of size 1. 
-                  Vector is represented as values packed in tuple.
-                  Tensor is represented as 3D tensor stored in tuple, column by column.
-		propId(PropertyID): property id
-		valueType(ValueType): type of property value 
-	        time(double): time 
-                units: property units
-                objectID(int): optional ID of problem object/subdomain to which 
-                  property is related.
+            :param tuple value: A tuple (array) representing property value
+            :param PropertyID propID: Property ID
+            :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor
+            :param float time: Time
+            :param PhysicalQuantity units: Property units
+            :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
             """
             self.value = value
             self.propID = propID
@@ -41,8 +28,8 @@ class Property(object):
             """
             Returns the value of property in a tuple.
 
-            Returns:
-                Property value as array (tuple); 
+            :return: Property value as array
+            :rtype: tuple
             """
             return self.value
 
@@ -50,8 +37,8 @@ class Property(object):
             """
             Returns type of property.
 
-            RETURNS:
-                Receiver property id (PropertyID)
+            :return: Receiver's property ID
+            :rtype: PropertyID
             """
             return self.propID
 
@@ -59,8 +46,8 @@ class Property(object):
             """
             Returns property objectID.
 
-            RETURNS:
-                int
+            :return: Object's ID 
+            :rtype: int
             """
             return self.objectID
 
@@ -68,7 +55,7 @@ class Property(object):
             """
             Returns representation of property units.
 
-            Returns:
-            Returns receiver's units (Units)
+            :return: Returns receiver's units (Units)
+            :rtype: PhysicalQuantity
             """
             return self.units

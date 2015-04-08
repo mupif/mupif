@@ -1,18 +1,16 @@
 class TimeStep(object):
     """
-    Class representing time step.
-    
-    Attributes:
-      time - time at the end of time step.
-      delta_t - time step length
+    Class representing a time step.
+
+    .. automethod:: __init__
     """
     def __init__(self, t, dt, n=1):
         """
         Initializes time step.
-        ARGS:
-            t(double): time
-            dt(double): step length (time increment)
-            n(int): time step number
+
+        :param float t: Time
+        :param float dt: Step length (time increment)
+        :param int n: Optional, solution time step number, default = 1
         """
         self.time = t
         self.dt = dt
@@ -20,17 +18,19 @@ class TimeStep(object):
     
     def getTime(self):
         """
-        :return: Returns time step time
-        :rtype: double
+        :return: Time
+        :rtype: float
         """
         return self.time
     def getTimeIncrement(self):
         """
-        Returns time increment (double)
+        :return: Time increment
+        :rtype: float
         """
         return self.dt
     def getNumber(self):
         """
-        Returns receiver's number (int)
+        :return: Receiver's solution step number
+        :rtype: int
         """
         return self.number
