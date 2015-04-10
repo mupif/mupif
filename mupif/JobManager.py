@@ -69,11 +69,12 @@ class JobManager(object):
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
 
-    def allocateJob (self, user):
+    def allocateJob (self, user, nsport):
         """
         Allocates the new instance of application.
 
         :param string?? user: ??
+        :param int nsport: client port which will be used
         :return: tuple (errCode, jobID, port), where errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES).             JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23).            JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple
         """
@@ -165,7 +166,7 @@ class SimpleJobManager(JobManager):
         #self.ns = connectNameServer(nshost, nsport, hkey)
         print('SimpleJobManager: initialization done')
 
-    def allocateJob(self, user):
+    def allocateJob(self, user, nsport):
         """
         See :func:`JobManager.allocateJob`
         """
@@ -263,7 +264,7 @@ class SimpleJobManager2 (JobManager):
 
         print('SimpleJobManager: initialization done')
 
-    def allocateJob (self, user):
+    def allocateJob (self, user, nsport):
         """
         See :func:`JobManager.allocateJob`
         """
@@ -284,7 +285,7 @@ class SimpleJobManager2 (JobManager):
                 jobPort = self.freePorts.pop(0)
                 print ("SimpleJobManager: port to be assigned %d"%(jobPort))
 
-                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID])
+                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-l', str(nsport)])
                 print ("SimpleJobManager: new process has been started....")
 
                 # try to get uri from Property.psubprocess

@@ -12,7 +12,7 @@ import getopt, sys
 print "Hello: ", sys.argv[1:]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "p:j:")
+    opts, args = getopt.getopt(sys.argv[1:], "p:j:l:")
 except getopt.GetoptError as err:
     # print help information and exit:
     print str(err) # will print something like "option -a not recognized"
@@ -24,14 +24,20 @@ for o, a in opts:
         daemonPort = int(a)
     elif o in ("-j", "--job"):
         jobID = a
+    elif o in ("-l", "--clientport"):
+        clientPort = int(a)
     else:
         assert False, "unhandled option"
+
+if clientPort == -1:
+    clientPort = daemonPort
+
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(conf.nshost, conf.nsport, "mmp-secret-key")
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = Pyro4.Daemon(host=conf.daemonHost, port=daemonPort) #, nathost="localhost", natport=6666)
+daemon = Pyro4.Daemon(host=conf.daemonHost, port=daemonPort, nathost="localhost", natport=clientPort)
 
 #Initialize application
 #app = DemoApplication.DemoApplication()
@@ -60,4 +66,4 @@ daemon.requestLoop()
 
 
 def usage():
-    print "Usage: JobMan2cmd -p portnumber -j jobid"
+    print "Usage: JobMan2cmd -p portnumber -j jobid -cp portnumber"
