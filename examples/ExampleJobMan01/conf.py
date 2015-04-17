@@ -4,6 +4,7 @@ nsport = 9090
 #address where JobManager will listen through a daemon
 #daemonHost = "jaja.fsv.cvut.cz"
 #daemonPort = 44382
+#address where this server will listen through a daemon
 daemonHost = "localhost"
 daemonPort = 44382
 

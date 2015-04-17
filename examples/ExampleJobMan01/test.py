@@ -14,6 +14,7 @@ from mupif import ValueType
 import DemoApplication
 import logging
 import time as timeTime
+import getopt
 logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger()
 #ssh flag (True if a ssh tunnel need to be established)
@@ -25,6 +26,23 @@ if len(sys.argv) > 1:
 else:
     repeat = 10000
 
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "p:r:")
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print str(err) # will print something like "option -a not recognized"
+    print ("test.py -p port -r repeat")
+    sys.exit(2)
+
+repeat = 1000
+port = -1 # the port will be same as the ane assigned by the jobmanager
+for o, a in opts:
+    if o in ("-p", "--port"):
+        port = int(a)
+    elif o in ("-r"):
+        repeat = int(a)
+    else:
+        assert False, "unhandled option"
 
 #locate the nameServer
 ns = PyroUtil.connectNameServer(conf.nshost, conf.nsport, "mmp-secret-key")
@@ -41,7 +59,7 @@ jobMan = PyroUtil.connectApp(ns, 'Mupif.JobManager@demo')
 # get application allocated
 logger.info("Connected to " + jobMan.getApplicationSignature())
 try:
-    retRec = jobMan.allocateJob(PyroUtil.getUserInfo())
+    retRec = jobMan.allocateJob(PyroUtil.getUserInfo(), port)
     print retRec
 except:
     logger.info("jobMan.allocateJob() failed")
@@ -50,7 +68,7 @@ except:
 
 #TODO: establist ssh commection to port, how to select local port? this is the one as used 
 if ssh:
-    apptunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='bp', localPort=9090, remotePort=retRec[2], sshClient='ssh')
+    apptunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='bp', localPort=port, remotePort=retRec[2], sshClient='ssh')
 
 
 logger.info("Connecting to " + retRec[1] + str(retRec[2]))
