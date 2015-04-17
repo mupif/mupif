@@ -8,7 +8,7 @@ class Application(object):
     namely properties and fields. 
     New abstract data types (properties, fields) allow to hide all implementation details 
     related to discretization and data storage.
-    
+
     .. automethod:: __init__
     """
     def __init__ (self, file):
@@ -29,7 +29,7 @@ class Application(object):
         """
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
-        
+
 
     def getField(self, fieldID, time):
         """
@@ -37,7 +37,7 @@ class Application(object):
 
         :param FieldID fieldID: Identifier of the field
         :param float time: Target time
-        
+
         :return: Returns requested field.
         :rtype: Field
         """
@@ -47,7 +47,7 @@ class Application(object):
 
         :param FieldID fieldID: Identifier of the field
         :param float time: Target time
-        
+
         :return: Requested field uri
         :rtype: Pyro4.core.URI
         """
@@ -63,7 +63,7 @@ class Application(object):
             field._PyroURI = uri
             #self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
             return uri
-    
+
     def setField(self, field):
         """
         Registers the given (remote) field in application. 
@@ -84,24 +84,24 @@ class Application(object):
     def setProperty(self, property, objectID=0):
         """
         Register given property in the application
-        
+
         :param Property property: Setting property
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
         """
     def getFunction(self, funcID, objectID=0):
         """
         Returns function identified by its ID
-        
+
         :param FunctionID funcID: function ID
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
-        
+
         :return: Returns requested function
         :rtype: Function
         """
     def setFunction(self, func, objectID=0):
         """
         Register given function in the application
-        
+
         :param Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
@@ -169,7 +169,7 @@ class Application(object):
     def restoreState(self, tstep):
         """
         Restore the saved state of an application.
-        
+
         :param TimeStep tstep: Solution step
         """
     def getAPIVersion(self):

@@ -1,4 +1,13 @@
-This example ilustrates simple job manager functionality. 
+This example ilustrates job manager functionality.
+
+1. Start the server.py. It finds a nameServer on a given IP and port and runs a daemon (usually on a local computer).
+The daemon registers JobManager and sends URI to the nameServer.
+
+2. Start (multiple) instances of simulation script test.py. test.py calls JobManager.allocateJob, which calls JobMan2cmd.py with a given port and jobID.
+
+
+
+
 After starting the server (which will start job manager), the user can:
 - monitor its status (using tools/jobManStatus.py)
 - run (multiple) instancs of simulation script (test.py) that contacts the jobmanager, 

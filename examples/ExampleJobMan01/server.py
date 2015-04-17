@@ -29,8 +29,10 @@ ns = PyroUtil.connectNameServer(conf.nshost, conf.nsport, "mmp-secret-key")
 daemon = Pyro4.Daemon(host=conf.daemonHost, port=conf.daemonPort) #, nathost="localhost", natport=6666)
 
 jobMan = JobManager.SimpleJobManager2(daemon, ns, DemoApplication.DemoApplication, "DemoApplication", (9090, 9091, 9092, 9093, 9094, 9095, 9096, 9097, 9098, 9099), 4)
-#register agent
-uri    = daemon.register(jobMan)
+#set up daemon with JobManager
+uri = daemon.register(jobMan)
+#register JobManager to nameServer
 ns.register("Mupif.JobManager@demo", uri)
-print (uri)
+print ("Daemon for JobManager runs at " + str(uri))
+#wait for requests
 daemon.requestLoop()

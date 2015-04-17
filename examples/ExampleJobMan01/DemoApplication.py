@@ -18,7 +18,7 @@ class DemoApplication (Application.Application):
     """
     def __init__(self):
         self.count = 0
-    
+
     def setProperty(self, property, objectID=0):
         propID = property.getPropertID()
         if (propID == PropertyID.PID_Demo_Value):

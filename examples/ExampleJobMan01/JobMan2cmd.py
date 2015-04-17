@@ -9,7 +9,7 @@ from mupif import PyroUtil
 import Pyro4
 import getopt, sys
 
-print "Hello: ", sys.argv[1:]
+print "JobMan2cmd: ", sys.argv[1:]
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "p:j:")

@@ -25,9 +25,13 @@ debug = False
 
 def quadratic_real (a, b, c): 
     """ 
-    Finds a real roots of quadratic equation: ax^2 + bx + c = 0
+    Finds a real roots of quadratic equation: ax^2 + bx + c = 0. By substituting x = y-t and t = a/2, the equation reduces to y^2 + (b-t^2) = 0 which has easy solution y = +/-sqrt(t^2-b)
 
-    By substituting x = y-t and t = a/2, the equation reduces to y^2 + (b-t^2) = 0 which has easy solution y = +/-sqrt(t^2-b)
+    :param float a: Parameter from quadratic equation
+    :param float b: Parameter from quadratic equation
+    :param float c: Parameter from quadratic equation
+    :return: Two real roots if they exist
+    :rtype: tuple
     """ 
     import math, cmath 
     if math.fabs(a) <= 1.e-10:

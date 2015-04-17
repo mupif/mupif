@@ -23,7 +23,7 @@ for apprecord in conf.apps:
         sshHost = apprecord[conf.appIndx_ServerName]
     else:
         sshHost = apprecord[conf.appIndx_SshHost]
-    
+
     try:
         tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
                                     userName=apprecord[conf.appIndx_UserName],

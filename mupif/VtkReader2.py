@@ -35,7 +35,7 @@ def readMesh(numNodes,nx,ny,nz,coords):
         vertices.append(Vertex.Vertex(i, i+1, (x,y,z)))
 
     print numNodes
-        
+
     numElts = (nx-1)*(ny-1)*(nz-1)
     print numElts
 

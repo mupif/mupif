@@ -1,9 +1,12 @@
 #where is a running nameserver
 nshost = "ksm.fsv.cvut.cz"
 nsport = 9090
-#address where this server will listen through a daemon
-daemonHost = "jaja.fsv.cvut.cz"
+#address where JobManager will listen through a daemon
+#daemonHost = "jaja.fsv.cvut.cz"
+#daemonPort = 44382
+daemonHost = "localhost"
 daemonPort = 44382
+
 
 import sys
 sys.path.append('../..')

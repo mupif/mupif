@@ -237,8 +237,8 @@ class SimpleJobManager2 (JobManager):
     """
     def __init__ (self, daemon, ns, appAPIClass, appName, ports, maxJobs=1):
         """
-        :param tuple ports: Tuple containing ports to use (size of ports should be equal to maxJobs)
-        
+        :param tuple ports: Tuple containing ports to use (size of ports should be less or equal to maxJobs)
+
         See :func:`SimpleJobManager.__init__`
         """
         super(SimpleJobManager2, self).__init__(appName, maxJobs)
@@ -259,7 +259,6 @@ class SimpleJobManager2 (JobManager):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('localhost', 10000))
         self.s.listen(1)
-
 
         print('SimpleJobManager: initialization done')
 

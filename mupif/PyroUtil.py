@@ -116,10 +116,10 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     """
     Runs a simple application server
 
-    :param str server: Host name of the server
-    :param int port: Port number on the server where daemon will listen
-    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' 
-    :param int natport: Server NAT port as reported by nameserver
+    :param str server: Host name of the server (internal host name)
+    :param int port: Port number on the server where daemon will listen (internal port number)
+    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
+    :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
     :param str nsname: Nameserver name to register application
