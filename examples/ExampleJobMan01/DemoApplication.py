@@ -18,6 +18,7 @@ class DemoApplication (Application.Application):
     """
     def __init__(self):
         self.count = 0
+        self.daemonRunning = True
 
     def setProperty(self, property, objectID=0):
         propID = property.getPropertID()

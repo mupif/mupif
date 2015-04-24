@@ -1,26 +1,36 @@
-import conf
+import sys
 import socket
 
-import logging
-logging.getLogger().setLevel(logging.DEBUG)
-logger = logging.getLogger()
 
-from mupif import PyroUtil
+#Results are printed through a logger only - communication with this subprocess is peculiar
+import logging
 import Pyro4
+logging.basicConfig(filename='JobMan2cmd.log',filemode='w',level=logging.DEBUG)
+logger = logging.getLogger()
+logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
+
+sys.path.append('../..')
+from mupif import PyroUtil
+
 import getopt, sys
 
-print "JobMan2cmd: ", sys.argv[1:]
+import PingServerApplication
 
 def usage():
     print "Usage: JobMan2cmd -p portnumber -j jobid -n natport"
+
+print "JobMan2cmd: ", sys.argv[1:]
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "p:j:n:", ['port=','job=','natport='])
 except getopt.GetoptError as err:
     # print help information and exit:
-    print str(err) # will print something like "option -a not recognized"
+    logger.exception(err)
     usage()
     sys.exit(2)
+
+daemonPort = None
+jobID = None
 
 for o, a in opts:
     if o in ("-p", "--port"):
@@ -32,25 +42,24 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
+if daemonPort == None or jobID == None:
+    logger.error('missing options -p and -j')
+    usage()
+    sys.exit(2)
+
 if natPort == -1:
     natPort = daemonPort
 
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(conf.nshost, conf.nsport, "mmp-secret-key")
+ns = PyroUtil.connectNameServer(nshost='147.32.130.137', nsport=9090, hkey='mmp-secret-key')
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-nathost='localhost'
-try:
-    daemon = Pyro4.Daemon(host=conf.daemonHost, port=daemonPort, nathost=nathost, natport=natPort)
-except Exception as e:
-    logger.debug('Daemon can not be started: host:%s, port:%d, nathost:%s, natport:%d' % (conf.daemonHost, daemonPort, nathost, natPort))
-    logger.exception(e)
-
+daemon = PyroUtil.runDaemon(host='localhost', port=44382, nathost='localhost', natport=natPort)
 
 #Initialize application
 #app = DemoApplication.DemoApplication()
-app = conf.appClass()
+app = PingServerApplication.PingServerApplication()
 app.registerPyro(daemon, ns)
 
 
@@ -58,14 +67,14 @@ app.registerPyro(daemon, ns)
 uri = daemon.register(app)
 ns.register(jobID, uri)
 
-#
+##
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('localhost', 10000))
 s.sendall(uri.asString())
 s.close()
 
-print 
-print "done"
+#print 
+#print "done"
 
 daemon.requestLoop()
 

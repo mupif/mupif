@@ -23,6 +23,7 @@
 import logging
 logging.basicConfig(filename='mupif.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger('mupif')
+#logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 import Pyro4
 import socket
 import getpass
@@ -63,7 +64,7 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     #locate nameserver
     try:
         ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
-        msg = "Connected to NameServer on %s:%s. Pyro4 version on your local computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
+        msg = "Connected to NameServer on %s:%s. Pyro4 version on this computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
         logger.debug(msg)
     except Exception as e:
         msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Do you have the correct hmac_key (password is now %s)? Exiting." %(nshost, nsport, Pyro4.constants.VERSION, hkey)
@@ -112,6 +113,26 @@ def getNSAppName(jobname, appname):
     """
     return 'Mupif'+'.'+jobname+'.'+appname
 
+def runDaemon(host, port, nathost, natport):
+    """
+    Runs a daemon without geristering to a name server
+    :param str(int) host: Host name where daemon runs. This is typically a localhost
+    :param int port: Port number where daemon will listen (internal port number)
+    :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
+    :param int natport: Server NAT port, optional (external port)
+    
+    :return Instance of the running daemon, None if a problem
+    :rtype Pyro4.Daemon 
+    """
+    try:
+        daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
+        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+    except Exception as e:
+        logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+        logger.exception(e)
+        daemon = None
+    return daemon
+
 def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app):
     """
     Runs a simple application server
@@ -125,12 +146,12 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param str nsname: Nameserver name to register application
     :param str hkey: A password string
     :param instance app: Application instance
-    
+
     :except: Can not run Pyro4 daemon
     """
     try:
         daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hmac %s' % (server, port, nathost, natport, hkey))
+        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
     except Exception as e:
         logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
         logger.exception(e)
@@ -140,9 +161,9 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     #register agent
     uri = daemon.register(app)
     ns.register(nsname, uri)
-    logger.debug('NameServer %s registered uri %s' % (nsname, uri) )
-    daemon.requestLoop()
+    logger.debug('NameServer %s has registered uri %s' % (nsname, uri) )
     logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, nameServerName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport,nsname,uri) )
+    daemon.requestLoop()
 
 
 def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost=''):
@@ -154,8 +175,8 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     :param int localPort: Local port
     :param int remotePort: Remote port
     :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
-    :param str options: Arguments to ssh clinent, e.g. the location of private ssh keyboard
-    :param str sshHost: Computer used for tunelling
+    :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
+    :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
 
     :return: Instance of subprocess.Popen running the tunneling command
     :rtype: subprocess.Popen

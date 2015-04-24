@@ -3,7 +3,7 @@ This example ilustrates job manager functionality.
 1. Start the server.py. It finds a nameServer on a given IP and port and runs a daemon (usually on a local computer).
 The daemon registers JobManager and sends URI to the nameServer.
 
-2. Start (multiple) instances of simulation script test.py. test.py calls JobManager.allocateJob, which calls JobMan2cmd.py with a given port and jobID.
+2. Start (multiple) instances of simulation script test.py. test.py calls JobManager.allocateJob(), which calls JobMan2cmd.py with a given port and jobID. This ensures that each JobMan2cmd.py has different GIL (Global Interpreter Lock)
 
 
 

@@ -21,13 +21,14 @@ from mupif import ValueType
 from mupif import PyroUtil
 import time as timeTime
 
+#use numerical IP values only (not names, sometimes they do not work)
 try:#tunnel must be closed at the end, otherwise bound socket may persist on system
     if(sys.platform.lower().startswith('win')):
         #Windows tunnel using putty
-        tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44361, sshClient='C:\\Program Files\\Putty\putty.exe', options='-i C:\\tmp\\id_rsa-putty-private.ppk')
+        tunnel = PyroUtil.sshTunnel(remoteHost='147.32.130.137', userName='mmp', localPort=5555, remotePort=44361, sshClient='C:\\Program Files\\Putty\putty.exe', options='-i C:\\tmp\\id_rsa-putty-private.ppk')
     else:
-        #Linux tunnel using ssh
-        tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='mmp', localPort=5555, remotePort=44361, sshClient='ssh', options='-oStrictHostKeyChecking=no')
+        #NIX tunnel
+        tunnel = PyroUtil.sshTunnel(remoteHost='147.32.130.137', userName='mmp', localPort=5555, remotePort=44361, sshClient='ssh', options='-oStrictHostKeyChecking=no')
 
     time  = 0
     dt    = 1
@@ -70,7 +71,7 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
         logger.info("Test PASSED")
     else:
         logger.info("Test FAILED")
-    
+
     serverApp.terminate();
     logger.info("Time consumed %f s" % (timeTime.time()-start))
     logger.info("Ping test finished")

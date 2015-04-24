@@ -8,7 +8,6 @@ nsport = 9090
 daemonHost = "localhost"
 daemonPort = 44382
 
-
 import sys
 sys.path.append('../..')
 import os
@@ -20,6 +19,8 @@ Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 Pyro4.config.AUTOPROXY=False
+Pyro4.config.COMMTIMEOUT = 10.0 #network communication timeout in seconds.
+#Pyro4.config.SOCK_REUSE = True #can use occupied port. This will not work for the ssh tunnel, which needs a free port to bind to.
 
 import logging
 logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)

@@ -15,16 +15,17 @@ import DemoApplication
 import logging
 import time as timeTime
 import getopt
-logging.getLogger().setLevel(logging.DEBUG)
+#logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger()
-#ssh flag (True if a ssh tunnel need to be established)
+
+#ssh flag (True if a ssh tunnel needs to be established)
 ssh = False
 
 #parse arguments
 if len(sys.argv) > 1:
     repeat = int(sys.argv[1])
 else:
-    repeat = 10000
+    repeat = 1000
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "p:r:")
@@ -34,8 +35,7 @@ except getopt.GetoptError as err:
     print ("test.py -p port -r repeat")
     sys.exit(2)
 
-repeat = 1000
-port = -1 # the port will be same as the ane assigned by the jobmanager
+port = -1 # the port will be assigned by the jobManager
 for o, a in opts:
     if o in ("-p", "--port"):
         port = int(a)
@@ -51,13 +51,10 @@ if ssh:
     tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='bp', localPort=5353, remotePort=44382, sshClient='ssh')
 
 
-
 start = timeTime.time()
 # locate remote jobManager application, request remote proxy
 jobMan = PyroUtil.connectApp(ns, 'Mupif.JobManager@demo')
 
-# get application allocated
-logger.info("Connected to " + jobMan.getApplicationSignature())
 try:
     retRec = jobMan.allocateJob(PyroUtil.getUserInfo(), port)
     print retRec
@@ -66,7 +63,7 @@ except:
     raise
     exit(1)
 
-#TODO: establist ssh commection to port, how to select local port? this is the one as used 
+#TODO: establish a ssh commection to port, how to select local port? this is the one as used 
 if ssh:
     apptunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='bp', localPort=port, remotePort=retRec[2], sshClient='ssh')
 
@@ -83,7 +80,6 @@ retProp = app.getProperty(PropertyID.PID_Demo_Value, 0.0)
 logger.info("Received " + str(retProp.getValue()))
 app.terminate()
 jobMan.terminateJob(retRec[1])
-
 
 
 logger.info("Time consumed %f s" % (timeTime.time()-start))

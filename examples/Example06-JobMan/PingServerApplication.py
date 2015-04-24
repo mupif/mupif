@@ -1,38 +1,23 @@
 import sys
 sys.path.append('../..')
-
-import logging
-logging.basicConfig(filename='mupif.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger('mupif')
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
-
+#from mupif import *
 from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
 from mupif import PropertyID
-from mupif import Property
+from mupif import FieldID
+from mupif import Mesh
+from mupif import Field
 from mupif import ValueType
+from mupif import Vertex
+from mupif import Cell
 from mupif import PyroUtil
-import os
-
-import Pyro4
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-hkey = 'mmp-secret-key'
-
-# required firewall settings (on ubuntu):
-# for computer running daemon (this script)
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44361 -j ACCEPT
-# for computer running a nameserver
-# sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
-
+from mupif import Property
+from mupif import IntegrationRule
 
 class PingServerApplication(Application.Application):
     """
     Simple application that computes an aritmetical average of a mapped property
     """
-    def __init__(self, file):
+    def __init__(self):
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
@@ -56,9 +41,4 @@ class PingServerApplication(Application.Application):
         return 1.0
 
     def getApplicationSignature(self):
-        return "CTU Ping server, version 1.0"
-
-
-app2 = PingServerApplication("/dev/null")
-
-PyroUtil.runAppServer( server='147.32.130.137', port=44361, nathost='localhost', natport=5555, nshost='147.32.130.137', nsport=9090, nsname='Mupif.PingServerApplication', hkey='mmp-secret-key', app=app2 )
+        return "PingServerApplication"

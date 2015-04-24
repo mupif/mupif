@@ -15,7 +15,7 @@ class Application(object):
         """
         Constructor. Initializes the application.
 
-        :param str file: path to application initialization file.
+        :param str file: Name of file
         """
         self.pyroDaemon = None
         self.pyroNS = None
@@ -183,8 +183,9 @@ class Application(object):
         :rtype: str
         """
         return "Application"
+
     def terminate(self):
         """
         Terminates the application.
         """
-
+        self.pyroDaemon.shutdown()
