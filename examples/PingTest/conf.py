@@ -19,7 +19,7 @@ apps=[('ctu-server','147.32.130.137', 'mmp', 5554, 44382, sshClient,options,''),
       ('celsian','192.168.16.6', 'mmp', 5555, 44381, sshClient, options+sshPortSpec+'223', 'remote.celsian.nl')
       ]
       #Missing TNO server
-      
+
       #('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'C:\\Program Files (x86)\\Putty\\putty.exe','-i C:\\Users\mmp\mupif-code\\id_rsa-putty-private.ppk'),
       #('celsian','jaja.fsv.cvut.cz', 'bp', 5555, 44381,'ssh',''),
       #('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382,'C:\\Program Files\\Putty\putty.exe','-i C:\\tmp\\id_rsa-putty-private.ppk')]
@@ -27,7 +27,7 @@ apps=[('ctu-server','147.32.130.137', 'mmp', 5554, 44382, sshClient,options,''),
       #('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, 'ssh',''),
       #('local','localhost', 'mmp', 44382, 44382, 'manual','-oStrictHostKeyChecking=no')
       #('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, 'ssh','')
-      
+
 
 #jobname - do not change 
 jobname = 'PingTest'

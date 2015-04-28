@@ -1,20 +1,14 @@
-import sys
+import conf
 import socket
-
 
 #Results are printed through a logger only - communication with this subprocess is peculiar
 import logging
-import Pyro4
 logging.basicConfig(filename='JobMan2cmd.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger()
 logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 
-sys.path.append('../..')
-from mupif import PyroUtil
-
+from mupif import *
 import getopt, sys
-
-import PingServerApplication
 
 def usage():
     print "Usage: JobMan2cmd -p portnumber -j jobid -n natport"
@@ -52,14 +46,14 @@ if natPort == -1:
 
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost='147.32.130.137', nsport=9090, hkey='mmp-secret-key')
+ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = PyroUtil.runDaemon(host='localhost', port=44382, nathost='localhost', natport=natPort)
+daemon = PyroUtil.runDaemon(host='localhost', port=conf.jobDaemonPort, nathost=conf.nathost, natport=natPort)
 
 #Initialize application
 #app = DemoApplication.DemoApplication()
-app = PingServerApplication.PingServerApplication()
+app = conf.PingServerApplication.PingServerApplication()
 app.registerPyro(daemon, ns)
 
 

@@ -1,30 +1,9 @@
-import sys
-sys.path.append('../..')
-
+import conf
+from mupif import *
 import logging
 logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger('server')
 logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
-
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
-from mupif import PyroUtil
-from mupif import JobManager
-
-import PingServerApplication
-
-import os
-
-
-import Pyro4
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-hkey = 'mmp-secret-key'
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -34,18 +13,17 @@ hkey = 'mmp-secret-key'
 
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost='147.32.130.137', nsport=9090, hkey=hkey)
+ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
-
-#Run a daemon for jobMamager
-daemon = PyroUtil.runDaemon(host='localhost', port=44361, nathost='localhost', natport=5555)
+#Run a daemon for jobMamager on this machine
+daemon = PyroUtil.runDaemon(host=conf.jobManDaemon, port=conf.jobManPort, nathost=conf.nathost, natport=conf.natport)
 #Run job manager on a server
-jobMan = JobManager.SimpleJobManager2(daemon, ns, PingServerApplication.PingServerApplication, "Mupif.PingServerApplication", ( 9091, 9092, 9093, 9094), 4)
+jobMan = JobManager.SimpleJobManager2(daemon, ns, conf.PingServerApplication, "Mupif.PingServerApplication", conf.jobManPortsForJobs, conf.jobManMaxJobs)
 
 #set up daemon with JobManager
 uri = daemon.register(jobMan)
 #register JobManager to nameServer
-ns.register("Mupif.JobManager@demo", uri)
+ns.register(conf.jobManName, uri)
 print ("Daemon for JobManager runs at " + str(uri))
 #waits for requests
 daemon.requestLoop()

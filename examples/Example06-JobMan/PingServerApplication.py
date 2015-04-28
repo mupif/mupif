@@ -1,17 +1,5 @@
-import sys
-sys.path.append('../..')
-#from mupif import *
-from mupif import Application
-from mupif import PropertyID
-from mupif import FieldID
-from mupif import Mesh
-from mupif import Field
-from mupif import ValueType
-from mupif import Vertex
-from mupif import Cell
-from mupif import PyroUtil
-from mupif import Property
-from mupif import IntegrationRule
+import conf
+from mupif import *
 
 class PingServerApplication(Application.Application):
     """
@@ -22,12 +10,12 @@ class PingServerApplication(Application.Application):
         self.count = 0.0
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.Property(float(self.value)/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, None, 0)
+        if (propID == PropertyID.PID_Demo_Value):
+            return Property.Property(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, time, propID, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
-        if (property.getPropertID() == PropertyID.PID_Concentration):
+        if (property.getPropertID() == PropertyID.PID_Demo_Value):
             # remember the mapped value
             self.contrib = property.getValue()
         else:

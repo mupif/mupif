@@ -13,6 +13,8 @@ class application1(Application.Application):
     Simple application that generates a property with a value equal to actual time
     """
     def __init__(self, file):
+        #calls constructor from Application module
+        super(application1, self).__init__(file)
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -31,6 +33,7 @@ class application2(Application.Application):
     Simple application that computes an arithmetical average of mapped property
     """
     def __init__(self, file):
+        super(application2, self).__init__(file)
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0

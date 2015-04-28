@@ -87,6 +87,3 @@ logger.info("Test finished")
 
 if ssh:
     tunnel.terminate()
-
-
-

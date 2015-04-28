@@ -188,4 +188,5 @@ class Application(object):
         """
         Terminates the application.
         """
-        self.pyroDaemon.shutdown()
+        if self.pyroDaemon:
+            self.pyroDaemon.shutdown()
