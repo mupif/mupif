@@ -16,7 +16,7 @@ logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=conf.jobManDaemon, port=conf.jobManPort, nathost=conf.nathost, natport=conf.natport)
+daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=conf.jobManPort, nathost=conf.nathost, natport=conf.jobManNatport)
 #Run job manager on a server
 jobMan = JobManager.SimpleJobManager2(daemon, ns, conf.PingServerApplication, "Mupif.PingServerApplication", conf.jobManPortsForJobs, conf.jobManMaxJobs)
 

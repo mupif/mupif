@@ -1,19 +1,18 @@
 import conf
 from mupif import *
 import logging
-logging.basicConfig(filename='scenario.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger('scenario')
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
+logger = logging.getLogger()
 
 import time as timeTime
 start = timeTime.time()
+logger.info('Timer started')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
 #create tunnel to JobManager running on (remote) server
 try:
-    tunnelJobMan = PyroUtil.sshTunnel(remoteHost=conf.jobManDaemon, userName=conf.serverUserName, localPort=conf.natport, remotePort=conf.jobManPort, sshClient='ssh')
+    tunnelJobMan = PyroUtil.sshTunnel(remoteHost=conf.deamonHost, userName=conf.hostUserName, localPort=conf.jobManNatport, remotePort=conf.jobManPort, sshClient='ssh')
 except Exception as e:
     logger.debug("Creating ssh tunnel for JobManager failed")
     logger.exception(e)
@@ -27,19 +26,21 @@ else:
     #JobMan will assign a free port from a given list on the server (9091, 9092, 9093, 9094).
     #This port will be mapped to this computer's port 6000
     try:
-        retRec = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=conf.jobDaemonNatPort)
+        retRec = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=conf.jobNatPort)
         logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception as e:
         logger.info("jobMan.allocateJob() failed")
         logger.exception(e)
     #create tunnel to application's daemon running on (remote) server
     try:
-        tunnelApp = PyroUtil.sshTunnel(remoteHost=conf.jobManDaemon, userName=conf.serverUserName, localPort=conf.jobDaemonNatPort, remotePort=conf.jobDaemonPort, sshClient='ssh')
+        tunnelApp = PyroUtil.sshTunnel(remoteHost=conf.deamonHost, userName=conf.hostUserName, localPort=conf.jobNatPort, remotePort=retRec[2], sshClient='ssh')
     except Exception as e:
         logger.info("Creating ssh tunnel for application's daemon failed")
         logger.exception(e)
     else:
-        logger.info("Connecting to " + retRec[1] + " " + str(retRec[2]))
+        logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
+
+        timeTime.sleep(2)
         # connect to (remote) application, requests remote proxy
         app = PyroUtil.connectApp(ns, retRec[1])
 

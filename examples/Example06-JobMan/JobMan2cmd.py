@@ -1,14 +1,11 @@
 import conf
 import socket
-
-#Results are printed through a logger only - communication with this subprocess is peculiar
+import getopt, sys
 import logging
-logging.basicConfig(filename='JobMan2cmd.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger()
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 
 from mupif import *
-import getopt, sys
+#Results are printed through a logger only - communication with this subprocess is peculiar
+logger = logging.getLogger()
 
 def usage():
     print "Usage: JobMan2cmd -p portnumber -j jobid -n natport"
@@ -49,7 +46,7 @@ if natPort == -1:
 ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = PyroUtil.runDaemon(host='localhost', port=conf.jobDaemonPort, nathost=conf.nathost, natport=natPort)
+daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=daemonPort, nathost=conf.nathost, natport=natPort)
 
 #Initialize application
 #app = DemoApplication.DemoApplication()
@@ -61,16 +58,11 @@ app.registerPyro(daemon, ns)
 uri = daemon.register(app)
 ns.register(jobID, uri)
 
-##
+logger.info('Signature is %s' % app.getApplicationSignature() )
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(('localhost', 10000))
 s.sendall(uri.asString())
 s.close()
 
-#print 
-#print "done"
-
 daemon.requestLoop()
-
-
-

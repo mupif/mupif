@@ -26,8 +26,9 @@ import socket
 import time as timeTime
 import Pyro4
 import logging
-logging.basicConfig(filename='jobman.log',filemode='w',level=logging.DEBUG)
+#logging.basicConfig(filename='jobman.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger('jobman')
+#logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 
 #error codes
 JOBMAN_OK = 1
@@ -77,7 +78,7 @@ class JobManager(object):
         :return: tuple (errCode, jobID, port), where errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES).             JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23).            JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple
         """
-        print('JobManager:allocateJob is abstract')
+        logger.debug('JobManager:allocateJob is abstract')
         return (JOBMAN_ERR,None)
 
     def terminateJob (self, jobID):
@@ -165,24 +166,23 @@ class SimpleJobManager(JobManager):
         #self.pyroDaemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport) 
         #self.pyroDaemon.requestLoop()
         #self.ns = connectNameServer(nshost, nsport, hkey)
-        print('SimpleJobManager: initialization done')
+        logger.debug('SimpleJobManager: initialization done')
 
     def allocateJob(self, user, natPort):
         """
         See :func:`JobManager.allocateJob`
         """
         self.lock.acquire()
-        print ("SimpleJobManager:allocateJob...")
+        logger.debug('SimpleJobManager:allocateJob...')
         if (len(self.activeJobs) >= self.maxJobs):
-            print ("SimpleJobManager: no more resources")
+            logger.error('SimpleJobManager: no more resources')
             self.lock.release()
             return (JOBMAN_NO_RESOURCES,None)
         else:
-            print ("haha")
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
-            print ("SimpleJobManager: trying to allocate "+jobID)
+            logger.debug('SimpleJobManager: trying to allocate '+jobID)
             # run the new application instance in a new thread
             try:
                 app = self.appAPIClass()
@@ -192,15 +192,15 @@ class SimpleJobManager(JobManager):
                 #register agent
                 uri = self.daemon.register(app)
                 self.ns.register(jobID, uri)
-                print ('NameServer %s registered uri %s' % (jobID, uri) )
+                logger.info('NameServer %s registered uri %s' % (jobID, uri) )
 
             except:
-                print "Unable to start thread"
+                logger.error('Unable to start thread')
                 self.lock.release()
                 raise
                 return (JOBMAN_ERR,None)
 
-            print ("SimpleJobManager:allocateJob: allocated " + jobID)
+            logger.info('SimpleJobManager:allocateJob: successfully allocated ' + jobID)
             self.lock.release()
             return (JOBMAN_OK, jobID, self.jobPort)
 
@@ -211,7 +211,7 @@ class SimpleJobManager(JobManager):
         self.lock.acquire()
         self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
         del self.activeJobs[jobID]
-        print ("SimpleJobManager:terminateJob: job terminated " + jobID)
+        logger.debug('SimpleJobManager:terminateJob: job terminated ' + jobID)
         self.lock.release()
 
     def getApplicationSignature(self):
@@ -251,7 +251,7 @@ class SimpleJobManager2 (JobManager):
         self.jobCounter = 0
         self.freePorts = list(ports)
         if maxJobs > len(self.freePorts):
-            print ("SimpleJobManager2: not enough free ports, changing maxJobs to %d"%(self.freePorts.size()))
+            logger.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d'%(self.freePorts.size()))
             self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
         jobID = ""
@@ -262,39 +262,42 @@ class SimpleJobManager2 (JobManager):
         self.s.bind(('localhost', 10000))
         self.s.listen(1)
 
-        print('SimpleJobManager2: initialization done')
+        logger.debug('SimpleJobManager2: initialization done')
 
     def allocateJob (self, user, natPort):
         """
         See :func:`JobManager.allocateJob`
         """
         self.lock.acquire()
-        print ("SimpleJobManager2:allocateJob...")
+        logger.info('SimpleJobManager2:allocateJob...')
         if (len(self.activeJobs) >= self.maxJobs):
-            print ("SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d" % (len(self.activeJobs), self.maxJobs) )
+            logger.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs) )
             self.lock.release()
             return (JOBMAN_NO_RESOURCES,None)
         else:
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
-            print ("SimpleJobManager2: trying to allocate "+jobID)
+            logger.debug('SimpleJobManager2: trying to allocate '+jobID)
             # run the new application instance served by corresponding pyro daemon in a new process
+            jobPort = self.freePorts.pop(0)
+            logger.info('SimpleJobManager2: port to be assigned %d'%(jobPort))
             try:
-                jobPort = self.freePorts.pop(0)
-                print ("SimpleJobManager2: port to be assigned %d"%(jobPort))
-
                 proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                print ("SimpleJobManager2: new process has been started")
-
+                logger.debug('SimpleJobManager2: new subprocess has been started')
+            except Exception as e:
+                logger.exception(e)
+                raise
+                return (JOBMAN_ERR,None)
+            try:
                 # try to get uri from Property.psubprocess
                 conn, addr = self.s.accept()
-                print('Connected by', addr)
+                logger.debug('Connected by %s' % str(addr))
                 while True:
                     data = conn.recv(1024)
                     if not data: break
                     uri = repr(data).rstrip('\'').lstrip('\'')
-                    print ('Received uri: ', uri)
+                    logger.info('Received uri: %s' % uri)
                 conn.close()
                 #s.shutdown(socket.SHUT_RDWR)
                 #s.close()
@@ -303,15 +306,16 @@ class SimpleJobManager2 (JobManager):
                 # either by doing some sort of regexp or query ns for it
                 start = timeTime.time()
                 self.activeJobs[jobID] = (proc, start, user, uri, jobPort)
-                print ("SimpleJobManager2: new process ", self.activeJobs[jobID])
-
-            except:
-                print "Unable to start thread"
+                logger.debug('SimpleJobManager2: new process ')
+                logger.debug(self.activeJobs[jobID])
+            except Exception as e:
+                logger.exception(e)
+                logger.error('Unable to start thread')
                 self.lock.release()
                 raise
                 return (JOBMAN_ERR,None)
 
-            print ("SimpleJobManager2:allocateJob: allocated " + jobID)
+            logger.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
             return (JOBMAN_OK, jobID, jobPort)
 
@@ -329,7 +333,7 @@ class SimpleJobManager2 (JobManager):
         self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
 
         # delete entry in the list of active jobs
-        print ("SimpleJobManager2:terminateJob: job %s terminated, freeing port %d"%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
+        logger.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
 
         del self.activeJobs[jobID]
         self.lock.release()
@@ -338,7 +342,7 @@ class SimpleJobManager2 (JobManager):
         """
         See :func:`SimpleJobManager.getApplicationSignature`
         """
-        return "Mupif.JobManager.SimpleJobManager"
+        return 'Mupif.JobManager.SimpleJobManager2'
 
     def getStatus(self):
         """

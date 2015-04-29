@@ -21,9 +21,14 @@
 # Boston, MA  02110-1301  USA
 #
 import logging
-logging.basicConfig(filename='mupif.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger('mupif')
-#logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
+formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+formatTime = '%Y-%m-%d %H:%M:%S'
+logging.basicConfig(filename='mupif.log',filemode='w',format=formatLog,level=logging.DEBUG)
+logger = logging.getLogger()#create a logger
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter(formatLog, formatTime))
+logger.addHandler(ch)
+
 import Pyro4
 import socket
 import getpass

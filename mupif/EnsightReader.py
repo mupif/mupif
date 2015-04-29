@@ -4,11 +4,15 @@
 import sys
 sys.path.append('../')
 
-import vtk
+try:
+    import vtk
+except ImportError:
+    pass
+
 from mupif import Timer
 import numpy as np
 from mupif import Mesh
-from mupif import Vertex
+#from mupif import VertexserverHost
 from mupif import Cell
 from mupif import Field
 from mupif import FieldID
@@ -81,11 +85,11 @@ class EnsightReader(object):
         """
         Reads a mesh from Ensight file.
         :param tuple cellFilter: A tuple containing a list of eligible cell types (according to CellGeometryType)??
-        
+
         :return: mesh
         :rtype: Mesh
         """
-        
+
         mesh = Mesh.UnstructuredMesh()
         vertices=[]
         coords = np.zeros((3), dtype='f')
