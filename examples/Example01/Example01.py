@@ -58,7 +58,7 @@ class application2(Application.Application):
 
 time  = 0
 timestepnumber=0
-targetTime = 10.0
+targetTime = 1.0
 
 
 app1 = application1(None)
@@ -74,7 +74,6 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -87,14 +86,16 @@ while (abs(time -targetTime) > 1.e-6):
         app2.setProperty (c)
         # solve second sub-problem 
         app2.solveStep(istep)
+        # get the averaged concentration
+        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
+        print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
+        
 
         
     except APIError.APIError as e:
         print ("Following API error occurred:",e)
         break
 
-prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-print ("Result: ", prop.getValue())
 # terminate
 app1.terminate();
 app2.terminate();
