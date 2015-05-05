@@ -1,4 +1,4 @@
-import conf
+import server-conf
 from mupif import *
 import logging
 logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
