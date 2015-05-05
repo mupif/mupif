@@ -229,3 +229,54 @@ def getUserInfo ():
     username = getpass.getuser()
     hostname = socket.gethostname()
     return username+"@"+hostname
+
+def allocateApplicationWithJobManager (jobManRec):
+    """
+    Connect to jobManager described by given jobManRec
+
+    :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see client-conf.py
+
+    :return: Proxy of Application class
+    :rtype: Application
+    """    
+
+(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+#create tunnel to JobManager running on (remote) server
+try:
+    tunnelJobMan = PyroUtil.sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient='ssh')
+except Exception as e:
+    logger.debug("Creating ssh tunnel for JobManager failed")
+    logger.exception(e)
+    
+    sys.exit(e)
+else:
+    # locate remote jobManager on (remote) server
+    jobMan = PyroUtil.connectApp(ns, jobManName)
+    if jobMan == None:
+        logger.error('Can not connect to JobManager on server')
+    
+    try:
+        retRec = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=conf.jobNatPorts.pop())
+        logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
+    except Exception as e:
+        logger.info("jobMan.allocateJob() failed")
+        logger.exception(e)
+    
+    #close tunnel 
+    if tunnelJobMan: tunnelJobMan.terminate()
+
+    #create tunnel to application's daemon running on (remote) server
+    try:
+        tunnelApp = PyroUtil.sshTunnel(remoteHost=conf.demoJobManRec[2], userName=conf.demoJobManRec[3], localPort=natPort, remotePort=retRec[2], sshClient='ssh')
+    except Exception as e:
+        logger.info("Creating ssh tunnel for application's daemon failed")
+        logger.exception(e)
+    else:
+        logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
+
+    timeTime.sleep(2)
+    # connect to (remote) application, requests remote proxy
+    app = PyroUtil.connectApp(ns, retRec[1])
+    return app
+
+return None
