@@ -1,4 +1,4 @@
-import conf
+import serverConfig as conf
 import socket
 import getopt, sys
 import logging
@@ -51,12 +51,13 @@ daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=daemonPort, nathost=conf.
 #Initialize application
 #app = DemoApplication.DemoApplication()
 app = conf.PingServerApplication.PingServerApplication()
-app.registerPyro(daemon, ns)
+
 
 
 #register agent
 uri = daemon.register(app)
 ns.register(jobID, uri)
+app.registerPyro(daemon, ns, uri)
 
 logger.info('Signature is %s' % app.getApplicationSignature() )
 

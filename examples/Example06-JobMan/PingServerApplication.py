@@ -1,4 +1,3 @@
-import conf
 from mupif import *
 
 class PingServerApplication(Application.Application):

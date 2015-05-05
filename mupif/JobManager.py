@@ -186,7 +186,6 @@ class SimpleJobManager(JobManager):
             # run the new application instance in a new thread
             try:
                 app = self.appAPIClass()
-                app.registerPyro(self.daemon, self.ns)
                 start = timeTime.time()
                 self.activeJobs[jobID] = (app, start, user)
                 #register agent

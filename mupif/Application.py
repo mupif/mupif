@@ -19,16 +19,19 @@ class Application(object):
         """
         self.pyroDaemon = None
         self.pyroNS = None
+        self.pyroURI = None
 
-    def registerPyro (self, pyroDaemon, pyroNS):
+    def registerPyro (self, pyroDaemon, pyroNS, pyroURI):
         """
         Register the Pyro daemon and nameserver. Required by getFieldURI service
 
         :param Pyro4.Daemon pyroDaemon: Optional pyro daemon
         :param Pyro4.naming.Nameserver pyroNS: Optional nameserver
+        :param string PyroURI: Optional URI of receiver
         """
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
+        self.pyroURI = pyroURI
 
 
     def getField(self, fieldID, time):
@@ -169,7 +172,6 @@ class Application(object):
     def restoreState(self, tstep):
         """
         Restore the saved state of an application.
-
         :param TimeStep tstep: Solution step
         """
     def getAPIVersion(self):
@@ -190,3 +192,11 @@ class Application(object):
         """
         if self.pyroDaemon:
             self.pyroDaemon.shutdown()
+
+    def getURI(self):
+        """
+        :return: Returns the application URI or None if application not registered in Pyro
+        :rtype: str
+        """
+        return self.pyroURI
+

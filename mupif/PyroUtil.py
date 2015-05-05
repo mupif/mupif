@@ -132,10 +132,18 @@ def runDaemon(host, port, nathost, natport):
     try:
         daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
         logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+    except socket.error as e:
+        logger.debug('Socket port seems to be already in use :%d' % (port))
+        daemon = None
+        raise e
+       
+
     except Exception as e:
         logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
         logger.exception(e)
         daemon = None
+        raise e
+
     return daemon
 
 def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app):
@@ -162,10 +170,11 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
         logger.exception(e)
         exit(1)
     ns = connectNameServer(nshost, nsport, hkey)
-    app.registerPyro(daemon, ns)
     #register agent
     uri = daemon.register(app)
     ns.register(nsname, uri)
+    app.registerPyro(daemon, ns, uri)
+
     logger.debug('NameServer %s has registered uri %s' % (nsname, uri) )
     logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, nameServerName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport,nsname,uri) )
     daemon.requestLoop()
@@ -230,53 +239,60 @@ def getUserInfo ():
     hostname = socket.gethostname()
     return username+"@"+hostname
 
-def allocateApplicationWithJobManager (jobManRec):
+def connectJobManager (ns, jobManRec):
     """
     Connect to jobManager described by given jobManRec
 
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see client-conf.py
 
-    :return: Proxy of Application class
-    :rtype: Application
+    :return: (JobManager proxy, jobManager Tunnel)
+    :rtype: tuple (JobManager, subprocess.Popen)
     """    
 
-(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
-#create tunnel to JobManager running on (remote) server
-try:
-    tunnelJobMan = PyroUtil.sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient='ssh')
-except Exception as e:
-    logger.debug("Creating ssh tunnel for JobManager failed")
-    logger.exception(e)
-    
-    sys.exit(e)
-else:
-    # locate remote jobManager on (remote) server
-    jobMan = PyroUtil.connectApp(ns, jobManName)
-    if jobMan == None:
-        logger.error('Can not connect to JobManager on server')
-    
+    (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    #create tunnel to JobManager running on (remote) server
     try:
-        retRec = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=conf.jobNatPorts.pop())
+        tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient='ssh')
+    except Exception as e:
+        logger.debug("Creating ssh tunnel for JobManager failed")
+        logger.exception(e)
+        raise (e)
+    else:
+        # locate remote jobManager on (remote) server
+        jobMan = connectApp(ns, jobManName)
+        return (jobMan, tunnelJobMan)
+
+
+def allocateApplicationWithJobManager (ns, jobManRec, jobMan, natPort):
+    """
+    Connect to jobManager described by given jobManRec
+
+    :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see client-conf.py
+
+    :return: tuple containing (Proxy of Application class, application jobID, tunnel connection)
+    :rtype: Application
+    """    
+    (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    try:
+        retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
         logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception as e:
         logger.info("jobMan.allocateJob() failed")
         logger.exception(e)
+        raise (e)
     
-    #close tunnel 
-    if tunnelJobMan: tunnelJobMan.terminate()
-
     #create tunnel to application's daemon running on (remote) server
     try:
-        tunnelApp = PyroUtil.sshTunnel(remoteHost=conf.demoJobManRec[2], userName=conf.demoJobManRec[3], localPort=natPort, remotePort=retRec[2], sshClient='ssh')
+        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient='ssh')
     except Exception as e:
         logger.info("Creating ssh tunnel for application's daemon failed")
         logger.exception(e)
+        raise (e)
     else:
         logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
-    timeTime.sleep(2)
+    time.sleep(2)
     # connect to (remote) application, requests remote proxy
-    app = PyroUtil.connectApp(ns, retRec[1])
-    return app
+    app = connectApp(ns, retRec[1])
+    return (app, retRec[1], tunnelApp)
 
-return None
