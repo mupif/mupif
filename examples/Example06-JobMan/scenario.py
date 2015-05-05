@@ -14,12 +14,11 @@ jobManTunnel = None
 appTunnel = None
 #create tunnel to JobManager running on (remote) server
 try:
-    (jobMan, jobManTunnel) = PyroUtil.connectJobManager (ns, conf.demoJobManRec)
-    (app, appJobID, appTunnel) = PyroUtil.allocateApplicationWithJobManager (ns, conf.demoJobManRec, jobMan, conf.jobNatPorts.pop())
+    appRec = PyroUtil.allocateApplicationWithJobManager (ns, conf.demoJobManRec, conf.jobNatPorts.pop())
+    app = appRec.getApplication()
 except Exception as e:
     logger.exception(e)
-    if jobManTunnel: jobManTunnel.terminate()
-    if appTunnel: appTunnel.terminate()
+    appRec.terminate()
 else:
 
     if app:
@@ -36,11 +35,8 @@ else:
     logger.info("Received " + str(retProp.getValue()))
     
     logger.info("Terminating " + str(app.getURI()))
-    app.terminate();
-    jobMan.terminateJob(appJobID)
 
-    if appTunnel: appTunnel.terminate()
-    if jobManTunnel: jobManTunnel.terminate()
-
+    #terminate
+    appRec.terminate()
     logger.info("Time consumed %f s" % (timeTime.time()-start))
 

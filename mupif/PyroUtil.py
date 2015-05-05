@@ -34,6 +34,7 @@ import socket
 import getpass
 import subprocess
 import time
+import RemoteAppRecord
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
@@ -263,16 +264,18 @@ def connectJobManager (ns, jobManRec):
         return (jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobManRec, jobMan, natPort):
+def allocateApplicationWithJobManager (ns, jobManRec, natPort):
     """
     Connect to jobManager described by given jobManRec
 
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see client-conf.py
 
-    :return: tuple containing (Proxy of Application class, application jobID, tunnel connection)
-    :rtype: Application
+    :return: RemoteAppRecord 
+    :rtype: RemoteAppRecord
     """    
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec)
+
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
         logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
@@ -294,5 +297,5 @@ def allocateApplicationWithJobManager (ns, jobManRec, jobMan, natPort):
     time.sleep(2)
     # connect to (remote) application, requests remote proxy
     app = connectApp(ns, retRec[1])
-    return (app, retRec[1], tunnelApp)
+    return RemoteAppRecord.RemoteAppRecord(app, tunnelApp, jobMan, tunnelJobMan, retRec[1])
 
