@@ -11,10 +11,10 @@ from mupif import APIError
 import logging
 import time as timeTime
 import curses
-
+import re
 
 def usage():
-    print "Usage: jobManStatus -h hostname -p port"
+    print "Usage: jobManStatus -n nshost -r nsPort -h hostname -p port -j jobmanname -k hkey [-t -u user]"
 
 
 def processor(win, jobman):
@@ -72,10 +72,11 @@ ssh = False
 
 host = 'ksm.fsv.cvut.cz'
 port = 9090
+hkey =""
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "h:j:")
+    opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")
 except getopt.GetoptError as err: 
     # print help information and exit: 
     print str(err) # will print something like "option -a not recognized"
@@ -86,7 +87,19 @@ for o, a in opts:
     if o in ("-p"):
         port = int(a)                                                                                              
     elif o in ("-h"):
-        host = a                                                                                                        
+        host = a                                         
+    elif o in ("-j"):
+        jobmanname = a
+    elif o in ("-k"):
+        hkey = a
+    elif o in ("-t"):
+        ssh = True
+    elif o in ("-u"):
+        username = a
+    elif o in ("-n"):
+        nshost = a
+    elif o in ("-r"):
+        nsport = int(a)
     else:
         assert False, "unhandled option"
 
@@ -98,17 +111,19 @@ user_col = 41
 time_col = 70
 
 #locate nameserver
-ns     = PyroUtil.connectNameServer(host, port, "mmp-secret-key")
+ns     = PyroUtil.connectNameServer(nshost, nsport, hkey)
+# locate remote jobManager application, request remote proxy
+jobManUri = ns.lookup(jobmanname)
+#get local port of jabmanager (from uri)
+jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
 
-
-print ("haha")
 
 #extablish secure ssh tunnel connection
 if ssh:
-    tunnel = PyroUtil.sshTunnel(remoteHost='mech.fsv.cvut.cz', userName='bp', localPort=5353, remotePort=44382, sshClient='ssh')
+    tunnel = PyroUtil.sshTunnel(remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
 
-# locate remote jobManager application, request remote proxy
-jobMan = PyroUtil.connectApp(ns, 'Mupif.JobManager@demo')
+
+jobMan = PyroUtil.connectApp(ns, jobmanname)
 
 
 

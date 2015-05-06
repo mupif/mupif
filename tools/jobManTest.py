@@ -8,7 +8,8 @@ logger = logging.getLogger()
 
 import time as timeTime
 start = timeTime.time()
-logger.info('Timer started')
+
+#logger.info('Timer started')
 
 
 def usage():
