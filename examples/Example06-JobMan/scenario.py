@@ -1,4 +1,4 @@
-import clientConfig as conf
+import clientConfig
 from mupif import *
 import logging
 logger = logging.getLogger()
@@ -8,35 +8,38 @@ start = timeTime.time()
 logger.info('Timer started')
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
+ns = PyroUtil.connectNameServer(nshost=clientConfig.nshost, nsport=clientConfig.nsport, hkey=clientConfig.hkey)
 
-jobManTunnel = None
-appTunnel = None
-#create tunnel to JobManager running on (remote) server
+#localize JobManager running on (remote) server and create a tunnel to it
+#allocate the first application app1
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager (ns, conf.demoJobManRec, conf.jobNatPorts.pop())
-    app = appRec.getApplication()
+    appRec = PyroUtil.allocateApplicationWithJobManager (ns, clientConfig.demoJobManRec, clientConfig.jobNatPorts.pop(0))
+    app1 = appRec.getApplication()
 except Exception as e:
     logger.exception(e)
-    appRec.terminate()
 else:
+    if app1 is not None:
+        appsig=app1.getApplicationSignature()
+        logger.info("Working application 1 on server " + appsig)
 
-    if app:
-        appsig=app.getApplicationSignature()
-        logger.info("Working application on server " + appsig)
+        val = Property.Property(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, None)
+        app1.setProperty (val)
+        app1.solveStep(None)
+        retProp = app1.getProperty(PropertyID.PID_Demo_Value, 0.0)
+        logger.info("SUCCESSFULLY Received " + str(retProp.getValue()))
+        logger.info("Terminating " + str(app1.getURI()))
+        #terminate
+        logger.info("Time consumed %f s" % (timeTime.time()-start))
     else:
         logger.debug("Connection to server failed, exiting")
-        if appTunnel: appTunnel.terminate()
 
-    val = Property.Property(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, None)
-    app.setProperty (val)
-    app.solveStep(None)
-    retProp = app.getProperty(PropertyID.PID_Demo_Value, 0.0)
-    logger.info("Received " + str(retProp.getValue()))
-    
-    logger.info("Terminating " + str(app.getURI()))
+    #allocate the second application, if necessary
+    #PyroUtil.allocateNextApplication (ns, clientConfig.demoJobManRec, clientConfig.jobNatPorts.pop(0), appRec)
+    #app2 = appRec.getApplication(1)
+    #appsig=app2.getApplicationSignature()
+    #logger.info("Working application 2 on server " + appsig)
 
-    #terminate
-    appRec.terminate()
-    logger.info("Time consumed %f s" % (timeTime.time()-start))
+finally:
+    if appRec: appRec.terminateAll()
+
 

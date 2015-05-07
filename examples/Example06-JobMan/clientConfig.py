@@ -17,7 +17,7 @@ hostUserName='mmp'#User name for ssh connection
 
 # jobManager records to be used in scenario
 # format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName)
-demoJobManRec = (44361, 5555, 'ksm.fsv.cvut.cz', 'mmp', 'Mupif.JobManager@demo')
+demoJobManRec = (44361, 5555, '147.32.130.137', 'mmp', 'Mupif.JobManager@demo')
 
 #client ports used to establish ssh connections (nat ports)
 jobNatPorts = range(6000, 6050) 
