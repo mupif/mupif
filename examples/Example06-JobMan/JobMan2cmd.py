@@ -50,7 +50,7 @@ daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=daemonPort, nathost=conf.
 
 #Initialize application
 #app = DemoApplication.DemoApplication()
-app = conf.PingServerApplication.PingServerApplication()
+app = conf.applicationClass()
 
 
 

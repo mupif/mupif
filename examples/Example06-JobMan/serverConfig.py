@@ -23,3 +23,5 @@ jobManName='Mupif.JobManager@demo' #Name of job manager
 
 jobManPortsForJobs=( 9091, 9092, 9093, 9094) #Ports to be assigned on the server to a job
 jobManMaxJobs=4 #Maximum number of jobs
+
+applicationClass = PingServerApplication.PingServerApplication
