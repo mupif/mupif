@@ -16,19 +16,11 @@ hkey = 'mmp-secret-key'
 
 import sys
 sys.path.append('../..')
-import os
+from mupif import *
 import logging
-logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
-from mupif import PyroUtil
-import Pyro4
+logger = logging.getLogger()
 import socket
+import Pyro4
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
@@ -40,6 +32,7 @@ class application2(Application.Application):
     Simple application that computes an arithmetical average of mapped property
     """
     def __init__(self, file):
+        super(application2, self).__init__(file)
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0

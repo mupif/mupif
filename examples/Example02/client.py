@@ -10,28 +10,17 @@ hkey = 'mmp-secret-key'
 
 import sys
 sys.path.append('../..')
+from mupif import *
 import os
 import logging
-#put logging before Pyro4 module
-logging.basicConfig(filename='mupif.pyro.log',filemode='w',datefmt="%Y-%m-%d %H:%M:%S",level=logging.DEBUG)
-logging.getLogger('Pyro4').setLevel(logging.INFO)
-logger = logging.getLogger('client.py')
-logger.setLevel(logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler()) #display logging also on screen
-
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
-from mupif import PyroUtil
+logger = logging.getLogger()
 
 class application1(Application.Application):
     """
     Simple application that generates a property with a value equal to actual time
     """
     def __init__(self, file):
+        super(application1, self).__init__(file)
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -80,7 +69,6 @@ while (abs(time -targetTime) > 1.e-6):
         # solve second sub-problem 
         app2.solveStep(istep)
 
-        
     except APIError.APIError as e:
         logger.error("Following API error occurred: %s" % e )
         break

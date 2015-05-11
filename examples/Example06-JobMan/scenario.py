@@ -1,4 +1,4 @@
-import clientConfig
+import clientConfig as cConf
 from mupif import *
 import logging
 logger = logging.getLogger()
@@ -8,12 +8,12 @@ start = timeTime.time()
 logger.info('Timer started')
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=clientConfig.nshost, nsport=clientConfig.nsport, hkey=clientConfig.hkey)
+ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
 
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the first application app1
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager (ns, clientConfig.demoJobManRec, clientConfig.jobNatPorts.pop(0))
+    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
     app1 = appRec.getApplication()
 except Exception as e:
     logger.exception(e)
@@ -34,7 +34,7 @@ else:
         logger.debug("Connection to server failed, exiting")
 
     #allocate the second application, if necessary
-    #PyroUtil.allocateNextApplication (ns, clientConfig.demoJobManRec, clientConfig.jobNatPorts.pop(0), appRec)
+    #PyroUtil.allocateNextApplication (ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), appRec)
     #app2 = appRec.getApplication(1)
     #appsig=app2.getApplicationSignature()
     #logger.info("Working application 2 on server " + appsig)

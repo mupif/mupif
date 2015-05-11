@@ -4,18 +4,13 @@ import sys
 sys.path.append('../..')
 sys.path.append('.')
 import conf
-from mupif import JobManager
-from mupif import PyroUtil
-from mupif import APIError
-from mupif import Property
-from mupif import PropertyID
-from mupif import ValueType
+from mupif import *
 
 import DemoApplication
-import logging
+
 import time as timeTime
 import getopt
-#logging.getLogger().setLevel(logging.DEBUG)
+import logging
 logger = logging.getLogger()
 
 #ssh flag (True if a ssh tunnel needs to be established)

@@ -52,8 +52,6 @@ daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=daemonPort, nathost=conf.
 #app = DemoApplication.DemoApplication()
 app = conf.applicationClass()
 
-
-
 #register agent
 uri = daemon.register(app)
 ns.register(jobID, uri)

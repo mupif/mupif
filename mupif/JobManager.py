@@ -26,9 +26,7 @@ import socket
 import time as timeTime
 import Pyro4
 import logging
-#logging.basicConfig(filename='jobman.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger('jobman')
-#logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
+logger = logging.getLogger()
 
 #error codes
 JOBMAN_OK = 1
@@ -43,13 +41,13 @@ JOBMAN_ERR = 99
 #    finally:
 #       lock.release() # release lock, no matter what
 #
-#  - how to kill the locked threads> this is an issue
+#  - how to kill the locked threads > this is an issue
 
 
 
 class JobManager(object):
     """
-    An abstract class representing simple job manager. The purpose of the job manager is the following:
+    An abstract (base) class representing a job manager. The purpose of the job manager is the following:
 
     * To allocate and register the new instance of application (called job)
     * To query the status of job
@@ -58,32 +56,35 @@ class JobManager(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self, appName, maxJobs=1):
+    def __init__ (self, appName, jobManWorkDir, maxJobs=1):
         """
         Constructor. Initializes the receiver.
 
-        :param object?? appName: Name of application to be served
-        :param int maxJobs: Maximum number of jobs to run
+        :param str appName: Name of application
+        :param str jobManWorkDir: Absolute path for storing data, if necessary
+        :param int maxJobs: Maximum number of jobs to run simultaneously
         """
         self.applicationName = appName
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
+        self.jobManWorkDir = jobManWorkDir
 
     def allocateJob (self, user, natPort):
         """
-        Allocates the new instance of application.
+        Allocates a new job.
 
-        :param string?? user: ??
-        :param int natPort: client port which will be used
-        :return: tuple (errCode, jobID, port), where errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES).             JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23).            JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
+        :param str user: user name
+        :param int natPort: NAT port used in ssh tunnel
+
+        :return: tuple (error code, None). errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES).             JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23). JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple
         """
         logger.debug('JobManager:allocateJob is abstract')
-        return (JOBMAN_ERR,None)
+        return (JOBMAN_ERR, None)
 
     def terminateJob (self, jobID):
         """
-        Terminates the given job, free the associated recources.
+        Terminates the given job, frees the associated recources.
 
         :param str jobID: jobID 
         :return: JOBMAN_OK indicates sucessfull termination, JOBMAN_ERR means internal error
@@ -94,12 +95,9 @@ class JobManager(object):
         Returns the status of the job. 
 
         :param str jobID: jobID
-        :return: Status??
-        :rtype: ??
         """
     def getStatus (self):
         """
-        ??
         """
 
     def uploadFile(self, jobID, filename):
@@ -112,11 +110,17 @@ class JobManager(object):
         """
     def uploadFilePart(self, jobID, filePart, partID, eof=False):
         """
+        Upload a piece of file to a jobID server
+
         ??
+
         """
     def dowloadFile(self, jobID, filename):
         """
+        Download a file from a jobID server
+
         ??
+
         """
 
 #SimpleJobManager
@@ -130,30 +134,27 @@ SJM2_URI_INDX = 3 #Pyro4 uri
 SJM2_PORT_INDX = 4 #port
 
 
-
 class SimpleJobManager(JobManager):
     """
     Simple job manager using Pyro thread pool based server. 
     Requires Pyro servertype=thread pool based (SERVERTYPE config item). This is the default value.
-    For the thread pool server the amount of worker threads to be spawned is configured using THREADPOOL_SIZE 
-    config item (default value set to 16).
+    For the thread pool server the amount of worker threads to be spawned is configured using THREADPOOL_SIZE config item (default value set to 16).
 
-    However, doe to GIL (Global Interpreter Lock of python the actual level of achievable concurency is low.
-    The threads created from a single python context are executed sequentilly. This implementation is
-    suitable only for servers with low workload.
+    However, dee to GIL (Global Interpreter Lock of python the actual level of achievable concurency is low. The threads created from a single python context are executed sequentially. This implementation is suitable only for servers with a low workload.
 
     .. automethod:: __init__
     """
-    def __init__ (self, daemon, ns, appAPIClass, appName, maxJobs=1):
+    def __init__ (self, daemon, ns, appAPIClass, appName, jobManWorkDir, maxJobs=1):
         """Constructor.
 
-        :param ?? daemon: ??
-        :param Pyro4 ns: NameServer
-        :param ?? appAPIClass: ??
-        :param str appName: Application name
-        :param int maxJobs: Maximum number of jobs??
+        :param Pyro4.Daemon daemon: running daemon for SimpleJobManager
+        :param Pyro4.naming.Nameserver ns: running name server
+        :param Application appAPIClass: application class
+        :param str appName: application name
+        :param str jobManWorkDir: see :func:`JobManager.__init__`
+        :param int maxJobs: see :func:`JobManager.__init__`
         """
-        super(SimpleJobManager, self).__init__(appName, maxJobs)
+        super(SimpleJobManager, self).__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
         self.appAPIClass = appAPIClass
         self.daemon = daemon
@@ -170,7 +171,11 @@ class SimpleJobManager(JobManager):
 
     def allocateJob(self, user, natPort):
         """
+        Allocates a new job.
+
         See :func:`JobManager.allocateJob`
+
+        :except: unable to start a thread, no more resources
         """
         self.lock.acquire()
         logger.debug('SimpleJobManager:allocateJob...')
@@ -205,6 +210,8 @@ class SimpleJobManager(JobManager):
 
     def terminateJob (self, jobID):
         """
+        Terminates the given job, frees the associated recources.
+
         See :func:`JobMSimpleJobManageranager.terminateJob`
         """
         self.lock.acquire()
@@ -215,14 +222,16 @@ class SimpleJobManager(JobManager):
 
     def getApplicationSignature(self):
         """
-        :return: Application name
+        :return: application name
         :rtype: str
         """
         return "Mupif.JobManager.SimpleJobManager"
 
     def getStatus (self):
         """
-        See :func:`JobManager.getStatus`
+        Returns a list of tuples for all running jobIDs
+        :return: a list of tuples (jobID, running time, user)
+        :rtype: a list of (str, float, str)
         """
         status = []
         tnow = timeTime.time()
@@ -232,29 +241,29 @@ class SimpleJobManager(JobManager):
 
 class SimpleJobManager2 (JobManager):
     """
-    Simple job manager. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.
+    Simple job manager 2. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.
 
     .. automethod:: __init__
     """
-    def __init__ (self, daemon, ns, appAPIClass, appName, ports, maxJobs=1):
+    def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, maxJobs=1):
         """
-        :param tuple ports: Tuple containing ports to use (size of ports should be less or equal to maxJobs)
+        Constructor.
 
         See :func:`SimpleJobManager.__init__`
+        :param tuple portRange: start and end ports for jobs which will be allocated by a job manager
         """
-        super(SimpleJobManager2, self).__init__(appName, maxJobs)
+        super(SimpleJobManager2, self).__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
         self.appAPIClass = appAPIClass
         self.daemon = daemon
         self.ns = ns
         self.jobCounter = 0
-        self.freePorts = list(ports)
+        self.freePorts = range(portRange[0], portRange[1]+1)
         if maxJobs > len(self.freePorts):
             logger.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d'%(self.freePorts.size()))
             self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
         jobID = ""
-
 
         # Create a TCP/IP socket to get uri from daemon registering an application
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -265,7 +274,10 @@ class SimpleJobManager2 (JobManager):
 
     def allocateJob (self, user, natPort):
         """
+        Allocates a new job.
+
         See :func:`JobManager.allocateJob`
+        :except: unable to start a thread, no more resources
         """
         self.lock.acquire()
         logger.info('SimpleJobManager2:allocateJob...')
@@ -320,6 +332,8 @@ class SimpleJobManager2 (JobManager):
 
     def terminateJob(self, jobID):
         """
+        Terminates the given job, frees the associated recources.
+
         See :func:`JobManager.terminateJob`
         """
         self.lock.acquire()

@@ -1,11 +1,10 @@
 import conf
 import socket
 
+from mupif import PyroUtil
 import logging
-logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger()
 
-from mupif import PyroUtil
 import Pyro4
 import getopt, sys
 

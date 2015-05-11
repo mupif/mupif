@@ -22,9 +22,10 @@ Pyro4.config.AUTOPROXY=False
 Pyro4.config.COMMTIMEOUT = 10.0 #network communication timeout in seconds.
 #Pyro4.config.SOCK_REUSE = True #can use occupied port. This will not work for the ssh tunnel, which needs a free port to bind to.
 
+from mupif import PyroUtil #get the logging
+
 import logging
-logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
+logger = logging.getLogger()
 
 import DemoApplication
 appClass = DemoApplication.DemoApplication

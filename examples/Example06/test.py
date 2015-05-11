@@ -3,22 +3,12 @@ sys.path.append('../..')
 import os
 
 import logging
-#put logging before Pyro4 module
-logging.basicConfig(filename='mupif.pyro.log',filemode='w',datefmt="%Y-%m-%d %H:%M:%S",level=logging.DEBUG)
-logging.getLogger('Pyro4').setLevel(logging.DEBUG)
-logger = logging.getLogger('test.py')
-logger.setLevel(logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler()) #display logging also on screen
+logger = logging.getLogger()
+
 hkey = 'mmp-secret-key'
 
 import Pyro4
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
-from mupif import PyroUtil
+from mupif import *
 import time as timeTime
 
 #use numerical IP values only (not names, sometimes they do not work)

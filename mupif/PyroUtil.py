@@ -239,11 +239,14 @@ def getUserInfo ():
     hostname = socket.gethostname()
     return username+"@"+hostname
 
-def connectJobManager (ns, jobManRec):
+def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     """
     Connect to jobManager described by given jobManRec and create a ssh tunnel
 
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see client-conf.py
+    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
+    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
 
     :return: (JobManager proxy, jobManager Tunnel)
     :rtype: tuple (JobManager, subprocess.Popen)
@@ -252,7 +255,7 @@ def connectJobManager (ns, jobManRec):
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
     try:
-        tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient='ssh')
+        tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception as e:
         logger.debug("Creating ssh tunnel for JobManager failed")
         logger.exception(e)
@@ -263,20 +266,23 @@ def connectJobManager (ns, jobManRec):
         return (jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobManRec, natPort):
+def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', options='', sshHost=''):
     """
     Connect to jobManager described by given jobManRec
 
     :param Pyro4.naming.Nameserver ns: running name server
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
     :param int natPort: nat port in local computer for ssh tunnel for the application
+    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
+    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
 
     :return: RemoteAppRecord containing application, tunnel to application, tunnel to jobman, jobid
     :rtype: RemoteAppRecord
     :except: allocation of tunnel failed
-    """    
+    """
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
-    (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec)
+    (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec, sshClient, options, sshHost)
 
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
@@ -288,7 +294,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort):
 
     #create tunnel to application's daemon running on (remote) server
     try:
-        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient='ssh')
+        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception as e:
         logger.info("Creating ssh tunnel for application's daemon failed")
         logger.exception(e)
@@ -326,7 +332,7 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec):
 
     #create tunnel to application's daemon running on (remote) server
     try:
-        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient='ssh')
+        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception as e:
         logger.info("Creating ssh tunnel for application's daemon failed")
         logger.exception(e)

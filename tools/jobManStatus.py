@@ -9,6 +9,7 @@ from mupif import PyroUtil
 from mupif import APIError
 
 import logging
+logger = logging.getLogger()
 import time as timeTime
 import curses
 import re
@@ -65,9 +66,8 @@ def processor(win, jobman):
 #######################################################################################
 
 
-logging.getLogger().setLevel(logging.WARNING)
-logger = logging.getLogger()
-#ssh flag (se to tru if ssh tunnel need to be established)
+
+#ssh flag (set to tru if ssh tunnel need to be established)
 ssh = False
 
 host = 'ksm.fsv.cvut.cz'
@@ -125,11 +125,7 @@ if ssh:
 
 jobMan = PyroUtil.connectApp(ns, jobmanname)
 
-
-
-logging.getLogger().setLevel(logging.WARNING)
-logger = logging.getLogger()
-#ssh flag (se to tru if ssh tunnel need to be established)
+#ssh flag (set to True if ssh tunnel need to be established)
 ssh = False
 
 jobmanName = 'Mupif.JobManager@demo'

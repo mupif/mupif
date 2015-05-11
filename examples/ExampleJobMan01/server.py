@@ -17,7 +17,6 @@ from mupif import *
 import DemoApplication
 
 import logging
-logging.getLogger().setLevel(logging.DEBUG)
 logger = logging.getLogger()
 
 import Pyro4

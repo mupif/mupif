@@ -1,9 +1,7 @@
-import serverConfig as conf
+import serverConfig as sConf
 from mupif import *
 import logging
-logging.basicConfig(filename='server.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger('server')
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
+logger = logging.getLogger()
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -13,17 +11,17 @@ logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
 
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
+ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=conf.jobManPort, nathost=conf.nathost, natport=conf.jobManNatport)
+daemon = PyroUtil.runDaemon(host=sConf.deamonHost, port=sConf.jobManPort, nathost=sConf.nathost, natport=sConf.jobManNatport)
 #Run job manager on a server
-jobMan = JobManager.SimpleJobManager2(daemon, ns, conf.PingServerApplication, "Mupif.PingServerApplication", conf.jobManPortsForJobs, conf.jobManMaxJobs)
+jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.PingServerApplication, "Mupif.PingServerApplication", sConf.jobManPortsForJobs, sConf.jobManWorkDir, sConf.jobManMaxJobs)
 
 #set up daemon with JobManager
 uri = daemon.register(jobMan)
 #register JobManager to nameServer
-ns.register(conf.jobManName, uri)
+ns.register(sConf.jobManName, uri)
 print ("Daemon for JobManager runs at " + str(uri))
 #waits for requests
 daemon.requestLoop()

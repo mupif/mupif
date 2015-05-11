@@ -1,18 +1,8 @@
 import sys
 sys.path.append('../..')
-
+from mupif import *
 import logging
-logging.basicConfig(filename='mupif.log',filemode='w',level=logging.DEBUG)
-logger = logging.getLogger('mupif')
-logging.getLogger().addHandler(logging.StreamHandler()) #display also on screen
-
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
-from mupif import PyroUtil
+logger = logging.getLogger()
 import os
 
 import Pyro4

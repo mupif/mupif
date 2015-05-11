@@ -21,7 +21,8 @@ jobManPort=44361 #Port for job manager's daemon
 jobManNatport=5555 #Natport - nat port used in ssh tunnel for job manager
 jobManName='Mupif.JobManager@demo' #Name of job manager
 
-jobManPortsForJobs=( 9091, 9092, 9093, 9094) #Ports to be assigned on the server to a job
+jobManPortsForJobs=( 9091, 9094) #Range of ports to be assigned on the server to jobs
 jobManMaxJobs=4 #Maximum number of jobs
+jobManWorkDir='/home/mmp/PingServerApplication'#Main directory for transmitting files
 
 applicationClass = PingServerApplication.PingServerApplication

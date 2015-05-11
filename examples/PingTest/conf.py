@@ -50,14 +50,11 @@ appIndx_SshClient = 5
 appIndx_Options = 6
 appIndx_SshHost = 7
 
+
+from mupif import PyroUtil #get logging facilities
 import logging
-#put logging before Pyro4 module
-logging.basicConfig(filename='mupif.pyro.log',filemode='w',datefmt="%Y-%m-%d %H:%M:%S",level=logging.DEBUG)
-logging.getLogger('Pyro4').setLevel(logging.DEBUG)
-#logging.getLogger('Pyro4.core').setLevel(logging.DEBUG)#To handle LOGWIRE
-logger = logging.getLogger('test.py')
-logger.setLevel(logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler()) #display logging also on screen
+
+logger = logging.getLogger()
 
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
