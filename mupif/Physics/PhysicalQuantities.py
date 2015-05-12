@@ -55,7 +55,7 @@ class PhysicalQuantity:
 
     See the documentation of the PhysicalQuantities module for a list
     of the available units.
-    
+
     Here is an example on usage:
 
     >>> from PhysicalQuantities import PhysicalQuantity as p  # short hand
@@ -126,8 +126,8 @@ class PhysicalQuantity:
             i.e. '1.5 m/s'. This form is provided for more convenient
             interactive use.
 
-        @param args: either (value, unit) or (value_with_unit,)
-        @type args: (number, C{str}) or (C{str},)
+        :param args: either (value, unit) or (value_with_unit,)
+        :type args: (number, C{str}) or (C{str},)
         """
         if len(args) == 2:
             self.value = args[0]
@@ -231,10 +231,9 @@ class PhysicalQuantity:
         the combination is equivalent to the original one. The new unit
         must be compatible with the previous unit of the object.
 
-        @param unit: a unit
-        @type unit: C{str}
-        @raise TypeError: if the unit string is not a know unit or a
-        unit incompatible with the current one
+        :param C{str} unit: a unit
+
+        :raise TypeError: if the unit string is not a know unit or a unit incompatible with the current one
         """
         unit = _findUnit(unit)
         self.value = _convertValue (self.value, self.unit, unit)
@@ -252,12 +251,12 @@ class PhysicalQuantity:
         are integers. This is used to convert to irregular unit
         systems like hour/minute/second.
 
-        @param units: one or several units
-        @type units: C{str} or sequence of C{str}
-        @returns: one or more physical quantities
-        @rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
-        @raises TypeError: if any of the specified units are not compatible
-        with the original unit
+        :param units: one or several units
+        :type units: C{str} or sequence of C{str}
+
+        :returns: one or more physical quantities
+        :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
+        :raises TypeError: if any of the specified units are not compatible with the original unit
         """
         units = map(_findUnit, units)
         if len(units) == 1:
@@ -283,9 +282,8 @@ class PhysicalQuantity:
     # Contributed by Berthold Hoellmann
     def inBaseUnits(self):
         """
-        @returns: the same quantity converted to base units,
-        i.e. SI units in most cases
-        @rtype: L{PhysicalQuantity}
+        :returns: the same quantity converted to base units,  i.e. SI units in most cases
+        :rtype: L{PhysicalQuantity}
         """
         new_value = self.value * self.unit.factor
         num = ''
@@ -309,11 +307,11 @@ class PhysicalQuantity:
 
     def isCompatible (self, unit):
         """
-        @param unit: a unit
-        @type unit: C{str}
-        @returns: C{True} if the specified unit is compatible with the
-        one of the quantity
-        @rtype: C{bool}
+        :param unit: a unit
+        :type unit: C{str}
+
+        :returns: C{True} if the specified unit is compatible with the one of the quantity
+        :rtype: C{bool}
         """
         unit = _findUnit (unit)
         return self.unit.isCompatible (unit)
@@ -325,7 +323,7 @@ class PhysicalQuantity:
     def getUnitName(self):
         """Return unit (string) of physical quantity."""
         return self.unit.name()
-    
+
     def sqrt(self):
         return pow(self, 0.5)
 
@@ -363,18 +361,18 @@ class PhysicalUnit:
     
     def __init__(self, names, factor, powers, offset=0):
         """
-        @param names: a dictionary mapping each name component to its
+        :param names: a dictionary mapping each name component to its
                       associated integer power (e.g. C{{'m': 1, 's': -1}})
                       for M{m/s}). As a shorthand, a string may be passed
                       which is assigned an implicit power 1.
-        @type names: C{dict} or C{str}
-        @param factor: a scaling factor
-        @type factor: C{float}
-        @param powers: the integer powers for each of the nine base units
-        @type powers: C{list} of C{int}
-        @param offset: an additive offset to the base unit (used only for
+        :type names: C{dict} or C{str}
+        :param factor: a scaling factor
+        :type factor: C{float}
+        :param powers: the integer powers for each of the nine base units
+        :type powers: C{list} of C{int}
+        :param offset: an additive offset to the base unit (used only for
                        temperatures)
-        @type offset: C{float}
+        :type offset: C{float}
         """
         if type(names) == type(''):
             self.names = NumberDict()
@@ -469,11 +467,12 @@ class PhysicalUnit:
 
     def conversionFactorTo(self, other):
         """
-        @param other: another unit
-        @type other: L{PhysicalUnit}
-        @returns: the conversion factor from this unit to another unit
-        @rtype: C{float}
-        @raises TypeError: if the units are not compatible
+        :param other: another unit
+        :type other: L{PhysicalUnit}
+
+        :returns: the conversion factor from this unit to another unit
+        :rtype: C{float}
+        :raises TypeError: if the units are not compatible
         """
         if self.powers != other.powers:
             raise TypeError('Incompatible units')
@@ -485,11 +484,12 @@ class PhysicalUnit:
 
     def conversionTupleTo(self, other): # added 1998/09/29 GPW
         """
-        @param other: another unit
-        @type other: L{PhysicalUnit}
-        @returns: the conversion factor and offset from this unit to another unit
-        @rtype: (C{float}, C{float})
-        @raises TypeError: if the units are not compatible
+        :param other: another unit
+        :type other: L{PhysicalUnit}
+
+        :returns: the conversion factor and offset from this unit to another unit
+        :rtype: (C{float}, C{float})
+        :raises TypeError: if the units are not compatible
         """
         if self.powers != other.powers:
             raise TypeError('Incompatible units')
@@ -515,10 +515,11 @@ class PhysicalUnit:
 
     def isCompatible (self, other):     # added 1998/10/01 GPW
         """
-        @param other: another unit
-        @type other: L{PhysicalUnit}
-        @returns: C{True} if the units are compatible, i.e. if the powers of the base units are the same
-        @rtype: C{bool}
+        :param other: another unit
+        :type other: L{PhysicalUnit}
+
+        :returns: C{True} if the units are compatible, i.e. if the powers of the base units are the same
+        :rtype: C{bool}
         """
         return self.powers == other.powers
 
@@ -557,19 +558,21 @@ class PhysicalUnit:
 
 def isPhysicalUnit(x):
     """
-    @param x: an object
-    @type x: any
-    @returns: C{True} if x is a L{PhysicalUnit}
-    @rtype: C{bool}
+    :param x: an object
+    :type x: any
+
+    :returns: C{True} if x is a L{PhysicalUnit}
+    :rtype: C{bool}
     """
     return hasattr(x, 'factor') and hasattr(x, 'powers')
 
 def isPhysicalQuantity(x):
     """
-    @param x: an object
-    @type x: any
-    @returns: C{True} if x is a L{PhysicalQuantity}
-    @rtype: C{bool}
+    :param x: an object
+    :type x: any
+
+    :returns: C{True} if x is a L{PhysicalQuantity}
+    :rtype: C{bool}
     """
     return hasattr(x, 'value') and hasattr(x, 'unit')
 
@@ -671,7 +674,6 @@ def _addPrefixed(unit):
 _help.append('SI derived units; these automatically get prefixes:\n' + \
      ', '.join([prefix + ' (%.0E)' % value for prefix, value in _prefixes]) + \
              '\n')
-             
 
 _unit_table['kg'] = PhysicalUnit('kg',   1., [0,1,0,0,0,0,0,0,0])
 

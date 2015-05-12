@@ -97,7 +97,7 @@ class Mesh(object):
     Derived classes represent structured, unstructured FE grids, FV grids, etc.
 
     Mesh is assumed to provide a suitable instance of cell and vertex localizers.
-    
+
     .. automethod:: __init__
     """
     def __init__(self):
@@ -147,7 +147,7 @@ class Mesh(object):
     def getMapping(self):
         """
         :return: The mapping associated to a mesh
-        :rtype: ??
+        :rtype: defined by API
         """
         return self.mapping
 
@@ -222,8 +222,8 @@ class UnstructuredMesh(Mesh):
         """
         Initializes the receicer according to given vertex and cell lists.
 
-        :param tuple vertexList: A tuple of vertices Type of tuple??
-        :param tuple cellList: A tuple of cells Type of tuple??
+        :param tuple vertexList: A tuple of vertices
+        :param tuple cellList: A tuple of cells
 
         """
         self.vertexList = vertexList

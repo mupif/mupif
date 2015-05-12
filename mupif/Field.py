@@ -59,7 +59,7 @@ class Field(object):
         :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalear, vector, tensor)
-        :param ?? units: Units of the field values
+        :param obj units: Units of the field values
         :param float time: Time associated with filed values
         :param tuple values: Field values (format dependent on a particular field type)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
@@ -182,10 +182,10 @@ class Field(object):
     def setValue(self, componentID, value):
         """
         Sets the value associated with a given component (vertex or integration point on a cell).
-        
+
         :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
         :param tuple value: Value to be set for a given component
-        
+
         .. Note:: If a mesh has mapping attached (a mesh view) then we have to remember value locally and record change. The source field values are updated after commit() method is invoked.
         """
         self.values[componentID] = value
@@ -197,7 +197,7 @@ class Field(object):
     def getUnits(self):
         """
         :return: Returns units of the receiver
-        :rtype: ??
+        :rtype: obj
         """
         return self.units
 
