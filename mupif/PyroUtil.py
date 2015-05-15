@@ -342,4 +342,22 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec):
 
     app = connectApp(ns, retRec[1])
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
-    
+
+
+import PyroFile
+def uploadPyroFile (filename, pyroFile):
+    file = open (filename, 'wb')
+    data = pyroFile.getChunk()
+    while data:
+        file.write(data)
+        data = pyroFile.getChunk()
+    file.close()
+
+def downloadPyroFile (filename, pyroFile, size = 1024):
+    file = open (filename, 'rb')
+    data = file.read(size)
+    while data:
+        pyroFile.setChunk(data)
+        data = file.read(size)
+    file.close()
+    pyroFile.close()

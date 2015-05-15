@@ -20,6 +20,7 @@ class Application(object):
         self.pyroDaemon = None
         self.pyroNS = None
         self.pyroURI = None
+        self.workDir = ""
 
     def registerPyro (self, pyroDaemon, pyroNS, pyroURI):
         """
@@ -200,3 +201,7 @@ class Application(object):
         """
         return self.pyroURI
 
+    def setWorkingDirectory(self, path):
+        """
+        """
+        self.workDir = path

@@ -294,7 +294,7 @@ class SimpleJobManager2 (JobManager):
             jobPort = self.freePorts.pop(0)
             logger.info('SimpleJobManager2: port to be assigned %d'%(jobPort))
             try:
-                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(self.jobManWorkDir)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 logger.debug('SimpleJobManager2: new subprocess has been started')
             except Exception as e:
                 logger.exception(e)
@@ -366,3 +366,26 @@ class SimpleJobManager2 (JobManager):
         for key in self.activeJobs:
             status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX], self.activeJobs[key][SJM2_PORT_INDX]  ))
         return status
+
+    def uploadFile(self, jobID, filename, pyroFile):
+        """
+        Uploads the given file to application server, files are uploaded to dedicated jobID directory
+        :param str jobID: jobID
+        :param str filename: path to file to upload
+
+        .. Note:: Some supporting local code is needed to split the file and send individual chunks as buffers to remote server.
+        """
+        targetFileName = self.jobManWorkDir+"\"+jobID+"\"+filename
+        PyroUtil.uploadPyroFile (targetFileName, pyroFile)
+
+    def getPyroFile(self, jobID, filename):
+        """
+        Download a file from a jobID server
+
+        ??
+
+        """
+        targetFileName = self.jobManWorkDir+"\"+jobID+"\"+filename
+        return PyroFile.PyroFile(targetFileName, 'rb')
+        
+        
