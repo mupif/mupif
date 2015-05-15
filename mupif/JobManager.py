@@ -101,27 +101,24 @@ class JobManager(object):
         """
         """
 
-    def uploadFile(self, jobID, filename):
+    def uploadFile(self, jobID, filename, pyroFile):
         """
         Uploads the given file to application server, files are uploaded to dedicated jobID directory
         :param str jobID: jobID
-        :param str filename: path to file to upload
-
-        .. Note:: Some supporting local code is needed to split the file and send individual chunks as buffers to remote server.
-        """
-    def uploadFilePart(self, jobID, filePart, partID, eof=False):
-        """
-        Upload a piece of file to a jobID server
-
-        ??
+        :param str filename: target file name 
+        :param PyroFile pyroFile: source pyroFile 
 
         """
-    def dowloadFile(self, jobID, filename):
+
+    def getPyroFile(self, jobID, filename):
         """
-        Download a file from a jobID server
-
-        ??
-
+        Returns the (remote) PyroFile representation of given file.
+        To create local copy of file represented by PyroFile, use PyroUtil.downloadPyroFile, see :func:`PyroUtil.downloadPyroFile`
+        
+        :param str jobID: job identifier (jobID)  
+        :param str filename: source file name (on remote server). The filename should contain only base filename, not a path, which is determined by jobManager based on jobID. 
+        :return: PyroFile representation of given file
+        :rtype: PyroFile
         """
 
 #SimpleJobManager
@@ -370,21 +367,14 @@ class SimpleJobManager2 (JobManager):
 
     def uploadFile(self, jobID, filename, pyroFile):
         """
-        Uploads the given file to application server, files are uploaded to dedicated jobID directory
-        :param str jobID: jobID
-        :param str filename: path to file to upload
-
-        .. Note:: Some supporting local code is needed to split the file and send individual chunks as buffers to remote server.
+        See :func:`JobManager.uploadFile`
         """
         targetFileName = self.jobManWorkDir+'/'+jobID+"/"+filename
         PyroUtil.uploadPyroFile (targetFileName, pyroFile)
 
     def getPyroFile(self, jobID, filename):
         """
-        Download a file from a jobID server
-
-        ??
-
+        See :func:`JobManager.getPyroFile`
         """
         targetFileName = self.jobManWorkDir+"/"+jobID+"/"+filename
         logger.info('SimpleJobManager2:getPyroFile ' + targetFileName)

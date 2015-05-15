@@ -346,6 +346,12 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec):
 
 import PyroFile
 def uploadPyroFile (filename, pyroFile):
+    """
+    Uploads the given file (specified by given file name) into PyroFile handle.
+
+    :param str filename: path to source file name
+    :param PyroFile pyroFile: representation of target (remote) file 
+    """
     file = open (filename, 'wb')
     data = pyroFile.getChunk()
     while data:
@@ -354,6 +360,13 @@ def uploadPyroFile (filename, pyroFile):
     file.close()
 
 def downloadPyroFile (filename, pyroFile, size = 1024):
+    """
+    Downloads the (remote) file, represented by given pyroFile into local file (determined by target path)
+
+    :param str filename: path to target file
+    :param PyroFile pyroFile: represenation of source (remote) file
+    :param int size: optional chunk size. The data are read and written in byte chunks of this size 
+    """
     file = open (filename, 'rb')
     data = file.read(size)
     while data:
