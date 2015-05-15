@@ -2,6 +2,7 @@ import serverConfig as conf
 import socket
 import getopt, sys
 import logging
+import os
 
 from mupif import *
 #Results are printed through a logger only - communication with this subprocess is peculiar
@@ -58,7 +59,14 @@ app = conf.applicationClass()
 uri = daemon.register(app)
 ns.register(jobID, uri)
 app.registerPyro(daemon, ns, uri)
-app.setWorkingDirectory(workDir)
+
+#create working directory if not present
+jobDir = workDir+'/'+jobID
+logger.info("Checking working directory:"+jobDir)
+if not os.path.exists(jobDir):
+    logger.info("Creating job working directory:"+jobDir)
+    os.makedirs(jobDir)
+app.setWorkingDirectory(jobDir)
 
 logger.info('Signature is %s' % app.getApplicationSignature() )
 

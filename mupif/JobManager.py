@@ -26,6 +26,7 @@ import socket
 import time as timeTime
 import Pyro4
 import logging
+import PyroFile
 logger = logging.getLogger()
 
 #error codes
@@ -375,7 +376,7 @@ class SimpleJobManager2 (JobManager):
 
         .. Note:: Some supporting local code is needed to split the file and send individual chunks as buffers to remote server.
         """
-        targetFileName = self.jobManWorkDir+"\"+jobID+"\"+filename
+        targetFileName = self.jobManWorkDir+'/'+jobID+"/"+filename
         PyroUtil.uploadPyroFile (targetFileName, pyroFile)
 
     def getPyroFile(self, jobID, filename):
@@ -385,7 +386,11 @@ class SimpleJobManager2 (JobManager):
         ??
 
         """
-        targetFileName = self.jobManWorkDir+"\"+jobID+"\"+filename
-        return PyroFile.PyroFile(targetFileName, 'rb')
+        targetFileName = self.jobManWorkDir+"/"+jobID+"/"+filename
+        logger.info('SimpleJobManager2:getPyroFile ' + targetFileName)
+        pfile = PyroFile.PyroFile(targetFileName, 'rb')
+        self.daemon.register(pfile)
+
+        return pfile
         
         
