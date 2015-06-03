@@ -1,4 +1,0 @@
-include *.c *.txt
-recursive-include doc *.pdf
-recursive-include tools *.py *.sh
-recursive-include examples/Example03 *.c README

@@ -23,7 +23,7 @@
 """
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
-__version__ = 1.0
+__version__ = 0.1
 __author__  = 'Borek Patzak and Guillaume Pacquaut and Vit Smilauer'
 
 #List all submodules, so they can all be imported: from mupif import *

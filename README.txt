@@ -50,10 +50,11 @@ MuPIF_TOP_DIR - contains source code of the MuPIF package
 |
 |-- mupif - contains source code of the MuPIF package|
 |-- examples - contains examples and tests
+etc.
 
 [3] Pre-requisites
 ===============================================================================
-The MuPIF requires the python interpreter. 
+The MuPIF requires the python interpreter.
 Some examples rely on vtk python module which requires Python 2.x version.
 
 MuPIF depends on application interfaces, which typically require that 
@@ -64,6 +65,20 @@ module.
 [4] Running Mupif examples
 ===============================================================================
 Please read README files in individual example directories for instructions.
+
+[5] Installation
+===============================================================================
+Use   pip install mupif   to install mupif as a package.
+
+To build an installable MuPIF package, several options are available.
+A package setuptools is normally used for creating e.g. installable tar files.
+Simply run a command   python setup.py sdist  to create sdist/*.tar.gz file.
+
+python setup.py install installs the MuPIF on local disk - need a root 
+priviledges by default. To uninstall, use   pip freeze   and then something like
+pip uninstall mupif==0.1
+
+
 
 Bugs
 ==============================================================================
