@@ -37,7 +37,6 @@ from mupif import ValueType
 def readEnsightGeo(name, partFilter, partRec):
     """
     Reads Ensight geometry file (Ensight6 format) and returns corresponding Mesh object instance. Supports only unstructured meshes.
-    Why are these functions not under EnsightReader class in EnsightReader.py??
 
     :param str name: Path to Ensight geometry file (\*.geo)
     :param tuple partFiler: Only parts with id contained in partFiler will be imported
@@ -127,7 +126,7 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
     :param int partnum: Part number
     :param list partdesc: Partition description record
     :param list partRec: Output agrument (list) containing info about individual parts (number of elements). Needed by readEnsightField
-    :return: line and line number??
+    :return: line and line number
     :rtype: tuple (line, enum)
     """
     # if the next line is not next part record, then should be element section
@@ -179,7 +178,7 @@ def readEnsightField (name, parts, partRec, type, mesh):
     :param list partRec: A list containing info about individual parts (number of elements per each element type).
     :param int type: Determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
     :param Mesh mesh: Corresponding mesh
-    :return: Field of unknowns??, why is FID_Temperature??
+    :return: Field of unknowns
     :rtype: Field
     """
     vertexVals = []

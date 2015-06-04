@@ -15,14 +15,14 @@ debug = 0
 
 def readMesh(numNodes,nx,ny,nz,coords):
     """
-    Reads structured 3D mesh??
+    Reads structured 3D mesh
 
     :param int numNodes: Number of nodes
     :param int nx: Number of elements in x direction
     :param int ny: Number of elements in y direction
     :param int nz: Number of elements in z direction
     :param tuple coords: Coordinates for each nodes
-    :return: Mesh??
+    :return: Mesh
     :rtype: Mesh
     """
     mesh = Mesh.UnstructuredMesh()
@@ -76,10 +76,10 @@ def readMesh(numNodes,nx,ny,nz,coords):
 
 def readField(mesh, Data, name, type):
     """
-    :param Mesh mesh: Source mesh??
-    :param ?? Data: ??
-    :param str name: ??
-    :param int type: ??
+    :param Mesh mesh: Source mesh
+    :param vtkData Data: vtkData obtained by pyvtk
+    :param str name: name of the field to visualize
+    :param int type: type of value of the field (1:Scalar, 3:Vector, 6:Tensor) 
     :return: Field of unknowns
     :rtype: Field
     """
