@@ -2,12 +2,12 @@
 import sys
 sys.path.append('../..')
 sys.path.append('.')
-from mupif import EnsightReader2
-from mupif import Application
+from mupif import *
 
 class Celsian(Application.Application):
 
     def __init__ (self, file):
+        super(Celsian, self).__init__(file)
         self.mesh = None
 
     def getField(self, fieldID, time):

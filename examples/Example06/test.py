@@ -9,16 +9,12 @@ hkey = 'mmp-secret-key'
 
 import Pyro4
 from mupif import *
+import config
 import time as timeTime
 
 #use numerical IP values only (not names, sometimes they do not work)
 try:#tunnel must be closed at the end, otherwise bound socket may persist on system
-    if(sys.platform.lower().startswith('win')):
-        #Windows tunnel using putty
-        tunnel = PyroUtil.sshTunnel(remoteHost='147.32.130.137', userName='mmp', localPort=5555, remotePort=44361, sshClient='C:\\Program Files\\Putty\putty.exe', options='-i C:\\tmp\\id_rsa-putty-private.ppk')
-    else:
-        #NIX tunnel
-        tunnel = PyroUtil.sshTunnel(remoteHost='147.32.130.137', userName='mmp', localPort=5555, remotePort=44361, sshClient='ssh', options='-oStrictHostKeyChecking=no')
+    tunnel = PyroUtil.sshTunnel(config.server, config.serverUserName, config.serverNatport, config.serverPort, config.sshClient, config.options)
 
     time  = 0
     dt    = 1
@@ -26,7 +22,7 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
 
     start = timeTime.time()
     #locate nameserver
-    ns = PyroUtil.connectNameServer('147.32.130.137', 9090, hkey)
+    ns = PyroUtil.connectNameServer(config.nshost, config.nsport, config.hkey)
 
     # locate remote PingServer application, request remote proxy
     serverApp = PyroUtil.connectApp(ns, 'Mupif.PingServerApplication')

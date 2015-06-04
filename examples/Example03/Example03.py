@@ -1,12 +1,7 @@
 import sys
 sys.path.append('../..')
  
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
+from mupif import *
 import os
 
 class application1(Application.Application):
@@ -14,6 +9,7 @@ class application1(Application.Application):
     Simple application that generates a property with a value equal to actual time
     """
     def __init__(self, file):
+        super(application1, self).__init__(file)
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -33,6 +29,7 @@ class application3(Application.Application):
     """
     def __init__(self, file):
         # list storing all mapped values from the beginning
+        super(application3, self).__init__(file)
         self.values = []
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):

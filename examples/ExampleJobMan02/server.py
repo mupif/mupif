@@ -14,7 +14,7 @@ logger = logging.getLogger()
 ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=sConf.deamonHost, port=sConf.jobManPort, nathost=sConf.nathost, natport=sConf.jobManNatport)
+daemon = PyroUtil.runDaemon(host=sConf.daemonHost, port=sConf.jobManPort, nathost=sConf.nathost, natport=sConf.jobManNatport)
 #Run job manager on a server
 jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, "Mupif.PingServerApplication", sConf.jobManPortsForJobs, sConf.jobManWorkDir, sConf.jobManMaxJobs)
 

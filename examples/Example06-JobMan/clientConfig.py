@@ -12,7 +12,7 @@ nsport  = 9090 #NameServer's port - do not change
 hkey = 'mmp-secret-key' #Password for accessing nameServer and applications
 nathost='127.0.0.1' #NatHost of local computer - do not change
 
-deamonHost='147.32.130.137'#IP of server
+daemonHost='147.32.130.137'#IP of server
 hostUserName='mmp'#User name for ssh connection
 
 #Edit these paths for your SSH-client and location of a private key

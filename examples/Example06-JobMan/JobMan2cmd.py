@@ -48,7 +48,7 @@ if natPort == -1:
 ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = PyroUtil.runDaemon(host=conf.deamonHost, port=daemonPort, nathost=conf.nathost, natport=natPort)
+daemon = PyroUtil.runDaemon(host=conf.daemonHost, port=daemonPort, nathost=conf.nathost, natport=natPort)
 
 #Initialize application
 #app = DemoApplication.DemoApplication()

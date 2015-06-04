@@ -7,6 +7,8 @@ nsport = 9090
 #address where this server will listen through a daemon
 daemonHost = "localhost"
 daemonPort = 44382
+hkey= "mmp-secret-key"
+nathost='127.0.0.1' #NatHost of local computer - do not change
 
 import sys
 sys.path.append('../..')
@@ -28,6 +30,6 @@ import logging
 logger = logging.getLogger()
 
 import DemoApplication
-appClass = DemoApplication.DemoApplication
+applicationClass = DemoApplication.DemoApplication
 
 

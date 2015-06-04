@@ -6,6 +6,8 @@ logger = logging.getLogger()
 import os
 
 import Pyro4
+import config
+
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
@@ -51,4 +53,6 @@ class PingServerApplication(Application.Application):
 
 app2 = PingServerApplication("/dev/null")
 
-PyroUtil.runAppServer( server='147.32.130.137', port=44361, nathost='localhost', natport=5555, nshost='147.32.130.137', nsport=9090, nsname='Mupif.PingServerApplication', hkey='mmp-secret-key', app=app2 )
+PyroUtil.runAppServer(config.server, config.serverPort, config.serverNathost, config.serverNatport, 
+                      config.nshost, config.nsport, config.nsname, config.hkey, 
+                      app=app2 )
