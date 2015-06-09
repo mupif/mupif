@@ -1,0 +1,13 @@
+This example ilustrates job manager functionality. It is similar to ExampleJobMan01. In addition, two ssh tunnels are created and test.txt file is transferred. To test this example:
+
+1. Configure serverConfig.py
+
+2. Start the server.py. It finds a nameServer on a given IP and port and runs a daemon (usually on a local computer).
+The daemon registers JobManager and sends URI to the nameServer.
+
+3. Configure clientConfig.py
+
+4. Start (multiple) instances of simulation script scenario.py. It calls JobManager.allocateJob(), which calls JobMan2cmd.py with a given port and jobID. This ensures that each JobMan2cmd.py has different GIL (Global Interpreter Lock). Two ssh tunnels are created using ssh private/public key authentication.
+
+5. A file test.txt created by an application will be securely transmitted to the subdirectories under server's directory defined in serverConfig.jobManWorkDir.
+

@@ -9,7 +9,6 @@ logger = logging.getLogger()
 # for computer running a nameserver
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
-
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 

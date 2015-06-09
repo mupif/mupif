@@ -1,4 +1,4 @@
-This example ilustrates job manager functionality.
+This example ilustrates job manager functionality. No ssh tunnels are created.
 
 1. Start the server.py. It finds a nameServer on a given IP and port and runs a daemon (usually on a local computer).
 The daemon registers JobManager and sends URI to the nameServer.
@@ -12,7 +12,4 @@ After starting the server (which will start job manager), the user can:
 - monitor its status (using tools/jobManStatus.py)
 - run (multiple) instancs of simulation script (test.py) that contacts the jobmanager, 
   allocates a new instance of application and performs some processing.
-
-
-
-  - 
+ 
