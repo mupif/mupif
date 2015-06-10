@@ -72,7 +72,11 @@ class Field(object):
         self.uri = None   #pyro uri; used in distributed setting
         self.fieldType = fieldType
         if values == None:
-            ncomponents = mesh.getNumberOfVertices()
+            if (self.fieldType == FieldType.FT_vertexBased):
+                ncomponents = mesh.getNumberOfVertices()
+            else:
+                ncomponents = mesh.giveNumberOfCells()
+
             if valueType == ValueType.Scalar:
                 recsize = 1
             elif valueType == ValueType.Vector:
