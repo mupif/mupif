@@ -4,12 +4,14 @@ sys.path.append('../..')
 sys.path.append('.')
 from mupif import VtkReader2
 from mupif import Application
+from mupif import FieldID
 import pyvtk
 
 
 class Micress(Application.Application):
 
     def __init__ (self, file):
+        super(Micress, self).__init__(file)
         self.mesh = None
 
     def getField(self, fieldID, time):
@@ -35,7 +37,7 @@ class Micress(Application.Application):
         if (self.mesh == None):
             self.mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)
 
-        f = VtkReader2.readField(self.mesh, Data,"conc1",1)
+        f = VtkReader2.readField(self.mesh, Data,FieldID.FID_Concentration, "conc1", "micress/sim.vtk", 1)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -43,5 +45,4 @@ class Micress(Application.Application):
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return 0.1
-
 
