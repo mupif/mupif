@@ -26,6 +26,8 @@ from . import APIError
 import math
 from . import Mesh
 from . import CellGeometryType
+import numpy as np
+
 
 #debug flag
 debug = 0
@@ -259,6 +261,65 @@ class Quad_2d_lin(Cell):
         :rtype: CellGeometryType
         """
         return CellGeometryType.CGT_QUAD
+
+    def _evalN(self, lc):
+        """
+        Evaluates shape functions at given point (given in parametric coordinates)
+        :param tuple lc: A local coordinate
+        :return: shape function
+        :rtype: float
+        """
+        print "lc :",lc
+
+        return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ), 
+                0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ), 
+                0.25 * ( 1. - lc[0] ) * ( 1. - lc[1] ), 
+                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] )) 
+
+
+    def compute_B(self, lc):
+
+        c1=self.mesh.getVertex(self.vertices[0]).coords
+        c2=self.mesh.getVertex(self.vertices[1]).coords
+        c3=self.mesh.getVertex(self.vertices[2]).coords
+        c4=self.mesh.getVertex(self.vertices[3]).coords
+
+        B11=0.25*(c1[0]-c2[0]-c3[0]+c4[0])
+        B12=0.25*(c1[0]+c2[0]-c3[0]-c4[0])
+        B21=0.25*(c1[1]-c2[1]-c3[1]+c4[1])
+        B22=0.25*(c1[1]+c2[1]-c3[1]-c4[1])
+
+        C11=0.25*(c1[0]-c2[0]+c3[0]-c4[0])
+        C12=0.25*(c1[0]-c2[0]+c3[0]-c4[0])
+        C21=0.25*(c1[1]-c2[1]+c3[1]-c4[1])
+        C22=0.25*(c1[1]-c2[1]+c3[1]-c4[1])
+
+        #local coords
+        ksi=lc[0]
+        eta=lc[1]
+
+        B = np.zeros((2,2))
+        B[0,0] = (1./self.getTransformationJacobian(lc))*(B22+ksi*C22)  
+        B[0,1] = (1./self.getTransformationJacobian(lc))*(-B21-eta*C21) 
+        B[1,0] = (1./self.getTransformationJacobian(lc))*(-B12-ksi*C12) 
+        B[1,1] = (1./self.getTransformationJacobian(lc))*(B11+eta*C11) 
+
+        dNdksi = np.zeros((2,4))
+        dNdksi[0,0] = 0.25 * ( 1. + eta )
+        dNdksi[0,1] = -0.25 * ( 1. + eta )
+        dNdksi[0,2] = -0.25 * ( 1. - eta )
+        dNdksi[0,3] = 0.25 * ( 1. - eta )
+        dNdksi[1,0] = 0.25 * ( 1. + ksi )
+        dNdksi[1,1] = 0.25 * ( 1. - ksi )
+        dNdksi[1,2] = -0.25 * ( 1. - ksi )
+        dNdksi[1,3] = -0.25 * ( 1. + ksi )
+
+        Grad= np.zeros((2,4))
+        Grad = np.dot(B,dNdksi)
+
+        print Grad
+        return Grad
+
 
     def glob2loc(self, coords):
         """
