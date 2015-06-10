@@ -22,7 +22,6 @@ else:
         appsig=app1.getApplicationSignature()
         logger.info("Working application 1 on server " + appsig)
 
-
         app1.solveStep(None)
         remoteFile = appRec.getJobManager().getPyroFile (appRec.getJobID(), 'test.txt')
         print remoteFile

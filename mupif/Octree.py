@@ -165,7 +165,8 @@ class Octant(object):
                 for i in self.data:
                     if debug: 
                         print (tab,"checking ...", i)
-                        print (i.getBBox(), bbox)
+                        print (str(i.getBBox()), str(bbox))
+                        
                     if i.getBBox().intersects(bbox):
                         if isinstance(itemList, set):
                             itemList.add(i)

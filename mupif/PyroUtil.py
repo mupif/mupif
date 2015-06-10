@@ -134,7 +134,7 @@ def runDaemon(host, port, nathost, natport):
         daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
         logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
     except socket.error as e:
-        logger.debug('Socket port seems to be already in use :%d' % (port))
+        logger.debug('Socket port %s:%d seems to be already in use' % (host,port))
         daemon = None
         raise e
 

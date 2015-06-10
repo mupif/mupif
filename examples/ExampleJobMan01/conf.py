@@ -1,15 +1,3 @@
-#where is a running nameserver
-nshost = "ksm.fsv.cvut.cz"
-nsport = 9090
-#address where JobManager will listen through a daemon
-#daemonHost = "jaja.fsv.cvut.cz"
-#daemonPort = 44382
-#address where this server will listen through a daemon
-daemonHost = "localhost"
-daemonPort = 44382
-hkey= "mmp-secret-key"
-nathost='127.0.0.1' #NatHost of local computer - do not change
-
 import sys
 sys.path.append('../..')
 import os
@@ -25,11 +13,18 @@ Pyro4.config.COMMTIMEOUT = 10.0 #network communication timeout in seconds.
 #Pyro4.config.SOCK_REUSE = True #can use occupied port. This will not work for the ssh tunnel, which needs a free port to bind to.
 
 from mupif import PyroUtil #get the logging
-
 import logging
 logger = logging.getLogger()
 
 import DemoApplication
 applicationClass = DemoApplication.DemoApplication
 
+#Where is a running nameserver
+nshost = "ksm.fsv.cvut.cz"
+nsport = 9090
 
+#Address where JobManager will listen through a daemon
+daemonHost = "localhost"
+daemonPort = 44382
+hkey= "mmp-secret-key"
+nathost='127.0.0.1' #NatHost of local computer - do not change

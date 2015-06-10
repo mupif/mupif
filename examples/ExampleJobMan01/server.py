@@ -1,19 +1,5 @@
-#Use on linux to reduce TIME_WAIT$  echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle
-
 import conf
 from mupif import *
-#from mupif import Application
-#from mupif import TimeStep
-#from mupif import APIError
-#from mupif import PropertyID
-#from mupif import FieldID
-#from mupif import Mesh
-#from mupif import Field
-#from mupif import ValueType
-#from mupif import Vertex
-#from mupif import Cell
-#from mupif import PyroUtil
-#from mupif import JobManager
 import DemoApplication
 
 import logging
@@ -34,7 +20,7 @@ except Exception as e:
     logger.exception(e)
     exit(0)
 
-jobMan = JobManager.SimpleJobManager2(daemon, ns, DemoApplication.DemoApplication, "DemoApplication", ( 9091, 9092, 9093, 9094), 2)
+jobMan = JobManager.SimpleJobManager2(daemon, ns, conf.applicationClass, "DemoApplication", ( 9091, 9092, 9093, 9094), 2)
 #set up daemon with JobManager
 uri = daemon.register(jobMan)
 #register JobManager to nameServer

@@ -2,7 +2,7 @@ from mupif import *
 
 class DemoApplication (Application.Application):
     """
-    Simple application that computes min and max values of the field
+    Simple application
     """
     def __init__(self):
         pass
