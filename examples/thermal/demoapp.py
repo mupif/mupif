@@ -28,16 +28,16 @@ class thermal(Application.Application):
         # generate a simple mesh here
         self.xl = 0.5 # domain (0..xl)(0..yl)
         self.yl = 0.3
-        self.nx = 1 # number of elements in x direction
-        self.ny = 1 # number of elements in y direction 
+        self.nx = 4 # number of elements in x direction
+        self.ny = 4 # number of elements in y direction 
         self.dx = self.xl/self.nx;
         self.dy = self.yl/self.ny;
         self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
 
         k = 1
         Te=10;
-        self.convectionBC = [(1,1,k, Te)]; # (elem, side, h, Te)
-        self.dirichletBCs = {0:0., 3:0.}; #nodes:value
+        self.convectionBC = [(0,0,k, Te), (4,0,k,Te), (8,0,k,Te), (12,0,k,Te)]; # (elem, side, h, Te)
+        self.dirichletBCs = {0:0., 1:0, 2:0, 3:0., 4:0, 20:0, 21:0, 22:0, 23:0, 24:0}; #nodes:value
 
         self.loc=np.zeros(self.mesh.getNumberOfVertices())
         for i in self.dirichletBCs.keys():
@@ -79,7 +79,7 @@ class thermal(Application.Application):
 
         numNodes = mesh.getNumberOfVertices()
         numElements= mesh.getNumberOfCells()
-        ndofs = numNodes
+        ndofs = 4
 
         print numNodes
         print numElements
@@ -96,12 +96,11 @@ class thermal(Application.Application):
         A = np.zeros((self.neq, self.neq ))
         b = np.zeros((self.neq, 1))
 
-        #element matrix and element vector
-        A_e = np.zeros((4,4 ))
-        b_e = np.zeros((4,1))
-
-
         for e in mesh.cells():
+            #element matrix and element vector
+            A_e = np.zeros((4,4 ))
+            b_e = np.zeros((4,1))
+
             ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
             pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
             
@@ -135,11 +134,12 @@ class thermal(Application.Application):
                 for i in range(4):#loop dofs
                     for j in range(4):
                         A_e[i,j] += K[i,j]*dv   
-                #print "A_e :",A_e
+            print "A_e :",A_e
                 #print "b_e :",b_e 
 
 
             # #Assemble
+            print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
             for i in range(ndofs):#loop nb of dofs
                 ii = self.loc[c[e.number-1,i]]
                 if (ii>=0):
@@ -156,14 +156,14 @@ class thermal(Application.Application):
         # add boundary terms
         for i in self.convectionBC:
             print "Processing bc:", i
-            elem = mesh.getCell(i[0]-1)
+            elem = mesh.getCell(i[0])
             side = i[1]
             h = i[2]
             Te = i[3]
 
             n1 = elem.getVertices()[side];
             print n1
-            if (side == 4):
+            if (side == 3):
                 n2 = elem.getVertices()[0]
             else:
                 n2 = elem.getVertices()[side+1]
@@ -187,7 +187,7 @@ class thermal(Application.Application):
             boundary_rhs[1] = (1./2.)*length*Te
 
             # #Assemble
-            loci = [n1.number-1, n2.number-1]
+            loci = [n1.number, n2.number]
             print loci
             for i in range(2):#loop nb of dofs
                 ii = self.loc[loci[i]]
@@ -195,7 +195,7 @@ class thermal(Application.Application):
                     for j in range(2):
                         jj = self.loc[loci[j]]
                         if jj>=0:
-                            print "Assembling bc ", jj, jj
+                            print "Assembling bc ", ii, jj, boundary_lhs[i,j]
                             A[ii,jj] += boundary_lhs[i,j]
                     b[ii] += boundary_rhs[i] 
         

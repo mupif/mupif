@@ -1,19 +1,37 @@
-import sys
-sys.path.append('../..')
-import demoapp
-import meshgen
-from mupif import FieldID
-from mupif import Field
-from mupif import ValueType
-from mupif import TimeStep
-from mupif import PropertyID
-from mupif import Mesh
-from mupif import Vertex
-from mupif import Cell
+import clientConfig as cConf
+from mupif import *
+import logging
+logger = logging.getLogger()
 
-app = demoapp.thermal()
-print app.getApplicationSignature()
+import time as timeTime
+start = timeTime.time()
+logger.info('Timer started')
 
-sol = app.solveStep(TimeStep.TimeStep(0,1)) 
-f = app.getField(FieldID.FID_Temperature, 0.0)
-f.field2VTKData().tofile('example2')
+#locate nameserver
+ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
+
+#localize JobManager running on (remote) server and create a tunnel to it
+#allocate the first application app1
+try:
+    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+    app1 = appRec.getApplication()
+except Exception as e:
+    logger.exception(e)
+else:
+    if app1 is not None:
+        appsig=app1.getApplicationSignature()
+        logger.info("Working application 1 on server " + appsig)
+
+        app1.solveStep(None)
+        f = app1.getField(FieldID.FID_Temperature, 0.0)
+        f.field2VTKData().tofile('example')
+        #terminate
+        logger.info("Time consumed %f s" % (timeTime.time()-start))
+    else:
+        logger.debug("Connection to server failed, exiting")
+
+finally:
+    if appRec: appRec.terminateAll()
+
+
+

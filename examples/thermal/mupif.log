@@ -1,0 +1,9 @@
+2015-06-10 21:34:32,140 DEBUG:PyroUtil.py:63 Can connect to a LISTENING port of nameserver on 147.32.130.137:9090 
+
+2015-06-10 21:34:32,140 DEBUG:PyroUtil.py:77 Can not connect to NameServer on 147.32.130.137:9090. Is the NameServer running? Runs the NameServer on the same Pyro version as this version 4.28? Do you have the correct hmac_key (password is now mmp-secret-key)? Exiting. 
+
+2015-06-10 21:34:32,141 ERROR:PyroUtil.py:78 locateNS() got an unexpected keyword argument 'hmac_key' 
+Traceback (most recent call last):
+  File "../../mupif/PyroUtil.py", line 72, in connectNameServer
+    ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
+TypeError: locateNS() got an unexpected keyword argument 'hmac_key'
