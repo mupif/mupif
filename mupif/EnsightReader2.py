@@ -34,9 +34,13 @@ from mupif import Field
 from mupif import FieldID
 from mupif import ValueType
 
+debug = 0
+
+
 def readEnsightGeo(name, partFilter, partRec):
     """
     Reads Ensight geometry file (Ensight6 format) and returns corresponding Mesh object instance. Supports only unstructured meshes.
+    Why are these functions not under EnsightReader class in EnsightReader.py??
 
     :param str name: Path to Ensight geometry file (\*.geo)
     :param tuple partFiler: Only parts with id contained in partFiler will be imported
@@ -52,7 +56,9 @@ def readEnsightGeo(name, partFilter, partRec):
 
     # open the geo file
     f = open(name, 'r')
-    print("Importing geometry from %s"%(name))
+    if debug: 
+        print("Importing geometry from %s"%(name))
+
     mesh = Mesh.UnstructuredMesh()
 
     #process header (6 lines)
@@ -95,7 +101,8 @@ def readEnsightGeo(name, partFilter, partRec):
             partnum = int(match.group(1))
             partRec.append({}) #add empty dict for each part containing number of elements for each elemeet type
             if (partnum in partFilter):
-                print "Importing part %d"%(partnum)
+                if debug:
+                    print "Importing part %d"%(partnum)
                 partdesc = f.readline().rstrip('\r\n')
                 # process part 
                 # get element type
@@ -106,10 +113,10 @@ def readEnsightGeo(name, partFilter, partRec):
         else:
            line = f.readline() 
 
-    print "Setting up mesh: %d vertices, %d cells"%(vnum, enum)
-    print len(vertices), len(cells)
+    if debug:
+        print "Setting up mesh: %d vertices, %d cells"%(vnum, enum)
+        print len(vertices), len(cells)
     mesh.setup(vertices, cells)
-    print partRec
     return mesh
 
 
@@ -126,19 +133,21 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
     :param int partnum: Part number
     :param list partdesc: Partition description record
     :param list partRec: Output agrument (list) containing info about individual parts (number of elements). Needed by readEnsightField
-    :return: line and line number
+    :return: tuple (line, cell number)
     :rtype: tuple (line, enum)
     """
     # if the next line is not next part record, then should be element section
     while (not re.search('\s*part\s+(\d+)', line)):
         # ok no "part" keyword, parse element section
         eltype=line.rstrip('\r\n')
-        print "(",eltype,")"
+        if debug: 
+            print "(",eltype,")"
         line = f.readline()
         nelem = int(line.rstrip('\r\n'))
         # remember info to partRec
         partRec[partnum-1][eltype]=nelem
-        print "part %s nelem %d" % (partdesc, nelem)
+        if debug:
+            print "part %s nelem %d" % (partdesc, nelem)
         #read individual elements
         for i in range(nelem):
             elemRec = f.readline()
@@ -157,7 +166,8 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
                     if match:
                         elnum = int(match.group(1))
                         elnodes = (int(match.group(2)), int(match.group(3)), int(match.group(4)), int(match.group(5)))
-                        print ("Quad: %d (%d %d %d %d)"%(elnum, elnodes[0],elnodes[1],elnodes[2],elnodes[3]))
+                        if debug:
+                            print ("Quad: %d (%d %d %d %d)"%(elnum, elnodes[0],elnodes[1],elnodes[2],elnodes[3]))
                         _vert = [vertexMapping[i] for i in elnodes]
                         cells.append(Cell.Quad_2d_lin(mesh, enum, enum, tuple(_vert)))
                         enum=enum+1
@@ -169,7 +179,7 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
     # next part record found
     return (line, enum)
     
-def readEnsightField (name, parts, partRec, type, mesh):
+def readEnsightField (name, parts, partRec, type, fieldID, mesh):
     """
     Reads either Per-node or Per-element variable file and returns corresponding Field representation.
     
@@ -177,8 +187,9 @@ def readEnsightField (name, parts, partRec, type, mesh):
     :param tuple parts: Only parts with id contained in partFiler will be imported
     :param list partRec: A list containing info about individual parts (number of elements per each element type).
     :param int type: Determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
+    :param FieldID fieldID: Field type (displacement, strain, temperature ...)
     :param Mesh mesh: Corresponding mesh
-    :return: Field of unknowns
+    :return: Field of unknowns??, why is FID_Temperature??
     :rtype: Field
     """
     vertexVals = []
@@ -199,7 +210,7 @@ def readEnsightField (name, parts, partRec, type, mesh):
 
     #get variable name (1st line)
     varname = f.readline().rstrip('\r\n')
-    print("Importing %s from %s"%(varname, name))
+#    print("Importing %s from %s"%(varname, name))
     
     #now check if nodal records available or part (cell records)
     line = f.readline()
@@ -234,7 +245,7 @@ def readEnsightField (name, parts, partRec, type, mesh):
                                vertexVals[i*6+2],vertexVals[i*6+3],
                                vertexVals[i*6+4],vertexVals[i*6+4]))
 
-        field = Field.Field(mesh, FieldID.FID_Temperature ,ftype, None, None, values, Field.FieldType.FT_vertexBased )
+        field = Field.Field(mesh, fieldID, ftype, None, None, values, Field.FieldType.FT_vertexBased )
         return field
 
     else:
@@ -244,7 +255,8 @@ def readEnsightField (name, parts, partRec, type, mesh):
             if match:
                 partnum = int(match.group(1))
                 if (partnum in parts):
-                    print "Importing part %d"%(partnum)
+                    if debug:
+                        print "Importing part %d"%(partnum)
                     # get element type
                     line = f.readline()
                     # if the next line is not next part record, then should be element section
@@ -252,7 +264,8 @@ def readEnsightField (name, parts, partRec, type, mesh):
                         # ok no "part" keyword, parse element section
                         eltype=line.rstrip('\r\n')
                         nelem = partRec[partnum-1][eltype] #get number of elements in part
-                        print "(",eltype, nelem,")"
+                        if debug:
+                            print "(",eltype, nelem,")"
                         size = nelem * type
                         cellVals=[] # empty values for each element group
                         for i in range (size/6): #six values per row in fixed format 12.5e
@@ -275,8 +288,8 @@ def readEnsightField (name, parts, partRec, type, mesh):
                                 values.append((cellVals[i*6], cellVals[i*6+1], 
                                                cellVals[i*6+2],cellVals[i*6+3],
                                                cellVals[i*6+4],cellVals[i*6+4]))
-                            
-                        print "done importing element section"
+                        if debug:
+                            print "done importing element section"
                         #done parsing cell record(s) in part 
                 
                 else: # if (partnum in parts):   proceed to next part 

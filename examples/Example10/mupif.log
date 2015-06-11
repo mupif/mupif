@@ -1,0 +1,30 @@
+2015-06-11 14:52:22,426 INFO:Demo03.py:8 Timer started 
+
+2015-06-11 14:52:22,426 DEBUG:PyroUtil.py:63 Can connect to a LISTENING port of nameserver on 147.32.130.137:9090 
+
+2015-06-11 14:52:22,428 DEBUG:PyroUtil.py:74 Connected to NameServer on 147.32.130.137:9090. Pyro4 version on this computer is 4.35 
+
+2015-06-11 14:52:22,429 DEBUG:PyroUtil.py:205 Creating ssh tunnel via command: ssh -L 5555:147.32.130.137:44361 mmp@147.32.130.137 -N -oStrictHostKeyChecking=no 
+
+2015-06-11 14:52:23,432 DEBUG:PyroUtil.py:95 Found URI PYRO:obj_ca9ce4e3084e45339f7820324a01eceb@127.0.0.1:5555 from a nameServer <Pyro4.core.Proxy at 0x7f896766bd10, connected, for PYRO:Pyro.NameServer@147.32.130.137:9090> 
+
+2015-06-11 14:52:23,473 DEBUG:PyroUtil.py:102 Connected to Mupif.JobManager.SimpleJobManager2 with the name Mupif.JobManager@demo 
+
+2015-06-11 14:52:23,639 INFO:PyroUtil.py:289 Allocated job, returned record from jobMan:(1, '3@Mupif.PingServerApplication', 9093) 
+
+2015-06-11 14:52:23,639 DEBUG:PyroUtil.py:205 Creating ssh tunnel via command: ssh -L 6000:147.32.130.137:9093 mmp@147.32.130.137 -N -oStrictHostKeyChecking=no 
+
+2015-06-11 14:52:24,640 INFO:PyroUtil.py:303 Scenario: Connecting to 3@Mupif.PingServerApplication 9093 
+
+2015-06-11 14:52:24,641 DEBUG:PyroUtil.py:95 Found URI PYRO:obj_1e8d9dcb5c8440ee847ff25410c9a08f@127.0.0.1:6000 from a nameServer <Pyro4.core.Proxy at 0x7f896766bd10, connected, for PYRO:Pyro.NameServer@147.32.130.137:9090> 
+
+2015-06-11 14:52:24,682 DEBUG:PyroUtil.py:102 Connected to Thermal demo solver, v1.0 with the name 3@Mupif.PingServerApplication 
+
+2015-06-11 14:52:24,683 INFO:Demo03.py:23 Working application 1 on server Thermal demo solver, v1.0 
+
+2015-06-11 14:52:24,683 INFO:Demo03.py:25 Uploading input file on server Thermal demo solver, v1.0 
+
+2015-06-11 14:52:24,726 INFO:Demo03.py:29 Solving problem on server Thermal demo solver, v1.0 
+
+2015-06-11 14:52:24,821 INFO:Demo03.py:34 Time consumed 2.394567 s 
+

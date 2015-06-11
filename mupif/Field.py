@@ -75,7 +75,7 @@ class Field(object):
             if (self.fieldType == FieldType.FT_vertexBased):
                 ncomponents = mesh.getNumberOfVertices()
             else:
-                ncomponents = mesh.giveNumberOfCells()
+                ncomponents = mesh.getNumberOfCells()
 
             if valueType == ValueType.Scalar:
                 recsize = 1
@@ -226,10 +226,10 @@ class Field(object):
             for v in xrange(field.mesh.getNumberOfVertices()):
                 values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.values[v]
         else:
-            values=[0]*mesh.giveNumberOfCells()
-            for v in xrange(self.mesh.giveNumberOfCells()):
+            values=[0]*mesh.getNumberOfCells()
+            for v in xrange(self.mesh.getNumberOfCells()):
                 values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)]=self.values[v]
-            for v in xrange(field.mesh.giveNumberOfCells()):
+            for v in xrange(field.mesh.getNumberOfCells()):
                 values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)]=field.values[v]
 
         self.mesh=mesh

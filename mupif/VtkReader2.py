@@ -74,10 +74,11 @@ def readMesh(numNodes,nx,ny,nz,coords):
     mesh.setup(vertices, cells)
     return mesh
 
-def readField(mesh, Data, name, type):
+def readField(mesh, Data, fieldID, name, filename, type):
     """
     :param Mesh mesh: Source mesh
     :param vtkData Data: vtkData obtained by pyvtk
+    :param FieldID fieldID: Field type (displacement, strain, temperature ...)
     :param str name: name of the field to visualize
     :param int type: type of value of the field (1:Scalar, 3:Vector, 6:Tensor) 
     :return: Field of unknowns
@@ -93,7 +94,7 @@ def readField(mesh, Data, name, type):
         ftype = ValueType.Tensor
 
 
-    f=open("./micress/sim.vtk", "r")
+    f=open(filename, "r")
     numScalars=0
     for line in f.readlines():
         if line.find('SCALARS')>= 0:
@@ -124,5 +125,5 @@ def readField(mesh, Data, name, type):
             values.append((scalar[i],))
             #print "values : ", values
 
-    field = Field.Field(mesh, FieldID.FID_Temperature ,ftype, None, None, values, Field.FieldType.FT_vertexBased )
+    field = Field.Field(mesh, fieldID ,ftype, None, None, values, Field.FieldType.FT_vertexBased )
     return field

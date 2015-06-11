@@ -27,6 +27,8 @@ import time as timeTime
 import Pyro4
 import logging
 import PyroFile
+import PyroUtil
+import os
 logger = logging.getLogger()
 
 #error codes
@@ -291,8 +293,20 @@ class SimpleJobManager2 (JobManager):
             # run the new application instance served by corresponding pyro daemon in a new process
             jobPort = self.freePorts.pop(0)
             logger.info('SimpleJobManager2: port to be assigned %d'%(jobPort))
+
             try:
-                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(self.jobManWorkDir)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                targetWorkDir = self.jobManWorkDir+os.path.sep+jobID
+                logger.info('SimpleJobManager2: Checking target workdir %s', targetWorkDir)
+                if not os.path.exists(targetWorkDir):
+                    os.makedirs(targetWorkDir)
+                    logger.info('SimpleJobManager2: creating target workdir %s', targetWorkDir)
+            except Exception as e:
+                logger.exception(e)
+                raise
+                return (JOBMAN_ERR,None)
+
+            try:
+                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 logger.debug('SimpleJobManager2: new subprocess has been started')
             except Exception as e:
                 logger.exception(e)
@@ -369,16 +383,16 @@ class SimpleJobManager2 (JobManager):
         """
         See :func:`JobManager.uploadFile`
         """
-        targetFileName = self.jobManWorkDir+'/'+jobID+"/"+filename
+        targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
         PyroUtil.uploadPyroFile (targetFileName, pyroFile)
 
-    def getPyroFile(self, jobID, filename):
+    def getPyroFile(self, jobID, filename, mode="r"):
         """
         See :func:`JobManager.getPyroFile`
         """
-        targetFileName = self.jobManWorkDir+"/"+jobID+"/"+filename
+        targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
         logger.info('SimpleJobManager2:getPyroFile ' + targetFileName)
-        pfile = PyroFile.PyroFile(targetFileName, 'rb')
+        pfile = PyroFile.PyroFile(targetFileName, mode)
         self.daemon.register(pfile)
 
         return pfile

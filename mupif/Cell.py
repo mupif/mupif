@@ -26,6 +26,8 @@ from . import APIError
 import math
 from . import Mesh
 from . import CellGeometryType
+import numpy as np
+
 
 #debug flag
 debug = 0
@@ -259,6 +261,21 @@ class Quad_2d_lin(Cell):
         :rtype: CellGeometryType
         """
         return CellGeometryType.CGT_QUAD
+
+    def _evalN(self, lc):
+        """
+        Evaluates shape functions at given point (given in parametric coordinates)
+        :param tuple lc: A local coordinate
+        :return: shape function
+        :rtype: float
+        """
+        #print "lc :",lc
+
+        return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ), 
+                0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ), 
+                0.25 * ( 1. - lc[0] ) * ( 1. - lc[1] ), 
+                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] )) 
+
 
     def glob2loc(self, coords):
         """
