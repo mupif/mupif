@@ -1,9 +1,58 @@
-2015-06-10 21:34:32,140 DEBUG:PyroUtil.py:63 Can connect to a LISTENING port of nameserver on 147.32.130.137:9090 
+2015-06-11 06:57:10,568 DEBUG:preferences.py:358 loading preferences from </home/bp/.enthought/mayavi_e3/preferences.ini> 
 
-2015-06-10 21:34:32,140 DEBUG:PyroUtil.py:77 Can not connect to NameServer on 147.32.130.137:9090. Is the NameServer running? Runs the NameServer on the same Pyro version as this version 4.28? Do you have the correct hmac_key (password is now mmp-secret-key)? Exiting. 
+2015-06-11 06:57:10,574 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/mayavi/preferences/preferences.ini', mode 'rb' at 0x7fc46b8f1f60>> 
 
-2015-06-10 21:34:32,141 ERROR:PyroUtil.py:78 locateNS() got an unexpected keyword argument 'hmac_key' 
-Traceback (most recent call last):
-  File "../../mupif/PyroUtil.py", line 72, in connectNameServer
-    ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
-TypeError: locateNS() got an unexpected keyword argument 'hmac_key'
+2015-06-11 06:57:10,575 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/tvtk/plugins/scene/preferences.ini', mode 'rb' at 0x7fc46b8bd930>> 
+
+2015-06-11 06:57:10,739 INFO:app.py:69 ******************************************************************************** 
+
+2015-06-11 06:57:10,741 INFO:app.py:70 logfile is: '/home/bp/.enthought/mayavi_e3/mayavi.log' 
+
+2015-06-11 06:57:10,742 INFO:app.py:71 ******************************************************************************** 
+
+2015-06-11 06:57:10,742 DEBUG:mayavi_workbench_application.py:69 ---------- workbench application ---------- 
+
+2015-06-11 06:57:10,743 DEBUG:application.py:289 ---------- application starting ---------- 
+
+2015-06-11 06:57:10,744 DEBUG:plugin_manager.py:114 plugin envisage.core starting 
+
+2015-06-11 06:57:10,761 DEBUG:provider_extension_registry.py:281 extensions to <envisage.preferences> <[[], ['pkgfile://envisage.ui.workbench/preferences.ini'], ['pkgfile://mayavi/preferences/preferences.ini'], ['pkgfile://tvtk.plugins.scene/preferences.ini'], ['pkgfile://apptools.logger/plugin/preferences.ini'], [], [], [], []]> 
+
+2015-06-11 06:57:10,763 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/envisage/ui/workbench/preferences.ini', mode 'rb' at 0x7fc46ac4c4b0>> 
+
+2015-06-11 06:57:10,764 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/mayavi/preferences/preferences.ini', mode 'rb' at 0x7fc46ac4c540>> 
+
+2015-06-11 06:57:10,766 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/tvtk/plugins/scene/preferences.ini', mode 'rb' at 0x7fc46ac4c4b0>> 
+
+2015-06-11 06:57:10,767 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/apptools/logger/plugin/preferences.ini', mode 'rb' at 0x7fc46ac4c540>> 
+
+2015-06-11 06:57:10,776 DEBUG:provider_extension_registry.py:281 extensions to <envisage.class_load_hooks> <[[], [], [], [], [], [], [], [], []]> 
+
+2015-06-11 06:57:10,785 DEBUG:provider_extension_registry.py:281 extensions to <envisage.categories> <[[], [], [], [], [], [], [], [], []]> 
+
+2015-06-11 06:57:10,791 DEBUG:provider_extension_registry.py:281 extensions to <envisage.service_offers> <[[], [<envisage.service_offer.ServiceOffer object at 0x7fc46ac28d70>, <envisage.service_offer.ServiceOffer object at 0x7fc46abe1410>], [], [], [], [], [], [], []]> 
+
+2015-06-11 06:57:10,792 DEBUG:service_registry.py:142 service <1> registered apptools.preferences.ui.preferences_manager.PreferencesManager 
+
+2015-06-11 06:57:10,792 DEBUG:service_registry.py:142 service <2> registered envisage.ui.workbench.workbench.Workbench 
+
+2015-06-11 06:57:10,793 DEBUG:plugin_manager.py:116 plugin envisage.core started 
+
+2015-06-11 06:57:10,793 DEBUG:plugin_manager.py:114 plugin envisage.ui.workbench starting 
+
+2015-06-11 06:57:10,794 DEBUG:plugin_manager.py:116 plugin envisage.ui.workbench started 
+
+2015-06-11 06:57:10,794 DEBUG:plugin_manager.py:114 plugin mayavi starting 
+
+2015-06-11 06:57:10,795 DEBUG:plugin_manager.py:116 plugin mayavi started 
+
+2015-06-11 06:57:10,795 DEBUG:plugin_manager.py:114 plugin tvtk.scene starting 
+
+2015-06-11 06:57:10,796 DEBUG:plugin_manager.py:116 plugin tvtk.scene started 
+
+2015-06-11 06:57:10,796 DEBUG:plugin_manager.py:114 plugin apptools.logger starting 
+
+2015-06-11 06:57:10,798 WARNING:plugin.py:182 plugin <envisage.plugins.text_editor.text_editor_plugin.TextEditorPlugin object at 0x7fc46ac28770> has no Id - using <envisage.plugins.text_editor.text_editor_plugin.TextEditorPlugin> 
+
+2015-06-11 06:57:10,879 WARNING:editor_set_structure_handler.py:78 could not restore editor [TVTK Scene 1] 
+

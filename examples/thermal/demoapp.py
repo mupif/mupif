@@ -19,12 +19,10 @@ import numpy as np
 
 class thermal(Application.Application):
 
-    def __init__(self):
-        self.value = 0.0
-        self.count = 0.0
-        self.contrib = 0.0
+    def __init__(self, file):
+        super(thermal, self).__init__(file)
+
         self.mesh = Mesh.UnstructuredMesh()
-        self.field = None
         # generate a simple mesh here
         self.xl = 0.5 # domain (0..xl)(0..yl)
         self.yl = 0.3
