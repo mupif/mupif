@@ -297,7 +297,7 @@ class SimpleJobManager2 (JobManager):
                 targetWorkDir = self.jobManWorkDir+os.pathsep+jobID
                 if not os.path.exists(targetWorkDir):
                     os.makedirs(targetWorkDir)
-             except Exception as e:
+            except Exception as e:
                 logger.exception(e)
                 raise
                 return (JOBMAN_ERR,None)
