@@ -37,7 +37,7 @@ class thermal(Application.Application):
             size = line.split()
             self.xl=float(size[0])
             self.yl=float(size[1])
-            
+
             line = getline(f)
             ne = line.split()
             self.nx=int(ne[0])
@@ -54,7 +54,7 @@ class thermal(Application.Application):
                     conventionModelEdges.append(edge)
 
             f.close()
-        
+
         except  Exception as e:
             logger.exception(e)
             exit(1)
@@ -184,7 +184,7 @@ class thermal(Application.Application):
 
             ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
             pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
-            
+
             # print "e : ",e.number-1
             #print "ngp :",ngp
             #print "pnts :",pnts
@@ -195,7 +195,7 @@ class thermal(Application.Application):
 
                 dv = detJ * p[1]
                 #print "dv :",dv 
-                
+
                 N = np.zeros((1,4)) 
                 tmp = e._evalN(p[0]) 
                 N=np.asarray(tmp)
@@ -203,7 +203,7 @@ class thermal(Application.Application):
 
                 x = e.loc2glob(p[0])
                 #print "global coords :", x
-                
+
                 k=1.
                 Grad= np.zeros((2,4))
                 Grad = self.compute_B(e,p[0])
@@ -251,10 +251,10 @@ class thermal(Application.Application):
 
             length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
                                (n2.coords[1]-n1.coords[1])*(n2.coords[1]-n1.coords[1]))
-            
+
             #print h, Te, length
 
-            
+
             # boundary_lhs=h*(np.dot(N.T,N))
             boundary_lhs=np.zeros((2,2))
             boundary_lhs[0,0] = (1./3.)*length*h
@@ -279,8 +279,7 @@ class thermal(Application.Application):
                             #print "Assembling bc ", ii, jj, boundary_lhs[i,j]
                             A[ii,jj] += boundary_lhs[i,j]
                     b[ii] += boundary_rhs[i] 
-        
-            
+
         #print A
         #print b
 
@@ -336,4 +335,4 @@ class thermal(Application.Application):
         return Grad
 
     def getApplicationSignature(self):
-        return "Thermal demo solver, v1.0"
+        return "Thermal-demo-solver, ver 1.0"

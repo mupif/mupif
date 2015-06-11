@@ -34,14 +34,14 @@ while (abs(time -targetTime) > 1.e-6):
         app1.solveStep(istep)
         #request Concentration property from app1
         field = app1.getField(FieldID.FID_Temperature, istep)
-        
+
     except APIError.APIError as e:
         print ("Following API error occurred:",e)
         break
 # evaluate field at given point
 position=(0.0, 0.0, 0.0)
 value=field.evaluate(position)
-        
+
 # Result
 print ("Field value at position ", position, " is ", value)
 field.field2VTKData().tofile('example2')

@@ -238,7 +238,7 @@ class Field(object):
     def field2VTKData (self):
         """
         Creates VTK representation of the receiver. Useful for visualization.
-        
+
         :return: Instance of pyvtk
         :rtype: pyvtk
         """
