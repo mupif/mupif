@@ -27,6 +27,7 @@ import time as timeTime
 import Pyro4
 import logging
 import PyroFile
+import PyroUtil
 logger = logging.getLogger()
 
 #error codes
