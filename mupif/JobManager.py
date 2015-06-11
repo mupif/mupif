@@ -292,6 +292,16 @@ class SimpleJobManager2 (JobManager):
             # run the new application instance served by corresponding pyro daemon in a new process
             jobPort = self.freePorts.pop(0)
             logger.info('SimpleJobManager2: port to be assigned %d'%(jobPort))
+
+            try:
+                targetWorkDir = self.jobManWorkDir+os.pathsep+jobID
+                if not os.path.exists(targetWorkDir):
+                    os.makedirs(targetWorkDir)
+             except Exception as e:
+                logger.exception(e)
+                raise
+                return (JOBMAN_ERR,None)
+
             try:
                 proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(self.jobManWorkDir)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 logger.debug('SimpleJobManager2: new subprocess has been started')
@@ -370,14 +380,14 @@ class SimpleJobManager2 (JobManager):
         """
         See :func:`JobManager.uploadFile`
         """
-        targetFileName = self.jobManWorkDir+'/'+jobID+"/"+filename
+        targetFileName = self.jobManWorkDir+os.pathsep+jobID+os.pathsep+filename
         PyroUtil.uploadPyroFile (targetFileName, pyroFile)
 
     def getPyroFile(self, jobID, filename):
         """
         See :func:`JobManager.getPyroFile`
         """
-        targetFileName = self.jobManWorkDir+"/"+jobID+"/"+filename
+        targetFileName = self.jobManWorkDir+os.pathsep+jobID+os.pathsep+filename
         logger.info('SimpleJobManager2:getPyroFile ' + targetFileName)
         pfile = PyroFile.PyroFile(targetFileName, 'rb')
         self.daemon.register(pfile)
