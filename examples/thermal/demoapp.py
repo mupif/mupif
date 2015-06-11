@@ -1,21 +1,10 @@
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import FieldID
-from mupif import Mesh
-from mupif import Field
-from mupif import ValueType
-from mupif import Vertex
-from mupif import Cell
-from mupif import PyroUtil
-from mupif import Property
-from mupif import IntegrationRule
+from mupif import *
 
 import meshgen
 import math
 import numpy as np
 import time as timeTime
+import os
 
 import logging
 logger = logging.getLogger()#create a logger
@@ -24,20 +13,26 @@ logger = logging.getLogger()#create a logger
 def getline (f):
     while True:
         line=f.readline()
-        if line[0]!='#':
+        if line == '':
+            raise APIError.APIError ('Error: EOF reached in input file')
+        elif line[0]!='#':
             return line
 
 
 
 class thermal(Application.Application):
 
-    def __init__(self, file):
-        super(thermal, self).__init__(file)
+    def __init__(self, file, workdir):
+        super(thermal, self).__init__(file, workdir)
+
+
+
+    def readInput(self):
 
         dirichletModelEdges=[]
         conventionModelEdges=[]
         try:
-            f = open(file, 'r')
+            f = open(self.workDir+os.path.sep+self.file, 'r')
             line = getline(f)
             size = line.split()
             self.xl=float(size[0])
@@ -57,7 +52,8 @@ class thermal(Application.Application):
                     dirichletModelEdges.append(edge)
                 elif (code == 'C'):
                     conventionModelEdges.append(edge)
-                
+
+            f.close()
         
         except  Exception as e:
             logger.exception(e)
@@ -151,6 +147,8 @@ class thermal(Application.Application):
         self.Field = field
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
+
+        self.readInput()
         mesh =  self.mesh
         rule = IntegrationRule.GaussIntegrationRule()
         self.volume = 0.0;

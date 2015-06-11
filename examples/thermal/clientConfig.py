@@ -1,5 +1,6 @@
 import sys
 sys.path.append('../..')
+sys.path.append('../../tools')
 
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"

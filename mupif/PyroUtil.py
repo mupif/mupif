@@ -357,6 +357,7 @@ def uploadPyroFile (filename, pyroFile):
     while data:
         file.write(data)
         data = pyroFile.getChunk()
+    pyroFile.close()
     file.close()
 
 def downloadPyroFile (filename, pyroFile, size = 1024):

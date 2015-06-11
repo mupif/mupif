@@ -22,6 +22,11 @@ else:
         appsig=app1.getApplicationSignature()
         logger.info("Working application 1 on server " + appsig)
 
+        logger.info("Uploading input file on server " + appsig)
+        pf = appRec.getJobManager().getPyroFile(appRec.getJobID(), "input.in", 'w')
+        PyroUtil.downloadPyroFile("input.in", pf)
+
+        logger.info("Solving problem on server " + appsig)
         app1.solveStep(None)
         f = app1.getField(FieldID.FID_Temperature, 0.0)
         f.field2VTKData().tofile('example')
