@@ -11,6 +11,7 @@ class Micress(Application.Application):
 
     def __init__ (self, file):
         self.mesh = None
+        super(Micress, self).__init__(file)
 
     def getField(self, fieldID, time):
         Data = pyvtk.VtkData('micress/sim.vtk')
