@@ -22,7 +22,7 @@ if(sys.platform.lower().startswith('win')):#Windows ssh client
     sshHost = ''
 else:#Unix ssh client
     sshClient = 'ssh'
-    options = '-oStrictHostKeyChecking=no -i /home/smilauer/.ssh/mech/id_rsa'
+    options = '-oStrictHostKeyChecking=no'
     sshHost = ''
 
 # jobManager records to be used in scenario

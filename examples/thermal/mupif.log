@@ -1,58 +1,43 @@
-2015-06-11 06:57:10,568 DEBUG:preferences.py:358 loading preferences from </home/bp/.enthought/mayavi_e3/preferences.ini> 
+2015-06-11 11:09:25,033 INFO:Demo03.py:8 Timer started 
 
-2015-06-11 06:57:10,574 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/mayavi/preferences/preferences.ini', mode 'rb' at 0x7fc46b8f1f60>> 
+2015-06-11 11:09:25,033 DEBUG:PyroUtil.py:63 Can connect to a LISTENING port of nameserver on 147.32.130.137:9090 
 
-2015-06-11 06:57:10,575 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/tvtk/plugins/scene/preferences.ini', mode 'rb' at 0x7fc46b8bd930>> 
+2015-06-11 11:09:25,035 DEBUG:PyroUtil.py:74 Connected to NameServer on 147.32.130.137:9090. Pyro4 version on this computer is 4.35 
 
-2015-06-11 06:57:10,739 INFO:app.py:69 ******************************************************************************** 
+2015-06-11 11:09:25,035 DEBUG:PyroUtil.py:205 Creating ssh tunnel via command: ssh -L 5555:147.32.130.150:44361 mmp@147.32.130.150 -N -oStrictHostKeyChecking=no 
 
-2015-06-11 06:57:10,741 INFO:app.py:70 logfile is: '/home/bp/.enthought/mayavi_e3/mayavi.log' 
+2015-06-11 11:09:26,039 DEBUG:PyroUtil.py:95 Found URI PYRO:obj_197b32c9af2f48c7bf3459cdf3e9fe3a@127.0.0.1:5555 from a nameServer <Pyro4.core.Proxy at 0x7f16ce0e7910, connected, for PYRO:Pyro.NameServer@147.32.130.137:9090> 
 
-2015-06-11 06:57:10,742 INFO:app.py:71 ******************************************************************************** 
+2015-06-11 11:09:26,041 DEBUG:PyroUtil.py:104 Cannot connect to application Mupif.JobManager@demo. Is the server running? 
 
-2015-06-11 06:57:10,742 DEBUG:mayavi_workbench_application.py:69 ---------- workbench application ---------- 
+2015-06-11 11:09:26,042 ERROR:PyroUtil.py:105 receiving: not enough data 
+Traceback (most recent call last):
+  File "../../mupif/PyroUtil.py", line 101, in connectApp
+    sig = app2.getApplicationSignature()
+  File "/usr/local/lib/python2.7/dist-packages/Pyro4/core.py", line 230, in __getattr__
+    self._pyroGetMetadata()
+  File "/usr/local/lib/python2.7/dist-packages/Pyro4/core.py", line 483, in _pyroGetMetadata
+    self.__pyroCreateConnection()
+  File "/usr/local/lib/python2.7/dist-packages/Pyro4/core.py", line 435, in __pyroCreateConnection
+    msg = message.Message.recv(conn, None, hmac_key=self._pyroHmacKey)
+  File "/usr/local/lib/python2.7/dist-packages/Pyro4/message.py", line 161, in recv
+    msg = cls.from_header(connection.recv(cls.header_size))
+  File "/usr/local/lib/python2.7/dist-packages/Pyro4/socketutil.py", line 447, in recv
+    return receiveData(self.sock, size)
+  File "/usr/local/lib/python2.7/dist-packages/Pyro4/socketutil.py", line 182, in receiveData
+    raise err
+ConnectionClosedError: receiving: not enough data
+2015-06-11 11:09:26,044 INFO:PyroUtil.py:291 jobMan.allocateJob() failed 
 
-2015-06-11 06:57:10,743 DEBUG:application.py:289 ---------- application starting ---------- 
-
-2015-06-11 06:57:10,744 DEBUG:plugin_manager.py:114 plugin envisage.core starting 
-
-2015-06-11 06:57:10,761 DEBUG:provider_extension_registry.py:281 extensions to <envisage.preferences> <[[], ['pkgfile://envisage.ui.workbench/preferences.ini'], ['pkgfile://mayavi/preferences/preferences.ini'], ['pkgfile://tvtk.plugins.scene/preferences.ini'], ['pkgfile://apptools.logger/plugin/preferences.ini'], [], [], [], []]> 
-
-2015-06-11 06:57:10,763 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/envisage/ui/workbench/preferences.ini', mode 'rb' at 0x7fc46ac4c4b0>> 
-
-2015-06-11 06:57:10,764 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/mayavi/preferences/preferences.ini', mode 'rb' at 0x7fc46ac4c540>> 
-
-2015-06-11 06:57:10,766 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/tvtk/plugins/scene/preferences.ini', mode 'rb' at 0x7fc46ac4c4b0>> 
-
-2015-06-11 06:57:10,767 DEBUG:preferences.py:358 loading preferences from <<open file '/usr/lib/python2.7/dist-packages/apptools/logger/plugin/preferences.ini', mode 'rb' at 0x7fc46ac4c540>> 
-
-2015-06-11 06:57:10,776 DEBUG:provider_extension_registry.py:281 extensions to <envisage.class_load_hooks> <[[], [], [], [], [], [], [], [], []]> 
-
-2015-06-11 06:57:10,785 DEBUG:provider_extension_registry.py:281 extensions to <envisage.categories> <[[], [], [], [], [], [], [], [], []]> 
-
-2015-06-11 06:57:10,791 DEBUG:provider_extension_registry.py:281 extensions to <envisage.service_offers> <[[], [<envisage.service_offer.ServiceOffer object at 0x7fc46ac28d70>, <envisage.service_offer.ServiceOffer object at 0x7fc46abe1410>], [], [], [], [], [], [], []]> 
-
-2015-06-11 06:57:10,792 DEBUG:service_registry.py:142 service <1> registered apptools.preferences.ui.preferences_manager.PreferencesManager 
-
-2015-06-11 06:57:10,792 DEBUG:service_registry.py:142 service <2> registered envisage.ui.workbench.workbench.Workbench 
-
-2015-06-11 06:57:10,793 DEBUG:plugin_manager.py:116 plugin envisage.core started 
-
-2015-06-11 06:57:10,793 DEBUG:plugin_manager.py:114 plugin envisage.ui.workbench starting 
-
-2015-06-11 06:57:10,794 DEBUG:plugin_manager.py:116 plugin envisage.ui.workbench started 
-
-2015-06-11 06:57:10,794 DEBUG:plugin_manager.py:114 plugin mayavi starting 
-
-2015-06-11 06:57:10,795 DEBUG:plugin_manager.py:116 plugin mayavi started 
-
-2015-06-11 06:57:10,795 DEBUG:plugin_manager.py:114 plugin tvtk.scene starting 
-
-2015-06-11 06:57:10,796 DEBUG:plugin_manager.py:116 plugin tvtk.scene started 
-
-2015-06-11 06:57:10,796 DEBUG:plugin_manager.py:114 plugin apptools.logger starting 
-
-2015-06-11 06:57:10,798 WARNING:plugin.py:182 plugin <envisage.plugins.text_editor.text_editor_plugin.TextEditorPlugin object at 0x7fc46ac28770> has no Id - using <envisage.plugins.text_editor.text_editor_plugin.TextEditorPlugin> 
-
-2015-06-11 06:57:10,879 WARNING:editor_set_structure_handler.py:78 could not restore editor [TVTK Scene 1] 
-
+2015-06-11 11:09:26,044 ERROR:PyroUtil.py:292 'NoneType' object has no attribute 'allocateJob' 
+Traceback (most recent call last):
+  File "../../mupif/PyroUtil.py", line 288, in allocateApplicationWithJobManager
+    retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
+AttributeError: 'NoneType' object has no attribute 'allocateJob'
+2015-06-11 11:09:26,044 ERROR:Demo03.py:19 'NoneType' object has no attribute 'allocateJob' 
+Traceback (most recent call last):
+  File "Demo03.py", line 16, in <module>
+    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+  File "../../mupif/PyroUtil.py", line 293, in allocateApplicationWithJobManager
+    raise (e)
+AttributeError: 'NoneType' object has no attribute 'allocateJob'

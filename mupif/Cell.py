@@ -269,7 +269,7 @@ class Quad_2d_lin(Cell):
         :return: shape function
         :rtype: float
         """
-        print "lc :",lc
+        #print "lc :",lc
 
         return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ), 
                 0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ), 
