@@ -16,7 +16,7 @@ class Celsian(Application.Application):
         if (self.mesh == None):
             self.mesh = EnsightReader2.readEnsightGeo('paraview/MMPTestCase_v1.geo', parts, partRec)
 
-        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, self.mesh)
+        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
