@@ -3,7 +3,7 @@
 import sys
 sys.path.append('../..')
 sys.path.append('.')
-import conf
+import clientConfig as conf
 from mupif import *
 
 import DemoApplication

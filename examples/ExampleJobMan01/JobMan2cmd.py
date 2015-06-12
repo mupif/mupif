@@ -1,4 +1,4 @@
-import conf
+import serverConfig as conf
 import socket
 import getopt, sys
 import logging
@@ -8,12 +8,12 @@ from mupif import *
 logger = logging.getLogger()
 
 def usage():
-    print "Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir"
+    print "Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile"
 
 print "JobMan2cmd: ", sys.argv[1:]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:", ['port=','job=','natport='])
+    opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:", ['port=','job=','natport='])
 except getopt.GetoptError as err:
     # print help information and exit:
     logger.exception(err)
@@ -32,6 +32,8 @@ for o, a in opts:
         natPort = int(a)
     elif o in ("-d", "--workdir"):
         workDir = a
+    elif o in ("-f", "--file"):
+	inputfile = a
     else:
         assert False, "unhandled option"
 
@@ -52,14 +54,14 @@ daemon = PyroUtil.runDaemon(host=conf.daemonHost, port=daemonPort, nathost=conf.
 
 #Initialize application
 #app = DemoApplication.DemoApplication()
-app = conf.applicationClass()
+app = conf.applicationClass("input.in",workDir)
 
 #register agent
 uri = daemon.register(app)
 ns.register(jobID, uri)
 app.registerPyro(daemon, ns, uri)
-app.setWorkingDirectory(workDir)
-
+#app.setWorkingDirectory(workDir)
+print('JobMan2cmd: setting workdir as %s', workDir)
 logger.info('Signature is %s' % app.getApplicationSignature() )
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

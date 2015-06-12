@@ -16,7 +16,8 @@ class DemoApplication (Application.Application):
     """
     Simple application that computes min and max values of the field
     """
-    def __init__(self):
+    def __init__(self, file, workdir):
+        super(DemoApplication, self).__init__(file)
         self.count = 0
         self.daemonRunning = True
 

@@ -20,7 +20,7 @@ except Exception as e:
     logger.exception(e)
     exit(0)
 
-jobMan = JobManager.SimpleJobManager2(daemon, ns, conf.applicationClass, "DemoApplication", ( 9091, 9092, 9093, 9094), 2)
+jobMan = JobManager.SimpleJobManager2(daemon, ns, conf.applicationClass, "DemoApplication", ( 9091, 9092, 9093, 9094), ".", 2)
 #set up daemon with JobManager
 uri = daemon.register(jobMan)
 #register JobManager to nameServer
