@@ -6,6 +6,8 @@ The example illustrates, how to establish a connection to
 a remote applications and how the secure connection can be
 extablished using ssh tunnel.
 
+Note: The individual remote servers (and applications)
+may not be operational all the time.
 
 ================================================================================
 Prerequisities:
