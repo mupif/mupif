@@ -1,23 +1,34 @@
 import sys
 sys.path.append('../..')
-import os
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
-os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
+sys.path.append('../../tools')
 
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-Pyro4.config.AUTOPROXY=False
-Pyro4.config.COMMTIMEOUT = 10.0 #network communication timeout in seconds.
-#Pyro4.config.SOCK_REUSE = True #can use occupied port. This will not work for the ssh tunnel, which needs a free port to bind to.
+hkey = 'mmp-secret-key'
 
-from mupif import PyroUtil #get the logging
-import logging
-logger = logging.getLogger()
+nshost = '147.32.130.137' #NameServer - do not change
+nsport  = 9090 #NameServer's port - do not change
+hkey = 'mmp-secret-key' #Password for accessing nameServer and applications
+nathost='127.0.0.1' #NatHost of local computer - do not change
 
-#Where is a running nameserver
-nshost = "ksm.fsv.cvut.cz"
-nsport = 9090
+#daemonHost='147.32.130.137'#IP of server
+hostUserName='mmp'#User name for ssh connection
+
+if(sys.platform.lower().startswith('win')):#Windows ssh client
+    sshClient = 'C:\\Program Files\\Putty\\putty.exe'
+    options = '-i L:\\.ssh\\mech\id_rsa.ppk'
+    sshHost = ''
+else:#Unix ssh client
+    sshClient = 'ssh'
+    options = '-oStrictHostKeyChecking=no'
+    sshHost = ''
+
+# jobManager records to be used in scenario
+# format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName)
+solverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
 
 
+#client ports used to establish ssh connections (nat ports)
+jobNatPorts = range(6000, 6050)

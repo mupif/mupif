@@ -17,7 +17,7 @@ class DemoApplication (Application.Application):
     Simple application that computes min and max values of the field
     """
     def __init__(self, file, workdir):
-        super(DemoApplication, self).__init__(file)
+        super(DemoApplication, self).__init__(file, workdir)
         self.count = 0
         self.daemonRunning = True
 
@@ -42,3 +42,7 @@ class DemoApplication (Application.Application):
             return Property.Property(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, time, propID, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
+
+    def getApplicationSignature(self):
+        return "DemoApplication, ver 1.0"
+    

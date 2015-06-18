@@ -1,30 +1,31 @@
 import sys
-sys.path.append('../..')
-import os
-os.environ['PYRO_HMAC_KEY'] = "mmp-secret-key" #do not change 
-os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
+sys.path.append('/home/mmp/mupif-code')
+
+import DemoApplication
 
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-Pyro4.config.AUTOPROXY=False
-Pyro4.config.COMMTIMEOUT = 10.0 #network communication timeout in seconds.
-#Pyro4.config.SOCK_REUSE = True #can use occupied port. This will not work for the ssh tunnel, which needs a free port to bind to.
+hkey = 'mmp-secret-key'
 
-from mupif import PyroUtil #get the logging
-import logging
-logger = logging.getLogger()
-
-import DemoApplication
-applicationClass = DemoApplication.DemoApplication
-
-#Where is a running nameserver
-nshost = "ksm.fsv.cvut.cz"
-nsport = 9090
-
-#Address where JobManager will listen through a daemon
-daemonHost = "localhost"
-daemonPort = 44382
-hkey= "mmp-secret-key"
+nshost = '147.32.130.137' #NameServer - do not change
+nsport  = 9090 #NameServer's port - do not change
+hkey = 'mmp-secret-key' #Password for accessing nameServer and applications
 nathost='127.0.0.1' #NatHost of local computer - do not change
+
+daemonHost='147.32.130.137'#IP of server
+hostUserName='mmp'#User name for ssh connection
+
+jobManPort=44360 #Port for job manager's daemon
+jobManNatport=5555 #Natport - nat port used in ssh tunnel for job manager
+jobManSocket=10000 #Port used to communicate with application servers
+jobManName='Mupif.JobManager@ExampleJobMan01' #Name of job manager
+
+jobManPortsForJobs=( 9095, 9100) #Range of ports to be assigned on the server to jobs
+jobManMaxJobs=4 #Maximum number of jobs
+jobManWorkDir='.'#Main directory for transmitting files
+
+applicationClass = DemoApplication.DemoApplication
+jobMan2CmdPath = "../../tools/JobMan2cmd.py" # path to JobMan2cmd.py 
+
