@@ -54,6 +54,11 @@ def main():
     field1.field2VTKData().tofile('example1')
     field2.field2VTKData().tofile('example2')
     
+    if (abs(value[0]-273.0) <= 1.e-4):
+        print ("Test OK")
+    else:
+        print ("Test FAILED")
+    
 
 
 
