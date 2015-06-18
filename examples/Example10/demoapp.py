@@ -465,7 +465,6 @@ class mechanical(Application.Application):
                     values.append(self.dirichletBCs[i])
                 else:
                     values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
-            #print values
             return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Vector, None, 0.0, values);
         else:
             raise APIError.APIError ('Unknown field ID')
@@ -697,4 +696,4 @@ class mechanical(Application.Application):
         return D
 
     def getApplicationSignature(self):
-        return "Thermal-demo-solver, ver 1.0"
+        return "Mechanical-demo-solver, ver 1.0"

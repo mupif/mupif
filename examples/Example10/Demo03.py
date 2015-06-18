@@ -13,30 +13,49 @@ ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=c
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the first application app1
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
-    app1 = appRec.getApplication()
+    thermalSolverAppRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.thermalSolverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+    mechanicalSolverAppRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.mechanicalSolverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+
+    thermalSolver = thermalSolverAppRec.getApplication()
+    mechanicalSolver = mechanicalSolverAppRec.getApplication()
+    
 except Exception as e:
     logger.exception(e)
 else:
-    if app1 is not None:
-        appsig=app1.getApplicationSignature()
-        logger.info("Working application 1 on server " + appsig)
+    if ((thermalSolver is not None) and (mechanicalSolver is not None)):
+        thermalSolverSignature=thermalSolver.getApplicationSignature()
+        logger.info("Working thermal solver on server " + thermalSolverSignature)
 
-        logger.info("Uploading input file on server " + appsig)
-        pf = appRec.getJobManager().getPyroFile(appRec.getJobID(), "input.in", 'w')
+        mechanicalSolverSignature=mechanicalSolver.getApplicationSignature()
+        logger.info("Working mechanical solver on server " + mechanicalSolverSignature)
+
+        logger.info("Uploading input files to servers")
+        pf = thermalSolverAppRec.getJobManager().getPyroFile(thermalSolverAppRec.getJobID(), "input.in", 'w')
         PyroUtil.downloadPyroFile("input.in", pf)
+        mf = mechanicalSolverAppRec.getJobManager().getPyroFile(mechanicalSolverAppRec.getJobID(), "input.in", 'w')
+        PyroUtil.downloadPyroFile("inputm.in", mf)
 
-        logger.info("Solving problem on server " + appsig)
-        app1.solveStep(None)
-        f = app1.getField(FieldID.FID_Temperature, 0.0)
-        f.field2VTKData().tofile('example')
+
+
+        logger.info("Solving thermal problem on server " + thermalSolverSignature)
+        thermalSolver.solveStep(None)
+        temperatureField = thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        #
+        mechanicalSolver.setField(temperatureField)
+        mechanicalSolver.solveStep(None)
+        displacementField = mechanicalSolver.getField(FieldID.FID_Displacement, 0.0)
+        # save results as vtk
+        temperatureField.field2VTKData().tofile('temperaturField')
+        displacementField.field2VTKData().tofile('displacementField')
+
         #terminate
         logger.info("Time consumed %f s" % (timeTime.time()-start))
     else:
         logger.debug("Connection to server failed, exiting")
 
 finally:
-    if appRec: appRec.terminateAll()
+    if thermalSolverAppRec: thermalSolverAppRec.terminateAll()
+    if mechanicalSolverAppRec: mechanicalSolverAppRec.terminateAll()
 
 
 

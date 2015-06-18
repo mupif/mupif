@@ -13,7 +13,7 @@ nsport  = 9090 #NameServer's port - do not change
 hkey = 'mmp-secret-key' #Password for accessing nameServer and applications
 nathost='127.0.0.1' #NatHost of local computer - do not change
 
-daemonHost='147.32.130.137'#IP of server
+#daemonHost='147.32.130.137'#IP of server
 hostUserName='mmp'#User name for ssh connection
 
 #Edit these paths for your SSH-client and location of a private key
@@ -28,7 +28,9 @@ else:#Unix ssh client
 
 # jobManager records to be used in scenario
 # format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName)
-demoJobManRec = (44361, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@demo')
+thermalSolverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ThermalSolverDemo')
+mechanicalSolverJobManRec = (44361, 5556, '147.32.130.137', hostUserName, 'Mupif.JobManager@MechanicalSolverDemo')
+
 
 #client ports used to establish ssh connections (nat ports)
 jobNatPorts = range(6000, 6050)
