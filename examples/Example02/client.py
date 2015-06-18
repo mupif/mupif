@@ -75,6 +75,14 @@ while (abs(time -targetTime) > 1.e-6):
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
 logger.info("Result: %f" % prop.getValue() )
+
+if (abs(prop.getValue()-5.05) <= 1.e-4):
+    print ("Test OK")
+else:
+    print ("Test FAILED")
+
+
+
 # terminate
 app1.terminate();
 app2.terminate();
