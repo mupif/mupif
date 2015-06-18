@@ -45,6 +45,13 @@ value=field.evaluate(position)
 # Result
 print ("Field value at position ", position, " is ", value)
 field.field2VTKData().tofile('example2')
+
+if (abs(value[0]-22.0) <= 1.e-4):
+    print ("Test OK")
+else:
+    print ("Test FAILED")
+
+
 # terminate
 app1.terminate();
 
