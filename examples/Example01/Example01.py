@@ -1,12 +1,7 @@
 import sys
 sys.path.append('../..')
 
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
+from mupif import *
 
 class application1(Application.Application):
     """
@@ -94,7 +89,13 @@ while (abs(time -targetTime) > 1.e-6):
         
     except APIError.APIError as e:
         print ("Following API error occurred:",e)
+        print ("Test FAILED")
         break
+
+if (abs(prop.getValue()-0.55) <= 1.e-4):
+    print ("Test OK")
+else:
+    print ("Test FAILED")
 
 # terminate
 app1.terminate();
