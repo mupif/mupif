@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../..')
+sys.path.append('/home/mmp/mupif-code')
 
 import PingServerApplication
 
@@ -19,6 +19,7 @@ hostUserName='mmp'#User name for ssh connection
 
 jobManPort=44361 #Port for job manager's daemon
 jobManNatport=5555 #Natport - nat port used in ssh tunnel for job manager
+jobManSocket=10001 #Port used to communicate with application servers
 jobManName='Mupif.JobManager@demo' #Name of job manager
 
 jobManPortsForJobs=( 9091, 9094) #Range of ports to be assigned on the server to jobs
@@ -26,3 +27,4 @@ jobManMaxJobs=4 #Maximum number of jobs
 jobManWorkDir='/home/mmp/PingServerApplication'#Main directory for transmitting files
 
 applicationClass = PingServerApplication.PingServerApplication
+jobMan2CmdPath = "../../tools/JobMan2cmd.py" # path to JobMan2cmd.py 

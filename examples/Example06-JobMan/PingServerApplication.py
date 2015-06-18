@@ -4,7 +4,8 @@ class PingServerApplication(Application.Application):
     """
     Simple application that computes an aritmetical average of a mapped property
     """
-    def __init__(self):
+    def __init__(self, file, workdir):
+        super(PingServerApplication, self).__init__(file, workdir)
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
