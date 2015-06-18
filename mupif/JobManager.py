@@ -244,13 +244,17 @@ class SimpleJobManager2 (JobManager):
     Simple job manager 2. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.
 
     .. automethod:: __init__
+    :param int jobMancmdCommPort: optional communication port to communicate with jobman2cmd
+    :param str configFile: path to server config file
     """
-    def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, maxJobs=1):
+    def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
         """
         Constructor.
 
         See :func:`SimpleJobManager.__init__`
         :param tuple portRange: start and end ports for jobs which will be allocated by a job manager
+        :param str serverConfigFile: path to serverConfig file
+        :param str jobMan2CmdPath: path to JobMan2cmd.py 
         """
         super(SimpleJobManager2, self).__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
@@ -258,6 +262,10 @@ class SimpleJobManager2 (JobManager):
         self.daemon = daemon
         self.ns = ns
         self.jobCounter = 0
+        self.jobMancmdCommPort = jobMancmdCommPort
+        self.serverConfigPath = serverConfigPath
+        self.configFile = serverConfigFile
+        self.jobMan2CmdPath = jobMan2CmdPath
         self.freePorts = range(portRange[0], portRange[1]+1)
         if maxJobs > len(self.freePorts):
             logger.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d'%(self.freePorts.size()))
@@ -267,7 +275,7 @@ class SimpleJobManager2 (JobManager):
 
         # Create a TCP/IP socket to get uri from daemon registering an application
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('localhost', 10000))
+        self.s.bind(('localhost', self.jobMancmdCommPort))
         self.s.listen(1)
 
         logger.debug('SimpleJobManager2: initialization done')
@@ -306,7 +314,7 @@ class SimpleJobManager2 (JobManager):
                 return (JOBMAN_ERR,None)
 
             try:
-                proc = subprocess.Popen(["python", "JobMan2cmd.py", '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                proc = subprocess.Popen(["python", self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 logger.debug('SimpleJobManager2: new subprocess has been started')
             except Exception as e:
                 logger.exception(e)
