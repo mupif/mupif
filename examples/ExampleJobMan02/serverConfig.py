@@ -3,6 +3,7 @@ sys.path.append('../..')
 
 import DemoApplication
 applicationClass = DemoApplication.DemoApplication
+jobMan2CmdPath = "../../tools/JobMan2cmd.py" # path to JobMan2cmd.py 
 
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
@@ -21,6 +22,7 @@ hostUserName='mmp'#User name for ssh connection
 jobManPort=44361 #Port for job manager's daemon
 jobManNatport=5555 #Natport - nat port used in ssh tunnel for job manager
 jobManName='Mupif.JobManager@demo' #Name of job manager
+jobManSocket=10001 #Port used to communicate with application servers
 
 jobManPortsForJobs=(9091, 9094) #Range of ports to be assigned on the server to jobs
 jobManMaxJobs=4 #Maximum number of jobs

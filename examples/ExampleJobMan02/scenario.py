@@ -28,7 +28,14 @@ else:
         PyroUtil.uploadPyroFile ("localtest.txt", remoteFile)
 
         file = open ("localtest.txt", "r")
-        print file.readlines()
+        answer = file.readlines()
+        print answer;
+        
+        if (answer[0]=="Hello MMP!"):
+            print ("Test OK")
+        else:
+            print ("Test FAILED")
+       
 
 finally:
     if appRec: appRec.terminateAll()
