@@ -85,7 +85,7 @@ class thermal(Application.Application):
         #dirichletModelEdges=(3,4,1)#
         self.dirichletBCs = {}# key is node number, value is prescribed temperature (zero supported only now)
         for ide in dirichletModelEdges:
-            print ide
+            #print ide
             if ide == 1:
                 for i in range(self.nx+1):
                     self.dirichletBCs[i*(self.ny+1)]=0.0
@@ -164,6 +164,7 @@ class thermal(Application.Application):
         #print ndofs
 
         start = timeTime.time()
+        print self.getApplicationSignature()
         print "\tNumber of equations:", self.neq
 
         #connectivity 
@@ -493,6 +494,7 @@ class mechanical(Application.Application):
         #print ndofs
 
         start = timeTime.time()
+        print self.getApplicationSignature()
         print "\tNumber of equations:", self.neq
 
         #connectivity 
