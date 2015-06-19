@@ -244,8 +244,10 @@ class SimpleJobManager2 (JobManager):
     Simple job manager 2. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.
 
     .. automethod:: __init__
+    
     :param int jobMancmdCommPort: optional communication port to communicate with jobman2cmd
     :param str configFile: path to server config file
+    
     """
     def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
         """
@@ -404,5 +406,4 @@ class SimpleJobManager2 (JobManager):
         self.daemon.register(pfile)
 
         return pfile
-        
-        
+
