@@ -22,7 +22,7 @@ def processor(win, jobman):
     win.erase()
 
     win.addstr(0,0, "MuPIF Remote JobMan MONITOR")
-    win.addstr(1,0, "JobManager:"+jobmanName)
+    win.addstr(1,0, jobmanname+" on "+host)
     win.hline(2,0,'-',80)
     win.addstr(3,jobid_col, "JobID")
     win.addstr(3,port_col, "Port")
@@ -127,9 +127,6 @@ jobMan = PyroUtil.connectApp(ns, jobmanname)
 
 #ssh flag (set to True if ssh tunnel need to be established)
 ssh = False
-
-jobmanName = 'Mupif.JobManager@demo'
-
 
 curses.wrapper(processor, jobMan)
 
