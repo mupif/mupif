@@ -31,7 +31,7 @@ from . import CellGeometryType
 VERTICES=0; CELLS=1
 
 #debug flag
-debug = 1
+debug = 0
 
 class MeshIterator(object):
     """
