@@ -1,8 +1,10 @@
-#This file works only for   python setup.py sdist , which creates *.tar.gz, or for further uploading to PyPI. On the other hand, setup.py specifies package_data={} files  for     bdist   or   install    options.
+# This file works only for $ python setup.py sdist, which creates *.tar.gz, necessary for uploading to PyPI.
+# It is also necessary to specify package_data which tell what will be installed from *.tar.gz
 
 include README.txt
-include doc/refManual/MuPIF.pdf
-include doc/userGuide/MuPIF-userGuide.pdf
+include mupif/doc/refManual/MuPIF.pdf
+include mupif/doc/userGuide/MuPIF-userGuide.pdf
+#prune *.pyc
 
-recursive-include examples *.py *.c
-recursive-include tools *.py
+recursive-include mupif/examples *.py *.c
+recursive-include mupif/tools *.py

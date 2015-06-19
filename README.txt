@@ -47,10 +47,17 @@ The MuPIF development has been supported by Grant Agency of the Czech Republic
 The directory tree below holds source code to the MuPIF package. 
 
 MuPIF_TOP_DIR - contains source code of the MuPIF package
-|
-|-- mupif - contains source code of the MuPIF package|
-|-- examples - contains examples and tests
-etc.
+   mupif - contains source code of the MuPIF package
+   *.py
+   __init__.py
+       doc - documentation
+       examples - examples and tests
+       Physics - module for units
+       tools - various support tools
+   README.txt
+   setup.py
+   MANIFEST.in
+
 
 [3] Pre-requisites
 ===============================================================================
@@ -72,11 +79,11 @@ Use   pip install mupif   to install mupif as a package.
 
 To build an installable MuPIF package, several options are available.
 A package setuptools is normally used for creating e.g. installable tar files.
-Simply run a command   python setup.py sdist  to create sdist/*.tar.gz file.
+Simply run a command $python setup.py sdist  to create sdist/*.tar.gz file.
 
-python setup.py install installs the MuPIF on local disk - need a root 
-priviledges by default. To uninstall, use   pip freeze   and then something like
-pip uninstall mupif==0.1
+$python setup.py install installs the MuPIF on local disk - need a root 
+priviledges by default. To uninstall, use $pip freeze  and then something like
+$pip uninstall mupif
 
 
 
@@ -85,7 +92,6 @@ Bugs
 
 Please mail all bug reports and suggestions to [info@oofem.org]. I will try to
 give satisfaction, if the time is at least partially on my side. 
-
 
                                 Enjoy
                                         Borek Patzak
