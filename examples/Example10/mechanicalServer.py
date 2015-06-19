@@ -23,7 +23,7 @@ jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.
 uri = daemon.register(jobMan)
 #register JobManager to nameServer
 ns.register(sConf.jobManName, uri)
-print ("Daemon for JobManager runs at " + str(uri))
+logger.debug ("Daemon for JobManager runs at " + str(uri))
 print 80*'-'
 print ("Started "+sConf.jobManName)
 #waits for requests
