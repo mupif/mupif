@@ -9,7 +9,7 @@ nsport = 9091
 hkey = 'mmp-secret-key'
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 from mupif import *
 import os
 import logging

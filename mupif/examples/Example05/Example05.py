@@ -2,7 +2,7 @@
 
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 sys.path.append('.')
 import Celsian
 from mupif import FieldID

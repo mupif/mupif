@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 
 from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
 

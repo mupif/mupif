@@ -1,6 +1,6 @@
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 sys.path.append('.')
 from mupif import VtkReader2
 from mupif import Application
