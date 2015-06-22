@@ -308,6 +308,48 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     return RemoteAppRecord.RemoteAppRecord(app, tunnelApp, jobMan, tunnelJobMan, retRec[1])
 
 
+def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', options='', sshHost=''):
+    """
+    Allocate next application instance on a running Job Manager and adds it into
+    existing applicationRecord. 
+
+    :param Pyro4.naming.Nameserver ns: running name server
+    :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
+    :param int natPort: nat port in local computer for ssh tunnel for the application
+    :param RemoteAppRecord appRec: existing RemoteAppRecord where a new application will be added
+    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
+    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+
+    :return: None
+    :except: allocation or tunnel failed
+    """
+    (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    jobMan = connectApp(ns, jobManName)
+
+    try:
+        retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
+        logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
+    except Exception as e:
+        logger.info("jobMan.allocateJob() failed")
+        logger.exception(e)
+        raise (e)
+
+    #create tunnel to application's daemon running on (remote) server
+    try:
+        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
+    except Exception as e:
+        logger.info("Creating ssh tunnel for application's daemon failed")
+        logger.exception(e)
+        raise (e)
+    else:
+        logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
+
+    app = connectApp(ns, retRec[1])
+    appRec.appendNextApplication(app,tunnelApp,retRec[1])
+
+
+
 
 import PyroFile
 def uploadPyroFile (filename, pyroFile):
