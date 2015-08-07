@@ -29,9 +29,7 @@ guarantee for the correctness of all entries in the unit
 table, so use this at your own risk.
 """
 
-#from Scientific.NumberDict import NumberDict
 from NumberDict import NumberDict
-# from Scientific import N as numpy
 import numpy
 import re, string
 
