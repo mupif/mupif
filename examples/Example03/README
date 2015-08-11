@@ -14,7 +14,7 @@ To run the example, the application3 should be compiled on your system
 using any c compiler. For example, on unix/linux use following command
 to create an executable:
 
-> gcc -o application03 application03.c
+> gcc -o application3 application3.c
 
 To run this example, invoke python interpreter on Example03.py:
 > python Example03.py
