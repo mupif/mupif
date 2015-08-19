@@ -33,7 +33,7 @@ class Property(object):
             """
             return self.value
 
-        def getPropertID(self):
+        def getPropertyID(self):
             """
             Returns type of property.
 

@@ -40,7 +40,7 @@ class application2(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
-        if (property.getPropertID() == PropertyID.PID_Concentration):
+        if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
             self.contrib = property.getValue()
         else:

@@ -24,7 +24,7 @@ CONTENTS:
 [1] Description
 [2] What is here
 [3] Pre-requisites
-[4] Running Mupif examples
+[4] Running MuPIF examples
 
 
 [1] Description
@@ -55,9 +55,9 @@ MuPIF_TOP_DIR - contains source code and other files of the MuPIF package
    |    +--tools - various supportive tools
    |    +--*.py - MuPIF classes
    |    +--__init__.py - description of MuPIF module
-   +--README.txt
-   +--setup.py
-   +--MANIFEST.in
+   +--README.txt - general description
+   +--setup.py - support for setuptools
+   +--MANIFEST.in - support for setuptools
 
 
 [3] Pre-requisites
@@ -70,13 +70,15 @@ corresponding package is installed properly.
 To support parallel and distributed simulation scenarios, MuPIF requires Pyro
 module.
 
-[4] Running Mupif examples
+[4] Running MuPIF examples
 ===============================================================================
 Please read README files in individual example directories for instructions.
 
 [5] Installation
 ===============================================================================
-Use   pip install mupif   to install mupif as a package.
+Use  $ pip install mupif   to install mupif as a package from PyPI.
+Use  $ git clone git://git.code.sf.net/p/mupif/code mupif.git  to get a git 
+version.
 
 To build an installable MuPIF package, several options are available.
 A package setuptools is normally used for creating e.g. installable tar files.

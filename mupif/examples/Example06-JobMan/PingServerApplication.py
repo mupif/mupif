@@ -15,7 +15,7 @@ class PingServerApplication(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
-        if (property.getPropertID() == PropertyID.PID_Demo_Value):
+        if (property.getPropertyID() == PropertyID.PID_Demo_Value):
             # remember the mapped value
             self.contrib = property.getValue()
         else:
