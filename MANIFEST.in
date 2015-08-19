@@ -1,5 +1,11 @@
 # This file works only for $ python setup.py sdist, which creates *.tar.gz, necessary for uploading to PyPI.
-# It is also necessary to specify package_data which tell what will be installed from *.tar.gz
+# It is also necessary to specify package_data in setup.py which tells what will be installed from *.tar.gz
+
+# A typical workflow
+# $ python setup.py install       test your installation locally as it would be downloaded from PyPI server
+# $ python setup.py sdist         creates an archive on local computer
+# $ python setup.py register      registers to PyPI server
+# $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
 
 include README.txt
 include mupif/doc/refManual/MuPIF.pdf

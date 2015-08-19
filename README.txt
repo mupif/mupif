@@ -44,19 +44,20 @@ The MuPIF development has been supported by Grant Agency of the Czech Republic
 
 [2] What is here
 ===============================================================================
-The directory tree below holds source code to the MuPIF package. 
+The directory tree below holds source code to the MuPIF package plus supportive
+files. 
 
-MuPIF_TOP_DIR - contains source code of the MuPIF package
-   mupif - contains source code of the MuPIF package
-   *.py
-   __init__.py
-       doc - documentation
-       examples - examples and tests
-       Physics - module for units
-       tools - various support tools
-   README.txt
-   setup.py
-   MANIFEST.in
+MuPIF_TOP_DIR - contains source code and other files of the MuPIF package
+   +--mupif - contains source code of the MuPIF package
+   |    +--doc - documentation (reference manual and User guide)
+   |    +--examples - examples and tests
+   |    +--Physics - module for units
+   |    +--tools - various supportive tools
+   |    +--*.py - MuPIF classes
+   |    +--__init__.py - description of MuPIF module
+   +--README.txt
+   +--setup.py
+   +--MANIFEST.in
 
 
 [3] Pre-requisites

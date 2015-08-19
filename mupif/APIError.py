@@ -7,26 +7,26 @@ class APIError(Exception):
     
     Exceptions provide a way to react to exceptional circumstances (like runtime errors) in programs by transferring 
     control to special functions called handlers. To catch exceptions, a portion of code is placed under exception inspection. This is done by enclosing that portion of code in a try-block. When an exceptional circumstance arises within that block, an exception is thrown that transfers the control to the exception handler. If no exception is thrown, the code continues normally and all handlers are ignored.
-    
+
     An exception is thrown by using the throw keyword from inside the "try" block. 
     Exception handlers are declared with the keyword "except", which must be placed immediately after the try block.
 
     .. automethod:: __init__
     .. automethod:: __str__
     """
-    
+
     #
     def __init__(self, _msg):
         """
         Constructor. Initializes the exception.
-        
+
         :param str _msg: Error message
         """
         self.msg = _msg
     def __str__(self):
         """
         Returns error message from the constructor.
-        
+
         :return: Returns string representation of the exception, ie. error message (string)
         :rtype: str
         """
