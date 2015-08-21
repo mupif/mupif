@@ -11,7 +11,6 @@ install:
    - pip install pyro4
    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install pyvtk; fi
    - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then
-       git clone 
        git clone https://code.google.com/r/fghorow-pyvtk-python3-port/ pyvtk-py3;
        cd pyvtk-py3;
        python setup.py install;
