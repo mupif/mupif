@@ -23,6 +23,8 @@ install:
 #   # see https://github.com/fabric/fabric/blob/master/.travis.yml
 #   # for allowing passwordless SSH to localhost
 script:
+   - ls -l
+   - pwd
    - cd mupif/examples
    - /bin/bash testExamples.sh
 ##
