@@ -40,7 +40,11 @@ class RemoteAppRecord (object):
         :return: Instance of Application
         """
         return self.app[num]
+    def getJobManager (self):
+        return self.jobMan
 
+    def getJobID (self, num=0):
+        return self.jobID[num]
 
     def terminateAll(self):
         """

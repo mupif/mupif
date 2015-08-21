@@ -39,17 +39,17 @@ class Octant(object):
         """
         The contructor. Octant class contains:
 
-        * data: Container??
-        * children: Container??
-        * octree: ??
-        * parent: ??
-        * origin: ??
-        * size: ??
+        * data: Container storing the indexed objects (cells, vertices, etc)
+        * children: Container storing the children octants (if not terminal). 
+        * octree: Link to octree object 
+        * parent: Link to parent Octant
+        * origin: Coordinates of Octant lower left corner
+        * size: Dimension of Octant
 
-        :param Octree octree:
-        :param Octree parent:
-        :param ?? origin:
-        :param ?? size:
+        :param Octree octree: Link to octree object 
+        :param Octree parent: Link to parent Octant
+        :param tuple origin: lower left corner octant coordinates
+        :param float size: Size (dimension) of receiver
         """
         self.data=[]
         self.children=[]
@@ -104,10 +104,11 @@ class Octant(object):
 
     def insert (self, item, itemBBox=None):
         """
-        Insert given object into receiver's list only when the BBox contains and item.
+        Insert given object into receiver container. 
+        Object is inserted only when its bounding box intersects the bounding box of the receiver.
 
-        :param object item: ??
-        :param BBox itemBBox: Optional parameter to specify other BBox than that of an item
+        :param object item: object to insert
+        :param BBox itemBBox: Optional parameter determining the  BBox of the object
         """
         if itemBBox is None:
             itemBBox = item.getBBox()
@@ -133,10 +134,10 @@ class Octant(object):
 
     def delete (self, item, itemBBox=None):
         """
-        Deletes given object from receiver data
+        Deletes given object from receiver
 
-        :param object item: ??
-        :param BBox itemBBox: Optional parameter to specify other BBox than that of an item
+        :param object item: object to remove
+        :param BBox itemBBox: Optional parameter to specify bounding box of the object to be removed
         """
         if itemBBox is None:
             itemBBox = item.getBBox()
@@ -151,9 +152,11 @@ class Octant(object):
 
     def giveItemsInBBox (self, itemList, bbox):
         """ 
-        Adds those managed object into itemList which BBox intersects with given bbox. Note: an object can be included several times, as can be assigned to several octants.
-        :param tuple itemList:??
-        :param BBox bbox:??
+        Returns the list of objects inside the given bounding box. 
+        Note: an object can be included several times, as can be assigned to several octants.
+
+        :param list itemList: list containing the objects matching the criteria
+        :param BBox bbox: target bounding box 
         """ 
         if debug: tab='  '*int(math.ceil ( math.log( self.octree.root.size / self.size) / math.log(2.0)))
         if self.containsBBox(bbox):
@@ -162,7 +165,8 @@ class Octant(object):
                 for i in self.data:
                     if debug: 
                         print (tab,"checking ...", i)
-                        print (i.getBBox(), bbox)
+                        print (str(i.getBBox()), str(bbox))
+                        
                     if i.getBBox().intersects(bbox):
                         if isinstance(itemList, set):
                             itemList.add(i)
@@ -179,7 +183,9 @@ class Octant(object):
 
     def evaluate (self, functor):
         """ 
-        Adds those managed objects into itemList for which functor.evaluate returned Trues. The functor should also provide its BBox to exclude remote octants from the search.
+        Evaluate the given functor on all containing objects.
+        The functor should define getBBox() function to return bounding box. Only the objects within this bouding box will be processed.
+        Functor should also define evaluate method accepting object as a parameter.
 
         :param object functor: Functor
         """
@@ -195,7 +201,7 @@ class Octant(object):
 
     def giveDepth (self):
         """
-        :return: Depth of ??
+        :return: Returns the depth (the subdivision level) of the receiver (and its children)
         """
         depth = math.ceil ( math.log( self.octree.root.size / self.size) / math.log(2.0))
         if not isTerminal():
@@ -208,9 +214,13 @@ class Octant(object):
 class Octree(Localizer.Localizer):
     """
     An octree is used to partition space by recursively subdividing the root cell (square or cube) into octants.
-    Each terminal octant contains the objects within the octant. Each object that can be inserted and is assumed to provide giveBBox() which returns its bounding box.
+    Octants can be terminal (containing the data) or can be further subdivided into children octants.
+    Each terminal octant contains the objects with bounding box within the octant.
+    Each object that can be inserted and is assumed to provide giveBBox() which returns its bounding box.
 
-    Octree mask is a tuple containing 0 or 1 values. If corresponding mask value is nonzero, receiver is subdivided in corresponding direction. The mask allows to create ocrtrees for various 2D and 1D settings.
+    Octree mask is a tuple containing 0 or 1 values. 
+    If corresponding mask value is nonzero, receiver is subdivided in corresponding coordinate direction. 
+    The mask allows to create ocrtrees for various 2D and 1D settings.
     
     .. automethod:: __init__
     """
@@ -218,9 +228,9 @@ class Octree(Localizer.Localizer):
         """
         The constructor.
         
-        :param ?? origin:
-        :param ?? size:
-        :param ?? mask:
+        :param tuple origin: coordinates of lower left corner of the root octant.
+        :param float size: dimension (size) of the root octant
+        :param tuple mask: boolean tuple, where true values determine the coordinate indices in which octree octants are subdivided
         """
         self.mask = mask
         self.root = Octant (self, None, origin, size)

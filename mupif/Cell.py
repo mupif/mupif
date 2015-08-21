@@ -26,12 +26,14 @@ from . import APIError
 import math
 from . import Mesh
 from . import CellGeometryType
+import numpy as np
+
 
 #debug flag
 debug = 0
 
 #in element tolerance
-tolerance = 0.01
+tolerance = 0.001
 
 
 class Cell(object):
@@ -260,6 +262,21 @@ class Quad_2d_lin(Cell):
         """
         return CellGeometryType.CGT_QUAD
 
+    def _evalN(self, lc):
+        """
+        Evaluates shape functions at given point (given in parametric coordinates)
+        :param tuple lc: A local coordinate
+        :return: shape function
+        :rtype: float
+        """
+        #print "lc :",lc
+
+        return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ), 
+                0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ), 
+                0.25 * ( 1. - lc[0] ) * ( 1. - lc[1] ), 
+                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] )) 
+
+
     def glob2loc(self, coords):
         """
         Converts global coordinate to local (area) coordinate.
@@ -470,10 +487,12 @@ class Tetrahedron_3d_lin(Cell):
         c3=self.mesh.getVertex(self.vertices[2]).coords
         c4=self.mesh.getVertex(self.vertices[3]).coords
         
-        x1 = c1.coords[0]; y1 = c1.coords[1]
-        x2 = c2.coords[0]; y2 = c2.coords[1]
-        x3 = c3.coords[0]; y3 = c3.coords[1]
-        x4 = c4.coords[0]; y4 = c4.coords[1]
+        x1 = c1[0]; y1 = c1[1]; z1 = c1[2]
+        x2 = c2[0]; y2 = c2[1]; z2 = c2[2]
+        x3 = c3[0]; y3 = c3[1]; z3 = c3[2]
+        x4 = c4[0]; y4 = c4[1]; z4 = c4[2]
+
+        xp = coords[0]; yp = coords[1]; zp = coords[2];
         
         volume = ( ( x4 - x1 ) * ( y2 - y1 ) * ( z3 - z1 ) - ( x4 - x1 ) * ( y3 - y1 ) * ( z2 - z1 ) +
                    ( x3 - x1 ) * ( y4 - y1 ) * ( z2 - z1 ) - ( x2 - x1 ) * ( y4 - y1 ) * ( z3 - z1 ) +
@@ -492,7 +511,7 @@ class Tetrahedron_3d_lin(Cell):
                ( x4 - x1 ) * ( y2 - y1 ) * ( zp - z1 ) - ( x4 - x1 ) * ( yp - y1 ) * ( z2 - z1 ) +
                ( xp - x1 ) * ( y4 - y1 ) * ( z2 - z1 ) - ( x2 - x1 ) * ( y4 - y1 ) * ( zp - z1 ) ) / 6. / volume;
         
-        l4  = 1.0 - answer.at(1) - answer.at(2) - answer.at(3);
+        l4  = 1.0 - l1 -l2 -l3;
 
         return (l1,l2,l3,l4)
 

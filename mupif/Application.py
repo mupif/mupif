@@ -1,3 +1,6 @@
+import os
+
+
 class Application(object):
     """
     An abstract class representing an application and its interface (API).
@@ -11,7 +14,7 @@ class Application(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file):
+    def __init__ (self, file, workdir=''):
         """
         Constructor. Initializes the application.
 
@@ -20,6 +23,11 @@ class Application(object):
         self.pyroDaemon = None
         self.pyroNS = None
         self.pyroURI = None
+        self.file = file
+        if workdir == '':
+            self.workDir =  os.getcwd()
+        else:
+            self.workDir = workdir
 
     def registerPyro (self, pyroDaemon, pyroNS, pyroURI):
         """

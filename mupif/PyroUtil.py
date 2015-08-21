@@ -134,7 +134,7 @@ def runDaemon(host, port, nathost, natport):
         daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
         logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
     except socket.error as e:
-        logger.debug('Socket port seems to be already in use :%d' % (port))
+        logger.debug('Socket port %s:%d seems to be already in use' % (host,port))
         daemon = None
         raise e
 
@@ -342,4 +342,36 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec):
 
     app = connectApp(ns, retRec[1])
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
-    
+
+
+import PyroFile
+def uploadPyroFile (filename, pyroFile):
+    """
+    Uploads the given file (specified by given file name) into PyroFile handle.
+
+    :param str filename: path to source file name
+    :param PyroFile pyroFile: representation of target (remote) file 
+    """
+    file = open (filename, 'wb')
+    data = pyroFile.getChunk()
+    while data:
+        file.write(data)
+        data = pyroFile.getChunk()
+    pyroFile.close()
+    file.close()
+
+def downloadPyroFile (filename, pyroFile, size = 1024):
+    """
+    Downloads the (remote) file, represented by given pyroFile into local file (determined by target path)
+
+    :param str filename: path to target file
+    :param PyroFile pyroFile: represenation of source (remote) file
+    :param int size: optional chunk size. The data are read and written in byte chunks of this size 
+    """
+    file = open (filename, 'rb')
+    data = file.read(size)
+    while data:
+        pyroFile.setChunk(data)
+        data = file.read(size)
+    file.close()
+    pyroFile.close()

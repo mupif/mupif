@@ -1,0 +1,29 @@
+This Example06-JobMan has similar functionality as Example06.
+Here, the communication server/client is carried out through two ssh tunnels.
+
+The first ssh tunnel transfers data between local computer and JobManager.
+The second ssh tunnel connects local computer with a job allocated with the JobManager.
+
+ssh public/private keys need to be estabilished for smooth ssh authentication
+
+serverConfig.py - set up details of your server
+run server.py
+
+clientConfig.py - set up details of your client
+run scenario.py
+
+================================================================================
+EXPECTED OUTPUT:
+================================================================================
+You should obtain the following output:
+...
+2015-06-09 15:17:12 DEBUG:PyroUtil.py:102 Connected to PingServerApplication with the name 1@Mupif.PingServerApplication 
+
+2015-06-09 15:17:12 INFO:scenario.py:23 Working application 1 on server PingServerApplication 
+
+2015-06-09 15:17:12 INFO:scenario.py:29 SUCCESSFULLY Received 1.0 
+
+2015-06-09 15:17:12 INFO:scenario.py:30 Terminating PYRO:obj_676f983b7c7f4dd386edd72f7809bc6d@127.0.0.1:6000 
+
+2015-06-09 15:17:12 INFO:scenario.py:32 Time consumed 2.279324 s
+
