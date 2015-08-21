@@ -5,10 +5,19 @@ python:
 install:
    #  APT stuff is below separately
    # 
-   # 1. install pyvtk from pip, since that has also python3 version there (not packaged in Ubuntu)
-   # 2. at some point, move all this to requirements.txt; see http://docs.travis-ci.com/user/languages/python/
-   # 3. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
-   - pip install pyro4 pyvtk
+   # 1. at some point, move all this to requirements.txt; see http://docs.travis-ci.com/user/languages/python/
+   # 2. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
+   # 3. numpy is pre-installed by travis implicitly
+   - pip install pyro4
+   - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install pyvtk; fi
+   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then
+       git clone https://code.google.com/r/christophelebourlot-pyvtk-py3/ pyvtk-py3
+       cd pyvtk-py3
+       python setup.py install
+     fi
+   # install mupif itself
+   - python setup.py install 
+
 #before_script:
 #   # see https://github.com/fabric/fabric/blob/master/.travis.yml
 #   # for allowing passwordless SSH to localhost
