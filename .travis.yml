@@ -13,15 +13,10 @@ install:
 #   # see https://github.com/fabric/fabric/blob/master/.travis.yml
 #   # for allowing passwordless SSH to localhost
 script:
-   - cd examples
-   - /bin/bash doTests.sh
+   - cd mupif/examples
+   - /bin/bash testExamples.sh
 ##
 ## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
 ##
 sudo: false
 ## maybe install NumPy from miniconda in the future: https://gist.github.com/dan-blanchard/7045057
-addons:
-   apt:
-      packages:
-         - python-numpy
-         - python3-numpy
