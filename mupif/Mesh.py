@@ -25,6 +25,7 @@ from . import APIError
 from . import Octree
 import copy
 import time
+import sys
 from . import CellGeometryType
 
 #enum to distinguish iterartors provided by domain
@@ -83,12 +84,13 @@ class MeshIterator(object):
                 return item
             else:
                  raise StopIteration()
-
-    def next (self):
-        """
-        Python 2.x compatibility, see :func:`MeshIterator.__next__`
-        """
-        return self.__next__()   #Python 2.x compatibility
+    # in py3k, this would lead to infinite recursion since 2to3 renames to __next__ already
+    if sys.version_info[0]==2:
+        def next (self):
+            """
+            Python 2.x compatibility, see :func:`MeshIterator.__next__`
+            """
+            return self.__next__()   #Python 2.x compatibility
 
 class Mesh(object):
     """

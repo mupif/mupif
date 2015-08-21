@@ -3,9 +3,12 @@
 # accumulates failures, which are stored in $ret for each example
 retval=0
 
+# in Travis virtualenv, this can be also python3
+export PYTHON=python
+
 pushd Example01; 
 	echo $PWD
-	python Example01.py
+	$PYTHON Example01.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
@@ -13,15 +16,15 @@ popd
 
 pushd Example02
 	echo $PWD
-	python nameserver.py &
+	$PYTHON nameserver.py &
 	PID1=$!
 	echo PID $PID1
 	sleep 1
-	python server.py &
+	$PYTHON server.py &
 	PID2=$!
 	echo $PID2
 	sleep 1
-	python client.py 
+	$PYTHON client.py 
 	ret=$?
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
@@ -36,7 +39,7 @@ retval=$retval || $ret
 #pushd Example03
 #	echo $PWD
 #	gcc -o application3 application3.c
-#	python Example03.py
+#	$PYTHON Example03.py
 #	ret=$?
 #	(( retval=$retval || $ret ))
 #	echo "=================== Exit status $ret ===================="
@@ -44,7 +47,7 @@ retval=$retval || $ret
 
 pushd Example04
 	echo $PWD
-	python Example04.py
+	$PYTHON Example04.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
@@ -54,7 +57,7 @@ popd
 #
 #pushd Example05
 #	echo $PWD
-#	python Example05.py
+#	$PYTHON Example05.py
 #	ret=$?
 #	(( retval=$retval || $ret ))
 #	echo "=================== Exit status $ret ===================="
@@ -65,9 +68,9 @@ popd
 ##
 #pushd PingTest
 #	echo $PWD
-#	ssh -n mmp@mech.fsv.cvut.cz "bash -c \"cd mupif-code/examples/PingTest;python ctu-server.py& sleep 10; pkill \"python ctu-server.py\"\"" &
+#	ssh -n mmp@mech.fsv.cvut.cz "bash -c \"cd mupif-code/examples/PingTest;$PYTHON ctu-server.py& sleep 10; pkill \"$PYTHON ctu-server.py\"\"" &
 #	sleep 1
-#	python test.py 
+#	$PYTHON test.py 
 #	ret=$?
 #	(( retval=$retval || $ret ))
 #	echo "=================== Exit status $?"
