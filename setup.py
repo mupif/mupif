@@ -27,15 +27,17 @@ from setuptools import setup, find_packages
 inFile = open("mupif/__init__.py")
 for line in inFile:
     if line.startswith('__version__'):
-        version = line.split()[2]
-        #print version
+        #version = line.split()[2]
+        version = re.findall(r'\'(.+?)\'', line)
+	#print version[0]
     elif line.startswith('__author__'):
         author = re.findall(r'\'(.+?)\'', line)
         #print author[0]
 inFile.close()
+#exit(0)
 
 setup(name='mupif',
-      version=version,
+      version=version[0],
       description='Mupif platform for multiscale/multiphysics modeling',
       license='LGPL',
       author=author[0],

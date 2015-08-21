@@ -22,7 +22,7 @@ class DemoApplication (Application.Application):
         self.daemonRunning = True
 
     def setProperty(self, property, objectID=0):
-        propID = property.getPropertID()
+        propID = property.getPropertyID()
         if (propID == PropertyID.PID_Demo_Value):
             self.count = property.getValue()
         else:

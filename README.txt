@@ -24,7 +24,7 @@ CONTENTS:
 [1] Description
 [2] What is here
 [3] Pre-requisites
-[4] Running Mupif examples
+[4] Running MuPIF examples
 
 
 [1] Description
@@ -44,19 +44,20 @@ The MuPIF development has been supported by Grant Agency of the Czech Republic
 
 [2] What is here
 ===============================================================================
-The directory tree below holds source code to the MuPIF package. 
+The directory tree below holds source code to the MuPIF package plus supportive
+files. 
 
-MuPIF_TOP_DIR - contains source code of the MuPIF package
-   mupif - contains source code of the MuPIF package
-   *.py
-   __init__.py
-       doc - documentation
-       examples - examples and tests
-       Physics - module for units
-       tools - various support tools
-   README.txt
-   setup.py
-   MANIFEST.in
+MuPIF_TOP_DIR - contains source code and other files of the MuPIF package
+   +--mupif - contains source code of the MuPIF package
+   |    +--doc - documentation (reference manual and User guide)
+   |    +--examples - examples and tests
+   |    +--Physics - module for units
+   |    +--tools - various supportive tools
+   |    +--*.py - MuPIF classes
+   |    +--__init__.py - description of MuPIF module
+   +--README.txt - general description
+   +--setup.py - support for setuptools
+   +--MANIFEST.in - support for setuptools
 
 
 [3] Pre-requisites
@@ -69,13 +70,15 @@ corresponding package is installed properly.
 To support parallel and distributed simulation scenarios, MuPIF requires Pyro
 module.
 
-[4] Running Mupif examples
+[4] Running MuPIF examples
 ===============================================================================
 Please read README files in individual example directories for instructions.
 
 [5] Installation
 ===============================================================================
-Use   pip install mupif   to install mupif as a package.
+Use  $ pip install mupif   to install mupif as a package from PyPI.
+Use  $ git clone git://git.code.sf.net/p/mupif/code mupif.git  to get a git 
+version.
 
 To build an installable MuPIF package, several options are available.
 A package setuptools is normally used for creating e.g. installable tar files.
