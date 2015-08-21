@@ -29,7 +29,7 @@ for line in inFile:
     if line.startswith('__version__'):
         #version = line.split()[2]
         version = re.findall(r'\'(.+?)\'', line)
-	#print version[0]
+    #print version[0]
     elif line.startswith('__author__'):
         author = re.findall(r'\'(.+?)\'', line)
         #print author[0]
@@ -49,6 +49,7 @@ setup(name='mupif',
       package_data={'': [ 'tools/*.py', 'examples/Ex*/*.*', 'examples/Pi*/*.*', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
       requires=['numpy', 'scipy', 'setuptools', 'pyvtk'],
       include_package_data=True,
-      url='http://sourceforge.net/projects/mupif/'
+      url='http://sourceforge.net/projects/mupif/',
+      use_2to3=True, # py3k support
       )
 
