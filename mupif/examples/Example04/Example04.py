@@ -7,7 +7,7 @@
 #
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 
 from mupif import Field
 from mupif import FieldID

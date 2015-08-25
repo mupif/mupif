@@ -15,7 +15,7 @@ daemonPort = 44382
 hkey = 'mmp-secret-key'
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 from mupif import *
 import logging
 logger = logging.getLogger()

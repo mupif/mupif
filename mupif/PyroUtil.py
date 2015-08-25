@@ -307,14 +307,19 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     app = connectApp(ns, retRec[1])
     return RemoteAppRecord.RemoteAppRecord(app, tunnelApp, jobMan, tunnelJobMan, retRec[1])
 
-def allocateNextApplication (ns, jobManRec, natPort, appRec):
+
+def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', options='', sshHost=''):
     """
-    Allocate next application on a running Job Manager
+    Allocate next application instance on a running Job Manager and adds it into
+    existing applicationRecord. 
 
     :param Pyro4.naming.Nameserver ns: running name server
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
     :param int natPort: nat port in local computer for ssh tunnel for the application
     :param RemoteAppRecord appRec: existing RemoteAppRecord where a new application will be added
+    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
+    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
 
     :return: None
     :except: allocation or tunnel failed
@@ -342,6 +347,8 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec):
 
     app = connectApp(ns, retRec[1])
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
+
+
 
 
 import PyroFile

@@ -29,8 +29,8 @@ guarantee for the correctness of all entries in the unit
 table, so use this at your own risk.
 """
 
-from Scientific.NumberDict import NumberDict
-from Scientific import N
+from NumberDict import NumberDict
+import numpy
 import re, string
 
 # Class definitions
@@ -329,21 +329,21 @@ class PhysicalQuantity:
 
     def sin(self):
         if self.unit.isAngle():
-            return N.sin(self.value * \
+            return numpy.sin(self.value * \
                              self.unit.conversionFactorTo(_unit_table['rad']))
         else:
             raise TypeError('Argument of sin must be an angle')
 
     def cos(self):
         if self.unit.isAngle():
-            return N.cos(self.value * \
+            return numpy.cos(self.value * \
                              self.unit.conversionFactorTo(_unit_table['rad']))
         else:
             raise TypeError('Argument of cos must be an angle')
 
     def tan(self):
         if self.unit.isAngle():
-            return N.tan(self.value * \
+            return numpy.tan(self.value * \
                              self.unit.conversionFactorTo(_unit_table['rad']))
         else:
             raise TypeError('Argument of tan must be an angle')
@@ -444,7 +444,7 @@ class PhysicalUnit:
                                 map(lambda x,p=other: x*p, self.powers))
         if isinstance(other, float):
             inv_exp = 1./other
-            rounded = int(N.floor(inv_exp+0.5))
+            rounded = int(numpy.floor(inv_exp+0.5))
             if abs(inv_exp-rounded) < 1.e-10:
                 if reduce(lambda a, b: a and b,
                           map(lambda x, e=rounded: x%e == 0, self.powers)):
@@ -592,10 +592,10 @@ def _findUnit(unit):
     return unit
 
 def _round(x):
-    if N.greater(x, 0.):
-        return N.floor(x)
+    if numpy.greater(x, 0.):
+        return numpy.floor(x)
     else:
-        return N.ceil(x)
+        return numpy.ceil(x)
 
 
 def _convertValue (value, src_unit, target_unit):
@@ -704,7 +704,7 @@ for unit in _unit_table.keys():
 # Fundamental constants
 _help.append('Fundamental constants:')
 
-_unit_table['pi'] = N.pi
+_unit_table['pi'] = numpy.pi
 _addUnit('c', '299792458.*m/s', 'speed of light')
 _addUnit('mu0', '4.e-7*pi*N/A**2', 'permeability of vacuum')
 _addUnit('eps0', '1/mu0/c**2', 'permittivity of vacuum')
@@ -842,7 +842,6 @@ __doc__ += '\n' + description()
 
 if __name__ == '__main__':
 
-    from Scientific.N import *
     l = PhysicalQuantity(10., 'm')
     big_l = PhysicalQuantity(10., 'km')
     print big_l + l

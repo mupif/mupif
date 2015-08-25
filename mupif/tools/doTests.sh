@@ -39,7 +39,7 @@ read -p "Finished Example05; Press [Enter] key to continue..."
 ### PingTest ###
 cd ../PingTest
 pwd
-ssh -n mmp@mech.fsv.cvut.cz "bash -c \"cd mupif-code/examples/PingTest;python ctu-server.py& sleep 10; pkill \"python ctu-server.py\"\"" &
+ssh -n mmp@mech.fsv.cvut.cz "bash -c \"cd mupif-code/mupif/examples/PingTest;python ctu-server.py& sleep 10; pkill \"python ctu-server.py\"\"" &
 sleep 1
 python test.py 
 read -p "Finished PingTest; Press [Enter] key to continue..."

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 import demoapp
 import meshgen
 from mupif import FieldID

@@ -2,7 +2,7 @@
 
 
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 sys.path.append('.')
 import Celsian
 from mupif import FieldID
@@ -46,7 +46,7 @@ value=field.evaluate(position)
 print ("Field value at position ", position, " is ", value)
 
 
-if (abs(value[0]-727.55) <= 1.e-4):
+if (abs(value[0]-728.13) <= 1.e-4):
     print ("Test OK")
 else:
     print ("Test FAILED")

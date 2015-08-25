@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 sys.path.append('../../tools')
 
 import Pyro4
