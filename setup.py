@@ -2,19 +2,17 @@
 Created 19.6.2015
 @author: Vit Smilauer
 '''
-# This creates sdist archive for pip installation. Run the command to create an archive
-# $ python setup.py sdist
-# The archive dist/mupif-0.1.tar.gz contains several files. However, they are not necessary installed through pip command.
 
-# Installation can be tested locally. To create an installation archive, run
-# $ python setup.py bdist   and explore the archive under dist/ . This will be installed.
-# As a root user, you can install on the local computer
-# $ python setup.py install
+# A typical workflow
+# $ python setup.py install       test your installation locally as it would be downloaded from PyPI server
+# $ python setup.py sdist         creates an archive on local computer
+# $ python setup.py register      registers to PyPI server
+# $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
+
 # The mupif module can be tested under python $ python   and  >> from mupif import * . Correct path is automatically added.
 # Uninstall with $ pip uninstall mupif . This also shows you the location of files.
 
 # Alternatively, without default path, $ pip install --user dist/mupif-0.1.tar.gz
-# Uninstall with $ pip uninstall mupif
 # See also https://bashelton.com/2009/04/setuptools-tutorial/#setup.py-package_dir
 # See also https://docs.python.org/2/distutils/setupscript.html
 
@@ -47,7 +45,7 @@ setup(name='mupif',
       #packages = ['mupif'],
       #Tell what to install (these files must be already in a sdist archive file)
       package_data={'': [ 'tools/*.py', 'examples/Ex*/*.*', 'examples/Pi*/*.*', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
-      requires=['numpy', 'scipy', 'setuptools', 'pyvtk'],
+      install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'Pyro4==4.30'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/'
       )
