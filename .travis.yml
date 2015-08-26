@@ -39,3 +39,4 @@ addons:
          - libblas-dev
          - liblapack-dev
          - libsuitesparse-dev
+         - gfortran
