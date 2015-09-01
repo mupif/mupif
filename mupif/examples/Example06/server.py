@@ -1,5 +1,5 @@
-import sys
 from __future__ import division
+import sys
 sys.path.append('../../..')
 from mupif import *
 import logging

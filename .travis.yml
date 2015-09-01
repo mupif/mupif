@@ -8,11 +8,10 @@ install:
    # 1. at some point, move all this to requirements.txt; see http://docs.travis-ci.com/user/languages/python/
    # 2. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
    # 3. numpy is pre-installed by travis implicitly
-   - pip install pyro4
+   - pip install pyro4 future
    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install pyvtk; fi
    - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then
        git clone https://code.google.com/r/fghorow-pyvtk-python3-port/ pyvtk-py3;
-       pip install future;
        cd pyvtk-py3;
        python setup.py install;
        cd ..;
@@ -26,7 +25,7 @@ install:
 script:
    - ls -l
    - pwd
-   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then cd build/examples-py3k; else cd mupif/examples; fi
+   - cd mupif/examples
    - /bin/bash testExamples.sh
 ##
 ## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
