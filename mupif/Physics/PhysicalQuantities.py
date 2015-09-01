@@ -30,6 +30,9 @@ table, so use this at your own risk.
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from builtins import range, object, str # py2k compat
+
 
 from .NumberDict import NumberDict
 import numpy
@@ -38,7 +41,7 @@ from functools import reduce
 
 # Class definitions
 
-class PhysicalQuantity:
+class PhysicalQuantity(object):
 
     """
     Physical quantity with units
@@ -196,7 +199,8 @@ class PhysicalQuantity:
         else:
             return self.__class__(value, unit)
 
-    __truediv__ = __div__
+    # FIXME: py3k invalid
+	 __truediv__ = __div__
 
     def __rdiv__(self, other):
         if not isPhysicalQuantity(other):
@@ -225,7 +229,7 @@ class PhysicalQuantity:
     def __neg__(self):
         return self.__class__(-self.value, self.unit)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.value != 0
 
     def convertToUnit(self, unit):
@@ -352,7 +356,7 @@ class PhysicalQuantity:
             raise TypeError('Argument of tan must be an angle')
 
 
-class PhysicalUnit:
+class PhysicalUnit(object):
 
     """
     Physical unit
@@ -424,6 +428,7 @@ class PhysicalUnit:
             return PhysicalUnit(self.names+{str(other): -1},
                                 self.factor/other, self.powers)
 
+    # FIXME: py3k
     __truediv__ = __div__
 
     def __rdiv__(self, other):
@@ -826,7 +831,7 @@ def description():
     """Return a string describing all available units."""
     s = ''  # collector for description text
     for entry in _help:
-        if isinstance(entry, basestring):
+        if isinstance(entry, str):
             # headline for new section
             s += '\n' + entry + '\n'
         elif isinstance(entry, tuple):

@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division
 from mupif import *
 
 import meshgen
@@ -118,7 +118,7 @@ class thermal(Application.Application):
                 
 
         self.loc=np.zeros(self.mesh.getNumberOfVertices())
-        for i in self.dirichletBCs.keys():
+        for i in self.dirichletBCs:
             self.loc[i]=-1;
         self.neq = 0;
         for i in range(self.mesh.getNumberOfVertices()):
@@ -444,7 +444,7 @@ class mechanical(Application.Application):
                 
 
         self.loc=np.zeros((self.mesh.getNumberOfVertices(),2)) # Du, Dv dofs per node
-        for i in self.dirichletBCs.keys():
+        for i in self.dirichletBCs:
             self.loc[i,0]=-1;
             self.loc[i,1]=-1;
         self.neq = 0;

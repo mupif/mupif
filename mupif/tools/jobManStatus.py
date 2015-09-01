@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 
-from __future__ import print_function
+from __future__ import print_function, division
+from builtins import str
 import getopt, sys
 sys.path.append('..')
 sys.path.append('.')
@@ -51,8 +52,8 @@ def processor(win, jobman):
             win1.addstr(i,jobid_col, rec[0])
             win1.addstr(i,port_col, str(rec[3]))
             win1.addstr(i,user_col, rec[2])
-            mins = int(rec[1])/60
-            hrs  = mins/24
+            mins = rec[1]//60
+            hrs  = mins//24
             mins = mins%60
             sec  = int(rec[1])%60
             jobtime = "%02d:%02d:%02d"%(hrs, mins, sec)

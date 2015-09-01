@@ -1,3 +1,6 @@
+from __future__ import division, print_function
+from builtins import range
+
 from mupif import Application
 from mupif import TimeStep
 from mupif import APIError

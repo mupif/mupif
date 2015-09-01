@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+from builtins import range, object
 import sys
 sys.path.append('../')
 
@@ -94,13 +95,13 @@ class EnsightReader(object):
         mesh = Mesh.UnstructuredMesh()
         vertices=[]
         coords = np.zeros((3), dtype='f')
-        for i in xrange(0, self.getNumberOfVertices()): 
+        for i in range(0, self.getNumberOfVertices()): 
             coords=self.getCoords(i,coords)
         tuple = (coords)
         vertices.append(Vertex.Vertex(i,i+1, tuple))
 
         cells = []
-        for i in xrange(0, self.getNumberOfCells()):
+        for i in range(0, self.getNumberOfCells()):
             if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
                 cells.append(Cell.Brick_3d_lin(mesh, i, i, (int(self.giveVertex(i,0)), int(self.giveVertex(i,1)), int(self.giveVertex(i,2)), int(self.giveVertex(i,3)), int(self.giveVertex(i,4)), int(self.giveVertex(i,5)), int(self.giveVertex(i,6)), int(self.giveVertex(i,7))) )) 
             elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
@@ -120,12 +121,12 @@ class EnsightReader(object):
         """
         values=[]
         if (vertexBasedFlag == True):
-            for i in xrange(0, self.getNumberOfVertices()): 
+            for i in range(0, self.getNumberOfVertices()): 
                 values.append ((self.giveValueAtPoint(fieldName, i), ))
         elif(vertexBasedFlag == False):
-            for i in xrange(0, self.getNumberOfCells()):
+            for i in range(0, self.getNumberOfCells()):
                 if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
-                    values.append ((self.giveValueAtCell(fieldName, i), ))
+                    alues.append ((self.giveValueAtCell(fieldName, i), ))
                 elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
                     values.append ((self.giveValueAtCell(fieldName, i), ))
         return Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values, Field.FieldType.FT_cellBased)

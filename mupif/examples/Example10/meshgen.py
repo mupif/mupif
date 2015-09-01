@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division
 from mupif import Mesh
 from mupif import Cell
 from mupif import Vertex

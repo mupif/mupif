@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, division
 # This script starts a server for Pyro4 on this machine with Application2
 # Works with Pyro4 version 4.28
 # Tested on Ubuntu 14.04 and Win XP
@@ -39,7 +39,7 @@ class application2(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.Property(float(self.value)/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, propID, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
