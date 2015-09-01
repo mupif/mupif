@@ -1,3 +1,4 @@
+from __future__ import print_function
 import thermalServerConfig as sConf
 import os
 from mupif import *
@@ -24,7 +25,7 @@ uri = daemon.register(jobMan)
 #register JobManager to nameServer
 ns.register(sConf.jobManName, uri)
 logger.debug ("Daemon for JobManager runs at " + str(uri))
-print 80*'-'
+print(80*'-')
 print ("Started "+sConf.jobManName)
 #waits for requests
 daemon.requestLoop()

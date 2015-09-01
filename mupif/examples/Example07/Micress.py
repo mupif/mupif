@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import sys
 sys.path.append('../../..')
@@ -17,11 +18,11 @@ class Micress(Application.Application):
 
     def getField(self, fieldID, time):
         Data = pyvtk.VtkData('micress/sim.vtk')
-        print Data.header
+        print(Data.header)
 
         dim=[]
         dim=Data.structure.dimensions
-        print dim
+        print(dim)
 
         #Number of nodes in each direction
         nx=dim[0]
@@ -33,7 +34,7 @@ class Micress(Application.Application):
         coords= Data.structure.get_points()
 
         numNodes = Data.point_data.length
-        print numNodes
+        print(numNodes)
 
         if (self.mesh == None):
             self.mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)

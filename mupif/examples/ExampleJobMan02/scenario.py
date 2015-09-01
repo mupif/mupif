@@ -1,3 +1,4 @@
+from __future__ import print_function
 import clientConfig as cConf
 from mupif import *
 import logging
@@ -24,12 +25,12 @@ else:
 
         app1.solveStep(None)
         remoteFile = appRec.getJobManager().getPyroFile (appRec.getJobID(), 'test.txt')
-        print remoteFile
+        print(remoteFile)
         PyroUtil.uploadPyroFile ("localtest.txt", remoteFile)
 
         file = open ("localtest.txt", "r")
         answer = file.readlines()
-        print answer;
+        print(answer);
         
         if (answer[0]=="Hello MMP!"):
             print ("Test OK")

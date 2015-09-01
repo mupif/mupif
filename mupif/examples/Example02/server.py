@@ -1,3 +1,4 @@
+from __future__ import print_function
 # This script starts a server for Pyro4 on this machine with Application2
 # Works with Pyro4 version 4.28
 # Tested on Ubuntu 14.04 and Win XP

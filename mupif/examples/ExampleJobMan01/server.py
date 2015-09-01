@@ -1,3 +1,4 @@
+from __future__ import print_function
 import serverConfig as conf
 from mupif import *
 import DemoApplication

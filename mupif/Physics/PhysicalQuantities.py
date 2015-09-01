@@ -28,10 +28,13 @@ recommended values from CODATA. Other conversion factors
 guarantee for the correctness of all entries in the unit
 table, so use this at your own risk.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
-from NumberDict import NumberDict
+from .NumberDict import NumberDict
 import numpy
 import re, string
+from functools import reduce
 
 # Class definitions
 
@@ -146,8 +149,8 @@ class PhysicalQuantity:
         return str(self.value) + ' ' + self.unit.name()
 
     def __repr__(self):
-        return (self.__class__.__name__ + '(' + `self.value` + ',' + 
-                `self.unit.name()` + ')')
+        return (self.__class__.__name__ + '(' + repr(self.value) + ',' + 
+                repr(self.unit.name()) + ')')
 
     def _sum(self, other, sign1, sign2):
         if not isPhysicalQuantity(other):
@@ -648,8 +651,8 @@ for unit in _base_units:
 _help = []
 
 def _addUnit(name, unit, comment=''):
-    if _unit_table.has_key(name):
-        raise KeyError, 'Unit ' + name + ' already defined'
+    if name in _unit_table:
+        raise KeyError('Unit ' + name + ' already defined')
     if comment:
         _help.append((name, comment, unit))
     if type(unit) == type(''):
@@ -831,7 +834,7 @@ def description():
             s += '%-8s  %-26s %s\n' % (name, comment, unit)
         else:
             # impossible
-            raise TypeError, 'wrong construction of _help list'
+            raise TypeError('wrong construction of _help list')
     return s
 
 # add the description of the units to the module's doc string:
@@ -844,16 +847,16 @@ if __name__ == '__main__':
 
     l = PhysicalQuantity(10., 'm')
     big_l = PhysicalQuantity(10., 'km')
-    print big_l + l
+    print(big_l + l)
     t = PhysicalQuantity(314159., 's')
-    print t.inUnitsOf('d','h','min','s')
+    print(t.inUnitsOf('d','h','min','s'))
 
     p = PhysicalQuantity # just a shorthand...
 
     e = p('2.7 Hartree*Nav')
     e.convertToUnit('kcal/mol')
-    print e
-    print e.inBaseUnits()
+    print(e)
+    print(e.inBaseUnits())
 
     freeze = p('0 degC')
-    print freeze.inUnitsOf ('degF')
+    print(freeze.inUnitsOf ('degF'))

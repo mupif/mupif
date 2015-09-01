@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('../..')
 import demoapp
@@ -9,7 +10,7 @@ from mupif import TimeStep
 from mupif import PropertyID
 
 app = demoapp.demoapp(None)
-print app.getApplicationSignature()
+print(app.getApplicationSignature())
 
 f = app.getField(FieldID.FID_Temperature, 0.0)
 

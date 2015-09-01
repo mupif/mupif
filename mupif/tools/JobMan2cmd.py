@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('..')
 
@@ -10,7 +11,7 @@ logger = logging.getLogger()
 
 
 def usage():
-    print "Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile"
+    print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile")
 
 
 logger.info ("JobMan2cmd: " + str(sys.argv[1:]))

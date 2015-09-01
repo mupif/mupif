@@ -1,3 +1,4 @@
+from __future__ import division
 # Dictionary containing numbers
 #
 # These objects are meant to be used like arrays with generalized
@@ -82,7 +83,11 @@ class NumberDict(dict):
     def __div__(self, other):
         new = NumberDict()
         for key in self.keys():
-            new[key] = self[key]/other
+            new[key] = self[key]//other
         return new
 
-    __truediv__ = __div__
+    def __truediv__(self,other):
+        new = NumberDict()
+        for key in self.keys():
+            new[key] = self[key]/other
+        return new

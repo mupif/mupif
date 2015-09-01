@@ -1,3 +1,4 @@
+from __future__ import print_function
 import getopt, sys
 import re
 sys.path.append('..')
@@ -13,17 +14,17 @@ start = timeTime.time()
 
 
 def usage():
-    print "Usage: jobManTest.py -j jobmanname -h jobmanhost -p jobManport -n nshost -r nsPort [-k hkey] [-t -u user] [-d]"
-    print
-    print "jobmanname : jobmanname is the name under which the job manager is registered in pyro nameserver"
-    print "jobmanhost : hostname of the computer serving jibmanager (and application instances)"
-    print "jobManport : port at which jobmanager deamon listens"
-    print "nshost : hostname where nameserver is running"
-    print "nsPort : port where nameserver listens"
-    print "hkey : Pyro hkey"
-    print "-t -u user: if -t provided, then ssh connection to jobmanager and application will be made using user as username"
-    print "-d : turns debugging messages on"
-    print 
+    print("Usage: jobManTest.py -j jobmanname -h jobmanhost -p jobManport -n nshost -r nsPort [-k hkey] [-t -u user] [-d]")
+    print()
+    print("jobmanname : jobmanname is the name under which the job manager is registered in pyro nameserver")
+    print("jobmanhost : hostname of the computer serving jibmanager (and application instances)")
+    print("jobManport : port at which jobmanager deamon listens")
+    print("nshost : hostname where nameserver is running")
+    print("nsPort : port where nameserver listens")
+    print("hkey : Pyro hkey")
+    print("-t -u user: if -t provided, then ssh connection to jobmanager and application will be made using user as username")
+    print("-d : turns debugging messages on")
+    print() 
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "j:h:p:k:u:n:r:td")
@@ -68,15 +69,15 @@ if jobmanname == None or hostname == None or port == None:
 if not debug:
     PyroUtil.logger.setLevel(logging.WARNING)
 
-print "hkey:"+hkey
-print "Nameserver:"+nshost+":"+str(nsport)
-print "JobManager:"+jobmanname+"@"+hostname+":"+str(port)
+print("hkey:"+hkey)
+print("Nameserver:"+nshost+":"+str(nsport))
+print("JobManager:"+jobmanname+"@"+hostname+":"+str(port))
 
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
 jobManUri = ns.lookup(jobmanname)
-print "Jobmanager uri:"+str(jobManUri)
+print("Jobmanager uri:"+str(jobManUri))
 
 jobManTunnel = None
 appTunnel = None

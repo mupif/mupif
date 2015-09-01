@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 sys.path.append('../../..')
 
@@ -62,21 +63,21 @@ while (abs(time -targetTime) > 1.e-6):
     V = PQ(v.getValue(), v.getUnits())
 
     velocity = V.inBaseUnits()
-    print velocity
+    print(velocity)
 
     #can be converted in km/s?
-    print V.isCompatible('km/s')
+    print(V.isCompatible('km/s'))
 
     #can be converted in km?
-    print V.isCompatible('km')
+    print(V.isCompatible('km'))
     
     # convert in km/h
     V.convertToUnit('km/h') 
-    print V
+    print(V)
 
     #give only the value
     value = float(str(V).split()[0])
-    print value
+    print(value)
 
     # terminate
 app1.terminate();
