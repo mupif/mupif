@@ -1,3 +1,4 @@
+from builtins import range
 import sys
 sys.path.append('../../..')
 sys.path.append('../../tools')
@@ -33,5 +34,5 @@ mechanicalSolverJobManRec = (44361, 5556, '147.32.130.137', hostUserName, 'Mupif
 
 
 #client ports used to establish ssh connections (nat ports)
-jobNatPorts = range(6000, 6050)
+jobNatPorts = list(range(6000, 6050))
 

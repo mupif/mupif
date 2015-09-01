@@ -200,7 +200,7 @@ class PhysicalQuantity(object):
             return self.__class__(value, unit)
 
     # FIXME: py3k invalid
-	 __truediv__ = __div__
+    __truediv__ = __div__
 
     def __rdiv__(self, other):
         if not isPhysicalQuantity(other):
