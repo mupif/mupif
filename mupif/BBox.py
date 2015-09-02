@@ -1,3 +1,4 @@
+from builtins import zip, str, range, object
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak

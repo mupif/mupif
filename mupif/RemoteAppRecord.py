@@ -1,3 +1,4 @@
+from builtins import range, object
 class RemoteAppRecord (object):
     """
     Class keeping data on remote application connection, such as ssh tunnels, etc.

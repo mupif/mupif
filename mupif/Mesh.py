@@ -20,6 +20,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from __future__ import print_function
+from builtins import str, zip, range, object
 
 from . import APIError
 from . import Octree
@@ -344,8 +346,8 @@ class UnstructuredMesh(Mesh):
         """
         self.vertexDict = {}
         # loop over vertex lists in both meshes
-        for v in xrange(len(self.vertexList)):
-            if (self.vertexDict.has_key(self.vertexList[v].label)):
+        for v in range(len(self.vertexList)):
+            if self.vertexList[v].label in self.vertexDict:
                 if debug:
                     print ("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",  self.vertexList[v].label)
             else:
@@ -357,8 +359,8 @@ class UnstructuredMesh(Mesh):
         """
         self.cellDict = {}
         # loop over vertex lists in both meshes
-        for v in xrange(len(self.cellList)):
-            if (self.cellDict.has_key(self.cellList[v].label)):
+        for v in range(len(self.cellList)):
+            if self.cellList[v].label in self.cellDict:
                 if debug:
                     print ("UnstructuredMesh::buildCellLabelMap: multiple entry detected, cell label ",  self.cellList[v].label)
             else:
@@ -399,7 +401,7 @@ class UnstructuredMesh(Mesh):
         #
         if debug: print ("UnstructuredMesh::merge: merged vertices with label:")
         for v in mesh.vertices():
-            if (self.vertexDict.has_key(v.label)):
+            if v.label in self.vertexDict:
                 if debug:
                     print (v.label)
             else:
@@ -421,7 +423,7 @@ class UnstructuredMesh(Mesh):
 
         if debug: print ("UnstructuredMesh::merge: merged cells with label:")
         for c in mesh.cells():
-            if (self.cellDict.has_key(c.label)):
+            if c.label in self.cellDict:
                 if debug:
                     print (c.label)
             else:
@@ -454,10 +456,10 @@ class UnstructuredMesh(Mesh):
         triangles = []
 
         #loop over receiver vertices and create list of vertex coordinates 
-        for v in xrange(len(self.vertexList)):
+        for v in range(len(self.vertexList)):
             vertices.append(self.vertexList[v].coords)
         #loop over receiver cells 
-        for c in xrange(len(self.cellList)):
+        for c in range(len(self.cellList)):
             cell = self.cellList[c]
             cgt = cell.getGeometryType()
             if (cgt == CellGeometryType.CGT_TRIANGLE_1):

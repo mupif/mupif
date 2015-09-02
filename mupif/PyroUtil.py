@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from builtins import str
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
@@ -34,7 +36,7 @@ import socket
 import getpass
 import subprocess
 import time
-import RemoteAppRecord
+from . import RemoteAppRecord
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
@@ -351,7 +353,7 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
 
 
 
-import PyroFile
+from . import PyroFile
 def uploadPyroFile (filename, pyroFile):
     """
     Uploads the given file (specified by given file name) into PyroFile handle.

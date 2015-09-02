@@ -20,6 +20,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from __future__ import print_function, division
+from builtins import range, object
+
 from . import BBox
 from . import Util
 from . import APIError
@@ -618,7 +621,7 @@ class Brick_3d_lin(Cell):
         x=[0]*8
         y=[0]*8
         z=[0]*8
-        for i in xrange(8):
+        for i in range(8):
             c=self.mesh.getVertex(self.vertices[i])
             x[i]=c.coords[0]
             y[i]=c.coords[1]
@@ -696,7 +699,7 @@ class Brick_3d_lin(Cell):
             #print answer
 
         # return result
-        for i in xrange(3):
+        for i in range(3):
             if answer[i] < ( -1. - tolerance ):
                 return (0, tuple(answer))
             if answer[i] > (  1. + tolerance ):

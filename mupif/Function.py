@@ -1,3 +1,4 @@
+from builtins import object
 class Function(object):
         """
         Represents a function.

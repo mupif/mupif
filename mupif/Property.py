@@ -1,3 +1,4 @@
+from builtins import object
 class Property(object):
         """
         Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain.

@@ -20,6 +20,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from __future__ import print_function
+from builtins import range
+from builtins import object
 from . import Cell
 from . import FieldID
 from . import ValueType
@@ -31,7 +34,7 @@ import collections
 #debug flag
 debug = 0
 
-class FieldType:
+class FieldType(object):
     """
     Represent the supported values of FieldType, i.e. FT_vertexBased or FT_cellBased. 
     """
@@ -221,15 +224,15 @@ class Field(object):
             raise TypeError("Field::merge: field_type of receiver and parameter is different")
         if (self.fieldType == FieldType.FT_vertexBased):
             values=[0]*mesh.getNumberOfVertices()
-            for v in xrange(self.mesh.getNumberOfVertices()):
+            for v in range(self.mesh.getNumberOfVertices()):
                 values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)]=self.values[v]
-            for v in xrange(field.mesh.getNumberOfVertices()):
+            for v in range(field.mesh.getNumberOfVertices()):
                 values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.values[v]
         else:
             values=[0]*mesh.getNumberOfCells()
-            for v in xrange(self.mesh.getNumberOfCells()):
+            for v in range(self.mesh.getNumberOfCells()):
                 values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)]=self.values[v]
-            for v in xrange(field.mesh.getNumberOfCells()):
+            for v in range(field.mesh.getNumberOfCells()):
                 values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)]=field.values[v]
 
         self.mesh=mesh

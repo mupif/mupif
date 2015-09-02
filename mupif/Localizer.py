@@ -1,3 +1,4 @@
+from builtins import object
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
