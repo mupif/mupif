@@ -68,9 +68,11 @@ Simply run a command $python setup.py sdist  to create ``sdist/*.tar.gz`` file.
 priviledges by default. To uninstall, use ``$ pip freeze``  and then something like
 ``$ pip uninstall mupif``.
 
-.. note:: Bugs
 
-   Please mail all bug reports and suggestions to `mailto:info@oofem.org`_. I will try to give satisfaction, if the time is at least partially on my side. 
+Bugs
+-----
+
+Please mail all bug reports and suggestions to mailto:info@oofem.org. I will try to give satisfaction, if the time is at least partially on my side. 
 
 
 Legal notice
