@@ -268,7 +268,7 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                         # ok no "part" keyword, parse element section
                         eltype=line.rstrip('\r\n')
                         if debug:
-                            print "eltype:", eltype
+                            print ("eltype:", eltype)
                         nelem = partRec[partnum-1][eltype] #get number of elements in part
                         if debug:
                             print("(",eltype, nelem,")")
