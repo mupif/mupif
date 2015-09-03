@@ -19,7 +19,7 @@ class application1(Application.Application):
     Simple application that generates a property with a value equal to actual time
     """
     def __init__(self, file):
-        return
+        super(application1,self).__init__(self,file)
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Velocity):
             return Property.Property(self.value, PropertyID.PID_Velocity, ValueType.Scalar, time, 'm/s', 0)

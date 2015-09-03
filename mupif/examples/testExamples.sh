@@ -34,16 +34,14 @@ pushd Example02
 popd
 retval=$retval || $ret
 
-# disabled temporarily: AttributeError: 'application1' object has no attribute 'pyroDaemon'
-#
-#pushd Example03
-#	echo $PWD
-#	gcc -o application3 application3.c
-#	$PYTHON Example03.py
-#	ret=$?
-#	(( retval=$retval || $ret ))
-#	echo "=================== Exit status $ret ===================="
-#popd
+pushd Example03
+	echo $PWD
+	gcc -o application3 application3.c
+	$PYTHON Example03.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	echo "=================== Exit status $ret ===================="
+popd
 
 pushd Example04
 	echo $PWD
@@ -53,15 +51,13 @@ pushd Example04
 	echo "=================== Exit status $ret ===================="
 popd
 
-# disabled temporarily: AttributeError: 'Celsian' object has no attribute 'pyroDaemon'
-#
-#pushd Example05
-#	echo $PWD
-#	$PYTHON Example05.py
-#	ret=$?
-#	(( retval=$retval || $ret ))
-#	echo "=================== Exit status $ret ===================="
-#popd
+pushd Example05
+	echo $PWD
+	$PYTHON Example05.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	echo "=================== Exit status $ret ===================="
+popd
 
 ##
 ## TODO: run local ssh server with paramiko and test-ping that one
@@ -75,6 +71,14 @@ popd
 #	(( retval=$retval || $ret ))
 #	echo "=================== Exit status $?"
 #popd
+
+pushd Example09
+	echo $PWD
+	$PYTHON Example09.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	echo "=================== Exit status $ret ===================="
+popd
 
 echo "*** Global return status $retval"
 echo "*** Bye."
