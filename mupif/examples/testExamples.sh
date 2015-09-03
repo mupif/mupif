@@ -4,7 +4,7 @@
 retval=0
 
 # in Travis virtualenv, this can be also python3
-export PYTHON=python
+export PYTHON=python3
 
 pushd Example01; 
 	echo $PWD

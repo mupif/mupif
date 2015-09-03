@@ -27,10 +27,10 @@ class celsian(Application.Application):
 #create application
 app = celsian("/dev/null")
 # run the application server
-appRecord = [item for item in conf.apps if item[0] == appname][0]
-PyroUtil.runAppServer(server=appRecord[conf.appIndx_ServerName], 
-                      port=appRecord[conf.appIndx_RemotePort], 
-                      nathost=conf.nathost, natport=appRecord[conf.appIndx_NATPort], 
+appRecord = conf.apps['celsian']
+PyroUtil.runAppServer(server=appRecord.serverName, 
+                      port=appRecord.remotePort, 
+                      nathost=conf.nathost, natport=appRecord.natPort, 
                       nshost=conf.nshost, nsport=conf.nsport, 
                       nsname=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
 

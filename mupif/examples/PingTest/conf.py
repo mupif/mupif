@@ -12,12 +12,15 @@ else:
     options = '-oStrictHostKeyChecking=no -i /home/smilauer/.ssh/mech/id_rsa'
     sshPortSpec = ' -p '
 
+import namedtuple
+AppConfig=namedtuple.namedtuple('AppConfig','name serverName userName natPort remotePort sshClient options sshHost')
+
 #There should be no need to edit futher lines
-apps=[('ctu-server','147.32.130.137', 'mmp', 5554, 44382, sshClient,options,''),
-      ('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382, sshClient, options, ''),
-      ('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, sshClient, options, ''),
-      ('celsian','192.168.16.6', 'mmp', 5555, 44381, sshClient, options+sshPortSpec+'223', 'remote.celsian.nl')
-      ]
+apps={'ctu-server':AppConfig('ctu-server','147.32.130.137', 'mmp', 5554, 44382, sshClient,options,''),
+      'micress':AppConfig('micress','acsrvappmic1.access.rwth-aachen.de', 'mmp', 5556, 44382, sshClient, options, ''),
+      'mmpraytracer':AppConfig('mmpraytracer','mmpserver.erve.vtt.fi', 'tracer-user', 5557, 44382, sshClient, options, ''),
+      'celsian':AppConfig('celsian','192.168.16.6', 'mmp', 5555, 44381, sshClient, options+sshPortSpec+'223', 'remote.celsian.nl')
+      }
       #Missing TNO server
 
       #('ctu-server','ksm.fsv.cvut.cz', 'mmp', 5554, 44382, 'C:\\Program Files (x86)\\Putty\\putty.exe','-i C:\\Users\mmp\mupif-code\\id_rsa-putty-private.ppk'),
@@ -39,16 +42,6 @@ nshost = '147.32.130.137'
 nsport  = 9090
 #password for accessing nameServer and applications
 hkey = 'mmp-secret-key'
-
-#do-not-change below this line, indexes in apps list
-appIndx_Name = 0
-appIndx_ServerName = 1
-appIndx_UserName = 2
-appIndx_NATPort = 3
-appIndx_RemotePort = 4
-appIndx_SshClient = 5
-appIndx_Options = 6
-appIndx_SshHost = 7
 
 
 from mupif import PyroUtil #get logging facilities
