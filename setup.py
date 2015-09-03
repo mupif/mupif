@@ -47,5 +47,8 @@ setup(name='mupif',
       install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future', 'Pyro4==4.30'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
+	  entry_points={
+          'console_scripts': ['JobMan2cmd = mupif.tools.JobMan2cmd:main']
+      }
       )
 
