@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 
+from __future__ import print_function, division
+from builtins import str
 import getopt, sys
 sys.path.append('..')
 sys.path.append('.')
@@ -15,7 +17,7 @@ import curses
 import re
 
 def usage():
-    print "Usage: jobManStatus -n nshost -r nsPort -h hostname -p port -j jobmanname -k hkey [-t -u user]"
+    print("Usage: jobManStatus -n nshost -r nsPort -h hostname -p port -j jobmanname -k hkey [-t -u user]")
 
 
 def processor(win, jobman):
@@ -50,8 +52,8 @@ def processor(win, jobman):
             win1.addstr(i,jobid_col, rec[0])
             win1.addstr(i,port_col, str(rec[3]))
             win1.addstr(i,user_col, rec[2])
-            mins = int(rec[1])/60
-            hrs  = mins/24
+            mins = rec[1]//60
+            hrs  = mins//24
             mins = mins%60
             sec  = int(rec[1])%60
             jobtime = "%02d:%02d:%02d"%(hrs, mins, sec)
@@ -79,7 +81,7 @@ try:
     opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")
 except getopt.GetoptError as err: 
     # print help information and exit: 
-    print str(err) # will print something like "option -a not recognized"
+    print(str(err)) # will print something like "option -a not recognized"
     usage()
     sys.exit(2)
 
@@ -103,7 +105,7 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
-print "huhu:"+host+str(port)
+print("huhu:"+host+str(port))
 
 jobid_col = 0
 port_col  = 35

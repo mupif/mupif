@@ -1,3 +1,4 @@
+from __future__ import print_function
 # This script starts a nameserver for Pyro4 on this machine
 # Works with Pyro4 version 4.28
 # Tested on Ubuntu 14.04 and Win XP
@@ -18,9 +19,9 @@ os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
 cmd = 'pyro4-check-config'
 p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 output, error = p1.communicate()
-print output if output else "", error if error else ""
+print(output if output else "", error if error else "")
 
 cmd = 'pyro4-ns -n 127.0.0.1 -p %d -k %s' % (nsport, hkey)
 p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
 output, error = p2.communicate()
-print output if output else "", error if error else ""
+print(output if output else "", error if error else "")

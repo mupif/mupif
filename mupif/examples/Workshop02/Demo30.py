@@ -1,3 +1,4 @@
+from __future__ import print_function, division
 import sys
 sys.path.append('../..')
 
@@ -36,7 +37,7 @@ class application2(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.Property(float(self.value)/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, propID, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
@@ -71,7 +72,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
+    print("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -87,11 +88,11 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        print ("Following API error occurred:",e)
+        print("Following API error occurred:",e)
         break
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-print ("Result: ", prop.getValue())
+print("Result: ", prop.getValue())
 # terminate
 app1.terminate();
 app2.terminate();

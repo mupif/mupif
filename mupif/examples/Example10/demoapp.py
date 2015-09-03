@@ -1,3 +1,5 @@
+from __future__ import print_function, division
+from builtins import range
 from mupif import *
 
 import meshgen
@@ -117,7 +119,7 @@ class thermal(Application.Application):
                 
 
         self.loc=np.zeros(self.mesh.getNumberOfVertices())
-        for i in self.dirichletBCs.keys():
+        for i in self.dirichletBCs:
             self.loc[i]=-1;
         self.neq = 0;
         for i in range(self.mesh.getNumberOfVertices()):
@@ -134,7 +136,7 @@ class thermal(Application.Application):
 
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if (self.dirichletBCs.has_key(i)):
+                if i in self.dirichletBCs:
                     values.append((self.dirichletBCs[i],))
                 else:
                     values.append((self.T[self.loc[i],0],))
@@ -164,8 +166,8 @@ class thermal(Application.Application):
         #print ndofs
 
         start = timeTime.time()
-        print self.getApplicationSignature()
-        print "\tNumber of equations:", self.neq
+        print(self.getApplicationSignature())
+        print("\tNumber of equations:", self.neq)
 
         #connectivity 
         c=np.zeros((numElements,4))
@@ -178,7 +180,7 @@ class thermal(Application.Application):
         A = np.zeros((self.neq, self.neq ))
         b = np.zeros((self.neq, 1))
 
-        print "\tAssembling ..."
+        print("\tAssembling ...")
         for e in mesh.cells():
             #element matrix and element vector
             A_e = np.zeros((4,4 ))
@@ -287,9 +289,9 @@ class thermal(Application.Application):
 
 
         #solve linear system
-        print "\tSolving ..."
+        print("\tSolving ...")
         self.T = np.linalg.solve(A, b)
-        print "\tDone"
+        print("\tDone")
         print("\tTime consumed %f s" % (timeTime.time()-start))
 
 
@@ -443,7 +445,7 @@ class mechanical(Application.Application):
                 
 
         self.loc=np.zeros((self.mesh.getNumberOfVertices(),2)) # Du, Dv dofs per node
-        for i in self.dirichletBCs.keys():
+        for i in self.dirichletBCs:
             self.loc[i,0]=-1;
             self.loc[i,1]=-1;
         self.neq = 0;
@@ -462,7 +464,7 @@ class mechanical(Application.Application):
 
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if (self.dirichletBCs.has_key(i)):
+                if i in self.dirichletBCs:
                     values.append(self.dirichletBCs[i])
                 else:
                     values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
@@ -494,8 +496,8 @@ class mechanical(Application.Application):
         #print ndofs
 
         start = timeTime.time()
-        print self.getApplicationSignature()
-        print "\tNumber of equations:", self.neq
+        print(self.getApplicationSignature())
+        print("\tNumber of equations:", self.neq)
 
         #connectivity 
         c=np.zeros((numElements,elemNodes))
@@ -508,7 +510,7 @@ class mechanical(Application.Application):
         A = np.zeros((self.neq, self.neq ))
         b = np.zeros((self.neq, 1))
 
-        print "\tAssembling ..."
+        print("\tAssembling ...")
         for e in mesh.cells():
             #element matrix and element vector
             A_e = np.zeros((elemDofs,elemDofs ))
@@ -617,9 +619,9 @@ class mechanical(Application.Application):
 
 
         #solve linear system
-        print "\tSolving ..."
+        print("\tSolving ...")
         self.T = np.linalg.solve(A, b)
-        print "\tDone"
+        print("\tDone")
         print("\tTime consumed %f s" % (timeTime.time()-start))
 
 

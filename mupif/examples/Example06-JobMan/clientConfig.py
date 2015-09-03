@@ -1,4 +1,5 @@
 import sys
+from builtins import range
 sys.path.append('../..')
 
 import Pyro4
@@ -30,5 +31,5 @@ else:#Unix ssh client
 demoJobManRec = (44361, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@demo')
 
 #client ports used to establish ssh connections (nat ports)
-jobNatPorts = range(6000, 6050)
+jobNatPorts = list(range(6000, 6050))
 

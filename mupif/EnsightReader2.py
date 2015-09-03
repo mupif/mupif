@@ -1,3 +1,4 @@
+from __future__ import print_function
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
@@ -20,19 +21,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from __future__ import division
+from builtins import range
 
 
 import re
-import sys
-sys.path.append('..')
 
-from mupif import Mesh
-from mupif import Vertex
-from mupif import Cell
-from mupif import BBox
-from mupif import Field
-from mupif import FieldID
-from mupif import ValueType
+from . import Mesh
+from . import Vertex
+from . import Cell
+from . import BBox
+from . import Field
+from . import FieldID
+from . import ValueType
 
 debug = 0
 
@@ -102,7 +103,7 @@ def readEnsightGeo(name, partFilter, partRec):
             partRec.append({}) #add empty dict for each part containing number of elements for each elemeet type
             if (partnum in partFilter):
                 if debug:
-                    print "Importing part %d"%(partnum)
+                    print("Importing part %d"%(partnum))
                 partdesc = f.readline().rstrip('\r\n')
                 # process part 
                 # get element type
@@ -114,8 +115,8 @@ def readEnsightGeo(name, partFilter, partRec):
            line = f.readline() 
 
     if debug:
-        print "Setting up mesh: %d vertices, %d cells"%(vnum, enum)
-        print len(vertices), len(cells)
+        print("Setting up mesh: %d vertices, %d cells"%(vnum, enum))
+        print(len(vertices), len(cells))
     mesh.setup(vertices, cells)
     return mesh
 
@@ -141,13 +142,13 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
         # ok no "part" keyword, parse element section
         eltype=line.rstrip('\r\n')
         if debug: 
-            print "(",eltype,")"
+            print("(",eltype,")")
         line = f.readline()
         nelem = int(line.rstrip('\r\n'))
         # remember info to partRec
         partRec[partnum-1][eltype]=nelem
         if debug:
-            print "part %s nelem %d" % (partdesc, nelem)
+            print("part %s nelem %d" % (partdesc, nelem))
         #read individual elements
         for i in range(nelem):
             elemRec = f.readline()
@@ -194,7 +195,7 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
     """
     vertexVals = []
     cellVals=[]
-    indx = range(6)
+    indx = list(range(6))
     values=[]
 
     if (type == 1):
@@ -219,14 +220,14 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
     if (not match):
         # nodal (vertex based specification)
         size = mesh.getNumberOfVertices()* type
-        print "Expecting ", mesh.getNumberOfVertices(), "nodal records in ", size/6, "lines"
+        print("Expecting ", mesh.getNumberOfVertices(), " nodal records in ", size//6, " lines")
         # read nodeal variables
-        for i in range (size/6): #six values per row in fixed format 12.5e
+        for i in range (size//6): #six values per row in fixed format 12.5e
             for j in indx:
                 try:
                     vertexVals.append(float(line[j*12:(j+1)*12]))
                 except:
-                    print "exception....", j, line, ">", line[j*12:(j+1)*12]
+                    print("exception....", j, line, ">", line[j*12:(j+1)*12])
             line = f.readline()
         
         #parse remaining values
@@ -259,7 +260,7 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                 partnum = int(match.group(1))
                 if (partnum in parts):
                     if debug:
-                        print "Importing part %d"%(partnum)
+                        print("Importing part %d"%(partnum))
                     # get element type
                     line = f.readline()
                     # if the next line is not next part record, then should be element section
@@ -270,10 +271,10 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                             print "eltype:", eltype
                         nelem = partRec[partnum-1][eltype] #get number of elements in part
                         if debug:
-                            print "(",eltype, nelem,")"
+                            print("(",eltype, nelem,")")
                         size = nelem * type
                         cellVals=[] # empty values for each element group
-                        for i in range (size/6): #six values per row in fixed format 12.5e
+                        for i in range (size//6): #six values per row in fixed format 12.5e
                             line = f.readline()
                             #print ".",
                             for j in indx:
@@ -296,7 +297,7 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                                                cellVals[i*6+2],cellVals[i*6+3],
                                                cellVals[i*6+4],cellVals[i*6+4]))
                         if debug:
-                            print "done importing element section"
+                            print("done importing element section")
                         #done parsing cell record(s) in part 
                 
                 else: # if (partnum in parts):   proceed to next part 

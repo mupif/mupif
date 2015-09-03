@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
+from builtins import range
 #
 # This example reequires pyvtk module, install it using
 # pip install pyvtk

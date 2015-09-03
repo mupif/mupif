@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from builtins import str, range, object
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
@@ -26,8 +28,8 @@ import socket
 import time as timeTime
 import Pyro4
 import logging
-import PyroFile
-import PyroUtil
+from . import PyroFile
+from . import PyroUtil
 import os
 logger = logging.getLogger()
 
@@ -268,7 +270,7 @@ class SimpleJobManager2 (JobManager):
         self.serverConfigPath = serverConfigPath
         self.configFile = serverConfigFile
         self.jobMan2CmdPath = jobMan2CmdPath
-        self.freePorts = range(portRange[0], portRange[1]+1)
+        self.freePorts = list(range(portRange[0], portRange[1]+1))
         if maxJobs > len(self.freePorts):
             logger.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d'%(self.freePorts.size()))
             self.maxJobs = len(self.freePorts)

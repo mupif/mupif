@@ -28,14 +28,20 @@ recommended values from CODATA. Other conversion factors
 guarantee for the correctness of all entries in the unit
 table, so use this at your own risk.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from builtins import range, object, str # py2k compat
 
-from Scientific.NumberDict import NumberDict
-from Scientific import N
+
+from .NumberDict import NumberDict
+import numpy
 import re, string
+from functools import reduce
 
 # Class definitions
 
-class PhysicalQuantity:
+class PhysicalQuantity(object):
 
     """
     Physical quantity with units
@@ -146,8 +152,8 @@ class PhysicalQuantity:
         return str(self.value) + ' ' + self.unit.name()
 
     def __repr__(self):
-        return (self.__class__.__name__ + '(' + `self.value` + ',' + 
-                `self.unit.name()` + ')')
+        return (self.__class__.__name__ + '(' + repr(self.value) + ',' + 
+                repr(self.unit.name()) + ')')
 
     def _sum(self, other, sign1, sign2):
         if not isPhysicalQuantity(other):
@@ -193,6 +199,7 @@ class PhysicalQuantity:
         else:
             return self.__class__(value, unit)
 
+    # FIXME: py3k invalid
     __truediv__ = __div__
 
     def __rdiv__(self, other):
@@ -222,7 +229,7 @@ class PhysicalQuantity:
     def __neg__(self):
         return self.__class__(-self.value, self.unit)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.value != 0
 
     def convertToUnit(self, unit):
@@ -329,27 +336,27 @@ class PhysicalQuantity:
 
     def sin(self):
         if self.unit.isAngle():
-            return N.sin(self.value * \
+            return numpy.sin(self.value * \
                              self.unit.conversionFactorTo(_unit_table['rad']))
         else:
             raise TypeError('Argument of sin must be an angle')
 
     def cos(self):
         if self.unit.isAngle():
-            return N.cos(self.value * \
+            return numpy.cos(self.value * \
                              self.unit.conversionFactorTo(_unit_table['rad']))
         else:
             raise TypeError('Argument of cos must be an angle')
 
     def tan(self):
         if self.unit.isAngle():
-            return N.tan(self.value * \
+            return numpy.tan(self.value * \
                              self.unit.conversionFactorTo(_unit_table['rad']))
         else:
             raise TypeError('Argument of tan must be an angle')
 
 
-class PhysicalUnit:
+class PhysicalUnit(object):
 
     """
     Physical unit
@@ -421,6 +428,7 @@ class PhysicalUnit:
             return PhysicalUnit(self.names+{str(other): -1},
                                 self.factor/other, self.powers)
 
+    # FIXME: py3k
     __truediv__ = __div__
 
     def __rdiv__(self, other):
@@ -444,7 +452,7 @@ class PhysicalUnit:
                                 map(lambda x,p=other: x*p, self.powers))
         if isinstance(other, float):
             inv_exp = 1./other
-            rounded = int(N.floor(inv_exp+0.5))
+            rounded = int(numpy.floor(inv_exp+0.5))
             if abs(inv_exp-rounded) < 1.e-10:
                 if reduce(lambda a, b: a and b,
                           map(lambda x, e=rounded: x%e == 0, self.powers)):
@@ -592,10 +600,10 @@ def _findUnit(unit):
     return unit
 
 def _round(x):
-    if N.greater(x, 0.):
-        return N.floor(x)
+    if numpy.greater(x, 0.):
+        return numpy.floor(x)
     else:
-        return N.ceil(x)
+        return numpy.ceil(x)
 
 
 def _convertValue (value, src_unit, target_unit):
@@ -648,8 +656,8 @@ for unit in _base_units:
 _help = []
 
 def _addUnit(name, unit, comment=''):
-    if _unit_table.has_key(name):
-        raise KeyError, 'Unit ' + name + ' already defined'
+    if name in _unit_table:
+        raise KeyError('Unit ' + name + ' already defined')
     if comment:
         _help.append((name, comment, unit))
     if type(unit) == type(''):
@@ -704,7 +712,7 @@ for unit in _unit_table.keys():
 # Fundamental constants
 _help.append('Fundamental constants:')
 
-_unit_table['pi'] = N.pi
+_unit_table['pi'] = numpy.pi
 _addUnit('c', '299792458.*m/s', 'speed of light')
 _addUnit('mu0', '4.e-7*pi*N/A**2', 'permeability of vacuum')
 _addUnit('eps0', '1/mu0/c**2', 'permittivity of vacuum')
@@ -823,7 +831,7 @@ def description():
     """Return a string describing all available units."""
     s = ''  # collector for description text
     for entry in _help:
-        if isinstance(entry, basestring):
+        if isinstance(entry, str):
             # headline for new section
             s += '\n' + entry + '\n'
         elif isinstance(entry, tuple):
@@ -831,7 +839,7 @@ def description():
             s += '%-8s  %-26s %s\n' % (name, comment, unit)
         else:
             # impossible
-            raise TypeError, 'wrong construction of _help list'
+            raise TypeError('wrong construction of _help list')
     return s
 
 # add the description of the units to the module's doc string:
@@ -842,19 +850,18 @@ __doc__ += '\n' + description()
 
 if __name__ == '__main__':
 
-    from Scientific.N import *
     l = PhysicalQuantity(10., 'm')
     big_l = PhysicalQuantity(10., 'km')
-    print big_l + l
+    print(big_l + l)
     t = PhysicalQuantity(314159., 's')
-    print t.inUnitsOf('d','h','min','s')
+    print(t.inUnitsOf('d','h','min','s'))
 
     p = PhysicalQuantity # just a shorthand...
 
     e = p('2.7 Hartree*Nav')
     e.convertToUnit('kcal/mol')
-    print e
-    print e.inBaseUnits()
+    print(e)
+    print(e.inBaseUnits())
 
     freeze = p('0 degC')
-    print freeze.inUnitsOf ('degF')
+    print(freeze.inUnitsOf ('degF'))

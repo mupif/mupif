@@ -1,14 +1,13 @@
+from __future__ import print_function, division
+from builtins import range
 
-import sys
-sys.path.append('../')
 
-
-from mupif import Mesh
-from mupif import Vertex
-from mupif import Cell
-from mupif import Field
-from mupif import FieldID
-from mupif import ValueType
+from . import Mesh
+from . import Vertex
+from . import Cell
+from . import Field
+from . import FieldID
+from . import ValueType
 
 #debug flag
 debug = 0
@@ -29,27 +28,27 @@ def readMesh(numNodes,nx,ny,nz,coords):
     vertices = []
     cells = []
 
-    for i in xrange(0,numNodes):
+    for i in range(0,numNodes):
         (x,y,z) = coords[i]
         #print (x,y,z)
         vertices.append(Vertex.Vertex(i, i+1, (x,y,z)))
 
-    print numNodes
+    print(numNodes)
 
     numElts = (nx-1)*(ny-1)*(nz-1)
-    print numElts
+    print(numElts)
 
-    print "nx: ",nx
-    print "ny: ",ny
-    print "nz: ",nz
+    print("nx: ",nx)
+    print("ny: ",ny)
+    print("nz: ",nz)
 
-    for e in xrange(0,numElts):
+    for e in range(0,numElts):
         #print "elem :",e
         i = e % (nx-1)
         #print "ligne i :", i
-        j = (e/(nx-1))%(ny-1) 
+        j = (e//(nx-1))%(ny-1) 
         #print "col j :", j
-        k = e/((nx-1)*(ny-1)) 
+        k = e//((nx-1)*(ny-1)) 
         #print "k :", k
 
         n1=i + j*nx + k*nx*ny
@@ -99,7 +98,7 @@ def readField(mesh, Data, fieldID, name, filename, type):
     for line in f.readlines():
         if line.find('SCALARS')>= 0:
             numScalars=numScalars+1
-    print "numScalars : ",  numScalars
+    print("numScalars : ",  numScalars)
 
     count=0
     for i in range(0,numScalars):
@@ -109,7 +108,7 @@ def readField(mesh, Data, fieldID, name, filename, type):
         count=count+1
 
     fieldName=Data.point_data.data[indice].name
-    print "fieldName : ", fieldName
+    print("fieldName : ", fieldName)
 
     scalar=[]
     scalar=Data.point_data.data[indice].scalars
@@ -119,9 +118,9 @@ def readField(mesh, Data, fieldID, name, filename, type):
     # for i in range(0,numNodes):
     #     print scalar[i]
 
-    print "name : ", name
+    print("name : ", name)
     if(name==fieldName):
-        for i in xrange(0,numNodes):
+        for i in range(0,numNodes):
             values.append((scalar[i],))
             #print "values : ", values
 

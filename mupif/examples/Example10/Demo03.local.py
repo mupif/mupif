@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('../../..')
 import demoapp
@@ -14,7 +15,7 @@ from mupif import Cell
 
 if True:
     app = demoapp.thermal('input.in','.')
-    print app.getApplicationSignature()
+    print(app.getApplicationSignature())
 
     sol = app.solveStep(TimeStep.TimeStep(0,1)) 
     f = app.getField(FieldID.FID_Temperature, 0.0)
@@ -22,7 +23,7 @@ if True:
 
 if True:
     app2 = demoapp.mechanical('inputm.in', '.')
-    print app2.getApplicationSignature()
+    print(app2.getApplicationSignature())
 
     app2.setField(f)
     sol = app2.solveStep(TimeStep.TimeStep(0,1)) 

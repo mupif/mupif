@@ -1,3 +1,4 @@
+from builtins import object
 import time
 
 class Timer(object):

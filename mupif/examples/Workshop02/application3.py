@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import division
+from builtins import str
 
 count=0
 sum = 0.
