@@ -19,6 +19,7 @@
 #  License along with this library; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
+from __future__ import print_function
 
 """
 This is a MuPIF module (Multi-Physics Integration Framework)
@@ -29,3 +30,10 @@ __author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
 
 #List all submodules, so they can all be imported: from mupif import *
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile']
+
+
+# more helpful error message
+try: import future, builtins
+except ImportError:
+	print("ERROR: mupif requires builtins and future modules; install both via 'pip install future'")
+	raise
