@@ -31,9 +31,14 @@ table, so use this at your own risk.
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+# from __future__ import unicode_literals
 from builtins import range, object, str # py2k compat
 
+# http://stackoverflow.com/a/22679982/761090
+try: basestring
+except NameError: basestring = str
 
+# XXX
 from .NumberDict import NumberDict
 import numpy
 import re, string
@@ -189,7 +194,7 @@ class PhysicalQuantity(object):
 
     __rmul__ = __mul__
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         if not isPhysicalQuantity(other):
             return self.__class__(self.value/other, self.unit)
         value = self.value/other.value
@@ -199,10 +204,7 @@ class PhysicalQuantity(object):
         else:
             return self.__class__(value, unit)
 
-    # FIXME: py3k invalid
-    __truediv__ = __div__
-
-    def __rdiv__(self, other):
+    def __rtruediv__(self, other):
         if not isPhysicalQuantity(other):
             return self.__class__(other/self.value, pow(self.unit, -1))
         value = other.value/self.value
@@ -211,6 +213,9 @@ class PhysicalQuantity(object):
             return value*unit.factor
         else:
             return self.__class__(value, unit)
+
+    __div__ = __truediv__
+    __rdiv__ = __rtruediv__
 
     def __pow__(self, other):
         if isPhysicalQuantity(other):
@@ -295,7 +300,7 @@ class PhysicalQuantity(object):
         new_value = self.value * self.unit.factor
         num = ''
         denom = ''
-        for i in xrange(9):
+        for i in range(9):
             unit = _base_names[i]
             power = self.unit.powers[i]
             if power < 0:
@@ -388,7 +393,7 @@ class PhysicalUnit(object):
             self.names = names
         self.factor = factor
         self.offset = offset
-        self.powers = powers
+        self.powers = list(powers)
 
     def __repr__(self):
         return '<PhysicalUnit ' + self.name() + '>'
@@ -416,7 +421,7 @@ class PhysicalUnit(object):
 
     __rmul__ = __mul__
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         if self.offset != 0 or (isPhysicalUnit (other) and other.offset != 0):
             raise TypeError("cannot divide units with non-zero offset")
         if isPhysicalUnit(other):
@@ -428,10 +433,7 @@ class PhysicalUnit(object):
             return PhysicalUnit(self.names+{str(other): -1},
                                 self.factor/other, self.powers)
 
-    # FIXME: py3k
-    __truediv__ = __div__
-
-    def __rdiv__(self, other):
+    def __rtruediv__(self, other):
         if self.offset != 0 or (isPhysicalUnit (other) and other.offset != 0):
             raise TypeError("cannot divide units with non-zero offset")
         if isPhysicalUnit(other):
@@ -440,9 +442,12 @@ class PhysicalUnit(object):
                                 map(lambda a,b: a-b,
                                     other.powers, self.powers))
         else:
+            print('__truediv__ else')
             return PhysicalUnit({str(other): 1}-self.names,
                                 other/self.factor,
                                 map(lambda x: -x, self.powers))
+    __div__ = __truediv__
+    __rdiv__ = __rtruediv__
 
     def __pow__(self, other):
         if self.offset != 0:
@@ -588,8 +593,8 @@ def isPhysicalQuantity(x):
 # Helper functions
 
 def _findUnit(unit):
-    if type(unit) == type(''):
-        name = string.strip(unit)
+    if isinstance(unit,basestring):
+        name = unit.strip()
         unit = eval(name, _unit_table)
         for cruft in ['__builtins__', '__args__']:
             try: del _unit_table[cruft]
@@ -706,7 +711,7 @@ _addUnit('Sv', 'J/kg', 'Sievert')
 
 del _unit_table['kg']
 
-for unit in _unit_table.keys():
+for unit in list(_unit_table.keys()):
     _addPrefixed(unit)
 
 # Fundamental constants
@@ -830,8 +835,8 @@ del kelvin
 def description():
     """Return a string describing all available units."""
     s = ''  # collector for description text
-    for entry in _help:
-        if isinstance(entry, str):
+    for i,entry in enumerate(_help):
+        if isinstance(entry, basestring):
             # headline for new section
             s += '\n' + entry + '\n'
         elif isinstance(entry, tuple):
@@ -839,9 +844,8 @@ def description():
             s += '%-8s  %-26s %s\n' % (name, comment, unit)
         else:
             # impossible
-            raise TypeError('wrong construction of _help list')
+            raise TypeError('wrong construction of _help list at %d, type %s'%(i,type(entry)))
     return s
-
 # add the description of the units to the module's doc string:
 __doc__ += '\n' + description()
 

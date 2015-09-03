@@ -73,6 +73,13 @@ class NumberDict(dict):
             sum_dict[key] = sum_dict[key] - other[key]
         return sum_dict
 
+    # needed for py3k compatibility
+    def __rsub__(self,other):
+       ret=NumberDict()
+       for key in self.keys(): ret[key]=-self[key]
+       for key in other.keys(): ret[key]=other[key]-self[key]
+       return ret
+
     def __mul__(self, other):
         new = NumberDict()
         for key in self.keys():
@@ -80,7 +87,7 @@ class NumberDict(dict):
         return new
     __rmul__ = __mul__
 
-    def __div__(self, other):
+    def __floordiv__(self, other):
         new = NumberDict()
         for key in self.keys():
             new[key] = self[key]//other
@@ -91,3 +98,4 @@ class NumberDict(dict):
         for key in self.keys():
             new[key] = self[key]/other
         return new
+    __div__=__truediv__
