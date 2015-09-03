@@ -210,7 +210,8 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
 
     #get variable name (1st line)
     varname = f.readline().rstrip('\r\n')
-#    print("Importing %s from %s"%(varname, name))
+    if (debug):
+        print("Importing %s from %s"%(varname, name))
     
     #now check if nodal records available or part (cell records)
     line = f.readline()
@@ -232,6 +233,8 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
         #line = f.readline()
         for j in range(size%6):
             vertexVals.append(float(line[j*12:(j+1)*12]))
+        if (size%6 > 0):
+            line=f.readline()
         #done parsing nodal record(s)
         # so this should be per-vertex variable file -> vertex based field
         # convert vertexVals into form required by field 
@@ -263,6 +266,8 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                     while (not re.search('\s*part\s+(\d+)', line)):
                         # ok no "part" keyword, parse element section
                         eltype=line.rstrip('\r\n')
+                        if debug:
+                            print "eltype:", eltype
                         nelem = partRec[partnum-1][eltype] #get number of elements in part
                         if debug:
                             print "(",eltype, nelem,")"
@@ -277,6 +282,8 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                         line = f.readline()
                         for j in range(size%6):
                             cellVals.append(float(line[j*12:(j+1)*12]))
+                        if (size%6 > 0):
+                            line=f.readline()
                         #print "%"
                         # now convert that into format required by filed
                         for i in range(nelem):
