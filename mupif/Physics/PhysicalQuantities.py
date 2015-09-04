@@ -442,7 +442,6 @@ class PhysicalUnit(object):
                                 map(lambda a,b: a-b,
                                     other.powers, self.powers))
         else:
-            print('__truediv__ else')
             return PhysicalUnit({str(other): 1}-self.names,
                                 other/self.factor,
                                 map(lambda x: -x, self.powers))
