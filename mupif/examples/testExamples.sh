@@ -4,7 +4,7 @@
 retval=0
 
 # in Travis virtualenv, this can be also python3
-export PYTHON=python3
+export PYTHON=python
 
 pushd Example01; 
 	echo $PWD
@@ -58,6 +58,18 @@ pushd Example05
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
 popd
+
+if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then
+	pushd Example07
+		echo $PWD
+		$PYTHON Example07.py
+		ret=$?
+		(( retval=$retval || $ret ))
+		echo "=================== Exit status $ret ===================="
+	popd
+else
+	echo "------------ Example07 skipped with python 3.x --------------"
+fi
 
 ##
 ## TODO: run local ssh server with paramiko and test-ping that one

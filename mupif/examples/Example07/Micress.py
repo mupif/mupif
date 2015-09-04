@@ -7,6 +7,8 @@ from mupif import VtkReader2
 from mupif import Application
 from mupif import FieldID
 import pyvtk
+## 
+VtkReader2.pyvtk_monkeypatch()
 
 
 class Micress(Application.Application):

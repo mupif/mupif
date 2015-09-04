@@ -31,9 +31,9 @@ __author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
 #List all submodules, so they can all be imported: from mupif import *
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile']
 
-
-# more helpful error message
-try: import future, builtins
-except ImportError:
-	print("ERROR: mupif requires builtins and future modules; install both via 'pip install future'")
-	raise
+## temporarily disabled (does not work on travis, even though future is installed there??)
+## more helpful error message
+#try: import future, builtins
+#except ImportError:
+#	print("ERROR: mupif requires builtins and future modules; install both via 'pip install future'")
+#	raise

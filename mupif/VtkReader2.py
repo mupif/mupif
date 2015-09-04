@@ -126,3 +126,97 @@ def readField(mesh, Data, fieldID, name, filename, type):
 
     field = Field.Field(mesh, fieldID ,ftype, None, None, values, Field.FieldType.FT_vertexBased )
     return field
+
+
+##
+## The rest is to work around ambiguous legacy VTK format specification
+## which leads to errors in the strict implementation (pyvtk), as described
+## in https://github.com/pearu/pyvtk/wiki/unexpectedEOF
+##
+## Monkey-patches are not applied automatically, the user has to call
+## mupif.VtkReader2.pyvtk_monkeypatch() (can be made the default if useful).
+##
+## Works for both python 2.x and 3.x (adapted from fghorow-pyvtk-python3-port)
+##
+## Long-term solution is to patch upstream, and select behavior
+## split(' ') vs. split() based on some switch like pyvtk.permissive=True.
+##
+##
+
+import pyvtk
+import pyvtk.Scalars, pyvtk.PolyData
+from pyvtk.Scalars import Scalars
+from pyvtk.PolyData import PolyData
+from pyvtk import common
+
+
+def patched_scalars_fromfile(f,n,sl):
+    dataname = sl[0]
+    datatype = sl[1].lower()
+    assert datatype in ['bit','unsigned_char','char','unsigned_short','short','unsigned_int','int','unsigned_long','long','float','double'],repr(datatype)
+    if len(sl)>2:
+        numcomp = eval(sl[2])
+    else:
+        numcomp = 1
+    l = common._getline(f)
+    l = l.split()
+    assert len(l)==2 and l[0].lower() == 'lookup_table'
+    tablename = l[1]
+    scalars = []
+    while len(scalars) < n:
+        scalars += list(map(eval,common._getline(f).split()))
+    assert len(scalars)==n
+    return Scalars(scalars,dataname,tablename)
+
+
+def patched_polydata_fromfile(f,self):
+    """Use VtkData(<filename>)."""
+    points = []
+    vertices = []
+    lines = []
+    polygons = []
+    triangle_strips = []
+    l = common._getline(f)
+    k,n,datatype = [s.strip().lower() for s in l.split()]
+    if k!='points':
+        raise ValueError('expected points but got %s'%(repr(k)))
+    n = eval(n)
+    assert datatype in ['bit','unsigned_char','char','unsigned_short','short','unsigned_int','int','unsigned_long','long','float','double'],repr(datatype)
+
+    self.message('\tgetting %s points'%n)
+    while len(points) < 3*n:
+        l = common._getline(f)
+        points += list(map(eval,l.split()))
+    assert len(points)==3*n
+    while 1:
+        l = common._getline(f)
+        if l is None:
+            break
+        sl = l.split()
+        k = sl[0].strip().lower()
+        if k not in ['vertices','lines','polygons','triangle_strips']:
+            break
+        assert len(sl)==3
+        n,size = list(map(eval,[sl[1],sl[2]]))
+        lst = []
+        while len(lst) < size:
+            l = common._getline(f)
+            lst += list(map(eval,l.split()))
+        assert len(lst)==size
+        lst2 = []
+        j = 0
+        for i in range(n):
+            lst2.append(lst[j+1:j+lst[j]+1])
+            j += lst[j]+1
+        exec('%s = lst2'%k)
+    return PolyData(points,vertices,lines,polygons,triangle_strips),l
+
+
+def pyvtk_monkeypatch():
+    'Apply monkey-patches to work around https://github.com/pearu/pyvtk/wiki/unexpectedEOF in pyvtk without changing the source code.'
+    pyvtk.scalars_fromfile=patched_scalars_fromfile
+    pyvtk.polydata_fromfile=patched_polydata_fromfile
+
+
+
+
