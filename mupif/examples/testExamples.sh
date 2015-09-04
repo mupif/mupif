@@ -5,6 +5,7 @@ retval=0
 
 # in Travis virtualenv, this can be also python3
 export PYTHON=python
+export PYVER=`$PYTHON -c 'import sys; print(sys.version_info[0])'`
 
 pushd Example01; 
 	echo $PWD
@@ -59,7 +60,7 @@ pushd Example05
 	echo "=================== Exit status $ret ===================="
 popd
 
-if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then
+if [[ $PYVER == 2* ]]; then
 	pushd Example07
 		echo $PWD
 		$PYTHON Example07.py
