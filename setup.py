@@ -44,8 +44,11 @@ setup(name='mupif',
       #packages = ['mupif'],
       #Tell what to install (these files must be already in a sdist archive file)
       package_data={'': [ 'tools/*.py', 'examples/Ex*/*.*', 'examples/Pi*/*.*', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
-      install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future', 'Pyro4==4.30'],
+      install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future>=0.15', 'Pyro4==4.30'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
+	  entry_points={
+          'console_scripts': ['JobMan2cmd = mupif.tools.JobMan2cmd:main']
+      }
       )
 
