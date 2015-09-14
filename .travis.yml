@@ -22,8 +22,8 @@ script:
    - pwd
    - pushd mupif/examples
    - /bin/bash testExamples.sh
-	- popd
-	- nosetests --rednose -v
+   - popd
+   - nosetests --rednose -v
 ##
 ## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
 ##
