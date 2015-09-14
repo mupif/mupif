@@ -1,0 +1,8 @@
+To run tests here, got to the mupif directory and run
+
+	$ nosetests -v
+
+or for prettier output:
+	
+	$ pip install rednose
+	$ nosetests --rednose -v
