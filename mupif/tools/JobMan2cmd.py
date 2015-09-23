@@ -1,7 +1,6 @@
 from __future__ import print_function
 from builtins import str
 import sys
-sys.path.append('..')
 
 import socket
 import getopt, sys
@@ -39,7 +38,7 @@ def main():
 		elif o in ("-d", "--workdir"):
 			workDir = a
 		elif o in ("-f", "--file"):
-		inputfile = a
+			inputfile = a
 		elif o in ("-s", "--socket"):
 			jobManCommPort = int(a)
 		elif o in ("-i", "--include"):
@@ -62,19 +61,20 @@ def main():
 		if (moduleDir):
 			sys.path.append(moduleDir)
 		conf = importlib.import_module(configName)
+                mupif= importlib.import_module('mupif')
+                #from mupif import *
 	else:
 		logger.error('missing options -c specifying server config file')
 
-	from mupif import *
 
 	#Results are printed through a logger only - communication with this subprocess is peculiar
 	logger = logging.getLogger()
 
 	#locate nameserver
-	ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
+	ns = mupif.PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
 	#Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-	daemon = PyroUtil.runDaemon(host=conf.daemonHost, port=daemonPort, nathost=conf.nathost, natport=natPort)
+	daemon = mupif.PyroUtil.runDaemon(host=conf.daemonHost, port=daemonPort, nathost=conf.nathost, natport=natPort)
 
 	#Initialize application
 	#app = DemoApplication.DemoApplication()
@@ -85,6 +85,7 @@ def main():
 	ns.register(jobID, uri)
 	app.registerPyro(daemon, ns, uri)
 	#app.setWorkingDirectory(workDir)
+        logger.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
 	logger.info('JobMan2cmd: setting workdir as %s', workDir)
 	logger.info('Signature is %s' % app.getApplicationSignature() )
 

@@ -49,6 +49,37 @@ JOBMAN_ERR = 99
 #  - how to kill the locked threads > this is an issue
 
 
+class JobManException(Exception):
+    """
+    This class serves as a base class for exceptions thrown by the job manager.
+
+    """
+    def __init__(self, _msg):
+        """
+        Constructor. Initializes the exception.
+        
+        :param str _msg: Error message
+        """
+        self.msg = _msg
+    def __str__(self):
+        """
+        Returns error message from the constructor.
+            
+        :return: Returns string representation of the exception, ie. error message (string)
+        :rtype: str
+        """
+        return repr(self.msg)
+
+
+class JobManNoResourcesException(JobManException):
+    """
+    This class is thrown when there are no more available resources.
+
+    """
+    pass
+    
+    
+    
 
 class JobManager(object):
     """
@@ -83,6 +114,7 @@ class JobManager(object):
 
         :return: tuple (error code, None). errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES).             JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23). JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple
+        :except: JobManException when allocation of new job failed
         """
         logger.debug('JobManager:allocateJob is abstract')
         return (JOBMAN_ERR, None)
@@ -184,7 +216,8 @@ class SimpleJobManager(JobManager):
         if (len(self.activeJobs) >= self.maxJobs):
             logger.error('SimpleJobManager: no more resources')
             self.lock.release()
-            return (JOBMAN_NO_RESOURCES,None)
+            raise JobManNoResourcesException("SimpleJobManager: no more resources");
+            # return (JOBMAN_NO_RESOURCES,None)
         else:
             # update job counter
             self.jobCounter = self.jobCounter+1
@@ -296,7 +329,8 @@ class SimpleJobManager2 (JobManager):
         if (len(self.activeJobs) >= self.maxJobs):
             logger.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs) )
             self.lock.release()
-            return (JOBMAN_NO_RESOURCES,None)
+            raise JobManNoResourcesException("SimpleJobManager: no more resources");
+            # return (JOBMAN_NO_RESOURCES,None)
         else:
             # update job counter
             self.jobCounter = self.jobCounter+1
