@@ -63,22 +63,21 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
         s.connect((nshost, nsport))
         s.close()
         logger.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
-    except Exception as e:
+    except Exception:
         msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
-        logger.debug(msg)
-        logger.exception(e)
-        exit(1)
+        logger.exception(msg)
+        raise
 
     #locate nameserver
     try:
         ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
         msg = "Connected to NameServer on %s:%s. Pyro4 version on this computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
         logger.debug(msg)
-    except Exception as e:
+    except Exception:
         msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Do you have the correct hmac_key (password is now %s)? Exiting." %(nshost, nsport, Pyro4.constants.VERSION, hkey)
-        logger.debug(msg)
-        logger.exception(e)
-        exit(1)
+        logger.exception(msg)
+        raise
+
     return ns
 
 
@@ -95,18 +94,19 @@ def connectApp(ns, name):
     try:
         uri = ns.lookup(name)
         logger.debug("Found URI %s from a nameServer %s" % (uri, ns) )
+        app2 = Pyro4.Proxy(uri)
     except Exception as e:
         logger.error("Cannot find registered server %s on %s" % (name, ns) )
         return None
-    app2 = Pyro4.Proxy(uri)
+
     try:
         sig = app2.getApplicationSignature()
         logger.debug("Connected to " + sig + " with the name " + name)
-    except Exception as e:
-        logger.debug("Cannot connect to application " + name + ". Is the server running?")
-        logger.exception(e)
+    except Exception:
+        logger.exception("Cannot connect to application " + name + ". Is the server running?")
+        reaise
         return None
-        #exit(e)
+
     return app2
 
 
@@ -140,11 +140,10 @@ def runDaemon(host, port, nathost, natport):
         daemon = None
         raise e
 
-    except Exception as e:
-        logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
-        logger.exception(e)
+    except Exception:
+        logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
         daemon = None
-        raise e
+        raise
 
     return daemon
 
@@ -167,9 +166,9 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     try:
         daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
         logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
-    except Exception as e:
-        logger.debug('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
-        logger.exception(e)
+    except Exception:
+        logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
+        raise
         exit(1)
     ns = connectNameServer(nshost, nsport, hkey)
     #register agent
@@ -223,10 +222,10 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
         exit(0)
     try:
         tunnel = subprocess.Popen(cmd.split())
-    except Exception as e:
-        logger.debug("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
-        logger.exception(e)
-        tunnel = None
+    except Exception:
+        logger.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
+        raise
+
     time.sleep(1.0)
 
     return tunnel 
@@ -258,10 +257,9 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     #create tunnel to JobManager running on (remote) server
     try:
         tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
-    except Exception as e:
-        logger.debug("Creating ssh tunnel for JobManager failed")
-        logger.exception(e)
-        raise (e)
+    except Exception:
+        logger.exception("Creating ssh tunnel for JobManager failed")
+        raise
     else:
         # locate remote jobManager on (remote) server
         jobMan = connectApp(ns, jobManName)
@@ -289,18 +287,16 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
         logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
-    except Exception as e:
-        logger.info("jobMan.allocateJob() failed")
-        logger.exception(e)
-        raise (e)
+    except Exception:
+        logger.exception("JobManager allocateJob() failed")
+        raise 
 
     #create tunnel to application's daemon running on (remote) server
     try:
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
-    except Exception as e:
-        logger.info("Creating ssh tunnel for application's daemon failed")
-        logger.exception(e)
-        raise (e)
+    except Exception:
+        logger.exception("Creating ssh tunnel for application's daemon failed")
+        raise
     else:
         logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
@@ -332,18 +328,16 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
         logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
-    except Exception as e:
-        logger.info("jobMan.allocateJob() failed")
-        logger.exception(e)
-        raise (e)
+    except Exception:
+        logger.exception("jobMan.allocateJob() failed")
+        raise 
 
     #create tunnel to application's daemon running on (remote) server
     try:
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
-    except Exception as e:
-        logger.info("Creating ssh tunnel for application's daemon failed")
-        logger.exception(e)
-        raise (e)
+    except Exception:
+        logger.exception("Creating ssh tunnel for application's daemon failed")
+        raise 
     else:
         logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 

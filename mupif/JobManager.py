@@ -54,21 +54,7 @@ class JobManException(Exception):
     This class serves as a base class for exceptions thrown by the job manager.
 
     """
-    def __init__(self, _msg):
-        """
-        Constructor. Initializes the exception.
-        
-        :param str _msg: Error message
-        """
-        self.msg = _msg
-    def __str__(self):
-        """
-        Returns error message from the constructor.
-            
-        :return: Returns string representation of the exception, ie. error message (string)
-        :rtype: str
-        """
-        return repr(self.msg)
+    pass
 
 
 class JobManNoResourcesException(JobManException):
@@ -77,7 +63,6 @@ class JobManNoResourcesException(JobManException):
 
     """
     pass
-    
     
     
 
