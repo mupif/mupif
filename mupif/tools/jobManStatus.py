@@ -4,14 +4,11 @@
 from __future__ import print_function, division
 from builtins import str
 import getopt, sys
-sys.path.append('..')
-sys.path.append('.')
 from mupif import JobManager
 from mupif import PyroUtil
 from mupif import APIError
 
 import logging
-logger = logging.getLogger()
 import time as timeTime
 import curses
 import re
@@ -68,73 +65,78 @@ def processor(win, jobman):
 #######################################################################################
 
 
+def main():
+    logger = logging.getLogger()
+    
+    #ssh flag (set to tru if ssh tunnel need to be established)
+    ssh = False
+    
+    host = 'ksm.fsv.cvut.cz'
+    port = 9090
+    hkey =""
+    
+    
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")
+        print(opts, args)
+    except getopt.GetoptError as err: 
+        # print help information and exit: 
+        print(str(err)) # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
+    
+    for o, a in opts:
+        if o in ("-p"):
+            port = int(a)                                                                                              
+        elif o in ("-h"):
+            host = a                                         
+        elif o in ("-j"):
+            jobmanname = a
+        elif o in ("-k"):
+            hkey = a
+        elif o in ("-t"):
+            ssh = True
+        elif o in ("-u"):
+            username = a
+        elif o in ("-n"):
+            nshost = a
+        elif o in ("-r"):
+            nsport = int(a)
+        else:
+            assert False, "unhandled option"
+    
+    print("huhu:"+host+str(port))
+    
+    jobid_col = 0
+    port_col  = 35
+    user_col = 41
+    time_col = 70
+    
+    #locate nameserver
+    ns     = PyroUtil.connectNameServer(nshost, nsport, hkey)
+    # locate remote jobManager application, request remote proxy
+    jobManUri = ns.lookup(jobmanname)
+    #get local port of jabmanager (from uri)
+    jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
+    
+    
+    #extablish secure ssh tunnel connection
+    if ssh:
+        tunnel = PyroUtil.sshTunnel(remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
+    
+    
+    jobMan = PyroUtil.connectApp(ns, jobmanname)
+    
+    #ssh flag (set to True if ssh tunnel need to be established)
+    ssh = False
+    
+    curses.wrapper(processor, jobMan)
+    
+    if ssh:
+        tunnel.terminate()
+    
+    
+    ###########################################################
 
-#ssh flag (set to tru if ssh tunnel need to be established)
-ssh = False
-
-host = 'ksm.fsv.cvut.cz'
-port = 9090
-hkey =""
-
-
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")
-except getopt.GetoptError as err: 
-    # print help information and exit: 
-    print(str(err)) # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
-
-for o, a in opts:
-    if o in ("-p"):
-        port = int(a)                                                                                              
-    elif o in ("-h"):
-        host = a                                         
-    elif o in ("-j"):
-        jobmanname = a
-    elif o in ("-k"):
-        hkey = a
-    elif o in ("-t"):
-        ssh = True
-    elif o in ("-u"):
-        username = a
-    elif o in ("-n"):
-        nshost = a
-    elif o in ("-r"):
-        nsport = int(a)
-    else:
-        assert False, "unhandled option"
-
-print("huhu:"+host+str(port))
-
-jobid_col = 0
-port_col  = 35
-user_col = 41
-time_col = 70
-
-#locate nameserver
-ns     = PyroUtil.connectNameServer(nshost, nsport, hkey)
-# locate remote jobManager application, request remote proxy
-jobManUri = ns.lookup(jobmanname)
-#get local port of jabmanager (from uri)
-jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
-
-
-#extablish secure ssh tunnel connection
-if ssh:
-    tunnel = PyroUtil.sshTunnel(remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
-
-
-jobMan = PyroUtil.connectApp(ns, jobmanname)
-
-#ssh flag (set to True if ssh tunnel need to be established)
-ssh = False
-
-curses.wrapper(processor, jobMan)
-
-if ssh:
-    tunnel.terminate()
-
-
-###########################################################
-
+if __name__ == '__main__':
+    main()

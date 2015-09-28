@@ -27,91 +27,96 @@ def usage():
     print("-d : turns debugging messages on")
     print() 
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "j:h:p:k:u:n:r:td")
-except getopt.GetoptError as err:
-    # print help information and exit:
-    logger.exception(err)
-    usage()
-    sys.exit(2)
 
-jobmanname = None
-tunnel = False
-debug = False
-
-for o, a in opts:
-    if o in ("-j"):
-        jobmanname = a
-    elif o in ("-h"):
-        hostname = a
-    elif o in ("-p"):
-        port = int(a)
-    elif o in ("-k"):
-        hkey = a
-    elif o in ("-t"):
-        tunnel = True
-    elif o in ("-u"):
-        username = a
-    elif o in ("-n"):
-        nshost = a
-    elif o in ("-r"):
-        nsport = int(a)
-    elif o in ("-d"):
-        debug = True
-
-
+def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "j:h:p:k:u:n:r:td")
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        logger.exception(err)
+        usage()
+        sys.exit(2)
+    
+    jobmanname = None
+    tunnel = False
+    debug = False
+    
+    for o, a in opts:
+        if o in ("-j"):
+            jobmanname = a
+        elif o in ("-h"):
+            hostname = a
+        elif o in ("-p"):
+            port = int(a)
+        elif o in ("-k"):
+            hkey = a
+        elif o in ("-t"):
+            tunnel = True
+        elif o in ("-u"):
+            username = a
+        elif o in ("-n"):
+            nshost = a
+        elif o in ("-r"):
+            nsport = int(a)
+        elif o in ("-d"):
+            debug = True
+    
+    
+        else:
+            assert False, "unhandled option"
+    
+    if jobmanname == None or hostname == None or port == None:
+        usage()
+        sys.exit(2)
+    
+    if not debug:
+        PyroUtil.logger.setLevel(logging.WARNING)
+    
+    print("hkey:"+hkey)
+    print("Nameserver:"+nshost+":"+str(nsport))
+    print("JobManager:"+jobmanname+"@"+hostname+":"+str(port))
+    
+    
+    #locate nameserver
+    ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
+    jobManUri = ns.lookup(jobmanname)
+    print("Jobmanager uri:"+str(jobManUri))
+    
+    jobManTunnel = None
+    appTunnel = None
+    
+    #get local port of jabmanager (from uri)
+    jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
+    
+    #create tunnel to JobManager running on (remote) server
+    try:
+        if tunnel:
+            tunnelJobMan = PyroUtil.sshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
+    except Exception as e:
+        logger.exception(e)
+        tunnelJobMan.terminate()
     else:
-        assert False, "unhandled option"
-
-if jobmanname == None or hostname == None or port == None:
-    usage()
-    sys.exit(2)
-
-if not debug:
-    PyroUtil.logger.setLevel(logging.WARNING)
-
-print("hkey:"+hkey)
-print("Nameserver:"+nshost+":"+str(nsport))
-print("JobManager:"+jobmanname+"@"+hostname+":"+str(port))
-
-
-#locate nameserver
-ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
-jobManUri = ns.lookup(jobmanname)
-print("Jobmanager uri:"+str(jobManUri))
-
-jobManTunnel = None
-appTunnel = None
-
-#get local port of jabmanager (from uri)
-jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
-
-#create tunnel to JobManager running on (remote) server
-try:
-    if tunnel:
-        tunnelJobMan = PyroUtil.sshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
-except Exception as e:
-    logger.exception(e)
-    tunnelJobMan.terminate()
-else:
-    # connect to jobmanager
-    jobMan = PyroUtil.connectApp(ns, jobmanname)
-
-try:
-
-    (errCode, jobID, jobPort) = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=6001)
-    print ("Application " + str(jobID) + " successfully allocted")
-    if tunnel:
-        tunnelApp = PyroUtil.sshTunnel(remoteHost=hostname, userName=username, localPort=6001, remotePort=jobPort, sshClient='ssh')
-    app = PyroUtil.connectApp(ns, jobID)
+        # connect to jobmanager
+        jobMan = PyroUtil.connectApp(ns, jobmanname)
     
-    jobMan.terminateJob(jobID)
-    if tunnelJobMan: tunnelJobMan.terminate()
-    if tunnelApp: tunnelApp.terminate()
+    try:
     
-    print("Terminating " + str(jobID))
-    print("Time consumed %f s" % (timeTime.time()-start))
-
-except Exception as e:
-    print("test failed")
-    logger.exception(e)
+        (errCode, jobID, jobPort) = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=6001)
+        print ("Application " + str(jobID) + " successfully allocted")
+        if tunnel:
+            tunnelApp = PyroUtil.sshTunnel(remoteHost=hostname, userName=username, localPort=6001, remotePort=jobPort, sshClient='ssh')
+        app = PyroUtil.connectApp(ns, jobID)
+        
+        jobMan.terminateJob(jobID)
+        if tunnelJobMan: tunnelJobMan.terminate()
+        if tunnelApp: tunnelApp.terminate()
+        
+        print("Terminating " + str(jobID))
+        print("Time consumed %f s" % (timeTime.time()-start))
+    
+    except Exception as e:
+        print("test failed")
+        logger.exception(e)
+        
+if __name__ == '__main__':
+    main()
