@@ -4,3 +4,7 @@
 __pycache__
 *.pyc
 /.project
+build
+dist
+*.egg-info
+/.pydevproject
