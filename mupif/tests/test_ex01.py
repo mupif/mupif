@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 import unittest
 from mupif import *
-from . import demo
+from mupif.tests import demo
 
 class TestEx01(unittest.TestCase):
     def setUp(self):

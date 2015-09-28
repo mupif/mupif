@@ -12,7 +12,7 @@ from mupif import PropertyID
 from mupif import Property
 from mupif import ValueType
 
-from . import demo
+from mupif.tests import demo
 
 
 
