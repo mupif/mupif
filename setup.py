@@ -48,7 +48,10 @@ setup(name='mupif',
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
 	  entry_points={
-          'console_scripts': ['JobMan2cmd = mupif.tools.JobMan2cmd:main']
+          'console_scripts': ['jobMan2cmd = mupif.tools.JobMan2cmd:main',
+                              'jobManStatus = mupif.tools.jobManStatus:main',
+                              'jobManTest = mupif.tools.jobManTest:main',
+                              'startMupifNameserver = mupif.tools.nameserver:main']
       }
       )
 

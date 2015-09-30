@@ -8,17 +8,22 @@ from __future__ import print_function
 import os
 import subprocess
 
-#Initializating variables
-nshost = 'localhost'
-nsport = 9090
-hkey = 'mmp-secret-key'
-python = '/usr/bin/python'
-os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
-os.environ['PYRO_PICKLE_PROTOCOL_VERSION']='2'
-os.environ['PYRO_SERIALIZER']='pickle'
+def main():
+    #Initializating variables
+    nshost = 'localhost'
+    nsport = 9090
+    hkey = 'mmp-secret-key'
+    python = 'python'
+    os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
+    os.environ['PYRO_PICKLE_PROTOCOL_VERSION']='2'
+    os.environ['PYRO_SERIALIZER']='pickle'
+    
+    #Creation of nameserver
+    cmd = '%s -m Pyro4.naming -n %s -p %d -k %s' % (python, nshost, nsport, hkey)
+    p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+    output, error = p.communicate()
+    print(output if output else "", error if error else "")
 
-#Creation of nameserver
-cmd = '%s -m Pyro4.naming -n %s -p %d -k %s' % (python, nshost, nsport, hkey)
-p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
-output, error = p.communicate()
-print(output if output else "", error if error else "")
+
+if __name__ == '__main__':
+    main()

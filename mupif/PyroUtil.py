@@ -104,7 +104,7 @@ def connectApp(ns, name):
         logger.debug("Connected to " + sig + " with the name " + name)
     except Exception:
         logger.exception("Cannot connect to application " + name + ". Is the server running?")
-        reaise
+        raise
         return None
 
     return app2
