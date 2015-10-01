@@ -6,6 +6,7 @@ import socket
 import getopt, sys
 import logging
 import importlib
+#from mupif import PyroUtil
 
 
 def usage():
@@ -61,7 +62,6 @@ def main():
             sys.path.append(moduleDir)
         conf = importlib.import_module(configName)
         mupif= importlib.import_module('mupif')
-
     else:
         logger.error('missing options -c specifying server config file')
 
@@ -74,6 +74,7 @@ def main():
 
     #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
     daemon = mupif.PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort)
+
 
     #Initialize application
     #app = DemoApplication.DemoApplication()
