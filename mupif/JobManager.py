@@ -337,7 +337,10 @@ class SimpleJobManager2 (JobManager):
                 return (JOBMAN_ERR,None)
 
             try:
-                proc = subprocess.Popen(["python", self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                if self.jobMan2CmdPath[-3:] == '.py':
+                    proc = subprocess.Popen(["python", self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                else:
+                    proc = subprocess.Popen([self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 logger.debug('SimpleJobManager2: new subprocess has been started')
             except Exception as e:
                 logger.exception(e)

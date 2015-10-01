@@ -7,6 +7,10 @@ logger = logging.getLogger()
 import os
 
 import Pyro4
+from config import Config
+f = file('../config.cfg')
+cfg = Config(f)
+
 import config
 
 Pyro4.config.SERIALIZER="pickle"
@@ -26,12 +30,13 @@ class PingServerApplication(Application.Application):
     Simple application that computes an aritmetical average of a mapped property
     """
     def __init__(self, file):
-	 	  super(PingServerApplication,self).__init__(file)
+        super(PingServerApplication,self).__init__(file)
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
+            logger.info('Getting property from PingServerApplication, exiting')
             return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, None, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
@@ -50,11 +55,11 @@ class PingServerApplication(Application.Application):
         return 1.0
 
     def getApplicationSignature(self):
-        return "CTU Ping server, version 1.0"
+        return cfg.appName
 
 
 app2 = PingServerApplication("/dev/null")
 
-PyroUtil.runAppServer(config.server, config.serverPort, config.serverNathost, config.serverNatport, 
-                      config.nshost, config.nsport, config.nsname, config.hkey, 
+PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, 
+                      cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, 
                       app=app2 )
