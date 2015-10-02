@@ -98,14 +98,14 @@ def connectApp(ns, name):
         app2 = Pyro4.Proxy(uri)
     except Exception as e:
         logger.error("Cannot find registered server %s on %s" % (name, ns) )
-        return None
+        raise
 
     try:
         sig = app2.getApplicationSignature()
         logger.debug("Connected to " + sig + " with the name " + name)
     except Exception as e:
         logger.exception("Cannot connect to application " + name + ". Is the server running?")
-        return None
+        raise
 
     return app2
 
