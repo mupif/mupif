@@ -11,12 +11,16 @@ hkey = 'mmp-secret-key'
 
 import Pyro4
 from mupif import *
-import config
 import time as timeTime
+from config import Config
+f = file('../config.cfg')
+cfg = Config(f)
 
+
+tunnel = None
 #use numerical IP values only (not names, sometimes they do not work)
 try:#tunnel must be closed at the end, otherwise bound socket may persist on system
-    tunnel = PyroUtil.sshTunnel(config.server, config.serverUserName, config.serverNatport, config.serverPort, config.sshClient, config.options)
+    tunnel = PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
 
     time  = 0
     dt    = 1
@@ -24,10 +28,10 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
 
     start = timeTime.time()
     #locate nameserver
-    ns = PyroUtil.connectNameServer(config.nshost, config.nsport, config.hkey)
+    ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
     # locate remote PingServer application, request remote proxy
-    serverApp = PyroUtil.connectApp(ns, 'Mupif.PingServerApplication')
+    serverApp = PyroUtil.connectApp(ns, cfg.appName)
 
     try:
         appsig=serverApp.getApplicationSignature()
@@ -52,7 +56,7 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
             logger.exception("Following API error occurred:" + e)
             break
 
-    logger.info("done")
+    logger.info("Done")
     prop = serverApp.getProperty(PropertyID.PID_CumulativeConcentration, i)
     logger.info("Received " + str(prop.getValue()) + " expected " + str(expectedValue) )
     if (prop.getValue() == expectedValue):
@@ -66,5 +70,6 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
 
 finally:
     logger.debug("Closing ssh tunnel")
-    tunnel.terminate()
+    if tunnel:
+        tunnel.terminate()
 

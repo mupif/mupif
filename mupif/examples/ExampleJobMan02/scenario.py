@@ -31,12 +31,12 @@ else:
         file = open ("localtest.txt", "r")
         answer = file.readlines()
         print(answer);
-        
+
         if (answer[0]=="Hello MMP!"):
             print ("Test OK")
         else:
             print ("Test FAILED")
-       
+
 
 finally:
     if appRec: appRec.terminateAll()

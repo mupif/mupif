@@ -17,7 +17,7 @@ popd
 
 pushd Example02
 	echo $PWD
-	$PYTHON nameserver.py &
+	$PYTHON ../../tools/nameserver.py &
 	PID1=$!
 	echo PID $PID1
 	sleep 1

@@ -20,7 +20,7 @@ a tool for installing and managing Python packages:
 
 To run this distributed example:
 --------------------------------
-1) start pyro name server by executing nameserver.py
+1) start pyro name server by executing ../nameserver-local.py
 
 The nameserver will listen on "127.0.0.1" locally, or should be set 
 to your public IP adress. Note that in the later case, your firewall has to be configured to accept connections at port 9090.

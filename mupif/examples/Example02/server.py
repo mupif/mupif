@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 # This script starts a server for Pyro4 on this machine with Application2
 # Works with Pyro4 version 4.28
 # Tested on Ubuntu 14.04 and Win XP
@@ -7,26 +6,13 @@ from __future__ import print_function, division
 # If firewall is blocking daemonPort, run on Ubuntu
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
 
-#where is a running nameserver
-nshost = "127.0.0.1"
-nsport = 9091
-#address where this server will listen through a daemon
-daemonHost = "127.0.0.1"
-daemonPort = 44382
-hkey = 'mmp-secret-key'
-
+from __future__ import print_function, division
 import sys
-sys.path.append('../../..')
-from mupif import *
-import logging
-logger = logging.getLogger()
+sys.path.append('..')
 import socket
-import Pyro4
-
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-
+import conf as cfg
+from mupif import *
+logger = cfg.logging.getLogger()
 
 class application2(Application.Application):
     """
@@ -57,14 +43,14 @@ class application2(Application.Application):
         return 1.0
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
+ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = Pyro4.Daemon(host=daemonHost, port=daemonPort)
+daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort)
 
 app2 = application2("input2.in")
 #register agent
 uri = daemon.register(app2)
-ns.register("Mupif.application2", uri)
+ns.register(cfg.appName, uri)
 print (uri)
 daemon.requestLoop()

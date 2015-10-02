@@ -1,5 +1,5 @@
 from builtins import range
-import sys
+import os,sys
 sys.path.append('../..')
 sys.path.append('../../tools')
 
@@ -9,13 +9,14 @@ Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 hkey = 'mmp-secret-key'
 
-nshost = '147.32.130.137' #NameServer - do not change
+#nshost = '147.32.130.137' #NameServer hosted on CTU
+nshost = '127.0.0.1' #NameServer on local computer
 nsport  = 9090 #NameServer's port - do not change
 hkey = 'mmp-secret-key' #Password for accessing nameServer and applications
 nathost='127.0.0.1' #NatHost of local computer - do not change
 
-#daemonHost='147.32.130.137'#IP of server
-hostUserName='mmp'#User name for ssh connection
+#hostUserName='mmp'#User name for ssh connection
+hostUserName=os.getlogin()#current user
 
 if(sys.platform.lower().startswith('win')):#Windows ssh client
     sshClient = 'C:\\Program Files\\Putty\\putty.exe'
@@ -27,8 +28,9 @@ else:#Unix ssh client
     sshHost = ''
 
 # jobManager records to be used in scenario
-# format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName)
-solverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
+# format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName)
+#solverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
+solverJobManRec = (44360, 5555, '127.0.0.1', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
 
 
 #client ports used to establish ssh connections (nat ports)

@@ -1,20 +1,14 @@
-from __future__ import print_function
 # This script starts a client for Pyro4 on this machine with Application1
 # Works with Pyro4 version 4.28
 # Tested on Ubuntu 14.04 and Win XP
 # Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
 
-#where is a running nameserver
-nshost = "127.0.0.1"
-nsport = 9091
-hkey = 'mmp-secret-key'
-
-import sys
-sys.path.append('../../..')
+from __future__ import print_function
+import os, sys
+sys.path.append('..')
+import conf as cfg
 from mupif import *
-import os
-import logging
-logger = logging.getLogger()
+logger = cfg.logging.getLogger()
 
 class application1(Application.Application):
     """
@@ -39,12 +33,12 @@ timestepnumber=0
 targetTime = 10.0
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
+ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
 # application1 is local, create its instance
 app1 = application1(None)
 # application2 is remote, request remote proxy
-app2=PyroUtil.connectApp(ns, "Mupif.application2")
+app2=PyroUtil.connectApp(ns, cfg.appName)
 
 while (abs(time -targetTime) > 1.e-6):
     #determine critical time step
@@ -81,7 +75,6 @@ if (abs(prop.getValue()-5.05) <= 1.e-4):
     print ("Test OK")
 else:
     print ("Test FAILED")
-
 
 
 # terminate

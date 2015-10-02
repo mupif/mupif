@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from builtins import str
+import os
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
@@ -102,9 +103,8 @@ def connectApp(ns, name):
     try:
         sig = app2.getApplicationSignature()
         logger.debug("Connected to " + sig + " with the name " + name)
-    except Exception:
+    except Exception as e:
         logger.exception("Cannot connect to application " + name + ". Is the server running?")
-        reaise
         return None
 
     return app2
@@ -157,7 +157,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
-    :param str nsname: Nameserver name to register application
+    :param str nsname: Name of registered application
     :param str hkey: A password string
     :param instance app: Application instance
 
@@ -177,7 +177,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     app.registerPyro(daemon, ns, uri)
 
     logger.debug('NameServer %s has registered uri %s' % (nsname, uri) )
-    logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, nameServerName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport,nsname,uri) )
+    logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport, nsname,uri) )
     daemon.requestLoop()
 
 
@@ -186,7 +186,7 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux
 
     :param str remoteHost: IP of remote host
-    :param str userName: User name
+    :param str userName: User name, if empty, current user name is used
     :param int localPort: Local port
     :param int remotePort: Remote port
     :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
@@ -199,6 +199,8 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
 
     if sshHost =='':
         sshHost = remoteHost
+    if userName =='a':
+        userName = os.getlogin()
     #use direct system command. Paramiko or sshtunnel do not work.
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
@@ -284,6 +286,18 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec, sshClient, options, sshHost)
 
+    if jobMan is None:
+       e = OSError("Can not connect to JobManager")
+       logger.exception(e)
+       raise e
+    else:
+       logger.debug('Connected to JobManager %s using tunnel %s' % (jobMan, tunnelJobMan))
+
+    if tunnelJobMan is None:
+       e = OSError("Can not create a ssh tunnel to JobManager")
+       logger.exception(e)
+       raise
+
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
         logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
@@ -303,6 +317,8 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     #time.sleep(1)
     # connect to (remote) application, requests remote proxy
     app = connectApp(ns, retRec[1])
+    if app==None:
+        tunnelApp.terminate()
     return RemoteAppRecord.RemoteAppRecord(app, tunnelApp, jobMan, tunnelJobMan, retRec[1])
 
 
@@ -342,10 +358,9 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
         logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
     app = connectApp(ns, retRec[1])
+    if app==None:
+        tunnelApp.terminate()
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
-
-
-
 
 from . import PyroFile
 def uploadPyroFile (filename, pyroFile):

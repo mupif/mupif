@@ -18,7 +18,7 @@ try:
 
     thermalSolver = thermalSolverAppRec.getApplication()
     mechanicalSolver = mechanicalSolverAppRec.getApplication()
-    
+
 except Exception as e:
     logger.exception(e)
 else:
