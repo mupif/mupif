@@ -11,24 +11,6 @@ class APIError(Exception):
     An exception is thrown by using the throw keyword from inside the "try" block. 
     Exception handlers are declared with the keyword "except", which must be placed immediately after the try block.
 
-    .. automethod:: __init__
-    .. automethod:: __str__
     """
 
-    #
-    def __init__(self, _msg):
-        """
-        Constructor. Initializes the exception.
-
-        :param str _msg: Error message
-        """
-        self.msg = _msg
-    def __str__(self):
-        """
-        Returns error message from the constructor.
-
-        :return: Returns string representation of the exception, ie. error message (string)
-        :rtype: str
-        """
-        return repr(self.msg)
 
