@@ -1,0 +1,10 @@
+This example ilustrates thermo-mechanical task using two running servers and a client.
+
+1. Start the server for thermal problem thermalServer.py. It uses an example-wide configuration file ../conf.py and a specific configuration file thermalServerConfig.py. A JobManager Mupif.JobManager@ThermalSolverDemo is started.
+
+2. Start the server for mechanical problem mechanicalServer.py. It uses an example-wide configuration file ../conf.py and a specific configuration file mechanicalServerConfig.py. A JobManager Mupif.JobManager@MechanicalSolverDemo is started.
+
+
+After starting both servers (which will start both JobManagers), the user can:
+1. monitor their status (using tools/jobManStatus.py)
+2. run a coupled simulation Demo10.py, which creates inputs files for thermal and mechanical tasks, get temperature field and send it to the mechanical task. Temperature and displacements are recorded to vtk file.

@@ -31,9 +31,9 @@ else:
 
         logger.info("Uploading input files to servers")
         pf = thermalSolverAppRec.getJobManager().getPyroFile(thermalSolverAppRec.getJobID(), "input.in", 'w')
-        PyroUtil.downloadPyroFile("input.in", pf)
+        PyroUtil.downloadPyroFile("inputT.in", pf)
         mf = mechanicalSolverAppRec.getJobManager().getPyroFile(mechanicalSolverAppRec.getJobID(), "input.in", 'w')
-        PyroUtil.downloadPyroFile("inputm.in", mf)
+        PyroUtil.downloadPyroFile("inputM.in", mf)
 
 
 

@@ -17,7 +17,7 @@ logger = logging.getLogger()
 ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=sConf.daemonHost, port=sConf.jobManPort, nathost=sConf.nathost, natport=sConf.jobManNatport)
+daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport)
 #Run job manager on a server
 jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'thermalServerConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 

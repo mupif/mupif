@@ -16,32 +16,33 @@ start = timeTime.time()
 ns = PyroUtil.connectNameServer(conf.nshost, 9090, conf.hkey)
 
 results=[]
-for apprecord in conf.apps.values():
+tunnel= None
+for apprecord in conf.apps:
     starti = timeTime.time()
-    conf.logger.info("Trying to connect to server " + str(apprecord.name))
+    conf.logger.info("Trying to connect to server " + str(apprecord[conf.appIndx_Name]))
 
     #Find if we need different ssh server for authentication
-    if apprecord.sshHost == '':
-        sshHost = apprecord.serverName
+    if apprecord[conf.appIndx_SshHost] == '':
+        sshHost = apprecord[conf.appIndx_ServerName]
     else:
-        sshHost = apprecord.sshHost
-
+        sshHost = apprecord[conf.appIndx_SshHost]
     try:
-        tunnel = PyroUtil.sshTunnel(remoteHost=apprecord.serverName,
-                                    userName=apprecord.userName,
-                                    localPort=apprecord.natPort, remotePort=apprecord.remotePort,
-                                    sshClient=apprecord.sshClient, options=apprecord.options,
+
+        tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
+                                    userName=apprecord[conf.appIndx_UserName],
+                                    localPort=apprecord[conf.appIndx_NATPort], remotePort=apprecord[conf.appIndx_RemotePort],
+                                    sshClient=apprecord[conf.appIndx_SshClient], options=apprecord[conf.appIndx_Options],
                                     sshHost=sshHost)
 
         # connect to individual applications
-        app = PyroUtil.connectApp(ns, PyroUtil.getNSAppName(conf.jobname, apprecord.name))
+        app = PyroUtil.connectApp(ns, PyroUtil.getNSAppName(conf.jobname, apprecord[conf.appIndx_Name]))
         if app:
             appsig=app.getApplicationSignature()
             msg = "Successfully connected to %-30s (%4.2f s)"%(appsig, timeTime.time()-starti)
             conf.logger.info(msg)
             conf.logger.info("Time elapsed %f s" % (timeTime.time()-starti) )
         else:
-            msg = "Unable to connect to " + str(apprecord.name)
+            msg = "Unable to connect to " + apprecord[conf.appIndx_Name]
             conf.logger.error(msg)
         results.append(msg)
     finally:

@@ -1,37 +1,30 @@
 from builtins import range
-import os,sys
-sys.path.append('../..')
-sys.path.append('../../tools')
+import sys
+#Import example-wide configuration
+sys.path.append('..')
+import conf as cfg
 
-import Pyro4
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-hkey = 'mmp-secret-key'
+nshost = cfg.nshost #NameServer - do not change
+nsport = cfg.nsport #NameServer's port - do not change
+hkey = cfg.hkey #Password for accessing nameServer and applications
 
-#nshost = '147.32.130.137' #NameServer hosted on CTU
-nshost = '127.0.0.1' #NameServer on local computer
-nsport  = 9090 #NameServer's port - do not change
-hkey = 'mmp-secret-key' #Password for accessing nameServer and applications
-nathost='127.0.0.1' #NatHost of local computer - do not change
+serverUserName=cfg.serverUserName
+server = cfg.server#IP of your server
+serverPort = cfg.serverPort
+serverNathost = cfg.serverNathost
+serverNatport = cfg.serverNatport
+serverUserName = cfg.serverUserName
+jobManName = cfg.jobManName
 
-#hostUserName='mmp'#User name for ssh connection
-hostUserName=os.getlogin()#current user
-
-if(sys.platform.lower().startswith('win')):#Windows ssh client
-    sshClient = 'C:\\Program Files\\Putty\\putty.exe'
-    options = '-i L:\\.ssh\\mech\id_rsa.ppk'
-    sshHost = ''
-else:#Unix ssh client
-    sshClient = 'ssh'
-    options = '-oStrictHostKeyChecking=no'
-    sshHost = ''
+sshClient = cfg.sshClient
+options = cfg.options
+sshHost = cfg.sshHost
 
 # jobManager records to be used in scenario
 # format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName)
-#solverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
-solverJobManRec = (44360, 5555, '127.0.0.1', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
+# solverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
+solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
 
 
 #client ports used to establish ssh connections (nat ports)
-jobNatPorts = list(range(6000, 6050))
+jobNatPorts = cfg.jobNatPorts

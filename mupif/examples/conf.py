@@ -49,8 +49,6 @@ jobManWorkDir='.'
 #Path to JobMan2cmd.py 
 jobMan2CmdPath = "../../tools/JobMan2cmd.py"
 
-
-
 #Name of the application
 appName = 'MuPIFServer'
 

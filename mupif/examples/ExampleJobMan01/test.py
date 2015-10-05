@@ -3,33 +3,28 @@ from __future__ import print_function
 from builtins import str
 import sys
 
-#sys.path.append('../../..')
-#sys.path.append('.')
-#import clientConfig as cConf
-
 #import common configuration file
 sys.path.append('..')
-import conf as cfg
+import clientConfig as cConf
 
 from mupif import *
-
 import time as timeTime
 import getopt
-
-logger = cfg.logging.getLogger()
+import logging
+logger = logging.getLogger()
 
 start = timeTime.time()
 logger.info('Timer started')
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
 
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the first application app1
 solverAppRec = None
 try:
-    solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
-    solverAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRec, cfg.jobNatPorts.pop(0), cfg.sshClient, cfg.options, cfg.sshHost )
+    solverJobManRec = (cConf.serverPort, cConf.serverNatport, cConf.server, cConf.serverUserName, cConf.jobManName)
+    solverAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
     app = solverAppRec.getApplication()
 
 except Exception as e:

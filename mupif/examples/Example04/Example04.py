@@ -10,14 +10,7 @@ from builtins import range
 import sys
 sys.path.append('../../..')
 
-from mupif import Field
-from mupif import FieldID
-from mupif import ValueType
-
-from mupif import Mesh
-from mupif import Vertex
-from mupif import Cell
-from mupif import BBox
+from mupif import *
 
 def main():
 

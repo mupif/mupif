@@ -7,12 +7,7 @@ sys.path.append('../../..')
 
 from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
 
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
+from mupif import *
 
 class application1(Application.Application):
     """
