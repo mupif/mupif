@@ -3,14 +3,18 @@
 
 # A typical workflow
 # $ python setup.py install       test your installation locally as it would be downloaded from PyPI server
+# $ python setup.py install --user test your installation locally as a user, installs under /home/user/.local/lib/
 # $ python setup.py sdist         creates an archive on local computer
 # $ python setup.py register      registers to PyPI server
 # $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
 
-include README.txt
+#include README.txt
 include mupif/doc/refManual/MuPIF.pdf
 include mupif/doc/userGuide/MuPIF-userGuide.pdf
 #prune *.pyc
+include mupif/examples/testExamples.sh
 
-recursive-include mupif/examples *.py *.c
-recursive-include mupif/tools *.py
+#prune mupif/Workshop02
+
+#recursive-include mupif/examples *.py *.c
+#recursive-include mupif/tools *.py

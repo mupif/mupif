@@ -4,7 +4,8 @@ Created 19.6.2015
 '''
 
 # A typical workflow
-# $ python setup.py install       test your installation locally as it would be downloaded from PyPI server
+# $ python setup.py install       test your installation locally as a root as it would be downloaded from PyPI server
+# $ python setup.py install --user   test your installation locally as a user, installs under /home/user/.local/lib/
 # $ python setup.py sdist         creates an archive on local computer
 # $ python setup.py register      registers to PyPI server
 # $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
@@ -42,8 +43,8 @@ setup(name='mupif',
       #package_dir={'': 'mupif'},#this looks where to find __init__.py
       packages = find_packages(),
       #packages = ['mupif'],
-      #Tell what to install (these files must be already in a sdist archive file)
-      package_data={'': [ 'tools/*.py', 'examples/Ex*/*.*', 'examples/Pi*/*.*', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
+      #Tell what to install (these files must be already in a sdist archive file) - package_data useful only for bdist
+      #package_data={'': [ 'README', '*.sh', '*.c', '*.in', 'tools/*.py', 'examples/Ex*/*.py', 'examples/Pi*/*.py', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
       install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future>=0.15', 'Pyro4==4.30'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
