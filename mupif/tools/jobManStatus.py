@@ -13,11 +13,21 @@ import time as timeTime
 import curses
 import re
 
+global jobmanname
+global host
+jobid_col = 0
+port_col  = 35
+user_col = 41
+time_col = 70
+
 def usage():
     print("Usage: jobManStatus -n nshost -r nsPort -h hostname -p port -j jobmanname -k hkey [-t -u user]")
 
 
 def processor(win, jobman):
+    global jobmanname
+    global host
+
     win.erase()
 
     win.addstr(0,0, "MuPIF Remote JobMan MONITOR")
@@ -43,7 +53,7 @@ def processor(win, jobman):
         c = win.getch()
         if c == ord('q'):
             break
-        status=jobMan.getStatus()
+        status=jobman.getStatus()
         i = 0
         for rec in status:
             win1.addstr(i,jobid_col, rec[0])
@@ -66,16 +76,19 @@ def processor(win, jobman):
 
 
 def main():
-    logger = logging.getLogger()
-    
-    #ssh flag (set to tru if ssh tunnel need to be established)
-    ssh = False
-    
-    host = 'ksm.fsv.cvut.cz'
+    global host
+    global jobmanname
+    host = 'ksm.fsv.cvut.cz'    
     port = 9090
     hkey =""
+    ssh = False#ssh flag (set to tru if ssh tunnel need to be established)
+    logger = logging.getLogger()
     
+
+
     
+
+
     try:
         opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")
         print(opts, args)
@@ -107,10 +120,6 @@ def main():
     
     print("huhu:"+host+str(port))
     
-    jobid_col = 0
-    port_col  = 35
-    user_col = 41
-    time_col = 70
     
     #locate nameserver
     ns     = PyroUtil.connectNameServer(nshost, nsport, hkey)
