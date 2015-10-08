@@ -13,7 +13,8 @@ import logging
 
 #NAME SERVER
 #IP/name of a name server
-nshost = '127.0.0.1'
+#nshost = '127.0.0.1'
+nshost = '147.32.130.137'
 #Port of name server
 nsport = 9090
 #Password for accessing nameServer and applications
@@ -24,6 +25,7 @@ hkey = 'mmp-secret-key'
 #SERVER for a single job or for JobManager
 #IP/name of a server's daemon
 server = '127.0.0.1'
+#server = '147.32.130.137'
 #Port of server's daemon
 serverPort = 44382
 #Nat IP/name (necessary for ssh tunnel)

@@ -1,22 +1,11 @@
 from __future__ import division
-import sys
-sys.path.append('../../..')
+import os,sys
+sys.path.append('..')
+import conf as cfg
 from mupif import *
+
 import logging
 logger = logging.getLogger()
-import os
-
-import Pyro4
-from config import Config
-f = file('../config.cfg')
-cfg = Config(f)
-
-import config
-
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-hkey = 'mmp-secret-key'
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)

@@ -1,21 +1,13 @@
 from builtins import str
 from builtins import range
-import sys
-sys.path.append('../../..')
-import os
+import os,sys
+sys.path.append('..')
+import conf as cfg
+from mupif import *
 
+import time as timeTime
 import logging
 logger = logging.getLogger()
-
-hkey = 'mmp-secret-key'
-
-import Pyro4
-from mupif import *
-import time as timeTime
-from config import Config
-f = file('../config.cfg')
-cfg = Config(f)
-
 
 tunnel = None
 #use numerical IP values only (not names, sometimes they do not work)

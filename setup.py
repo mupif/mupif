@@ -43,9 +43,9 @@ setup(name='mupif',
       #package_dir={'': 'mupif'},#this looks where to find __init__.py
       packages = find_packages(),
       #packages = ['mupif'],
-      #Tell what to install (these files must be already in a sdist archive file) - package_data useful only for bdist
+        #Tell what to install (these files must be already in a sdist archive file) - package_data useful only for bdist, not for pip. Extra added files are in MANIFEST.in
       #package_data={'': [ 'README', '*.sh', '*.c', '*.in', 'tools/*.py', 'examples/Ex*/*.py', 'examples/Pi*/*.py', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
-      install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future>=0.15', 'Pyro4==4.30'],
+      install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future>=0.15', 'Pyro4==4.39'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
 	  entry_points={

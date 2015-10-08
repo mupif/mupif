@@ -25,6 +25,5 @@ sshHost = cfg.sshHost
 # solverJobManRec = (44360, 5555, '147.32.130.137', hostUserName, 'Mupif.JobManager@ExampleJobMan01')
 solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
 
-
 #client ports used to establish ssh connections (nat ports)
 jobNatPorts = cfg.jobNatPorts

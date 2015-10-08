@@ -14,7 +14,7 @@ ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=c
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the first application app1
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.solverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
     app1 = appRec.getApplication()
 except Exception as e:
     logger.exception(e)

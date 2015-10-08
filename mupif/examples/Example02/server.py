@@ -8,8 +8,8 @@
 
 from __future__ import print_function, division
 import sys
-sys.path.append('..')
 import socket
+sys.path.append('..')
 import conf as cfg
 from mupif import *
 logger = cfg.logging.getLogger()
