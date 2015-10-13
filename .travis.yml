@@ -36,3 +36,5 @@ addons:
          - liblapack-dev
          - libsuitesparse-dev
          - gfortran
+			- openssh-server
+			- openssh-client
