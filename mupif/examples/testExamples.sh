@@ -1,11 +1,27 @@
 #!/bin/bash
 
+# force running everything locally (ssh clients and servers)
+export TRAVIS=1
+
+# in Travis virtualenv with python3, python is actually python3
+export PYTHON=python
+export PYVER=`$PYTHON -c 'import sys; print(sys.version_info[0])'`
+
+# kill all subprocesses when exiting
+# http://stackoverflow.com/a/22644006/761090
+trap "exit" INT TERM
+trap "kill 0 " TERM
+
+# run testing SSH server, will be killed by the trap
+bash ssh/test_ssh_server.sh &
+# testing Pyro nameserver
+$PYTHON ../tools/nameserver.py &
+sleep 1
+
 # accumulates failures, which are stored in $ret for each example
 retval=0
 
-# in Travis virtualenv, this can be also python3
-export PYTHON=python
-export PYVER=`$PYTHON -c 'import sys; print(sys.version_info[0])'`
+
 
 pushd Example01; 
 	echo $PWD
@@ -17,21 +33,15 @@ popd
 
 pushd Example02
 	echo $PWD
-	$PYTHON ../../tools/nameserver.py &
-	PID1=$!
-	echo PID $PID1
-	sleep 1
 	$PYTHON server.py &
-	PID2=$!
-	echo $PID2
+	PID1=$!
+	echo $PID1
 	sleep 1
 	$PYTHON client.py 
 	ret=$?
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
-	kill -9 $PID1 $PID2
-	#kill the pyro nameserver daemon
-	pkill pyro4-ns
+	kill -9 $PID1
 popd
 retval=$retval || $ret
 
@@ -58,6 +68,18 @@ pushd Example05
 	ret=$?
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
+popd
+
+pushd Example06
+	echo $PWD
+	$PYTHON server.py &
+	PID1=$!
+	sleep 1
+	$PYTHON test.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	echo "=================== Exit status $ret ===================="
+	kill -9 $PID1
 popd
 
 if [[ $PYVER == 2* ]]; then

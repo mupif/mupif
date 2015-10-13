@@ -1,5 +1,5 @@
 #Common configuration for examples
-import sys, os
+import sys, os, os.path
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
@@ -66,3 +66,16 @@ else:#Unix ssh client
     sshClient = 'ssh'
     options = '-oStrictHostKeyChecking=no'
     sshHost = ''
+
+# this is defined in Travis automatically; do everything locally in that case
+if 'TRAVIS' in os.environ:
+    nshost='localhost'
+    nsport=9090
+    server='localhost'
+    serverNathost='localhost'
+    sshClient='ssh'
+    thisdir=os.path.dirname(os.path.abspath(__file__))
+    options="-p2024 -N -F/dev/null -v -oIdentityFile=%s/ssh/test_ssh_client_rsa_key -oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts"%(thisdir,thisdir)
+    sshHosts=''
+    serverUserName=os.environ['USER']
+    
