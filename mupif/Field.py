@@ -29,7 +29,7 @@ from . import ValueType
 from . import BBox
 from numpy import array, arange, random, zeros
 import copy
-import collections
+import logging
 
 #debug flag
 debug = 0
@@ -73,6 +73,7 @@ class Field(object):
         self.time = time
         self.units = units
         self.uri = None   #pyro uri; used in distributed setting
+        self.logger = logging.getLogger()
         self.fieldType = fieldType
         if values == None:
             if (self.fieldType == FieldType.FT_vertexBased):
@@ -238,31 +239,46 @@ class Field(object):
         self.mesh=mesh
         self.values=values
 
-    def field2VTKData (self):
+    def field2VTKData (self,name=None,lookupTable=None):
         """
         Creates VTK representation of the receiver. Useful for visualization.
 
+        :param str name: human-readable name of the field
+        :param pyvtk.LookupTable lookupTable: color lookup table
         :return: Instance of pyvtk
         :rtype: pyvtk
         """
         import pyvtk
+
+        if name is None:
+            try: name=FieldID.FID_names[self.getFieldID()] # try human-readable name
+            except: name=str(self.getFieldID()) # if that fails, use number
+        if lookupTable and not isinstance(lookupTable,pyvtk.LookupTable):
+            # FIXME: move to some mupif-wide logger?
+            self.logger.warning('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
+            lookupTable=None
+        if lookupTable is None:
+            lookupTable=pyvtk.LookupTable([(0,.231,.298,.752),(.4,.865,.865,.865),(.8,.706,.016,.149)],name='coolwarm')
+        # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
+        kw=dict(name=name,lookup_table=lookupTable.name) # passed to all Scalars/Vectors ctors
+
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values])),
+                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values],**kw),lookupTable),
                                      'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Vectors(self.values)),
+                                     pyvtk.PointData(pyvtk.Vectors(self.values,**kw),lookupTable),
                                      'Unstructured Grid Example')
         else:
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values])),
+                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values],**kw),lookupTable),
                                      'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Vectors(self.values)),
+                                     pyvtk.CellData(pyvtk.Vectors(self.values,**kw),lookupTable),
                                      'Unstructured Grid Example')
             
 #    def __deepcopy__(self, memo):
