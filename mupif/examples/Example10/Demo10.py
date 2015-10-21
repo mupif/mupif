@@ -19,6 +19,9 @@ try:
     thermalSolver = thermalSolverAppRec.getApplication()
     mechanicalSolver = mechanicalSolverAppRec.getApplication()
 
+    #Create a reverse tunnel so mechanical server can access thermal server directly
+    appsTunnel = PyroUtil.connectApplications(cConf.mechanicalSolverJobManRec, thermalSolver, sshClient=cConf.sshClient, options=cConf.options )
+
 except Exception as e:
     logger.exception(e)
 else:
@@ -35,17 +38,24 @@ else:
         mf = mechanicalSolverAppRec.getJobManager().getPyroFile(mechanicalSolverAppRec.getJobID(), "input.in", 'w')
         PyroUtil.downloadPyroFile("inputM.in", mf)
 
-
-
         logger.info("Solving thermal problem on server " + thermalSolverSignature)
         thermalSolver.solveStep(None)
-        temperatureField = thermalSolver.getField(FieldID.FID_Temperature, 0.0)
-        #
-        mechanicalSolver.setField(temperatureField)
+        #Get field's uri from thermal application and send it to mechanical application. This prevents copying data to Demo10's computer,
+        #mechanical solver will use direct access to thermal field.
+        uri = thermalSolver.getFieldURI(FieldID.FID_Temperature, 0.0)
+        #logger.info("URI of thermal problem is " + str(uri) )
+        field = cConf.cfg.Pyro4.Proxy(uri)
+        mechanicalSolver.setField(field)
+
+        #Original version copied data to Demo10's computer and then to thermal solver. This can be time/memory consuming for large data
+        #temperatureField = thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        #mechanicalSolver.setField(temperatureField)
+
         mechanicalSolver.solveStep(None)
         displacementField = mechanicalSolver.getField(FieldID.FID_Displacement, 0.0)
         # save results as vtk
-        temperatureField.field2VTKData().tofile('temperaturField')
+        temperatureField = thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        temperatureField.field2VTKData().tofile('temperatureField')
         displacementField.field2VTKData().tofile('displacementField')
 
         #terminate
@@ -56,6 +66,6 @@ else:
 finally:
     if thermalSolverAppRec: thermalSolverAppRec.terminateAll()
     if mechanicalSolverAppRec: mechanicalSolverAppRec.terminateAll()
-
+    if appsTunnel: appsTunnel.terminate()
 
 

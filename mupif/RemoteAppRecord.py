@@ -41,6 +41,17 @@ class RemoteAppRecord (object):
         :return: Instance of Application
         """
         return self.app[num]
+    
+    def getApplicationUri(self, num=0):
+        """
+        Returns application uri
+
+        :param int num: number of application, default 0
+        :return: uri
+        """
+        return self.app[num].getURI()
+
+
     def getJobManager (self):
         return self.jobMan
 

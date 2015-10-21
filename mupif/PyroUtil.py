@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from builtins import str
 import os
+import re
 # 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2014 Borek Patzak
@@ -72,7 +73,7 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     #locate nameserver
     try:
         ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
-        msg = "Connected to NameServer on %s:%s. Pyro4 version on this computer is %s" %(nshost, nsport, Pyro4.constants.VERSION)
+        msg = "Connected to NameServer on %s:%s. Pyro4 version on your localhost is %s" %(nshost, nsport, Pyro4.constants.VERSION)
         logger.debug(msg)
     except Exception:
         msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Do you have the correct hmac_key (password is now %s)? Exiting." %(nshost, nsport, Pyro4.constants.VERSION, hkey)
@@ -181,7 +182,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     daemon.requestLoop()
 
 
-def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost=''):
+def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
     """
     Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux
 
@@ -199,24 +200,29 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
 
     if sshHost =='':
         sshHost = remoteHost
-    if userName =='a':
+    if userName =='':
         userName = os.getlogin()
+    
+    direction = 'L'
+    if Reverse == True:
+        direction = 'R'
+
     #use direct system command. Paramiko or sshtunnel do not work.
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
-        cmd = 'ssh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost, options)
+        cmd = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='autossh':
-        cmd = 'autossh -L %d:%s:%d %s@%s -N %s' % (localPort, remoteHost, remotePort, userName, sshHost, options)
+        cmd = 'autossh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.debug("Creating autossh tunnel via command: " + cmd)
     elif 'putty' in sshClient.lower():
         #need to create a public key *.ppk using puttygen. It can be created by importing Linux private key. The path to that key is given as -i option
-        cmd = '%s -L %d:%s:%d %s@%s -N %s' % (sshClient, localPort, remoteHost, remotePort, userName, sshHost, options)
+        cmd = '%s -%s %d:%s:%d %s@%s -N %s' % (direction, sshClient, localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-        cmd1 = 'ssh -L %d:%s:%d %s@%s' % (localPort, remoteHost, remotePort, userName, sshHost)
-        cmd2 = 'putty.exe -L %d:%s:%d %s@%s %s' % (localPort, remoteHost, remotePort, userName, sshHost, options)
+        cmd1 = 'ssh -%s %d:%s:%d %s@%s' % (direction, localPort, remoteHost, remotePort, userName, sshHost)
+        cmd2 = 'putty.exe -%s %d:%s:%d %s@%s %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
         logger.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
         return None
     else:
@@ -231,6 +237,44 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     time.sleep(1.0)
 
     return tunnel 
+
+def connectApplications(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
+    """
+    Create a reverse ssh tunnel so one server application can connect to another one.
+    
+    Typically, steering_computer creates connection to server1 and server2. However, there
+    is no direct link server1-server2 which is needed for Field operations (getField, setField).
+    Assume a working connection server1-steering_computer on NAT port 6000. This function creates
+    a tunnel steering_computer:6000 and server2:6000 so server2 has direct access to server1's data.
+
+        steering_computer
+          /           \
+    server1          server2
+
+
+    :param tuple fromSolverAppRec: A tuple defining userName, sshHost
+    :param Application toApplication: Application object to which we want to create a tunnel
+    :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
+    :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
+    
+    :return: Instance of subprocess.Popen running the tunneling command
+    :rtype: subprocess.Popen
+    """
+    uri = toApplication.getURI()
+    natPort = getNATfromUri( uri )
+    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromSolverAppRec[3], localPort=natPort, remotePort=natPort, sshClient=sshClient, options=options, sshHost=fromSolverAppRec[2], Reverse=True)
+    return tunnel
+
+def getNATfromUri (uri):
+    """
+    Return NAT port from URI, e.g. return 5555 from string PYRO:obj_b178eed8e1994135adf9864725f1d50f@127.0.0.1:5555
+
+    :param str uri: URI from an object
+
+    :return: NAT port number
+    :rtype: int
+    """
+    return int(re.search('(\d+)$', str(uri)).group(0))
 
 
 def getUserInfo ():

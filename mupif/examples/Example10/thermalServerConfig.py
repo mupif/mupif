@@ -7,7 +7,7 @@ import demoapp
 nshost = cfg.nshost #NameServer - do not change
 nsport = cfg.nsport #NameServer's port - do not change
 hkey = cfg.hkey #Password for accessing nameServer and applications
-nathost =cfg.serverNathost
+nathost = cfg.serverNathost
 
 hostUserName=cfg.serverUserName#User name for ssh connection
 server = cfg.server#IP of server

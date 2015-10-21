@@ -17,6 +17,9 @@ sshHost = cfg.sshHost
 # jobManager records to be used in scenario
 # format: (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName)
 thermalSolverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, hostUserName, 'Mupif.JobManager@ThermalSolverDemo')
+
+#cfg.server = '147.32.130.137'
+
 mechanicalSolverJobManRec = (cfg.serverPort+1, cfg.serverNatport+1, cfg.server, hostUserName, 'Mupif.JobManager@MechanicalSolverDemo')
 
 
