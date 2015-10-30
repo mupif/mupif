@@ -55,6 +55,7 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
         logger.info("Test PASSED")
     else:
         logger.info("Test FAILED")
+        sys.exit(1)
 
     serverApp.terminate();
     logger.info("Time consumed %f s" % (timeTime.time()-start))

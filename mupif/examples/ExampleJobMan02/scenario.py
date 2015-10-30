@@ -36,6 +36,7 @@ else:
             print ("Test OK")
         else:
             print ("Test FAILED")
+            sys.exit(1)
 
 
 finally:

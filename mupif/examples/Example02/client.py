@@ -75,6 +75,7 @@ if (abs(prop.getValue()-5.05) <= 1.e-4):
     print ("Test OK")
 else:
     print ("Test FAILED")
+    sys.exit(1)
 
 
 # terminate

@@ -97,6 +97,7 @@ if (abs(prop.getValue()-0.55) <= 1.e-4):
     print ("Test OK")
 else:
     print ("Test FAILED")
+    sys.exit(1)
 
 # terminate
 app1.terminate();

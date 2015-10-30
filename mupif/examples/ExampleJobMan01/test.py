@@ -46,10 +46,12 @@ else:
             print ("Test OK")
         else:
             print ("Test FAILED")
+            sys.exit(1)
 
     else:
         logger.debug("Connection to server failed, exiting")
         print ("Test FAILED")
+        sys.exit(1)
 
 finally:
     if solverAppRec: solverAppRec.terminateAll()

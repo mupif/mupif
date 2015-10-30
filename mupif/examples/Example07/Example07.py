@@ -50,6 +50,7 @@ if (abs(value[0]-22.0) <= 1.e-4):
     print ("Test OK")
 else:
     print ("Test FAILED")
+    sys.exit(1)
 
 
 # terminate
