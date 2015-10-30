@@ -63,7 +63,7 @@ class Field(object):
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalear, vector, tensor)
         :param obj units: Units of the field values
-        :param float time: Time associated with filed values
+        :param float time: Time associated with field values
         :param tuple values: Field values (format dependent on a particular field type)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
