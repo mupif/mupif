@@ -1,7 +1,7 @@
 # this will raise ImportError right away, if oofem wrapper is not found
 import liboofem
 
-from mupif import Cell, Field, FieldID, Mesh
+from . import Cell, Field, FieldID, Mesh
 
 class OofemReader(object):
     # shorthands
@@ -107,10 +107,7 @@ class OofemReader(object):
         val=liboofem.FloatArray()
         field.evaluateAtDman(val,dom.giveDofManager(1),valueModeType,timestep)
         valueType={1:ValueType.Scalar,3:ValueType.Vector,9:ValueType.Tensor}.get(len(val))
-        if len(val)==1: valueType=ValueType.Scalar
-        elif len(val)==3: valueType=ValueType.Vector
-        elif len(val)==9: valueType=ValueType.Tensor
-        else: raise ValueError("Unhandled value length in field: %d (should be 1, 3 or 9)"%(len(val)))
+        if not valueType: raise ValueError("Unhandled value length in field: %d (should be 1, 3 or 9)"%(len(val)))
         checkLen=len(val)
 
         # create empty field, values set in the loop below
