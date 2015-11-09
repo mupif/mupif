@@ -238,7 +238,7 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
 
     return tunnel 
 
-def connectApplications(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
+def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
     """
     Create a reverse ssh tunnel so one server application can connect to another one.
     
@@ -407,14 +407,14 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
 
 from . import PyroFile
-def uploadPyroFile (filename, pyroFile):
+def uploadPyroFile (newLocalFileName, pyroFile):
     """
-    Uploads the given file (specified by given file name) into PyroFile handle.
+    We are on a client. A remote server uploads its existing pyroFile handle to a newLocalFileName.
 
-    :param str filename: path to source file name
-    :param PyroFile pyroFile: representation of target (remote) file 
+    :param str newLocalFileName: path to a new local file on a client.
+    :param PyroFile pyroFile: representation of existing remote server's file
     """
-    file = open (filename, 'wb')
+    file = open (newLocalFileName, 'wb')
     data = pyroFile.getChunk()
     while data:
         file.write(data)
@@ -422,18 +422,25 @@ def uploadPyroFile (filename, pyroFile):
     pyroFile.close()
     file.close()
 
-def downloadPyroFile (filename, pyroFile, size = 1024):
-    """
-    Downloads the (remote) file, represented by given pyroFile into local file (determined by target path)
+def uploadPyroFileFromServer (newLocalFileName, pyroFile):
+    uploadPyroFile (newLocalFileName, pyroFile)
 
-    :param str filename: path to target file
-    :param PyroFile pyroFile: represenation of source (remote) file
+
+def downloadPyroFile (clientFileName, pyroFile, size = 1024):
+    """
+    We are on a client. A remote server downloads existing clientFileName file into server's pyroFile handle. Path to server's pyroFile handle is determined from target path.
+
+    :param str clientFileName: path to existing local file on a client where we are
+    :param PyroFile pyroFile: represenation of remote file, this file will be created
     :param int size: optional chunk size. The data are read and written in byte chunks of this size 
     """
-    file = open (filename, 'rb')
+    file = open (clientFileName, 'rb')
     data = file.read(size)
     while data:
         pyroFile.setChunk(data)
         data = file.read(size)
     file.close()
     pyroFile.close()
+
+def downloadPyroFileOnServer (clientFileName, pyroFile, size = 1024):
+    downloadPyroFile (clientFileName, pyroFile, size)

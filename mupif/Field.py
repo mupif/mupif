@@ -114,6 +114,13 @@ class Field(object):
         """
         return self.fieldID
 
+    def getTime(self):
+        """
+        :return: Time of field data
+        :rtype: float
+        """
+        return self.time
+
     def evaluate(self, positions, eps=0.001):
         """
         Evaluates the receiver at given spatial position(s).

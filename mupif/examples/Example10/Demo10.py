@@ -20,7 +20,7 @@ try:
     mechanicalSolver = mechanicalSolverAppRec.getApplication()
 
     #Create a reverse tunnel so mechanical server can access thermal server directly
-    appsTunnel = PyroUtil.connectApplications(cConf.mechanicalSolverJobManRec, thermalSolver, sshClient=cConf.sshClient, options=cConf.options )
+    appsTunnel = PyroUtil.connectApplicationsViaClient(cConf.mechanicalSolverJobManRec, thermalSolver, sshClient=cConf.sshClient, options=cConf.options )
 
 except Exception as e:
     logger.exception(e)
