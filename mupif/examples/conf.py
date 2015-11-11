@@ -13,8 +13,8 @@ import logging
 
 #NAME SERVER
 #IP/name of a name server
-#nshost = '127.0.0.1'
-nshost = '147.32.130.137'
+nshost = '127.0.0.1'
+#nshost = '147.32.130.137'
 #Port of name server
 nsport = 9090
 #Password for accessing nameServer and applications

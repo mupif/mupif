@@ -10,11 +10,18 @@ import importlib
 
 
 def usage():
-    print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile")
+    print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile")
 
 def main():
     #Results are printed through a logger only - communication with this subprocess is peculiar
-    logger = logging.getLogger()
+    formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+    formatTime = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(filename='JobMan2cmd.log',filemode='w',format=formatLog,level=logging.DEBUG)
+    logger = logging.getLogger()#create a logger
+    ch = logging.StreamHandler()
+    ch.setFormatter(logging.Formatter(formatLog, formatTime))
+    logger.addHandler(ch)
+    
     logger.info ("JobMan2cmd: " + str(sys.argv[1:]))
 
     try:
@@ -27,6 +34,10 @@ def main():
 
     daemonPort = None
     jobID = None
+    natPort = None
+    configName = None
+    mupif = None
+    moduleDir = None
 
     for o, a in opts:
         if o in ("-p", "--port"):
@@ -61,11 +72,11 @@ def main():
         if moduleDir:
             sys.path.append(moduleDir)
         conf = importlib.import_module(configName)
-        mupif= importlib.import_module('mupif')
+        mupif = importlib.import_module('mupif')
     else:
         logger.error('missing options -c specifying server config file')
-
-
+        exit(0)
+    
     #Results are printed through a logger only - communication with this subprocess is peculiar
     logger = logging.getLogger()
 
