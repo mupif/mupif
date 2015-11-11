@@ -83,7 +83,7 @@ class OofemReader(object):
         self.mesh.setup(verts,cells)
         return self.mesh
 
-    def makeField(fieldID):
+    def makeField(fieldID,timestep=None,valueModeType=liboofem.ValueModeType.VM_Total,units=None):
         '''Return field object for the model.
 
         TODO: pass timestep (uses current step at the moment), valueModeType and units as arguments?
@@ -92,10 +92,11 @@ class OofemReader(object):
         :return: Field
         :rtype: mupif.Field.Field
         '''
-        # XXX: should be user-settable?
-        timestep=model.giveCurrentStep()
-        valueModeType=liboofem.ValueModeType.VM_Total
-        units=None
+        if timestep is None: timestep=model.giveCurrentStep()
+        elif not isinstance(timestep,liboofem.TimeStep): raise ValueError("timestep must be a liboofem.TimeStep.")
+
+        # user can give units in which oofem field is represented
+        if units: raise RuntimeError("units not yet implemented.")
 
         dom=self.domain
         oofemFieldInfo=fieldTypeMap.get(fieldID)
