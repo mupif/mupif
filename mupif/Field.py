@@ -182,7 +182,7 @@ class Field(object):
         else:
             #no source cell found
             print ("Field::evaluate - no source cell found for position ", position)
-            raise ValueError
+            raise ValueError("Field::evaluate - no source cell found for position "+str(position))
 
     def giveValue(self, componentID):
         """

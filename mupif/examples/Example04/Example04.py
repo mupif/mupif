@@ -9,7 +9,7 @@ from builtins import range
 
 import sys
 sys.path.append('../../..')
-
+import mupif
 from mupif import *
 
 def main():
@@ -40,18 +40,19 @@ def main():
     # evaluate field at given point
     position=(20., 7.5, 0.0)
     value=field1.evaluate(position)
-    print ("Field1 value at position ", position, " is ", value)
+    mupif.log.debug("Field1 value at position ", position, " is ", value)
     position=(20., 7.5, 0.0)
     value=field2.evaluate(position)
-    print ("Field2 value at position ", position, " is ", value)
+    mupif.log.debug("Field2 value at position ", position, " is ", value)
 
     field1.field2VTKData().tofile('example1')
     field2.field2VTKData().tofile('example2')
     
     if (abs(value[0]-273.0) <= 1.e-4):
-        print ("Test OK")
+        mupif.log.info("Test OK")
     else:
-        print ("Test FAILED")
+        mupif.log.error("Test FAILED")
+        import sys
         sys.exit(1)
     
 

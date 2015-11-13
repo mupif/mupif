@@ -5,6 +5,7 @@ import sys
 sys.path.append('../../..')
 sys.path.append('.')
 import Micress
+import mupif
 from mupif import FieldID
 from mupif import TimeStep
 from mupif import APIError
@@ -25,7 +26,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
+    mupif.log.debug("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -36,20 +37,20 @@ while (abs(time -targetTime) > 1.e-6):
         field = app1.getField(FieldID.FID_Temperature, istep)
 
     except APIError.APIError as e:
-        print ("Following API error occurred:",e)
-        break
+        mupif.log.error("Following API error occurred:",e)
+        sys.exit(1)
 # evaluate field at given point
 position=(0.0, 0.0, 0.0)
 value=field.evaluate(position)
 
 # Result
-print ("Field value at position ", position, " is ", value)
+mupif.log.debug("Field value at position ", position, " is ", value)
 field.field2VTKData().tofile('example2')
 
 if (abs(value[0]-22.0) <= 1.e-4):
-    print ("Test OK")
+    mupif.log.info("Test OK")
 else:
-    print ("Test FAILED")
+    mupif.log.error("Test FAILED")
     sys.exit(1)
 
 

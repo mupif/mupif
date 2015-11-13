@@ -4,10 +4,9 @@ import os,sys
 sys.path.append('..')
 import conf as cfg
 from mupif import *
-
+import mupif
 import time as timeTime
-import logging
-logger = logging.getLogger()
+
 
 tunnel = None
 #use numerical IP values only (not names, sometimes they do not work)
@@ -27,13 +26,13 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
 
     try:
         appsig=serverApp.getApplicationSignature()
-        logger.info("Working application on server " + appsig)
+        mupif.log.debug("Working application on server " + appsig)
     except Exception as e:
-        logger.debug("Connection to server failed, exiting")
-        logger.exception(e)
-        sys.exit(e)
+        mupif.log.error("Connection to server failed, exiting")
+        mupif.log.exception(e)
+        sys.exit(1)
 
-    logger.info("Generating test sequence ...")
+    mupif.log.info("Generating test sequence ...")
 
     for i in range (10):
         time = i
@@ -45,24 +44,24 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
             serverApp.solveStep(istep)
 
         except APIError.APIError as e:
-            logger.exception("Following API error occurred:" + e)
+            mupif.log.exception("Following API error occurred:" + e)
             break
 
-    logger.info("Done")
+    mupif.log.debug("Done")
     prop = serverApp.getProperty(PropertyID.PID_CumulativeConcentration, i)
-    logger.info("Received " + str(prop.getValue()) + " expected " + str(expectedValue) )
+    mupif.log.debug("Received " + str(prop.getValue()) + " expected " + str(expectedValue) )
     if (prop.getValue() == expectedValue):
-        logger.info("Test PASSED")
+        mupif.log.info("Test PASSED")
     else:
-        logger.info("Test FAILED")
+        mupif.log.error("Test FAILED")
         sys.exit(1)
 
     serverApp.terminate();
-    logger.info("Time consumed %f s" % (timeTime.time()-start))
-    logger.info("Ping test finished")
+    mupif.log.debug("Time consumed %f s" % (timeTime.time()-start))
+    mupif.log.debug("Ping test finished")
 
 finally:
-    logger.debug("Closing ssh tunnel")
+    mupif.log.debug("Closing ssh tunnel")
     if tunnel:
         tunnel.terminate()
 

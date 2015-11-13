@@ -29,7 +29,12 @@ __version__ = '0.11.10'
 __author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
 
 #List all submodules, so they can all be imported: from mupif import *
-__all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile']
+__all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile','log']
+
+# mupif log, used e.g. in examples
+import logging
+logging.basicConfig() # setup root logger, if not yet done
+log=logging.getLogger('mupif')
 
 ## temporarily disabled (does not work on travis, even though future is installed there??)
 ## more helpful error message

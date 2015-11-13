@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 import sys
 sys.path.append('../../..')
-
+import mupif
 from mupif import *
 
 class application1(Application.Application):
@@ -84,19 +84,19 @@ while (abs(time -targetTime) > 1.e-6):
         app2.solveStep(istep)
         # get the averaged concentration
         prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-        print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
+        mupif.log.debug("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
         
 
         
     except APIError.APIError as e:
-        print ("Following API error occurred:",e)
-        print ("Test FAILED")
-        break
+        mupif.log.error("mupif.APIError occurred:",e)
+        mupif.log.error("Test FAILED")
+        raise
 
 if (abs(prop.getValue()-0.55) <= 1.e-4):
-    print ("Test OK")
+    mupif.log.info("Test OK")
 else:
-    print ("Test FAILED")
+    mupif.log.error("Test FAILED")
     sys.exit(1)
 
 # terminate

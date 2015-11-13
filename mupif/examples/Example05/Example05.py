@@ -5,6 +5,7 @@ import sys
 sys.path.append('../../..')
 sys.path.append('.')
 import Celsian
+import mupif
 from mupif import FieldID
 from mupif import TimeStep
 from mupif import APIError
@@ -25,7 +26,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
+    mupif.log.debug("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -36,7 +37,7 @@ while (abs(time -targetTime) > 1.e-6):
         field = app1.getField(FieldID.FID_Temperature, istep)
         
     except APIError.APIError as e:
-        print ("Following API error occurred:",e)
+        mupif.log.error("Following API error occurred:",e)
         break
 # evaluate field at given point
 position=(0.0, 0.0, 0.0)
@@ -47,9 +48,9 @@ print ("Field value at position ", position, " is ", value)
 
 
 if (abs(value[0]-728.13) <= 1.e-4):
-    print ("Test OK")
+    mupif.log.info("Test OK")
 else:
-    print ("Test FAILED")
+    mupif.log.error("Test FAILED")
     sys.exit(1)
 
 

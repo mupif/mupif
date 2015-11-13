@@ -6,7 +6,7 @@ import sys
 sys.path.append('../../..')
 
 from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
-
+import mupif
 from mupif import *
 
 class application1(Application.Application):
@@ -46,7 +46,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
+    mupif.log.debug("Step: ", timestepnumber, time, dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
     
@@ -59,21 +59,21 @@ while (abs(time -targetTime) > 1.e-6):
     V = PQ(v.getValue(), v.getUnits())
 
     velocity = V.inBaseUnits()
-    print(velocity)
+    mupif.log.debug(velocity)
 
     #can be converted in km/s?
-    print(V.isCompatible('km/s'))
+    mupif.log.debug(V.isCompatible('km/s'))
 
     #can be converted in km?
-    print(V.isCompatible('km'))
+    mupif.log.debug(V.isCompatible('km'))
     
     # convert in km/h
     V.convertToUnit('km/h') 
-    print(V)
+    mupif.log.debug(V)
 
     #give only the value
     value = float(str(V).split()[0])
-    print(value)
+    mupif.log.debug(value)
 
     # terminate
 app1.terminate();

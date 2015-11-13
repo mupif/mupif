@@ -2,9 +2,10 @@ from __future__ import print_function
 from builtins import str
 import sys
 sys.path.append('../../..')
- 
+import mupif
 from mupif import *
 import os
+
 
 class application1(Application.Application):
     """
@@ -78,7 +79,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    print ("Step: ", timestepnumber, time, dt)
+    mupif.log.debug("Step: ",timestepnumber,time,dt)
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -94,16 +95,16 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        print ("Following API error occurred:",e)
+        mupif.log.error("Following API error occurred:",e)
         break
 
 prop = app3.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-print  ("Result: ", prop.getValue())
+mupif.log.debug("Result: ", prop.getValue())
 
 if (abs(prop.getValue()-5.05) <= 1.e-4):
-    print ("Test OK")
+    mupif.log.info("Test OK")
 else:
-    print ("Test FAILED")
+    mupif.log.error("Test FAILED")
     sys.exit(1)
 
 

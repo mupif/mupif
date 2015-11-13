@@ -8,7 +8,7 @@ import os, sys
 sys.path.append('..')
 import conf as cfg
 from mupif import *
-logger = cfg.logging.getLogger()
+import mupif
 
 class application1(Application.Application):
     """
@@ -50,7 +50,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    logger.info("Step: %d %f %f" % (timestepnumber, time, dt) )
+    mupif.log.debug("Step: %d %f %f" % (timestepnumber, time, dt) )
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -65,16 +65,16 @@ while (abs(time -targetTime) > 1.e-6):
         app2.solveStep(istep)
 
     except APIError.APIError as e:
-        logger.error("Following API error occurred: %s" % e )
+        mupif.log.error("Following API error occurred: %s" % e )
         break
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-logger.info("Result: %f" % prop.getValue() )
+mupif.log.debug("Result: %f" % prop.getValue() )
 
 if (abs(prop.getValue()-5.05) <= 1.e-4):
-    print ("Test OK")
+    mupif.log.info("Test OK")
 else:
-    print ("Test FAILED")
+    mupif.log.error("Test FAILED")
     sys.exit(1)
 
 
