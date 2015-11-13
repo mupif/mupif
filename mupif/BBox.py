@@ -90,17 +90,16 @@ class BBox(object):
         nsd = len(self.coords_ll)
         if isinstance(entity, BBox):
             # Merge with given bbox
-            for i in range(nsd):
-                self.coords_ll[i]=min(self.coords_ll[i], entity.coords_ll[i])
-                self.coords_ur[i]=max(self.coords_ur[i], entity.coords_ur[i])
+            self.coords_ll=tuple([min(self.coords_ll[i],entity.coords_ll[i]) for i in range(nsd)])
+            self.coords_ur=tuple([max(self.coords_ur[i],entity.coords_ur[i]) for i in range(nsd)])
         else:
             # Merge with given coordinates
-            for i in range(nsd):
-                self.coords_ll[i]=min(self.coords_ll[i], entity[i])
-                self.coords_ur[i]=max(self.coords_ur[i], entity[i])
+            self.coords_ll=tuple([min(self.coords_ll[i],entity[i]) for i in range(nsd)])
+            self.coords_ur=tuple([max(self.coords_ur[i],entity[i]) for i in range(nsd)])
 
 
 try:
+    raise ImportError
     from minieigen import AlignedBox3
     BBox=AlignedBox3
     BBox.containsPoint=AlignedBox3.contains
