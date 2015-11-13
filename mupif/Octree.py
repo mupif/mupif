@@ -23,7 +23,7 @@
 from __future__ import print_function, division
 from builtins import str, range, object
 
-import math
+import math, itertools
 from . import BBox
 from . import Localizer
 
@@ -61,6 +61,14 @@ class Octant(object):
         self.size   = size
         self.bbox=None
         if debug: print ("Octree init: origin:", origin, "size:", size)
+
+
+    def childrenIJK(self):
+        """
+        :return: iterator over 3-tuples with child indices; functionally equivalent to 3 nested loops, a bit faster and more readable.
+        """
+        return itertools.product(range(self.octree.mask[0]+1),range(self.octree.mask[1]+1),range(self.octree.mask[2]+1))
+
 
     def isTerminal (self):
         """
@@ -124,18 +132,14 @@ class Octant(object):
                     if debug: print ("Octant insert: data limit reached, subdivision")
                     self.divide()
                     for item2 in self.data:
-                        for i in range(self.octree.mask[0]+1):
-                            for j in range(self.octree.mask[1]+1):
-                                for k in range(self.octree.mask[2]+1):
-                                    self.children[i][j][k].insert(item2)
+                        for i,j,k in self.childrenIJK():
+                            self.children[i][j][k].insert(item2)
                     # empty item list (items already inserted into its childrenren)
                     self.data = []
 
             else:
-                for i in range(self.octree.mask[0]+1):
-                    for j in range(self.octree.mask[1]+1):
-                        for k in range(self.octree.mask[2]+1):
-                            self.children[i][j][k].insert(item, itemBBox)
+                for i,j,k in self.childrenIJK():
+                    self.children[i][j][k].insert(item, itemBBox)
 
     def delete (self, item, itemBBox=None):
         """
@@ -150,10 +154,8 @@ class Octant(object):
             if self.isTerminal():
                 self.data.remove(item)
             else:
-                for i in range(self.octree.mask[0]+1):
-                    for j in range(self.octree.mask[1]+1):
-                        for k in range(self.octree.mask[2]+1):
-                            self.children[i][j][k].remove(item, itemBBox)
+                for i,j,k in self.childrenIJK():
+                    self.children[i][j][k].remove(item, itemBBox)
 
     def giveItemsInBBox (self, itemList, bbox):
         """ 
@@ -179,11 +181,9 @@ class Octant(object):
                             itemList.append(i)
             else:
                 if debug: print (tab,"Parent containing bbox found ....", self.giveMyBBox())
-                for i in range(self.octree.mask[0]+1):
-                    for j in range(self.octree.mask[1]+1):
-                        for k in range(self.octree.mask[2]+1):
-                            if debug: print (tab,"  Checking child .....", self.children[i][j][k].giveMyBBox())
-                            self.children[i][j][k].giveItemsInBBox(itemList, bbox)
+                for i,j,k in self.childrenIJK():
+                    if debug: print (tab,"  Checking child .....", self.children[i][j][k].giveMyBBox())
+                    self.children[i][j][k].giveItemsInBBox(itemList, bbox)
 
 
     def evaluate (self, functor):
@@ -199,10 +199,8 @@ class Octant(object):
                 for i in self.data:
                     functor.evaluate(i)
             else:
-                for i in range(self.octree.mask[0]+1):
-                    for j in range(self.octree.mask[1]+1):
-                        for k in range(self.octree.mask[2]+1):
-                            self.children[i][j][k].evaluate(functor)
+                for i,j,k in self.childrenIJK():
+                    self.children[i][j][k].evaluate(functor)
 
     def giveDepth (self):
         """
@@ -210,10 +208,8 @@ class Octant(object):
         """
         depth = math.ceil ( math.log( self.octree.root.size / self.size) / math.log(2.0))
         if not isTerminal():
-            for i in range(self.octree.mask[0]+1):
-                for j in range(self.octree.mask[1]+1):
-                    for k in range(self.octree.mask[2]+1):
-                        depth=max(depth, self.children[i][j][k].giveDepth(itemList, bbox))
+            for i,j,k in self.childrenIJK():
+                depth=max(depth, self.children[i][j][k].giveDepth(itemList, bbox))
         return depth
 
 class Octree(Localizer.Localizer):
@@ -276,3 +272,11 @@ class Octree(Localizer.Localizer):
         return self.root.giveDepth()
 
 
+try:
+    from . import fastOctant
+    # replace with the c++ implementation
+    Octant=fastOctant.Octant
+    print('mupif.fast: using mupif.fastOctant')
+except ImportError:
+    pass
+    # print('mupif.fast: NOT using mupif.fastOctant')
