@@ -306,39 +306,50 @@ class UnstructuredMesh(Mesh):
             return self.vertexOctree
 
     def giveCellLocalizer(self):
-       """
-       :return: Returns the cell localizer.
-       :rtype: Octree
-       """
-       if self.cellOctree: 
-           return self.cellOctree
-       else:
-           # loop over cell bboxes to get bounding box first
-           init=True
-           minc=[]
-           maxc=[]
-           for cell in self.cells():
-               #print "cell bbox:", cell.giveBBox()
-               if init:
-                   minc = [c for c in cell.getBBox().coords_ll]
-                   maxc = [c for c in cell.getBBox().coords_ur]
-                   init=False
-               else:
-                   for i in range(len(cell.getBBox().coords_ll)):
-                       minc[i]=min(minc[i], cell.getBBox().coords_ll[i])
-                       maxc[i]=max(maxc[i], cell.getBBox().coords_ur[i])
+        """
+        :return: Returns the cell localizer.
+        :rtype: Octree
+        """
+        if debug: t0=time.clock()
+        if self.cellOctree: 
+            return self.cellOctree
+        else:
+            # loop over cell bboxes to get bounding box first
+            if debug: print('Start at: ',time.clock()-t0)
 
-       #setup vertex localizer
-       size = max ( y-x for x,y in zip (minc,maxc))
-       mask = [(y-x)>0.0 for x,y in zip (minc,maxc)]
-       self.cellOctree = Octree.Octree(minc, size, mask) 
-       if debug: 
-           t0=time.clock()
-           print ("Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n")
-       for cell in self.cells():
-           self.cellOctree.insert(cell)
-       if debug: print ("done in ", time.clock() - t0, "[s]")
-       return self.cellOctree
+            ## XXX: remove this
+            if 0:
+                init=True
+                minc=[]
+                maxc=[]
+                for cell in self.cells():
+                    #print "cell bbox:", cell.giveBBox()
+                    if init:
+                        minc = [c for c in cell.getBBox().coords_ll]
+                        maxc = [c for c in cell.getBBox().coords_ur]
+                        init=False
+                    else:
+                        for i in range(len(cell.getBBox().coords_ll)):
+                            minc[i]=min(minc[i], cell.getBBox().coords_ll[i])
+                            maxc[i]=max(maxc[i], cell.getBBox().coords_ur[i])
+            else:
+                ccc=self.cells()
+                bb=ccc.__iter__().next().getBBox() # use the first bbox as base
+                for cell in ccc: bb.merge(cell.getBBox()) # extend it with all other cells
+                minc,maxc=bb.coords_ll,bb.coords_ur
+            if debug: print('Cell bbox: ',time.clock()-t0)
+
+        #setup vertex localizer
+        size = max ( y-x for x,y in zip (minc,maxc))
+        mask = [(y-x)>0.0 for x,y in zip (minc,maxc)]
+        self.cellOctree = Octree.Octree(minc, size, mask) 
+        if debug: print('Octree ctor: ',time.clock()-t0)
+        if debug: 
+            print ("Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n")
+        for cell in self.cells():
+            self.cellOctree.insert(cell)
+        if debug: print ("done in ", time.clock() - t0, "[s]")
+        return self.cellOctree
 
     def __buildVertexLabelMap__(self):
         """
