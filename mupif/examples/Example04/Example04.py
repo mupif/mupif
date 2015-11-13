@@ -40,10 +40,10 @@ def main():
     # evaluate field at given point
     position=(20., 7.5, 0.0)
     value=field1.evaluate(position)
-    mupif.log.debug("Field1 value at position ", position, " is ", value)
+    mupif.log.debug("Field1 value at position "+str(position)+" is "+str(value))
     position=(20., 7.5, 0.0)
     value=field2.evaluate(position)
-    mupif.log.debug("Field2 value at position ", position, " is ", value)
+    mupif.log.debug("Field2 value at position "+str(position)+" is "+str(value))
 
     field1.field2VTKData().tofile('example1')
     field2.field2VTKData().tofile('example2')

@@ -32,8 +32,8 @@ __author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile','log']
 
 # mupif log, used e.g. in examples
-import logging
-logging.basicConfig() # setup root logger, if not yet done
+import logging,os
+logging.basicConfig(level=logging.WARN if 'TRAVIS' in os.environ else logging.DEBUG) # setup root logger, if not yet done
 log=logging.getLogger('mupif')
 
 ## temporarily disabled (does not work on travis, even though future is installed there??)
