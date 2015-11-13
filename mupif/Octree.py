@@ -234,6 +234,10 @@ class Octree(Localizer.Localizer):
         :param tuple mask: boolean tuple, where true values determine the coordinate indices in which octree octants are subdivided
         """
         self.mask = mask
+        # c++ fast implementation does not use mask; issue a warning to see if someone needs it at all
+        # if we support it, it will be stored in every octant, since we don't store Octree pointer there
+        if min(mask)==0 and 'mupif.fastOctant' in sys.modules:
+            print('WARN: mupif.fastOctant.Octant assumes non-zero octree mask everywhere (mask='+str(mask)+').')
         self.root = Octant (self, None, origin, size)
 
     def insert (self, item):
