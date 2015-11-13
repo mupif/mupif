@@ -59,6 +59,7 @@ class Octant(object):
         self.parent = parent
         self.origin = origin
         self.size   = size
+        self.bbox=None
         if debug: print ("Octree init: origin:", origin, "size:", size)
 
     def isTerminal (self):
@@ -89,6 +90,7 @@ class Octant(object):
         :return: Receiver's BBox
         :rtype: BBox
         """
+        if self.bbox: return self.bbox
         # create self bbox
         cc = [0,0,0]
         for i in range(3):
@@ -96,7 +98,8 @@ class Octant(object):
                 cc[i] = self.origin[i]+self.size
             else:
                 cc[i]=self.origin[i]
-        return BBox.BBox (self.origin, tuple(cc)) # create self bbox
+        self.bbox=BBox.BBox (self.origin, tuple(cc)) # create self bbox
+        return self.bbox
 
     def containsBBox (self, _bbox):
         """ 

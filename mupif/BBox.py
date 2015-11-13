@@ -98,3 +98,18 @@ class BBox(object):
             for i in range(nsd):
                 self.coords_ll[i]=min(self.coords_ll[i], entity[i])
                 self.coords_ur[i]=max(self.coords_ur[i], entity[i])
+
+
+try:
+    from minieigen import AlignedBox3
+    BBox=AlignedBox3
+    BBox.containsPoint=AlignedBox3.contains
+    BBox.merge=AlignedBox3.extend
+    BBox.coords_ll=property(lambda self: self.min, lambda self,val: setattr(self,'min',val))
+    BBox.coords_ur=property(lambda self: self.max, lambda self,val: setattr(self,'max',val))
+    # newer minieigen version
+    if hasattr(AlignedBox3,'intersects'): pass
+    # older minieigen version
+    else: BBox.intersects=lambda self,b: not self.intersection(b).empty()
+    print('Using minieigen.AlignedBox as mupif.BBox.BBox with compatibility layer')
+except ImportError: pass

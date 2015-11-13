@@ -111,6 +111,13 @@ class Cell(object):
         :return: Returns a bounding box of the receiver
         :rtype: BBox
         """
+
+        # workaround for meshes pickled with previous versions; can be removed at some point
+        if not hasattr(self,'bbox'): return self.bbox=None
+
+        if self.bbox: return self.bbox
+
+        # FIXME: this is a mess, should be rewritten
         init=True
         try:
             for vertex in self.vertices:
@@ -127,7 +134,8 @@ class Cell(object):
             print ("getBBox failed: cell-no: ", self.number, "vertices: ", self.vertices, "vertex: ", vertex)
             exit (1)
 
-        return BBox.BBox (tuple(min_coords), tuple(max_coords))
+        self.bbox=BBox.BBox (tuple(min_coords), tuple(max_coords))
+        return self.bbox
 
     def getTransformationJacobian(self, coords):
         """
