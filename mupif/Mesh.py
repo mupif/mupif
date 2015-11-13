@@ -334,7 +334,7 @@ class UnstructuredMesh(Mesh):
                             maxc[i]=max(maxc[i], cell.getBBox().coords_ur[i])
             else:
                 ccc=self.cells()
-                bb=ccc.__iter__().next().getBBox() # use the first bbox as base
+                bb=ccc.__iter__().__next__().getBBox() # use the first bbox as base
                 for cell in ccc: bb.merge(cell.getBBox()) # extend it with all other cells
                 minc,maxc=bb.coords_ll,bb.coords_ur
             if debug: print('Cell bbox: ',time.clock()-t0)
