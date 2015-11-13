@@ -234,13 +234,11 @@ class Octree(Localizer.Localizer):
         :param tuple mask: boolean tuple, where true values determine the coordinate indices in which octree octants are subdivided
         """
         self.mask = mask
+        # use fastOctant only for 3d, until it is verified to work in 1d/2d as well
         import sys
-        # c++ fast implementation does not use mask; issue a warning to see if someone needs it at all
-        # if we support it, it will be stored in every octant, since we don't store Octree pointer there
-        if min(mask)==0 and 'mupif.fastOctant' in sys.modules:
-            # print('WARN: mupif.fastOctant.Octant assumes non-zero octree mask everywhere (mask='+str(mask)+').')
-            log.info('mupif.fastOctant.Octant not yet implemented for 2D and 1D (mask=%s), falling back to the python implementation.'%(str(mask)))
-            self.root=Octant_Python(self,None,origin,size)
+        if 'mupif.fastOctant' in sys.modules and min(mask)>0:
+            print('mupif.fast: using mupif.fastOctant')
+            self.root=fastOctant.Octant(self,None,origin,size)
         else:
             self.root = Octant (self, None, origin, size)
 
@@ -281,12 +279,8 @@ class Octree(Localizer.Localizer):
 
 
 try:
+    # this will be used by Octree ctor if necessary
     from . import fastOctant
-    # keep the old implementation when masks are used
-    Octant_Python=Octant
-    # replace with the c++ implementation
-    Octant=fastOctant.Octant
-    print('mupif.fast: using mupif.fastOctant')
 except ImportError:
     pass
     # print('mupif.fast: NOT using mupif.fastOctant')
