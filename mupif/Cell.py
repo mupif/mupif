@@ -113,7 +113,7 @@ class Cell(object):
         """
 
         # workaround for meshes pickled with previous versions; can be removed at some point
-        if not hasattr(self,'bbox'): return self.bbox=None
+        if not hasattr(self,'bbox'): self.bbox=None
 
         if self.bbox: return self.bbox
 
