@@ -107,9 +107,8 @@ try:
     BBox.merge=AlignedBox3.extend
     BBox.coords_ll=property(lambda self: self.min, lambda self,val: setattr(self,'min',val))
     BBox.coords_ur=property(lambda self: self.max, lambda self,val: setattr(self,'max',val))
-    # newer minieigen version
-    if hasattr(AlignedBox3,'intersects'): pass
-    # older minieigen version
-    else: BBox.intersects=lambda self,b: not self.intersection(b).empty()
-    print('Using minieigen.AlignedBox as mupif.BBox.BBox with compatibility layer')
-except ImportError: pass
+    BBox.intersects=lambda self,b: not self.intersection(b).empty()
+    print('mupif.fast: using minieigen.AlignedBox3')
+except ImportError:
+    pass
+    # print('mupif.fast: NOT using minieigen.AlignedBox3')
