@@ -34,6 +34,19 @@ for line in inFile:
         #print author[0]
 inFile.close()
 
+
+# enable useCxx to use experimental and optional mupif.fastOctant module (Linux-only)
+useCxx=False
+
+# punish those running Windows (wouldn't work anyway)
+if useCxx and sys.platform=='win32': raise RuntimeError('useCxx is not supported under Windows.')
+
+if not useCxx: ext_modules=[]
+else:
+    from setuptools import Extension
+    ext_modules=[Extension('mupif.fastOctant',sources=['mupif/fastOctant.cpp'],libraries=['boost_python-py%d%d'%(sys.version_info[0],sys.version_info[1])],include_dirs=['/usr/include/eigen3'],define_macros=[],extra_compile_args=['-std=c++11'])]
+
+
 setup(name='mupif',
       version=version[0],
       description='Mupif platform for multiscale/multiphysics modeling',
@@ -48,11 +61,12 @@ setup(name='mupif',
       install_requires=['numpy', 'scipy', 'setuptools', 'pyvtk', 'config', 'future>=0.15', 'Pyro4==4.39'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
-	  entry_points={
+      entry_points={
           'console_scripts': ['jobMan2cmd = mupif.tools.JobMan2cmd:main',
                               'jobManStatus = mupif.tools.jobManStatus:main',
                               'jobManTest = mupif.tools.jobManTest:main',
                               'startMupifNameserver = mupif.tools.nameserver:main']
-      }
-      )
+      },
+      ext_modules=ext_modules,
+)
 

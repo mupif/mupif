@@ -69,6 +69,14 @@ priviledges by default. To uninstall, use ``$ pip freeze``  and then something l
 ``$ pip uninstall mupif``.
 
 
+### mupif.fast
+Some operations in mupif can be accelerated by using compiled modules. All such features will be enabled automatically if detected, no user interaction is necessary. They are collectivelly called ``mupif.fast``.
+
+1. [minieigen](https://pypi.python.org/pypi/minieigen) module will be used for faster bounding-box implementation. 
+
+2. Experimental ``mupif.fastOctant`` will be compiled if ``useCxx=True`` is manually set in ``setup.py`` (Linux-only). The compilation requires ``boost_python`` and [Eigen](http://eigen.tuxfamily.org>); runtime requires minieigen as in the previous point.
+
+
 Bugs
 -----
 
