@@ -99,7 +99,6 @@ class BBox(object):
 
 
 try:
-    raise ImportError
     from minieigen import AlignedBox3
     BBox=AlignedBox3
     BBox.containsPoint=AlignedBox3.contains
