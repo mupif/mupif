@@ -26,7 +26,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    mupif.log.debug("Step: ", timestepnumber, time, dt)
+    mupif.log.debug("Step: %g %g %g "%(timestepnumber, time, dt))
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -44,7 +44,7 @@ position=(0.0, 0.0, 0.0)
 value=field.evaluate(position)
 
 # Result
-mupif.log.debug("Field value at position ", position, " is ", value)
+mupif.log.debug("Field value at position "+str(position)+" is "+str(value))
 field.field2VTKData().tofile('example2')
 
 if (abs(value[0]-22.0) <= 1.e-4):

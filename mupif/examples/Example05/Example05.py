@@ -26,7 +26,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    mupif.log.debug("Step: ", timestepnumber, time, dt)
+    mupif.log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 

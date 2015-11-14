@@ -33,7 +33,7 @@ __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'Ensig
 
 # mupif log, used e.g. in examples
 import logging,os
-logging.basicConfig(level=logging.WARN if 'TRAVIS' in os.environ else logging.DEBUG) # setup root logger, if not yet done
+logging.basicConfig(level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG) # setup root logger, if not yet done
 log=logging.getLogger('mupif')
 
 ## temporarily disabled (does not work on travis, even though future is installed there??)
