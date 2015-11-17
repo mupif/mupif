@@ -31,7 +31,7 @@ AlignedBox3d object_getBBox(const py::object& item){
 	return ex();
 }
 
-struct Octant{
+struct Octant: /* make sure copying does not happen */ public boost::noncopyable{
 	AlignedBox3d box;
 	//Vector3d size;
 	double size;
@@ -43,6 +43,26 @@ struct Octant{
 	Octant(/*ignored*/py::object octree,/*ignored*/py::object parent, const Vector3d& _origin, const double& _size): box(_origin,_origin+_size*Vector3d::Ones()), size(_size) { };
 	// same ctor, but without garbage arge
 	Octant(const Vector3d& _origin, const double& _size): box(_origin,_origin+_size*Vector3d::Ones()), size(_size) { };
+
+	// pickle support
+	// stuff everything into tuple, which will be passed to the ctor below
+	py::tuple __getinitargs__() const {
+		py::tuple childrenShape(py::make_tuple(children.shape()[0],children.shape()[1],children.shape()[2]));
+		py::list childrenList;
+		py::list dataList;
+		for(size_t i=0; i<children.num_elements(); i++) childrenList.append(*(children.origin()+i));
+		for(size_t i=0; i<data.size(); i++) dataList.append(data[i]);
+		return py::make_tuple(box,size,childrenShape,childrenList,dataList);
+	}
+	// restore everything from that tuple, using a special ctor
+	Octant(const AlignedBox3d& _box, const double& _size, py::tuple csh, py::list childrenList, py::list dataList){
+		box=_box;
+		size=_size;
+		children.resize(boost::extents[py::extract<int>(csh[0])()][py::extract<int>(csh[1])()][py::extract<int>(csh[2])()]);
+		for(size_t i=0; i<py::len(childrenList); i++) *(children.origin()+i)=py::extract<shared_ptr<Octant>>(childrenList[i])();
+		data.reserve(py::len(dataList));
+		for(size_t i=0; i<py::len(dataList); i++) data.push_back(dataList[i]);
+	}
 
 	bool isTerminal() const{ return children.size()==0; }
 
@@ -166,6 +186,10 @@ BOOST_PYTHON_MODULE(fastOctant){
 		.def("evaluate",&Octant::evaluate,(py::arg("functor"),py::arg("bbox")=AlignedBox3d()))
 		.def("giveDepth",&Octant::giveDepth)
 		.def("giveMyBBox",&Octant::giveMyBBox)
+		// expose pickling support
+		.enable_pickling()
+		.def("__getinitargs__",&Octant::__getinitargs__)
+		.def(py::init<const AlignedBox3d&, const double&, py::tuple, py::list, py::list>()) 
 		/* not exposed:
 			.def("containsBBox",&Octant::containsBBox)
 			.def("divide",&Octant::divide)
