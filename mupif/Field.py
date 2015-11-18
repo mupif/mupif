@@ -29,7 +29,7 @@ from . import ValueType
 from . import BBox
 from numpy import array, arange, random, zeros
 import copy
-import logging
+#import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute lookup thread.lock failed
 
 #debug flag
 debug = 0
@@ -73,7 +73,7 @@ class Field(object):
         self.time = time
         self.units = units
         self.uri = None   #pyro uri; used in distributed setting
-        self.logger = logging.getLogger()
+        #self.logger = logging.getLogger()
         self.fieldType = fieldType
         if values == None:
             if (self.fieldType == FieldType.FT_vertexBased):
@@ -262,12 +262,13 @@ class Field(object):
             except: name=str(self.getFieldID()) # if that fails, use number
         if lookupTable and not isinstance(lookupTable,pyvtk.LookupTable):
             # FIXME: move to some mupif-wide logger?
-            self.logger.warning('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
+            print('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
             lookupTable=None
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0,.231,.298,.752),(.4,.865,.865,.865),(.8,.706,.016,.149)],name='coolwarm')
         # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
-        kw=dict(name=name,lookup_table=lookupTable.name) # passed to all Scalars/Vectors ctors
+        #kw=dict(name=name,lookup_table=lookupTable.name) # passed to all Scalars/Vectors ctors
+        kw=dict(name=name)
 
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):

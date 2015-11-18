@@ -27,8 +27,6 @@ class thermal(Application.Application):
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
 
-
-
     def readInput(self):
 
         dirichletModelEdges=[]
@@ -457,11 +455,8 @@ class mechanical(Application.Application):
 
         #print "\tloc:", self.loc
     
-
-    
     def getField(self, fieldID, time):
         if (fieldID == FieldID.FID_Displacement):    
-
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
                 if i in self.dirichletBCs:

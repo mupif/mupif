@@ -7,6 +7,10 @@ import time as timeTime
 start = timeTime.time()
 logger.info('Timer started')
 
+thermalSolverAppRec = None
+mechanicalSolverAppRec = None
+appsTunnel = None
+
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
 
@@ -43,7 +47,7 @@ else:
         #Get field's uri from thermal application and send it to mechanical application. This prevents copying data to Demo10's computer,
         #mechanical solver will use direct access to thermal field.
         uri = thermalSolver.getFieldURI(FieldID.FID_Temperature, 0.0)
-        #logger.info("URI of thermal problem is " + str(uri) )
+        logger.info("URI of thermal problem's field is " + str(uri) )
         field = cConf.cfg.Pyro4.Proxy(uri)
         mechanicalSolver.setField(field)
 
@@ -51,7 +55,9 @@ else:
         #temperatureField = thermalSolver.getField(FieldID.FID_Temperature, 0.0)
         #mechanicalSolver.setField(temperatureField)
 
+        logger.info("Solving mechanical problem on server " + mechanicalSolver.getApplicationSignature())
         mechanicalSolver.solveStep(None)
+        logger.info("URI of mechanical problem's field is " + str(mechanicalSolver.getFieldURI(FieldID.FID_Displacement, 0.0)) )
         displacementField = mechanicalSolver.getField(FieldID.FID_Displacement, 0.0)
         # save results as vtk
         temperatureField = thermalSolver.getField(FieldID.FID_Temperature, 0.0)

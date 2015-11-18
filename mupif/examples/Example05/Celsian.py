@@ -1,7 +1,6 @@
 
 import sys
-sys.path.append('../..')
-sys.path.append('.')
+sys.path.append('../../..')
 from mupif import *
 
 class Celsian(Application.Application):

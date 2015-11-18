@@ -34,7 +34,7 @@ def main():
     mesh.setup(vertices, cells)
     # field1 is vertex based, i.e., field values are provided at vertices
     field1 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values1)
-    # field1 is cell based, i.e., field values are provided for cells
+    # field2 is cell based, i.e., field values are provided for cells
     field2 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values2, Field.FieldType.FT_cellBased)
 
     # evaluate field at given point
