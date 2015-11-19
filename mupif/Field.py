@@ -267,26 +267,26 @@ class Field(object):
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0,.231,.298,.752),(.4,.865,.865,.865),(.8,.706,.016,.149)],name='coolwarm')
         # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
-        #kw=dict(name=name,lookup_table=lookupTable.name) # passed to all Scalars/Vectors ctors
-        kw=dict(name=name)
+       scalarsKw=dict(name=name,lookup_table=lookupTable.name)
+       vectorsKw=dict(name=name) # vectors don't have a lookup_table
 
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values],**kw),lookupTable),
+                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable),
                                      'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Vectors(self.values,**kw),lookupTable),
+                                     pyvtk.PointData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable),
                                      'Unstructured Grid Example')
         else:
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values],**kw),lookupTable),
+                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable),
                                      'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Vectors(self.values,**kw),lookupTable),
+                                     pyvtk.CellData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable),
                                      'Unstructured Grid Example')
             
 #    def __deepcopy__(self, memo):
