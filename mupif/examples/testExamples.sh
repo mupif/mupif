@@ -94,19 +94,6 @@ else
 	echo "------------ Example07 skipped with python 3.x --------------"
 fi
 
-##
-## TODO: run local ssh server with paramiko and test-ping that one
-##
-#pushd PingTest
-#	echo $PWD
-#	ssh -n mmp@mech.fsv.cvut.cz "bash -c \"cd mupif-code/examples/PingTest;$PYTHON ctu-server.py& sleep 10; pkill \"$PYTHON ctu-server.py\"\"" &
-#	sleep 1
-#	$PYTHON test.py 
-#	ret=$?
-#	(( retval=$retval || $ret ))
-#	echo "=================== Exit status $?"
-#popd
-
 pushd Example09
 	echo $PWD
 	$PYTHON Example09.py
@@ -114,6 +101,22 @@ pushd Example09
 	(( retval=$retval || $ret ))
 	echo "=================== Exit status $ret ===================="
 popd
+
+pushd Example10
+	echo $PWD
+	$PYTHON thermalServer.py &
+	PID1=$!
+	$PYTHON mechanicalServer.py &
+	PID2=$!
+	$PYTHON Demo10.py
+	sleep 2 # wait for servers to start up
+	ret=$?
+	(( retval=$retval || $ret ))
+	echo "=================== Exit status $ret ===================="
+	kill -9 $PID1
+	kill -9 $PID2
+popd
+
 
 echo "*** Global return status $retval"
 echo "*** Bye."
