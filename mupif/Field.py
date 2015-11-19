@@ -267,8 +267,8 @@ class Field(object):
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0,.231,.298,.752),(.4,.865,.865,.865),(.8,.706,.016,.149)],name='coolwarm')
         # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
-       scalarsKw=dict(name=name,lookup_table=lookupTable.name)
-       vectorsKw=dict(name=name) # vectors don't have a lookup_table
+        scalarsKw=dict(name=name,lookup_table=lookupTable.name)
+        vectorsKw=dict(name=name) # vectors don't have a lookup_table
 
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):
