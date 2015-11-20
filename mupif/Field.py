@@ -29,6 +29,10 @@ from . import ValueType
 from . import BBox
 from numpy import array, arange, random, zeros
 import copy
+try:
+   import cPickle as pickle #faster serialization if available
+except:
+   import pickle
 #import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute lookup thread.lock failed
 
 #debug flag
@@ -288,6 +292,12 @@ class Field(object):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
                                      pyvtk.CellData(pyvtk.Vectors(self.values,**kw),lookupTable),
                                      'Unstructured Grid Example')
+
+    def dumpToLocalFile(self, fileName):
+        
+        
+        
+        
             
 #    def __deepcopy__(self, memo):
 #        """ Deepcopy operatin modified not to include attributes starting with underscore.
