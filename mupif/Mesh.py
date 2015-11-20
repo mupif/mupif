@@ -29,6 +29,10 @@ import copy
 import time
 import sys
 from . import CellGeometryType
+try:
+   import cPickle as pickle #faster serialization if available
+except:
+   import pickle
 
 #enum to distinguish iterartors provided by domain
 VERTICES=0; CELLS=1
@@ -106,6 +110,18 @@ class Mesh(object):
     """
     def __init__(self):
         self.mapping = None
+
+    @classmethod
+    def loadFromLocalFile(cls,fileName):
+        """
+        Alternative constructor from a Pickle module
+
+        :param str fileName: File name
+
+        :return: Returns Mesh instance
+        :rtype: Mesh
+        """
+        return pickle.load(file(fileName,'r'))
 
     def copy(self):
         """
@@ -189,6 +205,15 @@ class Mesh(object):
         :rtype: MeshIterator
         """
         return MeshIterator(self, CELLS)
+
+    def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
+        """
+        Dump Mesh to a file using Pickle module
+
+        :param str fileName: File name
+        :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
+        """
+        pickle.dump(self, file(fileName,'w'), protocol)
 
 
 class UnstructuredMesh(Mesh):
@@ -363,7 +388,7 @@ class UnstructuredMesh(Mesh):
                     print ("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",  self.vertexList[v].label)
             else:
                 self.vertexDict[self.vertexList[v].label]=v
-       
+
     def __buildCellLabelMap__(self):
         """
         Create a custom dictionary between cell's label and Cell instance.

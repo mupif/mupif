@@ -1,4 +1,9 @@
 from builtins import object
+try:
+   import cPickle as pickle #faster serialization if available
+except:
+   import pickle
+
 class Property(object):
         """
         Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain.
@@ -24,6 +29,18 @@ class Property(object):
             self.units = units
             self.valueType = valueType
             self.objectID = objectID
+
+        @classmethod
+        def loadFromLocalFile(cls,fileName):
+            """
+            Alternative constructor from a Pickle module
+
+            :param str fileName: File name
+
+            :return: Returns Property instance
+            :rtype: Property
+            """
+            return pickle.load(file(fileName,'r'))
 
         def getValue(self):
             """
@@ -60,3 +77,13 @@ class Property(object):
             :rtype: PhysicalQuantity
             """
             return self.units
+
+        def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
+            """
+            Dump Property to a file using Pickle module
+
+            :param str fileName: File name
+            :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
+            """
+            pickle.dump(self, file(fileName,'w'), protocol)
+

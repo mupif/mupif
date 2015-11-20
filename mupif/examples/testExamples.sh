@@ -118,7 +118,7 @@ pushd Example10
 popd
 
 
-echo "*** Global return status $retval"
+echo "*** Global return status $retval (0=All tests passed)"
 echo "*** Bye."
 
 exit $retval

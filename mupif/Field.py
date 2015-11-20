@@ -55,7 +55,7 @@ class Field(object):
 
     Derived classes will implement fields defined on common discretizations, 
     like fields defined on structured/unstructured FE meshes, FD grids, etc.
-    
+
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
@@ -96,6 +96,18 @@ class Field(object):
             self.values=zeros((ncomponents, recsize))
         else:
             self.values = values
+
+    @classmethod
+    def loadFromLocalFile(cls,fileName):
+        """
+        Alternative constructor from a Pickle module
+
+        :param str fileName: File name
+
+        :return: Returns Field instance
+        :rtype: Field
+        """
+        return pickle.load(file(fileName,'r'))
 
     def getMesh(self):
         """
@@ -223,7 +235,7 @@ class Field(object):
     def merge(self, field):
         """
         Merges the receiver with given field together. Both fields should be on different parts of the domain (can also overlap), but should refer to same underlying discretization, otherwise unpredictable results can occur.
-        
+
         :param Field field: given field to merge with.
         """
         # first merge meshes 
@@ -293,12 +305,16 @@ class Field(object):
                                      pyvtk.CellData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable),
                                      'Unstructured Grid Example')
 
-    def dumpToLocalFile(self, fileName):
-        
-        
-        
-        
-            
+    def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
+        """
+        Dump Field to a file using Pickle module
+
+        :param str fileName: File name
+        :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
+        """
+        pickle.dump(self, file(fileName,'w'), protocol)
+
+
 #    def __deepcopy__(self, memo):
 #        """ Deepcopy operatin modified not to include attributes starting with underscore.
 #            These are supposed to be the ones valid only to s specific copy of the receiver.
