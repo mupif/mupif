@@ -1,4 +1,5 @@
 from builtins import object
+from . import BBox
 class Vertex(object):
     """
     Represent a vertex. Vertices define the geometry of interpolation cells. Vertex is characterized by its position, number and label. Vertex number is locally assigned number, while label is a unique number referring to source application.
@@ -24,6 +25,12 @@ class Vertex(object):
         :rtype: tuple
         """
         return self.coords
+    def getBBox(self):
+        """
+        :return: Receiver's bounding-box (containing only one point)
+        :rtype: mupif.BBox.BBox
+        """
+        return BBox.BBox(self.coords,self.coords)
 
     def __repr__(self):
         """

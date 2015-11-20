@@ -25,6 +25,7 @@ from builtins import str, zip, range, object
 
 from . import APIError
 from . import Octree
+from . import BBox
 import copy
 import time
 import sys
@@ -270,6 +271,18 @@ class UnstructuredMesh(Mesh):
             cellList.append(i.copy())
         return UnstructuredMesh(vertexList,cellList)
 
+    def __getstate__(self):
+        '''Customized method returning dictionary for pickling.
+        
+        We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on c++ fastOctant, which the other side does not necessarily support.
+        
+        Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with ``vertexOctree`` and ``cellOctree`` set to ``None``.
+        '''
+        # shallow copy of __dict__
+        d2=self.__dict__.copy()
+        d2['vertexOctree']=d2['cellOctree']=None
+        return d2
+
 
     def getNumberOfVertices(self):
         """
@@ -304,17 +317,26 @@ class UnstructuredMesh(Mesh):
             return self.vertexOctree
         else:
             # loop over vertices to get bounding box first
-            init=True
-            minc=[]
-            maxc=[]
-            for vertex in self.vertices():
-                if init:
-                    for i in range(len(vertex.coords)):
-                        minc[i]=maxc[i]=vertex.coords[i]
-                else:
-                    for i in range(len(vertex.coords)):
-                        minc[i]=min(minc[i], vertex.coords[i])
-                        maxc[i]=max(maxc[i], vertex.coords[i])
+            
+            # XXX: remove this
+            if 0:
+                init=True
+                minc=[]
+                maxc=[]
+                for vertex in self.vertices():
+                    if init:
+                        for i in range(len(vertex.coords)):
+                            minc[i]=maxc[i]=vertex.coords[i]
+                    else:
+                        for i in range(len(vertex.coords)):
+                            minc[i]=min(minc[i], vertex.coords[i])
+                            maxc[i]=max(maxc[i], vertex.coords[i])
+            else:
+                vvv=self.vertices()
+                c0=vvv.__iter__().__next__().getCoordinates() # use the first bbox as base
+                bb=BBox.BBox(c0,c0) # ope-pointed bbox
+                for vert in vvv: bb.merge(vert.getCoordinates()) # extend it with all other cells
+                minc,maxc=bb.coords_ll,bb.coords_ur
 
             #setup vertex localizer
             size = max ( y-x for x,y in zip (minc,maxc))
