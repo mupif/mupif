@@ -34,7 +34,7 @@ def main():
             num+=1
 
     mesh.setup(vertices, cells)
-    
+
     #Check saving a mesh
     mesh.dumpToLocalFile('mesh.dat')
     Mesh.Mesh.loadFromLocalFile('mesh.dat')

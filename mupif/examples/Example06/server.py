@@ -50,4 +50,4 @@ app2 = PingServerApplication("/dev/null")
 
 PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, 
                       cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, 
-                      app=app2 )
+                      app=app2)

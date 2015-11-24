@@ -148,7 +148,7 @@ def runDaemon(host, port, nathost, natport):
 
     return daemon
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app):
+def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None):
     """
     Runs a simple application server
 
@@ -164,13 +164,14 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
 
     :except: Can not run Pyro4 daemon
     """
-    try:
-        daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
-    except Exception:
-        logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
-        raise
-        exit(1)
+    if not daemon:
+        try:
+            daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
+            logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
+        except Exception:
+            logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
+            raise
+            exit(1)
     ns = connectNameServer(nshost, nsport, hkey)
     #register agent
     uri = daemon.register(app)

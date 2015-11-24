@@ -200,6 +200,7 @@ class Application(object):
         Terminates the application.
         """
         if self.pyroDaemon:
+            self.pyroDaemon.unregister(self)
             self.pyroDaemon.shutdown()
 
     def getURI(self):

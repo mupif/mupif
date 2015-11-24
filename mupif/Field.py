@@ -27,6 +27,7 @@ from . import Cell
 from . import FieldID
 from . import ValueType
 from . import BBox
+import mupif #for logger
 from numpy import array, arange, random, zeros
 import copy
 try:
@@ -130,6 +131,13 @@ class Field(object):
         """
         return self.fieldID
 
+    def getFieldIDName(self):
+        """
+        :return: Returns fieldID name
+        :rtype: string
+        """
+        return self.fieldID.name
+
     def getTime(self):
         """
         :return: Time of field data
@@ -172,33 +180,33 @@ class Field(object):
                 try:
                     if icell.containsPoint(position):
                         if debug:
-                            print (icell.getVertices())
+                            mupif.log.debug(icell.getVertices())
 
                         if (self.fieldType == FieldType.FT_vertexBased):
                             try:
                                 answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
                             except IndexError:
-                                print ("Field::evaluate failed, inconsistent data at cell %d"%(icell.label))
+                                mupif.log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
                                 raise
                         else:
                             answer = self.values[icell.number]
                         return answer
 
                 except ZeroDivisionError:
-                    print (icell.number, position)
+                    mupif.log.debug(icell.number, position)
                     cell.debug=1
-                    print (icell.containsPoint(position), icell.glob2loc(position))
+                    mupif.log.debug(icell.containsPoint(position), icell.glob2loc(position))
 
-            print ("Field::evaluate - no source cell found for position ",position)
+            mupif.log.error('Field::evaluate - no source cell found for position ', position)
             for icell in cells:
-                print (icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                mupif.log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
 
             raise ValueError
 
         else:
             #no source cell found
-            print ("Field::evaluate - no source cell found for position ", position)
-            raise ValueError("Field::evaluate - no source cell found for position "+str(position))
+            mupif.log.error('Field::evaluate - no source cell found for position ' + str(position))
+            raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
 
     def giveValue(self, componentID):
         """
@@ -241,7 +249,7 @@ class Field(object):
         # first merge meshes 
         mesh = copy.deepcopy(self.mesh)
         mesh.merge(field.mesh)
-        print (mesh)
+        mupif.log.debug(mesh)
         # merge the field values 
         # some type checking first
         if (self.field_type != field.field_type):
@@ -274,11 +282,9 @@ class Field(object):
         import pyvtk
 
         if name is None:
-            try: name=FieldID.FID_names[self.getFieldID()] # try human-readable name
-            except: name=str(self.getFieldID()) # if that fails, use number
+            name=self.getFieldIDName()
         if lookupTable and not isinstance(lookupTable,pyvtk.LookupTable):
-            # FIXME: move to some mupif-wide logger?
-            print('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
+            mupif.log.info('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
             lookupTable=None
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0,.231,.298,.752),(.4,.865,.865,.865),(.8,.706,.016,.149)],name='coolwarm')

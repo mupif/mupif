@@ -21,6 +21,14 @@ sleep 1
 # accumulates failures, which are stored in $ret for each example
 retval=0
 
+#Logging failing examples
+LOG=()
+
+AppendLog () {
+        if [ $1 -ne 0 ]; then
+            LOG+=($2)
+        fi
+}
 
 
 pushd Example01; 
@@ -28,6 +36,7 @@ pushd Example01;
 	$PYTHON Example01.py
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
 
@@ -40,10 +49,10 @@ pushd Example02
 	$PYTHON client.py 
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
-retval=$retval || $ret
 
 pushd Example03
 	echo $PWD
@@ -51,6 +60,7 @@ pushd Example03
 	$PYTHON Example03.py
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
 
@@ -59,6 +69,7 @@ pushd Example04
 	$PYTHON Example04.py
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
 
@@ -67,6 +78,7 @@ pushd Example05
 	$PYTHON Example05.py
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
 
@@ -78,6 +90,7 @@ pushd Example06
 	$PYTHON test.py
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
@@ -88,6 +101,7 @@ if [[ $PYVER == 2* ]]; then
 		$PYTHON Example07.py
 		ret=$?
 		(( retval=$retval || $ret ))
+		AppendLog $ret `pwd`
 		echo "=================== Exit status $ret ===================="
 	popd
 else
@@ -99,6 +113,7 @@ pushd Example09
 	$PYTHON Example09.py
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
 
@@ -112,13 +127,24 @@ pushd Example10
 	sleep 2 # wait for servers to start up
 	ret=$?
 	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
 
+echo "*** Global return status $retval."
 
-echo "*** Global return status $retval (0=All tests passed)"
+cnt=${#LOG[@]}
+if [ $cnt -ne 0 ]; then
+    echo "*** Failed directories:"
+else
+    echo "*** All tests passed."
+fi
+for ((i=0;i<cnt;i++)); do
+    echo ${LOG[i]}
+done
+
 echo "*** Bye."
 
 exit $retval

@@ -299,12 +299,12 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                         if debug:
                             print("done importing element section")
                         #done parsing cell record(s) in part 
-                
+
                 else: # if (partnum in parts):   proceed to next part 
                     line= f.readline()
             else:
                 line=f.readline()
         # so this should be per-cell variable file -> cell based field
-        field = Field.Field(mesh, FieldID.FID_Temperature ,ftype, None, None, values, Field.FieldType.FT_cellBased )
+        field = Field.Field(mesh, fieldID, ftype, None, None, values, Field.FieldType.FT_cellBased )
         return field
     

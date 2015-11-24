@@ -100,7 +100,7 @@ class OofemReader(object):
 
         dom=self.domain
         oofemFieldInfo=fieldTypeMap.get(fieldID)
-        if not oofemFieldInfo: raise ValueError('Field type %d (%s) not found in this oofem model.'%(fieldID,FieldID.FID_names[fieldID]))
+        if not oofemFieldInfo: raise ValueError('Field type %d (%s) not found in this oofem model.'%( fieldID, fieldID.value )
         field=self.model.giveField(oofemFieldInfo[0],timestep)
 
         # determine valuye type from the first DOF
