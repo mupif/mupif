@@ -22,6 +22,7 @@ class Application(object):
         :param str file: Name of file
         """
         self.pyroDaemon = None
+        self.externalDaemon = False
         self.pyroNS = None
         self.pyroURI = None
         self.file = file
@@ -30,7 +31,7 @@ class Application(object):
         else:
             self.workDir = workdir
 
-    def registerPyro (self, pyroDaemon, pyroNS, pyroURI):
+    def registerPyro (self, pyroDaemon, pyroNS, pyroURI, externalDaemon = False):
         """
         Register the Pyro daemon and nameserver. Required by getFieldURI service
 
@@ -41,7 +42,7 @@ class Application(object):
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
         self.pyroURI = pyroURI
-
+        self.externalDaemon = externalDaemon
 
     def getField(self, fieldID, time):
         """
@@ -201,7 +202,9 @@ class Application(object):
         """
         if self.pyroDaemon:
             self.pyroDaemon.unregister(self)
-            self.pyroDaemon.shutdown()
+            print("Unregister")
+            if not self.externalDaemon:
+                self.pyroDaemon.shutdown()
 
     def getURI(self):
         """

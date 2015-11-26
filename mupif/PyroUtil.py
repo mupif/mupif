@@ -161,9 +161,11 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param str nsname: Name of registered application
     :param str hkey: A password string
     :param instance app: Application instance
+    :param daemon: Reference to already running daemon, if available. Optional parameter.
 
     :except: Can not run Pyro4 daemon
     """
+    externalDaemon = False
     if not daemon:
         try:
             daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
@@ -172,11 +174,14 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
             logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
             raise
             exit(1)
+    else:
+        externalDaemon = True
+
     ns = connectNameServer(nshost, nsport, hkey)
     #register agent
     uri = daemon.register(app)
     ns.register(nsname, uri)
-    app.registerPyro(daemon, ns, uri)
+    app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
 
     logger.debug('NameServer %s has registered uri %s' % (nsname, uri) )
     logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport, nsname,uri) )
