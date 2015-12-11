@@ -1,6 +1,28 @@
+# 
+#           MuPIF: Multi-Physics Integration Framework 
+#               Copyright (C) 2010-2015 Borek Patzak
+# 
+#    Czech Technical University, Faculty of Civil Engineering,
+#  Department of Structural Mechanics, 166 29 Prague, Czech Republic
+# 
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Boston, MA  02110-1301  USA
+#
+
 from builtins import object
 import os
-
 
 class Application(object):
     """
@@ -20,6 +42,7 @@ class Application(object):
         Constructor. Initializes the application.
 
         :param str file: Name of file
+        :param str workdir: Optional parameter for working directory
         """
         self.pyroDaemon = None
         self.externalDaemon = False
@@ -38,6 +61,7 @@ class Application(object):
         :param Pyro4.Daemon pyroDaemon: Optional pyro daemon
         :param Pyro4.naming.Nameserver pyroNS: Optional nameserver
         :param string PyroURI: Optional URI of receiver
+        :param bool externalDaemon: Optional parameter when damon was allocated externally.
         """
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
@@ -113,7 +137,7 @@ class Application(object):
         """
     def setFunction(self, func, objectID=0):
         """
-        Register given function in the application
+        Register given function in the application.
 
         :param Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
@@ -150,6 +174,8 @@ class Application(object):
         """
     def isSolved(self):
         """
+        Check whether solve has completed.
+        
         :return: Returns true or false depending whether solve has completed when executed in background.
         :rtype: bool
         """ 
@@ -161,6 +187,8 @@ class Application(object):
         """
     def getCriticalTimeStep(self):
         """
+        Returns a critical time step for an application.
+        
         :return: Returns the actual (related to current state) critical time step increment
         :rtype: float
         """
@@ -191,6 +219,8 @@ class Application(object):
         """
     def getApplicationSignature(self):
         """
+        Get application signature.
+        
         :return: Returns the application identification
         :rtype: str
         """
@@ -198,11 +228,10 @@ class Application(object):
 
     def terminate(self):
         """
-        Terminates the application.
+        Terminates the application. Shutdowns daemons if created internally.
         """
         if self.pyroDaemon:
             self.pyroDaemon.unregister(self)
-            print("Unregister")
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
 

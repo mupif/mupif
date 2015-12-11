@@ -1,4 +1,3 @@
-from __future__ import division
 # Dictionary containing numbers
 #
 # These objects are meant to be used like arrays with generalized
@@ -31,6 +30,7 @@ from __future__ import division
 """
 Dictionary storing numerical values
 """
+from __future__ import division
 
 class NumberDict(dict):
 

@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-from builtins import str, range, object
 # 
 #           MuPIF: Multi-Physics Integration Framework 
-#               Copyright (C) 2010-2014 Borek Patzak
+#               Copyright (C) 2010-2015 Borek Patzak
 # 
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -22,6 +20,9 @@ from builtins import str, range, object
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from __future__ import absolute_import
+from builtins import str, range, object
+
 import threading
 import subprocess
 import socket
@@ -52,7 +53,6 @@ JOBMAN_ERR = 99
 class JobManException(Exception):
     """
     This class serves as a base class for exceptions thrown by the job manager.
-
     """
     pass
 
@@ -60,7 +60,6 @@ class JobManException(Exception):
 class JobManNoResourcesException(JobManException):
     """
     This class is thrown when there are no more available resources.
-
     """
     pass
     
@@ -135,9 +134,9 @@ class JobManager(object):
         """
         Returns the (remote) PyroFile representation of given file.
         To create local copy of file represented by PyroFile, use PyroUtil.downloadPyroFile, see :func:`PyroUtil.downloadPyroFile`
-        
+
         :param str jobID: job identifier (jobID)  
-        :param str filename: source file name (on remote server). The filename should contain only base filename, not a path, which is determined by jobManager based on jobID. 
+        :param str filename: source file name (on remote server). The filename should contain only base filename, not a path, which is determined by jobManager based on jobID.
         :return: PyroFile representation of given file
         :rtype: PyroFile
         """

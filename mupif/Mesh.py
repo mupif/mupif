@@ -1,6 +1,6 @@
 # 
 #           MuPIF: Multi-Physics Integration Framework 
-#               Copyright (C) 2010-2014 Borek Patzak
+#               Copyright (C) 2010-2015 Borek Patzak
 # 
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -115,7 +115,7 @@ class Mesh(object):
     @classmethod
     def loadFromLocalFile(cls,fileName):
         """
-        Alternative constructor from a Pickle module
+        Alternative constructor which loads an instance from a Pickle module.
 
         :param str fileName: File name
 
@@ -135,6 +135,8 @@ class Mesh(object):
         """
     def getNumberOfVertices(self):
         """
+        Get number of vertices (nodes).
+
         :return: Number of Vertices
         :rtype: int
         """
@@ -142,6 +144,8 @@ class Mesh(object):
 
     def getNumberOfCells(self):
         """
+        Return number of cells (finite elements).
+
         :return: The number of Cells
         :rtype: int
         """
@@ -167,6 +171,8 @@ class Mesh(object):
 
     def getMapping(self):
         """
+        Get mesh mapping.
+
         :return: The mapping associated to a mesh
         :rtype: defined by API
         """
@@ -194,6 +200,8 @@ class Mesh(object):
 
     def vertices(self):
         """
+        Iterator over vertices.
+        
         :return: Iterator over vertices
         :rtype: MeshIterator
         """
@@ -202,6 +210,8 @@ class Mesh(object):
 
     def cells(self):
         """
+        Iterator over cells.
+
         :return: Iterator over cells
         :rtype: MeshIterator
         """
@@ -209,7 +219,7 @@ class Mesh(object):
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
-        Dump Mesh to a file using Pickle module
+        Dump Mesh to a file using a Pickle serialization module.
 
         :param str fileName: File name
         :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
@@ -254,7 +264,6 @@ class UnstructuredMesh(Mesh):
 
         :param tuple vertexList: A tuple of vertices
         :param tuple cellList: A tuple of cells
-
         """
         self.vertexList = vertexList
         self.cellList = cellList
@@ -273,16 +282,15 @@ class UnstructuredMesh(Mesh):
 
     def __getstate__(self):
         '''Customized method returning dictionary for pickling.
-        
+
         We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on c++ fastOctant, which the other side does not necessarily support.
-        
+
         Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with ``vertexOctree`` and ``cellOctree`` set to ``None``.
         '''
         # shallow copy of __dict__
         d2=self.__dict__.copy()
         d2['vertexOctree']=d2['cellOctree']=None
         return d2
-
 
     def getNumberOfVertices(self):
         """
@@ -317,7 +325,7 @@ class UnstructuredMesh(Mesh):
             return self.vertexOctree
         else:
             # loop over vertices to get bounding box first
-            
+
             # XXX: remove this
             if 0:
                 init=True
@@ -354,6 +362,8 @@ class UnstructuredMesh(Mesh):
 
     def giveCellLocalizer(self):
         """
+        Get the cell localizer.
+
         :return: Returns the cell localizer.
         :rtype: Octree
         """
@@ -446,9 +456,9 @@ class UnstructuredMesh(Mesh):
     def merge (self, mesh):
         """
         Merges receiver with a given mesh. This is based on merging mesh entities (vertices, cells) based on their labels, as they refer to global IDs of each entity, that should be unique.
-        
+
         The procedure used here is based on creating a dictionary for every componenet from both meshes, where the key is component label so that the entities with the same ID could be easily identified.
-        
+
         :param Mesh mesh: Source mesh for merging
         """
         #build vertex2local reciver map first
@@ -502,7 +512,9 @@ class UnstructuredMesh(Mesh):
 
     def getVTKRepresentation (self):
         """
-        :return: VTK representation of the receiver .Requires pyvtk module.
+        Get VTK representatnion of the mesh.
+
+        return: VTK representation of the receiver. Requires pyvtk module.
         :rtype: pyvtk.UnstructuredGrid
         """
         import pyvtk

@@ -1,7 +1,6 @@
-from builtins import object
 # 
 #           MuPIF: Multi-Physics Integration Framework 
-#               Copyright (C) 2010-2014 Borek Patzak
+#               Copyright (C) 2010-2015 Borek Patzak
 # 
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -21,6 +20,7 @@ from builtins import object
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from builtins import object
 
 class Localizer(object):
     """
@@ -29,21 +29,21 @@ class Localizer(object):
     def insert (self, item):
         """
         Inserts given object to Localizer. Object is assume to provide giveBBox() method returning bounding volume if itself.
-        
+
         :param object item: Inserted object
         """
 
     def delete (self, item):
         """
         Deletes the given object from Localizer data structure.
-        
+
         :param object item: Object to be removed
         """
-    
+
     def giveItemsInBBox (self, bbox):
         """
         :param BBox bbox: Bounding box
-        
+
         :return: List of all objects which bbox contains and intersects
         :rtype: tuple
         """
@@ -52,9 +52,9 @@ class Localizer(object):
     def evaluate(self, functor):
         """
         Returns the list of all objects for which the functor is satisfied.
-        
+ 
         :param object functor: The functor is a class which defines two methods: giveBBox() which returns an initial functor bbox and evaluate(obj) which should return True if the functor is satisfied for a given object.
-        
+
         :return: List of all objects
         :rtype: tuple
         """
