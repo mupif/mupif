@@ -6,6 +6,10 @@ class Enum allows accessing members by .name and .value
 from enum import Enum
 
 class PropertyID(Enum):
+    """
+    Enumeration class  defining Property IDs. These are used to uniquely determine 
+    the canonical keywords identifiing individual properties.
+    """
     PID_Concentration = 1
     PID_CumulativeConcentration = 2
     PID_Velocity = 3

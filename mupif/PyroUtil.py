@@ -57,7 +57,7 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     :param float timeOut: Waiting time for response in seconds
     :return: NameServer
     :rtype: Pyro4.naming.Nameserver
-    :except: Can not connect to a LISTENING port of nameserver
+    :raises Exception: When can not connect to a LISTENING port of nameserver
     """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,7 +91,7 @@ def connectApp(ns, name):
     :param str name: Name of the application to be connected to
     :return: Application
     :rtype: Instance of an application
-    :except: Cannot find registered server or Cannot connect to application
+    :raises Exception: When cannot find registered server or Cannot connect to application
     """
     try:
         uri = ns.lookup(name)
@@ -163,7 +163,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
 
-    :except: Can not run Pyro4 daemon
+    :raises Exception: if can not run Pyro4 daemon
     """
     externalDaemon = False
     if not daemon:
@@ -199,9 +199,11 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
     :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
     :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
+    :param bool Reverse: True if reverse tunnel to be created (default is False)
 
     :return: Instance of subprocess.Popen running the tunneling command
     :rtype: subprocess.Popen
+    :raises Exception: if creation of a tunnel failed
     """
 
     if sshHost =='':
@@ -303,6 +305,7 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
 
     :return: (JobManager proxy, jobManager Tunnel)
     :rtype: tuple (JobManager, subprocess.Popen)
+    :raises Exception: if creation of a tunnel failed
     """    
 
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
@@ -331,7 +334,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
 
     :return: RemoteAppRecord containing application, tunnel to application, tunnel to jobman, jobid
     :rtype: RemoteAppRecord
-    :except: allocation of tunnel failed
+    :raises Exception: if allocation of job fails
     """
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec, sshClient, options, sshHost)
@@ -386,7 +389,8 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
 
     :return: None
-    :except: allocation or tunnel failed
+    :raises Exception: if allocation of job fails
+    :raises Exception: if ssh tunnel to application instance can not be created
     """
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     jobMan = connectApp(ns, jobManName)
@@ -415,7 +419,7 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
 from . import PyroFile
 def uploadPyroFile (newLocalFileName, pyroFile):
     """
-    We are on a client. A remote server uploads its existing pyroFile handle to a newLocalFileName.
+    Allows to upload remote file (pyro ile handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
     :param PyroFile pyroFile: representation of existing remote server's file
@@ -429,12 +433,15 @@ def uploadPyroFile (newLocalFileName, pyroFile):
     file.close()
 
 def uploadPyroFileFromServer (newLocalFileName, pyroFile):
+    """
+    See :func:'uploadPyroFileFromServer'
+    """
     uploadPyroFile (newLocalFileName, pyroFile)
 
 
 def downloadPyroFile (clientFileName, pyroFile, size = 1024):
     """
-    We are on a client. A remote server downloads existing clientFileName file into server's pyroFile handle. Path to server's pyroFile handle is determined from target path.
+    Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
     :param PyroFile pyroFile: represenation of remote file, this file will be created
@@ -449,5 +456,8 @@ def downloadPyroFile (clientFileName, pyroFile, size = 1024):
     pyroFile.close()
 
 def downloadPyroFileOnServer (clientFileName, pyroFile, size = 1024):
+    """
+    See :func:'downloadPyroFile'
+    """
     downloadPyroFile (clientFileName, pyroFile, size)
 

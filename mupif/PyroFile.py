@@ -23,8 +23,7 @@
 
 class PyroFile (object):
     """
-    Class representing a remote file. 
-    It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.
+    Helper Pyro class providing an access to local file. It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.
     """
 
     def __init__ (self, filename, mode, buffsize=1024):

@@ -1,7 +1,13 @@
 from builtins import range, object
 class RemoteAppRecord (object):
     """
-    Class keeping data on remote application connection, such as ssh tunnels, etc.
+    Class keeping internal data on remote application. The data contain:
+    * appTunnel: reference to application ssh tunnel
+    * jobMan: reference to jobManager 
+    * jobManTunnel: reference to jobManager tunnel representation
+    * jobID: jobID of application
+
+    .. automethod:: __init__
     """
     def __init__ (self, app, appTunnel, jobMan, jobManTunnel, jobID):
         """
