@@ -25,7 +25,7 @@ from __future__ import print_function
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '0.11.14'
+__version__ = '0.20.00'
 __author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
 
 from fieldID import FieldID
