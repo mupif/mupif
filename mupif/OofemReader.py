@@ -1,9 +1,35 @@
+# 
+#           MuPIF: Multi-Physics Integration Framework 
+#               Copyright (C) 2010-2015 Borek Patzak
+# 
+#  Czech Technical University, Faculty of Civil Engineering,
+#  Department of Structural Mechanics, 166 29 Prague, Czech Republic
+# 
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Boston, MA  02110-1301  USA
+#
+
 # this will raise ImportError right away, if oofem wrapper is not found
 import liboofem
 
 from . import Cell, Field, FieldID, Mesh
 
 class OofemReader(object):
+    """ 
+    Class for reading OOFEM problem through the Python interface.
+    """
     # shorthands
     _EGT=liboofem.Element_Geometry_Type 
     _FT=liboofem.FieldType
@@ -23,8 +49,9 @@ class OofemReader(object):
         FieldID.FID_Humidity:      (_FT.FT_HumidityConcentration,0),
         FieldID.FID_Concentration: (_FT.FT_HumidityConcentration,1),
     }
-    
-    '''Read OOFEM problem through the Python interface, and return mirror of the data as mupif objects. Use like this::
+
+    """
+    Read OOFEM problem through the Python interface, and return mirror of the data as mupif objects. Use like this::
 
     # create and solve a problem in oofem
     import liboofem
@@ -42,23 +69,28 @@ class OofemReader(object):
     f2=reader.makeField(fieldID=mupif.FieldID.FID_Strain)
 
     .. note:: This class has not been tested yet, as liboofem wrapper is not yet fully functional.
-    '''
+    """
     def __init__(self,model,domain=1):
-        '''Construct the reader for later re-use; 
+        """
+        Construct the reader for later re-use; 
 
         :param int domain: select different domain than 1 (TODO: more user-friendly interface than number?)
-        '''
+        """
         self.model=model
-        if domain<1 or domain>model.giveNumberOfDomains(): raise ValueError('Invalid domain value (must be 1..%d, for this model instance)'%mode.giveNumberOfDomains())
+        if domain<1 or domain>model.giveNumberOfDomains():
+            raise ValueError('Invalid domain value (must be 1..%d, for this model instance)'%mode.giveNumberOfDomains())
         self.domain=mode.giveDomain(domain)
         self.mesh=None
     def _getMesh(self):
-        '''Return mesh object from the model. Called internally from makeField, and the result will be re-used for multiple fields.
+        """
+        Return mesh object from the model. Called internally from makeField, and the result will be re-used for multiple fields.
 
         :return: Mesh
         :rtype: mupif.Mesh.UnstructuredMesh
-        '''
-        if self.mesh: return self.mesh
+        """
+
+        if self.mesh:
+            return self.mesh
 
         dom=self.domain
         self.mesh=Mesh.UnstructuredMesh()
@@ -75,7 +107,8 @@ class OofemReader(object):
             elt=dom.giveElement(en)
             gt=elt.giveGeometryType()
             eltType=elementTypeMap.get(gt) # mupif class which will be instantiated
-            if not eltType: raise ValueError('Element type %s not mapped to any mupif cell type.'%(str(gt)))
+            if not eltType:
+                raise ValueError('Element type %s not mapped to any mupif cell type.'%(str(gt)))
             # convert to 0-based indices
             vv=tuple([elt.giveDofManager(n)-1 for n in range(1,elt.numberOfDofManagers+1)])
             cells.append(eltType(mesh=self.mesh,number=en-1,label=en-1,vertices=vv))
@@ -84,31 +117,38 @@ class OofemReader(object):
         return self.mesh
 
     def makeField(fieldID,timestep=None,valueModeType=liboofem.ValueModeType.VM_Total,units=None):
-        '''Return field object for the model.
+        """
+        Return field object for the model.
 
         TODO: pass timestep (uses current step at the moment), valueModeType and units as arguments?
 
         :param FieldID: type of field to be returned
         :return: Field
         :rtype: mupif.Field.Field
-        '''
-        if timestep is None: timestep=model.giveCurrentStep()
-        elif not isinstance(timestep,liboofem.TimeStep): raise ValueError("timestep must be a liboofem.TimeStep.")
+        """
+        if timestep is None:
+            timestep=model.giveCurrentStep()
+        elif not isinstance(timestep,liboofem.TimeStep):
+            raise ValueError("timestep must be a liboofem.TimeStep.")
 
         # user can give units in which oofem field is represented
-        if units: raise RuntimeError("units not yet implemented.")
+        if units:
+            raise RuntimeError("units not yet implemented.")
 
         dom=self.domain
         oofemFieldInfo=fieldTypeMap.get(fieldID)
-        if not oofemFieldInfo: raise ValueError('Field type %d (%s) not found in this oofem model.'%( fieldID, fieldID.value )
+        if not oofemFieldInfo:
+            raise ValueError('Field type %d (%s) not found in this oofem model.'%( fieldID, fieldID.value )
         field=self.model.giveField(oofemFieldInfo[0],timestep)
 
         # determine valuye type from the first DOF
-        if dom.giveNumberOfDofManagers()<1: raise ValueError("Field has zero DofManagers, unable to determine value type.")
+        if dom.giveNumberOfDofManagers()<1:
+            raise ValueError("Field has zero DofManagers, unable to determine value type.")
         val=liboofem.FloatArray()
         field.evaluateAtDman(val,dom.giveDofManager(1),valueModeType,timestep)
         valueType={1:ValueType.Scalar,3:ValueType.Vector,9:ValueType.Tensor}.get(len(val))
-        if not valueType: raise ValueError("Unhandled value length in field: %d (should be 1, 3 or 9)"%(len(val)))
+        if not valueType:
+            raise ValueError("Unhandled value length in field: %d (should be 1, 3 or 9)"%(len(val)))
         checkLen=len(val)
 
         # create empty field, values set in the loop below
@@ -121,6 +161,6 @@ class OofemReader(object):
             if len(val)!=checkLen: raise ValueError("Invalid length at DofManager #%d: %d, should be %d."%(dn,len(val),checkLen))
             ret.setValue(dn-1,val)
 
-        return ret
+    return ret
 
 
