@@ -6,9 +6,9 @@ except:
 
 class Property(object):
         """
-        Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain.
+        Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
-        Property represents characteristic value  of the problem. It can represent value of scalar, vector, or tensorial type. Property keeps its value, objectID, time and type.
+        Property value can be of scalar, vector, or tensorial type. Property keeps its value, objectID, time and type.
 
         .. automethod:: __init__
         """

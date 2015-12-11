@@ -4,6 +4,27 @@ import liboofem
 from . import Cell, Field, FieldID, Mesh
 
 class OofemReader(object):
+    """
+    Reads OOFEM problem through the Python interface, and return mirror of the data as mupif objects. OOFEM is general object oriented FEM solver (www.oofem.org). 
+    Use this class like this::
+
+    # create and solve a problem in oofem
+    import liboofem
+    dr=liboofem.OOFEMTXTDataReader("tmpatch42.in")
+    pb=liboofem.InstanciateProblem(dr,liboofem.problemMode._processor,0)
+    pb.checkProblemConsistency()
+    pb.setRenumberFlag()
+    pb.solveYourself()
+    pb.terminateAnalysis()
+
+    # instantiate the reader
+    reader=mupif.OofemReader.OofemReader(model=pb)
+    # return several fields; they will all share the same mesh
+    f1=reader.makeField(fieldID=mupif.FieldID.FID_Displacement)
+    f2=reader.makeField(fieldID=mupif.FieldID.FID_Strain)
+
+    .. note:: This class has not been tested yet, as liboofem wrapper is not yet fully functional.
+    """
     # shorthands
     _EGT=liboofem.Element_Geometry_Type 
     _FT=liboofem.FieldType
@@ -24,34 +45,17 @@ class OofemReader(object):
         FieldID.FID_Concentration: (_FT.FT_HumidityConcentration,1),
     }
     
-    '''Read OOFEM problem through the Python interface, and return mirror of the data as mupif objects. Use like this::
-
-    # create and solve a problem in oofem
-    import liboofem
-    dr=liboofem.OOFEMTXTDataReader("tmpatch42.in")
-    pb=liboofem.InstanciateProblem(dr,liboofem.problemMode._processor,0)
-    pb.checkProblemConsistency()
-    pb.setRenumberFlag()
-    pb.solveYourself()
-    pb.terminateAnalysis()
-
-    # instantiate the reader
-    reader=mupif.OofemReader.OofemReader(model=pb)
-    # return several fields; they will all share the same mesh
-    f1=reader.makeField(fieldID=mupif.FieldID.FID_Displacement)
-    f2=reader.makeField(fieldID=mupif.FieldID.FID_Strain)
-
-    .. note:: This class has not been tested yet, as liboofem wrapper is not yet fully functional.
-    '''
     def __init__(self,model,domain=1):
         '''Construct the reader for later re-use; 
-
-        :param int domain: select different domain than 1 (TODO: more user-friendly interface than number?)
+        
+        :param liboofem.EngngModel model: oofem problem class representation 
+        :param int domain: allows to select problem domain (default is 1, TODO: more user-friendly interface than number?)
         '''
         self.model=model
         if domain<1 or domain>model.giveNumberOfDomains(): raise ValueError('Invalid domain value (must be 1..%d, for this model instance)'%mode.giveNumberOfDomains())
         self.domain=mode.giveDomain(domain)
         self.mesh=None
+
     def _getMesh(self):
         '''Return mesh object from the model. Called internally from makeField, and the result will be re-used for multiple fields.
 
@@ -89,6 +93,8 @@ class OofemReader(object):
         TODO: pass timestep (uses current step at the moment), valueModeType and units as arguments?
 
         :param FieldID: type of field to be returned
+        :param timestep: time step representation
+        :param liboofem.ValueModeType valueModeType: determines the mode of requested value (total or incremental)
         :return: Field
         :rtype: mupif.Field.Field
         '''

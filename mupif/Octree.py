@@ -33,6 +33,10 @@ refineLimit = 400 # refine cell if number of items exceeds this treshold value
 class Octant(object):
     """
     Defines Octree Octant: a cell containing either terminal data or its child octants.
+    Octree is used to partition space by recursively subdividing the root cell 
+    (square or cube) into octants. Octants can be terminal (containing the data) 
+    or can be further subdivided into children octants.
+    Each terminal octant contains the objects with bounding box within the octant.
 
     .. automethod:: __init__
     """
@@ -50,7 +54,7 @@ class Octant(object):
 
         :param Octree octree: Link to octree object 
         :param Octree parent: Link to parent Octant
-        :param tuple origin: lower left corner octant coordinates
+        :param tuple origin: coordinates of octant lower left corner
         :param float size: Size (dimension) of receiver
         """
         self.data=[]
@@ -65,6 +69,8 @@ class Octant(object):
 
     def childrenIJK(self):
         """
+        Returns iterator over receiver children
+
         :return: iterator over 3-tuples with child indices; functionally equivalent to 3 nested loops, a bit faster and more readable.
         """
         return itertools.product(range(self.octree.mask[0]+1),range(self.octree.mask[1]+1),range(self.octree.mask[2]+1))
@@ -78,7 +84,7 @@ class Octant(object):
 
     def divide (self):
         """
-        Divides receiver locally.
+        Divides the receiver locally, creating child octants.
         """
         if debug: print ("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
         if not self.isTerminal(): assert("Could not divide non terminal octant")
@@ -119,6 +125,8 @@ class Octant(object):
         """
         Insert given object into receiver container. 
         Object is inserted only when its bounding box intersects the bounding box of the receiver.
+        If the number of stored objects exceeds the limit, the receiver is adaptively refined and 
+        objects distributed to children octants.
 
         :param object item: object to insert
         :param BBox itemBBox: Optional parameter determining the  BBox of the object
@@ -143,7 +151,7 @@ class Octant(object):
 
     def delete (self, item, itemBBox=None):
         """
-        Deletes given object from receiver
+        Deletes/removes the given object from receiver
 
         :param object item: object to remove
         :param BBox itemBBox: Optional parameter to specify bounding box of the object to be removed
@@ -189,7 +197,7 @@ class Octant(object):
     def evaluate (self, functor):
         """ 
         Evaluate the given functor on all containing objects.
-        The functor should define getBBox() function to return bounding box. Only the objects within this bouding box will be processed.
+        The functor should define getBBox() function to return functor bounding box. Only the objects within this bouding box will be processed.
         Functor should also define evaluate method accepting object as a parameter.
 
         :param object functor: Functor
@@ -214,14 +222,11 @@ class Octant(object):
 
 class Octree(Localizer.Localizer):
     """
-    An octree is used to partition space by recursively subdividing the root cell (square or cube) into octants.
-    Octants can be terminal (containing the data) or can be further subdivided into children octants.
-    Each terminal octant contains the objects with bounding box within the octant.
-    Each object that can be inserted and is assumed to provide giveBBox() which returns its bounding box.
+    An octree is used to partition space by recursively subdividing the root cell (square or cube) into octants. Octants can be terminal (containing the data) or can be further subdivided into children octants partitioning the parent. Each terminal octant contains the objects with bounding box within the octant. Octree contains at least one octant, called root octant, with geometry large enough to contain all potential objects. Such a partitiong can significantly speed up spatial serches on objects.
+    
+    Each object that can be inserted is assumed to provide giveBBox() returning its bounding box.
 
-    Octree mask is a tuple containing 0 or 1 values. 
-    If corresponding mask value is nonzero, receiver is subdivided in corresponding coordinate direction. 
-    The mask allows to create ocrtrees for various 2D and 1D settings.
+    Octree implementation supports 1D, 2D and 3D setting. This is controlled by Octree mask. Octree mask is a tuple containing 0 or 1 values. If corresponding mask value is nonzero, receiver is subdivided in corresponding coordinate direction. 
     
     .. automethod:: __init__
     """
@@ -244,18 +249,21 @@ class Octree(Localizer.Localizer):
 
     def insert (self, item):
         """
+        Inserts given object into octree.
         See :func:`Octant.insert`
         """
         self.root.insert(item)
 
     def delete (self, item):
         """
+        Removes the given object from octree.
         See :func:`Octant.delete`
         """
         self.root.delete(item)
 
     def giveItemsInBBox (self, bbox):
         """
+        Returns the list of objects inside the given bounding box. 
         See :func:`Octant.giveItemsInBBox`
         """
         answer=set()
@@ -267,6 +275,7 @@ class Octree(Localizer.Localizer):
 
     def evaluate(self, functor):
         """
+        Evaluate the given functor on all containing objects.
         See :func:`Octant.evaluate`
         """
         self.root.evaluate(functor)
