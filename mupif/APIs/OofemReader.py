@@ -1,7 +1,7 @@
 # this will raise ImportError right away, if oofem wrapper is not found
 import liboofem
 
-from . import Cell, Field, FieldID, Mesh
+from mupif import Cell, Field, FieldID, Mesh
 
 class OofemReader(object):
     """
