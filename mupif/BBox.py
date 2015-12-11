@@ -1,7 +1,6 @@
-from builtins import zip, str, range, object
 # 
 #           MuPIF: Multi-Physics Integration Framework 
-#               Copyright (C) 2010-2014 Borek Patzak
+#               Copyright (C) 2010-2015 Borek Patzak
 # 
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -21,6 +20,8 @@ from builtins import zip, str, range, object
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+
+from builtins import zip, str, range, object
 
 debug = 0
 

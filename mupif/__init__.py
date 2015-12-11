@@ -1,6 +1,6 @@
 #
 #               MuPIF: Multi-Physics Integration Framework 
-#                   Copyright (C) 2010 Borek Patzak
+#                   Copyright (C) 2010-2015 Borek Patzak
 #
 #       Czech Technical University, Faculty of Civil Engineering,
 #       Department of Mechanics, 166 29 Prague, Czech Republic

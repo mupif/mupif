@@ -1,6 +1,6 @@
 # 
 #           MuPIF: Multi-Physics Integration Framework 
-#               Copyright (C) 2010-2014 Borek Patzak
+#               Copyright (C) 2010-2015 Borek Patzak
 # 
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -101,7 +101,7 @@ class Field(object):
     @classmethod
     def loadFromLocalFile(cls,fileName):
         """
-        Alternative constructor from a Pickle module
+        Alternative constructor which loads instance directly from a Pickle module.
 
         :param str fileName: File name
 
@@ -112,6 +112,8 @@ class Field(object):
 
     def getMesh(self):
         """
+        Obtain mesh.
+        
         :return: Returns a mesh of underlying discretization
         :rtype: Mesh
         """
@@ -119,6 +121,8 @@ class Field(object):
 
     def getValueType(self):
         """
+        Returns ValueType of the field, e.g. scalar, vector, tensor.
+
         :return: Returns value type of the receiver
         :rtype: ValueType
         """
@@ -126,6 +130,8 @@ class Field(object):
 
     def getFieldID(self):
         """
+        Returns FieldID, e.g. FID_Displacement, FID_Temperature.
+        
         :return: Returns field ID
         :rtype: FieldID
         """
@@ -133,6 +139,8 @@ class Field(object):
 
     def getFieldIDName(self):
         """
+        Returns name of the field.
+        
         :return: Returns fieldID name
         :rtype: string
         """
@@ -140,6 +148,8 @@ class Field(object):
 
     def getTime(self):
         """
+        Get time of the field.
+        
         :return: Time of field data
         :rtype: float
         """
@@ -272,7 +282,7 @@ class Field(object):
 
     def field2VTKData (self,name=None,lookupTable=None):
         """
-        Creates VTK representation of the receiver. Useful for visualization.
+        Creates VTK representation of the receiver. Useful for visualization. Requires pyvtk module.
 
         :param str name: human-readable name of the field
         :param pyvtk.LookupTable lookupTable: color lookup table
@@ -313,7 +323,7 @@ class Field(object):
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
-        Dump Field to a file using Pickle module
+        Dump Field to a file using a Pickle serialization module.
 
         :param str fileName: File name
         :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary

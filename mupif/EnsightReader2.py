@@ -1,7 +1,6 @@
-from __future__ import print_function
 # 
 #           MuPIF: Multi-Physics Integration Framework 
-#               Copyright (C) 2010-2014 Borek Patzak
+#               Copyright (C) 2010-2015 Borek Patzak
 # 
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -21,9 +20,9 @@ from __future__ import print_function
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
+from __future__ import print_function
 from __future__ import division
 from builtins import range
-
 
 import re
 
@@ -183,14 +182,14 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
 def readEnsightField (name, parts, partRec, type, fieldID, mesh):
     """
     Reads either Per-node or Per-element variable file and returns corresponding Field representation.
-    
+
     :param str name: Input field name with variable data
     :param tuple parts: Only parts with id contained in partFiler will be imported
     :param list partRec: A list containing info about individual parts (number of elements per each element type).
     :param int type: Determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
     :param FieldID fieldID: Field type (displacement, strain, temperature ...)
     :param Mesh mesh: Corresponding mesh
-    :return: Field of unknowns??, why is FID_Temperature??
+    :return: FieldID for unknowns
     :rtype: Field
     """
     vertexVals = []
@@ -307,4 +306,4 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
         # so this should be per-cell variable file -> cell based field
         field = Field.Field(mesh, fieldID, ftype, None, None, values, Field.FieldType.FT_cellBased )
         return field
-    
+
