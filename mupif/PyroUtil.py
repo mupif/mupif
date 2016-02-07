@@ -24,14 +24,14 @@ import re
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import logging
-formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
-formatTime = '%Y-%m-%d %H:%M:%S'
-logging.basicConfig(filename='mupif.log',filemode='w',format=formatLog,level=logging.DEBUG)
-logger = logging.getLogger()#create a logger
-ch = logging.StreamHandler()
-ch.setFormatter(logging.Formatter(formatLog, formatTime))
-logger.addHandler(ch)
+#import logging - logger moved to __init__.py
+#formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+#formatTime = '%Y-%m-%d %H:%M:%S'
+#logging.basicConfig(filename='mupif.log',filemode='w',format=formatLog,level=logging.DEBUG)
+#logger = logging.getLogger()#create a logger
+#ch = logging.StreamHandler()
+#ch.setFormatter(logging.Formatter(formatLog, formatTime))
+#logger.addHandler(ch)
 
 import Pyro4
 import socket
@@ -39,6 +39,7 @@ import getpass
 import subprocess
 import time
 from . import RemoteAppRecord
+from mupif import log
 
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
@@ -64,20 +65,20 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
         s.settimeout(timeOut)
         s.connect((nshost, nsport))
         s.close()
-        logger.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
+        log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
     except Exception:
         msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
-        logger.exception(msg)
+        log.exception(msg)
         raise
 
     #locate nameserver
     try:
         ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
         msg = "Connected to NameServer on %s:%s. Pyro4 version on your localhost is %s" %(nshost, nsport, Pyro4.constants.VERSION)
-        logger.debug(msg)
+        log.debug(msg)
     except Exception:
         msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same Pyro version as this version %s? Do you have the correct hmac_key (password is now %s)? Exiting." %(nshost, nsport, Pyro4.constants.VERSION, hkey)
-        logger.exception(msg)
+        log.exception(msg)
         raise
 
     return ns
@@ -95,17 +96,17 @@ def connectApp(ns, name):
     """
     try:
         uri = ns.lookup(name)
-        logger.debug("Found URI %s from a nameServer %s" % (uri, ns) )
+        log.debug("Found URI %s from a nameServer %s" % (uri, ns) )
         app2 = Pyro4.Proxy(uri)
     except Exception as e:
-        logger.error("Cannot find registered server %s on %s" % (name, ns) )
+        log.error("Cannot find registered server %s on %s" % (name, ns) )
         raise
 
     try:
         sig = app2.getApplicationSignature()
-        logger.debug("Connected to " + sig + " with the name " + name)
+        log.debug("Connected to " + sig + " with the name " + name)
     except Exception as e:
-        logger.exception("Cannot connect to application " + name + ". Is the server running?")
+        log.exception("Cannot connect to application " + name + ". Is the server running?")
         raise
 
     return app2
@@ -135,14 +136,14 @@ def runDaemon(host, port, nathost, natport):
     """
     try:
         daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
-        logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+        log.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
     except socket.error as e:
-        logger.debug('Socket port %s:%d seems to be already in use' % (host,port))
+        log.debug('Socket port %s:%d seems to be already in use' % (host,port))
         daemon = None
         raise e
 
     except Exception:
-        logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+        log.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
         daemon = None
         raise
 
@@ -169,9 +170,9 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     if not daemon:
         try:
             daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-            logger.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
+            log.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
         except Exception:
-            logger.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
+            log.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
             raise
             exit(1)
     else:
@@ -183,8 +184,8 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     ns.register(nsname, uri)
     app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
 
-    logger.debug('NameServer %s has registered uri %s' % (nsname, uri) )
-    logger.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport, nsname,uri) )
+    log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
+    log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport, nsname,uri) )
     daemon.requestLoop()
 
 
@@ -219,27 +220,27 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
     if sshClient=='ssh':
         cmd = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        logger.debug("Creating ssh tunnel via command: " + cmd)
+        log.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='autossh':
         cmd = 'autossh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        logger.debug("Creating autossh tunnel via command: " + cmd)
+        log.debug("Creating autossh tunnel via command: " + cmd)
     elif 'putty' in sshClient.lower():
         #need to create a public key *.ppk using puttygen. It can be created by importing Linux private key. The path to that key is given as -i option
         cmd = '%s -%s %d:%s:%d %s@%s -N %s' % (sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        logger.debug("Creating ssh tunnel via command: " + cmd)
+        log.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
         cmd1 = 'ssh -%s %d:%s:%d %s@%s' % (direction, localPort, remoteHost, remotePort, userName, sshHost)
         cmd2 = 'putty.exe -%s %d:%s:%d %s@%s %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        logger.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
+        log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
         return None
     else:
-        logger.error("Unknown ssh client, exiting")
+        log.error("Unknown ssh client, exiting")
         exit(0)
     try:
         tunnel = subprocess.Popen(cmd.split())
     except Exception:
-        logger.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
+        log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
         raise
 
     time.sleep(1.0)
@@ -313,7 +314,7 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     try:
         tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
-        logger.exception("Creating ssh tunnel for JobManager failed")
+        log.exception("Creating ssh tunnel for JobManager failed")
         raise
     else:
         # locate remote jobManager on (remote) server
@@ -341,31 +342,31 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
 
     if jobMan is None:
        e = OSError("Can not connect to JobManager")
-       logger.exception(e)
+       log.exception(e)
        raise e
     else:
-       logger.debug('Connected to JobManager %s using tunnel %s' % (jobMan, tunnelJobMan))
+       log.debug('Connected to JobManager %s using tunnel %s' % (jobMan, tunnelJobMan))
 
     if tunnelJobMan is None:
        e = OSError("Can not create a ssh tunnel to JobManager")
-       logger.exception(e)
+       log.exception(e)
        raise
 
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
-        logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
+        log.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception:
-        logger.exception("JobManager allocateJob() failed")
+        log.exception("JobManager allocateJob() failed")
         raise 
 
     #create tunnel to application's daemon running on (remote) server
     try:
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
-        logger.exception("Creating ssh tunnel for application's daemon failed")
+        log.exception("Creating ssh tunnel for application's daemon failed")
         raise
     else:
-        logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
+        log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
     #time.sleep(1)
     # connect to (remote) application, requests remote proxy
@@ -397,19 +398,19 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
 
     try:
         retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
-        logger.info('Allocated job, returned record from jobMan:' +  str(retRec))
+        log.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception:
-        logger.exception("jobMan.allocateJob() failed")
+        log.exception("jobMan.allocateJob() failed")
         raise 
 
     #create tunnel to application's daemon running on (remote) server
     try:
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
-        logger.exception("Creating ssh tunnel for application's daemon failed")
+        log.exception("Creating ssh tunnel for application's daemon failed")
         raise 
     else:
-        logger.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
+        log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
     app = connectApp(ns, retRec[1])
     if app==None:

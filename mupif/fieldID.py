@@ -21,9 +21,10 @@
 # Boston, MA  02110-1301  USA
 #
 
-from enum import Enum
+#needs a module enum34
+from enum import IntEnum
 
-class FieldID(Enum):
+class FieldID(IntEnum):
     """ 
     This class represent the supported values of field IDs, e.g. displacement, strain, temperature.
     Immutable class Enum allows accessing members by .name and .value methods

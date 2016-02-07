@@ -36,6 +36,7 @@ class application3(Application.Application):
         self.values = []
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
+            mupif.log.debug("Getting property name: %s with ID  %d" % (PropertyID.PID_CumulativeConcentration.name,PropertyID.PID_CumulativeConcentration.value) )
             # parse output of application3 
             f = open('app3.out', 'r')
             answer = float(f.readline())
@@ -88,7 +89,7 @@ while (abs(time -targetTime) > 1.e-6):
         app1.solveStep(istep)
         #request Concentration property from app1
         c = app1.getProperty(PropertyID.PID_Concentration, istep)
-        # register Concentration property in app2
+        # register Concentration property in app3
         app3.setProperty (c)
         # solve second sub-problem 
         app3.solveStep(istep)

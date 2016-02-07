@@ -25,19 +25,28 @@ from __future__ import print_function
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '0.20.00'
+__version__ = '0.20.01'
 __author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
 
 from fieldID import FieldID
 from propertyID import PropertyID
+from functionID import FunctionID
 
 #List all submodules, so they can all be imported: from mupif import *
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile','log']
 
 # mupif log, used e.g. in examples
 import logging,os
-logging.basicConfig(level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG) # setup root logger, if not yet done
-log=logging.getLogger('mupif')
+formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+formatTime = '%Y-%m-%d %H:%M:%S'
+logging.basicConfig(filename='mupif.log',filemode='w',format=formatLog,level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
+logger = logging.getLogger()#create a logger
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter(formatLog, formatTime))
+logger.addHandler(ch)
+log = logging.getLogger('mupif')
+#logging.basicConfig(level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG) # setup root logger, if not yet done
+
 
 ## temporarily disabled (does not work on travis, even though future is installed there??)
 ## more helpful error message

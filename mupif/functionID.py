@@ -21,8 +21,13 @@
 # Boston, MA  02110-1301  USA
 #
 
-""" 
-This classenumeration represent the supported values of FunctionID, e.g. FuncID_ProbabilityDistribution
-"""
-FuncID_ProbabilityDistribution = 1
+#needs a module enum34
+from enum import IntEnum
+
+class FunctionID(IntEnum):
+    """ 
+    This classenumeration represent the supported values of FunctionID, e.g. FuncID_ProbabilityDistribution
+    """
+    FuncID_ProbabilityDistribution = 1
+    
 

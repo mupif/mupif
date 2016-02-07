@@ -1,5 +1,8 @@
 To generate a reference manual, run the script tools/createRefMan.sh. It does automatically what is described below.
 Html and pdf versions are generated.
+However, the final document has several deficiencies: no introduction, inclusion of all tests and unnecessary *.py files.
+For this reason, the files *.rst are adviced to edit manually (a backup is available in directory manual-modification.
+
 
 
 === Documentation using Sphinx - a preferred method ===

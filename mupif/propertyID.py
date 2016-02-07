@@ -2,12 +2,12 @@
 Module defining PropertyID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
 """
+#needs a module enum34
+from enum import IntEnum
 
-from enum import Enum
-
-class PropertyID(Enum):
+class PropertyID(IntEnum):
     """
-    Enumeration class  defining Property IDs. These are used to uniquely determine 
+    Enumeration class defining Property IDs. These are used to uniquely determine 
     the canonical keywords identifiing individual properties.
     """
     PID_Concentration = 1
@@ -23,7 +23,22 @@ class PropertyID(Enum):
     PID_mean_radius_green_phosphor = 11
     PID_standard_deviation_red_phosphor = 12
     PID_standard_deviation_green_phosphor = 13
-
+    PID_RefractiveIndex = 14
+    PID_NumberOfRays = 15
+    PID_LEDSpectrum = 16
+    PID_ChipSpectrum = 17
+    PID_LEDColor_x = 18
+    PID_LEDColor_y = 19
+    PID_LEDCCT = 20
+    PID_LEDRadiantPower = 21
+    PID_ParticleNumberDensity = 22
+    PID_ParticleRefractiveIndex = 23
+    PID_EmissionSpectrum = 24
+    PID_ExcitationSpectrum = 25
+    PID_AsorptionSpectrum = 26
+    PID_ScatteringCrossSections = 27
+    PID_InverseCumulativeDist = 28
+    
 
     PID_Demo_Min = 9990
     PID_Demo_Max = 9991
