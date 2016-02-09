@@ -13,8 +13,13 @@ include mupif/doc/refManual/MuPIF.pdf
 include mupif/doc/userGuide/MuPIF-userGuide.pdf
 #prune *.pyc
 include mupif/examples/testExamples.sh
+recursive-include mupif/examples README
+
+prune mupif/examples/Workshop02 *.py
+prune mupif/examples/PingTest
+prune mupif/examples/ports
+prune mupif/examples/ssh
 
 #prune mupif/Workshop02
-
 #recursive-include mupif/examples *.py *.c
 #recursive-include mupif/tools *.py
