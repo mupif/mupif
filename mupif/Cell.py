@@ -261,6 +261,237 @@ class Triangle_2d_lin(Cell):
                  c3[0] * ( c1[1] - c2[1] ) )
 
 
+class Triangle_2d_quad(Cell):
+    """
+    Unstructured 2D triangular element with quadratic interpolation
+    Node numbering convention:
+    
+    2
+    | \
+    |  \
+    5   4
+    |    \
+    |     \
+    0--3---1
+
+    """
+
+    def copy(self):
+        """
+        This will copy the receiver, making a deep copy of all atributes EXCEPT mesh attribute.
+
+        :return: A deep copy of a receiver
+        :rtype: Cell
+        """
+        return Triangle_2d_quad(self.mesh, self.number, self.label, tuple(self.vertices))
+
+    def getGeometryType(self):
+        """
+        Returns geometry type of receiver.
+        
+        :return: Returns geometry type of receiver
+        :rtype: CellGeometryType
+        """
+        return CellGeometryType.CGT_TRIANGLE_2
+
+    def glob2loc(self, coords):
+        """
+        Converts global coordinate to local (area) coordinate.
+        
+        :param tuple coords: A coordinate in global system
+        :return: local (area) coordinate
+        :rtype: tuple
+        """
+
+        convergence_limit = 1.e-6 * math.sqrt(self._evalArea())
+        res = np.zeros((2))
+        # setup initial guess
+        lcoords_guess = [0.0, 0.0]
+        
+        # apply Newton-Raphson to solve the problem
+        for nite in range(10):
+            # compute the residual
+            guess = self.loc2glob(lcoords_guess)
+            res[0] = coords[0]- guess[0]
+            res[1] = coords[1]- guess[1]
+
+            # check for convergence
+            error = math.sqrt(res[0]*res[0] + res[1]*res[1])
+            if ( error < convergence_limit ):
+                break;
+
+            # compute the corrections
+            jac = self._getTransformationJacobianMtrx(lcoords_guess)
+            delta = np.linalg.solve(jac.T, res)
+            ee = jac.dot(delta)-res
+
+            # update guess
+            lcoords_guess[0] = lcoords_guess[0] + delta[0]
+            lcoords_guess[1] = lcoords_guess[1] + delta[1]
+    
+        if ( error > convergence_limit ):
+            # failed convergence
+            return None
+
+        return (lcoords_guess[0], lcoords_guess[1], 1.0 - lcoords_guess[0] - lcoords_guess[1] )
+
+    def loc2glob(self, lc):
+        """
+        Converts local (parametric) coordinates to global ones.
+
+        :param tuple lc: A local coordinate
+        :return: global coordinate
+        :rtype: tuple
+        """
+        x = 0
+        y = 0
+        n = self._evalN(lc)
+        for i in range(6):
+            x += n[i] * self.mesh.getVertex(self.vertices[i]).coords[0]
+            y += n[i] * self.mesh.getVertex(self.vertices[i]).coords[1]
+        
+
+        return (x,y)
+
+    def interpolate(self, point, vertexValues):
+        """
+        Interpolates given vertex values to a given point.
+
+        :param tuple point: 1D/2D/3D position vector
+        :param tuple vertexValues: A tuple containing vertex values
+        :return: Interpolated value at a given point
+        :rtype: tuple
+        """
+        lc = self.glob2loc(point)
+        n = self._evalN(lc)
+        return (n[0]*vertexValues[0]+n[1]*vertexValues[1]+n[2]*vertexValues[2]+n[3]*vertexValues[3]+n[4]*vertexValues[4]+n[5]*vertexValues[5])
+
+    def containsPoint(self, point):
+        """
+        Check if a cell contains a point.
+
+        :param tuple point: 1D/2D/3D position vector
+        :return: Returns True if cell contains a given point
+        :rtype: bool
+        """
+        ac = self.glob2loc(point)
+
+        for li in ac:
+            if li < -tolerance or li > 1.0+tolerance:
+                return False
+        return True;
+
+    def getTransformationJacobian(self, coords):
+        """
+        Returns the transformation jacobian (the determinant of jacobian) of the receiver
+
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian
+        :rtype: float
+        """
+        return np.linalg.det(self._getTransformationJacobianMtrx(coords));
+
+
+
+    def _getTransformationJacobianMtrx (self, lcoords):
+        """ 
+        Returns the jacobian matrix  J (x,y)/(ksi,eta)  of the receiver.
+        :param tuple coords: local (parametric) coordinates of the point
+        :return: jacobian matrix
+        :rtype: numpy.matrix
+        """
+
+        jacobianMatrix = np.zeros((2,2))
+        
+        dn=self._evalDerivatives(lcoords);
+
+        for i in range(dn.shape[0]):
+            c = self.mesh.getVertex(self.vertices[i]).coords
+            x = c[0]
+            y = c[1]
+
+            jacobianMatrix[0][0] += dn[i][0] * x;
+            jacobianMatrix[0][1] += dn[i][0] * y;
+            jacobianMatrix[1][0] += dn[i][1] * x;
+            jacobianMatrix[1][1] += dn[i][1] * y;
+
+
+        return jacobianMatrix
+
+    def _evalN(self, lc):
+        """
+        Evaluates shape functions at given point (given in parametric coordinates).
+
+        :param tuple lc: A local coordinate
+        :return: shape function values
+        :rtype: tuple
+        """
+        #print "lc :",lc
+        l1 = lc[0]
+        l2 = lc[1]
+        l3 = 1.0-l1-l2
+
+        return (( 2. * l1 - 1. ) * l1,
+                ( 2. * l2 - 1. ) * l2,
+                ( 2. * l3 - 1. ) * l3,
+                4. * l1 * l2,
+                4. * l2 * l3,
+                4. * l3 * l1)
+
+
+    def _evalDerivatives (self, lc):
+        """
+        Evaluates shape function derivatives at given point (given in parametric coordinates).
+
+        :param tuple lc: A local coordinate
+        :return: shape function derivatives
+        :rtype: numpy.matrix
+        """
+        l1 = lc[0]
+        l2 = lc[1]
+        l3 = 1.0 - l1 - l2;
+
+        dn = np.zeros((6,2))
+
+        dn[0][0] =  4.0 * l1 - 1.0;
+        dn[1][0] =  0.0;
+        dn[2][0] = -1.0 * ( 4.0 * l3 - 1.0 );
+        dn[3][0] =  4.0 * l2;
+        dn[4][0] = -4.0 * l2;
+        dn[5][0] =  4.0 * l3 - 4.0 * l1;
+        
+        dn[0][1] =  0.0;
+        dn[1][1] =  4.0 * l2 - 1.0;
+        dn[2][1] = -1.0 * ( 4.0 * l3 - 1.0 );
+        dn[3][1] =  4.0 * l1;
+        dn[4][1] =  4.0 * l3 - 4.0 * l2;
+        dn[5][1] = -4.0 * l1;
+
+        return dn
+
+    def _evalArea(self):
+        p = self.mesh.getVertex(self.vertices[0]).coords
+        x1 = p[0];
+        y1 = p[1];
+        p = self.mesh.getVertex(self.vertices[1]).coords
+        x2 = p[0]
+        y2 = p[1]
+        p = self.mesh.getVertex(self.vertices[2]).coords
+        x3 = p[0]
+        y3 = p[1]
+        p = self.mesh.getVertex(self.vertices[3]).coords
+        x4 = p[0]
+        y4 = p[1]
+        p = self.mesh.getVertex(self.vertices[4]).coords
+        x5 = p[0]
+        y5 = p[1]
+        p = self.mesh.getVertex(self.vertices[5]).coords
+        x6 = p[0]
+        y6 = p[1]
+        
+        return math.fabs( ( 4 * ( -( x4 * y1 ) + x6 * y1 + x4 * y2 - x5 * y2 + x5 * y3 - x6 * y3 ) + x2 * ( y1 - y3 - 4 * y4 + 4 * y5 ) +
+                            x1 * ( -y2 + y3 + 4 * y4 - 4 * y6 ) + x3 * ( -y1 + y2 - 4 * y5 + 4 * y6 ) ) / 6 );
+
 class Quad_2d_lin(Cell):
     """
     Unstructured 2d quad element with linear interpolation
@@ -358,7 +589,7 @@ class Quad_2d_lin(Cell):
 
             if ksi1 < -1.0:
                 diff_ksi1 = ksi1 + 1.0;
-
+ 
             diff_eta1 = 0.0
             if eta1 > 1.0:
                 diff_eta1 = eta1 - 1.0;
@@ -858,4 +1089,6 @@ class Brick_3d_lin(Cell):
             j33 = j33+dnw[i]*z
 
         return (j11*j22*j33+j21*j32*j13+j31*j12*j23-j13*j22*j31-j23*j32*j11-j33*j12*j21)
+
+
 
