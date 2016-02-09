@@ -216,7 +216,7 @@ class Triangle_2d_lin(Cell):
         l1 = lc[0]
         l2 = lc[1]
         l3 = 1.-l1-l2
-        return (l1*c1[0]+l2*c2[0]+l3*c3[0], l1*c1[1]+l2*c2[1]+l3*c3[1], l1*c1[2]+l2*c2[2]+l3*c3[2])
+        return (l1*c1[0]+l2*c2[0]+l3*c3[0], l1*c1[1]+l2*c2[1]+l3*c3[1])
 
     def interpolate(self, point, vertexValues):
         """
@@ -364,7 +364,7 @@ class Triangle_2d_quad(Cell):
         """
         lc = self.glob2loc(point)
         n = self._evalN(lc)
-        return (n[0]*vertexValues[0]+n[1]*vertexValues[1]+n[2]*vertexValues[2]+n[3]*vertexValues[3]+n[4]*vertexValues[4]+n[5]*vertexValues[5])
+        return tuple([n[0]*v0+n[1]*v1+n[2]*v2+n[3]*v3+n[4]*v4+n[5]*v5 for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3] for v4 in vertexValues[4] for v5 in vertexValues[5]])
 
     def containsPoint(self, point):
         """
