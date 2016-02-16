@@ -575,6 +575,12 @@ class UnstructuredMesh(Mesh):
                 tetrahedrons.append(cell.vertices)
             elif (cgt == CellGeometryType.CGT_HEXAHEDRON):
                 hexahedrons.append(cell.vertices)
+            elif (cgt == CellGeometryType.CGT_TRIANGLE_2):
+               # no direct support in pyvtk. map it to linear tringles
+               triangles.append((cell.vertices[0], cell.vertices[3], cell.vertices[5]))
+               triangles.append((cell.vertices[1], cell.vertices[4], cell.vertices[3]))
+               triangles.append((cell.vertices[2], cell.vertices[5], cell.vertices[4]))
+               triangles.append((cell.vertices[3], cell.vertices[4], cell.vertices[5]))
             else:
                 msg = "Unsupported cell geometry type encountered: "+str(cgt)
                 raise APIError.APIError (msg) 
