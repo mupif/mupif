@@ -81,6 +81,13 @@ class Cell(object):
             return [self.mesh.getVertex(i) for i in self.vertices]
         return self.vertices
 
+    def getNumberOfVertices(self):
+        """
+        :return: Number of vertices
+        :rtype: int
+        """
+        return len(self.vertices)
+
     def containsPoint (self, point):
         """
         Check if a cell contains a point.
