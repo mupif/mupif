@@ -14,7 +14,7 @@ from mupif import Cell
 
 
 if True:
-    app = demoapp.thermal('input.in','.')
+    app = demoapp.thermal('inputT.in','.')
     print(app.getApplicationSignature())
 
     sol = app.solveStep(TimeStep.TimeStep(0,1)) 
@@ -22,7 +22,7 @@ if True:
     data = f.field2VTKData().tofile('example2')
 
 if True:
-    app2 = demoapp.mechanical('inputm.in', '.')
+    app2 = demoapp.mechanical('inputM.in', '.')
     print(app2.getApplicationSignature())
 
     app2.setField(f)

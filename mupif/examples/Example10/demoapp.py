@@ -27,6 +27,7 @@ class thermal(Application.Application):
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
 
+
     def readInput(self):
 
         dirichletModelEdges=[]
@@ -48,10 +49,11 @@ class thermal(Application.Application):
                 rec = line.split()
                 edge = int(rec[0])
                 code = rec[1]
+                value= float(rec[2])
                 if (code == 'D'):
-                    dirichletModelEdges.append(edge)
+                    dirichletModelEdges.append((edge, value))
                 elif (code == 'C'):
-                    conventionModelEdges.append(edge)
+                    conventionModelEdges.append((edge, value))
 
             f.close()
 
@@ -84,24 +86,24 @@ class thermal(Application.Application):
 
         #dirichletModelEdges=(3,4,1)#
         self.dirichletBCs = {}# key is node number, value is prescribed temperature (zero supported only now)
-        for ide in dirichletModelEdges:
+        for (ide, value) in dirichletModelEdges:
             #print ide
             if ide == 1:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[i*(self.ny+1)]=0.0
+                    self.dirichletBCs[i*(self.ny+1)]=value
             elif ide ==2:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[(self.ny+1)*(self.nx)+i]=0.0
+                    self.dirichletBCs[(self.ny+1)*(self.nx)+i]=value
             elif ide ==3:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[self.ny + (self.ny+1)*(i)]=0.0
+                    self.dirichletBCs[self.ny + (self.ny+1)*(i)]=value
             elif ide ==4:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[i]=0.0
+                    self.dirichletBCs[i]=value
 
         #conventionModelEdges=(2,)
         self.convectionBC = []
-        for ice in conventionModelEdges:
+        for (ice, Te) in conventionModelEdges:
             if ice ==1:
                 for i in range(self.nx):
                     self.convectionBC.append((self.ny*i,0,k,Te))
@@ -211,12 +213,12 @@ class thermal(Application.Application):
                 Grad = self.compute_B(e,p[0])
                 #print "Grad :",Grad
                 K=np.zeros((4,4))
-                K=k*(np.dot(Grad.T,Grad))
+                K=k*dv*(np.dot(Grad.T,Grad))
 
                 #Conductivity matrix
                 for i in range(4):#loop dofs
                     for j in range(4):
-                        A_e[i,j] += K[i,j]*dv   
+                        A_e[i,j] += K[i,j]
             #print "A_e :",A_e
             #print "b_e :",b_e 
 
@@ -233,8 +235,30 @@ class thermal(Application.Application):
                             A[ii, jj] += A_e[i,j]
                     b[ii] += b_e[i] 
 
-        #print A
-        #print b
+            # add effect of nonzero dirichlet BCs
+            rp = np.zeros((4, 1))
+            fr = np.zeros((4, 1))
+            i = 0
+            bcflag = False
+            for n in e.getVertices():
+                if n.number in self.dirichletBCs:
+                    rp[i]=self.dirichletBCs[n.number]
+                    bcflag = True
+                else:
+                    rp[i]=0.0
+                i+=1
+            
+            if bcflag:
+                #print (rp)
+                fr = np.dot(A_e, rp)
+                #print (fr)
+                for i in range(4):#loop nb of dofs
+                    ii = self.loc[c[e.number-1,i]]
+                    if (ii>=0):
+                        b[ii] -= fr[i] 
+
+        #print (A)
+        #print (b)
 
         # add boundary terms
         for i in self.convectionBC:
@@ -463,7 +487,7 @@ class mechanical(Application.Application):
                     values.append(self.dirichletBCs[i])
                 else:
                     values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Vector, None, 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, None, 0.0, values);
         else:
             raise APIError.APIError ('Unknown field ID')
 
