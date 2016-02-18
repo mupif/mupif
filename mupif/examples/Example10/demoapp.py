@@ -32,33 +32,35 @@ class thermal(Application.Application):
         dirichletModelEdges=[]
         conventionModelEdges=[]
         try:
-            f = open(self.workDir+os.path.sep+self.file, 'r')
-            line = getline(f)
-            size = line.split()
-            self.xl=float(size[0])
-            self.yl=float(size[1])
-
-            line = getline(f)
-            ne = line.split()
-            self.nx=int(ne[0])
-            self.ny=int(ne[1])
-
-            for iedge in range(4):
-                line = getline(f)
-                rec = line.split()
-                edge = int(rec[0])
-                code = rec[1]
-                if (code == 'D'):
-                    dirichletModelEdges.append(edge)
-                elif (code == 'C'):
-                    conventionModelEdges.append(edge)
-
-            f.close()
-
+            lines = open(self.workDir+os.path.sep+self.file, 'r')
         except  Exception as e:
             logger.exception(e)
             exit(1)
 
+        #filter out comments wstarting with #
+        lines = (l for l in lines if (l.startswith('#')==False) )
+        # more filters and mappings you might want
+        #print (lines.next())
+        line = lines.next()
+        size = line.split()
+        self.xl=float(size[0])
+        self.yl=float(size[1])
+        print (self.xl, self.yl)
+        line = lines.next()
+        ne = line.split()
+        self.nx=int(ne[0])
+        self.ny=int(ne[1])
+
+        for iedge in range(4):
+            line = lines.next()
+            rec = line.split()
+            edge = int(rec[0])
+            code = rec[1]
+            temperature = float(rec[2])
+            if (code == 'D'):
+                dirichletModelEdges.append((edge,temperature))
+            elif (code == 'C'):
+                conventionModelEdges.append((edge,temperature))
 
         self.mesh = Mesh.UnstructuredMesh()
         # generate a simple mesh here
@@ -70,8 +72,7 @@ class thermal(Application.Application):
         self.dy = self.yl/self.ny;
         self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
 
-        k = 1
-        Te=10;
+        k = 1.
 
 #
 # Model edges
@@ -83,61 +84,73 @@ class thermal(Application.Application):
 #
 
         #dirichletModelEdges=(3,4,1)#
-        self.dirichletBCs = {}# key is node number, value is prescribed temperature (zero supported only now)
+        self.dirichletBCs = {}# key is node number, value is prescribed temperature
         for ide in dirichletModelEdges:
-            #print ide
-            if ide == 1:
+            print ("Dirichlet", ide)
+            if ide[0] == 1:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[i*(self.ny+1)]=0.0
-            elif ide ==2:
+                    self.dirichletBCs[i*(self.ny+1)]=ide[1]
+            elif ide[0] == 2:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[(self.ny+1)*(self.nx)+i]=0.0
-            elif ide ==3:
+                    self.dirichletBCs[(self.ny+1)*(self.nx)+i]=ide[1]
+            elif ide[0] == 3:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[self.ny + (self.ny+1)*(i)]=0.0
-            elif ide ==4:
+                    self.dirichletBCs[self.ny + (self.ny+1)*(i)]=ide[1]
+            elif ide[0] == 4:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[i]=0.0
+                    self.dirichletBCs[i]=ide[1]
 
         #conventionModelEdges=(2,)
         self.convectionBC = []
         for ice in conventionModelEdges:
-            if ice ==1:
+            print ("Convention", ice)
+            if ice[0] == 1:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*i,0,k,Te))
-            elif ice ==2:
+                    self.convectionBC.append((self.ny*i,0,k,ice[1]))
+            elif ice[0] == 2:
                 for i in range(self.ny):
-                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, k, Te))
-            elif ice ==3:
+                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, k, ice[1]))
+            elif ice[0] == 3:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*(i+1)-1, 2, k, Te))
-            elif ice ==4:
+                    self.convectionBC.append((self.ny*(i+1)-1, 2, k, ice[1]))
+            elif ice[0] == 4:
                 for i in range(self.ny):
-                    self.convectionBC.append((i, 3, k, Te))
-                
+                    self.convectionBC.append((i, 3, k, ice[1]))
 
         self.loc=np.zeros(self.mesh.getNumberOfVertices())
-        for i in self.dirichletBCs:
-            self.loc[i]=-1;
-        self.neq = 0;
+        self.neq = 0;#number of unknowns
+        self.pneq = 0;#number of prescribed equations (Dirichlet b.c.)
+        #print (self.mesh.getNumberOfVertices())
         for i in range(self.mesh.getNumberOfVertices()):
-            if (self.loc[i] >= 0):
-                self.loc[i]=self.neq;
-                self.neq=self.neq+1
+            #print(i)
+            if i in self.dirichletBCs:
+                self.pneq += 1
+            else:
+                self.neq += 1
+        #print ("Neq", self.neq, "Pneq", self.pneq)
 
-        #print "\tloc:", self.loc
-    
+        ineq = 0 # unknowns numbering starts from 0..neq-1
+        ipneq = self.neq #prescribed unknowns numbering starts neq..neq+pneq-1
 
-    
+        for i in range(self.mesh.getNumberOfVertices()):
+            if i in self.dirichletBCs:
+                self.loc[i] = ipneq
+                ipneq += 1
+            else:
+                self.loc[i] = ineq
+                ineq += 1
+        #print (self.loc)
+
+
     def getField(self, fieldID, time):
-        if (fieldID == FieldID.FID_Temperature):    
+        if (fieldID == FieldID.FID_Temperature):
 
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
                 if i in self.dirichletBCs:
                     values.append((self.dirichletBCs[i],))
                 else:
-                    values.append((self.T[self.loc[i],0],))
+                    values.append((self.T[self.loc[i]],))
             #print values
             return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, 0.0, values);
         else:
@@ -150,7 +163,7 @@ class thermal(Application.Application):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 
         self.readInput()
-        mesh =  self.mesh
+        mesh = self.mesh
         rule = IntegrationRule.GaussIntegrationRule()
         self.volume = 0.0;
         self.integral = 0.0;
@@ -175,8 +188,11 @@ class thermal(Application.Application):
         #print "connectivity :",c
 
         #Global matrix and global vector
-        A = np.zeros((self.neq, self.neq ))
-        b = np.zeros((self.neq, 1))
+        kuu = np.zeros((self.neq,self.neq))
+        kpp = np.zeros((self.pneq,self.pneq))
+        kup = np.zeros((self.neq,self.pneq))
+        #A = np.zeros((self.neq, self.neq ))
+        b = np.zeros(self.neq)
 
         print("\tAssembling ...")
         for e in mesh.cells():
@@ -216,22 +232,39 @@ class thermal(Application.Application):
                 #Conductivity matrix
                 for i in range(4):#loop dofs
                     for j in range(4):
-                        A_e[i,j] += K[i,j]*dv   
+                        A_e[i,j] += K[i,j]*dv
             #print "A_e :",A_e
             #print "b_e :",b_e 
 
 
             # #Assemble
             #print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
-            for i in range(ndofs):#loop nb of dofs
-                ii = self.loc[c[e.number-1,i]]
-                if (ii>=0):
+            for i in range(ndofs):#loop of dofs
+                ii = self.loc[c[e.number-1,i]]#code number
+                if ii<self.neq:#unknown to be solved
                     for j in range(ndofs):
                         jj = self.loc[c[e.number-1,j]]
-                        if (jj>=0):
-                            #print "Assembling", ii, jj
-                            A[ii, jj] += A_e[i,j]
-                    b[ii] += b_e[i] 
+                        if jj<self.neq:
+                            kuu[ii,jj] += A_e[i,j]
+                        else:
+                            kup[ii,jj-self.neq] += A_e[i,j]
+                else:#prescribed value
+                    for j in range(ndofs):
+                        jj = self.loc[c[e.number-1,j]]
+                        if jj>=self.neq:
+                            kpp[ii-self.neq,jj-self.neq] += A_e[i,j]
+
+            #print ( kuu, kup, kpp )
+
+            #for i in range(ndofs):#loop of dofs
+                #ii = self.loc[c[e.number-1,i]]
+                #if (ii>=0):
+                    #for j in range(ndofs):
+                        #jj = self.loc[c[e.number-1,j]]
+                        #if (jj>=0):
+                            ##print "Assembling", ii, jj
+                            #A[ii, jj] += A_e[i,j]
+                    #b[ii] += b_e[i]
 
         #print A
         #print b
@@ -243,6 +276,7 @@ class thermal(Application.Application):
             side = i[1]
             h = i[2]
             Te = i[3]
+            print ("Te", Te)
 
             n1 = elem.getVertices()[side];
             #print n1
@@ -256,7 +290,6 @@ class thermal(Application.Application):
 
             #print h, Te, length
 
-
             # boundary_lhs=h*(np.dot(N.T,N))
             boundary_lhs=np.zeros((2,2))
             boundary_lhs[0,0] = (1./3.)*length*h
@@ -265,7 +298,7 @@ class thermal(Application.Application):
             boundary_lhs[1,1] = (1./3.)*length*h
 
             # boundary_rhs=h*Te*N.T
-            boundary_rhs = np.zeros((2,1)) 
+            boundary_rhs = np.zeros((2,1))
             boundary_rhs[0] = (1./2.)*length*Te
             boundary_rhs[1] = (1./2.)*length*Te
 
@@ -274,21 +307,32 @@ class thermal(Application.Application):
             #print loci
             for i in range(2):#loop nb of dofs
                 ii = self.loc[loci[i]]
-                if ii>=0:
+                if ii<self.neq:
                     for j in range(2):
                         jj = self.loc[loci[j]]
-                        if jj>=0:
+                        if jj<self.neq:
                             #print "Assembling bc ", ii, jj, boundary_lhs[i,j]
-                            A[ii,jj] += boundary_lhs[i,j]
+                            kuu[ii,jj] += boundary_lhs[i,j]
                     b[ii] += boundary_rhs[i] 
 
-        #print A
-        #print b
+        bp = np.zeros(self.pneq)
+        Tp = np.zeros(self.pneq) #vector of prescribed temperatures
+        for i in range(self.mesh.getNumberOfVertices()):
+            if i in self.dirichletBCs:
+                ii = self.loc[i] 
+                Tp[ii-self.neq] = self.dirichletBCs[i] #assign temperature
 
-
+        #print (Tp)
         #solve linear system
         print("\tSolving ...")
-        self.T = np.linalg.solve(A, b)
+        self.rhs = np.zeros(self.neq)
+        self.rhs = b - np.dot(kup,Tp)
+        self.T = np.linalg.solve(kuu,self.rhs)
+
+        #print (b)
+        print (self.T)
+
+        #self.T = np.linalg.solve(A, b)
         print("\tDone")
         print("\tTime consumed %f s" % (timeTime.time()-start))
 
@@ -396,8 +440,6 @@ class mechanical(Application.Application):
         self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
 
         k = 1
-        Te=10;
-
 #
 # Model edges
 #     ----------3----------
@@ -440,7 +482,6 @@ class mechanical(Application.Application):
             elif ice ==4:
                 for i in range(self.ny):
                     self.loadBC.append((i, 3, fx, fy))
-                
 
         self.loc=np.zeros((self.mesh.getNumberOfVertices(),2)) # Du, Dv dofs per node
         for i in self.dirichletBCs:
@@ -454,7 +495,7 @@ class mechanical(Application.Application):
                     self.neq=self.neq+1
 
         #print "\tloc:", self.loc
-    
+
     def getField(self, fieldID, time):
         if (fieldID == FieldID.FID_Displacement):    
             values=[]
