@@ -29,6 +29,7 @@ from . import BBox
 import copy
 import time
 import sys
+import numpy
 from . import CellGeometryType
 try:
    import cPickle as pickle #faster serialization if available
@@ -160,6 +161,20 @@ class Mesh(object):
         :rtype: Vertex
         """
 
+    def getVertices(self):
+        """
+        Return all vertex coordinates as 2D (Nx3) numpy.array; each i-th row contains 3d coordinates of the i-th vertex.
+
+        :return: vertices
+        :rtype: numpy.array
+
+        .. note:: This method has not been tested yet.
+        """
+        nv=self.getNumberOfVertices()
+        ret=numpy.empty((nv,3),dtype=numpy.float)
+        for i in range(0,nv): ret[i]=numpy.array(self.getVertex(i).getCoordinates())
+        return ret
+
     def getCell(self, i):
         """
         Returns i-th cell.
@@ -168,6 +183,26 @@ class Mesh(object):
         :return: cell
         :rtype: Cell
         """
+
+    def getCells(self, i):
+        """
+        Return all cells as 2x numpy.array; each i-th row contains vertex indices for i-th cell. Does in 2 passes, first to determine maximum number of vertices per cell (to shape the field accordingly). For cells with less vertices than the maximum, excess ones are assigned the invalid value of -1.
+
+        :return: (cell_types,cell_vertices)
+        :rtype: (numpy.array,numpy.array)
+
+        .. note:: This method has not been tested yet.
+        """
+        # determine the maximum number of vertices
+        mnv=0
+        for c in self.cells: mnv=max(mnv,c.getNumberOfVertices())
+        nc=self.getNumberOfCells()
+        tt,cc=numpy.empty(shape=(nc,),dtype=numpy.int),numpy.full(shape=(nc,mnv),fill_value=-1,dtype=numpy.int)
+        for i in range(0,nc):
+            tt[i]=c.getGeometryType()
+            vv=c.getVertices() # TODO: assert that this is a list of ints
+            cc[i,:len(vv)]=numpy.array(vv,dtype=numpy.int) # excess elements in the row stay at -1
+        return tt,cc
 
     def getMapping(self):
         """
@@ -540,6 +575,12 @@ class UnstructuredMesh(Mesh):
                 tetrahedrons.append(cell.vertices)
             elif (cgt == CellGeometryType.CGT_HEXAHEDRON):
                 hexahedrons.append(cell.vertices)
+            elif (cgt == CellGeometryType.CGT_TRIANGLE_2):
+               # no direct support in pyvtk. map it to linear tringles
+               triangles.append((cell.vertices[0], cell.vertices[3], cell.vertices[5]))
+               triangles.append((cell.vertices[1], cell.vertices[4], cell.vertices[3]))
+               triangles.append((cell.vertices[2], cell.vertices[5], cell.vertices[4]))
+               triangles.append((cell.vertices[3], cell.vertices[4], cell.vertices[5]))
             else:
                 msg = "Unsupported cell geometry type encountered: "+str(cgt)
                 raise APIError.APIError (msg) 

@@ -29,6 +29,7 @@ from . import ValueType
 from . import BBox
 import mupif #for logger
 from numpy import array, arange, random, zeros
+import numpy
 import copy
 try:
    import cPickle as pickle #faster serialization if available
@@ -85,16 +86,7 @@ class Field(object):
                 ncomponents = mesh.getNumberOfVertices()
             else:
                 ncomponents = mesh.getNumberOfCells()
-
-            if valueType == ValueType.Scalar:
-                recsize = 1
-            elif valueType == ValueType.Vector:
-                recsize = 3
-            elif valueType == ValueType.Tensor:
-                recsize = 9
-            else:
-                raise TypeError("Unknown valueType")
-            self.values=zeros((ncomponents, recsize))
+            self.values=zeros((ncomponents, self.getRecordSize()))
         else:
             self.values = values
 
@@ -109,6 +101,18 @@ class Field(object):
         :rtype: Field
         """
         return pickle.load(file(fileName,'r'))
+
+    def getRecordSize(self):
+        """
+        Return the number of scalars per value, depending on :obj:`valueType` passed when constructing the instance.
+
+        :return: number of scalars (1,3,9 respectively for scalar, vector, tensor)
+        :rtype: int
+        """
+        if self.valueType==ValueType.Scalar: return 1
+        elif self.valueType==ValueType.Vector: return 3
+        elif self.valueType==ValueType.Tensor: return 9
+        else: raise ValueError("Invalid value of Field.valueType (%d)."%self.valueType)
 
     def getMesh(self):
         """
@@ -330,6 +334,53 @@ class Field(object):
         """
         pickle.dump(self, file(fileName,'w'), protocol)
 
+    def toHdf5(self,fileName,group='component1/part1'):
+        """
+        Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
+
+        :param str fileName: HDF5 file
+        :param str group: HDF5 group the data will be saved under (IOError is raised if the group exists already).
+
+        .. note:: This method has not been tested yet.
+        """
+        import h5py
+        hdf=h5py.File(filename,'a',libver='latest')
+        if group in hdf: raise IOError('Path "%s" is already used in "%s".'%(path,fileName))
+        gg=hdf.create_group(group)
+        mesh=self.getMesh()
+        gg['mesh_vertex_coords']=mesh.getVertices()
+        gg['mesh_cell_types'],gg['mesh_cell_indices']=mesh.getCells()
+        # if there are no values, don't save them
+        if self.values:
+            if self.fieldType==FieldType.FT_vertexBased:
+                val=numpy.array(shape=(mesh.getNumberOfVertices(),self.getRecordSize()),dtype=numpy.float)
+                for vert in range(0,mesh.getNumberOfVertices()): val[vert]=self.getValue((vert,))
+                gg['vertex_values']=val
+            elif self.fieldType==FieldType.FT_cellBased:
+                raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
+                val=numpy.array(shape=(mesh.getNumberOfCells(),self.getRecordSize()),dtype=numpy.float)
+                for cell in range(0,mesh.getNumberOfCells()):
+                    intPtId=FIXME #...?
+                    val[cell]=self.getValue((cell,intPtId))
+                gg['cell_values']=val
+            else: raise RuntimeError("Unknown fieldType %d."%(self.fieldType))
+
+    @staticmethod
+    def fromHdf5(fileName,group='component1/part1'):
+        """
+        Restore Field from HDF5 file.
+
+        :param str fileName: HDF5 file
+        :param str group: HDF5 group the data will be read from (IOError is raised if the group does not exist).
+        :return: new :obj:`Field` instance
+        :rtype: Field
+
+
+        .. note:: This method has not been tested yet.
+        """
+        raise NotImplementedError('File.dfromHdf5 is not yet implemented.')
+        
+
 
 #    def __deepcopy__(self, memo):
 #        """ Deepcopy operatin modified not to include attributes starting with underscore.
@@ -347,5 +398,6 @@ class Field(object):
 #                value = getattr(self, attr)
 #                setattr(dpcpy, attr, copy.deepcopy(value, memo))
 #        return dpcpy
+
 
 

@@ -1,6 +1,13 @@
-5 1
-10 5
-1 C 10.
+# Model edges
+#     ----------3----------
+#     |                   |
+#     4                   2
+#     |                   | 
+#     ----------1---------
+#
+5 1 #Size x and y
+10 5 #Number of elements in x and y
+1 C 10. #Domain edge number 1 with boundary condition (D-Dirichlet, C-convection, other-None), prescribed temperature/ambient temperature
 2 D 0.
 3 D 0.
 4 D 0.

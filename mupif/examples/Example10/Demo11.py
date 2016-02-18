@@ -14,19 +14,19 @@ from mupif import Cell
 
 
 if True:
-    app = demoapp.thermal('inputT.in','.')
+    app = demoapp.thermal('inputT11.in','.')
     print(app.getApplicationSignature())
 
     sol = app.solveStep(TimeStep.TimeStep(0,1)) 
     f = app.getField(FieldID.FID_Temperature, 0.0)
-    data = f.field2VTKData().tofile('example2')
+    data = f.field2VTKData().tofile('thermal11')
 
 if True:
-    app2 = demoapp.mechanical('inputM.in', '.')
+    app2 = demoapp.mechanical('inputM11.in', '.')
     print(app2.getApplicationSignature())
 
     app2.setField(f)
     sol = app2.solveStep(TimeStep.TimeStep(0,1)) 
     f = app2.getField(FieldID.FID_Displacement, 0.0)
-    data = f.field2VTKData().tofile('example3')
+    data = f.field2VTKData().tofile('mechanical11')
 
