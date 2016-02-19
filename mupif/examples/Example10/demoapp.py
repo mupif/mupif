@@ -46,7 +46,7 @@ class thermal(Application.Application):
         size = line.split()
         self.xl=float(size[0])
         self.yl=float(size[1])
-        print (self.xl, self.yl)
+        print ("Thermal Problem dimensions: ("+str(self.xl)+","+str(self.yl)+")\n")
         line = lines.next()
         ne = line.split()
         self.nx=int(ne[0])
@@ -86,37 +86,37 @@ class thermal(Application.Application):
 
         #dirichletModelEdges=(3,4,1)#
         self.dirichletBCs = {}# key is node number, value is prescribed temperature
-        for ide in dirichletModelEdges:
-            print ("Dirichlet", ide)
-            if ide[0] == 1:
+        for (ide,value) in dirichletModelEdges:
+            #print ("Dirichlet", ide)
+            if ide == 1:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[i*(self.ny+1)]=ide[1]
-            elif ide[0] == 2:
+                    self.dirichletBCs[i*(self.ny+1)]=value
+            elif ide == 2:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[(self.ny+1)*(self.nx)+i]=ide[1]
-            elif ide[0] == 3:
+                    self.dirichletBCs[(self.ny+1)*(self.nx)+i]=value
+            elif ide == 3:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[self.ny + (self.ny+1)*(i)]=ide[1]
-            elif ide[0] == 4:
+                    self.dirichletBCs[self.ny + (self.ny+1)*(i)]=value
+            elif ide == 4:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[i]=ide[1]
+                    self.dirichletBCs[i]=value
 
         #conventionModelEdges=(2,)
         self.convectionBC = []
-        for ice in conventionModelEdges:
+        for (ice, value) in conventionModelEdges:
             print ("Convention", ice)
-            if ice[0] == 1:
+            if ice == 1:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*i,0,k,ice[1]))
-            elif ice[0] == 2:
+                    self.convectionBC.append((self.ny*i,0,k,value))
+            elif ice == 2:
                 for i in range(self.ny):
-                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, k, ice[1]))
-            elif ice[0] == 3:
+                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, k, value))
+            elif ice == 3:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*(i+1)-1, 2, k, ice[1]))
-            elif ice[0] == 4:
+                    self.convectionBC.append((self.ny*(i+1)-1, 2, k, value))
+            elif ice == 4:
                 for i in range(self.ny):
-                    self.convectionBC.append((i, 3, k, ice[1]))
+                    self.convectionBC.append((i, 3, k, value))
 
         self.loc=np.zeros(self.mesh.getNumberOfVertices())
         self.neq = 0;#number of unknowns
@@ -255,39 +255,6 @@ class thermal(Application.Application):
                         if jj>=self.neq:
                             kpp[ii-self.neq,jj-self.neq] += A_e[i,j]
 
-            #print ( kuu, kup, kpp )
-
-            #for i in range(ndofs):#loop of dofs
-                #ii = self.loc[c[e.number-1,i]]
-                #if (ii>=0):
-                    #for j in range(ndofs):
-                        #jj = self.loc[c[e.number-1,j]]
-                        #if (jj>=0):
-                            ##print "Assembling", ii, jj
-                            #A[ii, jj] += A_e[i,j]
-                    #b[ii] += b_e[i]
-
-            ## add effect of nonzero dirichlet BCs
-            #rp = np.zeros((4, 1))
-            #fr = np.zeros((4, 1))
-            #i = 0
-            #bcflag = False
-            #for n in e.getVertices():
-                #if n.number in self.dirichletBCs:
-                    #rp[i]=self.dirichletBCs[n.number]
-                    #bcflag = True
-                #else:
-                    #rp[i]=0.0
-                #i+=1
-            #if bcflag:
-                ##print (rp)
-                #fr = np.dot(A_e, rp)
-                ##print (fr)
-                #for i in range(4):#loop nb of dofs
-                    #ii = self.loc[c[e.number-1,i]]
-                    #if (ii>=0):
-                        #b[ii] -= fr[i] 
-
         #print (A)
         #print (b)
 
@@ -298,7 +265,7 @@ class thermal(Application.Application):
             side = i[1]
             h = i[2]
             Te = i[3]
-            print ("Te", Te)
+            # print ("Te", Te)
 
             n1 = elem.getVertices()[side];
             #print n1
@@ -351,10 +318,6 @@ class thermal(Application.Application):
         self.rhs = b - np.dot(kup,Tp)
         self.T = np.linalg.solve(kuu,self.rhs)
 
-        #print (b)
-        print (self.T)
-
-        #self.T = np.linalg.solve(A, b)
         print("\tDone")
         print("\tTime consumed %f s" % (timeTime.time()-start))
 
