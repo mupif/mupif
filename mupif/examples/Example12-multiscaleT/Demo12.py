@@ -1,46 +1,32 @@
-import os,sys
-sys.path.append('..')
-import conf as cfg
+import sys
+sys.path.append('../../..')
 from mupif import *
-import mupif
-
-#import module Example10/demoapp.py
+from mupif import logger
+#Import module Example10/demoapp.py
 sys.path.append('../Example10')
 import demoapp
-import logging
-logger = logging.getLogger()
 
-import time as timeTime
-start = timeTime.time()
-logger.info('Timer started')
+#Read geometry and boundary condition for the microscale
+thermalMicro = demoapp.thermal('thermalMicro.in','')
+logger.info(thermalMicro.getApplicationSignature())
+#Solve the microscale problem
+thermalMicro.solveStep(None)
+#Get effective conductivity from the microscale
+effConductivity = thermalMicro.getProperty(PropertyID.PID_effective_conductivity,0.0)
+logger.info('Computed effective conductivity from microscale: %f' % effConductivity.value)
 
-tunnel = None
-try:#tunnel must be closed at the end, otherwise bound socket may persist on system
-    tunnel = PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
+#Dump microscale results to VTK files
+thermalMicroField = thermalMicro.getField(FieldID.FID_Material_number, 0.0)
+thermalMicroField.field2VTKData().tofile('thermalMicroMaterial')
+thermalMicroField = thermalMicro.getField(FieldID.FID_Temperature, 0.0)
+thermalMicroField.field2VTKData().tofile('thermalMicroT')
 
-    #locate a nameserver
-    ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
-    # locate remote thermal server
-    thermalMicro = PyroUtil.connectApp(ns, 'thermalMicro')
-    thermalMicroSignature = thermalMicro.getApplicationSignature()
-    logger.info("Working thermal solver on server " + thermalMicroSignature )
-    logger.info("Solving thermal problem on server " + thermalMicroSignature )
-    thermalMicro.solveStep(None)
-    thermalMicroField = thermalMicro.getField(FieldID.FID_Temperature, 0.0)
-    thermalMicroField.field2VTKData().tofile('thermalMicroField')
+#Read geometry and boundary condition for the macroscale
+thermalMacro = demoapp.thermal('thermalMacro.in','')
+#Assign effective conductivity for the whole macroscale domain
+thermalMacro.setProperty(effConductivity)
+thermalMacro.solveStep(None)
+thermalMacroField = thermalMacro.getField(FieldID.FID_Temperature, 0.0)
 
-    #print (thermalSolver)
-
-    #try:
-        #appsig=thermalSolver.getApplicationSignature()
-        #mupif.log.debug("Working application on server " + appsig)
-    #except Exception as e:
-            #mupif.log.error("Connection to server failed, exiting")
-            #mupif.log.exception(e)
-            #sys.exit(1)
-
-finally:
-    mupif.log.debug("Closing ssh tunnel")
-    if tunnel:
-        tunnel.terminate()
-
+#Dump macroscale results to VTK files
+thermalMacroField.field2VTKData().tofile('thermalMacroT')
