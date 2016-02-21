@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 sys.path.append('../../..')
+sys.path.append('../Example10')
 import demoapp
 import meshgen
 from mupif import FieldID
