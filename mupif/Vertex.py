@@ -25,6 +25,13 @@ class Vertex(object):
         :rtype: tuple
         """
         return self.coords
+    def getNumber(self):
+        '''
+        :return: Number of the instance
+        :rtype: int
+        '''
+        return self.number
+
     def getBBox(self):
         """
         :return: Receiver's bounding-box (containing only one point)
