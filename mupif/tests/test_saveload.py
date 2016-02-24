@@ -21,9 +21,9 @@ class TestSaveLoad(unittest.TestCase):
     def testFieldHdf5Save(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         if 1: # when testing locally, set to 0 so that the dump file can be inspected
-            from tempdir import TempDir
-            with TempDir() as d:
-                f.toHdf5(d+'/field.hdf5')
+            import tempfile
+            with tempfile.NamedTemporaryFile() as tmp:
+                f.toHdf5(tmp.name)
         else:
             f.toHdf5('/tmp/mupif-field-test.hdf5')
     def testOctreeNotPickled(self):
