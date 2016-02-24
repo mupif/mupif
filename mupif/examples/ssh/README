@@ -1,4 +1,0 @@
-This directory contains keys and other auxiliary files for testing operations through ssh tunnels using localhost only. Localhost testing is useful for self-contained testing, such as in Travis (https://travis-ci.org/mmp-project/mupif) where it is not desirable to access external services.
-
-1. starting the testing ssh server (listening on localhost:2024) from examples/testExamples.sh;
-2. as configuration files used for ssh setup in examples/conf.py when run with env var TRAVIS set (as in testExamples.sh).

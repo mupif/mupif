@@ -185,7 +185,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
 
     log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
-    log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, URI %s' % (server, port, nathost, natport, nshost, nsport, nsname,uri) )
+    log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, nsname, uri) )
     daemon.requestLoop()
 
 

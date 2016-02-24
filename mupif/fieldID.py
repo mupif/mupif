@@ -37,3 +37,4 @@ class FieldID(IntEnum):
     FID_Concentration = 6
     FID_Thermal_absorption_volume = 7
     FID_Thermal_absorption_surface = 8
+    FID_Material_number = 9

@@ -1,5 +1,6 @@
 # This file works only for $ python setup.py sdist, which creates *.tar.gz, necessary for uploading to PyPI.
 # It is also necessary to specify package_data in setup.py which tells what will be installed from *.tar.gz
+# It is strongly advised to remove built and dist directories before new build
 
 # A typical workflow
 # $ python setup.py install       test your installation locally as it would be downloaded from PyPI server
@@ -13,13 +14,10 @@ include mupif/doc/refManual/MuPIF.pdf
 include mupif/doc/userGuide/MuPIF-userGuide.pdf
 #prune *.pyc
 include mupif/examples/testExamples.sh
-recursive-include mupif/examples README
+recursive-include mupif/examples *.py README *.in *.c
 
-prune mupif/examples/Workshop02 *.py
+prune mupif/examples/Workshop02
 prune mupif/examples/PingTest
 prune mupif/examples/ports
 prune mupif/examples/ssh
 
-#prune mupif/Workshop02
-#recursive-include mupif/examples *.py *.c
-#recursive-include mupif/tools *.py

@@ -1,0 +1,15 @@
+# Model edges
+#     ----------3----------
+#     |                   |
+#     4                   2
+#     |                   | 
+#     ----------1---------
+#
+0.02 0.02 #Size x and y
+40 40 #Number of elements in x and y
+1 N NaN #Domain edge number 1 with boundary condition (D-Dirichlet, C-convection, other(e.g. N)-None), prescribed temperature/ambient temperature
+2 D 1.
+3 N NaN
+4 D 0.
+Inclusion 0.40
+
