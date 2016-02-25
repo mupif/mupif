@@ -44,6 +44,8 @@ from mupif import log
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
+#Pyro4.config.THREADPOOL_SIZE=100
+Pyro4.config.SERVERTYPE="multiplex"
 
 #First, check that we can connect to a listening port of a name server
 #Second, connect there

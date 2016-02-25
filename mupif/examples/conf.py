@@ -4,6 +4,7 @@ import Pyro4
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
+Pyro4.config.SERVERTYPE="multiplex"
 
 #Absolute path to mupif directory - used in JobMan2cmd
 mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../../.."))

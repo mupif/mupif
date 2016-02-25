@@ -17,6 +17,7 @@ def main():
     os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
     os.environ['PYRO_PICKLE_PROTOCOL_VERSION']='2'
     os.environ['PYRO_SERIALIZER']='pickle'
+    os.environ['PYRO_SERVERTYPE']='multiplex'
     
     ##Creation of nameserver
     #cmd = '%s -m Pyro4.naming -n %s -p %d -k %s' % (python, nshost, nsport, hkey)
