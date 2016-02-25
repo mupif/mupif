@@ -302,8 +302,11 @@ class Field(object):
             lookupTable=None
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0,.231,.298,1.0),(.4,.865,.865,1.0),(.8,.706,.016,1.0)],name='coolwarm')
+            #Scalars use different name than 'coolwarm'. Then Paraview uses its own color mapping instead of taking 'coolwarm' from *.vtk file. This prevents setting Paraview's color mapping.
+            scalarsKw=dict(name=name,lookup_table='default')
+        else:
+            scalarsKw=dict(name=name,lookup_table=lookupTable.name)
         # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
-        scalarsKw=dict(name=name,lookup_table=lookupTable.name)
         vectorsKw=dict(name=name) # vectors don't have a lookup_table
 
         if (self.fieldType == FieldType.FT_vertexBased):
@@ -339,46 +342,102 @@ class Field(object):
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
 
         :param str fileName: HDF5 file
-        :param str group: HDF5 group the data will be saved under (IOError is raised if the group exists already).
+        :param str group: HDF5 group the data will be saved under.
 
-        .. note:: This method has not been tested yet.
+        The HDF hierarchy is like this::
+
+            group
+              |
+              +--- mesh_01 {hash=25aa0aa04457}
+              |      +--- [vertex_coords]
+              |      +--- [cell_types]
+              |      \--- [cell_vertices]
+              +--- mesh_02 {hash=17809e2b86ea}
+              |      +--- [vertex_coords]
+              |      +--- [cell_types]
+              |      \--- [cell_vertices]
+              +--- ...
+              +--- field_01
+              |      +--- -> mesh_01
+              |      \--- [vertex_values]
+              +--- field_02
+              |      +--- -> mesh_01
+              |      \--- [vertex_values]
+              +--- field_03
+              |      +--- -> mesh_02
+              |      \--- [cell_values]
+              \--- ...
+
+        where ``plain`` names are HDF (sub)groups, ``[bracketed]`` names are datasets, ``{name=value}`` are HDF attributes, ``->`` prefix indicated HDF5 hardlink (transparent to the user); numerical suffixes (``_01``, ...) are auto-allocated. Mesh objects are hardlinked using HDF5 hardlinks if an identical mesh is already stored in the group, based on hexdigest of its full data.
+
+        .. note:: This method has not been tested yet. The format is subject to future changes.
         """
-        import h5py
-        hdf=h5py.File(filename,'a',libver='latest')
-        if group in hdf: raise IOError('Path "%s" is already used in "%s".'%(path,fileName))
-        gg=hdf.create_group(group)
-        mesh=self.getMesh()
-        gg['mesh_vertex_coords']=mesh.getVertices()
-        gg['mesh_cell_types'],gg['mesh_cell_indices']=mesh.getCells()
-        # if there are no values, don't save them
+        import h5py, hashlib
+        hdf=h5py.File(fileName,'a',libver='latest')
+        if group not in hdf: gg=hdf.create_group(group)
+        else: gg=hdf[group]
+        # raise IOError('Path "%s" is already used in "%s".'%(path,fileName))
+        def lowestUnused(trsf,predicate,start=1):
+            'Find the lowest unused index, where *predicate* is used to test for existence, and *trsf* transforms integer (starting at *start* and incremented until unused value is found) to whatever predicate accepts as argument. Lowest transformed value is returned.'
+            import itertools,sys
+            for i in itertools.count(start=start):
+                t=trsf(i)
+                if not predicate(t): return t
+        # save mesh (not saved if there already)
+        newgrp=lowestUnused(trsf=lambda i:'mesh_%02d'%i,predicate=lambda t:t in gg)
+        mh5=self.getMesh().asHdf5Object(parentgroup=gg,newgroup=newgrp)
+
         if self.values:
+            fieldGrp=hdf.create_group(lowestUnused(trsf=lambda i,group=group: group+'/field_%02d'%i,predicate=lambda t: t in hdf))
+            fieldGrp['mesh']=mh5
+            fieldGrp.attrs['fieldID']=self.fieldID
+            fieldGrp.attrs['units']=self.units if self.units else ''
+            fieldGrp.attrs['time']=self.fieldID
             if self.fieldType==FieldType.FT_vertexBased:
-                val=numpy.array(shape=(mesh.getNumberOfVertices(),self.getRecordSize()),dtype=numpy.float)
-                for vert in range(0,mesh.getNumberOfVertices()): val[vert]=self.getValue((vert,))
-                gg['vertex_values']=val
+                val=numpy.empty(shape=(self.getMesh().getNumberOfVertices(),self.getRecordSize()),dtype=numpy.float)
+                for vert in range(self.getMesh().getNumberOfVertices()): val[vert]=self.giveValue(vert)
+                fieldGrp['vertex_values']=val
             elif self.fieldType==FieldType.FT_cellBased:
                 raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
-                val=numpy.array(shape=(mesh.getNumberOfCells(),self.getRecordSize()),dtype=numpy.float)
-                for cell in range(0,mesh.getNumberOfCells()):
+                val=numpy.empty(shape=(self.getMesh().getNumberOfCells(),self.getRecordSize()),dtype=numpy.float)
+                for cell in range(self.getMesh().getNumberOfCells()):
                     intPtId=FIXME #...?
-                    val[cell]=self.getValue((cell,intPtId))
-                gg['cell_values']=val
+                    val[cell]=self.giveValue((cell,intPtId))
+                fieldGrp['cell_values']=val
             else: raise RuntimeError("Unknown fieldType %d."%(self.fieldType))
 
     @staticmethod
-    def fromHdf5(fileName,group='component1/part1'):
+    def makeFromHdf5(fileName,group='component1/part1'):
         """
-        Restore Field from HDF5 file.
+        Restore Fields from HDF5 file.
 
         :param str fileName: HDF5 file
         :param str group: HDF5 group the data will be read from (IOError is raised if the group does not exist).
-        :return: new :obj:`Field` instance
-        :rtype: Field
+        :return: list of new :obj:`Field` instances
+        :rtype: [Field,Field,...]
 
 
         .. note:: This method has not been tested yet.
         """
-        raise NotImplementedError('File.dfromHdf5 is not yet implemented.')
+        import h5py, hashlib
+        hdf=h5py.File(filename,'r',libver='latest')
+        grp=hdf[group]
+        # load mesh and field data from HDF5
+        meshObjs=[obj for name,obj in hdf.items() if name.startswith('mesh_')]
+        fieldObjs=[obj for name,obj in hdf.items() if name.startswith('field_')]
+        # construct all meshes as mupif objects
+        meshes=[Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        # construct all fields as mupif objects
+        ret=[]
+        for f in fieldObjs:
+            if 'vertex_values' in f: fieldType,values=FieldType.FT_vertexBased,f['vertex_values']
+            elif 'cell_values' in f: fieldType,values=FieldType.FT_cellBase,f['cell_values']
+            else: ValueError("HDF5/mupif format error: unable to determine field type.")
+            fieldID,units,time=f.attrs['fieldId'],f.attrs['units'],f.attrs['time']
+            if units=='': units=None # special case, handled at saving time
+            meshIndex=meshObjs.index(f['mesh']) # find which mesh object this field refers to
+            ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,values=values,fieldType=fieldType))
+        return ret
         
 
 

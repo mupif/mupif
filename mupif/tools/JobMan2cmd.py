@@ -72,7 +72,9 @@ def main():
         if moduleDir:
             sys.path.append(moduleDir)
         conf = importlib.import_module(configName)
-        mupif = importlib.import_module('mupif')
+        # import PyroUtil module from mupif
+        # mupif = importlib.import_module('mupif')
+        PyroUtil = importlib.import_module('mupif.PyroUtil')
     else:
         logger.error('missing options -c specifying server config file')
         exit(0)
@@ -81,10 +83,10 @@ def main():
     logger = logging.getLogger()
 
     #locate nameserver
-    ns = mupif.PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
+    ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
     #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-    daemon = mupif.PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort)
+    daemon = PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort)
 
 
     #Initialize application

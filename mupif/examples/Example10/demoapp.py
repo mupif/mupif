@@ -11,7 +11,6 @@ import os
 import logging
 logger = logging.getLogger()#create a logger
 
-
 def getline (f):
     while True:
         line=f.readline()
@@ -21,17 +20,17 @@ def getline (f):
             return line
 
 
-
 class thermal(Application.Application):
 
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
-
+        self.morphologyType=None
+        self.conductivity=1.0
 
     def readInput(self):
 
         dirichletModelEdges=[]
-        conventionModelEdges=[]
+        convectionModelEdges=[]
         try:
             lines = open(self.workDir+os.path.sep+self.file, 'r')
         except  Exception as e:
@@ -46,7 +45,7 @@ class thermal(Application.Application):
         size = line.split()
         self.xl=float(size[0])
         self.yl=float(size[1])
-        print ("Thermal Problem dimensions: ("+str(self.xl)+","+str(self.yl)+")\n")
+        logging.info ("Thermal problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
         line = lines.next()
         ne = line.split()
         self.nx=int(ne[0])
@@ -61,7 +60,17 @@ class thermal(Application.Application):
             if (code == 'D'):
                 dirichletModelEdges.append((edge,temperature))
             elif (code == 'C'):
-                conventionModelEdges.append((edge,temperature))
+                h = float(rec[3])
+                convectionModelEdges.append((edge,temperature, h))
+        
+        #print (convectionModelEdges)
+
+        line = lines.next()
+        rec = line.split()
+        if len(rec)>0:
+            if rec[0] =='Inclusion':
+                self.morphologyType='Inclusion'
+                self.scaleInclusion=float(rec[1])
 
         self.mesh = Mesh.UnstructuredMesh()
         # generate a simple mesh here
@@ -72,8 +81,6 @@ class thermal(Application.Application):
         self.dx = self.xl/self.nx;
         self.dy = self.yl/self.ny;
         self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
-
-        k = 1.
 
 #
 # Model edges
@@ -101,22 +108,22 @@ class thermal(Application.Application):
                 for i in range(self.ny+1):
                     self.dirichletBCs[i]=value
 
-        #conventionModelEdges=(2,)
+        #convectionModelEdges=(2,)
         self.convectionBC = []
-        for (ice, value) in conventionModelEdges:
-            print ("Convention", ice)
+        for (ice, value, h) in convectionModelEdges:
+            #print ("Convection", ice)
             if ice == 1:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*i,0,k,value))
+                    self.convectionBC.append((self.ny*i,0 , h, value))
             elif ice == 2:
                 for i in range(self.ny):
-                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, k, value))
+                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, h, value))
             elif ice == 3:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*(i+1)-1, 2, k, value))
+                    self.convectionBC.append((self.ny*(i+1)-1, 2, h, value))
             elif ice == 4:
                 for i in range(self.ny):
-                    self.convectionBC.append((i, 3, k, value))
+                    self.convectionBC.append((i, 3, h, value))
 
         self.loc=np.zeros(self.mesh.getNumberOfVertices())
         self.neq = 0;#number of unknowns
@@ -145,18 +152,41 @@ class thermal(Application.Application):
 
     def getField(self, fieldID, time):
         if (fieldID == FieldID.FID_Temperature):
-
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
                 if i in self.dirichletBCs:
                     values.append((self.dirichletBCs[i],))
                 else:
                     values.append((self.T[self.loc[i]],))
-            #print values
+            #print (values)
             return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, 0.0, values);
+        elif (fieldID == FieldID.FID_Material_number):
+            values=[]
+            for e in self.mesh.cells():
+                if self.isInclusion(e) and self.morphologyType=='Inclusion':
+                    values.append((1,))
+                else:
+                    values.append((0,))
+            #print (values)
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, None, 0.0, values,fieldType=Field.FieldType.FT_cellBased);
         else:
             raise APIError.APIError ('Unknown field ID')
 
+    def isInclusion(self,e):
+        vertices = e.getVertices()
+        c1=vertices[0].coords
+        c2=vertices[1].coords
+        c3=vertices[2].coords
+        c4=vertices[3].coords
+        xCell = (c1[0]+c2[0]+c3[0]+c4[0])/4. #vertex center
+        yCell = (c1[1]+c2[1]+c3[1]+c4[1])/4. #vertex center
+        radius = min(self.xl, self.yl) * self.scaleInclusion
+        xCenter = self.xl/2.#domain center
+        yCenter = self.yl/2.#domain center
+        if ( math.sqrt((xCell-xCenter)*(xCell-xCenter) + (yCell-yCenter)*(yCell-yCenter)) < radius ):
+            return True
+            #print (xCell,yCell)
+        return False
 
     def setField(self, field):
         self.Field = field
@@ -223,7 +253,12 @@ class thermal(Application.Application):
                 x = e.loc2glob(p[0])
                 #print "global coords :", x
 
-                k=1.
+                #conductivity
+                k=self.conductivity
+                if self.morphologyType=='Inclusion':
+                    if self.isInclusion(e):
+                        k=0.001
+
                 Grad= np.zeros((2,4))
                 Grad = self.compute_B(e,p[0])
                 #print "Grad :",Grad
@@ -265,7 +300,7 @@ class thermal(Application.Application):
             side = i[1]
             h = i[2]
             Te = i[3]
-            # print ("Te", Te)
+            #print ("h:%f Te:%f" % (h, Te))
 
             n1 = elem.getVertices()[side];
             #print n1
@@ -281,15 +316,15 @@ class thermal(Application.Application):
 
             # boundary_lhs=h*(np.dot(N.T,N))
             boundary_lhs=np.zeros((2,2))
-            boundary_lhs[0,0] = (1./3.)*length*h
-            boundary_lhs[0,1] = (1./6.)*length*h
-            boundary_lhs[1,0] = (1./6.)*length*h
-            boundary_lhs[1,1] = (1./3.)*length*h
+            boundary_lhs[0,0] = h*(1./3.)*length
+            boundary_lhs[0,1] = h*(1./6.)*length
+            boundary_lhs[1,0] = h*(1./6.)*length
+            boundary_lhs[1,1] = h*(1./3.)*length
 
             # boundary_rhs=h*Te*N.T
             boundary_rhs = np.zeros((2,1))
-            boundary_rhs[0] = (1./2.)*length*Te
-            boundary_rhs[1] = (1./2.)*length*Te
+            boundary_rhs[0] = h*(1./2.)*length*Te
+            boundary_rhs[1] = h*(1./2.)*length*Te
 
             # #Assemble
             loci = [n1.number, n2.number]
@@ -304,7 +339,7 @@ class thermal(Application.Application):
                             kuu[ii,jj] += boundary_lhs[i,j]
                     b[ii] += boundary_rhs[i] 
 
-        bp = np.zeros(self.pneq)
+        self.bp = np.zeros(self.pneq)#reactions
         Tp = np.zeros(self.pneq) #vector of prescribed temperatures
         for i in range(self.mesh.getNumberOfVertices()):
             if i in self.dirichletBCs:
@@ -317,6 +352,8 @@ class thermal(Application.Application):
         self.rhs = np.zeros(self.neq)
         self.rhs = b - np.dot(kup,Tp)
         self.T = np.linalg.solve(kuu,self.rhs)
+        self.bp = np.dot(kup.transpose(),self.T)+np.dot(kpp,Tp)
+        #print (self.bp)
 
         print("\tDone")
         print("\tTime consumed %f s" % (timeTime.time()-start))
@@ -365,8 +402,55 @@ class thermal(Application.Application):
         #print Grad
         return Grad
 
+    def getProperty(self, propID, time, objectID=0):
+        if (propID == PropertyID.PID_effective_conductivity):
+            #average reactions from solution - use nodes on edge 4 (coordinate x==0.)
+            sumQ = 0.
+            for i in range(self.mesh.getNumberOfVertices()):
+                coord = (self.mesh.getVertex(i).getCoordinates())
+                if coord[0] < 1.e-6:
+                    ipneq = self.loc[i]
+                    if ipneq>=self.neq:
+                        #print (coord, ipneq)
+                        #print (i,ipneq)
+                        sumQ -= self.bp[ipneq-self.neq]
+            self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
+            #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
+            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
+        else:
+            raise APIError.APIError ('Unknown property ID')
+
+    def setProperty(self, property, objectID=0):
+        if (property.getPropertyID() == PropertyID.PID_effective_conductivity):
+            # remember the mapped value
+            self.conductivity = property.getValue()
+            #logger.info("Assigning effective conductivity %f" % self.conductivity )
+        else:
+            raise APIError.APIError ('Unknown property ID')
+     
+    def getProperty(self, propID, time, objectID=0):
+        if (propID == PropertyID.PID_effective_conductivity):
+            #average reactions from solution - use nodes on edge 4 (coordinate x==0.)
+            sumQ = 0.
+            for i in range(self.mesh.getNumberOfVertices()):
+                coord = (self.mesh.getVertex(i).getCoordinates())
+                if coord[0] < 1.e-6:
+                    ipneq = self.loc[i]
+                    if ipneq>=self.neq:
+                        #print (coord, ipneq)
+                        #print (i,ipneq)
+                        sumQ -= self.bp[ipneq-self.neq]
+            self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
+            #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
+            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
+        else:
+            raise APIError.APIError ('Unknown property ID')
+
+
+
     def getApplicationSignature(self):
         return "Thermal-demo-solver, ver 1.0"
+
 
 
 class mechanical(Application.Application):
@@ -450,7 +534,7 @@ class mechanical(Application.Application):
                 for i in range(self.ny+1):
                     self.dirichletBCs[i]=(0.0, 0.0, 0.0)
 
-        #conventionModelEdges=(2,)
+        #convectionModelEdges=(2,)
         self.loadBC = []
         fx = self.fx
         fy = self.fy
@@ -493,13 +577,11 @@ class mechanical(Application.Application):
         else:
             raise APIError.APIError ('Unknown field ID')
 
-
     def setField(self, field):
         if (field.getFieldID() == FieldID.FID_Temperature):
             self.temperatureField = field
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-
         self.readInput()
         mesh =  self.mesh
         rule = IntegrationRule.GaussIntegrationRule()

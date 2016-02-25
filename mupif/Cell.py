@@ -63,6 +63,23 @@ class Cell(object):
         self.label=label
         self.vertices=tuple(vertices)
 
+    @staticmethod
+    def getClassForCellGeometryType(cgt):
+        '''
+        Return class object (not instance) for given cell geometry type. Does introspection of all subclasses of Cell caches the result.
+        '''
+        if not Cell.subclasses:
+            # cache all subclasses (recursive)
+            def get_subclasses(cls):
+                ret=[]
+                for sc in cls.__subclasses__():
+                    ret.append(sc)
+                    sc.extend(get_subclasses(sc))
+                return ret
+            for sc in get_subclasses(Cell):
+                Cell.subclasses[sc().getGeometryType()]=sc
+        return Cell.subclasses[cgt]
+
     def copy(self):
         """
         This will copy the receiver, making a deep copy of all attributes EXCEPT a mesh attribute

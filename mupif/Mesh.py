@@ -172,7 +172,8 @@ class Mesh(object):
         """
         nv=self.getNumberOfVertices()
         ret=numpy.empty((nv,3),dtype=numpy.float)
-        for i in range(0,nv): ret[i]=numpy.array(self.getVertex(i).getCoordinates())
+        for i in range(0,nv):
+            ret[i]=numpy.array(self.getVertex(i).getCoordinates())
         return ret
 
     def getCell(self, i):
@@ -184,7 +185,7 @@ class Mesh(object):
         :rtype: Cell
         """
 
-    def getCells(self, i):
+    def getCells(self):
         """
         Return all cells as 2x numpy.array; each i-th row contains vertex indices for i-th cell. Does in 2 passes, first to determine maximum number of vertices per cell (to shape the field accordingly). For cells with less vertices than the maximum, excess ones are assigned the invalid value of -1.
 
@@ -195,14 +196,52 @@ class Mesh(object):
         """
         # determine the maximum number of vertices
         mnv=0
-        for c in self.cells: mnv=max(mnv,c.getNumberOfVertices())
         nc=self.getNumberOfCells()
+        for i in range(nc): mnv=max(mnv,self.getCell(i).getNumberOfVertices())
         tt,cc=numpy.empty(shape=(nc,),dtype=numpy.int),numpy.full(shape=(nc,mnv),fill_value=-1,dtype=numpy.int)
-        for i in range(0,nc):
+        for i in range(nc):
+            c=self.getCell(i)
             tt[i]=c.getGeometryType()
-            vv=c.getVertices() # TODO: assert that this is a list of ints
-            cc[i,:len(vv)]=numpy.array(vv,dtype=numpy.int) # excess elements in the row stay at -1
+            vv=numpy.array([v.getNumber() for v in c.getVertices()],dtype=numpy.int)
+            cc[i,:len(vv)]=vv # excess elements in the row stay at -1
         return tt,cc
+
+    def asHdf5Object(self,parentgroup,newgroup):
+        def numpyHash(*args):
+            'Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to find an identical mesh which was already stored.'
+            import hashlib
+            return ''.join([hashlib.sha1(arr.view(numpy.uint8)).hexdigest() for arr in args])
+        mvc,(mct,mci)=self.getVertices(),self.getCells()
+        mhash='mesh_'+numpyHash(mvc,mct,mci)
+        # try to find this mesh in the hdf5 group and return that one, instead of creating a new one
+        if parentgroup:
+            for name,group in parentgroup.items():
+                if 'mhash' in group.attrs and group.attrs['mhash']==mhash: return parentgroup[name]
+        gg=parentgroup.create_group(name=newgroup)
+        for name,data in ('vertex_coords',mvc),('cell_types',mct),('cell_vertices',mci): gg[name]=data
+        gg.attrs['mhash']=mhash
+        gg.attrs['__class__']=self.__class__.__name__
+        gg.attrs['__module__']=self.__class__.__module__
+        return gg
+
+    @staticmethod
+    def makeFromHdf5Object(h5obj):
+        """
+        Create new :obj:`Mesh` instance from given hdf5 object.
+
+        :return: new instance
+        :rtype: :obj:`Mesh` or its subclass
+        """
+        # instantiate the right Mesh subclass
+        klass=getattr(__import__(h5obj.attrs['__module__']),h5obj.attrs['__class__'])
+        ret=klass()
+        mvc,mct,mci=h5obj['vertex_coords'],h5obj['cell_types'],h5obj['cell_vertices']
+        # construct vertices
+        vertices=[Vertex(number=vi,label=None,coord=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
+        cells=[Cell.getClassForCellGeometryType(mct[ci])(mesh=ret,number=ci,label=None,vertices=tuple(mci[ci])) for ci in range(mct.shape[0])]
+        ret.setup(vertexList=vertices,cellList=cells)
+        return ret
+
 
     def getMapping(self):
         """
