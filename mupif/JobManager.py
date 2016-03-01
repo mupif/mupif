@@ -347,6 +347,7 @@ class SimpleJobManager2 (JobManager):
                 return (JOBMAN_ERR,None)
             try:
                 # try to get uri from Property.psubprocess
+                uri = None # avoids UnboundLocalError in py3k
                 conn, addr = self.s.accept()
                 logger.debug('Connected by %s' % str(addr))
                 while True:
