@@ -35,7 +35,7 @@ addons:
          - libblas-dev
          - liblapack-dev
          - libsuitesparse-dev
-			- libhdf5-serial-dev
+         - libhdf5-serial-dev
          - gfortran
          - openssh-server
          - openssh-client
