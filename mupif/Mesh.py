@@ -123,7 +123,7 @@ class Mesh(object):
         :return: Returns Mesh instance
         :rtype: Mesh
         """
-        return pickle.load(open(fileName,'r'))
+        return pickle.load(open(fileName,'rb'))
 
     def copy(self):
         """
@@ -310,7 +310,7 @@ class Mesh(object):
         :param str fileName: File name
         :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
         """
-        pickle.dump(self, open(fileName,'w'), protocol)
+        pickle.dump(self, open(fileName,'wb'), protocol)
 
 
 class UnstructuredMesh(Mesh):
