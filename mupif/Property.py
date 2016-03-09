@@ -51,6 +51,24 @@ class Property(object):
             """
             return self.value
 
+        def getValueType(self):
+            """
+            Returns the value type of property.
+
+            :return: Property value type
+            :rtype: mupif.PropertyID
+            """
+            return self.valueType
+
+        def getTime(self):
+            """
+            Returns time associated with this property.
+
+            :return: Time
+            :rtype: float
+            """
+            return self.time
+
         def getPropertyID(self):
             """
             Returns type of property.
