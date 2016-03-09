@@ -391,6 +391,7 @@ class Field(object):
             fieldGrp=hdf.create_group(lowestUnused(trsf=lambda i,group=group: group+'/field_%02d'%i,predicate=lambda t: t in hdf))
             fieldGrp['mesh']=mh5
             fieldGrp.attrs['fieldID']=self.fieldID
+            fieldGrp.attrs['valueType']=self.valueType
             fieldGrp.attrs['units']=self.units if self.units else ''
             fieldGrp.attrs['time']=self.fieldID
             if self.fieldType==FieldType.FT_vertexBased:
@@ -419,24 +420,24 @@ class Field(object):
 
         .. note:: This method has not been tested yet.
         """
-        import h5py, hashlib
-        hdf=h5py.File(filename,'r',libver='latest')
+        import h5py, hashlib, mupif.Mesh
+        hdf=h5py.File(fileName,'r',libver='latest')
         grp=hdf[group]
         # load mesh and field data from HDF5
-        meshObjs=[obj for name,obj in hdf.items() if name.startswith('mesh_')]
-        fieldObjs=[obj for name,obj in hdf.items() if name.startswith('field_')]
+        meshObjs=[obj for name,obj in grp.items() if name.startswith('mesh_')]
+        fieldObjs=[obj for name,obj in grp.items() if name.startswith('field_')]
         # construct all meshes as mupif objects
-        meshes=[Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        meshes=[mupif.Mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
         # construct all fields as mupif objects
         ret=[]
         for f in fieldObjs:
             if 'vertex_values' in f: fieldType,values=FieldType.FT_vertexBased,f['vertex_values']
             elif 'cell_values' in f: fieldType,values=FieldType.FT_cellBase,f['cell_values']
             else: ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID,units,time=f.attrs['fieldId'],f.attrs['units'],f.attrs['time']
+            fieldID,valueType,units,time=f.attrs['fieldID'],f.attrs['valueType'],f.attrs['units'],f.attrs['time']
             if units=='': units=None # special case, handled at saving time
             meshIndex=meshObjs.index(f['mesh']) # find which mesh object this field refers to
-            ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,values=values,fieldType=fieldType))
+            ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,valueType=valueType,values=values,fieldType=fieldType))
         return ret
         
 

@@ -63,22 +63,25 @@ class Cell(object):
         self.label=label
         self.vertices=tuple(vertices)
 
+    # static attribute (cache)
+    _subclasses={}
+
     @staticmethod
     def getClassForCellGeometryType(cgt):
         '''
         Return class object (not instance) for given cell geometry type. Does introspection of all subclasses of Cell caches the result.
         '''
-        if not Cell.subclasses:
+        if not Cell._subclasses:
             # cache all subclasses (recursive)
             def get_subclasses(cls):
                 ret=[]
                 for sc in cls.__subclasses__():
                     ret.append(sc)
-                    sc.extend(get_subclasses(sc))
+                    ret.extend(get_subclasses(sc))
                 return ret
             for sc in get_subclasses(Cell):
-                Cell.subclasses[sc().getGeometryType()]=sc
-        return Cell.subclasses[cgt]
+                Cell._subclasses[sc.getGeometryType()]=sc
+        return Cell._subclasses[cgt]
 
     def copy(self):
         """
@@ -123,7 +126,8 @@ class Cell(object):
         :return: Interpolated value at a given point
         :rtype: tuple
         """
-    
+
+    @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
@@ -194,6 +198,7 @@ class Triangle_2d_lin(Cell):
         """
         return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
+    @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
@@ -308,7 +313,8 @@ class Triangle_2d_quad(Cell):
         :rtype: Cell
         """
         return Triangle_2d_quad(self.mesh, self.number, self.label, tuple(self.vertices))
-
+    
+    @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
@@ -530,6 +536,7 @@ class Quad_2d_lin(Cell):
         """
         return Quad_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
+    @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
@@ -744,6 +751,7 @@ class Tetrahedron_3d_lin(Cell):
         """
         return Tetrahedron_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
+    @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
@@ -882,6 +890,7 @@ class Brick_3d_lin(Cell):
         """
         return Brick_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
+    @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.

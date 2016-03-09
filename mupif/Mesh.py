@@ -206,18 +206,24 @@ class Mesh(object):
             cc[i,:len(vv)]=vv # excess elements in the row stay at -1
         return tt,cc
 
-    def asHdf5Object(self,parentgroup,newgroup):
+    def internalArraysDigest(self):
+        '''Internal function returning hash digest of all internal data, for the purposes of identity test.'''
         def numpyHash(*args):
             'Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to find an identical mesh which was already stored.'
             import hashlib
             return ''.join([hashlib.sha1(arr.view(numpy.uint8)).hexdigest() for arr in args])
         mvc,(mct,mci)=self.getVertices(),self.getCells()
-        mhash='mesh_'+numpyHash(mvc,mct,mci)
+        return 'mesh_'+numpyHash(mvc,mct,mci)
+
+    def asHdf5Object(self,parentgroup,newgroup):
+        '''Return the instance as HDF5 object. Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.'''
+        mhash=self.internalArraysDigest()
         # try to find this mesh in the hdf5 group and return that one, instead of creating a new one
         if parentgroup:
             for name,group in parentgroup.items():
                 if 'mhash' in group.attrs and group.attrs['mhash']==mhash: return parentgroup[name]
         gg=parentgroup.create_group(name=newgroup)
+        mvc,(mct,mci)=self.getVertices(),self.getCells()
         for name,data in ('vertex_coords',mvc),('cell_types',mct),('cell_vertices',mci): gg[name]=data
         gg.attrs['mhash']=mhash
         gg.attrs['__class__']=self.__class__.__name__
@@ -227,18 +233,24 @@ class Mesh(object):
     @staticmethod
     def makeFromHdf5Object(h5obj):
         """
-        Create new :obj:`Mesh` instance from given hdf5 object.
+        Create new :obj:`Mesh` instance from given hdf5 object. Complementary to :obj:`asHdf5Object`.
 
         :return: new instance
         :rtype: :obj:`Mesh` or its subclass
         """
         # instantiate the right Mesh subclass
-        klass=getattr(__import__(h5obj.attrs['__module__']),h5obj.attrs['__class__'])
+        import importlib
+        from mupif.Vertex import Vertex
+        from mupif.Cell import Cell
+        klass=getattr(importlib.import_module(h5obj.attrs['__module__']),h5obj.attrs['__class__'])
         ret=klass()
         mvc,mct,mci=h5obj['vertex_coords'],h5obj['cell_types'],h5obj['cell_vertices']
         # construct vertices
-        vertices=[Vertex(number=vi,label=None,coord=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
-        cells=[Cell.getClassForCellGeometryType(mct[ci])(mesh=ret,number=ci,label=None,vertices=tuple(mci[ci])) for ci in range(mct.shape[0])]
+        vertices=[Vertex(number=vi,label=None,coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
+        cells=[Cell.getClassForCellGeometryType(mct[ci])(mesh=ret,number=ci,label=None,
+            # vertices=tuple(mci[ci])
+            vertices=[vertices[i] for i in mci[ci]]
+            ) for ci in range(mct.shape[0])]
         ret.setup(vertexList=vertices,cellList=cells)
         return ret
 

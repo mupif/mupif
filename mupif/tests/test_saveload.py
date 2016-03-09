@@ -19,13 +19,20 @@ class TestSaveLoad(unittest.TestCase):
         self.assert_(not id(f)==id(f2))
         self.assertEqual(t22a,t22b)
     def testFieldHdf5Save(self):
+        import mupif.Field
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         if 1: # when testing locally, set to 0 so that the dump file can be inspected
             import tempfile
             with tempfile.NamedTemporaryFile() as tmp:
                 f.toHdf5(tmp.name)
+                ff2=mupif.Field.Field.makeFromHdf5(tmp.name)
         else:
-            f.toHdf5('/tmp/mupif-field-test.hdf5')
+            name='/tmp/mupif-field-test.hdf5'
+            f.toHdf5(name)
+            ff2=mupif.Field.Field.makeFromHdf5(name)
+        self.assertEqual(len(ff2),1)
+        f2=ff2[0]
+        self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
     def testOctreeNotPickled(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         import pickle
@@ -43,5 +50,6 @@ class TestSaveLoad(unittest.TestCase):
         self.assert_(m2.cellOctree is None)
         
         
+
 
 
