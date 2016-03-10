@@ -38,7 +38,10 @@ class PropertyID(IntEnum):
     PID_AsorptionSpectrum = 26
     PID_ScatteringCrossSections = 27
     PID_InverseCumulativeDist = 28
-    
+    PID_NumberOfFluorescentParticles = 29
+    PID_ParticleMu = 30
+    PID_ParticleSigma = 31
+    PID_PhosphorEfficiency = 32
 
     PID_Demo_Min = 9990
     PID_Demo_Max = 9991
