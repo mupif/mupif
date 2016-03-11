@@ -150,6 +150,15 @@ class Field(object):
         """
         return self.fieldID.name
 
+    def getFieldType (self):
+        """
+        Returns receiver field type (values specified as vertex or cell values)
+        
+        :return: Returns fieldType id
+        :rtype: FieldType
+        """
+        return self.fieldType
+
     def getTime(self):
         """
         Get time of the field.
