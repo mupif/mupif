@@ -420,9 +420,9 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
 
 from . import PyroFile
-def uploadPyroFile (newLocalFileName, pyroFile):
+def downloadPyroFile (newLocalFileName, pyroFile):
     """
-    Allows to upload remote file (pyro ile handle) to a local file.
+    Allows to download remote file (pyro ile handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
     :param PyroFile pyroFile: representation of existing remote server's file
@@ -435,14 +435,14 @@ def uploadPyroFile (newLocalFileName, pyroFile):
     pyroFile.close()
     file.close()
 
-def uploadPyroFileFromServer (newLocalFileName, pyroFile):
+def downloadPyroFileFromServer (newLocalFileName, pyroFile):
     """
-    See :func:'uploadPyroFileFromServer'
+    See :func:'downloadPyroFileFromServer'
     """
-    uploadPyroFile (newLocalFileName, pyroFile)
+    downloadPyroFile (newLocalFileName, pyroFile)
 
 
-def downloadPyroFile (clientFileName, pyroFile, size = 1024):
+def uploadPyroFile (clientFileName, pyroFile, size = 1024):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
@@ -458,9 +458,9 @@ def downloadPyroFile (clientFileName, pyroFile, size = 1024):
     file.close()
     pyroFile.close()
 
-def downloadPyroFileOnServer (clientFileName, pyroFile, size = 1024):
+def uploadPyroFileOnServer (clientFileName, pyroFile, size = 1024):
     """
     See :func:'downloadPyroFile'
     """
-    downloadPyroFile (clientFileName, pyroFile, size)
+    uploadPyroFile (clientFileName, pyroFile, size)
 
