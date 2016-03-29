@@ -290,6 +290,7 @@ class Octree(Localizer.Localizer):
 try:
     # this will be used by Octree ctor if necessary
     from . import fastOctant
+    from minieigen import AlignedBox3 # register converter
 except ImportError:
     pass
     # print('mupif.fast: NOT using mupif.fastOctant')
