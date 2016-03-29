@@ -42,7 +42,9 @@ from . import RemoteAppRecord
 from mupif import log
 
 Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+# some versions of Pyro don't have this attribute... (strange, is documented)
+if hasattr(Pyro4.config,'PICKLE_PROTOCOL_VERSION'): 
+    Pyro4.config.PICKLE_PROTOCOL_VERSION=2 # use lower version for interoperability between python 2 and 3
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 #Pyro4.config.THREADPOOL_SIZE=100
 Pyro4.config.SERVERTYPE="multiplex"
