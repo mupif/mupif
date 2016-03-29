@@ -36,8 +36,11 @@ while (abs(time -targetTime) > 1.e-6):
         mupif.log.error("Following API error occurred:",e)
         break
 # evaluate field at given point
-position=(0.0, 0.0, 0.0)
-value=field.evaluate(position)
+position=(-1e-5, -1e-5, -1e-5)
+value=field.evaluate(position,eps=0.0)
+
+#import datetime
+#field.toHdf5(fileName='ex5dbg.h5',group=datetime.datetime.now().isoformat())
 
 # Result
 print ("Field value at position ", position, " is ", value)
