@@ -196,8 +196,11 @@ class Field(object):
         :param float eps: Optional tolerance, default 0.001
         :return: field value
         :rtype: tuple
+
+        .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([ c-eps for c in position], [c+eps for c in position]))
+        ## answer=None
         if len(cells):
             for icell in cells:
                 try:
@@ -214,11 +217,15 @@ class Field(object):
                         else:
                             answer = self.values[icell.number]
                         return answer
+                        # debugging only, when multiple cells match the bbox
+                        ## print('Value %s for cell '%(str(answer[0])),','.join([str(v.getCoordinates()) for v in icell.getVertices()]))
 
                 except ZeroDivisionError:
+                    print('ZeroDivisionError?')
                     mupif.log.debug(icell.number, position)
                     cell.debug=1
                     mupif.log.debug(icell.containsPoint(position), icell.glob2loc(position))
+            ## if answer is not None: return answer
 
             mupif.log.error('Field::evaluate - no source cell found for position ', position)
             for icell in cells:
