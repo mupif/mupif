@@ -408,11 +408,10 @@ class Field(object):
                 for vert in range(self.getMesh().getNumberOfVertices()): val[vert]=self.giveValue(vert)
                 fieldGrp['vertex_values']=val
             elif self.fieldType==FieldType.FT_cellBased:
-                raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
+                # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
                 val=numpy.empty(shape=(self.getMesh().getNumberOfCells(),self.getRecordSize()),dtype=numpy.float)
                 for cell in range(self.getMesh().getNumberOfCells()):
-                    intPtId=FIXME #...?
-                    val[cell]=self.giveValue((cell,intPtId))
+                    val[cell]=self.giveValue(cell)
                 fieldGrp['cell_values']=val
             else: raise RuntimeError("Unknown fieldType %d."%(self.fieldType))
 
