@@ -47,7 +47,7 @@ class RemoteAppRecord (object):
         :return: Instance of Application
         """
         return self.app[num]
-    
+
     def getApplicationUri(self, num=0):
         """
         Returns application uri
@@ -73,7 +73,9 @@ class RemoteAppRecord (object):
             if self.app is not None:
                 self.terminateApp(i)
                 if self.jobMan: self.jobMan.terminateJob(self.jobID[i])
-        if self.jobManTunnel: self.jobManTunnel.terminate()
+        if self.jobManTunnel:
+            if self.jobManTunnel!='manual':
+                self.jobManTunnel.terminate()
 
     def terminateApp(self, num):
         """
@@ -82,5 +84,7 @@ class RemoteAppRecord (object):
         :param int num: number of application
         """
         if self.app[num]: self.app[num].terminate()
-        if self.appTunnel[num]: self.appTunnel[num].terminate()
+        if self.appTunnel[num]:
+            if self.appTunnel[num]!='manual':
+                self.appTunnel[num].terminate()
 
