@@ -214,8 +214,11 @@ def patched_polydata_fromfile(f,self):
 
 def pyvtk_monkeypatch():
     'Apply monkey-patches to work around https://github.com/pearu/pyvtk/wiki/unexpectedEOF in pyvtk without changing the source code.'
-    pyvtk.scalars_fromfile=patched_scalars_fromfile
-    pyvtk.polydata_fromfile=patched_polydata_fromfile
+    print('Monkey-patching pyVTK, see https://github.com/pearu/pyvtk/wiki/unexpectedEOF for details.')
+    import pyvtk, pyvtk.Scalars, pyvtk.PolyData
+    # some versions of pyVTK need to patch both
+    pyvtk.Scalars.scalars_fromfile=pyvtk.scalars_fromfile=patched_scalars_fromfile
+    pyvtk.PolyData.polydata_fromfile=polydata_fromfile=patched_polydata_fromfile
 
 
 
