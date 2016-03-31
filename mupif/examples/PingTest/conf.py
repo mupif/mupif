@@ -42,11 +42,6 @@ nsport  = 9090
 hkey = 'mmp-secret-key'
 
 
-from mupif import PyroUtil #get logging facilities
-import logging
-
-logger = logging.getLogger()
-
 import Pyro4
 Pyro4.config.SERIALIZER="pickle"
 Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x

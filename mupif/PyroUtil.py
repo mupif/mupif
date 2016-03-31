@@ -234,10 +234,10 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
         log.debug("Creating ssh tunnel via command: " + cmd)
     elif sshClient=='manual':
         #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-        cmd1 = 'ssh -%s %d:%s:%d %s@%s' % (direction, localPort, remoteHost, remotePort, userName, sshHost)
-        cmd2 = 'putty.exe -%s %d:%s:%d %s@%s %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+        cmd1 = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+        cmd2 = 'putty.exe -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
         log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
-        return None
+        return 'manual'
     else:
         log.error("Unknown ssh client, exiting")
         exit(0)
@@ -361,7 +361,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
         log.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
-        raise 
+        raise
 
     #create tunnel to application's daemon running on (remote) server
     try:

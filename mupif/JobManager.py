@@ -62,8 +62,7 @@ class JobManNoResourcesException(JobManException):
     This class is thrown when there are no more available resources.
     """
     pass
-    
-    
+
 
 class JobManager(object):
     """
