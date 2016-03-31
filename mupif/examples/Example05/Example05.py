@@ -37,7 +37,7 @@ while (abs(time -targetTime) > 1.e-6):
         break
 # evaluate field at given point
 position=(-1e-5, -1e-5, -1e-5)
-value=field.evaluate(position,eps=0.0)
+value=field.evaluate(position)
 
 #import datetime
 #field.toHdf5(fileName='ex5dbg.h5',group=datetime.datetime.now().isoformat())

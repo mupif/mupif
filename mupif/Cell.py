@@ -136,8 +136,11 @@ class Cell(object):
         :rtype: CellGeometryType
         """
 
-    def getBBox(self):
+    def getBBox(self, relPad=1e-5):
         """ 
+        Return bounding box. The box is by default slightly enlarged via *relPad* to avoid finite-precision issues when testing for a boundary point being inside the box.
+            
+        :param float relPad: relative padding of the box; tight (geometrical)  bbox will be enlarged along each axis by *relPad* times size along that axis, in both directions.
         :return: Returns a bounding box of the receiver
         :rtype: BBox
         """
@@ -163,6 +166,12 @@ class Cell(object):
         except IndexError:
             print ("getBBox failed: cell-no: ", self.number, "vertices: ", self.vertices, "vertex: ", vertex)
             exit (1)
+
+        if relPad:
+            sizes=[max_coords[i]-min_coords[i] for i in (0,1,2)] # compute box sizes (should be all non-negative)
+            sizes=[max(sizes) if sizes[i]==0 else sizes[i] for i in (0,1,2)] # replace zero size by maximum for the purposes of padding
+            min_coords=[min_coords[i]-relPad*sizes[i] for i in (0,1,2)] # pad on the negative side
+            max_coords=[max_coords[i]+relPad*sizes[i] for i in (0,1,2)] # pad on the positive side
 
         self.bbox=BBox.BBox (tuple(min_coords), tuple(max_coords))
         return self.bbox

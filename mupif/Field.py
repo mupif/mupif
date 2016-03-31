@@ -168,13 +168,13 @@ class Field(object):
         """
         return self.time
 
-    def evaluate(self, positions, eps=0.001):
+    def evaluate(self, positions, eps=0.0):
         """
         Evaluates the receiver at given spatial position(s).
 
         :param position: 1D/2D/3D position vectors
         :type position: tuple, a list of tuples
-        :param float eps: Optional tolerance, default 0.001
+        :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
         :return: field value(s)
         :rtype: tuple or a list of tuples
         """
@@ -188,12 +188,12 @@ class Field(object):
             # single position passed
             return self._evaluate(positions, eps)
 
-    def _evaluate(self, position, eps=0.001):
+    def _evaluate(self, position, eps):
         """
         Evaluates the receiver at a single spatial position.
 
         :param tuple position: 1D/2D/3D position vector
-        :param float eps: Optional tolerance, default 0.001
+        :param float eps: Optional tolerance
         :return: field value
         :rtype: tuple
 
