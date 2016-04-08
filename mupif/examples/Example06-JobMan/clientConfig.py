@@ -16,5 +16,7 @@ options = cfg.options
 sshHost = cfg.sshHost
 
 solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
+solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.serverNathost, cfg.serverUserName, cfg.jobManName)
 jobNatPorts = cfg.jobNatPorts
+
 

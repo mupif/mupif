@@ -7,11 +7,14 @@ from mupif import *
 import mupif
 import time as timeTime
 
+#if you wish to run no SSH tunnels, set to True
+noSSH=False
 
 tunnel = None
 #use numerical IP values only (not names, sometimes they do not work)
 try:#tunnel must be closed at the end, otherwise bound socket may persist on system
-    tunnel = PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
+    if not noSSH:
+        tunnel = PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
 
     time  = 0
     dt    = 1

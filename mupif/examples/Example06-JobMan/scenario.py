@@ -8,14 +8,25 @@ import time as timeTime
 start = timeTime.time()
 logger.info('Timer started')
 
+#if you wish to run no SSH tunnels, set to True
+noSSH=False
+
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
 
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the first application app1
 #cConf.sshClient='manual'
+if noSSH:
+    cConf.solverJobManRec = cConf.solverJobManRecNoSSH
+    #get 
+    jobNatport = -1
+    cConf.sshClient = 'manual'
+else:
+    jobNatport = cConf.jobNatPorts.pop(0)
+
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.solverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+    appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.solverJobManRec, jobNatport, cConf.sshClient, cConf.options, cConf.sshHost )
     app1 = appRec.getApplication()
 except Exception as e:
     logger.exception(e)

@@ -5,6 +5,8 @@ import conf as cfg
 from mupif import *
 import mupif
 
+#if you wish to run no SSH tunnels, set to True
+noSSH=False
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -47,6 +49,10 @@ class PingServerApplication(Application.Application):
 
 
 app2 = PingServerApplication("/dev/null")
+
+if noSSH: #set NATport=port and local IP
+    cfg.server = cfg.serverNathost
+    cfg.serverNatport = cfg.serverPort
 
 PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, 
                       cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, 

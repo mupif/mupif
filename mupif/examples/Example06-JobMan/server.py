@@ -12,9 +12,15 @@ logger = logging.getLogger()
 # for computer running a nameserver
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
+#if you wish to run no SSH tunnels, set to True
+noSSH=False
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
+
+if noSSH:
+    sConf.server = sConf.serverNathost
+    sConf.jobManNatport = sConf.jobManPort
 
 #Run a daemon for jobMamager on this machine
 daemon = sConf.cfg.Pyro4.Daemon(host=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport)

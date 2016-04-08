@@ -175,7 +175,7 @@ class Application(object):
     def isSolved(self):
         """
         Check whether solve has completed.
-        
+
         :return: Returns true or false depending whether solve has completed when executed in background.
         :rtype: bool
         """ 
@@ -220,7 +220,7 @@ class Application(object):
     def getApplicationSignature(self):
         """
         Get application signature.
-        
+
         :return: Returns the application identification
         :rtype: str
         """
@@ -234,6 +234,7 @@ class Application(object):
             self.pyroDaemon.unregister(self)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
+
 
     def getURI(self):
         """
