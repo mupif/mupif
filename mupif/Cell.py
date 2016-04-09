@@ -266,7 +266,7 @@ class Triangle_2d_lin(Cell):
         :rtype: tuple
         """
         ac = self.glob2loc(point)
-        return tuple([v0*ac[0]+v1*ac[1]+v2*ac[2] for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2]])
+        return tuple([vertexValues[0][i]*ac[0]+vertexValues[1][i]*ac[1]+vertexValues[2][i]*ac[2] for i in range(len(vertexValues[0]))])
 
     def containsPoint(self, point):
         """
@@ -403,7 +403,7 @@ class Triangle_2d_quad(Cell):
         """
         lc = self.glob2loc(point)
         n = self._evalN(lc)
-        return tuple([n[0]*v0+n[1]*v1+n[2]*v2+n[3]*v3+n[4]*v4+n[5]*v5 for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3] for v4 in vertexValues[4] for v5 in vertexValues[5]])
+        return tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i] for i in range(len(vertexValues[0]))])
 
     def containsPoint(self, point):
         """
@@ -698,10 +698,10 @@ class Quad_2d_lin(Cell):
         (inside, ac) = self.glob2loc(point)
         #print "glob:",point,"->loc:",ac
 
-        return tuple([(0.25*(1.0+ac[0])*(1.0+ac[1])*v0+
-                       0.25*(1.0-ac[0])*(1.0+ac[1])*v1+
-                       0.25*(1.0-ac[0])*(1.0-ac[1])*v2+
-                       0.25*(1.0+ac[0])*(1.0-ac[1])*v3) for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3]])
+        return tuple([(0.25*(1.0+ac[0])*(1.0+ac[1])*vertexValues[0][i]+
+                       0.25*(1.0-ac[0])*(1.0+ac[1])*vertexValues[1][i]+
+                       0.25*(1.0-ac[0])*(1.0-ac[1])*vertexValues[2][i]+
+                       0.25*(1.0+ac[0])*(1.0-ac[1])*vertexValues[3][i]) for i in range(len(vertexValues[0]))])
 
     def containsPoint(self, point):
         """
@@ -842,7 +842,7 @@ class Tetrahedron_3d_lin(Cell):
         """
 
         ac = self.glob2loc(point)
-        return tuple([v0*ac[0]+v1*ac[1]+v2*ac[2]+v3*ac[3] for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3]])
+        return tuple([vertexValues[0][i]*ac[0]+vertexValues[1][i]*ac[1]+vertexValues[2][i]*ac[2]+vertexValues[3][i]*ac[3] for i in range(len(vertexValues[0]))])
 
     def containsPoint(self, point):
         """
@@ -1054,7 +1054,7 @@ class Brick_3d_lin(Cell):
         (inside, ac) = self.glob2loc(point)
         n = self._evalN(ac)
 
-        return tuple([n[0]*v0+n[1]*v1+n[2]*v2+n[3]*v3+n[4]*v4+n[5]*v5+n[6]*v6+n[7]*v7 for v0 in vertexValues[0] for v1 in vertexValues[1] for v2 in vertexValues[2] for v3 in vertexValues[3] for v4 in vertexValues[4] for v5 in vertexValues[5] for v6 in vertexValues[6] for v7 in vertexValues[7]])
+        return tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i]+n[6]*vertexValues[6][i]+n[7]*vertexValues[7][i] for i in range(len(vertexValues[0]))])
 
     def containsPoint(self, point):
         """
