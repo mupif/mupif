@@ -705,6 +705,8 @@ class mechanical(Application.Application):
         self.temperatureField = None
         self.alpha = 1.0
 
+    def getCriticalTimeStep(self):
+        return 1.0;
 
     def readInput(self):
 

@@ -17,7 +17,7 @@ app2 = demoapp.mechanical('inputM13.in', '.')
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = app1.getCriticalTimeStep()
+    dt = min (app1.getCriticalTimeStep(), app2.getCriticalTimeStep())
     #update time
     time = time+dt
     if (time > targetTime):
@@ -42,10 +42,14 @@ while (abs(time -targetTime) > 1.e-6):
         print ("D(l,1)=", f.evaluate((5.0,1.0,0.0)))
         data = f.field2VTKData().tofile('D_%s'%str(timestepnumber))
 
+        #finish step
+        app1.finishStep(istep)
+        app2.finishStep(istep)
+
     except APIError.APIError as e:
         mupif.log.error("Following API error occurred:",e)
         break
 # terminate
 app1.terminate();
-
+app2.terminate();
 
