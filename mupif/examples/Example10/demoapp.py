@@ -155,7 +155,10 @@ class thermal(Application.Application):
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                values.append((self.T[self.loc[i]],))
+                if time.getNumber()==0:#put zeros everywhere
+                    values.append((0.,))
+                else:
+                    values.append((self.T[self.loc[i]],))
             return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, 0.0, values);
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
@@ -505,11 +508,10 @@ class thermal_nonstat(thermal):
 
             C=np.zeros((4,4))
             C=c*dv*(np.dot(N.T,N))
-                
+
             #Conductivity matrix
             A_e = np.add(A_e, C)
         return A_e
-        
 
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -519,6 +521,9 @@ class thermal_nonstat(thermal):
         self.volume = 0.0;
         self.integral = 0.0;
         dt = tstep.getTimeIncrement()
+
+        if tstep.getNumber()==0:#assign mesh only for 0th time step
+            return
 
         numNodes = mesh.getNumberOfVertices()
         numElements= mesh.getNumberOfCells()
@@ -698,12 +703,12 @@ class mechanical(Application.Application):
 
     def __init__(self, file, workdir):
         super(mechanical, self).__init__(file, workdir)
-        self.E = 1.0;
-        self.nu = 0.25;
-        self.fx = 0.0
-        self.fy = 1.0
+        self.E = 30.0e+9 #ceramics
+        self.nu = 0.25   #ceramics
+        self.fx = 0.0    #load in x
+        self.fy = 0.0    #load in y
         self.temperatureField = None
-        self.alpha = 1.0
+        self.alpha = 12.e-6
 
     def getCriticalTimeStep(self):
         return 1.0;
@@ -812,10 +817,13 @@ class mechanical(Application.Application):
         if (fieldID == FieldID.FID_Displacement):    
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if i in self.dirichletBCs:
-                    values.append(self.dirichletBCs[i])
+                if time.getNumber()==0:#put zeros everywhere
+                    values.append((0.,0.,0.))
                 else:
-                    values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
+                    if i in self.dirichletBCs:
+                        values.append(self.dirichletBCs[i])
+                    else:
+                        values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
 
             return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, None, 0.0, values);
         else:
@@ -828,6 +836,8 @@ class mechanical(Application.Application):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.readInput()
         mesh =  self.mesh
+        if tstep.getNumber()==0:#assign mesh only for 0th time step
+            return
         rule = IntegrationRule.GaussIntegrationRule()
         self.volume = 0.0;
         self.integral = 0.0;
