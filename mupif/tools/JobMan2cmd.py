@@ -22,7 +22,7 @@ def main():
     ch = logging.StreamHandler()
     ch.setFormatter(logging.Formatter(formatLog, formatTime))
     logger.addHandler(ch)
-    
+
     logger.info ("JobMan2cmd: " + str(sys.argv[1:]))
 
     try:
@@ -79,7 +79,7 @@ def main():
     else:
         logger.error('missing options -c specifying server config file')
         exit(0)
-    
+
     #Results are printed through a logger only - communication with this subprocess is peculiar
     logger = logging.getLogger()
 
@@ -111,6 +111,6 @@ def main():
     s.close()
 
     daemon.requestLoop()
-    
+
 if __name__ == '__main__':
     main()

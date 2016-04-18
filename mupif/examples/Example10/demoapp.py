@@ -21,6 +21,7 @@ def getline (f):
 
 
 class thermal(Application.Application):
+    """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
@@ -62,7 +63,7 @@ class thermal(Application.Application):
             elif (code == 'C'):
                 h = float(rec[3])
                 convectionModelEdges.append((edge,temperature, h))
-        
+
         #print (convectionModelEdges)
 
         line = lines.next()
@@ -154,11 +155,10 @@ class thermal(Application.Application):
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if i in self.dirichletBCs:
-                    values.append((self.dirichletBCs[i],))
+                if time.getNumber()==0:#put zeros everywhere
+                    values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            #print (values)
             return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, 0.0, values);
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
@@ -195,7 +195,6 @@ class thermal(Application.Application):
 
         self.readInput()
         mesh = self.mesh
-        rule = IntegrationRule.GaussIntegrationRule()
         self.volume = 0.0;
         self.integral = 0.0;
 
@@ -224,54 +223,18 @@ class thermal(Application.Application):
         kup = np.zeros((self.neq,self.pneq))
         #A = np.zeros((self.neq, self.neq ))
         b = np.zeros(self.neq)
+        # solution vector
+        self.T = np.zeros(self.neq+self.pneq) #vector of temperatures
+
+        #initialize prescribed Temperatures in current solution vector (T):
+        for i in range(self.mesh.getNumberOfVertices()):
+            if i in self.dirichletBCs:
+                ii = self.loc[i] 
+                self.T[ii] = self.dirichletBCs[i] #assign temperature
 
         print("\tAssembling ...")
         for e in mesh.cells():
-            #element matrix and element vector
-            A_e = np.zeros((4,4 ))
-            b_e = np.zeros((4,1))
-
-            ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
-            pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
-
-            # print "e : ",e.number-1
-            #print "ngp :",ngp
-            #print "pnts :",pnts
-
-            for p in pnts: # loop over ips
-                detJ=e.getTransformationJacobian(p[0])
-                #print "Jacobian: ",detJ
-
-                dv = detJ * p[1]
-                #print "dv :",dv 
-
-                N = np.zeros((1,4)) 
-                tmp = e._evalN(p[0]) 
-                N=np.asarray(tmp)
-                #print "N :",N
-
-                x = e.loc2glob(p[0])
-                #print "global coords :", x
-
-                #conductivity
-                k=self.conductivity
-                if self.morphologyType=='Inclusion':
-                    if self.isInclusion(e):
-                        k=0.001
-
-                Grad= np.zeros((2,4))
-                Grad = self.compute_B(e,p[0])
-                #print "Grad :",Grad
-                K=np.zeros((4,4))
-                K=k*dv*(np.dot(Grad.T,Grad))
-
-                #Conductivity matrix
-                for i in range(4):#loop dofs
-                    for j in range(4):
-                        A_e[i,j] += K[i,j]
-            #print "A_e :",A_e
-            #print "b_e :",b_e 
-
+            A_e = self.compute_elem_conductivity(e)
 
             # #Assemble
             #print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
@@ -339,27 +302,22 @@ class thermal(Application.Application):
                             kuu[ii,jj] += boundary_lhs[i,j]
                     b[ii] += boundary_rhs[i] 
 
-        self.bp = np.zeros(self.pneq)#reactions
-        Tp = np.zeros(self.pneq) #vector of prescribed temperatures
-        for i in range(self.mesh.getNumberOfVertices()):
-            if i in self.dirichletBCs:
-                ii = self.loc[i] 
-                Tp[ii-self.neq] = self.dirichletBCs[i] #assign temperature
+        self.r = np.zeros(self.pneq)#reactions
 
-        #print (Tp)
         #solve linear system
         print("\tSolving ...")
-        self.rhs = np.zeros(self.neq)
-        self.rhs = b - np.dot(kup,Tp)
-        self.T = np.linalg.solve(kuu,self.rhs)
-        self.bp = np.dot(kup.transpose(),self.T)+np.dot(kpp,Tp)
-        #print (self.bp)
+        #self.rhs = np.zeros(self.neq)
+        self.rhs = b - np.dot(kup,self.T[self.neq:self.neq+self.pneq])
+        self.T[:self.neq] = np.linalg.solve(kuu,self.rhs)
+        self.r = np.dot(kup.transpose(),self.T[:self.neq])+np.dot(kpp,self.T[self.neq:self.neq+self.pneq])
+        #print (self.r)
 
         print("\tDone")
         print("\tTime consumed %f s" % (timeTime.time()-start))
 
 
     def compute_B(self, elem, lc):
+        # computes gradients of shape functions of given element
         vertices = elem.getVertices()
         c1=vertices[0].coords
         c2=vertices[1].coords
@@ -402,6 +360,52 @@ class thermal(Application.Application):
         #print Grad
         return Grad
 
+    def compute_elem_conductivity (self, e):
+        #compute element conductivity matrix
+        A_e = np.zeros((4,4 ))
+        b_e = np.zeros((4,1))
+        rule = IntegrationRule.GaussIntegrationRule()
+
+        ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
+        pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
+
+        # print "e : ",e.number-1
+        #print "ngp :",ngp
+        #print "pnts :",pnts
+
+        for p in pnts: # loop over ips
+            detJ=e.getTransformationJacobian(p[0])
+            #print "Jacobian: ",detJ
+
+            dv = detJ * p[1]
+            #print "dv :",dv 
+
+            N = np.zeros((1,4)) 
+            tmp = e._evalN(p[0]) 
+            N=np.asarray(tmp)
+            #print "N :",N
+
+            x = e.loc2glob(p[0])
+            #print "global coords :", x
+
+            #conductivity
+            k=self.conductivity
+            if self.morphologyType=='Inclusion':
+                if self.isInclusion(e):
+                    k=0.001
+
+            Grad= np.zeros((2,4))
+            Grad = self.compute_B(e,p[0])
+            #print "Grad :",Grad
+            K=np.zeros((4,4))
+            K=k*dv*(np.dot(Grad.T,Grad))
+                
+            #Conductivity matrix
+            for i in range(4):#loop dofs
+                for j in range(4):
+                    A_e[i,j] += K[i,j]
+        return A_e
+
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_effective_conductivity):
             #average reactions from solution - use nodes on edge 4 (coordinate x==0.)
@@ -413,7 +417,7 @@ class thermal(Application.Application):
                     if ipneq>=self.neq:
                         #print (coord, ipneq)
                         #print (i,ipneq)
-                        sumQ -= self.bp[ipneq-self.neq]
+                        sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
             return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
@@ -439,7 +443,7 @@ class thermal(Application.Application):
                     if ipneq>=self.neq:
                         #print (coord, ipneq)
                         #print (i,ipneq)
-                        sumQ -= self.bp[ipneq-self.neq]
+                        sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
             return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
@@ -453,17 +457,259 @@ class thermal(Application.Application):
 
 
 
+class thermal_nonstat(thermal):
+    """ Simple non-stationary (transient) heat transport solver on rectangular domains"""    
+    def __init__(self, file, workdir):
+        super(thermal_nonstat, self).__init__(file, workdir)
+        self.capacity = 1.0
+        self.density = 1.0
+        self.Tau=0.5;
+        self.init=True;
+
+
+    def getApplicationSignature(self):
+        return "Nonstat-Thermal-demo-solver, ver 1.0"
+
+    def finishStep(self, tstep):
+        return
+
+    def getCriticalTimeStep(self):
+        return 1.0;
+
+    def compute_elem_capacity (self, e):
+        #compute element capacity matrix
+        A_e = np.zeros((4,4 ))
+        rule = IntegrationRule.GaussIntegrationRule()
+
+        ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
+        pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
+
+        # print "e : ",e.number-1
+        #print "ngp :",ngp
+        #print "pnts :",pnts
+
+        for p in pnts: # loop over ips
+            detJ=e.getTransformationJacobian(p[0])
+            #print "Jacobian: ",detJ
+
+            dv = detJ * p[1]
+            #print "dv :",dv 
+
+            N = np.zeros((1,4)) 
+            tmp = e._evalN(p[0]) 
+            N=np.asarray(tmp)
+            #print "N :",N
+
+
+            c=self.capacity * self.density
+            if self.morphologyType=='Inclusion':
+                if self.isInclusion(e):
+                    c=0.001
+
+            C=np.zeros((4,4))
+            C=c*dv*(np.dot(N.T,N))
+
+            #Conductivity matrix
+            A_e = np.add(A_e, C)
+        return A_e
+
+
+    def solveStep(self, tstep, stageID=0, runInBackground=False):
+
+        self.readInput()
+        mesh = self.mesh
+        self.volume = 0.0;
+        self.integral = 0.0;
+        dt = tstep.getTimeIncrement()
+
+        if tstep.getNumber()==0:#assign mesh only for 0th time step
+            return
+
+        numNodes = mesh.getNumberOfVertices()
+        numElements= mesh.getNumberOfCells()
+        ndofs = 4
+
+        #print numNodes
+        #print numElements
+        #print ndofs
+
+        start = timeTime.time()
+        print(self.getApplicationSignature())
+        print("\tNumber of equations:", self.neq)
+
+        #connectivity 
+        c=np.zeros((numElements,4))
+        for e in range(0,numElements):
+            for i in range(0,4):
+                c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label
+        #print "connectivity :",c
+
+        if (self.init):  # do only once 
+            #Global matrix and global vector -> assuming constant time step size
+            self.kuu = np.zeros((self.neq,self.neq))
+            self.kpp = np.zeros((self.pneq,self.pneq))
+            self.kup = np.zeros((self.neq,self.pneq))
+            self.P = np.zeros((self.neq+self.pneq,self.neq+self.pneq))
+            self.init=False
+
+            print("\tAssembling ...")
+            for e in mesh.cells():
+                K_e = self.compute_elem_conductivity(e)
+                C_e = self.compute_elem_capacity(e)
+                A_e = K_e*self.Tau + C_e/dt
+                P_e = np.subtract(C_e/dt, K_e*(1.-self.Tau))
+                # #Assemble
+                #print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
+                for i in range(ndofs):#loop of dofs
+                    ii = self.loc[c[e.number-1,i]]#code number
+                    if ii<self.neq:#unknown to be solved
+                        for j in range(ndofs):
+                            jj = self.loc[c[e.number-1,j]]
+                            if jj<self.neq:
+                                self.kuu[ii,jj] += A_e[i,j]
+                            else:
+                               self. kup[ii,jj-self.neq] += A_e[i,j]
+                    else:#prescribed value
+                        for j in range(ndofs):
+                            jj = self.loc[c[e.number-1,j]]
+                            if jj>=self.neq:
+                                self.kpp[ii-self.neq,jj-self.neq] += A_e[i,j]
+
+
+                    # rhs mtrx P=C/dt - K*(1-Tau)
+                    for j in range(ndofs):
+                        jj = self.loc[c[e.number-1,j]]
+                        self.P[ii,jj] += P_e[i,j]
+
+            # add boundary terms 
+            for i in self.convectionBC:
+                #print "Processing bc:", i
+                elem = mesh.getCell(i[0])
+                side = i[1]
+                h = i[2]
+                Te = i[3]
+                #print ("h:%f Te:%f" % (h, Te))
+
+                n1 = elem.getVertices()[side];
+                #print n1
+                if (side == 3):
+                    n2 = elem.getVertices()[0]
+                else:
+                    n2 = elem.getVertices()[side+1]
+
+                    length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
+                                       (n2.coords[1]-n1.coords[1])*(n2.coords[1]-n1.coords[1]))
+
+                #print h, Te, length
+
+                # boundary_lhs=h*(np.dot(N.T,N))
+                boundary_lhs=np.zeros((2,2))
+                boundary_lhs[0,0] = h*(1./3.)*length
+                boundary_lhs[0,1] = h*(1./6.)*length
+                boundary_lhs[1,0] = h*(1./6.)*length
+                boundary_lhs[1,1] = h*(1./3.)*length
+
+                # #Assemble
+                loci = [n1.number, n2.number]
+                #print loci
+                for i in range(2):#loop nb of dofs
+                    ii = self.loc[loci[i]]
+                    if ii<self.neq:
+                        for j in range(2):
+                            jj = self.loc[loci[j]]
+                            if jj<self.neq:
+                                #print "Assembling bc ", ii, jj, boundary_lhs[i,j]
+                                self.kuu[ii,jj] += boundary_lhs[i,j]*self.Tau
+
+                    for j in range(2):
+                        jj = self.loc[loci[j]]
+                        self.P[ii,jj] += boundary_lhs[i,j]*self.Tau
+
+            self.T = np.zeros(self.neq+self.pneq) #vector of current prescribed temperatures
+            self.b = np.zeros(self.neq) # rhs vector
+
+        #end self.init
+
+        # update solution Tp = T
+        # update rhs bp = b;
+        self.Tp = np.copy(self.T)
+        self.bp = np.copy(self.b)
+
+        #initialize prescribed Temperatures in current solution vector (T):
+        for i in range(self.mesh.getNumberOfVertices()):
+            if i in self.dirichletBCs:
+                ii = self.loc[i] 
+                self.T[ii] = self.dirichletBCs[i] #assign temperature
+
+        # evaluate RHS
+        # add boundary terms due to prescribed fluxes
+        self.b=np.zeros(self.neq)
+        for i in self.convectionBC:
+            #print "Processing bc:", i
+            elem = mesh.getCell(i[0])
+            side = i[1]
+            h = i[2]
+            Te = i[3]
+            #print ("h:%f Te:%f" % (h, Te))
+
+            n1 = elem.getVertices()[side];
+            #print n1
+            if (side == 3):
+                n2 = elem.getVertices()[0]
+            else:
+                n2 = elem.getVertices()[side+1]
+
+            length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
+                               (n2.coords[1]-n1.coords[1])*(n2.coords[1]-n1.coords[1]))
+
+            #print h, Te, length
+            # boundary_rhs=h*Te*N.T
+            boundary_rhs = np.zeros((2,1))
+            boundary_rhs[0] = h*(1./2.)*length*Te
+            boundary_rhs[1] = h*(1./2.)*length*Te
+
+            # #Assemble
+            loci = [n1.number, n2.number]
+            #print loci
+            for i in range(2):#loop nb of dofs
+                ii = self.loc[loci[i]]
+                if ii<self.neq:
+                    self.b[ii] += boundary_rhs[i] 
+
+        rhs = self.b*self.Tau + self.bp*(1-self.Tau) 
+        # add rhs due to previous state (C/dt-K(1-Tau))*r_{i-1}
+        tmp = np.dot(self.P, self.Tp) #contains all DOFs; extract unknown part and add it to rhs
+        rhs = rhs+tmp[:self.neq]
+
+        # add effect of dirichlet BCS
+        rhs = np.subtract(rhs, np.dot(self.kup,self.T[self.neq:self.neq+self.pneq]))
+
+        self.r = np.zeros(self.pneq)    #reactions
+        #solve linear system
+        print("\tSolving ...")
+        self.T[:self.neq] = np.linalg.solve(self.kuu,rhs) #inefficient; should reuse existing factorization !!!
+        self.r = np.dot(self.kup.transpose(),self.T[:self.neq])+np.dot(self.kpp,self.T[self.neq:self.neq+self.pneq])
+        #print (self.r)
+
+        print("\tDone")
+        print("\tTime consumed %f s" % (timeTime.time()-start))
+
+
+
 class mechanical(Application.Application):
+    """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self, file, workdir):
         super(mechanical, self).__init__(file, workdir)
-        self.E = 1.0;
-        self.nu = 0.25;
-        self.fx = 0.0
-        self.fy = 1.0
+        self.E = 30.0e+9 #ceramics
+        self.nu = 0.25   #ceramics
+        self.fx = 0.0    #load in x
+        self.fy = 0.0    #load in y
         self.temperatureField = None
-        self.alpha = 1.0
+        self.alpha = 12.e-6
 
+    def getCriticalTimeStep(self):
+        return 1.0;
 
     def readInput(self):
 
@@ -566,13 +812,17 @@ class mechanical(Application.Application):
         #print "\tloc:", self.loc
 
     def getField(self, fieldID, time):
-        if (fieldID == FieldID.FID_Displacement):    
+        if (fieldID == FieldID.FID_Displacement):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if i in self.dirichletBCs:
-                    values.append(self.dirichletBCs[i])
+                if time.getNumber()==0:#put zeros everywhere
+                    values.append((0.,0.,0.))
                 else:
-                    values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
+                    if i in self.dirichletBCs:
+                        values.append(self.dirichletBCs[i])
+                    else:
+                        values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
+
             return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, None, 0.0, values);
         else:
             raise APIError.APIError ('Unknown field ID')
@@ -584,6 +834,8 @@ class mechanical(Application.Application):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.readInput()
         mesh =  self.mesh
+        if tstep.getNumber()==0:#assign mesh only for 0th time step
+            return
         rule = IntegrationRule.GaussIntegrationRule()
         self.volume = 0.0;
         self.integral = 0.0;
