@@ -63,7 +63,7 @@ class thermal(Application.Application):
             elif (code == 'C'):
                 h = float(rec[3])
                 convectionModelEdges.append((edge,temperature, h))
-        
+
         #print (convectionModelEdges)
 
         line = lines.next()
@@ -500,7 +500,7 @@ class thermal_nonstat(thermal):
             N=np.asarray(tmp)
             #print "N :",N
 
-            
+
             c=self.capacity * self.density
             if self.morphologyType=='Inclusion':
                 if self.isInclusion(e):
@@ -575,7 +575,7 @@ class thermal_nonstat(thermal):
                             if jj>=self.neq:
                                 self.kpp[ii-self.neq,jj-self.neq] += A_e[i,j]
 
-                    
+
                     # rhs mtrx P=C/dt - K*(1-Tau)
                     for j in range(ndofs):
                         jj = self.loc[c[e.number-1,j]]
@@ -624,11 +624,10 @@ class thermal_nonstat(thermal):
                     for j in range(2):
                         jj = self.loc[loci[j]]
                         self.P[ii,jj] += boundary_lhs[i,j]*self.Tau
-                 
 
             self.T = np.zeros(self.neq+self.pneq) #vector of current prescribed temperatures
             self.b = np.zeros(self.neq) # rhs vector
-            
+
         #end self.init
 
         # update solution Tp = T
@@ -677,12 +676,11 @@ class thermal_nonstat(thermal):
                 if ii<self.neq:
                     self.b[ii] += boundary_rhs[i] 
 
-        
         rhs = self.b*self.Tau + self.bp*(1-self.Tau) 
         # add rhs due to previous state (C/dt-K(1-Tau))*r_{i-1}
         tmp = np.dot(self.P, self.Tp) #contains all DOFs; extract unknown part and add it to rhs
         rhs = rhs+tmp[:self.neq]
-        
+
         # add effect of dirichlet BCS
         rhs = np.subtract(rhs, np.dot(self.kup,self.T[self.neq:self.neq+self.pneq]))
 
@@ -814,7 +812,7 @@ class mechanical(Application.Application):
         #print "\tloc:", self.loc
 
     def getField(self, fieldID, time):
-        if (fieldID == FieldID.FID_Displacement):    
+        if (fieldID == FieldID.FID_Displacement):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
                 if time.getNumber()==0:#put zeros everywhere

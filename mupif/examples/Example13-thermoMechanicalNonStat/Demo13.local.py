@@ -8,32 +8,16 @@ from mupif import logger
 sys.path.append('../Example10')
 import demoapp
 
-time  = 0
+time  = 0.
+dt = 0.
 timestepnumber = 0
 targetTime = 10.0
 
 thermal = demoapp.thermal_nonstat('inputT13.in','.')
 mechanical = demoapp.mechanical('inputM13.in', '.')
 
-# report zero temperature fields in the 0th time step
-istep = TimeStep.TimeStep(0., 0., 0)
-thermal.solveStep(istep)
-f = thermal.getField(FieldID.FID_Temperature, istep)
-data = f.field2VTKData().tofile('T_0')
-mechanical.solveStep(istep)
-f = mechanical.getField(FieldID.FID_Displacement, istep)
-data = f.field2VTKData().tofile('M_0')
-
 while (abs(time -targetTime) > 1.e-6):
 
-    # determine critical time step
-    dt = min (thermal.getCriticalTimeStep(), mechanical.getCriticalTimeStep())
-    # update time
-    time = time+dt
-    if (time > targetTime):
-        # make sure we reach targetTime at the end
-        time = targetTime
-    timestepnumber = timestepnumber+1
     logger.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
@@ -55,6 +39,16 @@ while (abs(time -targetTime) > 1.e-6):
         # finish step
         thermal.finishStep(istep)
         mechanical.finishStep(istep)
+
+        # determine critical time step
+        dt = min (thermal.getCriticalTimeStep(), mechanical.getCriticalTimeStep())
+
+        # update time
+        time = time+dt
+        if (time > targetTime):
+            # make sure we reach targetTime at the end
+            time = targetTime
+        timestepnumber = timestepnumber+1
 
     except APIError.APIError as e:
         logger.error("Following API error occurred:",e)
