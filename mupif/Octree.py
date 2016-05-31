@@ -215,7 +215,7 @@ class Octant(object):
         :return: Returns the depth (the subdivision level) of the receiver (and its children)
         """
         depth = math.ceil ( math.log( self.octree.root.size / self.size) / math.log(2.0))
-        if not isTerminal():
+        if not self.isTerminal():
             for i,j,k in self.childrenIJK():
                 depth=max(depth, self.children[i][j][k].giveDepth(itemList, bbox))
         return depth
