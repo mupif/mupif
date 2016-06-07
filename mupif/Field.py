@@ -70,7 +70,7 @@ class Field(object):
         :param ValueType valueType: Type of field values (scalear, vector, tensor)
         :param obj units: Units of the field values
         :param float time: Time associated with field values
-        :param list of values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
+        :param list of tuples representing individual values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
         self.mesh = mesh
