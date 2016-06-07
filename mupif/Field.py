@@ -70,7 +70,7 @@ class Field(object):
         :param ValueType valueType: Type of field values (scalear, vector, tensor)
         :param obj units: Units of the field values
         :param float time: Time associated with field values
-        :param tuple values: Field values (format dependent on a particular field type)
+        :param list of values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
         self.mesh = mesh
@@ -282,8 +282,8 @@ class Field(object):
         mupif.log.debug(mesh)
         # merge the field values 
         # some type checking first
-        if (self.field_type != field.field_type):
-            raise TypeError("Field::merge: field_type of receiver and parameter is different")
+        if (self.fieldType != field.fieldType):
+            raise TypeError("Field::merge: fieldType of receiver and parameter is different")
         if (self.fieldType == FieldType.FT_vertexBased):
             values=[0]*mesh.getNumberOfVertices()
             for v in range(self.mesh.getNumberOfVertices()):
