@@ -155,7 +155,7 @@ class thermal(Application.Application):
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if time.getNumber()==0:#put zeros everywhere
+                if time==0.0:#put zeros everywhere
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
@@ -431,7 +431,7 @@ class thermal(Application.Application):
             #logger.info("Assigning effective conductivity %f" % self.conductivity )
         else:
             raise APIError.APIError ('Unknown property ID')
-     
+
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_effective_conductivity):
             #average reactions from solution - use nodes on edge 4 (coordinate x==0.)
@@ -815,7 +815,7 @@ class mechanical(Application.Application):
         if (fieldID == FieldID.FID_Displacement):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if time.getNumber()==0:#put zeros everywhere
+                if time==0.0:#put zeros everywhere
                     values.append((0.,0.,0.))
                 else:
                     if i in self.dirichletBCs:
@@ -833,8 +833,8 @@ class mechanical(Application.Application):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.readInput()
-        mesh =  self.mesh
-        if tstep.getNumber()==0:#assign mesh only for 0th time step
+        mesh = self.mesh
+        if tstep and tstep.getNumber()==0:#assign mesh only for 0th time step
             return
         rule = IntegrationRule.GaussIntegrationRule()
         self.volume = 0.0;

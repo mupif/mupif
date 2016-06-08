@@ -16,7 +16,7 @@ targetTime = 10.0
 thermal = demoapp.thermal_nonstat('inputT13.in','.')
 mechanical = demoapp.mechanical('inputM13.in', '.')
 
-while (abs(time -targetTime) > 1.e-6):
+while (abs(time - targetTime) > 1.e-6):
 
     logger.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
@@ -26,13 +26,13 @@ while (abs(time -targetTime) > 1.e-6):
         # solve problem 1
         thermal.solveStep(istep)
         # request Temperature from thermal
-        f = thermal.getField(FieldID.FID_Temperature, istep)
+        f = thermal.getField(FieldID.FID_Temperature, istep.getTime())
         #print ("T(l/2)=", f.evaluate((2.5,0.2,0.0)))
         data = f.field2VTKData().tofile('T_%s'%str(timestepnumber))
 
         mechanical.setField(f)
         sol = mechanical.solveStep(istep) 
-        f = mechanical.getField(FieldID.FID_Displacement, istep)
+        f = mechanical.getField(FieldID.FID_Displacement, istep.getTime())
         #print ("D(l,1)=", f.evaluate((5.0,1.0,0.0)))
         data = f.field2VTKData().tofile('M_%s'%str(timestepnumber))
 

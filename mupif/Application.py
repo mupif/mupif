@@ -23,6 +23,7 @@
 
 from builtins import object
 import os
+import APIError
 
 class Application(object):
     """
@@ -90,11 +91,14 @@ class Application(object):
         """
         if (self.pyroDaemon == None):
             raise APIError.APIError ('Error: getFieldURI requires to register pyroDaemon in application')
-        field = self.getField(fieldID, time)
+        try:
+            field = self.getField(fieldID, time)
+        except:
+            raise APIError.APIError ('Error: can not obtain field')
         if (hasattr(field, '_PyroURI')):
             return field._PyroURI
         else:
-            uri    = self.pyroDaemon.register(field)
+            uri = self.pyroDaemon.register(field)
             #inject uri into field attributes, note: _PyroURI is avoided 
             #for deepcopy operation
             field._PyroURI = uri

@@ -46,6 +46,7 @@ else:
         thermalSolver.solveStep(None)
         #Get field's uri from thermal application and send it to mechanical application. This prevents copying data to Demo10's computer,
         #mechanical solver will use direct access to thermal field.
+        logger.info("Thermal problem solved")
         uri = thermalSolver.getFieldURI(FieldID.FID_Temperature, 0.0)
         logger.info("URI of thermal problem's field is " + str(uri) )
         field = cConf.cfg.Pyro4.Proxy(uri)
