@@ -254,6 +254,38 @@ class Mesh(object):
         ret.setup(vertexList=vertices,cellList=cells)
         return ret
 
+    def asVtkUnstructuredGrid(self):
+        '''
+        Return object as a vtk.vtkUnstructuredMesh instance.
+        '''
+        import vtk
+        # vertices
+        pts=vtk.vtkPoints()
+        for ip in range(self.getNumberOfVertices()): pts.InsertNextPoint(self.getVertex(ip).getCoordinates())
+        # cells
+        cells,cellTypes=vtk.vtkCellArray(),[]
+        for ic in range(self.getNumberOfCells()):
+            c=self.getCell(ic)
+            cgt=c.getGeometryType()
+            cellGeomTypeMap={
+                CellGeometryType.CGT_TRIANGLE_1: (vtk.vtkTriangle,vtk.VTK_TRIANGLE),
+                CellGeometryType.CGT_QUAD:       (vtk.vtkQuad,vtk.VTK_QUAD),
+                CellGeometryType.CGT_TETRA:      (vtk.vtkTetra,vtk.VTK_TETRA),
+                CellGeometryType.CGT_HEXAHEDRON: (vtk.vtkHexahedron,vtk.VTK_HEXAHEDRON),
+                CellGeometryType.CGT_TRIANGLE_2: (vtk.vtkQuadraticTriangle,vtk.VTK_QUADRATIC_TRIANGLE)
+            }
+            c2klass,c2type=cellGeomTypeMap[cgt] # instantiate the VTK cell with the correct type
+            c2=c2klass()
+            verts=c.getVertices() # those should be all instances of Vertex...? Hopefully so.
+            for i,v in enumerate(verts): c2.GetPointIds().SetId(i,v.getNumber())
+            cells.InsertNextCell(c2)
+            cellTypes.append(c2type)
+        ret=vtk.vtkUnstructuredGrid()
+        ret.SetPoints(pts)
+        ret.SetCells(cellTypes,cells)
+        return ret
+
+        
 
     def getMapping(self):
         """
@@ -637,5 +669,46 @@ class UnstructuredMesh(Mesh):
                 raise APIError.APIError (msg) 
 
         return pyvtk.UnstructuredGrid(vertices, hexahedron=hexahedrons, tetra=tetrahedrons, quad=quads, triangle=triangles)
+
+
+    @staticmethod
+    def makeFromVtkUnstructuredGrid(ugrid):
+        '''Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are mapped between VTK and mupif (supported: vtkTriangle, vtkQuad, vtkTetra, vtkHexahedron).
+
+        :param ugrid: instance of vtk.vtkUnstructuredGrid
+        :return: new instance of :obj:`UnstructuredMesh`
+        '''
+        import vtk
+        from . import Cell, Vertex
+        ret=UnstructuredMesh()
+        np,nc=ugrid.GetNumberOfPoints(),ugrid.GetNumberOfCells()
+        # vertices
+        mupifVertices=[Vertex.Vertex(number=ip,label=ip,coords=ugrid.GetPoint(ip)) for ip in range(np)]
+        # cells
+        mupifCells=[]
+        for ic in range(nc):
+            c=ugrid.GetCell(ic)
+            pts=[c.GetPointId(i) for i in range(c.GetNumberOfPoints())]
+            # map VTK type to our type?
+            # or don't care and used cell types array to reconstruct cells
+            # assuming that cell types were stored correctly and numbering did not change meanwhile
+            # plus add safety check for the required number of points per cell
+            cellGeomTypeMap={
+                vtk.VTK_TRIANGLE:           CellGeometryType.CGT_TRIANGLE_1,
+                vtk.VTK_QUADRATIC_TRIANGLE: CellGeometryType.CGT_TRIANGLE_2,
+                vtk.VTK_TETRA:              CellGeometryType.CGT_TETRA,
+                vtk.VTK_QUAD:               CellGeometryType.CGT_QUAD,
+                vtk.VTK_HEXAHEDRON:         CellGeometryType.CGT_HEXAHEDRON,
+            }
+            # find mupif class of the cell
+            # if the lookup fails, KeyError propagates to the caller, which is what we want
+            cgt=cellGeomTypeMap[c.GetCellType()]
+            # create new cell and append to mupifCells
+            mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret,number=ic,label=None,vertices=[mupifVertices[i] for i in pts]))
+        ret.setup(vertexList=mupifVertices,cellList=mupifCells)
+        return ret
+
+
+
 
 

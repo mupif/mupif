@@ -454,7 +454,103 @@ class Field(object):
             meshIndex=meshObjs.index(f['mesh']) # find which mesh object this field refers to
             ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,valueType=valueType,values=values,fieldType=fieldType))
         return ret
-        
+
+    
+    def toVTK3(self,fileName,**kw):
+        '''
+        Save the instance as Unstructured Grid in VTK3 format (``.vtu``). This is a simple proxy for calling :obj:`manyToVTK3` with the instance as the only field to be saved. If multiple fields with identical mesh are to be saved in VTK3, use :obj:`manyToVTK3` directly.
+
+        :param fileName: output file name
+        :param **kw: passed to :obj:`manyToVTK3`
+        '''
+        return self.manyToVTK3([self],fileName,**kw)
+
+    @staticmethod
+    def manyToVTK3(fields,fileName,ascii=False,compress=True):
+        '''
+        Save all fields passed as argument into VTK3 Unstructured Grid file (``*.vtu``).
+
+        All *fields* must be defined on the same mesh object; exception will be raised if this is not the case.
+
+        :param bool ascii: write numbers are ASCII in the XML-based VTU file (rather than base64-encoded binary in XML)
+        :param bool compress: apply compression to the data
+        '''
+        import vtk
+        if not fields: raise ValueError('At least one field must be passed.')
+        # check if all fields are defined on the same mesh
+        if len(set([f.mesh for f in fields]))!=1: raise RuntimeError('Not all fields are sharing the same Mesh object (and could not be saved to a single .vtu file')
+        # convert mesh to VTK UnstructuredGrid
+        mesh=fields[0].getMesh()
+        vtkgrid=mesh.asVtkUnstructuredGrid()
+        # add fields as arrays
+        for f in fields:
+            arr=vtk.vtkDoubleArray()
+            arr.SetNumberOfComponents(f.getRecordSize())
+            arr.SetName(f.getFieldIDName())
+            assert f.getFieldType() in (FieldType.FT_vertexBased,FieldType.FT_cellBased) # other future types not handled
+            if f.getFieldType()==FieldType.FT_vertexBased: nn=mesh.getNumberOfVertices()
+            else: nn=mesh.getNumberOfCells()
+            arr.SetNumberOfValues(nn)
+            for i in range(nn): arr.SetTuple(i,f.giveValue(i))
+            if f.getFieldType()==FieldType.FT_vertexBased: vtkgrid.GetPointData().AddArray(arr)
+            else: vtkgrid.GetCellData().AddArray(arr)
+        # write the unstructured grid to file
+        writer=vtk.vtkXMLUnstructuredGridWriter()
+        if compress: writer.SetCompressor(vtk.vtkZLibDataCompressor())
+        if ascii: writer.SetDataModeToAscii()
+        writer.SetFileName(fileName)
+        # change between VTK5 and VTK6
+        if vtk.vtkVersion().GetVTKMajorVersion()==6: writer.SetInputData(vtkgrid)
+        else: writer.SetInput(vtkgrid)
+        writer.Write()
+        # finito
+
+    
+    @staticmethod
+    def makeFromVTK3(fileName,time=0):
+        '''
+        Create fields from a VTK unstructured grid file (format version 3, unstructured grid ``*.vtu``); the mesh is shared between fields.
+
+        .. note:: Units are not supported when loading from VTK, all fields will have ``None`` unit assigned.
+
+        :param str fileName: VTK (``*.vtu``) file
+        :param float time: time value for created fields (time is not saved in VTK3, thus cannot be recovered)
+        :return: list of new :obj:`Field` instances
+        :rtype: [Field,Field,...]
+        '''
+        import vtk
+        from . import fieldID
+        rr=vtk.vtkXMLUnstructuredGridReader()
+        rr.SetFileName(fileName)
+        rr.Update()
+        ugrid=rr.GetOutput()
+        # make mesh -- implemented separately
+        mesh=mupif.Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
+        # fields which will be returned
+        ret=[]
+        # get cell and point data
+        cd,pd=ugrid.GetCellData(),ugrid.GetPointData()
+        for data,fieldType in (pd,FieldType.FT_vertexBased),(cd,FieldType.FT_cellBased):
+            for idata in range(data.GetNumberOfArrays()):
+                aname,arr=pd.GetArrayName(idata),pd.GetArray(idata)
+                nt=arr.GetNumberOfTuples()
+                if nt==0: raise RuntimeError("Zero values in field '%s', unable to determine value type."%aname)
+                t0=arr.GetTuple(0)
+                valueType=ValueType.fromNumberOfComponents(len(arr.GetTuple(0)))
+                # this will raise KeyError if fieldID with that name not defined
+                fid=fieldID.FieldID[aname]
+                # get actual values as tuples
+                values=[arr.GetTuple(t) for t in range(nt)]
+                ret.append(Field(
+                    mesh=mesh,
+                    fieldID=fid,
+                    units=None, # not stored at all
+                    time=time,  # not stored either, set by caller
+                    valueType=valueType,
+                    values=values,
+                    fieldType=fieldType
+                ))
+        return ret
 
 
 #    def __deepcopy__(self, memo):
