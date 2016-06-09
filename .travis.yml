@@ -10,7 +10,7 @@ install:
    # 3. numpy is pre-installed by travis implicitly
    - pip install pyro4 future nose rednose h5py
    - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install pyvtk; fi
-   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip3 install git+https://code.google.com/r/fghorow-pyvtk-python3-port/; fi
+   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip3 install git+https://bitbucket.org/fghorow/pyvtk-py3-port.git; fi
    # install mupif itself
    - python setup.py install 
 
