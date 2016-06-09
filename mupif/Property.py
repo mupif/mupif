@@ -40,7 +40,7 @@ class Property(object):
             :return: Returns Property instance
             :rtype: Property
             """
-            return pickle.load(open(fileName,'r'))
+            return pickle.load(open(fileName,'rb'))
 
         def getValue(self):
             """
@@ -103,5 +103,5 @@ class Property(object):
             :param str fileName: File name
             :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
             """
-            pickle.dump(self, open(fileName,'w'), protocol)
+            pickle.dump(self, open(fileName,'wb'), protocol)
 
