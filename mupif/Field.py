@@ -408,7 +408,7 @@ class Field(object):
             fieldGrp['mesh']=mh5
             fieldGrp.attrs['fieldID']=self.fieldID
             fieldGrp.attrs['valueType']=self.valueType
-            fieldGrp.attrs['units']=self.units if self.units else ''
+            fieldGrp.attrs['units']=pickle.dumps(self.units)
             fieldGrp.attrs['time']=self.fieldID
             if self.fieldType==FieldType.FT_vertexBased:
                 val=numpy.empty(shape=(self.getMesh().getNumberOfVertices(),self.getRecordSize()),dtype=numpy.float)
@@ -449,7 +449,7 @@ class Field(object):
             if 'vertex_values' in f: fieldType,values=FieldType.FT_vertexBased,f['vertex_values']
             elif 'cell_values' in f: fieldType,values=FieldType.FT_cellBase,f['cell_values']
             else: ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID,valueType,units,time=f.attrs['fieldID'],f.attrs['valueType'],f.attrs['units'],f.attrs['time']
+            fieldID,valueType,units,time=f.attrs['fieldID'],f.attrs['valueType'],pickle.loads(f.attrs['units']),f.attrs['time']
             if units=='': units=None # special case, handled at saving time
             meshIndex=meshObjs.index(f['mesh']) # find which mesh object this field refers to
             ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,valueType=valueType,values=values,fieldType=fieldType))
