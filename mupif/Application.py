@@ -23,7 +23,7 @@
 
 from builtins import object
 import os
-import APIError
+from . import APIError
 
 class Application(object):
     """
