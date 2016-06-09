@@ -202,36 +202,60 @@ class Field(object):
         cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([ c-eps for c in position], [c+eps for c in position]))
         ## answer=None
         if len(cells):
-            for icell in cells:
-                try:
-                    if icell.containsPoint(position):
-                        if debug:
-                            mupif.log.debug(icell.getVertices())
-
-                        if (self.fieldType == FieldType.FT_vertexBased):
+            if (self.fieldType == FieldType.FT_vertexBased):
+                for icell in cells:
+                    try:
+                        if icell.containsPoint(position):
+                            if debug:
+                                mupif.log.debug(icell.getVertices())
                             try:
                                 answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
                             except IndexError:
                                 mupif.log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
                                 raise
-                        else:
-                            answer = self.values[icell.number]
-                        return answer
-                        # debugging only, when multiple cells match the bbox
-                        ## print('Value %s for cell '%(str(answer[0])),','.join([str(v.getCoordinates()) for v in icell.getVertices()]))
+                            return answer
 
-                except ZeroDivisionError:
-                    print('ZeroDivisionError?')
-                    mupif.log.debug(icell.number, position)
-                    cell.debug=1
-                    mupif.log.debug(icell.containsPoint(position), icell.glob2loc(position))
-            ## if answer is not None: return answer
+                    except ZeroDivisionError:
+                        print('ZeroDivisionError?')
+                        mupif.log.debug(icell.number, position)
+                        cell.debug=1
+                        mupif.log.debug(icell.containsPoint(position), icell.glob2loc(position))
 
-            mupif.log.error('Field::evaluate - no source cell found for position ', position)
-            for icell in cells:
-                mupif.log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                mupif.log.error('Field::evaluate - no source cell found for position ', position)
+                for icell in cells:
+                    mupif.log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
 
-            raise ValueError
+
+            else: #if (self.fieldType == FieldType.FT_vertexBased):
+                #in case of cell besed field do compute average of cell velues containing point
+                count=0
+                for icell in cells:
+                    if icell.containsPoint(position):
+                        if debug:
+                            mupif.log.debug(icell.getVertices())
+
+                        try:
+                            tmp = self.values[icell.number]
+                            if count==0:
+                                answer = list(tmp)
+                            else:
+                                for i in answer:
+                                   answer = [x+y for x in answer for y in tmp]
+                            count+=1
+
+                        except IndexError:
+                            mupif.log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
+			    mupif.log.error(icell.getVertices())
+			    mupif.log.error('Size of values = %d'%len(self.values))
+                            raise
+                # end loop over icells
+                if count == 0:
+                    mupif.log.error('Field::evaluate - no source cell found for position %s', str(position))
+                    #for icell in cells:
+                    #    mupif.log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                else:
+                    answer = [x/count for x in answer]
+                    return answer
 
         else:
             #no source cell found
