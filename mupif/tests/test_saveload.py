@@ -41,7 +41,7 @@ class TestSaveLoad(unittest.TestCase):
         f2=ff2[0]
         self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
 
-    @unittest.skipUnless(vtkAvailable) # vtkAvailable defined above
+    @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
     def testFieldVtk3SaveLoad(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         if 0:
