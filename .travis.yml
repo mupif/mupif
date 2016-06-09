@@ -39,4 +39,4 @@ addons:
          - gfortran
          - openssh-server
          - openssh-client
-         - python-vtk6
+         - python-vtk

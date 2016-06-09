@@ -4,6 +4,13 @@ from mupif import *
 import mupif
 from mupif.tests import demo
 
+# check for python-vtk before running related tests
+try:
+    import vtk
+    vtkAvailable=True
+except ImportError:
+    vtkAvailable=False
+
 
 class TestSaveLoad(unittest.TestCase):
     def setUp(self):
@@ -33,6 +40,8 @@ class TestSaveLoad(unittest.TestCase):
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
+
+    @unittest.skipUnless(vtkAvailable) # vtkAvailable defined above
     def testFieldVtk3SaveLoad(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         if 0:
