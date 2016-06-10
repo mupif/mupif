@@ -1,23 +1,23 @@
-# 
-#           MuPIF: Multi-Physics Integration Framework 
+#
+#           MuPIF: Multi-Physics Integration Framework
 #               Copyright (C) 2010-2015 Borek Patzak
-# 
+#
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
 from __future__ import print_function
@@ -42,7 +42,7 @@ debug = 0
 
 class FieldType(object):
     """
-    Represent the supported values of FieldType, i.e. FT_vertexBased or FT_cellBased. 
+    Represent the supported values of FieldType, i.e. FT_vertexBased or FT_cellBased.
     """
     FT_vertexBased = 1
     FT_cellBased   = 2
@@ -50,12 +50,12 @@ class FieldType(object):
 
 class Field(object):
     """
-    Representation of field. Field is a scalar, vector, or tensorial 
+    Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
-    to be fixed at certain time. The field can be evaluated in any spatial point 
-    belonging to underlying domain. 
+    to be fixed at certain time. The field can be evaluated in any spatial point
+    belonging to underlying domain.
 
-    Derived classes will implement fields defined on common discretizations, 
+    Derived classes will implement fields defined on common discretizations,
     like fields defined on structured/unstructured FE meshes, FD grids, etc.
 
     .. automethod:: __init__
@@ -135,7 +135,7 @@ class Field(object):
     def getFieldID(self):
         """
         Returns FieldID, e.g. FID_Displacement, FID_Temperature.
-        
+
         :return: Returns field ID
         :rtype: FieldID
         """
@@ -144,7 +144,7 @@ class Field(object):
     def getFieldIDName(self):
         """
         Returns name of the field.
-        
+
         :return: Returns fieldID name
         :rtype: string
         """
@@ -153,7 +153,7 @@ class Field(object):
     def getFieldType (self):
         """
         Returns receiver field type (values specified as vertex or cell values)
-        
+
         :return: Returns fieldType id
         :rtype: FieldType
         """
@@ -162,7 +162,7 @@ class Field(object):
     def getTime(self):
         """
         Get time of the field.
-        
+
         :return: Time of field data
         :rtype: float
         """
@@ -227,7 +227,8 @@ class Field(object):
 
 
             else: #if (self.fieldType == FieldType.FT_vertexBased):
-                #in case of cell besed field do compute average of cell velues containing point
+                #in case of cell based fields do compute average of cell values containing point
+                #this typically happens when point is on the shared edge or vertex
                 count=0
                 for icell in cells:
                     if icell.containsPoint(position):
@@ -245,8 +246,7 @@ class Field(object):
 
                         except IndexError:
                             mupif.log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
-			    mupif.log.error(icell.getVertices())
-			    mupif.log.error('Size of values = %d'%len(self.values))
+                            mupif.log.error(icell.getVertices())
                             raise
                 # end loop over icells
                 if count == 0:
@@ -300,11 +300,11 @@ class Field(object):
 
         :param Field field: given field to merge with.
         """
-        # first merge meshes 
+        # first merge meshes
         mesh = copy.deepcopy(self.mesh)
         mesh.merge(field.mesh)
         mupif.log.debug(mesh)
-        # merge the field values 
+        # merge the field values
         # some type checking first
         if (self.fieldType != field.fieldType):
             raise TypeError("Field::merge: fieldType of receiver and parameter is different")
@@ -479,7 +479,7 @@ class Field(object):
             ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,valueType=valueType,values=values,fieldType=fieldType))
         return ret
 
-    
+
     def toVTK3(self,fileName,**kw):
         '''
         Save the instance as Unstructured Grid in VTK3 format (``.vtu``). This is a simple proxy for calling :obj:`manyToVTK3` with the instance as the only field to be saved. If multiple fields with identical mesh are to be saved in VTK3, use :obj:`manyToVTK3` directly.
@@ -529,7 +529,7 @@ class Field(object):
         writer.Write()
         # finito
 
-    
+
     @staticmethod
     def makeFromVTK3(fileName,time=0):
         '''
@@ -580,8 +580,8 @@ class Field(object):
 #    def __deepcopy__(self, memo):
 #        """ Deepcopy operatin modified not to include attributes starting with underscore.
 #            These are supposed to be the ones valid only to s specific copy of the receiver.
-#            An example of these attributes are _PyroURI (injected by Application), 
-#            where _PyroURI contains the URI of specific object, the copy should receive  
+#            An example of these attributes are _PyroURI (injected by Application),
+#            where _PyroURI contains the URI of specific object, the copy should receive
 #            its own URI
 #        """
 #        cls = self.__class__
@@ -593,6 +593,3 @@ class Field(object):
 #                value = getattr(self, attr)
 #                setattr(dpcpy, attr, copy.deepcopy(value, memo))
 #        return dpcpy
-
-
-
