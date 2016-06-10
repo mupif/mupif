@@ -1,23 +1,23 @@
-# 
-#           MuPIF: Multi-Physics Integration Framework 
+#
+#           MuPIF: Multi-Physics Integration Framework
 #               Copyright (C) 2010-2015 Borek Patzak
-# 
+#
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
 from __future__ import print_function, division
@@ -41,7 +41,7 @@ tolerance = 0.001
 
 class Cell(object):
     """
-    Representation of a computational cell. 
+    Representation of a computational cell.
 
     The solution domain is composed of cells (e.g. finite element), whose geometry is defined using vertices (e.g. nodes).
     Cells provide interpolation over their associated volume, based on given vertex values.
@@ -54,8 +54,8 @@ class Cell(object):
         Initializes the cell.
 
         :param Mesh mesh: The mesh to which a cell belongs to
-        :param int number: A local cell number
-        :param int label: A cell label
+        :param int number: A local cell number. Local numbering should start from 0 and should be continuous.
+        :param int label: A cell label. Arbitrary unique number.
         :param tuple vertices: A cell vertices (local numbers)
         """
         self.mesh=mesh
@@ -131,15 +131,15 @@ class Cell(object):
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
-        
+
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
 
     def getBBox(self, relPad=1e-5):
-        """ 
+        """
         Return bounding box. The box is by default slightly enlarged via *relPad* to avoid finite-precision issues when testing for a boundary point being inside the box.
-            
+
         :param float relPad: relative padding of the box; tight (geometrical)  bbox will be enlarged along each axis by *relPad* times size along that axis, in both directions.
         :return: Returns a bounding box of the receiver
         :rtype: BBox
@@ -179,7 +179,7 @@ class Cell(object):
     def getTransformationJacobian(self, coords):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
-        
+
         :param tuple coords: local (parametric) coordinates of the point
         :return: jacobian
         :rtype: float
@@ -211,7 +211,7 @@ class Triangle_2d_lin(Cell):
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
-        
+
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
@@ -220,7 +220,7 @@ class Triangle_2d_lin(Cell):
     def glob2loc(self, coords):
         """
         Converts global coordinate to local (area) coordinate.
-        
+
         :param tuple coords: A coordinate in global system
         :return: local (area) coordinate
         :rtype: tuple
@@ -295,7 +295,7 @@ class Triangle_2d_lin(Cell):
         c2=self.mesh.getVertex(self.vertices[1]).coords
         c3=self.mesh.getVertex(self.vertices[2]).coords
 
-        return ( c1[0] * ( c2[1] - c3[1] ) + c2[0]* ( -c1[1] + c3[1] ) + 
+        return ( c1[0] * ( c2[1] - c3[1] ) + c2[0]* ( -c1[1] + c3[1] ) +
                  c3[0] * ( c1[1] - c2[1] ) )
 
 
@@ -303,7 +303,7 @@ class Triangle_2d_quad(Cell):
     """
     Unstructured 2D triangular element with quadratic interpolation
     Node numbering convention:
-    
+
     2
     | \
     |  \
@@ -322,12 +322,12 @@ class Triangle_2d_quad(Cell):
         :rtype: Cell
         """
         return Triangle_2d_quad(self.mesh, self.number, self.label, tuple(self.vertices))
-    
+
     @classmethod
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
-        
+
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
@@ -336,7 +336,7 @@ class Triangle_2d_quad(Cell):
     def glob2loc(self, coords):
         """
         Converts global coordinate to local (area) coordinate.
-        
+
         :param tuple coords: A coordinate in global system
         :return: local (area) coordinate
         :rtype: tuple
@@ -346,7 +346,7 @@ class Triangle_2d_quad(Cell):
         res = np.zeros((2))
         # setup initial guess
         lcoords_guess = [0.0, 0.0]
-        
+
         # apply Newton-Raphson to solve the problem
         for nite in range(10):
             # compute the residual
@@ -367,7 +367,7 @@ class Triangle_2d_quad(Cell):
             # update guess
             lcoords_guess[0] = lcoords_guess[0] + delta[0]
             lcoords_guess[1] = lcoords_guess[1] + delta[1]
-    
+
         if ( error > convergence_limit ):
             # failed convergence
             return None
@@ -388,7 +388,7 @@ class Triangle_2d_quad(Cell):
         for i in range(6):
             x += n[i] * self.mesh.getVertex(self.vertices[i]).coords[0]
             y += n[i] * self.mesh.getVertex(self.vertices[i]).coords[1]
-        
+
 
         return (x,y)
 
@@ -433,7 +433,7 @@ class Triangle_2d_quad(Cell):
 
 
     def _getTransformationJacobianMtrx (self, lcoords):
-        """ 
+        """
         Returns the jacobian matrix  J (x,y)/(ksi,eta)  of the receiver.
         :param tuple coords: local (parametric) coordinates of the point
         :return: jacobian matrix
@@ -441,7 +441,7 @@ class Triangle_2d_quad(Cell):
         """
 
         jacobianMatrix = np.zeros((2,2))
-        
+
         dn=self._evalDerivatives(lcoords);
 
         for i in range(dn.shape[0]):
@@ -498,7 +498,7 @@ class Triangle_2d_quad(Cell):
         dn[3][0] =  4.0 * l2;
         dn[4][0] = -4.0 * l2;
         dn[5][0] =  4.0 * l3 - 4.0 * l1;
-        
+
         dn[0][1] =  0.0;
         dn[1][1] =  4.0 * l2 - 1.0;
         dn[2][1] = -1.0 * ( 4.0 * l3 - 1.0 );
@@ -527,7 +527,7 @@ class Triangle_2d_quad(Cell):
         p = self.mesh.getVertex(self.vertices[5]).coords
         x6 = p[0]
         y6 = p[1]
-        
+
         return math.fabs( ( 4 * ( -( x4 * y1 ) + x6 * y1 + x4 * y2 - x5 * y2 + x5 * y3 - x6 * y3 ) + x2 * ( y1 - y3 - 4 * y4 + 4 * y5 ) +
                             x1 * ( -y2 + y3 + 4 * y4 - 4 * y6 ) + x3 * ( -y1 + y2 - 4 * y5 + 4 * y6 ) ) / 6 );
 
@@ -549,7 +549,7 @@ class Quad_2d_lin(Cell):
     def getGeometryType(self):
         """
         Returns geometry type of receiver.
-        
+
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
@@ -565,10 +565,10 @@ class Quad_2d_lin(Cell):
         """
         #print "lc :",lc
 
-        return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ), 
-                0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ), 
-                0.25 * ( 1. - lc[0] ) * ( 1. - lc[1] ), 
-                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] )) 
+        return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ),
+                0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ),
+                0.25 * ( 1. - lc[0] ) * ( 1. - lc[1] ),
+                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] ))
 
     def glob2loc(self, coords):
         """
@@ -629,7 +629,7 @@ class Quad_2d_lin(Cell):
 
             if ksi1 < -1.0:
                 diff_ksi1 = ksi1 + 1.0;
- 
+
             diff_eta1 = 0.0
             if eta1 > 1.0:
                 diff_eta1 = eta1 - 1.0;
@@ -872,11 +872,11 @@ class Tetrahedron_3d_lin(Cell):
         c3=self.mesh.getVertex(self.vertices[2]).coords
         c4=self.mesh.getVertex(self.vertices[3]).coords
 
-        return ( ( c4[0] - c1[0] ) * ( c2[1] - c1[1] ) * ( c3[2] - c1[2] ) - 
+        return ( ( c4[0] - c1[0] ) * ( c2[1] - c1[1] ) * ( c3[2] - c1[2] ) -
                  ( c4[0] - c1[0] ) * ( c3[1] - c1[1] ) * ( c2[2] - c1[2] ) +
-                 ( c3[0] - c1[0] ) * ( c4[1] - c1[1] ) * ( c2[2] - c1[2] ) - 
+                 ( c3[0] - c1[0] ) * ( c4[1] - c1[1] ) * ( c2[2] - c1[2] ) -
                  ( c2[0] - c1[0] ) * ( c4[1] - c1[1] ) * ( c3[2] - c1[2] ) +
-                 ( c2[0] - c1[0] ) * ( c3[1] - c1[1] ) * ( c4[2] - c1[2] ) - 
+                 ( c2[0] - c1[0] ) * ( c3[1] - c1[1] ) * ( c4[2] - c1[2] ) -
                  ( c3[0] - c1[0] ) * ( c2[1] - c1[1] ) * ( c4[2] - c1[2] ) )
 
 
@@ -965,7 +965,7 @@ class Brick_3d_lin(Cell):
         while True:
             nite=nite+1
             if nite > 10:
-                if debug: 
+                if debug:
                     print ("Brick_3d_lin :: global2local: no convergence after 10 iterations")
                 return (0, (0.,0.,0.))
 
@@ -1131,6 +1131,3 @@ class Brick_3d_lin(Cell):
             j33 = j33+dnw[i]*z
 
         return (j11*j22*j33+j21*j32*j13+j31*j12*j23-j13*j22*j31-j23*j32*j11-j33*j12*j21)
-
-
-
