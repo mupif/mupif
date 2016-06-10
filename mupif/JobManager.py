@@ -1,23 +1,23 @@
-# 
-#           MuPIF: Multi-Physics Integration Framework 
+#
+#           MuPIF: Multi-Physics Integration Framework
 #               Copyright (C) 2010-2015 Borek Patzak
-# 
+#
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
 from __future__ import absolute_import
@@ -40,7 +40,7 @@ JOBMAN_NO_RESOURCES = 2
 JOBMAN_ERR = 99
 
 #
-# TODO: 
+# TODO:
 #  - locking for thread safe operation lock.acquire()
 #    try:
 #       ... access shared resource
@@ -106,13 +106,13 @@ class JobManager(object):
         """
         Terminates the given job, frees the associated recources.
 
-        :param str jobID: jobID 
+        :param str jobID: jobID
         :return: JOBMAN_OK indicates sucessfull termination, JOBMAN_ERR means internal error
         :rtype: str
         """
     def getJobStatus (self, jobID):
         """
-        Returns the status of the job. 
+        Returns the status of the job.
 
         :param str jobID: jobID
         """
@@ -124,17 +124,17 @@ class JobManager(object):
         """
         Uploads the given file to application server, files are uploaded to dedicated jobID directory
         :param str jobID: jobID
-        :param str filename: target file name 
-        :param PyroFile pyroFile: source pyroFile 
+        :param str filename: target file name
+        :param PyroFile pyroFile: source pyroFile
 
         """
 
-    def getPyroFile(self, jobID, filename):
+    def getPyroFile(self, jobID, filename, buffSize=1024):
         """
         Returns the (remote) PyroFile representation of given file.
         To create local copy of file represented by PyroFile, use PyroUtil.downloadPyroFile, see :func:`PyroUtil.downloadPyroFile`
 
-        :param str jobID: job identifier (jobID)  
+        :param str jobID: job identifier (jobID)
         :param str filename: source file name (on remote server). The filename should contain only base filename, not a path, which is determined by jobManager based on jobID.
         :return: PyroFile representation of given file
         :rtype: PyroFile
@@ -153,7 +153,7 @@ SJM2_PORT_INDX = 4 #port
 
 class SimpleJobManager(JobManager):
     """
-    Simple job manager using Pyro thread pool based server. 
+    Simple job manager using Pyro thread pool based server.
     Requires Pyro servertype=thread pool based (SERVERTYPE config item). This is the default value.
     For the thread pool server the amount of worker threads to be spawned is configured using THREADPOOL_SIZE config item (default value set to 16).
 
@@ -181,7 +181,7 @@ class SimpleJobManager(JobManager):
         self.lock = threading.Lock()
 
         # pyro daemon running in thread pool based setting to allow for concurrent connections
-        #self.pyroDaemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport) 
+        #self.pyroDaemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
         #self.pyroDaemon.requestLoop()
         #self.ns = connectNameServer(nshost, nsport, hkey)
         logger.debug('SimpleJobManager: initialization done')
@@ -262,10 +262,10 @@ class SimpleJobManager2 (JobManager):
     Simple job manager 2. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.
 
     .. automethod:: __init__
-    
+
     :param int jobMancmdCommPort: optional communication port to communicate with jobman2cmd
     :param str configFile: path to server config file
-    
+
     """
     def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
         """
@@ -274,7 +274,7 @@ class SimpleJobManager2 (JobManager):
         See :func:`SimpleJobManager.__init__`
         :param tuple portRange: start and end ports for jobs which will be allocated by a job manager
         :param str serverConfigFile: path to serverConfig file
-        :param str jobMan2CmdPath: path to JobMan2cmd.py 
+        :param str jobMan2CmdPath: path to JobMan2cmd.py
         """
         super(SimpleJobManager2, self).__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
@@ -386,7 +386,7 @@ class SimpleJobManager2 (JobManager):
         self.ns.remove(jobID)
         # terminate the process
         self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
- 
+
         # free the assigned port
         self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
 
@@ -419,14 +419,13 @@ class SimpleJobManager2 (JobManager):
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
         PyroUtil.uploadPyroFile (targetFileName, pyroFile)
 
-    def getPyroFile(self, jobID, filename, mode="r"):
+    def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):
         """
         See :func:`JobManager.getPyroFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
         logger.info('SimpleJobManager2:getPyroFile ' + targetFileName)
-        pfile = PyroFile.PyroFile(targetFileName, mode)
+        pfile = PyroFile.PyroFile(targetFileName, mode, buffSize)
         self.daemon.register(pfile)
 
         return pfile
-
