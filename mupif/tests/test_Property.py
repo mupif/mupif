@@ -1,4 +1,6 @@
-import unittest
+import unittest,sys
+sys.path.append('../..')
+
 from mupif import *
 from mupif.Physics.PhysicalQuantities import PhysicalUnit as PQ 
 import math

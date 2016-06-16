@@ -3,15 +3,10 @@ from __future__ import print_function
 from builtins import str
 
 import unittest,sys
+sys.path.append('../..')
 
 from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import Property
-from mupif import ValueType
-
+from mupif import *
 from mupif.tests import demo
 
 

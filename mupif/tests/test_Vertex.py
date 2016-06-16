@@ -1,4 +1,5 @@
-import unittest
+import unittest,sys
+sys.path.append('../..')
 from mupif import *
 import math
 import numpy as np

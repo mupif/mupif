@@ -1,21 +1,12 @@
 from __future__ import division, print_function
 from builtins import range
 
-from mupif import Application
-from mupif import TimeStep
-from mupif import APIError
-from mupif import PropertyID
-from mupif import FieldID
-from mupif import Mesh
-from mupif import Field
-from mupif import ValueType
-from mupif import Vertex
-from mupif import Cell
-from mupif import PyroUtil
-from mupif import Property
-from mupif import IntegrationRule
-
+import sys
 import math
+sys.path.append('../..')
+
+import mupif
+from mupif import *
 
 
 def meshgen_grid2d(origin, size, nx, ny, tria=False,debug=False):

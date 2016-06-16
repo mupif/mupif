@@ -1,5 +1,7 @@
 from __future__ import print_function, division
-import unittest
+import unittest,sys
+sys.path.append('../..')
+
 from mupif import *
 import mupif
 from mupif.tests import demo
