@@ -585,12 +585,15 @@ class Field(object):
     @staticmethod
     def makeFromVTK3(fileName,time=0,forceVersion2=False):
         '''
-        Create fields from a VTK unstructured grid file (format version 3, unstructured grid ``*.vtu``); the mesh is shared between fields.
+        Create fields from a VTK unstructured grid file (``.vtu``, format version 3, or ``.vtp`` with *forceVersion2*); the mesh is shared between fields.
+
+        ``vtk.vtkXMLGenericDataObjectReader`` is used to open the file (unless *forceVersion2* is set), but it is checked that contained dataset is a ``vtk.vtkUnstructuredGrid`` and an error is raised if not.
 
         .. note:: Units are not supported when loading from VTK, all fields will have ``None`` unit assigned.
 
         :param str fileName: VTK (``*.vtu``) file
         :param float time: time value for created fields (time is not saved in VTK3, thus cannot be recovered)
+        :param bool forceVersion2: if ``True``, ``vtk.vtkGenericDataObjectReader`` (for VTK version 2) will be used to open the file, isntead of ``vtk.vtkXMLGenericDataObjectReader``; this also supposes *fileName* ends with ``.vtk`` (not checked, but may cause an error).
         :return: list of new :obj:`Field` instances
         :rtype: [Field,Field,...]
         '''
