@@ -130,7 +130,8 @@ class Mesh_TestCase(unittest.TestCase):
 #Testing getVTKRepresentation      
     def test_getVTKRepresentation(self):
        self.res=self.mesh5.getVTKRepresentation()
-       self.assertEqual(type(self.res) is types.InstanceType,True,'error in getVTKRepresentation')
+       import pyvtk
+       self.assertTrue(isinstance(self.res,pyvtk.DataSet.DataSet),'error in getVTKRepresentation')
   
 # python test_Mesh.py for stand-alone test being run
 if __name__=='__main__': unittest.main()
