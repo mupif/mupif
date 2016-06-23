@@ -395,10 +395,12 @@ class UnstructuredMesh(Mesh):
         vertexList = []
         cellList   = []
         for i in self.vertices():
-            vertexList.append(copy.deepcopy(v))
+            vertexList.append(copy.deepcopy(i))
         for i in self.cells():
             cellList.append(i.copy())
-        return UnstructuredMesh(vertexList,cellList)
+        ans = UnstructuredMesh()
+        ans.setup(vertexList,cellList)
+        return ans
 
     def __getstate__(self):
         '''Customized method returning dictionary for pickling.

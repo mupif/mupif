@@ -1,6 +1,9 @@
 from __future__ import print_function
 import unittest
 import sys, multiprocessing, time
+import unittest,sys
+sys.path.append('../..')
+
 import mupif, mupif.Application
 import Pyro4
 
