@@ -67,21 +67,21 @@ class TestSaveLoad(unittest.TestCase):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         if 1:
             import tempfile
-            with tempfile.NamedTemporaryFile() as tmp:
+            with tempfile.NamedTemporaryFile(suffix='.vtk') as tmp:
                 f.toVTK2(tmp.name,format=format)
                 ff2=mupif.Field.Field.makeFromVTK2(tmp.name)
         else:
-            name='/tmp/mupif-field-test.vtk'
+            name='/tmp/mupif-field-test.'+format+'.vtk'
             f.toVTK2(name,format=format)
             ff2=mupif.Field.Field.makeFromVTK2(name)
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         # just compare coordinates of the first point
         self.assertEqual(f.getMesh().getVertex(0).getCoordinates(),f2.getMesh().getVertex(0).getCoordinates())
-    def testFieldVtk2SaveLoad_ASCII(self):
+    def testFieldVtk2SaveLoad_ascii(self):
         self._testFieldVtk2SaveLoad(format='ascii')
-    @unittest.skip("Reading binary format not supported by pyvtk, see https://github.com/pearu/pyvtk/issues/1")
-    def testFieldVtk2SaveLoad_ASCII(self):
+    @unittest.skipUnless(vtkAvailable,'Reading binary not supported by pyvtk, vtk (python-vtk/python-vtk6) would be used transparently instead but is not importable.') # vtkAvailable defined above
+    def testFieldVtk2SaveLoad_binary(self):
         self._testFieldVtk2SaveLoad(format='binary')
 
     def testOctreeNotPickled(self):

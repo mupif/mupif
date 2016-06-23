@@ -499,12 +499,15 @@ class Field(object):
         '''
         import pyvtk
         from . import fieldID
+        if not fileName.endswith('.vtk'): mupif.log.warn('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
         ret=[]
-        data=pyvtk.VtkData(fileName) # this is where reading the file happens (inside pyvtk)
+        try: data=pyvtk.VtkData(fileName) # this is where reading the file happens (inside pyvtk)
+        except NotImplementedError:
+            mupif.log.info('pyvtk fails to open (binary?) file "%s", trying through vtk.vtkGenericDataReader.'%fileName)
+            return Field.makeFromVTK3(fileName,time=time,forceVersion2=True)
         ugr=data.structure
         if not isinstance(ugr,pyvtk.UnstructuredGrid): raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)."%ugr.__class__.__name__)
         mesh=mupif.Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
-        print(mesh,mesh.getNumberOfVertices(),mesh.getNumberOfCells())
         # get cell and point data
         pd,cd=data.point_data.data,data.cell_data.data
         for dd,fieldType in (pd,FieldType.FT_vertexBased),(cd,FieldType.FT_cellBased):
@@ -514,7 +517,7 @@ class Field(object):
                 fid=fieldID.FieldID[d.name]
                 # determine the number of components using the expected number of values from the mesh
                 expectedNumVal=(mesh.getNumberOfVertices() if fieldType==FieldType.FT_vertexBased else mesh.getNumberOfCells())
-                nc=len(d.scalars)/expectedNumVal
+                nc=len(d.scalars)//expectedNumVal
                 valueType=ValueType.fromNumberOfComponents(nc)
                 values=[d.scalars[i*nc:i*nc+nc] for i in range(len(d.scalars))]
                 ret.append(Field(
@@ -580,7 +583,7 @@ class Field(object):
 
 
     @staticmethod
-    def makeFromVTK3(fileName,time=0):
+    def makeFromVTK3(fileName,time=0,forceVersion2=False):
         '''
         Create fields from a VTK unstructured grid file (format version 3, unstructured grid ``*.vtu``); the mesh is shared between fields.
 
@@ -593,10 +596,15 @@ class Field(object):
         '''
         import vtk
         from . import fieldID
-        rr=vtk.vtkXMLUnstructuredGridReader()
+        #rr=vtk.vtkXMLUnstructuredGridReader()
+        if forceVersion2 or fileName.endswith('.vtk'): rr=vtk.vtkGenericDataObjectReader()
+        else: rr=vtk.vtkXMLGenericDataObjectReader()
         rr.SetFileName(fileName)
         rr.Update()
         ugrid=rr.GetOutput()
+        if not isinstance(ugrid,vtk.vtkUnstructuredGrid): raise RuntimeError("vtkDataObject read from '%s' must be a vtkUnstructuredGrid (not a %s)"%(fileName,ugrid.__class__.__name__))
+        #import sys
+        #sys.stderr.write(str((ugrid,ugrid.__class__,vtk.vtkUnstructuredGrid)))
         # make mesh -- implemented separately
         mesh=mupif.Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
         # fields which will be returned
