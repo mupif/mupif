@@ -8,9 +8,10 @@ install:
    # 1. at some point, move all this to requirements.txt; see http://docs.travis-ci.com/user/languages/python/
    # 2. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
    # 3. numpy is pre-installed by travis implicitly
+   #
    - pip install pyro4 future nose rednose h5py
-   - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install pyvtk; fi
-   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip3 install git+https://bitbucket.org/fghorow/pyvtk-py3-port.git; fi
+   # this seems to be the new active upstream for pyvtk supporting 2.x and 3.x
+   - pip install git+https://github.com/pearu/pyvtk.git
    # install mupif itself
    - python setup.py install 
 
