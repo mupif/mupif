@@ -479,6 +479,55 @@ class Field(object):
             ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,valueType=valueType,values=values,fieldType=fieldType))
         return ret
 
+    def toVTK2(self,fileName,format='ascii'):
+        '''
+        Save the instance as Unstructured Grid in VTK2 format (``.vtk``).
+
+        :param str fileName: where to save
+        :param str format: one of ``ascii`` or ``binary``
+        '''
+        self.field2VTKData().tofile(filename=fileName,format=format)
+
+    @staticmethod
+    def makeFromVTK2(fileName,time=0,skip=['coolwarm']):
+        '''
+        Return fields stored in *fileName* in the VTK2 (``.vtk``) format.
+
+        :param str fileName: filename to load from
+        :param float time: time value for created fields (time is not saved in VTK2, thus cannot be recovered)
+        :param [string,] skip: file names to be skipped when reading the input file; the default value skips the default coolwarm colormap.
+        '''
+        import pyvtk
+        from . import fieldID
+        ret=[]
+        data=pyvtk.VtkData(fileName) # this is where reading the file happens (inside pyvtk)
+        ugr=data.structure
+        if not isinstance(ugr,pyvtk.UnstructuredGrid): raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)."%ugr.__class__.__name__)
+        mesh=mupif.Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
+        print(mesh,mesh.getNumberOfVertices(),mesh.getNumberOfCells())
+        # get cell and point data
+        pd,cd=data.point_data.data,data.cell_data.data
+        for dd,fieldType in (pd,FieldType.FT_vertexBased),(cd,FieldType.FT_cellBased):
+            for d in dd:
+                # will raise KeyError if fieldID with that name is not defined
+                if d.name in skip: continue
+                fid=fieldID.FieldID[d.name]
+                # determine the number of components using the expected number of values from the mesh
+                expectedNumVal=(mesh.getNumberOfVertices() if fieldType==FieldType.FT_vertexBased else mesh.getNumberOfCells())
+                nc=len(d.scalars)/expectedNumVal
+                valueType=ValueType.fromNumberOfComponents(nc)
+                values=[d.scalars[i*nc:i*nc+nc] for i in range(len(d.scalars))]
+                ret.append(Field(
+                    mesh=mesh,
+                    fieldID=fid,
+                    units=None, # not stored at all
+                    time=time,  # not stored either, set by caller
+                    valueType=valueType,
+                    values=values,
+                    fieldType=fieldType
+                ))
+        return ret
+
 
     def toVTK3(self,fileName,**kw):
         '''

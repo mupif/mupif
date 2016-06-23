@@ -44,7 +44,7 @@ class TestSaveLoad(unittest.TestCase):
     @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
     def testFieldVtk3SaveLoad(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
-        if 0:
+        if 1:
             import tempfile
             with tempfile.NamedTemporaryFile() as tmp:
                 f.toVTK3(tmp.name)
@@ -61,6 +61,27 @@ class TestSaveLoad(unittest.TestCase):
         # data hash comparison is too strict and fails
         # as tried, however, saving to VTK again yields byte-to-byte identical .vtu
         ## self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
+    def _testFieldVtk2SaveLoad(self,format):
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
+        if 1:
+            import tempfile
+            with tempfile.NamedTemporaryFile() as tmp:
+                f.toVTK2(tmp.name,format=format)
+                ff2=mupif.Field.Field.makeFromVTK2(tmp.name)
+        else:
+            name='/tmp/mupif-field-test.vtk'
+            f.toVTK2(name,format=format)
+            ff2=mupif.Field.Field.makeFromVTK2(name)
+        self.assertEqual(len(ff2),1)
+        f2=ff2[0]
+        # just compare coordinates of the first point
+        self.assertEqual(f.getMesh().getVertex(0).getCoordinates(),f2.getMesh().getVertex(0).getCoordinates())
+    def testFieldVtk2SaveLoad_ASCII(self):
+        self._testFieldVtk2SaveLoad(format='ascii')
+    @unittest.skip("Reading binary format not supported by pyvtk, see https://github.com/pearu/pyvtk/issues/1")
+    def testFieldVtk2SaveLoad_ASCII(self):
+        self._testFieldVtk2SaveLoad(format='binary')
+
     def testOctreeNotPickled(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
         import pickle

@@ -257,6 +257,8 @@ class Mesh(object):
     def asVtkUnstructuredGrid(self):
         '''
         Return object as a vtk.vtkUnstructuredMesh instance.
+
+        .. note:: This method uses the compiled vtk module (which is a wrapper atop the c++ VTK library) -- in contrast to :obj:`UnstructuredMesh.getVTKRepresentation`, which uses the pyvtk module (python-only implementation of VTK i/o supporting only VTK File Format version 2).
         '''
         import vtk
         # vertices
@@ -673,7 +675,7 @@ class UnstructuredMesh(Mesh):
 
     @staticmethod
     def makeFromVtkUnstructuredGrid(ugrid):
-        '''Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are mapped between VTK and mupif (supported: vtkTriangle, vtkQuad, vtkTetra, vtkHexahedron).
+        '''Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are mapped between VTK and mupif (supported: vtkTriangle, vtkQuadraticTriangle, vtkQuad, vtkTetra, vtkHexahedron).
 
         :param ugrid: instance of vtk.vtkUnstructuredGrid
         :return: new instance of :obj:`UnstructuredMesh`
@@ -708,6 +710,39 @@ class UnstructuredMesh(Mesh):
         ret.setup(vertexList=mupifVertices,cellList=mupifCells)
         return ret
 
+    @staticmethod
+    def makeFromPyvtkUnstructuredGrid(ugr):
+        '''Create a new instance of :obj:`UnstructuredMesh` based on pyvtk.UnstructuredGrid object. Cell types are mapped between pyvtk and mupif (supported: triangle, tetra, quad, hexahedron).
+
+        :param ugr: instance of pyvtk.UnstructuredGrid
+        :return: new instance of :obj:`UnstructuredMesh`
+        '''
+        import pyvtk
+        from . import Cell, Vertex
+        ret=UnstructuredMesh()
+        vertices=[]
+        cells=[]
+        vertices=[Vertex.Vertex(number=ip,label=ip,coords=ugr.points[ip]) for ip in range(len(ugr.points))]
+        for cellName in ['vertex','poly_vertex','line','poly_line','triangle','triangle_strip','polygon','pixel','quad','tetra','voxel','hexahedron','wedge','pyramid']:
+            if not hasattr(ugr,cellName): continue
+            val=getattr(ugr,cellName)
+            if val==[] or (len(val)==1 and val[0]==[]): continue  # no cells of this type
+            # print(cellName,val)
+            cellGeomNameMap={
+                'triangle':  CellGeometryType.CGT_TRIANGLE_1,
+                'tetra':     CellGeometryType.CGT_TETRA,
+                'quad':      CellGeometryType.CGT_QUAD,
+                'hexahedron':CellGeometryType.CGT_HEXAHEDRON,
+            }
+            try:
+                cgt=cellGeomNameMap[cellName]
+            except KeyError: raise NotImplementedError("pyvtk cell type '%s' is not handled by the mupif import routine."%cellName)
+            cells.append([Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret,number=len(cells),label=None,vertices=[vertices[i] for iv in val[i]]) for i in range(len(val))])
+        ret.setup(vertexList=vertices,cellList=cells)
+        return ret
+
+            
+            
 
 
 
