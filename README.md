@@ -55,6 +55,12 @@ Running MuPIF examples
 
 Please read README files in individual example directories for instructions.
 
+
+Running MuPIF self-tests
+-------------------------
+
+Run ``nosetests`` (or ``nosetests3`` for Python3) anywhere in MuPIF source tree. Add ``--verbose`` for verbose output and, if you have ``rednose`` installed, add ``--rednose`` for prettier output.
+
 Installation
 -------------
 Use ``$ pip install mupif`` to install mupif as a package from PyPI. Use ``$ git clone git://git.code.sf.net/p/mupif/code mupif.git``  to get a git 
