@@ -106,7 +106,10 @@ try:
     def extend2d(arg): return (arg[0],arg[1],0) if len(arg)==2 else arg
     # some methods are called different, this adds the API of BBox from above
     BBoxBase.containsPoint=lambda self,p: self.contains(extend2d(p))
-    BBoxBase.merge=AlignedBox3.extend
+    def BBoxBase_merge(self,p):
+        if isinstance(p,BBoxBase): self.extend(p)
+        else: self.extend(extend2d(p))
+    BBoxBase.merge=BBoxBase_merge
     BBoxBase.coords_ll=property(lambda self: self.min, lambda self,val: setattr(self,'min',extend2d(val)))
     BBoxBase.coords_ur=property(lambda self: self.max, lambda self,val: setattr(self,'max',extend2d(val)))
     BBoxBase.intersects=lambda self,b: not self.intersection(b).empty()
