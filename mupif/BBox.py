@@ -101,12 +101,22 @@ class BBox(object):
 
 try:
     from minieigen import AlignedBox3
-    BBox=AlignedBox3
-    BBox.containsPoint=AlignedBox3.contains
-    BBox.merge=AlignedBox3.extend
-    BBox.coords_ll=property(lambda self: self.min, lambda self,val: setattr(self,'min',val))
-    BBox.coords_ur=property(lambda self: self.max, lambda self,val: setattr(self,'max',val))
-    BBox.intersects=lambda self,b: not self.intersection(b).empty()
+    BBoxBase=AlignedBox3
+    # add zero 3rd coordinate to 2-tuples
+    def extend2d(arg): return (arg[0],arg[1],0) if len(arg)==2 else arg
+    # some methods are called different, this adds the API of BBox from above
+    BBoxBase.containsPoint=lambda self,p: self.contains(extend2d(p))
+    BBoxBase.merge=AlignedBox3.extend
+    BBoxBase.coords_ll=property(lambda self: self.min, lambda self,val: setattr(self,'min',extend2d(val)))
+    BBoxBase.coords_ur=property(lambda self: self.max, lambda self,val: setattr(self,'max',extend2d(val)))
+    BBoxBase.intersects=lambda self,b: not self.intersection(b).empty()
+    # this definition hijacks the plain BBox class defined without fastOctant
+    # it acts as pseudo-ctor which handles 2d coords by adding the 3rd, and checks for consistency
+    def BBox(mn,mx):
+        if len(mn)!=len(mx): raise ValueError("Min/max must have the same dimension (not %d/%d)."%(len(mn),len(mx)))
+        if len(mn)==2: return BBoxBase((mn[0],mn[1],0),(mx[0],mx[1],0))
+        elif len(mn)==3: return BBoxBase(mn,mx)
+        else: raise ValueError("Min/max dimension must be 2 or 3 (not %d)."%len(mn))
     print('mupif.fast: using minieigen.AlignedBox3')
 except ImportError:
     pass
