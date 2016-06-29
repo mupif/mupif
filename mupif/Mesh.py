@@ -619,8 +619,8 @@ class UnstructuredMesh(Mesh):
             else:
                 # update c vertex list according to new numbering
                 updatedVertices=[]
-                for v in c.giveVertices():
-                    updatedVertices.append(self.vertexDict[mesh.giveVertex(v).label])
+                for v in c.getVertices():
+                    updatedVertices.append(self.vertexDict[v.label])
                 ccopy=c.copy()
                 ccopy.vertices=tuple(updatedVertices)
                 ccopy.mesh=self
