@@ -126,6 +126,12 @@ class Mesh_TestCase(unittest.TestCase):
 #Testing merge (AttributeError: 'Triangle_2d_lin' object has no attribute 'giveVertices')
     def test_merge(self):
         self.mesh3.merge(self.mesh5)
+        self.assertEqual(self.mesh3.getCell(0).getVertices()[1].label, 5, 'error in merge')
+        self.assertEqual(self.mesh3.getCell(0).getVertices()[2].label, 6, 'error in merge')
+        self.assertEqual(self.mesh3.getCell(2).getVertices()[0].label, 16, 'error in merge')
+        self.assertEqual(self.mesh3.getCell(2).getVertices()[1].label, 5, 'error in merge')
+
+
         
 #Testing getVTKRepresentation      
     def test_getVTKRepresentation(self):
