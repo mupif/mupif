@@ -24,7 +24,7 @@ class Mesh_TestCase(unittest.TestCase):
         self.mesh4.setup([Vertex.Vertex(0,4,(0.,0.,2.)), Vertex.Vertex(1,8,(2.,0.,2.)), Vertex.Vertex(2,16,(0.,5.,2.)),Vertex.Vertex(3,23,(3.,3.,2.))], [Cell.Cell(self.mesh4,1,16,(0,1,2)),(Cell.Cell(self.mesh4,2,18,(1,2,3)))])
         
         self.mesh5 = Mesh.UnstructuredMesh()
-        self.mesh5.setup([Vertex.Vertex(11,16,(8.,7.,0.)), Vertex.Vertex(15,5,(3.,1.,0.)), Vertex.Vertex(31,8,(35.,42.,0.)), Vertex.Vertex(35,9,(545.,72.,0.))], [Cell.Triangle_2d_lin(self.mesh5,5,1,(0,1,2)),(Cell.Triangle_2d_lin(self.mesh5,2,2,(1,2,3)))])
+        self.mesh5.setup([Vertex.Vertex(0,16,(8.,7.,0.)), Vertex.Vertex(1,5,(3.,1.,0.)), Vertex.Vertex(2,8,(35.,42.,0.)), Vertex.Vertex(3,9,(545.,72.,0.))], [Cell.Triangle_2d_lin(self.mesh5,5,1,(0,1,2)),(Cell.Triangle_2d_lin(self.mesh5,2,2,(1,2,3)))])
  
     def tearDown(self):
         
@@ -124,8 +124,8 @@ class Mesh_TestCase(unittest.TestCase):
         self.assertEqual(self.mesh3.cellLabel2Number(22),0,'error in cellLabel2Number for mesh4(1)')
         
 #Testing merge (AttributeError: 'Triangle_2d_lin' object has no attribute 'giveVertices')
-#    def test_merge(self):
-#        self.mesh3.merge(self.mesh5)
+    def test_merge(self):
+        self.mesh3.merge(self.mesh5)
         
 #Testing getVTKRepresentation      
     def test_getVTKRepresentation(self):
