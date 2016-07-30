@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('../..')
 
@@ -446,7 +447,7 @@ class Brick_3d_lin_TestCase(unittest.TestCase):
        
         
     def test_getTransformationJacobian(self):
-        print self.cell.getTransformationJacobian((-1.0, 1.0, 1.0))
+        print(self.cell.getTransformationJacobian((-1.0, 1.0, 1.0)))
         self.assertEqual(self.cell.getTransformationJacobian((-1.0, 1.0, 1.0)), 30.0/8.0, 'error in getTransformationJacobian')
         
 # python test_Cell.py for stand-alone test being run
