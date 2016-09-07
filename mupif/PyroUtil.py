@@ -2,26 +2,26 @@ from __future__ import absolute_import
 from builtins import str
 import os
 import re
-# 
-#           MuPIF: Multi-Physics Integration Framework 
+#
+#           MuPIF: Multi-Physics Integration Framework
 #               Copyright (C) 2010-2014 Borek Patzak
-# 
+#
 #    Czech Technical University, Faculty of Civil Engineering,
 #  Department of Structural Mechanics, 166 29 Prague, Czech Republic
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, 
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
 #import logging - logger moved to __init__.py
@@ -43,7 +43,7 @@ from mupif import log
 
 Pyro4.config.SERIALIZER="pickle"
 # some versions of Pyro don't have this attribute... (strange, is documented)
-if hasattr(Pyro4.config,'PICKLE_PROTOCOL_VERSION'): 
+if hasattr(Pyro4.config,'PICKLE_PROTOCOL_VERSION'):
     Pyro4.config.PICKLE_PROTOCOL_VERSION=2 # use lower version for interoperability between python 2 and 3
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 #Pyro4.config.THREADPOOL_SIZE=100
@@ -136,7 +136,7 @@ def runDaemon(host, port, nathost, natport):
     :param int natport: Server NAT port, optional (external port)
 
     :return Instance of the running daemon, None if a problem
-    :rtype Pyro4.Daemon 
+    :rtype Pyro4.Daemon
     """
     try:
         daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
@@ -249,12 +249,12 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
 
     time.sleep(1.0)
 
-    return tunnel 
+    return tunnel
 
 def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
     """
     Create a reverse ssh tunnel so one server application can connect to another one.
-    
+
     Typically, steering_computer creates connection to server1 and server2. However, there
     is no direct link server1-server2 which is needed for Field operations (getField, setField).
     Assume a working connection server1-steering_computer on NAT port 6000. This function creates
@@ -269,7 +269,7 @@ def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh
     :param Application toApplication: Application object to which we want to create a tunnel
     :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
     :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
-    
+
     :return: Instance of subprocess.Popen running the tunneling command
     :rtype: subprocess.Popen
     """
@@ -311,7 +311,7 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     :return: (JobManager proxy, jobManager Tunnel)
     :rtype: tuple (JobManager, subprocess.Popen)
     :raises Exception: if creation of a tunnel failed
-    """    
+    """
 
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
@@ -383,7 +383,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
 def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', options='', sshHost=''):
     """
     Allocate next application instance on a running Job Manager and adds it into
-    existing applicationRecord. 
+    existing applicationRecord.
 
     :param Pyro4.naming.Nameserver ns: running name server
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
@@ -405,14 +405,14 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
         log.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception:
         log.exception("jobMan.allocateJob() failed")
-        raise 
+        raise
 
     #create tunnel to application's daemon running on (remote) server
     try:
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
         log.exception("Creating ssh tunnel for application's daemon failed")
-        raise 
+        raise
     else:
         log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
@@ -422,47 +422,56 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
 
 from . import PyroFile
-def downloadPyroFile (newLocalFileName, pyroFile):
+def downloadPyroFile (newLocalFileName, pyroFile, compressFlag=False):
     """
     Allows to download remote file (pyro ile handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
     :param PyroFile pyroFile: representation of existing remote server's file
+    :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    file = open (newLocalFileName, 'wb')
-    data = pyroFile.getChunk()
+    file = PyroFile.PyroFile(newLocalFileName, 'wb')
+    if compressFlag:
+        pyroFile.setCompressionFlag()
+        file.setCompressionFlag()
+    data = pyroFile.getChunk() # this is where the potential remote communication via Pyro happen
     while data:
-        file.write(data)
+        file.setChunk(data)
         data = pyroFile.getChunk()
+    file.setChunk(pyroFile.getTerminalChunk())
     pyroFile.close()
     file.close()
 
-def downloadPyroFileFromServer (newLocalFileName, pyroFile):
+def downloadPyroFileFromServer (newLocalFileName, pyroFile, compressFlag=False):
     """
     See :func:'downloadPyroFileFromServer'
     """
-    downloadPyroFile (newLocalFileName, pyroFile)
+    downloadPyroFile (newLocalFileName, pyroFile, compressFlag)
 
 
-def uploadPyroFile (clientFileName, pyroFile, size = 1024):
+def uploadPyroFile (clientFileName, pyroFile, size = 1024, compressFlag=False):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
     :param PyroFile pyroFile: represenation of remote file, this file will be created
-    :param int size: optional chunk size. The data are read and written in byte chunks of this size 
+    :param int size: optional chunk size. The data are read and written in byte chunks of this size
+    :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    file = open (clientFileName, 'rb')
-    data = file.read(size)
+    file = PyroFile.PyroFile(clientFileName, 'rb', buffsize=size)
+    if compressFlag:
+        file.setCompressionFlag()
+        pyroFile.setCompressionFlag()
+    data = file.getChunk()
     while data:
-        pyroFile.setChunk(data)
-        data = file.read(size)
+        pyroFile.setChunk(data) #this is where the data are sent over net via Pyro
+        data = file.getChunk()
+    pyroFile.setChunk(file.getTerminalChunk())
     file.close()
     pyroFile.close()
 
-def uploadPyroFileOnServer (clientFileName, pyroFile, size = 1024):
+def uploadPyroFileOnServer (clientFileName, pyroFile, size = 1024, compressFlag=False):
     """
     See :func:'downloadPyroFile'
     """
-    uploadPyroFile (clientFileName, pyroFile, size)
-
+    uploadPyroFile (clientFileName, pyroFile, size, compressFlag)
