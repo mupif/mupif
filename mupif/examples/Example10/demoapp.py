@@ -126,7 +126,7 @@ class thermal(Application.Application):
                 for i in range(self.ny):
                     self.convectionBC.append((i, 3, h, value))
 
-        self.loc=np.zeros(self.mesh.getNumberOfVertices())
+        self.loc=np.zeros(self.mesh.getNumberOfVertices(), dtype=np.int32)
         self.neq = 0;#number of unknowns
         self.pneq = 0;#number of prescribed equations (Dirichlet b.c.)
         #print (self.mesh.getNumberOfVertices())
@@ -137,7 +137,7 @@ class thermal(Application.Application):
             else:
                 self.neq += 1
         #print ("Neq", self.neq, "Pneq", self.pneq)
-
+        #print(self.loc)
         ineq = 0 # unknowns numbering starts from 0..neq-1
         ipneq = self.neq #prescribed unknowns numbering starts neq..neq+pneq-1
 
@@ -211,7 +211,7 @@ class thermal(Application.Application):
         print("\tNumber of equations:", self.neq)
 
         #connectivity 
-        c=np.zeros((numElements,4))
+        c=np.zeros((numElements,4), dtype=np.int32)
         for e in range(0,numElements):
             for i in range(0,4):
                 c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label
@@ -538,7 +538,7 @@ class thermal_nonstat(thermal):
         print("\tNumber of equations:", self.neq)
 
         #connectivity 
-        c=np.zeros((numElements,4))
+        c=np.zeros((numElements,4), dtype=np.int32)
         for e in range(0,numElements):
             for i in range(0,4):
                 c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label
@@ -798,7 +798,7 @@ class mechanical(Application.Application):
                 for i in range(self.ny):
                     self.loadBC.append((i, 3, fx, fy))
 
-        self.loc=np.zeros((self.mesh.getNumberOfVertices(),2)) # Du, Dv dofs per node
+        self.loc=np.zeros((self.mesh.getNumberOfVertices(),2), dtype=np.int32) # Du, Dv dofs per node
         for i in self.dirichletBCs:
             self.loc[i,0]=-1;
             self.loc[i,1]=-1;
@@ -855,7 +855,7 @@ class mechanical(Application.Application):
         print("\tNumber of equations:", self.neq)
 
         #connectivity 
-        c=np.zeros((numElements,elemNodes))
+        c=np.zeros((numElements,elemNodes), dtype=np.int32)
         for e in range(0,numElements):
             for i in range(0,elemNodes):
                 c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label
@@ -922,11 +922,11 @@ class mechanical(Application.Application):
             #print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
             for i in range(elemNodes):#loop nb of dofs
                 for id in range(nodalDofs):
-                    ii = self.loc[c[e.number-1,i], id]
+                    ii = int(self.loc[c[e.number-1,i], id])
                     if (ii>=0):
                         for j in range(elemNodes):
                             for jd in range (nodalDofs):
-                                jj = self.loc[c[e.number-1,j], jd]
+                                jj = int(self.loc[c[e.number-1,j], jd])
                                 if (jj>=0):
                                     #print "Assembling", ii, jj
                                     A[ii, jj] += A_e[i*nodalDofs+id,j*nodalDofs+jd]

@@ -6,3 +6,7 @@ or for prettier output:
 	
 	$ pip install rednose
 	$ nosetests --rednose -v
+
+It requires installation of e.g. python-nose module.
+
+
