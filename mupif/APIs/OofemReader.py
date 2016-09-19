@@ -74,6 +74,8 @@ class OofemReader(object):
             cc=dof.giveCoordinates()
             assert len(cc) in (1,2,3) # 1D, 2D, 3D
             verts.append(tuple([cc[i] for i in range(len(cc))]))
+            # note: seems that the previous line should read
+            # verts.append(Vertex.Vertex(dn-1, dof.giveLabel(), tuple([cc[i] for i in range(len(cc))])))
         # cells
         for en in range(1,dom.giveNumberOfElements()+1):
             elt=dom.giveElement(en)
