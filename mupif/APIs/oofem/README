@@ -1,0 +1,26 @@
+What is there
+------------------------------------------------------------------------------------
+
+This directory contains MuPIF API implementation for OOFEM.org solver.
+
+Prerequsities:
+------------------------------------------------------------------------------------
+The oofem solver has to be build with USE_PYTHON_BINDINGS ON
+
+
+To test the API, the liboofem.so (created when building oofem target) must be
+discoverable by python, i.e., located where python looks for modules.
+This can be done e.g. by symlinking to the .so in the build directory
+by running something like
+
+ln -s /oofem-build-dir/liboofem.so /home/user/oofem-build/liboofem.so
+
+or by setting PYTHONPATH environment variable accordingly.
+
+Testing:
+------------------------------------------------------------------------------------
+The oofem API can be tested by running python on module itself:
+
+python oofem.py
+
+
