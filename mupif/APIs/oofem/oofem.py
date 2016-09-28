@@ -25,6 +25,26 @@ sys.path.append('../../..')
 from mupif import *
 import liboofem
 
+# shorthands
+_EGT=liboofem.Element_Geometry_Type 
+_FT=liboofem.FieldType
+# mapping from oofem element type enumeration to corresponding mupif cell class
+elementTypeMap={
+    CellGeometryType.CGT_TRIANGLE_1:    _EGT.EGT_triangle_1,
+}
+# mapping from mupif field ID to oofem field type
+fieldTypeMap={
+    FieldID.FID_Displacement:  (_FT.FT_Displacements,0),
+    FieldID.FID_Stress: None,
+    FieldID.FID_Strain: None,
+    FieldID.FID_Temperature:   (_FT.FT_Temperature,0),
+    FieldID.FID_Humidity:      (_FT.FT_HumidityConcentration,0),
+    FieldID.FID_Concentration: (_FT.FT_HumidityConcentration,1),
+}
+
+
+
+
 class OOFEM(Application.Application):
     """
     Implementation of OOFEM MuPIF API.
@@ -90,7 +110,34 @@ class OOFEM(Application.Application):
 
         :param Field field: Remote field to be registered by the application
         """
-        raise APIError.APIError ('setField not yet supported')
+        if not isinstance(field, Field.Field): raise ValueError("field must be a Field.Field.")
+        # convert Field.Field into liboofem.UnstructredGridField first
+        mesh = field.getMesh()
+        target = liboofem.UnstructuredGridField(mesh.getNumberOfVertices(), mesh.getNumberOfCells())
+        # convert vertices first
+        for node in mesh.vertices():
+            c = node.getCoordinates() # tuple -> FloatArray conversion
+            cc = liboofem.FloatArray(len(c))
+            for i in range(len(c)):
+                cc[i]=c[i]
+            target.addVertex(node.getNumber(), cc)
+        for cell in mesh.cells():
+            v = cell.getVertices()  
+            vv = liboofem.IntArray(len(v))
+            for i in range(len(v)):
+                vv[i]=v[i].getNumber()
+            target.addCell(cell.number, elementTypeMap.get(cell.getGeometryType()), vv)
+        # set values
+        if (field.getFieldType() == Field.FieldType.FT_vertexBased):
+            for node in mesh.vertices():
+                target.setVertexValue(node.getNumber(), field.giveValue(node.getNumber()))
+        else:
+            for node in mesh.vertices():
+                target.setVertexValue(node.getNumber(), field.evaluate(node.getCoordinates()))
+        # register converted field in oofem
+        ft = fieldTypeMap.get((field.getFieldID()))[0]
+        if ft == None: raise ValueError ("Field type not recognized")
+        self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
 
     def getProperty(self, propID, time, objectID=0):
         """
@@ -291,7 +338,8 @@ if __name__ == "__main__":
     o = OOFEM ("test.oofem.in")
     time = 0.0
     dt = 604800.0
-    for i in range (10):
+
+    for i in range (2):
         time=i*dt;
         ts = TimeStep.TimeStep(0.0, 604800.0)
         o.solveStep (ts)
@@ -302,3 +350,8 @@ if __name__ == "__main__":
 
     #print f.evaluate ((-7.75, -6.1, 0.0))
     f.toVTK2("field1")
+
+
+    o2 = OOFEM ("test.oofem.in")
+    o2.setField(f)
+    
