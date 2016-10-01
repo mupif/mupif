@@ -31,6 +31,7 @@ _FT=liboofem.FieldType
 # mapping from oofem element type enumeration to corresponding mupif cell class
 elementTypeMap={
     CellGeometryType.CGT_TRIANGLE_1:    _EGT.EGT_triangle_1,
+    CellGeometryType.CGT_QUAD:          _EGT.EGT_quad_1,
 }
 # mapping from mupif field ID to oofem field type
 fieldTypeMap={
@@ -89,11 +90,12 @@ class OOFEM(Application.Application):
             vmt=liboofem.ValueModeType.VM_Total
             f=self.oofem_pb.giveField(self.getOOFEMFieldName(fieldID), ts)
             print "oofem returned f=",f
+            if not f: raise ValueError("no suitable field in solver found")
             
             for i in range (1, nd+1):
                 d=self.oofem_mesh.giveDofManager(i)
                 val=f.evaluateAtDman(d,mode=vmt,atTime=ts)
-                print "Temp at node ", i, "=", val
+                ###  print "Temp at node ", i, "=", val
                 #convert val into tuple
                 v = []
                 for j in range(len(val)):
@@ -137,7 +139,15 @@ class OOFEM(Application.Application):
         # register converted field in oofem
         ft = fieldTypeMap.get((field.getFieldID()))[0]
         if ft == None: raise ValueError ("Field type not recognized")
+        print "Registering extermal field ", field, "as ...", target
+        print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+
         self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
+        # internal check
+        checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(liboofem.FieldType.FT_Temperature)
+        print checkf
+        print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+        
 
     def getProperty(self, propID, time, objectID=0):
         """
@@ -214,7 +224,7 @@ class OOFEM(Application.Application):
                     celllist.append(Cell.Tetrahedron_3d_lin(self.mesh, i-1, e.giveLabel(), nodes))
                 else:
                     raise APIError.APIError ('Unknown element GeometryType')
-                print "adding element ", i
+                ##print "adding element ", i
             self.mesh.setup (vertexlist, celllist)
         return self.mesh
 
@@ -237,7 +247,7 @@ class OOFEM(Application.Application):
 
         """
         ts = self.oofem_pb.generateNextStep()
-        print ts
+        ##print ts
         #override ts settings by the given ones
         ts.setTargetTime(tstep.getTime())
         ts.setIntrinsicTime(tstep.getTime())
@@ -335,23 +345,90 @@ class OOFEM(Application.Application):
 
 
 if __name__ == "__main__":
-    o = OOFEM ("test.oofem.in")
-    time = 0.0
-    dt = 604800.0
 
-    for i in range (2):
-        time=i*dt;
-        ts = TimeStep.TimeStep(0.0, 604800.0)
-        o.solveStep (ts)
-        o.finishStep (ts)
+
+    def t2f (t):
+        # conver tuple to floatArray
+        ans = liboofem.FloatArray(len(t))
+        for i in range(len(t)):
+            ans[i]=t[i]
+        return ans
+            
+    def t2i (t):
+        # conver tuple to floatArray
+        ans = liboofem.IntArray(len(t))
+        for i in range(len(t)):
+            ans[i]=t[i]
+        return ans
+
+    
+    f = liboofem.UnstructuredGridField(9, 4)
+    f.addVertex(0, t2f((0,0,0)))
+    f.addVertex(1, t2f((1,0,0)))
+    f.addVertex(2, t2f((2,0,0)))
+
+    f.addVertex(3, t2f((0,0.5,0)))
+    f.addVertex(4, t2f((1,0.5,0)))
+    f.addVertex(5, t2f((2,0.5,0)))
+
+    f.addVertex(6, t2f((0,1,0)))
+    f.addVertex(7, t2f((1,1,0)))
+    f.addVertex(8, t2f((2,1,0)))
+
+    f.addCell(0, _EGT.EGT_quad_1, t2i((0,1,4,3)))
+    f.addCell(1, _EGT.EGT_quad_1, t2i((1,2,5,4)))
+    f.addCell(2, _EGT.EGT_quad_1, t2i((3,4,7,6)))
+    f.addCell(3, _EGT.EGT_quad_1, t2i((4,5,8,7)))
+
+    
+    for i in range(9):
+        f.setVertexValue(i,t2f((i%3,)))
+        print i, i%3
+    
+    print f.evaluateAtPos (t2f((2,1,0)), liboofem.ValueModeType.VM_Total)
+
+
+    if 1:
+        ot = OOFEM ("testt.oofem.in")
+        om = OOFEM ("testm.oofem.in")
+        time = 0.0
+        dt = 0.1
+
+        for i in range (10):
+            time=i*dt;
+            ts = TimeStep.TimeStep(time, dt)
+            ot.solveStep (ts)
+            ot.finishStep (ts)
+            
+            f = ot.getField(FieldID.FID_Temperature, ts.getTime())
+            f.toVTK2("temp%d"%(i))
+            print f.evaluate ((2.5, 0.9, 0.0))
+            print "Got field ", f
+            om.setField(f)
+            om.solveStep (ts)
+            om.finishStep (ts)
+
         
-    f = o.getField(FieldID.FID_Temperature, ts.getTime())
-    print "Got field ", f
+        
+        
 
-    #print f.evaluate ((-7.75, -6.1, 0.0))
-    f.toVTK2("field1")
+    # o = OOFEM ("test.oofem.in")
+    # time = 0.0
+    # dt = 604800.0
+
+    # for i in range (2):
+    #     time=i*dt;
+    #     ts = TimeStep.TimeStep(0.0, 604800.0)
+    #     o.solveStep (ts)
+    #     o.finishStep (ts)
+        
+    # f = o.getField(FieldID.FID_Temperature, ts.getTime())
+    # print "Got field ", f
+
+    # #print f.evaluate ((-7.75, -6.1, 0.0))
+    # f.toVTK2("field1")
 
 
-    o2 = OOFEM ("test.oofem.in")
-    o2.setField(f)
+    # o2 = OOFEM ("test.oofem.in")
+    # o2.setField(f)
     
