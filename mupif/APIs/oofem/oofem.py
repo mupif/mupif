@@ -82,14 +82,14 @@ class OOFEM(Application.Application):
         ts=self.oofem_pb.giveCurrentStep()
         self.mesh = self.getMesh(ts)
 
-        print "Mesh conversion finished"
+        #print "Mesh conversion finished"
         if (abs(ts.targetTime - time) < 1.e-6):
             values=[]
             ne=self.oofem_mesh.giveNumberOfElements()
             nd=self.oofem_mesh.giveNumberOfDofManagers()
             vmt=liboofem.ValueModeType.VM_Total
             f=self.oofem_pb.giveField(self.getOOFEMFieldName(fieldID), ts)
-            print "oofem returned f=",f
+            #print "oofem returned f=",f
             if not f: raise ValueError("no suitable field in solver found")
             
             for i in range (1, nd+1):
@@ -139,14 +139,14 @@ class OOFEM(Application.Application):
         # register converted field in oofem
         ft = fieldTypeMap.get((field.getFieldID()))[0]
         if ft == None: raise ValueError ("Field type not recognized")
-        print "Registering extermal field ", field, "as ...", target
-        print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+        print "oofem: registering extermal field ", field, "as ...", target
+        #print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
 
         self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
         # internal check
-        checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(liboofem.FieldType.FT_Temperature)
-        print checkf
-        print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+        #checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(liboofem.FieldType.FT_Temperature)
+        #print checkf
+        #print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
         
 
     def getProperty(self, propID, time, objectID=0):
@@ -402,8 +402,8 @@ if __name__ == "__main__":
             
             f = ot.getField(FieldID.FID_Temperature, ts.getTime())
             f.toVTK2("temp%d"%(i))
-            print f.evaluate ((2.5, 0.9, 0.0))
-            print "Got field ", f
+            #print f.evaluate ((2.5, 0.9, 0.0))
+            #print "Got field ", f
             om.setField(f)
             om.solveStep (ts)
             om.finishStep (ts)
@@ -418,7 +418,7 @@ if __name__ == "__main__":
 
     # for i in range (2):
     #     time=i*dt;
-    #     ts = TimeStep.TimeStep(0.0, 604800.0)
+    #     ts = TimeStep.TimeStep(time, 604800.0)
     #     o.solveStep (ts)
     #     o.finishStep (ts)
         

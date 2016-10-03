@@ -1,0 +1,198 @@
+testt.out
+test
+NonStationaryProblem nsteps 10 deltat 0.1 alpha 0.5 nmodules 1
+vtkxml tstep_all domain_all primvars 1 6 
+domain HeatTransfer
+OutputManager 
+ndofman 105 nelem 80 ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1
+node 1 coords 3 0.000000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 2 coords 3 5.000000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 3 coords 3 5.000000e+00 1.000000e+00 0.000000e+00
+node 4 coords 3 0.000000e+00 1.000000e+00 0.000000e+00 bc 1 1
+node 5 coords 3 2.500000e-01 0.000000e+00 0.000000e+00 bc 1 1
+node 6 coords 3 5.000000e-01 0.000000e+00 0.000000e+00 bc 1 1
+node 7 coords 3 7.500000e-01 0.000000e+00 0.000000e+00 bc 1 1
+node 8 coords 3 1.000000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 9 coords 3 1.250000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 10 coords 3 1.500000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 11 coords 3 1.750000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 12 coords 3 2.000000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 13 coords 3 2.250000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 14 coords 3 2.500000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 15 coords 3 2.750000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 16 coords 3 3.000000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 17 coords 3 3.250000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 18 coords 3 3.500000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 19 coords 3 3.750000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 20 coords 3 4.000000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 21 coords 3 4.250000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 22 coords 3 4.500000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 23 coords 3 4.750000e+00 0.000000e+00 0.000000e+00 bc 1 1
+node 24 coords 3 5.000000e+00 2.500000e-01 0.000000e+00
+node 25 coords 3 5.000000e+00 5.000000e-01 0.000000e+00
+node 26 coords 3 5.000000e+00 7.500000e-01 0.000000e+00
+node 27 coords 3 4.750000e+00 1.000000e+00 0.000000e+00
+node 28 coords 3 4.500000e+00 1.000000e+00 0.000000e+00
+node 29 coords 3 4.250000e+00 1.000000e+00 0.000000e+00
+node 30 coords 3 4.000000e+00 1.000000e+00 0.000000e+00
+node 31 coords 3 3.750000e+00 1.000000e+00 0.000000e+00
+node 32 coords 3 3.500000e+00 1.000000e+00 0.000000e+00
+node 33 coords 3 3.250000e+00 1.000000e+00 0.000000e+00
+node 34 coords 3 3.000000e+00 1.000000e+00 0.000000e+00
+node 35 coords 3 2.750000e+00 1.000000e+00 0.000000e+00
+node 36 coords 3 2.500000e+00 1.000000e+00 0.000000e+00
+node 37 coords 3 2.250000e+00 1.000000e+00 0.000000e+00
+node 38 coords 3 2.000000e+00 1.000000e+00 0.000000e+00
+node 39 coords 3 1.750000e+00 1.000000e+00 0.000000e+00
+node 40 coords 3 1.500000e+00 1.000000e+00 0.000000e+00
+node 41 coords 3 1.250000e+00 1.000000e+00 0.000000e+00
+node 42 coords 3 1.000000e+00 1.000000e+00 0.000000e+00
+node 43 coords 3 7.500000e-01 1.000000e+00 0.000000e+00
+node 44 coords 3 5.000000e-01 1.000000e+00 0.000000e+00
+node 45 coords 3 2.500000e-01 1.000000e+00 0.000000e+00
+node 46 coords 3 0.000000e+00 7.500000e-01 0.000000e+00 bc 1 1
+node 47 coords 3 0.000000e+00 5.000000e-01 0.000000e+00 bc 1 1
+node 48 coords 3 0.000000e+00 2.500000e-01 0.000000e+00 bc 1 1
+node 49 coords 3 2.500000e-01 2.500000e-01 0.000000e+00
+node 50 coords 3 5.000000e-01 2.500000e-01 0.000000e+00
+node 51 coords 3 7.500000e-01 2.500000e-01 0.000000e+00
+node 52 coords 3 1.000000e+00 2.500000e-01 0.000000e+00
+node 53 coords 3 1.250000e+00 2.500000e-01 0.000000e+00
+node 54 coords 3 1.500000e+00 2.500000e-01 0.000000e+00
+node 55 coords 3 1.750000e+00 2.500000e-01 0.000000e+00
+node 56 coords 3 2.000000e+00 2.500000e-01 0.000000e+00
+node 57 coords 3 2.250000e+00 2.500000e-01 0.000000e+00
+node 58 coords 3 2.500000e+00 2.500000e-01 0.000000e+00
+node 59 coords 3 2.750000e+00 2.500000e-01 0.000000e+00
+node 60 coords 3 3.000000e+00 2.500000e-01 0.000000e+00
+node 61 coords 3 3.250000e+00 2.500000e-01 0.000000e+00
+node 62 coords 3 3.500000e+00 2.500000e-01 0.000000e+00
+node 63 coords 3 3.750000e+00 2.500000e-01 0.000000e+00
+node 64 coords 3 4.000000e+00 2.500000e-01 0.000000e+00
+node 65 coords 3 4.250000e+00 2.500000e-01 0.000000e+00
+node 66 coords 3 4.500000e+00 2.500000e-01 0.000000e+00
+node 67 coords 3 4.750000e+00 2.500000e-01 0.000000e+00
+node 68 coords 3 4.750000e+00 5.000000e-01 0.000000e+00
+node 69 coords 3 4.750000e+00 7.500000e-01 0.000000e+00
+node 70 coords 3 4.500000e+00 7.500000e-01 0.000000e+00
+node 71 coords 3 4.250000e+00 7.500000e-01 0.000000e+00
+node 72 coords 3 4.000000e+00 7.500000e-01 0.000000e+00
+node 73 coords 3 3.750000e+00 7.500000e-01 0.000000e+00
+node 74 coords 3 3.500000e+00 7.500000e-01 0.000000e+00
+node 75 coords 3 3.250000e+00 7.500000e-01 0.000000e+00
+node 76 coords 3 3.000000e+00 7.500000e-01 0.000000e+00
+node 77 coords 3 2.750000e+00 7.500000e-01 0.000000e+00
+node 78 coords 3 2.500000e+00 7.500000e-01 0.000000e+00
+node 79 coords 3 2.250000e+00 7.500000e-01 0.000000e+00
+node 80 coords 3 2.000000e+00 7.500000e-01 0.000000e+00
+node 81 coords 3 1.750000e+00 7.500000e-01 0.000000e+00
+node 82 coords 3 1.500000e+00 7.500000e-01 0.000000e+00
+node 83 coords 3 1.250000e+00 7.500000e-01 0.000000e+00
+node 84 coords 3 1.000000e+00 7.500000e-01 0.000000e+00
+node 85 coords 3 7.500000e-01 7.500000e-01 0.000000e+00
+node 86 coords 3 5.000000e-01 7.500000e-01 0.000000e+00
+node 87 coords 3 2.500000e-01 7.500000e-01 0.000000e+00
+node 88 coords 3 2.500000e-01 5.000000e-01 0.000000e+00
+node 89 coords 3 5.000000e-01 5.000000e-01 0.000000e+00
+node 90 coords 3 7.500000e-01 5.000000e-01 0.000000e+00
+node 91 coords 3 1.000000e+00 5.000000e-01 0.000000e+00
+node 92 coords 3 1.250000e+00 5.000000e-01 0.000000e+00
+node 93 coords 3 1.500000e+00 5.000000e-01 0.000000e+00
+node 94 coords 3 1.750000e+00 5.000000e-01 0.000000e+00
+node 95 coords 3 2.000000e+00 5.000000e-01 0.000000e+00
+node 96 coords 3 2.250000e+00 5.000000e-01 0.000000e+00
+node 97 coords 3 2.500000e+00 5.000000e-01 0.000000e+00
+node 98 coords 3 2.750000e+00 5.000000e-01 0.000000e+00
+node 99 coords 3 3.000000e+00 5.000000e-01 0.000000e+00
+node 100 coords 3 3.250000e+00 5.000000e-01 0.000000e+00
+node 101 coords 3 3.500000e+00 5.000000e-01 0.000000e+00
+node 102 coords 3 3.750000e+00 5.000000e-01 0.000000e+00
+node 103 coords 3 4.000000e+00 5.000000e-01 0.000000e+00
+node 104 coords 3 4.250000e+00 5.000000e-01 0.000000e+00
+node 105 coords 3 4.500000e+00 5.000000e-01 0.000000e+00
+Quad1ht 1 nodes 4 1 5 49 48 crossSect 1 mat 1
+Quad1ht 2 nodes 4 5 6 50 49 crossSect 1 mat 1
+Quad1ht 3 nodes 4 6 7 51 50 crossSect 1 mat 1
+Quad1ht 4 nodes 4 7 8 52 51 crossSect 1 mat 1
+Quad1ht 5 nodes 4 8 9 53 52 crossSect 1 mat 1
+Quad1ht 6 nodes 4 9 10 54 53 crossSect 1 mat 1
+Quad1ht 7 nodes 4 10 11 55 54 crossSect 1 mat 1
+Quad1ht 8 nodes 4 11 12 56 55 crossSect 1 mat 1
+Quad1ht 9 nodes 4 12 13 57 56 crossSect 1 mat 1
+Quad1ht 10 nodes 4 13 14 58 57 crossSect 1 mat 1
+Quad1ht 11 nodes 4 14 15 59 58 crossSect 1 mat 1
+Quad1ht 12 nodes 4 15 16 60 59 crossSect 1 mat 1
+Quad1ht 13 nodes 4 16 17 61 60 crossSect 1 mat 1
+Quad1ht 14 nodes 4 17 18 62 61 crossSect 1 mat 1
+Quad1ht 15 nodes 4 18 19 63 62 crossSect 1 mat 1
+Quad1ht 16 nodes 4 19 20 64 63 crossSect 1 mat 1
+Quad1ht 17 nodes 4 20 21 65 64 crossSect 1 mat 1
+Quad1ht 18 nodes 4 21 22 66 65 crossSect 1 mat 1
+Quad1ht 19 nodes 4 22 23 67 66 crossSect 1 mat 1
+Quad1ht 20 nodes 4 23 2 24 67 crossSect 1 mat 1
+Quad1ht 21 nodes 4 24 25 68 67 crossSect 1 mat 1
+Quad1ht 22 nodes 4 25 26 69 68 crossSect 1 mat 1
+Quad1ht 23 nodes 4 26 3 27 69 crossSect 1 mat 1 boundaryLoads 2 2 2
+Quad1ht 24 nodes 4 27 28 70 69 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 25 nodes 4 28 29 71 70 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 26 nodes 4 29 30 72 71 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 27 nodes 4 30 31 73 72 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 28 nodes 4 31 32 74 73 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 29 nodes 4 32 33 75 74 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 30 nodes 4 33 34 76 75 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 31 nodes 4 34 35 77 76 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 32 nodes 4 35 36 78 77 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 33 nodes 4 36 37 79 78 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 34 nodes 4 37 38 80 79 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 35 nodes 4 38 39 81 80 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 36 nodes 4 39 40 82 81 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 37 nodes 4 40 41 83 82 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 38 nodes 4 41 42 84 83 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 39 nodes 4 42 43 85 84 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 40 nodes 4 43 44 86 85 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 41 nodes 4 44 45 87 86 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 42 nodes 4 45 4 46 87 crossSect 1 mat 1 boundaryLoads 2 2 1
+Quad1ht 43 nodes 4 46 47 88 87 crossSect 1 mat 1
+Quad1ht 44 nodes 4 47 48 49 88 crossSect 1 mat 1
+Quad1ht 45 nodes 4 49 50 89 88 crossSect 1 mat 1
+Quad1ht 46 nodes 4 50 51 90 89 crossSect 1 mat 1
+Quad1ht 47 nodes 4 51 52 91 90 crossSect 1 mat 1
+Quad1ht 48 nodes 4 52 53 92 91 crossSect 1 mat 1
+Quad1ht 49 nodes 4 53 54 93 92 crossSect 1 mat 1
+Quad1ht 50 nodes 4 54 55 94 93 crossSect 1 mat 1
+Quad1ht 51 nodes 4 55 56 95 94 crossSect 1 mat 1
+Quad1ht 52 nodes 4 56 57 96 95 crossSect 1 mat 1
+Quad1ht 53 nodes 4 57 58 97 96 crossSect 1 mat 1
+Quad1ht 54 nodes 4 58 59 98 97 crossSect 1 mat 1
+Quad1ht 55 nodes 4 59 60 99 98 crossSect 1 mat 1
+Quad1ht 56 nodes 4 60 61 100 99 crossSect 1 mat 1
+Quad1ht 57 nodes 4 61 62 101 100 crossSect 1 mat 1
+Quad1ht 58 nodes 4 62 63 102 101 crossSect 1 mat 1
+Quad1ht 59 nodes 4 63 64 103 102 crossSect 1 mat 1
+Quad1ht 60 nodes 4 64 65 104 103 crossSect 1 mat 1
+Quad1ht 61 nodes 4 65 66 105 104 crossSect 1 mat 1
+Quad1ht 62 nodes 4 66 67 68 105 crossSect 1 mat 1
+Quad1ht 63 nodes 4 68 69 70 105 crossSect 1 mat 1
+Quad1ht 64 nodes 4 70 71 104 105 crossSect 1 mat 1
+Quad1ht 65 nodes 4 71 72 103 104 crossSect 1 mat 1
+Quad1ht 66 nodes 4 72 73 102 103 crossSect 1 mat 1
+Quad1ht 67 nodes 4 73 74 101 102 crossSect 1 mat 1
+Quad1ht 68 nodes 4 74 75 100 101 crossSect 1 mat 1
+Quad1ht 69 nodes 4 75 76 99 100 crossSect 1 mat 1
+Quad1ht 70 nodes 4 76 77 98 99 crossSect 1 mat 1
+Quad1ht 71 nodes 4 77 78 97 98 crossSect 1 mat 1
+Quad1ht 72 nodes 4 78 79 96 97 crossSect 1 mat 1
+Quad1ht 73 nodes 4 79 80 95 96 crossSect 1 mat 1
+Quad1ht 74 nodes 4 80 81 94 95 crossSect 1 mat 1
+Quad1ht 75 nodes 4 81 82 93 94 crossSect 1 mat 1
+Quad1ht 76 nodes 4 82 83 92 93 crossSect 1 mat 1
+Quad1ht 77 nodes 4 83 84 91 92 crossSect 1 mat 1
+Quad1ht 78 nodes 4 84 85 90 91 crossSect 1 mat 1
+Quad1ht 79 nodes 4 85 86 89 90 crossSect 1 mat 1
+Quad1ht 80 nodes 4 86 87 88 89 crossSect 1 mat 1
+SimpleCS 1 thick 1.0
+isoheat 1 d 1.0 k 1.0 c 1.0 
+BoundaryCondition 1 loadTimeFunction 1 values 1 0.0
+constantedgeload 2 loadTimeFunction 1 components 1 10.0 properties 1 a 1.0 loadtype 3 
+ConstantFunction 1 f(t) 1.0
+
