@@ -15,6 +15,7 @@ include mupif/doc/userGuide/MuPIF-userGuide.pdf
 #prune *.pyc
 include mupif/examples/testExamples.sh
 recursive-include mupif/examples *.py README *.in *.c
+recursive-include mupif/APIs *.py README *.in
 
 prune mupif/examples/Workshop02
 prune mupif/examples/PingTest

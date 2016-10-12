@@ -23,4 +23,5 @@ jobManWorkDir=os.path.abspath(os.path.join(os.getcwd(), 'thermalWorkDir'))
 '/home/mmp/work/thermalWorkDir'#Main directory for transmitting files
 
 applicationClass = demoapp.thermal
+applicationInitialFile = 'input.in'
 jobMan2CmdPath = cfg.jobMan2CmdPath # path to JobMan2cmd.py

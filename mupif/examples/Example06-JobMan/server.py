@@ -22,7 +22,7 @@ if noSSH:
     sConf.server = sConf.serverNathost
     sConf.jobManNatport = sConf.jobManPort
 
-#Run a daemon for jobMamager on this machine
+#Run a daemon for jobManager on this machine
 daemon = sConf.cfg.Pyro4.Daemon(host=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport)
 #Run job manager on a server
 jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'serverConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)

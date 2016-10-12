@@ -15,7 +15,7 @@ import logging
 #NAME SERVER
 #IP/name of a name server
 nshost = '127.0.0.1'
-#nshost = '147.32.130.137'
+#nshost = '147.32.130.71'
 #Port of name server
 nsport = 9090
 #Password for accessing nameServer and applications
@@ -26,7 +26,7 @@ hkey = 'mmp-secret-key'
 #SERVER for a single job or for JobManager
 #IP/name of a server's daemon
 server = '127.0.0.1'
-#server = '147.32.130.137'
+#server = '147.32.130.71'
 #Port of server's daemon
 serverPort = 44382
 #Nat IP/name (necessary for ssh tunnel)
@@ -35,7 +35,8 @@ serverNathost = '127.0.0.1'
 serverNatport = 5555
 #Name of job manager
 jobManName='Mupif.JobManager@Example'
-#Name of application class
+#Name of application
+appName = 'MuPIFServer'
 
 #Jobs in JobManager
 #Range of ports to be assigned on the server to jobs
@@ -52,12 +53,19 @@ jobManWorkDir='.'
 #Path to JobMan2cmd.py 
 jobMan2CmdPath = "../../tools/JobMan2cmd.py"
 
-#Name of the application
-appName = 'MuPIFServer'
+
+#SECOND SERVER for another application
+server2 = '127.0.0.1'
+serverPort2 = 44385
+serverNathost2 = '127.0.0.1'
+serverNatport2 = 5558
+appName2 = 'MuPIFServer2'
+
 
 #CLIENT
 #User name for ssh connection, empty uses current login name
-serverUserName = os.environ.get( "USERNAME" )#current user
+#serverUserName = os.environ.get( "USERNAME" )#current user-not working
+serverUserName = os.getenv('USER')
 
 if(sys.platform.lower().startswith('win')):#Windows ssh client
     sshClient = 'C:\\Program Files\\Putty\\putty.exe'

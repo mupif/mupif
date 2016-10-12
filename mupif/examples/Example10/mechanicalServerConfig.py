@@ -22,6 +22,6 @@ jobManPortsForJobs=( 9095, 9100) #Range of ports to be assigned on the server to
 jobManMaxJobs=4 #Maximum number of jobs
 jobManWorkDir=os.path.abspath(os.path.join(os.getcwd(), 'mechanicalWorkDir'))
 #jobManWorkDir='/home/mmp/work/mechanicalWorkDir'#Main directory for transmitting files
-
+applicationInitialFile = 'input.in'
 applicationClass = demoapp.mechanical
 jobMan2CmdPath = cfg.jobMan2CmdPath # path to JobMan2cmd.py 

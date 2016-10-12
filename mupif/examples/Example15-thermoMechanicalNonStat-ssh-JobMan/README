@@ -1,0 +1,12 @@
+This example illustrates two applications running on a network. NameServer runs on mech.fsv.cvut.cz. JobManager for thermalServer runs on mech.fsv.cvut.cz. MechanicalServer and scenario script runs on a local computer. Ssh tunnels are created for JobManager and a thermalServer automatically from a script.
+
+Prerequisites:
+Ssh keys to set up ssh tunnel from a localhost to mech.fsv.cvut.cz server.
+Correct configuration in conf.py, namely IPs in 'nshost' and 'server'.
+
+Running:
+On a server side (mech.fsv.cvut.cz) run nameserver $python tools/nameserver.py. Run $python thermalServer.py
+On a client side run $python mechanicalServer.py and $python Demo15-client.py
+
+
+

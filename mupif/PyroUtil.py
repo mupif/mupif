@@ -214,7 +214,7 @@ def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', opti
     if sshHost =='':
         sshHost = remoteHost
     if userName =='':
-        userName = os.getlogin()
+        userName = os.getenv('USER')
 
     direction = 'L'
     if Reverse == True:
@@ -318,7 +318,7 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     try:
         tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
-        log.exception("Creating ssh tunnel for JobManager failed")
+        log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, jobManUserName, jobManNatport, jobManPort, sshClient, options, sshHost))
         raise
     else:
         # locate remote jobManager on (remote) server
@@ -342,6 +342,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     :raises Exception: if allocation of job fails
     """
     (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    log.debug('Trying to connect to JobManager')
     (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec, sshClient, options, sshHost)
 
     if jobMan is None:

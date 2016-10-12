@@ -4,6 +4,7 @@ sys.path.append('..')
 import conf as cfg
 import DemoApplication
 applicationClass = DemoApplication.DemoApplication
+applicationInitialFile = ''
 
 nshost = cfg.nshost #NameServer - do not change
 nsport = cfg.nsport #NameServer's port - do not change

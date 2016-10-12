@@ -4,6 +4,7 @@ sys.path.append('..')
 import conf as cfg
 import PingServerApplication
 applicationClass = PingServerApplication.PingServerApplication
+applicationInitialFile = "input.in"#dummy file
 
 nshost = cfg.nshost #NameServer - do not change
 nsport = cfg.nsport #NameServer's port - do not change

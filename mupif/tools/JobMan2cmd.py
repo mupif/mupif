@@ -92,7 +92,7 @@ def main():
 
     #Initialize application
     #app = DemoApplication.DemoApplication()
-    app = conf.applicationClass("input.in",workDir)
+    app = conf.applicationClass(conf.applicationInitialFile, workDir)
 
     #register agent
     uri = daemon.register(app)

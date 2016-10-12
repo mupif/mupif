@@ -2,13 +2,15 @@ from __future__ import print_function
 # This script starts a nameserver for Pyro4 on this machine
 # Works with Pyro4 version 4.28 (later 4.39)
 # Tested on Ubuntu 14.04 and Win XP (4.39)
-# Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
+# Vit Smilauer 10/2016, vit.smilauer (et) fsv.cvut.cz
 # TNO 09/2015
 
-import os, sys
+import os
+import sys
 import subprocess
+
 sys.path.append('../examples')
-import conf as cfg
+import conf_vpn as cfg
 
 def main():
     #Initializating variables
