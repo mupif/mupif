@@ -1,6 +1,15 @@
 mupif package
 =============
 
+Subpackages
+-----------
+
+.. toctree::
+
+    mupif.Physics
+
+Submodules
+----------
 
 mupif.APIError module
 ---------------------
@@ -62,14 +71,6 @@ mupif.Function module
 ---------------------
 
 .. automodule:: mupif.Function
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mupif.FunctionID module
------------------------
-
-.. automodule:: mupif.FunctionID
     :members:
     :undoc-members:
     :show-inheritance:
@@ -202,6 +203,14 @@ mupif.fieldID module
     :undoc-members:
     :show-inheritance:
 
+mupif.functionID module
+-----------------------
+
+.. automodule:: mupif.functionID
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mupif.propertyID module
 -----------------------
 
@@ -211,14 +220,6 @@ mupif.propertyID module
     :show-inheritance:
 
 
-Submodules
----------------
-
-.. toctree::
-
-    mupif.Physics
-
-
 Module contents
 ---------------
 
@@ -226,6 +227,3 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
-
-
-

@@ -25,8 +25,8 @@ from __future__ import print_function, absolute_import
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '0.20.14'
-__author__  = 'Borek Patzak and Vit Smilauer and Guillaume Pacquaut'
+__version__ = '1.0.0'
+__author__  = 'Borek Patzak and Vit Smilauer'
 
 from .fieldID import FieldID
 from .propertyID import PropertyID

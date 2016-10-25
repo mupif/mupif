@@ -16,10 +16,10 @@ represented as abstract classes. Therefore, the focus on services is provided by
 The integration framework is implemented in Python. Python is an interpreted,
 interactive, object-oriented programming language. It runs on many Unix/Linux
 platforms, on the Mac, and on PCs under MS-DOS, Windows, Windows NT, and OS/2.
-The Python language will be enriched by new objects/classes to describe and to
+The Python language is enriched by new objects/classes to describe and to
 represent complex simulation chains. Such approach allows profiting from the
 capabilities of established scripting environment, including numerical libraries,
-serialization/persistence support, and remote communication.
+serialization/persistence support, VPN, and remote communication.
 
 The proposed abstract classes are designed to represent the entities in a model space,
 including simulation tools, fields, discretizations, properties, etc. The purpose of these
@@ -30,3 +30,4 @@ implementation details of an individual software component.
 
 To facilitate execution and development of the simulation workflows, the platform provides the transparent communication mechanism that will take care of the network communication between the objects. An important feature is the transparency, which hides the details of remote communication to the user and allows working with local and remote objects in the same way. The communication layer is built on Pyro4 library, which provides a transparent distributed object system fully integrated into Python. It takes care of the network communication between the objects when they are distributed over different machines on the network. The platform is designed to work on virtually any distributed platform, including grid and cloud infrastructure. 
 
+In addition to this MuPIF reference manual, a user manual from http://sourceforge.net/projects/mupif/ can be obtained, showing details on API implementation, installation, networking and providing several examples in local/distributed setups. 

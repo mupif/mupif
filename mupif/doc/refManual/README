@@ -1,7 +1,8 @@
-To generate a reference manual, run the script tools/createRefMan.sh. It does automatically what is described below.
+To generate a reference manual, run first the script tools/createRefMan.sh. It does automatically what is described below.
 Html and pdf versions are generated.
 However, the final document has several deficiencies: no introduction, inclusion of all tests and unnecessary *.py files.
 For this reason, the files *.rst are adviced to edit manually (a backup is available in directory manual-modification.
+Then run manually $make pdflatex  or $make html . It will not change *.rst files anymore.
 
 
 

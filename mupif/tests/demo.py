@@ -12,12 +12,14 @@ from mupif import *
 def meshgen_grid2d(origin, size, nx, ny, tria=False,debug=False):
     """ 
     Generates a simple mesh on rectangular domain
-    Params:
-      origin(tuple): x,y coordinates of origin (lower left corner) 
-      size(tuple): tuple containing size in x and y directions
-      nx(int): number of elements in x direction
-      ny(int): number of elements in y direction
-      tria(bool): when tru, triangular mesh generated, quad otherwise
+    
+    :param tuple origin: x,y coordinates of origin (lower left corner) 
+    :param tuple size: tuple containing size in x and y directions
+    :param int nx: number of elements in x direction
+    :param int ny: number of elements in y direction
+    :param bool tria: when tru, triangular mesh generated, quad otherwise
+    :return: Returns the mesh.
+    :rtype: Mesh
     """
     dx = size[0]/nx;
     dy = size[1]/ny;
@@ -58,9 +60,6 @@ def meshgen_grid2d(origin, size, nx, ny, tria=False,debug=False):
     mesh.setup (vertexlist, celllist);
     return mesh;
     
-
-
-
 class AppGridAvg(Application.Application):
     """
     Simple application that computes an arithmetical average of mapped property

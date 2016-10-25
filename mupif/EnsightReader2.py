@@ -40,7 +40,6 @@ debug = 0
 def readEnsightGeo(name, partFilter, partRec):
     """
     Reads Ensight geometry file (Ensight6 format) and returns corresponding Mesh object instance. Supports only unstructured meshes.
-    Why are these functions not under EnsightReader class in EnsightReader.py??
 
     :param str name: Path to Ensight geometry file (\*.geo)
     :param tuple partFiler: Only parts with id contained in partFiler will be imported

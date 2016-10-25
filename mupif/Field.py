@@ -541,7 +541,7 @@ class Field(object):
         Save the instance as Unstructured Grid in VTK3 format (``.vtu``). This is a simple proxy for calling :obj:`manyToVTK3` with the instance as the only field to be saved. If multiple fields with identical mesh are to be saved in VTK3, use :obj:`manyToVTK3` directly.
 
         :param fileName: output file name
-        :param **kw: passed to :obj:`manyToVTK3`
+        :param ``**kw``: passed to :obj:`manyToVTK3`
         '''
         return self.manyToVTK3([self],fileName,**kw)
 

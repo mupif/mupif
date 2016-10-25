@@ -6,8 +6,8 @@ $ openvpn mupif1.ovpn
 which will create VPN connection to mech.fsv.cvut.cz server. Then, all communication runs on a network 172.30.0.6 (client) with 172.30.0.1 (mech.fsv.cvut.cz)
 
 Running:
-On a server side (mech.fsv.cvut.cz) run nameserver $python tools/nameserver-VPN.py. Run $python server.py
-On a client side run $python client.py
+On a server side (mech.fsv.cvut.cz) run nameserver $python tools/nameserver-VPN.py. Run $python thermalServer.py. Run $python mechanicalServer.py
+On a client side run $python Demo14-client.py
 
 
 
