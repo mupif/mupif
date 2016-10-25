@@ -10,9 +10,9 @@
 # $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
 
 #include README.txt
-include mupif/doc/refManual/MuPIF.pdf
-include mupif/doc/userGuide/MuPIF-userGuide.pdf
-#prune *.pyc
+include mupif/doc/refManual/MuPIF-ReferenceManual-1.0.0.pdf
+include mupif/doc/userManual/MuPIF-UserManual-1.0.0.pdf
+#prune *.pyc - should be kept in distro
 include mupif/examples/testExamples.sh
 recursive-include mupif/examples *.py README *.in *.c
 recursive-include mupif/APIs *.py README *.in

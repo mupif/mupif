@@ -9,6 +9,7 @@ Created 19.6.2015
 # $ python setup.py sdist         creates an archive on local computer
 # $ python setup.py register      registers to PyPI server
 # $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
+# $ python setup.py sdist --format=zip creates source archive on local computer
 
 # The mupif module can be tested under python $ python   and  >> from mupif import * . Correct path is automatically added.
 # Uninstall with $ pip uninstall mupif . This also shows you the location of files.
