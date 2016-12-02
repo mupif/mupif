@@ -41,6 +41,7 @@ def main():
 
     # field1 is vertex based, i.e., field values are provided at vertices
     field1 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values1)
+    #field1.field2Image2D(title='Field', barFormatNum='%.0f')
     # field2 is cell based, i.e., field values are provided for cells
     field2 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values2, Field.FieldType.FT_cellBased)
 

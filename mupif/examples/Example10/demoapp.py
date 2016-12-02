@@ -157,7 +157,7 @@ class thermal(Application.Application):
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', 0.0, values);
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
             for e in self.mesh.cells():
@@ -823,7 +823,7 @@ class mechanical(Application.Application):
                     else:
                         values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
 
-            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, None, 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, 'm', 0.0, values);
         else:
             raise APIError.APIError ('Unknown field ID')
 

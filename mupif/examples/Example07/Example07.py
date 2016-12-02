@@ -35,9 +35,10 @@ while (abs(time -targetTime) > 1.e-6):
         app1.solveStep(istep)
         #request Concentration property from app1
         field = app1.getField(FieldID.FID_Temperature, istep)
+        #field.field2Image2D()
 
     except APIError.APIError as e:
-        mupif.log.error("Following API error occurred:",e)
+        mupif.log.error("Following API error occurred:%s",e)
         sys.exit(1)
 # evaluate field at given point
 position=(0.0, 0.0, 0.0)

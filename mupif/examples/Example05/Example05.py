@@ -33,7 +33,7 @@ while (abs(time -targetTime) > 1.e-6):
         field = app1.getField(FieldID.FID_Temperature, istep)
 
     except APIError.APIError as e:
-        mupif.log.error("Following API error occurred:",e)
+        mupif.log.error("Following API error occurred: %s",e)
         break
 # evaluate field at given point
 position=(-1e-5, -1e-5, -1e-5)

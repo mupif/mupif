@@ -19,8 +19,9 @@ if True:
     print(app.getApplicationSignature())
 
     sol = app.solveStep(TimeStep.TimeStep(0,1)) 
-    f = app.getField(FieldID.FID_Temperature, 0.0)
+    f = app.getField(FieldID.FID_Temperature, 1.0)
     f.field2VTKData().tofile('thermal11')
+    f.field2Image2D(title='Thermal', fileName='thermal.png', block=False)
 
 if True:
     app2 = demoapp.mechanical('inputM11.in', '.')
@@ -28,6 +29,7 @@ if True:
 
     app2.setField(f)
     sol = app2.solveStep(TimeStep.TimeStep(0,1)) 
-    f = app2.getField(FieldID.FID_Displacement, 0.0)
+    f = app2.getField(FieldID.FID_Displacement, 1.0)
     f.field2VTKData().tofile('mechanical11')
+    f.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
 

@@ -27,6 +27,7 @@ from . import Cell
 from . import FieldID
 from . import ValueType
 from . import BBox
+from . import APIError
 import mupif #for logger
 from numpy import array, arange, random, zeros
 import numpy
@@ -376,6 +377,125 @@ class Field(object):
         :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
         """
         pickle.dump(self, open(fileName,'wb'), protocol)
+
+    def field2Image2D(self, plane='xy', elevation = (-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None,None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=True, block=True, figsize = (8,4)):
+        """ 
+        Plots and/or saves 2D image using a matplotlib library. Works for structured and unstructured 2D/3D fields. 2D/3D fields need to define plane. This method gives only basic viewing options, for aesthetic and more elaborated output use e.g. VTK field export with 
+        postprocessors such as ParaView or Mayavi. Idea from https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html#id1
+        
+        :param Field field : field of unknowns
+        :param str plane: what plane to extract from field, valid values are 'xy', 'xz', 'yz' 
+        :param tuple elevation: range of third coordinate. For example, in plane='xy' is grabs z coordinates in the range
+        :param int numX : number of divisions on x graph axis
+        :param int numY : number of divisions on y graph axis
+        :param str interp : interpolation type when transferring to a grid. Valid values 'linear', 'nearest' or 'cubic'
+        :param int fieldComponent: component of the field
+        :param bool vertex : if vertices shoud be plot as points
+        :param str colorBar : color bar details. Valid values '' for no colorbar, 'vertical' or 'horizontal'  
+        :param str colorBarLegend : Legend for color bar. If '', current field name and units are printed. None prints nothing.
+        :param tuple barRange: min and max bar range. If barRange=('NaN','NaN'), it is adjusted automatically
+        :param str barFormatNum : format of color bar numbers
+        :param str title : title
+        :param str xlabel : x axis label
+        :param str ylabel : y axis label
+        :param str fileName : if nonempty, a filename is written to the disk, usually png, pdf, ps, eps and svg are supported
+        :param bool show : if the plot should be showed
+        :prama bool block : False means plot window remains in separate thread, True waits until a plot window becomes closed
+        :param tuple figsize : size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
+        
+        :return: Two real roots if they exist
+        :rtype: tuple
+        """ 
+        try:
+            import numpy as np
+            import math
+            from scipy.interpolate import griddata
+            import matplotlib.pyplot as plt
+        except ImportError as e:
+            print(e)
+            raise
+        
+        if ( self.fieldType != FieldType.FT_vertexBased):
+            raise APIError.APIError ('Only FieldType.FT_vertexBased is now supported')
+        
+        mesh = self.getMesh()
+        numVertices = mesh.getNumberOfVertices()
+        
+        vertexPoints = np.zeros((numVertices,2))
+        values = np.zeros((numVertices))
+            
+        if plane=='xy':
+            indX = 0
+            indY = 1
+            elev = 2
+        elif plane=='xz':
+            indX = 0
+            indY = 2
+            elev = 1
+        elif plane=='yz':
+            indX = 1
+            indY = 2
+            elev = 0
+        
+        #find eligible vertex points and values
+        vertexPoints = []
+        vertexValue = []
+        for i in range (0, numVertices):
+            coords = mesh.getVertex(i).getCoordinates()
+            #print(coords)
+            if (coords[elev]>elevation[0] and coords[elev]<elevation[1]):
+                vertexPoints.append((coords[indX], coords[indY]))
+                vertexValue.append(self.giveValue(i)[fieldComponent])
+        
+        vertexPointsArr = np.array(vertexPoints)
+        vertexValueArr = np.array(vertexValue)
+        
+        xMin = vertexPointsArr[:,0].min()
+        xMax = vertexPointsArr[:,0].max()
+        yMin = vertexPointsArr[:,1].min()
+        yMax = vertexPointsArr[:,1].max()
+        
+        #print(xMin, xMax, yMin, yMax)
+        
+        grid_x, grid_y = np.mgrid[xMin:xMax:complex(0,numX), yMin:yMax:complex(0,numY)]    
+        grid_z1 = griddata(vertexPointsArr, vertexValueArr, (grid_x, grid_y), interp)
+        
+        plt.figure(figsize=figsize)
+        plt.xlim(xMin, xMax)
+        plt.ylim(yMin, yMax)
+        #image.tight_layout()
+        
+        image = plt.imshow(grid_z1.T, extent=(xMin,xMax,yMin,yMax), aspect='equal')
+        
+        if colorBar:
+            cbar = plt.colorbar(orientation=colorBar, format=barFormatNum)
+            if colorBarLegend != None:
+                if colorBarLegend == '':
+                    colorBarLegend = self.getFieldIDName() + '_' + str(fieldComponent)
+                    if self.units != None:
+                        colorBarLegend = colorBarLegend + ' (' + self.units + ')'
+                cbar.set_label(colorBarLegend, rotation=0 if colorBar=='horizontal' else 90)
+        if title:
+            plt.title(title)
+        if xlabel:
+            plt.xlabel(xlabel)
+        if ylabel:
+            plt.ylabel(ylabel)
+        if vertex == 1:
+            plt.scatter(vertexPointsArr[:,0], vertexPointsArr[:,1], marker='o', c='b', s=5, zorder=10)
+
+        #plt.axis('equal')
+        #plt.gca().set_aspect('equal', adjustable='box-forced')
+        
+        if (isinstance(barRange[0], float) or isinstance(barRange[0], int)):
+            image.set_clim(vmin=barRange[0], vmax=barRange[1])
+        
+        
+        if fileName:
+            plt.savefig(fileName, bbox_inches='tight')
+        if show:
+            plt.show(block=block)
+        
 
     def toHdf5(self,fileName,group='component1/part1'):
         """
