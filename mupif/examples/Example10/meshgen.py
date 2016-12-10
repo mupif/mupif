@@ -15,7 +15,7 @@ def meshgen(origin, size, nx, ny, tria=False):
       size(tuple): tuple containing size in x and y directions
       nx(int): number of elements in x direction
       ny(int): number of elements in y direction
-      tria(bool): when tru, triangular mesh generated, quad otherwise
+      tria(bool): when True, triangular mesh generated, quad otherwise
     """
     dx = size[0]/nx;
     dy = size[1]/ny;

@@ -50,5 +50,5 @@ def quadratic_real (a, b, c):
             return ()
         y2 = -y1 
         return (y1 - t, y2 - t)
- 
+
     

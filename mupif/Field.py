@@ -447,6 +447,9 @@ class Field(object):
                 vertexPoints.append((coords[indX], coords[indY]))
                 vertexValue.append(self.giveValue(i)[fieldComponent])
         
+        #for i in range (0, len(vertexPoints)):
+            #print (vertexPoints[i], vertexValue[i])
+        
         vertexPointsArr = np.array(vertexPoints)
         vertexValueArr = np.array(vertexValue)
         
@@ -460,12 +463,14 @@ class Field(object):
         grid_x, grid_y = np.mgrid[xMin:xMax:complex(0,numX), yMin:yMax:complex(0,numY)]    
         grid_z1 = griddata(vertexPointsArr, vertexValueArr, (grid_x, grid_y), interp)
         
+        #print (grid_z1.T)
+        
         plt.figure(figsize=figsize)
         plt.xlim(xMin, xMax)
         plt.ylim(yMin, yMax)
         #image.tight_layout()
         
-        image = plt.imshow(grid_z1.T, extent=(xMin,xMax,yMin,yMax), aspect='equal')
+        image = plt.imshow(grid_z1.T, extent=(xMin,xMax,yMin,yMax), origin='lower', aspect='equal')
         
         if colorBar:
             cbar = plt.colorbar(orientation=colorBar, format=barFormatNum)

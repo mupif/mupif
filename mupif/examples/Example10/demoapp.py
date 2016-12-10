@@ -25,9 +25,10 @@ class thermal(Application.Application):
         super(thermal, self).__init__(file, workdir)
         self.morphologyType=None
         self.conductivity=1.0
+        self.tria=False
 
-    def readInput(self):
-
+    def readInput(self, tria=False):
+        self.tria = tria
         dirichletModelEdges=[]
         convectionModelEdges=[]
         try:
@@ -52,6 +53,7 @@ class thermal(Application.Application):
 
         for iedge in range(4):
             line = lines.next()
+            #print (line)
             rec = line.split()
             edge = int(rec[0])
             code = rec[1]
@@ -72,14 +74,14 @@ class thermal(Application.Application):
                 self.scaleInclusion=float(rec[1])
 
         self.mesh = Mesh.UnstructuredMesh()
-        # generate a simple mesh here
+        # generate a simple mesh here, either triangles or rectangles
         #self.xl = 0.5 # domain (0..xl)(0..yl)
         #self.yl = 0.3
         #self.nx = 10 # number of elements in x direction
         #self.ny = 10 # number of elements in y direction 
         self.dx = self.xl/self.nx;
         self.dy = self.yl/self.ny;
-        self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
+        self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny, tria) 
 
 #
 # Model edges
@@ -113,17 +115,29 @@ class thermal(Application.Application):
             #print ("Convection", ice)
             if ice == 1:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*i,0 , h, value))
+                    if self.tria:
+                        self.convectionBC.append((2*self.ny*i,0 , h, value))
+                    else:
+                        self.convectionBC.append((self.ny*i,0 , h, value))
             elif ice == 2:
                 for i in range(self.ny):
-                    self.convectionBC.append(((self.nx-1)*self.ny+i, 1, h, value))
+                    if self.tria:
+                        self.convectionBC.append(((self.nx-1)*2*self.ny+2*i, 1, h, value))
+                    else:
+                        self.convectionBC.append(((self.nx-1)*self.ny+i, 1, h, value))
             elif ice == 3:
                 for i in range(self.nx):
-                    self.convectionBC.append((self.ny*(i+1)-1, 2, h, value))
+                    if self.tria:
+                        self.convectionBC.append((2*self.ny*(i+1)-1, 1, h, value))
+                    else:
+                        self.convectionBC.append((self.ny*(i+1)-1, 2, h, value))
             elif ice == 4:
                 for i in range(self.ny):
-                    self.convectionBC.append((i, 3, h, value))
-
+                    if self.tria:
+                        self.convectionBC.append((2*i+1, 2, h, value))
+                    else:
+                        self.convectionBC.append((i, 3, h, value))
+        
         self.loc=np.zeros(self.mesh.getNumberOfVertices(), dtype=np.int32)
         self.neq = 0;#number of unknowns
         self.pneq = 0;#number of prescribed equations (Dirichlet b.c.)
@@ -255,6 +269,7 @@ class thermal(Application.Application):
         #print (b)
 
         # add boundary terms
+        #print ('Convection BC', self.convectionBC)
         for i in self.convectionBC:
             #print "Processing bc:", i
             elem = mesh.getCell(i[0])
@@ -277,10 +292,16 @@ class thermal(Application.Application):
 
             # boundary_lhs=h*(np.dot(N.T,N))
             boundary_lhs=np.zeros((2,2))
-            boundary_lhs[0,0] = h*(1./3.)*length
-            boundary_lhs[0,1] = h*(1./6.)*length
-            boundary_lhs[1,0] = h*(1./6.)*length
-            boundary_lhs[1,1] = h*(1./3.)*length
+            if self.tria:
+                boundary_lhs[0,0] = h*(1./4.)*length
+                boundary_lhs[0,1] = h*(1./4.)*length
+                boundary_lhs[1,0] = h*(1./4.)*length
+                boundary_lhs[1,1] = h*(1./4.)*length
+            else:
+                boundary_lhs[0,0] = h*(1./3.)*length
+                boundary_lhs[0,1] = h*(1./6.)*length
+                boundary_lhs[1,0] = h*(1./6.)*length
+                boundary_lhs[1,1] = h*(1./3.)*length
 
             # boundary_rhs=h*Te*N.T
             boundary_rhs = np.zeros((2,1))
@@ -317,57 +338,80 @@ class thermal(Application.Application):
     def compute_B(self, elem, lc):
         # computes gradients of shape functions of given element
         vertices = elem.getVertices()
-        c1=vertices[0].coords
-        c2=vertices[1].coords
-        c3=vertices[2].coords
-        c4=vertices[3].coords
+        
+        if isinstance(elem, Cell.Quad_2d_lin):
+            c1=vertices[0].coords
+            c2=vertices[1].coords
+            c3=vertices[2].coords
+            c4=vertices[3].coords
 
-        B11=0.25*(c1[0]-c2[0]-c3[0]+c4[0])
-        B12=0.25*(c1[0]+c2[0]-c3[0]-c4[0])
-        B21=0.25*(c1[1]-c2[1]-c3[1]+c4[1])
-        B22=0.25*(c1[1]+c2[1]-c3[1]-c4[1])
+            B11=0.25*(c1[0]-c2[0]-c3[0]+c4[0])
+            B12=0.25*(c1[0]+c2[0]-c3[0]-c4[0])
+            B21=0.25*(c1[1]-c2[1]-c3[1]+c4[1])
+            B22=0.25*(c1[1]+c2[1]-c3[1]-c4[1])
 
-        C11=0.25*(c1[0]-c2[0]+c3[0]-c4[0])
-        C12=0.25*(c1[0]-c2[0]+c3[0]-c4[0])
-        C21=0.25*(c1[1]-c2[1]+c3[1]-c4[1])
-        C22=0.25*(c1[1]-c2[1]+c3[1]-c4[1])
+            C11=0.25*(c1[0]-c2[0]+c3[0]-c4[0])
+            C12=0.25*(c1[0]-c2[0]+c3[0]-c4[0])
+            C21=0.25*(c1[1]-c2[1]+c3[1]-c4[1])
+            C22=0.25*(c1[1]-c2[1]+c3[1]-c4[1])
 
-        #local coords
-        ksi=lc[0]
-        eta=lc[1]
+            #local coords
+            ksi=lc[0]
+            eta=lc[1]
 
-        B = np.zeros((2,2))
-        B[0,0] = (1./elem.getTransformationJacobian(lc))*(B22+ksi*C22)  
-        B[0,1] = (1./elem.getTransformationJacobian(lc))*(-B21-eta*C21) 
-        B[1,0] = (1./elem.getTransformationJacobian(lc))*(-B12-ksi*C12) 
-        B[1,1] = (1./elem.getTransformationJacobian(lc))*(B11+eta*C11) 
+            B = np.zeros((2,2))
+            B[0,0] = (1./elem.getTransformationJacobian(lc))*(B22+ksi*C22)  
+            B[0,1] = (1./elem.getTransformationJacobian(lc))*(-B21-eta*C21) 
+            B[1,0] = (1./elem.getTransformationJacobian(lc))*(-B12-ksi*C12) 
+            B[1,1] = (1./elem.getTransformationJacobian(lc))*(B11+eta*C11) 
 
-        dNdksi = np.zeros((2,4))
-        dNdksi[0,0] = 0.25 * ( 1. + eta )
-        dNdksi[0,1] = -0.25 * ( 1. + eta )
-        dNdksi[0,2] = -0.25 * ( 1. - eta )
-        dNdksi[0,3] = 0.25 * ( 1. - eta )
-        dNdksi[1,0] = 0.25 * ( 1. + ksi )
-        dNdksi[1,1] = 0.25 * ( 1. - ksi )
-        dNdksi[1,2] = -0.25 * ( 1. - ksi )
-        dNdksi[1,3] = -0.25 * ( 1. + ksi )
+            dNdksi = np.zeros((2,4))
+            dNdksi[0,0] = 0.25 * ( 1. + eta )
+            dNdksi[0,1] = -0.25 * ( 1. + eta )
+            dNdksi[0,2] = -0.25 * ( 1. - eta )
+            dNdksi[0,3] = 0.25 * ( 1. - eta )
+            dNdksi[1,0] = 0.25 * ( 1. + ksi )
+            dNdksi[1,1] = 0.25 * ( 1. - ksi )
+            dNdksi[1,2] = -0.25 * ( 1. - ksi )
+            dNdksi[1,3] = -0.25 * ( 1. + ksi )
 
-        Grad= np.zeros((2,4))
+            Grad = np.zeros((2,4))
+        elif isinstance(elem, Cell.Triangle_2d_lin):
+            c1=vertices[0].coords
+            c2=vertices[1].coords
+            c3=vertices[2].coords
+            #local coords
+            ksi=lc[0]
+            eta=lc[1]
+            B = np.zeros((2,2))
+            B[0,0] = (1./elem.getTransformationJacobian(lc))*(c2[1]-c3[1])  
+            B[0,1] = (1./elem.getTransformationJacobian(lc))*(-c1[1]+c3[1]) 
+            B[1,0] = (1./elem.getTransformationJacobian(lc))*(-c2[0]+c3[0]) 
+            B[1,1] = (1./elem.getTransformationJacobian(lc))*(c1[0]-c3[0]) 
+            dNdksi = np.zeros((2,3))
+            dNdksi[0,0] = 1#N1=ksi, N2=eta, N3=1-ksi-eta
+            dNdksi[0,1] = 0
+            dNdksi[0,2] = -1
+            dNdksi[1,0] = 0
+            dNdksi[1,1] = 1
+            dNdksi[1,2] = -1
+            Grad = np.zeros((2,4))
+            
         Grad = np.dot(B,dNdksi)
-
         #print Grad
         return Grad
 
     def compute_elem_conductivity (self, e):
         #compute element conductivity matrix
-        A_e = np.zeros((4,4 ))
-        b_e = np.zeros((4,1))
+        numVert = e.getNumberOfVertices()
+        A_e = np.zeros((numVert,numVert))
+        b_e = np.zeros((numVert,1))
         rule = IntegrationRule.GaussIntegrationRule()
 
         ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
         pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
 
-        # print "e : ",e.number-1
+        #print "e : ",e.number-1
         #print "ngp :",ngp
         #print "pnts :",pnts
 
@@ -378,7 +422,7 @@ class thermal(Application.Application):
             dv = detJ * p[1]
             #print "dv :",dv 
 
-            N = np.zeros((1,4)) 
+            N = np.zeros((1,numVert)) 
             tmp = e._evalN(p[0]) 
             N=np.asarray(tmp)
             #print "N :",N
@@ -392,15 +436,15 @@ class thermal(Application.Application):
                 if self.isInclusion(e):
                     k=0.001
 
-            Grad= np.zeros((2,4))
+            Grad= np.zeros((2,numVert))
             Grad = self.compute_B(e,p[0])
             #print "Grad :",Grad
-            K=np.zeros((4,4))
+            K=np.zeros((numVert,numVert))
             K=k*dv*(np.dot(Grad.T,Grad))
                 
             #Conductivity matrix
-            for i in range(4):#loop dofs
-                for j in range(4):
+            for i in range(numVert):#loop dofs
+                for j in range(numVert):
                     A_e[i,j] += K[i,j]
         return A_e
 
@@ -461,8 +505,8 @@ class thermal_nonstat(thermal):
         super(thermal_nonstat, self).__init__(file, workdir)
         self.capacity = 1.0
         self.density = 1.0
-        self.Tau=0.5;
-        self.init=True;
+        self.Tau=0.5
+        self.init=True
 
 
     def getApplicationSignature(self):
@@ -476,13 +520,14 @@ class thermal_nonstat(thermal):
 
     def compute_elem_capacity (self, e):
         #compute element capacity matrix
-        A_e = np.zeros((4,4 ))
+        numVert = e.getNumberOfVertices()
+        A_e = np.zeros((numVert,numVert))
         rule = IntegrationRule.GaussIntegrationRule()
 
         ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
         pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
 
-        # print "e : ",e.number-1
+        #print "e : ",e.number-1
         #print "ngp :",ngp
         #print "pnts :",pnts
 
@@ -493,7 +538,7 @@ class thermal_nonstat(thermal):
             dv = detJ * p[1]
             #print "dv :",dv 
 
-            N = np.zeros((1,4)) 
+            N = np.zeros((1,numVert)) 
             tmp = e._evalN(p[0]) 
             N=np.asarray(tmp)
             #print "N :",N
@@ -504,7 +549,7 @@ class thermal_nonstat(thermal):
                 if self.isInclusion(e):
                     c=0.001
 
-            C=np.zeros((4,4))
+            C=np.zeros((numVert,numVert))
             C=c*dv*(np.dot(N.T,N))
 
             #Conductivity matrix
@@ -514,7 +559,7 @@ class thermal_nonstat(thermal):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 
-        self.readInput()
+        self.readInput(tria=True)
         mesh = self.mesh
         self.volume = 0.0;
         self.integral = 0.0;
@@ -524,8 +569,9 @@ class thermal_nonstat(thermal):
             return
 
         numNodes = mesh.getNumberOfVertices()
-        numElements= mesh.getNumberOfCells()
-        ndofs = 4
+        numElements = mesh.getNumberOfCells()
+        
+        ndofs = 3 if self.tria else 4
 
         #print numNodes
         #print numElements
@@ -536,11 +582,12 @@ class thermal_nonstat(thermal):
         mupif.log.info("Number of equations: %d" % self.neq)
 
         #connectivity 
-        c=np.zeros((numElements,4), dtype=np.int32)
+        c=np.full((numElements,ndofs), -1, dtype=np.int32)
         for e in range(0,numElements):
-            for i in range(0,4):
+            numVert = self.mesh.getCell(e).getNumberOfVertices()
+            for i in range(0,numVert):
                 c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label
-        #print "connectivity :",c
+        #print ('connectivity :',c)
 
         if (self.init):  # do only once 
             #Global matrix and global vector -> assuming constant time step size
@@ -579,7 +626,9 @@ class thermal_nonstat(thermal):
                         jj = self.loc[c[e.number-1,j]]
                         self.P[ii,jj] += P_e[i,j]
 
-            # add boundary terms 
+            # add boundary terms
+            #print ('convection BC', self.convectionBC)
+            #exit(0)
             for i in self.convectionBC:
                 #print "Processing bc:", i
                 elem = mesh.getCell(i[0])
@@ -589,25 +638,27 @@ class thermal_nonstat(thermal):
                 #print ("h:%f Te:%f" % (h, Te))
 
                 n1 = elem.getVertices()[side];
-                #print n1
-                if (side == 3):
-                    n2 = elem.getVertices()[0]
-                else:
-                    n2 = elem.getVertices()[side+1]
+                n2 = elem.getVertices()[0 if side+1==elem.getNumberOfVertices() else side+1]
 
-                    length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
-                                       (n2.coords[1]-n1.coords[1])*(n2.coords[1]-n1.coords[1]))
+                length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
+                                        (n2.coords[1]-n1.coords[1])*(n2.coords[1]-n1.coords[1]))
 
-                #print h, Te, length
+                #print (h, Te, length)
 
                 # boundary_lhs=h*(np.dot(N.T,N))
                 boundary_lhs=np.zeros((2,2))
-                boundary_lhs[0,0] = h*(1./3.)*length
-                boundary_lhs[0,1] = h*(1./6.)*length
-                boundary_lhs[1,0] = h*(1./6.)*length
-                boundary_lhs[1,1] = h*(1./3.)*length
+                if self.tria:
+                    boundary_lhs[0,0] = h*(1./4.)*length
+                    boundary_lhs[0,1] = h*(1./4.)*length
+                    boundary_lhs[1,0] = h*(1./4.)*length
+                    boundary_lhs[1,1] = h*(1./4.)*length
+                else:
+                    boundary_lhs[0,0] = h*(1./3.)*length
+                    boundary_lhs[0,1] = h*(1./6.)*length
+                    boundary_lhs[1,0] = h*(1./6.)*length
+                    boundary_lhs[1,1] = h*(1./3.)*length
 
-                # #Assemble
+                #Assemble
                 loci = [n1.number, n2.number]
                 #print loci
                 for i in range(2):#loop nb of dofs
@@ -652,10 +703,7 @@ class thermal_nonstat(thermal):
 
             n1 = elem.getVertices()[side];
             #print n1
-            if (side == 3):
-                n2 = elem.getVertices()[0]
-            else:
-                n2 = elem.getVertices()[side+1]
+            n2 = elem.getVertices()[0 if side+1==elem.getNumberOfVertices() else side+1]
 
             length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
                                (n2.coords[1]-n1.coords[1])*(n2.coords[1]-n1.coords[1]))
@@ -874,7 +922,7 @@ class mechanical(Application.Application):
             ngp  = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
             pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
 
-            # print "e : ",e.number-1
+            #print "e : ",e.number-1
             #print "ngp :",ngp
             #print "pnts :",pnts
 

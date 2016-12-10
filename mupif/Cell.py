@@ -196,7 +196,17 @@ class Cell(object):
 class Triangle_2d_lin(Cell):
     """
     Unstructured 2D triangular element with linear interpolation
+    Node numbering convention:
+
+    2
+    | \
+    |  \
+    |   \
+    |    \
+    0-----1
+
     """
+    
 
     def copy(self):
         """
@@ -297,6 +307,16 @@ class Triangle_2d_lin(Cell):
 
         return ( c1[0] * ( c2[1] - c3[1] ) + c2[0]* ( -c1[1] + c3[1] ) +
                  c3[0] * ( c1[1] - c2[1] ) )
+
+    def _evalN(self, lc):
+        """
+        Evaluates shape functions at given point (given in parametric coordinates).
+
+        :param tuple lc: A local coordinate
+        :return: shape function values
+        :rtype: tuple
+        """
+        return (lc[0], lc[1], 1.-lc[0]-lc[1])
 
 
 class Triangle_2d_quad(Cell):
