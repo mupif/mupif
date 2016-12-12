@@ -378,7 +378,7 @@ class Field(object):
         """
         pickle.dump(self, open(fileName,'wb'), protocol)
 
-    def field2Image2D(self, plane='xy', elevation = (-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None,None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=True, block=True, figsize = (8,4)):
+    def field2Image2D(self, plane='xy', elevation = (-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None,None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=True, figsize = (8,4), matPlotFig=None):
         """ 
         Plots and/or saves 2D image using a matplotlib library. Works for structured and unstructured 2D/3D fields. 2D/3D fields need to define plane. This method gives only basic viewing options, for aesthetic and more elaborated output use e.g. VTK field export with 
         postprocessors such as ParaView or Mayavi. Idea from https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html#id1
@@ -400,8 +400,8 @@ class Field(object):
         :param str ylabel : y axis label
         :param str fileName : if nonempty, a filename is written to the disk, usually png, pdf, ps, eps and svg are supported
         :param bool show : if the plot should be showed
-        :prama bool block : False means plot window remains in separate thread, True waits until a plot window becomes closed
         :param tuple figsize : size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
+        :param obj matPlotFig : False means plot window remains in separate thread, True waits until a plot window becomes closed
         
         :return: Two real roots if they exist
         :rtype: tuple
@@ -410,6 +410,8 @@ class Field(object):
             import numpy as np
             import math
             from scipy.interpolate import griddata
+            import matplotlib
+            matplotlib.use('TkAgg')#Qt4Agg gives an empty, black window
             import matplotlib.pyplot as plt
         except ImportError as e:
             print(e)
@@ -465,12 +467,20 @@ class Field(object):
         
         #print (grid_z1.T)
         
-        plt.figure(figsize=figsize)
-        plt.xlim(xMin, xMax)
-        plt.ylim(yMin, yMax)
-        #image.tight_layout()
+        plt.ion()#ineractive mode
         
+        if matPlotFig == None:
+            matPlotFig = plt.figure(figsize=figsize)
+            #plt.xlim(xMin, xMax)
+            #plt.ylim(yMin, yMax)
+        
+        plt.clf()
+        plt.axis((xMin, xMax, yMin, yMax))
         image = plt.imshow(grid_z1.T, extent=(xMin,xMax,yMin,yMax), origin='lower', aspect='equal')
+        #plt.margins(tight=True)
+        #plt.tight_layout()
+        #plt.margins(x=-0.3, y=-0.3)
+        
         
         if colorBar:
             cbar = plt.colorbar(orientation=colorBar, format=barFormatNum)
@@ -499,7 +509,10 @@ class Field(object):
         if fileName:
             plt.savefig(fileName, bbox_inches='tight')
         if show:
-            plt.show(block=block)
+            matPlotFig.canvas.draw()
+            #plt.ioff()
+            #plt.show(block=block)
+        return matPlotFig
         
 
     def toHdf5(self,fileName,group='component1/part1'):

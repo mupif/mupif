@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env pythonoun            
 from __future__ import print_function
 import sys
 sys.path.append('../../..')
@@ -15,6 +15,7 @@ targetTime = 10.0
 
 thermal = demoapp.thermal_nonstat('inputT13.in','.')
 mechanical = demoapp.mechanical('inputM13.in', '.')
+matPlotFig = None
 
 while (abs(time - targetTime) > 1.e-6):
 
@@ -29,7 +30,7 @@ while (abs(time - targetTime) > 1.e-6):
         f = thermal.getField(FieldID.FID_Temperature, istep.getTime())
         #print ("T(l/2)=", f.evaluate((2.5,0.2,0.0)))
         data = f.field2VTKData().tofile('T_%s'%str(timestepnumber))
-        f.field2Image2D(title='Thermal '+str(time), fileName='thermal.png', block=False)
+        matPlotFig = f.field2Image2D(title='Thermal '+str(time), barRange=(0,9), fileName='thermal.png', matPlotFig=matPlotFig)
 
         mechanical.setField(f)
         sol = mechanical.solveStep(istep) 
