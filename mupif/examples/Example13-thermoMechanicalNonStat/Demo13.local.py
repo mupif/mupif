@@ -11,7 +11,7 @@ import demoapp
 time  = 0.
 dt = 0.
 timestepnumber = 0
-targetTime = 10.0
+targetTime = 3
 
 thermal = demoapp.thermal_nonstat('inputT13.in','.')
 mechanical = demoapp.mechanical('inputM13.in', '.')
@@ -27,12 +27,12 @@ while (abs(time - targetTime) > 1.e-6):
         # solve problem 1
         thermal.solveStep(istep)
         # request Temperature from thermal
-        f = thermal.getField(FieldID.FID_Temperature, istep.getTime())
+        ft = thermal.getField(FieldID.FID_Temperature, istep.getTime())
         #print ("T(l/2)=", f.evaluate((2.5,0.2,0.0)))
-        data = f.field2VTKData().tofile('T_%s'%str(timestepnumber))
-        matPlotFig = f.field2Image2D(title='Thermal '+str(time), barRange=(0,9), fileName='thermal.png', matPlotFig=matPlotFig)
+        data = ft.field2VTKData().tofile('T_%s'%str(timestepnumber))
+        matPlotFig = ft.field2Image2D(title='Thermal '+str(time), barRange=(0,9), fileName='thermal.png', matPlotFig=matPlotFig)
 
-        mechanical.setField(f)
+        mechanical.setField(ft)
         sol = mechanical.solveStep(istep) 
         f = mechanical.getField(FieldID.FID_Displacement, istep.getTime())
         #print ("D(l,1)=", f.evaluate((5.0,1.0,0.0)))
@@ -59,4 +59,4 @@ while (abs(time - targetTime) > 1.e-6):
 # terminate
 thermal.terminate();
 mechanical.terminate();
-
+#ft.field2Image2DBlock() #To block the window

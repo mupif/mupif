@@ -449,9 +449,15 @@ class Field(object):
                 vertexPoints.append((coords[indX], coords[indY]))
                 vertexValue.append(self.giveValue(i)[fieldComponent])
         
+        if(len(vertexPoints)==0):
+            mupif.log.info('No valid vertex points found, putting zeros on domain 1 x 1')
+            for i in range(5):
+                vertexPoints.append((i%2,i/4.))
+                vertexValue.append(0)
+
         #for i in range (0, len(vertexPoints)):
             #print (vertexPoints[i], vertexValue[i])
-        
+
         vertexPointsArr = np.array(vertexPoints)
         vertexValueArr = np.array(vertexValue)
         
@@ -511,9 +517,16 @@ class Field(object):
         if show:
             matPlotFig.canvas.draw()
             #plt.ioff()
-            #plt.show(block=block)
+            #plt.show(block=True)
         return matPlotFig
-        
+  
+    def field2Image2DBlock(self):
+        """
+        Block an open window from matPlotLib. Waits until closed.
+        """
+        import matplotlib.pyplot as plt
+        plt.ioff()
+        plt.show(block=True)
 
     def toHdf5(self,fileName,group='component1/part1'):
         """
