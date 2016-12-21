@@ -51,8 +51,10 @@ MuPIF_TOP_DIR - contains source code and other files of the MuPIF package
    +--mupif - contains source code of the MuPIF package
    |    +--doc - documentation (reference manual and User guide)
    |    +--examples - examples and tests
+   |    +--tests - unit tests
    |    +--Physics - module for units
    |    +--tools - various supportive tools
+   |    +--APIs - implemented APIs
    |    +--*.py - MuPIF classes
    |    +--__init__.py - description of MuPIF module
    +--README.txt - general description
