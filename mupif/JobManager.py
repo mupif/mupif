@@ -63,7 +63,7 @@ class JobManNoResourcesException(JobManException):
     """
     pass
 
-
+@Pyro4.expose
 class JobManager(object):
     """
     An abstract (base) class representing a job manager. The purpose of the job manager is the following:
@@ -150,7 +150,7 @@ SJM2_PROC_INDX = 0 #object of subprocess.Popen
 SJM2_URI_INDX = 3 #Pyro4 uri
 SJM2_PORT_INDX = 4 #port
 
-
+@Pyro4.expose
 class SimpleJobManager(JobManager):
     """
     Simple job manager using Pyro thread pool based server.
@@ -211,7 +211,9 @@ class SimpleJobManager(JobManager):
                 app = self.appAPIClass()
                 start = timeTime.time()
                 self.activeJobs[jobID] = (app, start, user)
-                #register agent
+                #register agent; exposing all its methods
+                #ExposedApp = Pyro4.expose(app)
+                #uri = self.daemon.register(ExposedApp) #
                 uri = self.daemon.register(app)
                 self.ns.register(jobID, uri)
                 logger.info('NameServer %s registered uri %s' % (jobID, uri) )
@@ -257,6 +259,8 @@ class SimpleJobManager(JobManager):
             status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX] ))
         return status
 
+
+@Pyro4.expose
 class SimpleJobManager2 (JobManager):
     """
     Simple job manager 2. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.

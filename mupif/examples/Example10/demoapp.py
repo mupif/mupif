@@ -2,7 +2,7 @@ from __future__ import print_function, division
 from builtins import range
 from mupif import *
 import mupif
-
+import Pyro4
 import meshgen
 import math
 import numpy as np
@@ -17,7 +17,7 @@ def getline (f):
         elif line[0]!='#':
             return line
 
-
+@Pyro4.expose
 class thermal(Application.Application):
     """ Simple stationary heat transport solver on rectangular domains"""
 
@@ -498,7 +498,7 @@ class thermal(Application.Application):
         return "Thermal-demo-solver, ver 1.0"
 
 
-
+@Pyro4.expose
 class thermal_nonstat(thermal):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""    
     def __init__(self, file, workdir):
@@ -741,7 +741,7 @@ class thermal_nonstat(thermal):
         mupif.log.info("Time consumed %f s" % (timeTime.time()-start))
 
 
-
+@Pyro4.expose
 class mechanical(Application.Application):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 

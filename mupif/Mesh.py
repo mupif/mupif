@@ -30,6 +30,7 @@ import copy
 import time
 import sys
 import numpy
+import Pyro4
 from . import CellGeometryType
 try:
    import cPickle as pickle #faster serialization if available
@@ -42,6 +43,7 @@ VERTICES=0; CELLS=1
 #debug flag
 debug = 0
 
+@Pyro4.expose
 class MeshIterator(object):
     """
     Class implementing iterator on Mesh components (vertices, cells).
@@ -100,6 +102,7 @@ class MeshIterator(object):
             """
             return self.__next__()   #Python 2.x compatibility
 
+@Pyro4.expose         
 class Mesh(object):
     """
     Abstract representation of a computational domain.
@@ -346,7 +349,7 @@ class Mesh(object):
         """
         pickle.dump(self, open(fileName,'wb'), protocol)
 
-
+@Pyro4.expose
 class UnstructuredMesh(Mesh):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.

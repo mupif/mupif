@@ -30,6 +30,7 @@ import math
 from . import Mesh
 from . import CellGeometryType
 import numpy as np
+import Pyro4
 
 
 #debug flag
@@ -38,7 +39,7 @@ debug = 0
 #in element tolerance
 tolerance = 0.001
 
-
+@Pyro4.expose
 class Cell(object):
     """
     Representation of a computational cell.
@@ -192,7 +193,7 @@ class Cell(object):
 ##############################################################
 
 
-
+@Pyro4.expose
 class Triangle_2d_lin(Cell):
     """
     Unstructured 2D triangular element with linear interpolation
@@ -318,7 +319,7 @@ class Triangle_2d_lin(Cell):
         """
         return (lc[0], lc[1], 1.-lc[0]-lc[1])
 
-
+@Pyro4.expose
 class Triangle_2d_quad(Cell):
     """
     Unstructured 2D triangular element with quadratic interpolation
@@ -551,6 +552,8 @@ class Triangle_2d_quad(Cell):
         return math.fabs( ( 4 * ( -( x4 * y1 ) + x6 * y1 + x4 * y2 - x5 * y2 + x5 * y3 - x6 * y3 ) + x2 * ( y1 - y3 - 4 * y4 + 4 * y5 ) +
                             x1 * ( -y2 + y3 + 4 * y4 - 4 * y6 ) + x3 * ( -y1 + y2 - 4 * y5 + 4 * y6 ) ) / 6 );
 
+
+@Pyro4.expose
 class Quad_2d_lin(Cell):
     """
     Unstructured 2d quad element with linear interpolation
@@ -768,7 +771,7 @@ class Quad_2d_lin(Cell):
         return j11*j22-j12*j21
 
 
-
+@Pyro4.expose
 class Tetrahedron_3d_lin(Cell):
     """
     Unstructured 3d tetrahedral element with linear interpolation.
@@ -906,6 +909,8 @@ class Tetrahedron_3d_lin(Cell):
 import numpy
 import numpy.linalg
 
+
+@Pyro4.expose
 class Brick_3d_lin(Cell):
     """
     Unstructured 3d tetrahedral element with linear interpolation

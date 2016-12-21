@@ -21,7 +21,9 @@
 # Boston, MA  02110-1301  USA
 #
 from builtins import object
+import Pyro4
 
+@Pyro4.expose
 class Localizer(object):
     """
     A Localizer is an abstract class representing an algorithm used to partition space and quicly localize the contained objects.

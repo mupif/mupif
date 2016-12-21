@@ -26,6 +26,7 @@ from builtins import str, range, object
 import math, itertools
 from . import BBox
 from . import Localizer
+import Pyro4
 
 debug = 0
 refineLimit = 400 # refine cell if number of items exceeds this treshold value
@@ -219,6 +220,8 @@ class Octant(object):
             for i,j,k in self.childrenIJK():
                 depth=max(depth, self.children[i][j][k].giveDepth(itemList, bbox))
         return depth
+
+
 
 class Octree(Localizer.Localizer):
     """

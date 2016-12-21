@@ -1,4 +1,8 @@
 from builtins import object
+import Pyro4
+
+
+@Pyro4.expose
 class TimeStep(object):
     """
     Class representing a time step.

@@ -22,9 +22,11 @@
 #
 
 from builtins import zip, str, range, object
+import Pyro4
 
 debug = 0
 
+@Pyro4.expose
 class BBox(object):
     """
     Represents a bounding box - a rectange in 2D and prism in 3D.

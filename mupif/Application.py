@@ -23,8 +23,10 @@
 
 from builtins import object
 import os
+import Pyro4
 from . import APIError
 
+@Pyro4.expose
 class Application(object):
     """
     An abstract class representing an application and its interface (API).

@@ -1,9 +1,11 @@
 from builtins import object
+import Pyro4
 try:
    import cPickle as pickle #faster serialization if available
 except:
    import pickle
 
+@Pyro4.expose
 class Property(object):
         """
         Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.

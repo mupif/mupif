@@ -32,6 +32,8 @@ import mupif #for logger
 from numpy import array, arange, random, zeros
 import numpy
 import copy
+import Pyro4
+
 try:
    import cPickle as pickle #faster serialization if available
 except:
@@ -48,7 +50,7 @@ class FieldType(object):
     FT_vertexBased = 1
     FT_cellBased   = 2
 
-
+@Pyro4.expose
 class Field(object):
     """
     Representation of field. Field is a scalar, vector, or tensorial
