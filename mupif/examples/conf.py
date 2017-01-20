@@ -45,7 +45,7 @@ portsForJobs=( 9095, 9200 )
 jobNatPorts = list(range(6000, 6050))
 
 #Maximum number of jobs
-maxJobs=4
+maxJobs=20
 #Auxiliary port used to communicate with application daemons on a local computer
 socketApps=10000
 #Main directory for transmitting files

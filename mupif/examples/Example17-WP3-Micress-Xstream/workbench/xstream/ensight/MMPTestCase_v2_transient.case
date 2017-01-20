@@ -1,0 +1,20 @@
+# Ensight6 case file created by GTM-X
+
+FORMAT
+type: ensight
+
+GEOMETRY
+model: MMPTestCase_v2_transient.geo
+
+VARIABLE
+scalar per element:    TEMPERATURE                         fld_TEMPERATURE*.escl
+vector per node:       COORDINATES                         fld_COORDINATES.nvect
+vector per node:       SCALING                             fld_SCALING.nvect
+
+TIME
+time set:                     1
+number of steps:              1
+filename start number:        1
+filename increment:           1
+time values:
+ 0.20000E+01 

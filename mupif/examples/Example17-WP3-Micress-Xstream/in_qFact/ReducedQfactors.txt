@@ -1,0 +1,22 @@
+#
+#
+#  MMP (Multiscale Modeling Platform) - EU Project
+#  funded by FP7 under NMP-2013-1.4-1 call with Grant agreement no: 604279
+#
+#  Copyright (C) 2014-2016 Jurjen Emmelkamp (TNO, The Netherlands)
+# 
+#  CIGS example: Quality factor parameters
+#  Used to determine a quality factor from microstructure data 
+#  
+#  Publication:
+#  'Introducing the Quality Factor as a Fast and Simple Link 
+#  between PV Properties and the Crystal CIGS Structure', Jurjen Emmelkamp,
+#  poster presentation at EU PVSEC 2016 (32nd European Photovoltaic Solar 
+#  Energy Conference and Exhibition), 20. - 24. June 2016, Munich Germany 
+#
+#
+#Parameter	Units	Min	Opt	Max	SF	RF
+Average_Grain_size	[um]	0.143	0.143803333333	4	3	0.6
+Thickness_CIGS	[um]	1.65	1.65219333	5	3	0.5
+Fraction_Cu(2-x)Se	[At%]	0.32	0.4	0.320228868131	1.2	0.5
+Fraction_Cu(In,Ga)3Se5	[At%]	0.27	0.278124836638	1.4	1	0.8
