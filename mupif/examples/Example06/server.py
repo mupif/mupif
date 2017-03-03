@@ -4,6 +4,7 @@ sys.path.append('..')
 import conf as cfg
 from mupif import *
 import mupif
+import Pyro4
 
 #if you wish to run no SSH tunnels, set to True
 noSSH=False
@@ -14,7 +15,7 @@ noSSH=False
 # for computer running a nameserver
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
-
+@Pyro4.expose
 class PingServerApplication(Application.Application):
     """
     Simple application that computes an aritmetical average of a mapped property

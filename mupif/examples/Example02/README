@@ -5,7 +5,7 @@ The overall simulation is performed in a time loop,
 where one application provides data for the second application, 
 which computes the arithmetical average value of given data.
 
-The main difference to Example01 is that this example uses Pyro
+The main difference to Example01 is that this example uses Pyro4
 communication and thus the client and server parts can be executed on 
 different computers. 
 
@@ -14,26 +14,70 @@ Prerequisities:
 Python (preferably Python 2.x) interpreter
 Pyro module installed. To install Pyro, we reccomend to use pip: 
 a tool for installing and managing Python packages:
-
 > pip install Pyro4
 
+There are two configuration files ../conf.py and ../conf_vpn.py. They need to be set up according
+to your network.
 
-To run this distributed example:
---------------------------------
-1) start pyro name server by executing ../nameserver-local.py
+Example02 supports three communication modes:
+1) Local computer
+2) VPN (Virtual private network) communication
+3) SSH tunnel
+The mode can be set up in server.py and client.py by a variable 'mode' in the preamble, e.g. mode = 1
 
+
+Ad 1) Local computer
+-----------------------
+- Start pyro name server on local computer by executing tools/nameserver.py
 The nameserver will listen on "127.0.0.1" locally, or should be set 
 to your public IP adress. Note that in the later case, your firewall has to be configured to accept connections at port 9090.
 
-2) start server script
-python server.py
+- Start server script $python server.py
+By default, the server will listen on internal ip adress "127.0.0.1". If you want your server to listen on your public IP adress, edit the conf.py script. Note that in the later case, your firewall has to be configured to accept connections at port 44382.
+Similarly, by default the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the conf.py script by modifying nshost variable.
 
-By default, the server will listen on internal ip adress "127.0.0.1". If you want your server to listen on your public IP adress, edit the server.py script by modifying localhost variable. Note that in the later case, your firewall has to be configured to accept connections at port 44382.
-Similarly, by default the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the server.py script by modifying nshost variable.
+- Run client script $python client.py
+By default, the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the conf.py script by modifying nshost variable.
 
-3) run client script
-python client.py
-By default, the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit the client.py script by modifying nshost variable.
+
+Ad 2) VPN communication
+-----------------------
+VPN ensures that nameserver, server and client are on a local-like network. You need to set up conf_vpn.py to
+reflect your current setting.
+
+- First, you need to set up a virtual private network. This could be done by e.g. openVPN by issuing a command with root priviledges such as 
+$openvpn mupif1.ovpn from a local computer.
+This assigns a new address to a local computer on a virtual IP address (e.g. 172.30.0.6 as tun0-00) while assigning virtual address on remote computer such 172.30.0.1 on tun0-00 (e.g. mech.fsv.cvut.cz as a server). Then, all communication pretends to run on a local-like virtual network.
+
+- On a server side (e.g. mech.fsv.cvut.cz) run a nameserver $python tools/nameserver-VPN.py.
+
+- On a server side (e.g. mech.fsv.cvut.cz) run $python server.py.
+
+- On a client side run $python client.py.
+
+
+Ad 3) SSH tunnel
+----------------
+SSH tunnel is estabilished between client and server. We need to estabilish 
+network address translation (NAT) settings and port forwarding configurations automatically.
+Server
+
+We need to use NAT You need to set up conf_vpn.py to
+reflect your current setting.
+
+- First, you need to set up a virtual private network. This could be done by e.g. openVPN by issuing a command with root priviledges such as 
+$openvpn mupif1.ovpn from a local computer.
+This assigns a new address to a local computer on a virtual IP address (e.g. 172.30.0.6 as tun0-00) while assigning virtual address on remote computer such 172.30.0.1 on tun0-00 (e.g. mech.fsv.cvut.cz as a server). Then, all communication pretends to run on a local-like virtual network.
+
+- On a server side (e.g. mech.fsv.cvut.cz) run a nameserver $python tools/nameserver-VPN.py.
+
+- On a server side (e.g. mech.fsv.cvut.cz) run $python server.py.
+
+- On a client side run $python client.py.
+
+
+
+
 
 
 note: the client and server scripts can run on different computers.

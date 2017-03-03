@@ -5,10 +5,8 @@ from __future__ import print_function
 # Vit Smilauer 10/2016, vit.smilauer (et) fsv.cvut.cz
 # TNO 09/2015
 
-import os
-import sys
+import os, sys
 import subprocess
-
 sys.path.append('../examples')
 import conf_vpn as cfg
 

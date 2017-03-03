@@ -184,10 +184,10 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
 
     ns = connectNameServer(nshost, nsport, hkey)
     #register agent; register exposed class 
-    ExposedApp = Pyro4.expose(app)
-    uri = daemon.register(ExposedApp)
-    ns.register(nsname, uri)
+    #ExposedApp = Pyro4.expose(app)
+    uri = daemon.register(app)
     app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
+    ns.register(nsname, uri)
 
     log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
     log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, nsname, uri) )

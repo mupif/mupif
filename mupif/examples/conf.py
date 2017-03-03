@@ -9,8 +9,10 @@ Pyro4.config.SERVERTYPE="multiplex"
 #Absolute path to mupif directory - used in JobMan2cmd
 mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
 sys.path.append(mupif_dir)
+mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../.."))
+sys.path.append(mupif_dir)
 
-import logging
+from mupif import logger
 
 #NAME SERVER
 #IP/name of a name server
@@ -19,7 +21,7 @@ nshost = '127.0.0.1'
 #Port of name server
 nsport = 9090
 #Password for accessing nameServer and applications
-hkey = 'mmp-secret-key'
+hkey = 'mupif-secret-key'
 #name server's name
 
 
