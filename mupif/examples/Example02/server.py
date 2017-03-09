@@ -8,13 +8,13 @@
 
 from __future__ import print_function, division
 
-mode = 1 #Communication type 1=local(default), 2=VPN, 3=ssh tunnel
+mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
 
 import sys
 import socket
 sys.path.append('..')
 
-if mode==2:
+if mode==3:
     import conf_vpn as cfg
 else:
     import conf as cfg
@@ -53,7 +53,7 @@ class application2(Application.Application):
     def getCriticalTimeStep(self):
         return 1.0
 
-if mode!=3: #set NATport=port and local IP
+if mode!=2: #set NATport=port and local IP
     cfg.server = cfg.serverNathost
     cfg.serverNatport = cfg.serverPort
 
