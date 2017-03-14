@@ -129,7 +129,7 @@ def getNSAppName(jobname, appname):
 
 def runDaemon(host, port, nathost, natport):
     """
-    Runs a daemon without geristering to a name server
+    Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
     :param int port: Port number where daemon will listen (internal port number)
     :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
@@ -333,7 +333,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
 
     :param Pyro4.naming.Nameserver ns: running name server
     :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
-    :param int natPort: nat port in local computer for ssh tunnel for the application
+    :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
     :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
     :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''

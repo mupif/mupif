@@ -20,7 +20,7 @@ jobNatport = -1
 
 try:
     appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='manual', options='', sshHost = '' )
-    mupif.log.info("Applocated application %s" % appRec)
+    mupif.log.info("Allocated application %s" % appRec)
     thermal = appRec.getApplication()
 except Exception as e:
     mupif.log.exception(e)
