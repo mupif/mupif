@@ -33,7 +33,8 @@ class thermal(Application.Application):
         convectionModelEdges=[]
         try:
             lines = open(self.workDir+os.path.sep+self.file, 'r')
-        except  Exception as e:
+        except Exception as e:
+            mupif.log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
             mupif.log.exception(e)
             exit(1)
 

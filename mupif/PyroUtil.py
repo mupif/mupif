@@ -186,7 +186,11 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     #register agent; register exposed class 
     #ExposedApp = Pyro4.expose(app)
     uri = daemon.register(app)
-    app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
+    try:
+        app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
+    except AttributeError:
+        pass
+    
     ns.register(nsname, uri)
 
     log.debug('NameServer %s has registered uri %s' % (nsname, uri) )

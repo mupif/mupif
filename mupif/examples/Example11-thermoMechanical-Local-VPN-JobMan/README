@@ -1,0 +1,17 @@
+This example demonstrates a staionary coupled thermo-mechanical analysis consisting of a cantilever, clamped on the left hand side edge and subjected to temperature loading. The top and bottom edges are subjected to prescribed temperature, while left and right are isolated. First, the temperature distribution has to be solved in the whole specimen from the given boundary conditions. Then the temperature filed is passed to mechanical analysis, which evaluates the corresponding deformations.
+
+The example needs running thermalServer, mechanicalServer, nameServer and a steering script.
+
+Run nameserver either locally (tools/nameserver.py) or on a remote computer (tools/nameserver-VPN.py)
+
+This example Demo11ext.py runs with three different setups:
+
+1-Local setup - nameserver, thermal server, mechanical server, steering script.
+All runs on a local machine.
+It uses instances of demoapp module, allocated on the fly.
+
+2-Distributed setup using VPN and peer-to-peer connection. Nameserver remote, thermal server remote.
+Mechanical server local, steering script local. You need to create a VPN network prior to execution (e.g. openVPN server-client).
+
+3-Distributed setup using VPN and jobManager connection. Nameserver remote, thermal server remote via job Manager.
+Mechanical server local, steering script local. You need to create a VPN network prior to execution (e.g. openVPN server-client).
