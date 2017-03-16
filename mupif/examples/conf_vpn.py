@@ -12,7 +12,7 @@ sys.path.append(mupif_dir)
 mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../.."))
 sys.path.append(mupif_dir)
 
-from mupif import logger
+from mupif import log
 
 #NAME SERVER and SERVER
 #IP/name of a name server
@@ -38,7 +38,7 @@ appName = 'MuPIFServer'
 #Range of ports to be assigned on the server to jobs
 portsForJobs=( 9095, 9200 )
 #Maximum number of jobs
-maxJobs=10
+maxJobs=30
 #Auxiliary port used to communicate with application daemons on a local computer
 socketApps=10000
 #Main directory for transmitting files

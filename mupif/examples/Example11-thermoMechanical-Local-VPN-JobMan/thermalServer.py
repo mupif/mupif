@@ -4,6 +4,8 @@ sys.path.extend(['..','../../..','../Example10','../Example11-thermoMechanical']
 from mupif import *
 import demoapp
 
+#python jobManStatus.py -n 172.30.0.1 -r 9090 -h 172.30.0.1 -p 44382 -j 'jobMan1' -k 'mupif-secret-key'
+
 ## 1-Local setup - nameserver, thermal server, mechanical server, steering script.
 ## All runs on a local machine ##
 #import conf as cfg

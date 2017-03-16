@@ -40,7 +40,7 @@ class Application(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file, workdir=''):
+    def __init__ (self, file='', workdir=''):
         """
         Constructor. Initializes the application.
 
