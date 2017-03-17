@@ -81,6 +81,7 @@ def main():
     host = 'ksm.fsv.cvut.cz'    
     port = 9090
     hkey =""
+    nshost=None
     ssh = False#ssh flag (set to tru if ssh tunnel need to be established)
     logger = logging.getLogger()
     
@@ -91,7 +92,7 @@ def main():
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")
-        print(opts, args)
+        # print(opts, args)
     except getopt.GetoptError as err: 
         # print help information and exit: 
         print(str(err)) # will print something like "option -a not recognized"
@@ -118,7 +119,12 @@ def main():
         else:
             assert False, "unhandled option"
     
-    print("huhu:"+host+str(port))
+    # print("huhu:"+host+str(port))
+
+    if (not nshost):
+        usage()
+        sys.exit(2)
+        
     
     
     #locate nameserver
