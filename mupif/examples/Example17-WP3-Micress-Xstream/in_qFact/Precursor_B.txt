@@ -1,0 +1,28 @@
+#
+#
+#  MMP (Multiscale Modeling Platform) - EU Project
+#  funded by FP7 under NMP-2013-1.4-1 call with Grant agreement no: 604279
+#
+#  Copyright (C) 2014-2016 Jurjen Emmelkamp (TNO, The Netherlands)
+# 
+#  CIGS example: Precursor table
+#  Used for mapping the Se concentration (1st column) 
+#  to emissivity (2nd column)
+#  
+#  This data was published here:
+#  'Introducing the Quality Factor as a Fast and Simple Link 
+#  between PV Properties and the Crystal CIGS Structure', Jurjen Emmelkamp,
+#  poster presentation at EU PVSEC 2016 (32nd European Photovoltaic Solar 
+#  Energy Conference and Exhibition), 20. - 24. June 2016, Munich Germany 
+#
+#
+0	0.135
+7	0.31
+17.9	0.525
+34.7	0.88
+41.2	0.88
+43.6	0.845
+46.8	0.86
+50.1	0.88
+53.6	0.88
+62.1	0.845

@@ -1,0 +1,42 @@
+#
+#
+#  MMP (Multiscale Modeling Platform) - EU Project
+#  funded by FP7 under NMP-2013-1.4-1 call with Grant agreement no: 604279
+#
+#  Copyright (C) 2014-2016
+#  Luuk Thielen (CelSian Glass&Solar, The Netherlands)
+# 
+#  CIGS example: X-Stream input configuration
+#  This configuration provides necessary test case specific information
+#  for the X-Stream interface to set-up input for the actual X-Stream 
+#  application, run it and parsing its results.
+#  
+{
+# File names for running X-stream
+# Provide name, only (without path)
+'caseFile' : 'MMPTestCase_v2_transient.cas',
+'outputFile' : 'MMPTestCase2.out',
+'gridFile' : 'MMPTESTCASE.grd',
+'geoFile' : 'MMPTestCase_v2_transient.geo',
+'fieldFile' : 'fld_TEMPERATURE1',
+
+# Filenames for field boundary conditions
+# Provide name, only (without path)
+'Temperature_dataset' : 'TemperatureFld_Dataset.txt',
+'Emissivity_dataset' : 'EmissivityFld_Dataset.txt',
+
+# Name of the boundary on which bc's can be changed
+'boundary_name_start' : 'BEGIN BOUNDARY FLOWGLAS DOMAIN',
+'boundary_name_end' : 'END BOUNDARY FLOWGLAS',
+'boundary_axis1' : 'X',
+'boundary_axis2' : 'Y',
+
+# Dimension and spacing of the boundary condition that can be imposed
+'boundary_minx'   : -0.015,
+'boundary_maxx'   :  0.015,
+'boundary_miny'   : -0.015,
+'boundary_maxy'   :  0.015,
+'boundary_minz'   :  0.0,
+'boundary_maxz'   :  0.0,
+'boundary_spacing':  0.003,
+}

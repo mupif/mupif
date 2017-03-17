@@ -26,7 +26,7 @@ from nose.tools import nottest
 @nottest
 class TestLocalApp(unittest.TestCase):
     jobname='TestLocalApp'
-    hkey='mmp-secret-key'
+    hkey='mupif-secret-key'
     sshpwd='ssh-secret-key'
     # def __init__(self): super(TestLocalApp,self).__init__()
     def setUp(self):

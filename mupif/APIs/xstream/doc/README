@@ -1,0 +1,38 @@
+However, the final document has several deficiencies: no introduction, inclusion of all tests and unnecessary *.py files.
+For this reason, the files *.rst are adviced to edit manually (a backup is available in directory manual-modification.
+Then run manually $make pdflatex  or $make html . It will not change *.rst files anymore.
+
+
+
+=== Documentation using Sphinx - a preferred method ===
+sphinx-apidoc -A "Luuk Thielen, Miriam Del Hoyo, Ralph Altenfeld" -H "X-stream API" -R "1.0.0" -f -F  -o . ../
+
+#Add path to conf.py so Sphinx can find *.py modules and mupif. Insert just after import os (like line 17)
+sys.path.append(os.path.abspath('../..'))
+sys.path.append(os.path.abspath('../../../..'))
+
+	#Uncomment
+	latex_domain_indices = False
+
+	#and at the end to make one page printing
+latex_elements = {
+  'classoptions': ',openany,oneside', 'babel': '\\usepackage[english]{babel}', 
+  'tableofcontents': '', 'printindex': '', 
+}
+
+#Since the source directory contains __init__.py file, sphinx treats all *.py files as a part of mupif module. Once __init__.py is removed, sphinx treats all classes individually.
+
+
+#From index.rst delete lines
+Contents:
+Indices and tables and to the end
+
+
+#Create documentation, e.g. html works the best for initial debugging
+make html
+
+#Create pdf documentation
+make latexpdf
+
+#Conf.py could be edited further if needed. Keep out -F in sphinx-apidoc command otherwise conf.py becomes overwritten.
+

@@ -6,7 +6,6 @@ class RemoteAppRecord (object):
     * jobMan: reference to jobManager 
     * jobManTunnel: reference to jobManager tunnel representation
     * jobID: jobID of application
-
     .. automethod:: __init__
     """
     def __init__ (self, app, appTunnel, jobMan, jobManTunnel, jobID):
@@ -30,7 +29,6 @@ class RemoteAppRecord (object):
     def appendNextApplication(self, app, appTunnel, jobID):
         """
         Append next application on existing instance
-
         :param Application app: application instance
         :param subprocess.Popen appTunnel: ssh tunnel subprocess representing ssh tunnel to application process
         :param string jobID: application jobID
@@ -42,7 +40,6 @@ class RemoteAppRecord (object):
     def getApplication(self, num=0):
         """
         Returns application instance
-
         :param int num: number of application, default 0
         :return: Instance of Application
         """
@@ -51,7 +48,6 @@ class RemoteAppRecord (object):
     def getApplicationUri(self, num=0):
         """
         Returns application uri
-
         :param int num: number of application, default 0
         :return: uri
         """
@@ -80,11 +76,9 @@ class RemoteAppRecord (object):
     def terminateApp(self, num):
         """
         Terminates app[num] and its ssh tunnel. Job manager and its tunnel remains untouched.
-
         :param int num: number of application
         """
         if self.app[num]: self.app[num].terminate()
         if self.appTunnel[num]:
             if self.appTunnel[num]!='manual':
                 self.appTunnel[num].terminate()
-

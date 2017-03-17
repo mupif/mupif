@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-
-
 from __future__ import print_function, division
+
+import sys
+sys.path.append('../..') #Path to mupif if installed locally
+
 from builtins import str
 import getopt, sys
 from mupif import JobManager
@@ -19,6 +21,9 @@ jobid_col = 0
 port_col  = 35
 user_col = 41
 time_col = 70
+
+
+
 
 def usage():
     print("Usage: jobManStatus -n nshost -r nsPort -h hostname -p port -j jobmanname -k hkey [-t -u user]")

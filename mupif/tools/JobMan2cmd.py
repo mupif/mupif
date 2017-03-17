@@ -2,26 +2,28 @@ from __future__ import print_function
 from builtins import str
 import future.utils
 import sys
+sys.path.extend(['../..','../../..'])
 
 import socket
 import getopt, sys
 import logging
 import importlib
-#from mupif import PyroUtil
-
+from mupif import Util
 
 def usage():
     print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile")
 
 def main():
-    #Results are printed through a logger only - communication with this subprocess is peculiar
-    formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
-    formatTime = '%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(filename='JobMan2cmd.log',filemode='w',format=formatLog,level=logging.DEBUG)
-    logger = logging.getLogger()#create a logger
-    ch = logging.StreamHandler()
-    ch.setFormatter(logging.Formatter(formatLog, formatTime))
-    logger.addHandler(ch)
+    logger = Util.setupLogger(loggerName='JobMan2cmd', level=logging.DEBUG)
+    
+    ##Results are printed through a logger only - communication with this subprocess is peculiar
+    #formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+    #formatTime = '%Y-%m-%d %H:%M:%S'
+    #logging.basicConfig(filename='JobMan2cmd.log',filemode='w',format=formatLog,level=logging.DEBUG)
+    #logger = logging.getLogger()#create a logger
+    #ch = logging.StreamHandler()
+    #ch.setFormatter(logging.Formatter(formatLog, formatTime))
+    #logger.addHandler(ch)
 
     logger.info ("JobMan2cmd: " + str(sys.argv[1:]))
 

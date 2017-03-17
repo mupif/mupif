@@ -33,7 +33,8 @@ class thermal(Application.Application):
         convectionModelEdges=[]
         try:
             lines = open(self.workDir+os.path.sep+self.file, 'r')
-        except  Exception as e:
+        except Exception as e:
+            mupif.log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
             mupif.log.exception(e)
             exit(1)
 
@@ -580,10 +581,10 @@ class thermal_nonstat(thermal):
         start = timeTime.time()
         mupif.log.info(self.getApplicationSignature())
         mupif.log.info("Number of equations: %d" % self.neq)
-
         #connectivity 
-        c=np.full((numElements,ndofs), -1, dtype=np.int32)
-        for e in range(0,numElements):
+        c=np.zeros((numElements,ndofs), dtype=np.int32)
+        c.fill(-1)
+	for e in range(0,numElements):
             numVert = self.mesh.getCell(e).getNumberOfVertices()
             for i in range(0,numVert):
                 c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label

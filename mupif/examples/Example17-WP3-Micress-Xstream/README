@@ -1,0 +1,22 @@
+This example shows a coupled simulation between X-stream and Micress. It uses precomputed values
+so no simulation is actually run.
+
+First, X-stream executes the initialization of monitor files, lookup table (concentration -> emissivity),
+quality factor module, and a Mupif mesh representing the glass substrates surface is done.
+    
+One time step of the overall simulation chain consists of a critical time step of X-Stream
+and a loop over the surface mesh node positions for microstructure analysis by MICRESS
+for the same simulation time. The temperature at each position will be given by 
+X-Stream and serves as a boundary property for MICRESS. After the complete microstructure
+analysis is done, the individual Se concentrations will be mapped by the lookup table to
+emissivity values and assembled to a 2D surface mesh which will serve as a boundary
+condition for the next X-Stream step. Additionally, some properties of the microstructure
+will be combined to a local quality factor, e.g. grain size.
+    
+The average of the local quality factors after the last time step is the overall quality
+factor of the photovoltaic thin-film layer. However, there is only data for a few beginning
+time steps given in this example and the quality factor will remain zero.
+    
+The main intention of this example is to present one way of implementing a
+simulation chain for Mupif, not to evaluate a CIGS photovoltaic component.
+ 

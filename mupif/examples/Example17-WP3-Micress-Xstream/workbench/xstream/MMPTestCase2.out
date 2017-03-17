@@ -1,0 +1,805 @@
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                              WELCOME TO GTM-X
+                              Version V4.5
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Title of computed case: Demonstration case for MMP simulation chain
+
+==================================================================================
+ G r i d   i n f o r m a t i o n
+==================================================================================
+Reading information from gridfile MMPTESTCASE.grd
+ 
+-------------------------
+Memory allocation
+-------------------------
+Maximum grid level:                   1
+Number of blocks in this grid:       10
+ 
+Maximum nodes in i-direction:        12
+Maximum nodes in j-direction:        12
+Maximum nodes in k-direction:         3
+ 
+Grid:  1 Total number of grid cells on this level:      500
+Grid:  1 Total number of nodes for all blocks on this level:     2520
+==================================================================================
+ R e a d i n g   d a t a   f r o m   r e s t a r t   f i l e
+==================================================================================
+ Reading data from the binary file MMPTestCase2.bin
+Restart time =   1.0000E+00
+ Reading U_VELOCITY
+ Reading V_VELOCITY
+ Reading W_VELOCITY
+ Reading PRESSURE
+Field old_PRESSURE will be filled with field at the current timestep if stored
+ Reading PRES_CORRECTION
+Field old_PRES_CORRECTION will be filled with field at the current timestep if stored
+ Reading ENERGY
+ Reading RADIATION_INTENSITY
+Field old_RADIATION_INTENSITY will be filled with field at the current timestep if stored
+ Reading EAST_MASSFLUX
+Field old_EAST_MASSFLUX will be filled with field at the current timestep if stored
+ Reading NORTH_MASSFLUX
+Field old_NORTH_MASSFLUX will be filled with field at the current timestep if stored
+ Reading TOP_MASSFLUX
+Field old_TOP_MASSFLUX will be filled with field at the current timestep if stored
+ Reading XG_FORCE
+Field old_XG_FORCE will be filled with field at the current timestep if stored
+ Reading YG_FORCE
+Field old_YG_FORCE will be filled with field at the current timestep if stored
+ Reading ZG_FORCE
+Field old_ZG_FORCE will be filled with field at the current timestep if stored
+ Reading X_FORCE
+Field old_X_FORCE will be filled with field at the current timestep if stored
+ Reading Y_FORCE
+Field old_Y_FORCE will be filled with field at the current timestep if stored
+ Reading Z_FORCE
+Field old_Z_FORCE will be filled with field at the current timestep if stored
+ Reading MASS_IMBALANCE
+Field old_MASS_IMBALANCE will be filled with field at the current timestep if stored
+ Reading ENRG_IMBALANCE
+Field old_ENRG_IMBALANCE will be filled with field at the current timestep if stored
+ Reading EFFECTIVE_VISCOSITY
+Field old_EFFECTIVE_VISCOSITY will be filled with field at the current timestep if stored
+ Reading REFRESH_RATE
+Field old_REFRESH_RATE will be filled with field at the current timestep if stored
+ Reading VISCOSITY
+Field old_VISCOSITY will be filled with field at the current timestep if stored
+ Reading DENSITY
+ Reading SPECIFIC_HEAT
+Field old_SPECIFIC_HEAT will be filled with field at the current timestep if stored
+ Reading THERMAL_CONDUCTIVITY
+Field old_THERMAL_CONDUCTIVITY will be filled with field at the current timestep if stored
+ Reading ABSORPTION_COEFFICIENT
+Field old_ABSORPTION_COEFFICIENT will be filled with field at the current timestep if stored
+ Reading TOTAL_ABSORPTION_COEFFICIENT
+Field old_TOTAL_ABSORPTION_COEFFICIENT will be filled with field at the current timestep if stored
+ Reading SCATTERING_COEFFICIENT
+Field old_SCATTERING_COEFFICIENT will be filled with field at the current timestep if stored
+ Reading TEMPERATURE
+Field old_TEMPERATURE will be filled with field at the current timestep if stored
+ Reading BLACKBODY_INTENSITY
+Field old_BLACKBODY_INTENSITY will be filled with field at the current timestep if stored
+ Reading RADHEAT
+Field old_RADHEAT will be filled with field at the current timestep if stored
+ Reading TRANSHEAT
+Field old_TRANSHEAT will be filled with field at the current timestep if stored
+ Reading HEAT_USER_SRC
+Field old_HEAT_USER_SRC will be filled with field at the current timestep if stored
+ Reading MASS_USER_SRC
+Field old_MASS_USER_SRC will be filled with field at the current timestep if stored
+ Reading IRRAD
+Field old_IRRAD will be filled with field at the current timestep if stored
+ Reading EPOWER
+Field old_EPOWER will be filled with field at the current timestep if stored
+ Reading REFRACTIVE_INDEX
+Field old_REFRACTIVE_INDEX will be filled with field at the current timestep if stored
+ Reading MAX_CELL_SIZE
+Field old_MAX_CELL_SIZE will be filled with field at the current timestep if stored
+ Reading OPT_THICKNESS
+Field old_OPT_THICKNESS will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#1
+Field old_DOM_DIR_INTENSITY_#1 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#2
+Field old_DOM_DIR_INTENSITY_#2 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#3
+Field old_DOM_DIR_INTENSITY_#3 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#4
+Field old_DOM_DIR_INTENSITY_#4 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#5
+Field old_DOM_DIR_INTENSITY_#5 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#6
+Field old_DOM_DIR_INTENSITY_#6 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#7
+Field old_DOM_DIR_INTENSITY_#7 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#8
+Field old_DOM_DIR_INTENSITY_#8 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#9
+Field old_DOM_DIR_INTENSITY_#9 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#10
+Field old_DOM_DIR_INTENSITY_#10 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#11
+Field old_DOM_DIR_INTENSITY_#11 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#12
+Field old_DOM_DIR_INTENSITY_#12 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#13
+Field old_DOM_DIR_INTENSITY_#13 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#14
+Field old_DOM_DIR_INTENSITY_#14 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#15
+Field old_DOM_DIR_INTENSITY_#15 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#16
+Field old_DOM_DIR_INTENSITY_#16 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#17
+Field old_DOM_DIR_INTENSITY_#17 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#18
+Field old_DOM_DIR_INTENSITY_#18 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#19
+Field old_DOM_DIR_INTENSITY_#19 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#20
+Field old_DOM_DIR_INTENSITY_#20 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#21
+Field old_DOM_DIR_INTENSITY_#21 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#22
+Field old_DOM_DIR_INTENSITY_#22 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#23
+Field old_DOM_DIR_INTENSITY_#23 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#24
+Field old_DOM_DIR_INTENSITY_#24 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#25
+Field old_DOM_DIR_INTENSITY_#25 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#26
+Field old_DOM_DIR_INTENSITY_#26 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#27
+Field old_DOM_DIR_INTENSITY_#27 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#28
+Field old_DOM_DIR_INTENSITY_#28 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#29
+Field old_DOM_DIR_INTENSITY_#29 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#30
+Field old_DOM_DIR_INTENSITY_#30 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#31
+Field old_DOM_DIR_INTENSITY_#31 will be filled with field at the current timestep if stored
+ Reading DOM_DIR_INTENSITY_#32
+Field old_DOM_DIR_INTENSITY_#32 will be filled with field at the current timestep if stored
+==================================================================================
+ C o m p l e t e   c a s e   d e s c r i p t i o n
+==================================================================================
+-------------------------
+Filenames
+-------------------------
+Gridfile:                    MMPTESTCASE.grd
+Casefile:                    MMPTestCase_v2_transient.cas
+Outputfile:                  MMPTestCase2.out
+Restart_file:                MMPTestCase2
+  
+-------------------------
+Iteration parameters
+-------------------------
+Convergence threshold:              1.00E-06
+Divergence  threshold:              1.00E+15
+SIMPLE-stabilizer parameter:               2
+ Extra loop for computing pressure to improve 
+ convergence rate enabled!
+SIP solver alpha parameter:           0.9100
+  
+-------------------------
+Transient information
+-------------------------
+Time step                      1.00E+00
+Blend time-integration           0.0000
+Number of timesteps                   1
+Minimum iter per timestep             2
+Solution saved after timestep  10000000
+No stop when steady state is reached
+  
+-------------------------
+User defined functions
+-------------------------
+ 
+           -------------------------------------------------------
+           UDF: TEMP_RAMP_TOPW
+           -------------------------------------------------------
+           LET   T1 = 853.15
+           LET   T2 = 773.15
+           LET   T3 = 623.15
+           LET   T4 = 298.15
+           LET   TIME1 = 250.0
+           LET   TIME2 = 500.0
+           LET   TIME3 = 1000.0
+           LET   TBOUND = IF ( TIME < TIME1 ) THEN T1 ELSE IF ( TIME < TIME2 ) THEN T2 ELSE IF ( TIME < TIME3 ) THEN T3 ELSE T4 ENDIF
+           VALUE TBOUND
+           -------------------------------------------------------
+  
+No UDF fields defined
+  
+-------------------------
+Materials and mixtures
+-------------------------
+           -------------------------------------------------------
+Id:   1    AIR                      Continuum_type: fluid
+           -------------------------------------------------------
+           VISCOSITY                   constant  3.781E-05
+           DENSITY                     constant  3.949E-01
+           SPECIFIC_HEAT               constant  7.421E+02
+           THERMAL_CONDUCTIVITY        constant  4.209E-02
+           SCATTERING_COEFFICIENT      constant  0.000E+00
+           ABSORPTION_COEFFICIENT      constant  0.000E+00
+           REFRACTIVE_INDEX            constant  1.000E+00
+           SURFACE_EMISSIVITY          constant  1.000E+00
+           MEAN_BEAM_LENGTH            constant  1.000E+00
+           -------------------------------------------------------
+  
+           -------------------------------------------------------
+Id:   2    GLASS                    Continuum_type: solid
+           -------------------------------------------------------
+           VISCOSITY                   constant  1.000E-04
+           DENSITY                     constant  2.500E+03
+           SPECIFIC_HEAT               constant  8.400E+02
+           THERMAL_CONDUCTIVITY        constant  3.000E+00
+           SCATTERING_COEFFICIENT      constant  0.000E+00
+           ABSORPTION_COEFFICIENT      constant  0.000E+00
+           SURFACE_EMISSIVITY          constant  1.000E+00
+           MEAN_BEAM_LENGTH            constant  1.000E+00
+           -------------------------------------------------------
+  
+-------------------------
+Model constants
+-------------------------
+Machine underflow              1.00E-15
+Machine overflow               1.00E+15
+Gravity in domain    D_FLOW    0.00  0.00 -9.81
+Gravity in domain    D_GLASS   0.00  0.00 -9.81
+  
+-------------------------
+Turbulence model
+-------------------------
+No turbulence model selected
+  
+-------------------------
+Crown model
+-------------------------
+No crown boundary selected
+  
+-------------------------
+Bubbling model
+-------------------------
+No bubbling model selected
+  
+-------------------------
+Batch parameters
+-------------------------
+No batch calculated
+  
+-------------------------
+Phase change model
+-------------------------
+No phase change
+  
+-------------------------
+Boosting parameters
+-------------------------
+No boosting calculated
+  
+-------------------------
+Stirring parameters
+-------------------------
+No stirring calculated
+  
+-------------------------
+Horizontal stirring parameters
+-------------------------
+No stirring calculated
+  
+-------------------------
+Feeder Models
+-------------------------
+No feeder model calculated
+  
+-------------------------
+Radiation model
+-------------------------
+
+---------------
+  Domain D_FLOW
+---------------
+Discrete Ordinate Method (DOM) used to model radiation
+Radiation calculated after it         1
+Rays in nphi-direction                2
+Rays in theta-direction               2
+Optical thickness limit        5.00E-01
+Gray radiation model applied 
+  
+-------------------------
+Combustion parameters
+-------------------------
+No combustion calculated
+  
+-------------------------
+Foam parameters
+-------------------------
+No FOAM LAYER calculated
+
+-------------------------
+1d wall parameters
+-------------------------
+No 1D WALL calculated
+
+No user sources on physicals defined
+  
+No user UDF sources defined
+  
+No particle trace model applied
+  
+-------------------------
+Chemical species
+-------------------------
+No chemical species defined
+  
+-------------------------
+Released species
+-------------------------
+No released species defined
+  
+-------------------------
+Surface species
+-------------------------
+No surface species defined
+  
+-------------------------
+Function_species tables
+-------------------------
+No function_species tables defined
+  
+-------------------------
+Reactions
+-------------------------
+No reactions
+  
+-------------------------
+Elementary Reactions
+-------------------------
+No elementary reactions
+  
+-------------------------
+Surface sites
+-------------------------
+No surface sites
+  
+-------------------------
+Surface reactions
+-------------------------
+No surface reactions
+  
+-------------------------
+Elementary surface reactions
+-------------------------
+No elementary surface reactions
+  
+-------------------------
+Blister model
+-------------------------
+No blister model calculated
+  
+-------------------------
+Boundary surface area [m^2]
+-------------------------
+BC_FLTO                             9.0000E-04
+BC_FLBA                             4.8000E-04
+BC_FLFR                             4.8000E-04
+BC_FLRI                             4.8000E-04
+BC_FLLE                             4.8000E-04
+BC_GLBO                             9.0000E-04
+BC_GLBA                             1.2000E-04
+BC_GLFR                             1.2000E-04
+BC_GLRI                             1.2000E-04
+BC_GLLE                             1.2000E-04
+FLOWGLAS                            9.0000E-04
+GLASFLOW                            9.0000E-04
+  
+-------------------------
+Domain volume [m^3]
+-------------------------
+D_FLOW                              1.4400E-05
+D_GLASS                             3.6000E-06
+  
+-------------------------
+DSMC model 
+-------------------------
+No DSMC applied
+ 
+-------------------------
+Parallel information
+-------------------------
+This is a parallel calculation on 1 processors, with 10 blocks.
+Master processor has rank 0
+  
+Name of processor 0: acsrvappmic1
+  
+Processor   0 computes blocks   1  2  3  4  5  6  7  8  9 10
+  
+Exchange overhead (# region points / total # grid points)
+
+  internal:       27.78%
+  domain:          7.94%
+
+Communication overhead (# comm. points / total # grid points)
+
+  internal:        0.00%
+  domain:          0.00%
+
+Relative load per processor (100% = optimally loaded)
+  
+  processor  0:  100.00%
+  
+-------------------------
+Stop Method
+-------------------------
+           Stopping by user-defined stop criteria
+           Residual                    D_FLOW U_VELOCITY          1.00E-04
+           Residual                    D_FLOW V_VELOCITY          1.00E-04
+           Residual                    D_FLOW W_VELOCITY          1.00E-04
+           Residual                    D_FLOW PRESSURE            1.00E-04
+           Residual                    D_FLOW ENERGY              1.00E-04
+           Energy_balance              D_FLOW                     2.00E-03
+           Energy_balance              D_GLASS                    2.00E-03
+-------------------------
+Specific variable settings for every domain
+-------------------------
+         Columns represent the following:
+          (1) : Underrelaxation factor
+          (2) : Gradient underrelaxation factor
+          (3) : Blending factor
+          (4) : Convection scheme 
+                (CDS)uds<->cds (LUDS)uds<->luds (QUDS)uds<->quds (TVD)tvd
+                NOTE: with TVD no blending possible!!!!
+          (5) : TVD limiter
+                NOTE: Only used when TVD scheme is active
+          (6) : Solver type 
+          (7) : Amount of inner iterations (within the solver)
+          (8) : Convergence criterion for inner iterations
+          (9) : Print variable
+         (10) : Read variable from restart file
+         (11) : Write variable to restart file
+         (12) : Initial value for this variable
+         -- indicates: Not applicable for this variable
+  
+                   ****** Domain   1 D_FLOW ******
+Flow model applied                    (1)   (2)   (3)   (4)  (5)     (6)    (7)  (8)    (9)(10)(11)   (12)
+    U_VELOCITY                       0.30  1.00  0.00   CDS   -       SIP   15 1.0E-03   F   T   T  ---file---
+    V_VELOCITY                       0.30  1.00  0.00   CDS   -       SIP   15 1.0E-03   F   T   T  ---file---
+    W_VELOCITY                       0.30  1.00  0.00   CDS   -       SIP   15 1.0E-03   F   T   T  ---file---
+    PRESSURE                         0.90  1.00  0.00   CDS   -       SIP   10 1.0E-03   F   T   T  ---file---
+    X_FORCE                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    Y_FORCE                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    Z_FORCE                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    XG_FORCE                         1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    YG_FORCE                         1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    ZG_FORCE                         1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    MASS_IMBALANCE                   1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    VISCOSITY                        1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    DENSITY                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    BDENSITY                         not active
+    MASS_USER_SRC                     --    --    --     -    -       ---    -   ---     F   T   T  ---file---
+    REFRESH_RATE                     1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+Energy model applied                  (1)   (2)   (3)   (4)  (5)     (6)    (7)  (8)    (9)(10)(11)   (12)
+    ENERGY                           1.00  1.00  0.00   CDS   -       SIP   15 1.0E-03   F   T   T  ---file---
+    TEMPERATURE                      1.00   --    --     -    -       ---    -   ---     T   T   T  ---file---
+    ENRG_IMBALANCE                   1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    THERMAL_CONDUCTIVITY             1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    SPECIFIC_HEAT                    1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    TRANSHEAT                        1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    DENSITY                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    HEAT_USER_SRC                     --    --    --     -    -       ---    -   ---     F   T   T  ---file---
+Gray DOM model applied                (1)   (2)   (3)   (4)  (5)     (6)    (7)  (8)    (9)(10)(11)   (12)
+    RADIATION_INTENSITY              1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    BLACKBODY_INTENSITY              1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    SCATTERING_COEFFICIENT           1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    ABSORPTION_COEFFICIENT           1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    TOTAL_ABSORPTION_COEFFICIENT     1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    RADHEAT                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    REFRACTIVE_INDEX                 1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    IRRAD                            1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    EPOWER                           1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    OPT_THICKNESS                    1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    DOM_DIR_INTENSITY_#1             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#2             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#3             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#4             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#5             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#6             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#7             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#8             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#9             1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#10            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#11            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#12            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#13            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#14            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#15            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#16            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#17            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#18            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#19            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#20            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#21            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#22            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#23            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#24            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#25            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#26            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#27            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#28            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#29            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#30            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#31            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    DOM_DIR_INTENSITY_#32            1.00  1.00  0.00   CDS   -       SIP    5 1.0E-03   F   T   T  ---file---
+    -----
+    (x,y,z) pressure reference point:  1.500E-03 1.350E-02 2.000E-03
+    Reference density for this domain:     0.00
+    -----
+                   ****** Domain   2 D_GLASS ******
+Energy model applied                  (1)   (2)   (3)   (4)  (5)     (6)    (7)  (8)    (9)(10)(11)   (12)
+    ENERGY                           1.00  1.00  0.00   CDS   -       SIP   15 1.0E-03   F   T   T  ---file---
+    TEMPERATURE                      1.00   --    --     -    -       ---    -   ---     T   T   T  ---file---
+    ENRG_IMBALANCE                   1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    THERMAL_CONDUCTIVITY             1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    SPECIFIC_HEAT                    1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    TRANSHEAT                        1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    DENSITY                          1.00   --    --     -    -       ---    -   ---     F   T   T  ---file---
+    HEAT_USER_SRC                     --    --    --     -    -       ---    -   ---     F   T   T  ---file---
+    -----
+==================================================================================
+ S t a r t i n g   g r i d   l e v e l   1
+==================================================================================
+
+--------------------------------------------------------------------------------
+Conv. crit. SATISFIED for this step - time =   2.00000E+00
+--------------------------------------------------------------------------------
+
+=oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo=
+
+GTM-X model reports for grid level 1
+
+=oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo=
+
+==================================================================================
+ R a d i a t i o n   r e p o r t
+==================================================================================
+Optical thickness limit =    5.00E-01
+
+-------------------------
+ Domain D_FLOW
+-------------------------
+
+ Max. optical thickness based on total absorption coeff. =     0.00000E+00 at xyz   1.50000E-03  1.50000E-02  2.00000E-03
+
+
+==================================================================================
+ C l i p p i n g   r e p o r t
+==================================================================================
+
+--------------------------------------------------------------------------------
+Clipped variables in domain D_FLOW
+--------------------------------------------------------------------------------
+No variables clipped on domain D_FLOW
+
+--------------------------------------------------------------------------------
+Clipped variables in domain D_GLASS
+--------------------------------------------------------------------------------
+No variables clipped on domain D_GLASS
+
+==================================================================================
+ I n s t a n t a n e o u s   m a s s   a n d   e n e r g y   r e p o r t
+==================================================================================
+   == Report 1: Mass Rate [kg/s] and Energy Rate [J/s] on Boundaries 
+
+ Boundary name | Mass           | Convective     | Diffusive      | Radiative      | Total energy   | OW_Diffusive   | OW_Radiative   | Total OW_energy| 
+ -----------------------------------------------------------------------------------------------------
+   INLET(s)
+ BC_FLLE       |   2.5000E-07   |   1.5828E-01   |   1.1551E+00   |   0.0000E+00   |   1.3134E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ -----------------------------------------------------------------------------------------------------
+   OUTLET(s)
+ BC_FLRI       |  -2.5000E-07   |  -1.0740E-01   |   1.9963E-16   |   0.0000E+00   |  -1.0740E-01   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ -----------------------------------------------------------------------------------------------------
+   WALL(s)
+ BC_FLTO       |  -0.0000E+00   |   0.0000E+00   |   1.0378E+00   |   1.3120E+01   |   1.4158E+01   |   1.4158E+01   |   0.0000E+00   |   1.4158E+01   | 
+ BC_FLBA       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_FLFR       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLBO       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLBA       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLFR       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLRI       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLLE       |  -0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ -----------------------------------------------------------------------------------------------------
+   DOMAIN INTERFACE(s)
+ FLOWGLAS      |  -0.0000E+00   |   0.0000E+00   |  -2.1004E+00   |  -1.3120E+01   |  -1.5220E+01   |  -1.5220E+01   |   0.0000E+00   |  -1.5220E+01   | 
+ GLASFLOW      |  -0.0000E+00   |   0.0000E+00   |   1.5220E+01   |   0.0000E+00   |   1.5220E+01   |   2.1004E+00   |   1.3120E+01   |   1.5220E+01   | 
+ -----------------------------------------------------------------------------------------------------
+
+  SUM          |  -9.2328E-14   |   5.0878E-02   |   1.5313E+01   |   8.0861E-10   |   1.5364E+01   |   1.0378E+00   |   1.3120E+01   |   1.4158E+01   |
+
+ Note: convective heat fluxes wrt 0 [K] as reference state
+
+   == Report 2: Energy sources in domains [J/s]
+
+  Domain    | Boost      | Batch      | Combustion | Radiation  | Stir       | Imposed    | Transient  | Oil        | Total      |
+
+ --------------------------------------------------------------------------------------------------------------------
+ D_FLOW     |  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00| -1.4337E-01|  0.0000E+00| -1.4337E-01|
+ D_GLASS    |  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00| -1.5220E+01|  0.0000E+00| -1.5220E+01|
+ --------------------------------------------------------------------------------------------------------------------
+
+  SUM       |  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00| -1.5364E+01|  0.0000E+00| -1.5364E+01|
+
+
+  == Report 3: Global mass and energy balance
+
+ Mass/Energy | Total inlets | Total outlets| Total walls  | Field sources|  Balance     |  Fraction   |
+
+ -----------------------------------------------------------------------------------------------------
+ Mass        |   2.5000E-07 |  -2.5000E-07 |   0.0000E+00 |   0.0000E+00 |  -9.2328E-14 |  100.0000%  |
+ Energy      |   1.3134E+00 |  -1.0740E-01 |   1.4158E+01 |  -1.5364E+01 |   1.6470E-06 |  100.0000%  |
+ -----------------------------------------------------------------------------------------------------
+ Note: The field source of radiation does not participate in the global energy balance. 
+
+
+==================================================================================
+ T i m e   i n t e g r a t e d   m a s s   a n d   e n e r g y   r e p o r t
+==================================================================================
+
+   => Integrated from 1.0000E+00 to 2.0000E+00 [s], or 2.7778E-04 to 5.5556E-04 [h]
+
+   == Report 1: Mass flow [kg] and Energy flow [J] on Boundaries 
+
+ Boundary name | Mass           | Convective     | Diffusive      | Radiative      | Total energy   | OW_Diffusive   | OW_Radiative   | Total OW_energy| 
+ -----------------------------------------------------------------------------------------------------
+   INLET(s)
+ BC_FLLE       |   2.5000E-07   |   1.5828E-01   |   1.1551E+00   |   0.0000E+00   |   1.3134E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ -----------------------------------------------------------------------------------------------------
+   OUTLET(s)
+ BC_FLRI       |  -2.5000E-07   |  -1.0740E-01   |   1.9963E-16   |   0.0000E+00   |  -1.0740E-01   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ -----------------------------------------------------------------------------------------------------
+   WALL(s)
+ BC_FLTO       |   0.0000E+00   |   0.0000E+00   |   1.0378E+00   |   1.3120E+01   |   1.4158E+01   |   1.4158E+01   |   0.0000E+00   |   1.4158E+01   | 
+ BC_FLBA       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_FLFR       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLBO       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLBA       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLFR       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLRI       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ BC_GLLE       |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   |   0.0000E+00   | 
+ -----------------------------------------------------------------------------------------------------
+   DOMAIN INTERFACE(s)
+ FLOWGLAS      |   0.0000E+00   |   0.0000E+00   |  -2.1004E+00   |  -1.3120E+01   |  -1.5220E+01   |  -1.5220E+01   |   0.0000E+00   |  -1.5220E+01   | 
+ GLASFLOW      |   0.0000E+00   |   0.0000E+00   |   1.5220E+01   |   0.0000E+00   |   1.5220E+01   |   2.1004E+00   |   1.3120E+01   |   1.5220E+01   | 
+ -----------------------------------------------------------------------------------------------------
+
+  SUM          |  -9.2328E-14   |   5.0878E-02   |   1.5313E+01   |   8.0861E-10   |   1.5364E+01   |   1.0378E+00   |   1.3120E+01   |   1.4158E+01   |
+
+ Note: convective heat fluxes wrt 0 [K] as reference state
+
+   == Report 2: Energy sources in domains [J]
+
+  Domain    | Boost      | Batch      | Combustion | Radiation  | Stir       | Imposed    | Transient  | Oil        | Total      |
+
+ --------------------------------------------------------------------------------------------------------------------
+ D_FLOW     |  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00| -1.4337E-01|  0.0000E+00| -1.4337E-01|
+ D_GLASS    |  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00| -1.5220E+01|  0.0000E+00| -1.5220E+01|
+ --------------------------------------------------------------------------------------------------------------------
+
+  SUM       |  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00|  0.0000E+00| -1.5364E+01|  0.0000E+00| -1.5364E+01|
+
+
+  == Report 3: Global mass and energy balance over whole time period
+
+ Mass/Energy | Total inlets | Total outlets| Total walls  | Field sources|  Balance     |  Fraction   |
+
+ -----------------------------------------------------------------------------------------------------
+ Mass        |   2.5000E-07 |  -2.5000E-07 |   0.0000E+00 |   0.0000E+00 |  -9.2328E-14 |  100.0000%  |
+ Energy      |   1.3134E+00 |  -1.0740E-01 |   1.4158E+01 |  -1.5364E+01 |   1.6470E-06 |  100.0000%  |
+ -----------------------------------------------------------------------------------------------------
+ Note: The field source of radiation does not participate in the global energy balance. 
+
+
+
+=oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo=
+
+End of GTM-X model reports for grid level 1
+
+=oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo=
+
+==================================================================================
+ M o n i t o r   o u t p u t   r e p o r t
+==================================================================================
+
+ // Grid level and total iteration number //
+Monitor results for grid level   1
+Total iteration:    167
+
+ // Residuals in domain D_FLOW //
+U_VELOCITY RESIDUAL =  9.80072E-05
+V_VELOCITY RESIDUAL =  6.72266E-12
+W_VELOCITY RESIDUAL =  6.18016E-13
+PRESSURE RESIDUAL =  9.47456E-14
+ENERGY RESIDUAL =  6.87807E-08
+
+ // Residuals in domain D_GLASS //
+ENERGY RESIDUAL =  1.28490E-10
+
+ // Energy balance of domain D_FLOW //
+ENERGY BALANCE =   1.1095E-06
+
+ // Energy balance of domain D_GLASS //
+ENERGY BALANCE =   5.3748E-07
+
+ // Monitor PONCTR // 
+ On points   0.000E+00  0.000E+00  8.000E-03
+PRESSURE =  1.00000E+05
+U_VELOCITY =  2.49317E-03
+V_VELOCITY =  2.97398E-05
+W_VELOCITY =  2.37088E-05
+
+ // Monitor PINGLS // 
+ On points   0.000E+00  0.000E+00 -2.000E-03
+TEMPERATURE =  3.01819E+02
+
+ // Monitor SE_SURF // 
+ On boundaries FLOWGLAS
+TEMPERATURE =  3.13093E+02
+
+ // Monitor INLET // 
+ On boundaries BC_FLLE
+TEMPERATURE =  8.53150E+02
+
+ // Monitor WALL // 
+ On boundaries BC_FLTO
+TEMPERATURE =  8.53150E+02
+
+USED_ITERATIONS =   7.0000E+01
+
+
+  -- End of Report 4 
+
+=> Writing data to binary file MMPTestCase2.bin for grid level  1 and time  2.00000E+00
+==================================================================================
+ T i m e   r e p o r t
+==================================================================================
+Wall clock times on master processor: 
+start date   : 10 November 2016  16:42: 9
+end date     : 10 November 2016  16:42:13
+
+elapsed time :               0: 0: 3
+elapsed  [s] :      3.2E+00
+
+Total cpu time usage per processor [s]: 
+----------------------------------------------------------------------------------
+|      processor     |acsrvappmi|
+|      proc nr       |      0    |
+----------------------------------------------------------------------------------
+|               GTM-X|  3.16E+00 | 
+|                flow|  1.95E-01 | 
+|          turbulence|  0.00E+00 | 
+| independent_scalars|  1.00E-03 | 
+|   dependent_scalars|  1.10E-02 | 
+|           radiation|  1.06E+00 | 
+|              solver|  4.52E-01 | 
+|              gradfi|  4.40E-02 | 
+|        exchange_cfi|  1.24E-01 | 
+|            boosting|  0.00E+00 | 
+|               flame|  0.00E+00 | 
+|      particle trace|  0.00E+00 | 
+|           reactions|  0.00E+00 | 
+|                dsmc|  0.00E+00 | 
+|      oil combustion|  0.00E+00 | 
+|         user fields|  0.00E+00 | 
+----------------------------------------------------------------------------------
+
+==================================================================================
+ N o r m a l   t e r m i n a t i o n   o f   t h e   p r o g r a m
+==================================================================================
+GTM-X terminated from procedure GTM-X
+
+==================================================================================
+ E n d   o f   o u t p u t   f i l e
+==================================================================================

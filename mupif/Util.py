@@ -21,8 +21,35 @@
 # Boston, MA  02110-1301  USA
 #
 from __future__ import division
+import logging, os
 
 debug = False
+
+def setupLogger(loggerName,level=logging.DEBUG):
+    """
+    Set up a logger which prints messages on the screen and simultaneously saves them to a file.
+    The file has the suffix '.log' after a loggerName.
+    
+    :param str loggerName: Logger name. Logging file add the suffix '.log'.
+    :param object level: logging level. Allowed values are CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    :rtype: logger instance
+    """
+    logFile=loggerName+'.log'
+    l = logging.getLogger(loggerName)
+    formatLog = '%(asctime)s %(name)s:%(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+    formatTime = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter(formatLog, formatTime)
+    fileHandler = logging.FileHandler(logFile, mode='w')
+    fileHandler.setFormatter(formatter)
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(formatter)
+
+    l.setLevel(level)
+    l.addHandler(fileHandler)
+    l.addHandler(streamHandler)    
+    
+    return l
+    
 
 def quadratic_real (a, b, c): 
     """ 

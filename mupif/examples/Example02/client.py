@@ -4,9 +4,15 @@
 # Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
 
 from __future__ import print_function
+
+mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
 import os, sys
 sys.path.append('..')
-import conf as cfg
+if mode==3:
+    import conf_vpn as cfg
+else:
+    import conf as cfg
+
 from mupif import *
 import mupif
 
@@ -28,9 +34,12 @@ class application1(Application.Application):
     def getCriticalTimeStep(self):
         return 0.1
 
-time  = 0
+time = 0
 timestepnumber=0
-targetTime = 10.0
+targetTime = 1.3
+
+if mode==2: #just print out how to set up a SSH tunnel
+    PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, 'manual', cfg.options)
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
@@ -71,12 +80,11 @@ while (abs(time -targetTime) > 1.e-6):
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
 mupif.log.debug("Result: %f" % prop.getValue() )
 
-if (abs(prop.getValue()-5.05) <= 1.e-4):
+if (abs(prop.getValue()-0.700000) <= 1.e-4):
     mupif.log.info("Test OK")
 else:
     mupif.log.error("Test FAILED")
     sys.exit(1)
-
 
 # terminate
 app1.terminate();

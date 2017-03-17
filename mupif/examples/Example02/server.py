@@ -1,19 +1,29 @@
 # This script starts a server for Pyro4 on this machine with Application2
 # Works with Pyro4 version 4.28
 # Tested on Ubuntu 14.04 and Win XP
-# Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
+# Vit Smilauer 03/2017, vit.smilauer (et) fsv.cvut.cz
 
 # If firewall is blocking daemonPort, run on Ubuntu
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
 
 from __future__ import print_function, division
+
+mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
+
 import sys
 import socket
 sys.path.append('..')
-import conf as cfg
-from mupif import *
-logger = cfg.logging.getLogger()
 
+if mode==3:
+    import conf_vpn as cfg
+else:
+    import conf as cfg
+
+import Pyro4
+from mupif import *
+import mupif
+
+@Pyro4.expose
 class application2(Application.Application):
     """
     Simple application that computes an arithmetical average of mapped property
@@ -35,6 +45,7 @@ class application2(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
+        mupif.log.debug("Solving step: %d %f %f" % (tstep.number, tstep.time, tstep.dt) )
         # here we actually accumulate the value using value of mapped property
         self.value=self.value+self.contrib
         self.count = self.count+1
@@ -42,15 +53,10 @@ class application2(Application.Application):
     def getCriticalTimeStep(self):
         return 1.0
 
-#locate nameserver
-ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
+if mode!=2: #set NATport=port and local IP
+    cfg.server = cfg.serverNathost
+    cfg.serverNatport = cfg.serverPort
 
-#Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort)
+app2 = application2("/dev/null")
 
-app2 = application2("input2.in")
-#register agent
-uri = daemon.register(app2)
-ns.register(cfg.appName, uri)
-print (uri)
-daemon.requestLoop()
+PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, app=app2)

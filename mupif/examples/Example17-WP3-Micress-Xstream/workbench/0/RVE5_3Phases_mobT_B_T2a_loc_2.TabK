@@ -1,0 +1,7 @@
+ #  Simulation   Avg. radius    Gr. density      Number of   Liquid        Phase 1      Phase 2      Phase 3      Phase 4      Phase 5
+ #   time [s]   [micrometer]  [micrometer**(-3)]  grains     present?     n.  avg. r.  n.  avg. r.  n.  avg. r.  n.  avg. r.  n.  avg. r.
+ # NB: the radii are calculated from the average fractions
+   0.0000      0.50263          1.88000E+00       141         Liquid    100   0.30970     20   0.14472      1   1.71833     10   0.13998     10   0.14671
+   1.0000      0.50263          1.88000E+00       141         Liquid    100   0.30970     20   0.15129      1   1.71833     10   0.14725     10   0.15398
+   2.0000      0.50263          1.88000E+00       141         Liquid    100   0.30970     20   0.15823      1   1.71833     10   0.15481     10   0.16157
+   3.0000      0.50263          1.88000E+00       141         Liquid    100   0.30970     20   0.16493      1   1.71833     10   0.16180     10   0.16869

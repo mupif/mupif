@@ -40,7 +40,7 @@ class Application(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file, workdir=''):
+    def __init__ (self, file='', workdir=''):
         """
         Constructor. Initializes the application.
 
@@ -232,6 +232,7 @@ class Application(object):
         """
         return "Application"
 
+    @Pyro4.oneway # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Shutdowns daemons if created internally.
@@ -239,6 +240,7 @@ class Application(object):
         if self.pyroDaemon:
             self.pyroDaemon.unregister(self)
             if not self.externalDaemon:
+                pass
                 self.pyroDaemon.shutdown()
 
 
