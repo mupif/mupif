@@ -37,7 +37,7 @@ daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort)
 
 jobMan = JobManager.SimpleJobManager2(daemon, ns, None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 
-PyroUtil.runAppServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.server, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, nsname='jobMan1', hkey=cfg.hkey, app=jobMan, daemon=daemon )
+PyroUtil.runAppServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.server, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, nsname='jobMan1', hkey=cfg.hkey, app=jobMan, daemon=daemon , metadata={PyroUtil.NS_METADATA_jobmanager})
 
 ##Run a daemon for jobManager on this machine
 #daemon = cfg.Pyro4.Daemon(host=127.0.0.1, port=44382)

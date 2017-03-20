@@ -49,9 +49,12 @@ Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 #Pyro4.config.THREADPOOL_SIZE=100
 Pyro4.config.SERVERTYPE="multiplex"
 
+
+#pyro4 nameserver metadata
+NS_METADATA_jobmanager="jobmanager"
+
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
-
 def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     """
     Connects to a NameServer.
@@ -153,7 +156,7 @@ def runDaemon(host, port, nathost, natport):
 
     return daemon
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None):
+def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -167,6 +170,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param str hkey: A password string
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags.
 
     :raises Exception: if can not run Pyro4 daemon
     """
@@ -191,7 +195,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     except AttributeError:
         pass
     
-    ns.register(nsname, uri)
+    ns.register(nsname, uri, metadata=metadata)
 
     log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
     log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, nsname, uri) )
