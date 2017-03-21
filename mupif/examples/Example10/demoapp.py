@@ -821,10 +821,10 @@ class mechanical(Application.Application):
                     self.dirichletBCs[i*(self.ny+1)]= (0.0, 0.0, 0.0)
             elif ide ==2:
                 for i in range(self.ny+1):
-                    self.dirichletBCs[self.ny*(self.nx+1)+i]=(0.0,0.0, 0.0)
+                    self.dirichletBCs[self.nx*(self.ny+1)+i]=(0.0,0.0, 0.0)
             elif ide ==3:
                 for i in range(self.nx+1):
-                    self.dirichletBCs[self.ny+i*(self.nx+1)]=(0.0, 0.0, 0.0)
+                    self.dirichletBCs[self.ny+i*(self.ny+1)]=(0.0, 0.0, 0.0)
             elif ide ==4:
                 for i in range(self.ny+1):
                     self.dirichletBCs[i]=(0.0, 0.0, 0.0)
