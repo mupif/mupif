@@ -2,16 +2,13 @@ from __future__ import print_function
 from builtins import str
 import getopt, sys
 import re
-sys.path.append('..')
+sys.path.append('../..')
 from mupif import *
 import logging
-logger = logging.getLogger()
 
 
 import time as timeTime
 start = timeTime.time()
-
-#logger.info('Timer started')
 
 
 def usage():
@@ -33,7 +30,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "n:r:k:d")
     except getopt.GetoptError as err:
         # print help information and exit:
-        logger.exception(err)
+        log.exception(err)
         usage()
         sys.exit(2)
     
@@ -65,10 +62,10 @@ def main():
     
     except:
         # Exception as e:
-        print("\n\nConnection to nameserfer failed\n")
-        #logger.exception(e)
+        print("\nConnection to nameserfer failed\n")
+        #log.exception(e)
     else:
-        print ("\n\nConnection to nameserver is OK\n")
+        print ("\nConnection to nameserver is OK\n")
         
 if __name__ == '__main__':
     main()

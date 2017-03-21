@@ -21,7 +21,6 @@ else:
 
 import Pyro4
 from mupif import *
-import mupif
 
 @Pyro4.expose
 class application2(Application.Application):
@@ -45,7 +44,7 @@ class application2(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        mupif.log.debug("Solving step: %d %f %f" % (tstep.number, tstep.time, tstep.dt) )
+        log.debug("Solving step: %d %f %f" % (tstep.number, tstep.time, tstep.dt) )
         # here we actually accumulate the value using value of mapped property
         self.value=self.value+self.contrib
         self.count = self.count+1

@@ -14,7 +14,6 @@ else:
     import conf as cfg
 
 from mupif import *
-import mupif
 
 class application1(Application.Application):
     """
@@ -59,7 +58,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    mupif.log.debug("Step: %d %f %f" % (timestepnumber, time, dt) )
+    log.debug("Step: %d %f %f" % (timestepnumber, time, dt) )
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -74,16 +73,16 @@ while (abs(time -targetTime) > 1.e-6):
         app2.solveStep(istep)
 
     except APIError.APIError as e:
-        mupif.log.error("Following API error occurred: %s" % e )
+        log.error("Following API error occurred: %s" % e )
         break
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-mupif.log.debug("Result: %f" % prop.getValue() )
+log.debug("Result: %f" % prop.getValue() )
 
 if (abs(prop.getValue()-0.700000) <= 1.e-4):
-    mupif.log.info("Test OK")
+    log.info("Test OK")
 else:
-    mupif.log.error("Test FAILED")
+    log.error("Test FAILED")
     sys.exit(1)
 
 # terminate
