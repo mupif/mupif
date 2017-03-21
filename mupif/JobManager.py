@@ -140,6 +140,17 @@ class JobManager(object):
         :rtype: PyroFile
         """
 
+    def registerPyro(self, daemon, ns, uri, externalDaemon):
+        """
+        Possibility to register the Pyro daemon and nameserver.
+
+        :param Pyro4.Daemon pyroDaemon: Optional pyro daemon
+        :param Pyro4.naming.Nameserver pyroNS: Optional nameserver
+        :param string PyroURI: Optional URI of receiver
+        :param bool externalDaemon: Optional parameter when damon was allocated externally.
+        """
+        
+
 #SimpleJobManager
 SJM_APP_INDX = 0
 SJM_STARTTIME_INDX = 1

@@ -32,6 +32,9 @@ Ad 1) Local computer
 The nameserver will listen on "127.0.0.1" locally, or should be set 
 to your public IP adress. Note that in the later case, your firewall has to be configured to accept
 connections at port 9090.
+Your conf.py file must contain local IP address, i.e.
+nshost = '127.0.0.1'
+server = '127.0.0.1'
 
 - Start server script $python server.py
 By default, the server will listen on internal ip adress "127.0.0.1". If you want your server to listen
@@ -51,7 +54,7 @@ SSH tunnel is estabilished between client and server, each of them located on di
 or same computer. We need to estabilish network address translation (NAT) settings and port forwarding
 configurations automatically.
 
-- You need to set up conf.py to reflect your current settings, provide external (public)  IP addresses.
+- You need to set up conf.py to reflect your current settings, provide external (public) IP addresses on both machines. This means e.g. nshost = '147.32.130.71', server = '147.32.130.71'.
 
 - Run client.py. It gives you hint how to create a ssh tunnel externally, e.g.
 *NIX: ssh -L 5555:machine1:44382 mmp@mech.fsv.cvut.cz

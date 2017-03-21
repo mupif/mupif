@@ -52,7 +52,7 @@ class application2(Application.Application):
     def getCriticalTimeStep(self):
         return 1.0
 
-if mode!=2: #set NATport=port and local IP
+if mode==1: #set NATport=port and local IP
     cfg.server = cfg.serverNathost
     cfg.serverNatport = cfg.serverPort
 

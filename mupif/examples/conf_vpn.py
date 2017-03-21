@@ -27,6 +27,7 @@ hkey = 'mupif-secret-key'
 #SERVER for a single job or for JobManager
 #IP/name of a server's daemon
 server = '172.30.0.1'
+
 #Port of server's daemon
 serverPort = 44382
 #Name of job manager
@@ -59,5 +60,8 @@ serverPort3 = 44385
 #Name of the application
 appName = 'MuPIFServer'
 
+#Variables declaring not using NAT
+serverNathost = ''
+serverNatport = ''
 
 

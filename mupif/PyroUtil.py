@@ -175,6 +175,11 @@ def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app,
 
     :raises Exception: if can not run Pyro4 daemon
     """
+    if nathost=='':
+        nathost = server
+    if natport=='':
+        natport = port
+
     externalDaemon = False
     if not daemon:
         try:
@@ -194,7 +199,9 @@ def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app,
     try:
         app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
     except:
-        raise APIError.APIError ('Can not register daemon or nameServer.')
+        log.exception('Can not register daemon on %s:%d using nathost %s:%d and hkey %s on nameServer' % (server, port, nathost, natport, hkey))
+        raise
+        exit(1)
     
     ns.register(nsname, uri, metadata=metadata)
 
