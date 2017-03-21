@@ -51,7 +51,9 @@ server2 = '172.30.0.1'
 serverPort2 = 44383
 
 #SERVER - an application running on local computer in VPN
-server3 = '172.30.0.6'
+#this server can be accessed only from script from the same computer
+#otherwise the server address has to be replaced by vpn local adress
+server3 = 'localhost'
 serverPort3 = 44385
 
 #Name of the application
