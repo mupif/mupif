@@ -52,6 +52,7 @@ Pyro4.config.SERVERTYPE="multiplex"
 
 #pyro4 nameserver metadata
 NS_METADATA_jobmanager="jobmanager"
+NS_METADATA_jobmanager="appserver"
 
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
@@ -156,7 +157,7 @@ def runDaemon(host, port, nathost, natport):
 
     return daemon
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None, metadata=None):
+def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -201,6 +202,43 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, nsname, uri) )
     daemon.requestLoop()
 
+def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None):
+    """
+    Runs a simple application server
+
+    :param str server: Host name of the server (internal host name)
+    :param int port: Port number on the server where daemon will listen (internal port number)
+    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
+    :param int natport: Server NAT port as reported by nameserver (external port)
+    :param str nshost: Hostname of the computer running nameserver
+    :param int nsport: Nameserver port
+    :param str nsname: Name of registered application
+    :param str hkey: A password string
+    :param instance app: Application instance
+    :param daemon: Reference to already running daemon, if available. Optional parameter.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags.
+
+    :raises Exception: if can not run Pyro4 daemon
+    """
+    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, nsname=nsname, hkey=hkey, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
+
+
+def runJobManagerServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, jobman, daemon=None):
+    """
+    Registers and runs given jobManager server
+
+    :param str server: Host name of the server (internal host name)
+    :param int port: Port number on the server where daemon will listen (internal port number)
+    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
+    :param int natport: Server NAT port as reported by nameserver (external port)
+    :param str nshost: Hostname of the computer running nameserver
+    :param int nsport: Nameserver port
+    :param str nsname: Name of job manager to be registered at nameserver
+    :param str hkey: A password string
+    :param instance app: Application instance
+    :param daemon: Reference to already running daemon, if available. Optional parameter.
+    """
+    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, nsname=nsname, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
 def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
     """
