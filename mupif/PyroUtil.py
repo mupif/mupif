@@ -193,8 +193,8 @@ def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app,
     uri = daemon.register(app)
     try:
         app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
-    except AttributeError:
-        pass
+    except:
+        raise APIError.APIError ('Can not register daemon or nameServer.')
     
     ns.register(nsname, uri, metadata=metadata)
 

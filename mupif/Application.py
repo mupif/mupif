@@ -25,6 +25,7 @@ from builtins import object
 import os
 import Pyro4
 from . import APIError
+from . import log
 
 @Pyro4.expose
 class Application(object):
@@ -239,8 +240,9 @@ class Application(object):
         """
         if self.pyroDaemon:
             self.pyroDaemon.unregister(self)
+            log.info("Unregistering daemon %s" % self.pyroDaemon)
+            #log.info(self.pyroDaemon)
             if not self.externalDaemon:
-                pass
                 self.pyroDaemon.shutdown()
 
 

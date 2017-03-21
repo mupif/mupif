@@ -18,6 +18,7 @@ recursive-include mupif/examples *.py README *.in *.c
 recursive-include mupif/APIs *.py README *.in
 
 prune mupif/examples/Workshop02
+prune mupif/examples/Workshop-2017
 prune mupif/examples/PingTest
 prune mupif/examples/ports
 prune mupif/examples/ssh
