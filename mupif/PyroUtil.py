@@ -52,7 +52,7 @@ Pyro4.config.SERVERTYPE="multiplex"
 
 #pyro4 nameserver metadata
 NS_METADATA_jobmanager="jobmanager"
-NS_METADATA_jobmanager="appserver"
+NS_METADATA_appserver="appserver"
 
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
