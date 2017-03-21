@@ -11,5 +11,5 @@ import conf_vpn as cfg
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 mechanical = demoapp.mechanical('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputM13.in', '.')
-PyroUtil.runJobManagerServer(server=cfg.server2, port=cfg.serverPort2, nathost=cfg.server2, natport=cfg.serverPort2, nshost=cfg.nshost, nsport=cfg.nsport, nsname='mechanical', hkey=cfg.hkey, jobman=mechanical)
+PyroUtil.runAppServer(server=cfg.server2, port=cfg.serverPort2, nathost=cfg.server2, natport=cfg.serverPort2, nshost=cfg.nshost, nsport=cfg.nsport, nsname='mechanical', hkey=cfg.hkey, jobman=mechanical)
 
