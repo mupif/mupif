@@ -349,12 +349,12 @@ def getNATfromUri (uri):
 
 def getUserInfo ():
     """
-    :return: String assembled from username+"@"+hostname
-    :rtype: str
+    :return: tuple containing (username, hostname)
+    :rtype: tuple of strings
     """
     username = getpass.getuser()
     hostname = socket.gethostname()
-    return username+"@"+hostname
+    return (username, hostname)
 
 def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     """
@@ -415,7 +415,8 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
        raise
 
     try:
-        retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
+        (username,hostname)=getUserInfo()
+        retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
         log.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
@@ -459,7 +460,8 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     jobMan = connectApp(ns, jobManName)
 
     try:
-        retRec = jobMan.allocateJob(getUserInfo(), natPort=natPort)
+        (username,hostname)=getUserInfo()
+        retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
         log.info('Allocated job, returned record from jobMan:' +  str(retRec))
     except Exception:
         log.exception("jobMan.allocateJob() failed")

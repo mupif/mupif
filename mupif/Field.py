@@ -28,6 +28,7 @@ from . import FieldID
 from . import ValueType
 from . import BBox
 from . import APIError
+from . import MupifObject
 import mupif #for logger
 from numpy import array, arange, random, zeros
 import numpy
@@ -51,7 +52,7 @@ class FieldType(object):
     FT_cellBased   = 2
 
 @Pyro4.expose
-class Field(object):
+class Field(MupifObject.MupifObject):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -76,6 +77,7 @@ class Field(object):
         :param list of tuples representing individual values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
+        super(Field, self).__init__()
         self.mesh = mesh
         self.fieldID = fieldID
         self.valueType = valueType

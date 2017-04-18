@@ -21,14 +21,14 @@
 # Boston, MA  02110-1301  USA
 #
 
-from builtins import object
 import os
 import Pyro4
 from . import APIError
 from . import log
+import MupifObject
 
 @Pyro4.expose
-class Application(object):
+class Application(MupifObject.MupifObject):
     """
     An abstract class representing an application and its interface (API).
 
@@ -48,6 +48,7 @@ class Application(object):
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
         """
+        super(Application, self).__init__()
         self.pyroDaemon = None
         self.externalDaemon = False
         self.pyroNS = None

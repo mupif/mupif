@@ -1,4 +1,4 @@
-from builtins import object
+from . import MupifObject
 import Pyro4
 try:
    import cPickle as pickle #faster serialization if available
@@ -6,7 +6,7 @@ except:
    import pickle
 
 @Pyro4.expose
-class Property(object):
+class Property(MupifObject.MupifObject):
         """
         Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -25,6 +25,7 @@ class Property(object):
             :param PhysicalQuantity units: Property units
             :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
             """
+            super(Field, self).__init__()
             self.value = value
             self.propID = propID
             self.time = time
