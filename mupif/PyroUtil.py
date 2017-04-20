@@ -171,7 +171,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app,
     :param str hkey: A password string
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
-    :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be authomatically generated.
 
     :raises Exception: if can not run Pyro4 daemon
     """
@@ -205,7 +205,9 @@ def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app,
         log.exception('Can not register daemon on %s:%d using nathost %s:%d and hkey %s on nameServer' % (server, port, nathost, natport, hkey))
         raise
         exit(1)
-    
+    # generate connection metadata entry
+    connectionMetadata = 'connection:%s:%d:%s:%d'%(server,port,nathost,natport)
+    metadata.append(connectionMetadata)
     ns.register(nsname, uri, metadata=metadata)
 
     log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
