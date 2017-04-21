@@ -26,7 +26,7 @@ time_col = 70
 
 
 def usage():
-    print("Usage: jobManStatus -n nshost -r nsPort -h hostname -p port -j jobmanname -k hkey [-t -u user]")
+    print("Usage: jobManStatus -n nshost -r nsPort -j jobmanname -k hkey [-t -u user]")
 
 
 def processor(win, jobman):
@@ -105,11 +105,11 @@ def main():
         sys.exit(2)
     
     for o, a in opts:
-        if o in ("-p"):
-            port = int(a)                                                                                              
-        elif o in ("-h"):
-            host = a                                         
-        elif o in ("-j"):
+#        if o in ("-p"):
+#            port = int(a)                                                                                              
+#        elif o in ("-h"):
+#            host = a                                         
+        if o in ("-j"):
             jobmanname = a
         elif o in ("-k"):
             hkey = a
@@ -142,6 +142,7 @@ def main():
     
     #extablish secure ssh tunnel connection
     if ssh:
+        (host, jobmannatport, jobManNatHost, port) = PyroUtil.getNSConnectionInfo(ns, jobmanname)
         tunnel = PyroUtil.sshTunnel(remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     
     
