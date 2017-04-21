@@ -476,6 +476,7 @@ def allocateApplicationWithJobManager (ns, jobManName, natPort, userName='', ssh
 
     #create tunnel to application's daemon running on (remote) server
     try:
+        (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
         log.exception("Creating ssh tunnel for application's daemon failed")
@@ -491,7 +492,7 @@ def allocateApplicationWithJobManager (ns, jobManName, natPort, userName='', ssh
     return RemoteAppRecord.RemoteAppRecord(app, tunnelApp, jobMan, tunnelJobMan, retRec[1])
 
 
-def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', options='', sshHost=''):
+def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
     """
     Allocate next application instance on a running Job Manager and adds it into
     existing applicationRecord.
@@ -508,7 +509,7 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
     :raises Exception: if allocation of job fails
     :raises Exception: if ssh tunnel to application instance can not be created
     """
-    (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     jobMan = connectApp(ns, jobManName)
 
     try:
@@ -521,7 +522,8 @@ def allocateNextApplication (ns, jobManRec, natPort, appRec, sshClient='ssh', op
 
     #create tunnel to application's daemon running on (remote) server
     try:
-        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
+        (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
+        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
         log.exception("Creating ssh tunnel for application's daemon failed")
         raise
