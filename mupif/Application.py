@@ -49,16 +49,18 @@ class Application(MupifObject.MupifObject):
         :param str workdir: Optional parameter for working directory
         """
         super(Application, self).__init__()
-        self.pyroDaemon = None
-        self.externalDaemon = False
-        self.pyroNS = None
-        self.pyroURI = None
         self.file = file
         if workdir == '':
             self.workDir =  os.getcwd()
         else:
             self.workDir = workdir
 
+        # mupif internals (do not change)
+        self.pyroDaemon = None
+        self.externalDaemon = False
+        self.pyroNS = None
+        self.pyroURI = None
+        
     def registerPyro (self, pyroDaemon, pyroNS, pyroURI, externalDaemon = False):
         """
         Register the Pyro daemon and nameserver. Required by getFieldURI service
