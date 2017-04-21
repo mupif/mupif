@@ -21,9 +21,10 @@ class Demo18(Workflow.Workflow):
         jobNatport = -1
 
         try:
-            appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='manual', options='', sshHost = '' )
-            mupif.log.info("Allocated application %s" % appRec)
-            self.thermal = appRec.getApplication()
+            #self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='ssh', options='', sshHost = '' )
+            self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, cfg.jobManName, jobNatport, userName='', sshClient='ssh', options='', sshHost = '' )
+            mupif.log.info("Allocated application %s" % self.thermalAppRec)
+            self.thermal = self.thermalAppRec.getApplication()
         except Exception as e:
             mupif.log.exception(e)
 
@@ -53,7 +54,8 @@ class Demo18(Workflow.Workflow):
         return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
-        self.thermal.terminate()
+        
+        self.thermalAppRec.terminateAll()
         self.mechanical.terminate()
         super(Demo18, self).terminate()
 
