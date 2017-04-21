@@ -98,7 +98,11 @@ def main():
 
     #register agent
     uri = daemon.register(app)
-    ns.register(jobID, uri)
+    metadata={NS_METADATA_appserver, '%s:%s'%(NS_METADATA_host, conf.server),
+              '%s:%s'%(NS_METADATA_port, daemonPort),
+              '%s:%s'%(NS_METADATA_nathost, conf.serverNathost),
+              '%s:%s'%(NS_METADATA_natport, natport)}
+    ns.register(jobID, uri, metadata=metadata)
     app.registerPyro(daemon, ns, uri)
     #app.setWorkingDirectory(workDir)
     logger.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
