@@ -125,13 +125,13 @@ def getNSConnectionInfo(ns, name):
             host=match.group(1)
         match = re.search(NS_METADATA_port+':(\w+)', i)
         if match:
-            port=match.group(1)
+            port=int(match.group(1))
         match = re.search(NS_METADATA_nathost+':([\w\.]+)', i)
         if match:
             nathost=match.group(1)
         match = re.search(NS_METADATA_natport+':(\w+)', i)
         if match:
-            natport=match.group(1)
+            natport=int(match.group(1))
         
     return (host, port, nathost, natport)
             
