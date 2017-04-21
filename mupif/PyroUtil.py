@@ -53,6 +53,10 @@ Pyro4.config.SERVERTYPE="multiplex"
 #pyro4 nameserver metadata
 NS_METADATA_jobmanager="jobmanager"
 NS_METADATA_appserver="appserver"
+NS_METADATA_host='host'
+NS_METADATA_port='port'
+NS_METADATA_nathost='nathost'
+NS_METADATA_natport='natport'
 
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
@@ -157,7 +161,8 @@ def runDaemon(host, port, nathost, natport):
 
     return daemon
 
-def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None, metadata=None):
+def runServer(server, port, nathost, natport,
+              nshost, nsport, nsname, hkey, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -206,8 +211,10 @@ def runServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app,
         raise
         exit(1)
     # generate connection metadata entry
-    connectionMetadata = 'connection:%s:%d:%s:%d'%(server,port,nathost,natport)
-    metadata.append(connectionMetadata)
+    metadata.add('%s:%s'%(NS_METADATA_host, server))
+    metadata.add('%s:%s'%(NS_METADATA_port, port))
+    metadata.add('%s:%s'%(NS_METADATA_nathost, nathost))
+    metadata.add('%s:%s'%(NS_METADATA_natport, natport))
     ns.register(nsname, uri, metadata=metadata)
 
     log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
