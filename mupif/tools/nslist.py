@@ -65,11 +65,9 @@ def main():
             print ('{:30}:{}'.format(k,v))
         
         print ("=======Applications=========")
-        a = ns.list(metadata_any={PyroUtil.NS_METADATA_appserver}, return_metadata=True)
+        a = ns.list(metadata_any={PyroUtil.NS_METADATA_appserver, 'appserver'}, return_metadata=True)
         for k,v in a.items():
             print ('{:30}:{}'.format(k,v))
-
-        
     
     except Exception as e:
         print("\nConnection to nameserfer failed\n")
