@@ -51,12 +51,13 @@ Pyro4.config.SERVERTYPE="multiplex"
 
 
 #pyro4 nameserver metadata
-NS_METADATA_jobmanager="jobmanager"
-NS_METADATA_appserver="appserver"
+NS_METADATA_jobmanager="type:jobmanager"
+NS_METADATA_appserver="type:appserver"
 NS_METADATA_host='host'
 NS_METADATA_port='port'
 NS_METADATA_nathost='nathost'
 NS_METADATA_natport='natport'
+
 
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
@@ -95,6 +96,45 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 
     return ns
 
+
+
+def getNSmetadata(ns, name):
+    """
+    Returns name server metadata for given entry identified by name
+    :return entry metadata 
+    :rtype: list of strings
+    """
+    (uri, mdata) = ns.lookup(name, return_metadata=True)
+    return mdata
+
+def getNSConnectionInfo(ns, name):
+    """
+    Returns component connection information stored in name server 
+    :return (host, port, nathost, natport) tuple
+    :rtype: tuple
+    """
+    mdata = getNSmetadata(ns, name)
+    host=None
+    port=None
+    nathost=None
+    natport=None
+    
+    for i in mdata:
+        match = re.search(NS_METADATA_host+':([\w\.]+)', i)
+        if (match):
+            host=match.group(1)
+        match = re.search(NS_METADATA_port+':(\w+)', i)
+        if match:
+            port=match.group(1)
+        match = re.search(NS_METADATA_nathost+':([\w\.]+)', i)
+        if match:
+            nathost=match.group(1)
+        match = re.search(NS_METADATA_natport+':(\w+)', i)
+        if match:
+            natport=match.group(1)
+        
+    return (host, port, nathost, natport)
+            
 
 def connectApp(ns, name):
     """
@@ -365,11 +405,12 @@ def getUserInfo ():
     hostname = socket.gethostname()
     return (username, hostname)
 
-def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
+def connectJobManager (ns, jobManName, userName='', sshClient='ssh', options='', sshHost=''):
     """
     Connect to jobManager described by given jobManRec and create a ssh tunnel
 
-    :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see client-conf.py
+    :param jobManName name under which jobmanager is registered on NS
+    :param userName username for ssh connection 
     :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
     :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
     :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
@@ -379,12 +420,14 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
     :raises Exception: if creation of a tunnel failed
     """
 
-    (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
+    print ( (jobManHostname, jobManPort, jobManNatHost, jobManNatport))
+    #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
     try:
-        tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
+        tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
-        log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, jobManUserName, jobManNatport, jobManPort, sshClient, options, sshHost))
+        log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, userName, jobManNatport, jobManPort, sshClient, options, sshHost))
         raise
     else:
         # locate remote jobManager on (remote) server
@@ -392,7 +435,7 @@ def connectJobManager (ns, jobManRec, sshClient='ssh', options='', sshHost=''):
         return (jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', options='', sshHost=''):
+def allocateApplicationWithJobManager (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
     """
     Connect to jobManager described by given jobManRec
 
@@ -407,9 +450,9 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
     :rtype: RemoteAppRecord
     :raises Exception: if allocation of job fails
     """
-    (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     log.debug('Trying to connect to JobManager')
-    (jobMan, tunnelJobMan) = connectJobManager (ns, jobManRec, sshClient, options, sshHost)
+    (jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
 
     if jobMan is None:
        e = OSError("Can not connect to JobManager")
@@ -433,7 +476,7 @@ def allocateApplicationWithJobManager (ns, jobManRec, natPort, sshClient='ssh', 
 
     #create tunnel to application's daemon running on (remote) server
     try:
-        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=jobManUserName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
+        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
         log.exception("Creating ssh tunnel for application's daemon failed")
         raise
