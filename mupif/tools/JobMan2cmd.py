@@ -98,10 +98,11 @@ def main():
 
     #register agent
     uri = daemon.register(app)
-    metadata={NS_METADATA_appserver, '%s:%s'%(NS_METADATA_host, conf.server),
-              '%s:%s'%(NS_METADATA_port, daemonPort),
-              '%s:%s'%(NS_METADATA_nathost, conf.serverNathost),
-              '%s:%s'%(NS_METADATA_natport, natport)}
+    metadata={PyroUtil.NS_METADATA_appserver,
+              '%s:%s'%(PyroUtil.NS_METADATA_host, conf.server),
+              '%s:%s'%(PyroUtil.NS_METADATA_port, daemonPort),
+              '%s:%s'%(PyroUtil.NS_METADATA_nathost, conf.serverNathost),
+              '%s:%s'%(PyroUtil.NS_METADATA_natport, natport)}
     ns.register(jobID, uri, metadata=metadata)
     app.registerPyro(daemon, ns, uri)
     #app.setWorkingDirectory(workDir)
