@@ -22,7 +22,7 @@ class Demo18(Workflow.Workflow):
 
         try:
             #self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='ssh', options='', sshHost = '' )
-            self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, cfg.jobManName, jobNatport, userName='', sshClient='ssh', options='', sshHost = '' )
+            self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, cfg.jobManName, jobNatport, userName='bp', sshClient='manual', options='', sshHost = '' )
             mupif.log.info("Allocated application %s" % self.thermalAppRec)
             self.thermal = self.thermalAppRec.getApplication()
         except Exception as e:
