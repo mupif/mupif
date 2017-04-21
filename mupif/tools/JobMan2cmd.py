@@ -102,7 +102,7 @@ def main():
               '%s:%s'%(PyroUtil.NS_METADATA_host, conf.server),
               '%s:%s'%(PyroUtil.NS_METADATA_port, daemonPort),
               '%s:%s'%(PyroUtil.NS_METADATA_nathost, conf.serverNathost),
-              '%s:%s'%(PyroUtil.NS_METADATA_natport, natport)}
+              '%s:%s'%(PyroUtil.NS_METADATA_natport, natPort)}
     ns.register(jobID, uri, metadata=metadata)
     app.registerPyro(daemon, ns, uri)
     #app.setWorkingDirectory(workDir)
