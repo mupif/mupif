@@ -256,3 +256,39 @@ class Application(MupifObject.MupifObject):
         """
         return self.pyroURI
 
+
+
+class RemoteJobManApplication (object):
+    """
+    Remote Application instances are normally represented by auto generated pyro proxy.
+    However, when application is allocated using JobManager, its instance must be properly terminated (requires interaction with jobManager).
+    This class is a decorator around pyro proxy object represeting application storing the reference to job manager which allocated the application.
+
+    The attribute could not be injected into remote instance (using proxy) as the termination has to be done from local computer, which has the neccesary communication link established 
+    (ssh tunnel in particular, when port translation takes place)
+    """
+    def __init__ (self, decoratee, jobMan, jobID):
+        self._decoratee = decoratee
+        self._jobMan = jobMan
+        self._jobID = jobID
+        
+    def __getattr__(self, name):
+        """ 
+        Catch all attribute access and pass it to self._decoratee, see python data model, __getattar__ method
+        """
+        #if name == "_jobMan":
+        #    return self._jobMan
+        #elif name == "_jobID":
+        #    return self._jobID
+        #else:
+        return getattr(self._decoratee, name)
+    
+    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    def terminate(self):
+        """
+        Terminates the application. Terminates the allocated job at jobManager
+        """
+        print ("Terminating jobManagar job %s on %s"%(self._jobID, self._jobMan))
+        self._jobMan.terminateJob(self._jobID)
+        self._decoratee.terminate()
+
