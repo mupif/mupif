@@ -400,15 +400,17 @@ class SimpleJobManager2 (JobManager):
         # unregister the applictaion from ns
         self.ns.remove(jobID)
         # terminate the process
-        self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
+        try:
+            self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
+            # free the assigned port
+            self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
+            # delete entry in the list of active jobs
+            del self.activeJobs[jobID]
+            logger.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
+            
+        except KeyError:
+            logger.debug('SimpleJobManager2:terminateJob: key error, job %s already terminated?'%(jobID))
 
-        # free the assigned port
-        self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
-
-        # delete entry in the list of active jobs
-        logger.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
-
-        del self.activeJobs[jobID]
         self.lock.release()
 
     def getApplicationSignature(self):
