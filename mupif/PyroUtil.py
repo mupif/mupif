@@ -39,6 +39,7 @@ import getpass
 import subprocess
 import time
 from . import RemoteAppRecord
+from . import Application
 from mupif import log
 
 Pyro4.config.SERIALIZER="pickle"
@@ -489,7 +490,7 @@ def allocateApplicationWithJobManager (ns, jobManName, natPort, userName='', ssh
     app = connectApp(ns, retRec[1])
     if app==None:
         tunnelApp.terminate()
-    return RemoteAppRecord.RemoteAppRecord(app, tunnelApp, jobMan, tunnelJobMan, retRec[1])
+    return RemoteAppRecord.RemoteAppRecord(Application.RemoteJobManApplication(app, jobMan, retRec[1]), tunnelApp, jobMan, tunnelJobMan, retRec[1])
 
 
 def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
