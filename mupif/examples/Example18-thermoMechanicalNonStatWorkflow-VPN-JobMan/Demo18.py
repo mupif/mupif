@@ -21,7 +21,6 @@ class Demo18(Workflow.Workflow):
         jobNatport = -1
         try:
             self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, PyroUtil.SSHContext(userName='bp', sshClient='manual', options='', sshHost = '' ))
-            #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, sshContext = sshContext(userName='bp', sshClient='manual', options='', sshHost = ''))
             #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport )
         except Exception as e:
             mupif.log.exception(e)
