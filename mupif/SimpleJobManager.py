@@ -116,11 +116,11 @@ class SimpleJobManager(JobManager.JobManager):
                 logger.error('Unable to start thread')
                 self.lock.release()
                 raise
-                return (JOBMAN_ERR,None)
+                return (JobManager.JOBMAN_ERR,None)
 
             logger.info('SimpleJobManager:allocateJob: successfully allocated ' + jobID)
             self.lock.release()
-            return (JOBMAN_OK, jobID, self.jobPort)
+            return (JobManager.JOBMAN_OK, jobID, self.jobPort)
 
     def terminateJob (self, jobID):
         """
@@ -267,11 +267,11 @@ class SimpleJobManager2 (JobManager.JobManager):
                 logger.error('Unable to start thread')
                 self.lock.release()
                 raise
-                return (JOBMAN_ERR,None)
+                return (JobManager.JOBMAN_ERR,None)
 
             logger.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
-            return (JOBMAN_OK, jobID, jobPort)
+            return (JobManager.JOBMAN_OK, jobID, jobPort)
 
     def terminateJob(self, jobID):
         """
