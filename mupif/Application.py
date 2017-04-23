@@ -286,7 +286,8 @@ class RemoteJobManApplication (object):
         """
         if self._appTunnel:
             log.info ("RemoteJobManApplication: Terminating app sshTunnel")
-            self._appTunnel.terminate()
+            if self._appTunnel != "manual":
+                self._appTunnel.terminate()
             
         log.info ("RemoteJobManApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
         self._jobMan.terminateJob(self._jobID)
