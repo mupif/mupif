@@ -283,7 +283,7 @@ class RemoteJobManApplication (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
-        log.info ("Terminating jobManagar job %s on %s"%(self._jobID, self._jobMan))
+        log.info ("RemoteJobManApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
         self._jobMan.terminateJob(self._jobID)
         self._decoratee.terminate()
 

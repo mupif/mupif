@@ -170,7 +170,7 @@ class RemoteJobManager (object):
         
     def __del__(self):
         if self._sshTunnel:
-            log.info ("RemoteJobManagar: autoterminating sshTunnel") 
+            loger.info ("RemoteJobManager: autoterminating sshTunnel") 
             self._sshTunnel.terminate()
 
     def __getattr__(self, name):
