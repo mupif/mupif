@@ -118,7 +118,7 @@ class JobManager(object):
         """
         """
     def getNSName (self):
-        return appName
+        return self.applicationName
 
     def uploadFile(self, jobID, filename, pyroFile):
         """
