@@ -479,7 +479,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClie
 
     #create tunnel to application's daemon running on (remote) server
     try:
-        (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
+        (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobMan.getNSName())
         tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
     except Exception:
         log.exception("Creating ssh tunnel for application's daemon failed")
@@ -492,7 +492,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClie
     app = connectApp(ns, retRec[1])
     if app==None:
         tunnelApp.terminate()
-    return RemoteAppRecord.RemoteAppRecord(Application.RemoteJobManApplication(app, jobMan, retRec[1]), tunnelApp, jobMan, tunnelJobMan, retRec[1])
+    return RemoteAppRecord.RemoteAppRecord(Application.RemoteJobManApplication(app, jobMan, retRec[1]), tunnelApp, jobMan, None, retRec[1])
 
 
 def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
