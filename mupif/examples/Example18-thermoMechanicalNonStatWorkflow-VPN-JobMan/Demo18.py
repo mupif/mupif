@@ -14,7 +14,8 @@ class Demo18(Workflow.Workflow):
         
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
-        #localize JobManager running on (remote) server and create a tunnel to it
+        #connect to JobManager running on (remote) server and create a tunnel to it
+        self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName)
         #allocate the thermal server
         solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
 
@@ -22,7 +23,7 @@ class Demo18(Workflow.Workflow):
 
         try:
             #self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='ssh', options='', sshHost = '' )
-            self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, cfg.jobManName, jobNatport, userName='bp', sshClient='manual', options='', sshHost = '' )
+            self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, userName='bp', sshClient='manual', options='', sshHost = '' )
             mupif.log.info("Allocated application %s" % self.thermalAppRec)
             self.thermal = self.thermalAppRec.getApplication()
         except Exception as e:

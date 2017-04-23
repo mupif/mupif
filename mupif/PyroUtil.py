@@ -40,6 +40,7 @@ import subprocess
 import time
 from . import RemoteAppRecord
 from . import Application
+from . import JobManager
 from mupif import log
 
 Pyro4.config.SERIALIZER="pickle"
