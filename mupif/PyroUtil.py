@@ -61,6 +61,22 @@ NS_METADATA_nathost='nathost'
 NS_METADATA_natport='natport'
 
 
+
+
+class SSHContext(object):
+    """
+    Helper class to store ssh tunnel connection details. It is parameter to different methods (connectJobManager, allocateApplicationWithJobManager, etc.).
+    When provided, the corresponding ssh tunnel connection is established and associated to proxy using decorator class to make sure it can be terminated properly.
+    """
+    def __init__(self, userName='', sshClient='manual', options='', sshHost=''):
+        self.userName = userName
+        self.sshClient=sshClient
+        self.options=options
+        self.sshHost=sshHost
+        
+
+
+
 #First, check that we can connect to a listening port of a name server
 #Second, connect there
 def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
@@ -407,7 +423,7 @@ def getUserInfo ():
     hostname = socket.gethostname()
     return (username, hostname)
 
-def connectJobManager (ns, jobManName, userName='', sshClient='ssh', options='', sshHost=''):
+def connectJobManager (ns, jobManName, sshContext=None):
     """
     Connect to jobManager described by given jobManRec and create a ssh tunnel
 
@@ -426,19 +442,24 @@ def connectJobManager (ns, jobManName, userName='', sshClient='ssh', options='',
     print ( (jobManHostname, jobManPort, jobManNatHost, jobManNatport))
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
-    try:
-        tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=jobManNatport, remotePort=jobManPort, sshClient=sshClient, options=options, sshHost=sshHost)
-    except Exception:
-        log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, userName, jobManNatport, jobManPort, sshClient, options, sshHost))
-        raise
+    if sshContext:
+        try:
+            tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
+                                     sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
+        except Exception:
+            log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, sshContext.userName,
+                                                                                                                                                                     jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
+            raise
     else:
-        # locate remote jobManager on (remote) server
-        jobMan = connectApp(ns, jobManName)
-        #return (jobMan, tunnelJobMan)
-        return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
+        tunnelJObMan = None
+
+    # locate remote jobManager on (remote) server
+    jobMan = connectApp(ns, jobManName)
+    #return (jobMan, tunnelJobMan)
+    return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClient='ssh', options='', sshHost=''):
+def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
     """
     Request new application instance to be spawned by  given jobManager
 
@@ -478,12 +499,15 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClie
         raise
 
     #create tunnel to application's daemon running on (remote) server
-    try:
-        (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobMan.getNSName())
-        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
-    except Exception:
-        log.exception("Creating ssh tunnel for application's daemon failed")
-        raise
+    appTunnel = None
+    if sshContext:
+        try:
+            (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobMan.getNSName())
+            appTunnel = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=natPort, remotePort=retRec[2],
+                                  sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
+        except Exception:
+            log.exception("Creating ssh tunnel for application's daemon failed")
+            raise
     else:
         log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
@@ -491,8 +515,8 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClie
     # connect to (remote) application, requests remote proxy
     app = connectApp(ns, retRec[1])
     if app==None:
-        tunnelApp.terminate()
-    return Application.RemoteJobManApplication(app, jobMan, retRec[1])
+        appTunnel.terminate()
+    return Application.RemoteJobManApplication(app, jobMan, retRec[1], appTunnel=appTunnel)
 
 
 def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
