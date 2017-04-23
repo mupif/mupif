@@ -276,11 +276,6 @@ class RemoteJobManApplication (object):
         """ 
         Catch all attribute access and pass it to self._decoratee, see python data model, __getattar__ method
         """
-        #if name == "_jobMan":
-        #    return self._jobMan
-        #elif name == "_jobID":
-        #    return self._jobID
-        #else:
         return getattr(self._decoratee, name)
     
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
@@ -288,7 +283,7 @@ class RemoteJobManApplication (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
-        print ("Terminating jobManagar job %s on %s"%(self._jobID, self._jobMan))
+        log.info ("Terminating jobManagar job %s on %s"%(self._jobID, self._jobMan))
         self._jobMan.terminateJob(self._jobID)
         self._decoratee.terminate()
 
