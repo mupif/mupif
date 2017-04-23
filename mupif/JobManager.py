@@ -446,3 +446,35 @@ class SimpleJobManager2 (JobManager):
         self.daemon.register(pfile)
 
         return pfile
+
+
+
+
+class RemoteJobManager (object):
+    """
+    Remote jobManager instances are normally represented by auto generated pyro proxy.
+    However, when ssh tunneled connection is established to connect to remote job manager, 
+    its instance must be properly terminated.
+    This class is a decorator around pyro proxy object represeting jobManager storing the
+    reference to the ssh tunnel established.
+    Note in case of VPN or direct (plain) connection, the plain Pyro proxy should be used.
+
+    The attribute could not be injected into remote instance (using proxy) as the termination 
+    has to be done from local computer, where the ssh tunnel has been created. 
+    Also different connections (proxies) to the same jobManager can exist.
+    """
+    def __init__ (self, decoratee, sshTunnel=None):
+        self._decoratee = decoratee
+        self._sshTunnel = sshTunnel
+        
+    def __del__(self):
+        if self._sshTunnel:
+            log.info ("RemoteJobManagar: autoterminating sshTunnel") 
+            self._sshTunnel.terminate()
+
+    def __getattr__(self, name):
+        """ 
+        Catch all attribute access and pass it to self._decoratee, see python data model, __getattar__ method
+        """
+        return getattr(self._decoratee, name)
+    

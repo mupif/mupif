@@ -433,15 +433,16 @@ def connectJobManager (ns, jobManName, userName='', sshClient='ssh', options='',
     else:
         # locate remote jobManager on (remote) server
         jobMan = connectApp(ns, jobManName)
-        return (jobMan, tunnelJobMan)
+        #return (jobMan, tunnelJobMan)
+        return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
+def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClient='ssh', options='', sshHost=''):
     """
-    Connect to jobManager described by given jobManRec
+    Request new application instance to be spawned by  given jobManager
 
     :param Pyro4.naming.Nameserver ns: running name server
-    :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
+    :param jobManager jobmanager to use 
     :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
     :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
@@ -453,19 +454,19 @@ def allocateApplicationWithJobManager (ns, jobManName, natPort, userName='', ssh
     """
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     log.debug('Trying to connect to JobManager')
-    (jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
+    #(jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
 
-    if jobMan is None:
-       e = OSError("Can not connect to JobManager")
-       log.exception(e)
-       raise e
-    else:
-       log.debug('Connected to JobManager %s using tunnel %s' % (jobMan, tunnelJobMan))
+    #if jobMan is None:
+    #   e = OSError("Can not connect to JobManager")
+    #   log.exception(e)
+    #   raise e
+    #else:
+    #   log.debug('Connected to JobManager %s using tunnel %s' % (jobMan, tunnelJobMan))
 
-    if tunnelJobMan is None:
-       e = OSError("Can not create a ssh tunnel to JobManager")
-       log.exception(e)
-       raise
+    #if tunnelJobMan is None:
+    #   e = OSError("Can not create a ssh tunnel to JobManager")
+    #   log.exception(e)
+    #   raise
 
     try:
         (username,hostname)=getUserInfo()
