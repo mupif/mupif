@@ -267,10 +267,11 @@ class RemoteJobManApplication (object):
     The attribute could not be injected into remote instance (using proxy) as the termination has to be done from local computer, which has the neccesary communication link established 
     (ssh tunnel in particular, when port translation takes place)
     """
-    def __init__ (self, decoratee, jobMan, jobID):
+    def __init__ (self, decoratee, jobMan, jobID, appTunnel=None):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID
+        self._appTunnel = appTunnel
         
     def __getattr__(self, name):
         """ 
@@ -283,6 +284,10 @@ class RemoteJobManApplication (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
+        if self._appTunnel:
+            log.info ("RemoteJobManApplication: Terminating app sshTunnel")
+            self._appTunnel.terminate()
+            
         log.info ("RemoteJobManApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
         self._jobMan.terminateJob(self._jobID)
         self._decoratee.terminate()
