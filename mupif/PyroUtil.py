@@ -492,7 +492,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, userName='', sshClie
     app = connectApp(ns, retRec[1])
     if app==None:
         tunnelApp.terminate()
-    return RemoteAppRecord.RemoteAppRecord(Application.RemoteJobManApplication(app, jobMan, retRec[1]), tunnelApp, jobMan, None, retRec[1])
+    return Application.RemoteJobManApplication(app, jobMan, retRec[1])
 
 
 def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
