@@ -442,6 +442,7 @@ def connectJobManager (ns, jobManName, sshContext=None):
     print ( (jobManHostname, jobManPort, jobManNatHost, jobManNatport))
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
+    tunnelJobMam = None
     if sshContext:
         try:
             tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
@@ -450,8 +451,6 @@ def connectJobManager (ns, jobManName, sshContext=None):
             log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, sshContext.userName,
                                                                                                                                                                      jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
             raise
-    else:
-        tunnelJObMan = None
 
     # locate remote jobManager on (remote) server
     jobMan = connectApp(ns, jobManName)
