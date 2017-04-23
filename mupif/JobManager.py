@@ -77,7 +77,7 @@ class JobManager(object):
         """
         Constructor. Initializes the receiver.
 
-        :param str appName: Name of application
+        :param str appName: Name of receiver (used also by NS)
         :param str jobManWorkDir: Absolute path for storing data, if necessary
         :param int maxJobs: Maximum number of jobs to run simultaneously
         """
@@ -117,6 +117,8 @@ class JobManager(object):
     def getStatus (self):
         """
         """
+    def getNSName (self):
+        return appName
 
     def uploadFile(self, jobID, filename, pyroFile):
         """
