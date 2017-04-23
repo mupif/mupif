@@ -442,7 +442,7 @@ def connectJobManager (ns, jobManName, sshContext=None):
     print ( (jobManHostname, jobManPort, jobManNatHost, jobManNatport))
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
-    tunnelJobMam = None
+    tunnelJobMan = None
     if sshContext:
         try:
             tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
