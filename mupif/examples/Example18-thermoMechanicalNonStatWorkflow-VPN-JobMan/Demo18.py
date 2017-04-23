@@ -23,9 +23,9 @@ class Demo18(Workflow.Workflow):
 
         try:
             #self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='ssh', options='', sshHost = '' )
-            self.thermalAppRec = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, userName='bp', sshClient='manual', options='', sshHost = '' )
-            mupif.log.info("Allocated application %s" % self.thermalAppRec)
-            self.thermal = self.thermalAppRec.getApplication()
+            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, userName='bp', sshClient='manual', options='', sshHost = '' )
+            #mupif.log.info("Allocated application %s" % self.thermalAppRec)
+            #self.thermal = self.thermalAppRec.getApplication()
         except Exception as e:
             mupif.log.exception(e)
 
@@ -56,7 +56,8 @@ class Demo18(Workflow.Workflow):
 
     def terminate(self):
         
-        self.thermalAppRec.terminateAll()
+        #self.thermalAppRec.terminateAll()
+        self.thermal.terminate()
         self.mechanical.terminate()
         super(Demo18, self).terminate()
 
