@@ -1,0 +1,10 @@
+
+
+2017-04-24  Borek Patzak  <Borek.Patzak@fsv.cvut.cz>
+	branch origin/devel-ver2.0:
+	* Introduced abstract MupifObject class implementing metadata storage. It comes with getMetadata and setMetadata methods allowing to store any metadata. All mupif components should be derived from this base (Application, Property and Field already derived)
+	* Added new Workflow class (derived from Application). It allows to implement workflow with application interface, which allows to build a hierarchy of workflows. Added new Example18 demontrating this concept.
+	* Applications and JobManagers now store their connection data (host, port, natPort) in nameserver metadata list. This allowed to reduce some argument passed to various methods (connectJobManager, allocateApplicationWithJobManager, etc).
+	* Introduced new decorator classes representing remote application and remote jobmanager connected using ssh tunnels, decorating the pyro proxy instances and allowing to store local data related to connection and allowing to terminate established tunnels. So the external RemoteApplicationRecord is not necessary any more.
+
+
