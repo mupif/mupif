@@ -25,7 +25,7 @@ class Property(MupifObject.MupifObject):
             :param PhysicalQuantity units: Property units
             :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
             """
-            super(Field, self).__init__()
+            super(Property, self).__init__()
             self.value = value
             self.propID = propID
             self.time = time
