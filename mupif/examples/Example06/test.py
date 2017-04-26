@@ -7,15 +7,13 @@ from mupif import *
 import mupif
 import time as timeTime
 
-#if you wish to run no SSH tunnels, set to True
-noSSH=False
+#if you wish to run no SSH tunnels, set to None
+#sshContext = None
+sshContext = PyroUtil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
 
-tunnel = None
+
 #use numerical IP values only (not names, sometimes they do not work)
-try:#tunnel must be closed at the end, otherwise bound socket may persist on system
-    if not noSSH:
-        tunnel = PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
-
+try:
     time  = 0
     dt    = 1
     expectedValue = 4.5
@@ -25,7 +23,8 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
     ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
     # locate remote PingServer application, request remote proxy
-    serverApp = PyroUtil.connectApp(ns, cfg.appName)
+    # tunnel created on the fly and terminated with application
+    serverApp = PyroUtil.connectApp(ns, cfg.appName, sshContext)
 
     try:
         appsig=serverApp.getApplicationSignature()
@@ -63,8 +62,6 @@ try:#tunnel must be closed at the end, otherwise bound socket may persist on sys
     mupif.log.debug("Time consumed %f s" % (timeTime.time()-start))
     mupif.log.debug("Ping test finished")
 
-finally:
-    mupif.log.debug("Closing ssh tunnel")
-    if tunnel:
-        tunnel.terminate()
 
+finally:
+    mupif.log.info("Test Terminated")
