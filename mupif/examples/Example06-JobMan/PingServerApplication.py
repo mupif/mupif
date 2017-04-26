@@ -1,5 +1,6 @@
 from mupif import *
 
+@Pyro4.expose
 class PingServerApplication(Application.Application):
     """
     Simple application that computes an aritmetical average of a mapped property
