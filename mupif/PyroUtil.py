@@ -138,23 +138,23 @@ def getNSConnectionInfo(ns, name):
     natport=None
     
     for i in mdata:
-        match = re.search(NS_METADATA_host+':([\w\.]+)', i)
+        match = re.search('\A'+NS_METADATA_host+':([\w\.]+)', i)
         if (match):
             host=match.group(1)
-        match = re.search(NS_METADATA_port+':(\w+)', i)
+        match = re.search('\A'+NS_METADATA_port+':(\w+)', i)
         if match:
             port=int(match.group(1))
-        match = re.search(NS_METADATA_nathost+':([\w\.]+)', i)
+        match = re.search('\A'+NS_METADATA_nathost+':([\w\.]+)', i)
         if match:
             nathost=match.group(1)
-        match = re.search(NS_METADATA_natport+':(\w+)', i)
+        match = re.search('\A'+NS_METADATA_natport+':(\w+)', i)
         if match:
             natport=int(match.group(1))
         
     return (host, port, nathost, natport)
             
 
-def connectApp(ns, name):
+def _connectApp(ns, name):
     """
     Connects to a remote application.
 
@@ -173,6 +173,7 @@ def connectApp(ns, name):
         raise
 
     try:
+        log.info("Connecting to %s"%(app2))
         sig = app2.getApplicationSignature()
         log.debug("Connected to " + sig + " with the name " + name)
     except Exception as e:
@@ -181,6 +182,30 @@ def connectApp(ns, name):
 
     return app2
 
+
+def connectApp(ns, name, sshContext=None):
+    """
+    Connects to a remote application, creates the ssh tunnel if necessary
+
+    :param Pyro4.naming.Nameserver ns: Instance of a nameServer
+    :param str name: Name of the application to be connected to
+    :return: Application Decorator (docorating pyro proxy with ssh tunnel instance)
+    :rtype: Instance of an application decorator
+    :raises Exception: When cannot find registered server or Cannot connect to application
+    """
+    tunnel = None
+    if sshContext:
+        try:
+            (hostname, port, natHost, natport) = getNSConnectionInfo(ns, name)
+            tunnel = sshTunnel(remoteHost=hostname, userName=sshContext.userName, localPort=natport, remotePort=port,
+                               sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
+        except Exception:
+            log.exception('Creating ssh tunnel failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' %
+                          (jobManHostname, sshContext.userName, jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
+            raise
+
+    app = _connectApp(ns, name)
+    return Application.RemoteApplication (app, appTunnel=tunnel)
 
 def getNSAppName(jobname, appname):
     """
@@ -453,7 +478,7 @@ def connectJobManager (ns, jobManName, sshContext=None):
             raise
 
     # locate remote jobManager on (remote) server
-    jobMan = connectApp(ns, jobManName)
+    jobMan = _connectApp(ns, jobManName)
     #return (jobMan, tunnelJobMan)
     return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
 
@@ -512,10 +537,10 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
 
     #time.sleep(1)
     # connect to (remote) application, requests remote proxy
-    app = connectApp(ns, retRec[1])
+    app = _connectApp(ns, retRec[1])
     if app==None:
         appTunnel.terminate()
-    return Application.RemoteJobManApplication(app, jobMan, retRec[1], appTunnel=appTunnel)
+    return Application.RemoteApplication(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
 
 
 def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
@@ -536,7 +561,7 @@ def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ss
     :raises Exception: if ssh tunnel to application instance can not be created
     """
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
-    jobMan = connectApp(ns, jobManName)
+    jobMan = _connectApp(ns, jobManName)
 
     try:
         (username,hostname)=getUserInfo()
@@ -556,7 +581,7 @@ def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ss
     else:
         log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
-    app = connectApp(ns, retRec[1])
+    app = _connectApp(ns, retRec[1])
     if app==None:
         tunnelApp.terminate()
     appRec.appendNextApplication(app,tunnelApp,retRec[1])
