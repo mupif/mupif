@@ -22,11 +22,15 @@ daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sC
 jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'thermalServerConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 
 #set up daemon with JobManager
-uri = daemon.register(jobMan)
+#uri = daemon.register(jobMan)
 #register JobManager to nameServer
-ns.register(sConf.jobManName, uri)
-logger.debug ("Daemon for JobManager runs at " + str(uri))
-print(80*'-')
-print ("Started "+sConf.jobManName)
+#ns.register(sConf.jobManName, uri)
+#logger.debug ("Daemon for JobManager runs at " + str(uri))
+#print(80*'-')
+#print ("Started "+sConf.jobManName)
 #waits for requests
-daemon.requestLoop()
+#daemon.requestLoop()
+
+PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.serverPort, nathost='', natport='', nshost=sConf.nshost, nsport=sConf.nsport, nsname=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
+
+
