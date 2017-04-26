@@ -1,4 +1,5 @@
 from mupif import *
+import Pyro4
 
 @Pyro4.expose
 class PingServerApplication(Application.Application):

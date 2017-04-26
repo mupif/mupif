@@ -52,6 +52,7 @@ else:
     #logger.info("Working application 2 on server " + appsig)
 
 finally:
+    app1.terminate()
     mupif.log.info("Workflow terminated")
 
 
