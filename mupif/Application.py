@@ -258,7 +258,7 @@ class Application(MupifObject.MupifObject):
 
 
 
-class RemoteJobManApplication (object):
+class RemoteApplication (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
     However, when application is allocated using JobManager, its instance must be properly terminated (requires interaction with jobManager).
@@ -267,7 +267,7 @@ class RemoteJobManApplication (object):
     The attribute could not be injected into remote instance (using proxy) as the termination has to be done from local computer, which has the neccesary communication link established 
     (ssh tunnel in particular, when port translation takes place)
     """
-    def __init__ (self, decoratee, jobMan, jobID, appTunnel=None):
+    def __init__ (self, decoratee, jobMan=None, jobID=None, appTunnel=None):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID
@@ -285,11 +285,13 @@ class RemoteJobManApplication (object):
         Terminates the application. Terminates the allocated job at jobManager
         """
         if self._appTunnel:
-            log.info ("RemoteJobManApplication: Terminating app sshTunnel")
+            log.info ("RemoteApplication: Terminating app sshTunnel")
             if self._appTunnel != "manual":
                 self._appTunnel.terminate()
+
+        if (self._jobMan and self._jobID):
+            log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
+            self._jobMan.terminateJob(self._jobID)
             
-        log.info ("RemoteJobManApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
-        self._jobMan.terminateJob(self._jobID)
         self._decoratee.terminate()
 
