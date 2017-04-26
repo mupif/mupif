@@ -14,6 +14,7 @@ server = cfg.server#IP of your server
 sshClient = cfg.sshClient
 options = cfg.options
 sshHost = cfg.sshHost
+jobManName=cfg.jobManName #Name of job manager
 
 solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
 solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.serverNathost, cfg.serverUserName, cfg.jobManName)

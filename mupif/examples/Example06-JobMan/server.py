@@ -25,12 +25,7 @@ if noSSH:
 #Run a daemon for jobManager on this machine
 daemon = sConf.cfg.Pyro4.Daemon(host=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport)
 #Run job manager on a server
-jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'serverConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
+jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'serverConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 
-#set up daemon with JobManager
-uri = daemon.register(jobMan)
-#register JobManager to nameServer
-ns.register(sConf.jobManName, uri)
-print ("Daemon for JobManager runs at " + str(uri))
-#waits for requests
-daemon.requestLoop()
+PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport, nshost=sConf.nshost, nsport=sConf.nsport, nsname=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
+
