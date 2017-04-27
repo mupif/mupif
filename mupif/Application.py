@@ -296,6 +296,9 @@ class RemoteApplication (object):
         if (self._jobMan and self._jobID):
             log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
             self._jobMan.terminateJob(self._jobID)
+            self._jobID=None
             
         self._decoratee.terminate()
 
+    def __del__(self):
+        self.terminate()
