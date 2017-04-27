@@ -247,6 +247,7 @@ class Application(MupifObject.MupifObject):
             #log.info(self.pyroDaemon)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
+            self.pyroDaemon=None
 
 
     def getURI(self):
