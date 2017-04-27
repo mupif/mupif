@@ -19,7 +19,7 @@ ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=s
 #Run a daemon for jobMamager on this machine
 daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport)
 #Run job manager on a server
-jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'mechanicalServerConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
+jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'mechanicalServerConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 
 #set up daemon with JobManager
 #uri = daemon.register(jobMan)
@@ -31,5 +31,5 @@ jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.
 #waits for requests
 #daemon.requestLoop()
 
-PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.serverPort, nathost='', natport='', nshost=sConf.nshost, nsport=sConf.nsport, nsname=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
+PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport, nshost=sConf.nshost, nsport=sConf.nsport, nsname=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
 
