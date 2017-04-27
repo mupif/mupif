@@ -75,6 +75,66 @@ class SSHContext(object):
         self.sshHost=sshHost
         
 
+class sshTunnel(object):
+    """
+    Helper class to represent established ssh tunnel. It defines terminate and __del__ method
+    to ensure correct tunnel termination.
+    """
+    def __init__(self, remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
+
+
+        if sshHost =='':
+            sshHost = remoteHost
+        if userName =='':
+            userName = os.getenv('USER')
+                
+        direction = 'L'
+        if Reverse == True:
+            direction = 'R'
+
+        #use direct system command. Paramiko or sshtunnel do not work.
+        #put ssh public key on a server - interaction with a keyboard
+        #for password will not work here (password goes through TTY, not stdin)
+        if sshClient=='ssh':
+            cmd = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.debug("Creating ssh tunnel via command: " + cmd)
+        elif sshClient=='autossh':
+            cmd = 'autossh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.debug("Creating autossh tunnel via command: " + cmd)
+        elif 'putty' in sshClient.lower():
+            #need to create a public key *.ppk using puttygen.
+            #It can be created by importing Linux private key.
+            #The path to that key is given as -i option
+            cmd = '%s -%s %d:%s:%d %s@%s -N %s' % (sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.debug("Creating ssh tunnel via command: " + cmd)
+        elif sshClient=='manual':
+            #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
+            cmd1 = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd2 = 'putty.exe -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
+            self.tunnel = 'manual'
+        else:
+            log.error("Unknown ssh client, exiting")
+            exit(0)
+        try:
+            self.tunnel = subprocess.Popen(cmd.split())
+        except Exception:
+            log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
+            raise
+
+        time.sleep(1.0)
+
+    def terminate(self):
+        if self.tunnel:
+            if not self.tunnel == "manual":
+                self.tunnel.terminate()
+                self.tunnel = None
+
+    def __del__(self):
+        self.terminate()
+        
+                
+        
 
 
 #First, check that we can connect to a listening port of a name server
@@ -342,65 +402,8 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, nsname, 
     """
     runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, nsname=nsname, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
-def sshTunnel(remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
-    """
-    Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux
-
-    :param str remoteHost: IP of remote host
-    :param str userName: User name, if empty, current user name is used
-    :param int localPort: Local port
-    :param int remotePort: Remote port
-    :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
-    :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
-    :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
-    :param bool Reverse: True if reverse tunnel to be created (default is False)
-
-    :return: Instance of subprocess.Popen running the tunneling command
-    :rtype: subprocess.Popen
-    :raises Exception: if creation of a tunnel failed
-    """
-
-    if sshHost =='':
-        sshHost = remoteHost
-    if userName =='':
-        userName = os.getenv('USER')
-
-    direction = 'L'
-    if Reverse == True:
-        direction = 'R'
-
-    #use direct system command. Paramiko or sshtunnel do not work.
-    #put ssh public key on a server - interaction with a keyboard for password will not work here (password goes through TTY, not stdin)
-    if sshClient=='ssh':
-        cmd = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        log.debug("Creating ssh tunnel via command: " + cmd)
-    elif sshClient=='autossh':
-        cmd = 'autossh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        log.debug("Creating autossh tunnel via command: " + cmd)
-    elif 'putty' in sshClient.lower():
-        #need to create a public key *.ppk using puttygen. It can be created by importing Linux private key. The path to that key is given as -i option
-        cmd = '%s -%s %d:%s:%d %s@%s -N %s' % (sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        log.debug("Creating ssh tunnel via command: " + cmd)
-    elif sshClient=='manual':
-        #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-        cmd1 = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        cmd2 = 'putty.exe -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-        log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
-        return 'manual'
-    else:
-        log.error("Unknown ssh client, exiting")
-        exit(0)
-    try:
-        tunnel = subprocess.Popen(cmd.split())
-    except Exception:
-        log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
-        raise
-
-    time.sleep(1.0)
-
-    return tunnel
-
-def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
+#def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
+def connectApplicationsViaClient(fromContext, toApplication):
     """
     Create a reverse ssh tunnel so one server application can connect to another one.
 
@@ -415,6 +418,7 @@ def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh
 
 
     :param tuple fromSolverAppRec: A tuple defining userName, sshHost
+    :param fromContext SSHContext
     :param Application toApplication: Application object to which we want to create a tunnel
     :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
     :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
@@ -424,7 +428,7 @@ def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh
     """
     uri = toApplication.getURI()
     natPort = getNATfromUri( uri )
-    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromSolverAppRec[3], localPort=natPort, remotePort=natPort, sshClient=sshClient, options=options, sshHost=fromSolverAppRec[2], Reverse=True)
+    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=natPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
     return tunnel
 
 def getNATfromUri (uri):
@@ -438,6 +442,22 @@ def getNATfromUri (uri):
     """
     return int(re.search('(\d+)$', str(uri)).group(0))
 
+def getIPfromUri (uri):
+    """
+    Returns IP address of the server hosting given URI, e.g. return 127.0.0.1 from string 
+    PYRO:obj_b178eed8e1994135adf9864725f1d50f@127.0.0.1:5555
+    :param str uri: URI from an object
+
+    :return: IP address 
+    :rtype: string
+    """
+    match = re.search('\@([\w\.]+)\:\d+$', str(uri))
+    if match:
+        return match.group(1)
+    else:
+        log.error("getIPfromUri: uri format mismatch (%s)"%(uri))
+        return None
+    
 
 def getUserInfo ():
     """
