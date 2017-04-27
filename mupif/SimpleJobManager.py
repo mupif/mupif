@@ -31,6 +31,7 @@ import Pyro4
 import logging
 from . import JobManager
 from . import PyroUtil
+from . import PyroFile
 import os
 logger = logging.getLogger()
 
