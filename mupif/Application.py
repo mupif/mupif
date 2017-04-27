@@ -278,6 +278,10 @@ class RemoteApplication (object):
         Catch all attribute access and pass it to self._decoratee, see python data model, __getattar__ method
         """
         return getattr(self._decoratee, name)
+
+    def getJobID(self):
+        return self._jobID
+
     
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
     def terminate(self):
