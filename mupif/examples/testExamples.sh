@@ -123,8 +123,8 @@ pushd Example10
 	PID1=$!
 	$PYTHON mechanicalServer.py &
 	PID2=$!
+	sleep 2 #wait for servers to start
 	$PYTHON Demo10.py
-	sleep 2 # wait for servers to start up
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
