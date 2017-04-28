@@ -1,4 +1,4 @@
-f# 
+# 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2015 Borek Patzak
 # 
