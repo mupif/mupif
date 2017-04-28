@@ -8,56 +8,51 @@ from mupif import log as logger
 sys.path.append('../Example10')
 import demoapp
 
-time  = 0.
-dt = 0.
-timestepnumber = 0
-targetTime = 3
 
-thermal = demoapp.thermal_nonstat('inputT13.in','.')
-mechanical = demoapp.mechanical('inputM13.in', '.')
-matPlotFig = None
+class Demo13(Workflow.Workflow):
+    def __init__ (self, targetTime=3.):
+        super(Demo13, self).__init__(file='', workdir='', targetTime=targetTime)
+        
+        self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
+        self.mechanical = demoapp.mechanical('inputM13.in', '.')
+        self.matPlotFig = None
 
-while (abs(time - targetTime) > 1.e-6):
 
-    logger.debug("Step: %g %g %g"%(timestepnumber,time,dt))
-    # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    def solveStep(self, istep, stageID=0, runInBackground=False):
 
-    try:
-        # solve problem 1
-        thermal.solveStep(istep)
-        # request Temperature from thermal
-        ft = thermal.getField(FieldID.FID_Temperature, istep.getTime())
-        #print ("T(l/2)=", f.evaluate((2.5,0.2,0.0)))
-        #data = ft.field2VTKData().tofile('T_%s'%str(timestepnumber))
-        #matPlotFig = ft.field2Image2D(title='Thermal '+str(time), barRange=(0,9), fileName='thermal.png', matPlotFig=matPlotFig)
+        try:
+            # solve problem 1
+            self.thermal.solveStep(istep)
+            # request Temperature from thermal
+            ft = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
+            
+            self.mechanical.setField(ft)
+            sol = self.mechanical.solveStep(istep) 
+            f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
 
-        mechanical.setField(ft)
-        sol = mechanical.solveStep(istep) 
-        f = mechanical.getField(FieldID.FID_Displacement, istep.getTime())
-        #print ("D(l,1)=", f.evaluate((5.0,1.0,0.0)))
-        data = f.field2VTKData().tofile('M_%s'%str(timestepnumber))
-        matPlotFig = f.field2Image2D(title='Mechanical ' + str(time), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=matPlotFig) 
+            data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
+            self.matPlotFig = f.field2Image2D(title='Mechanical ' + str(istep.getTime()), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=self.matPlotFig) 
+            
+        except APIError.APIError as e:
+            logger.error("Following API error occurred:",e)
 
-        # finish step
-        thermal.finishStep(istep)
-        mechanical.finishStep(istep)
-
+    def getCriticalTimeStep(self):
         # determine critical time step
-        dt = min (thermal.getCriticalTimeStep(), mechanical.getCriticalTimeStep())
+        return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
-        # update time
-        time = time+dt
-        if (time > targetTime):
-            # make sure we reach targetTime at the end
-            time = targetTime
-        timestepnumber = timestepnumber+1
+    def terminate(self):
+        self.thermal.terminate()
+        self.mechanical.terminate()
 
-    except APIError.APIError as e:
-        logger.error("Following API error occurred:",e)
-        break
+    def getApplicationSignature(self):
+        return "Demo13 workflow 1.0"
 
-# terminate
-thermal.terminate();
-mechanical.terminate();
-ft.field2Image2DBlock() #To block the window
+    def getAPIVersion(self):
+        return "1.0"
+
+
+    
+if __name__=='__main__':
+    demo = Demo13(targetTime=3.0)
+    demo.solve()
+    #ft.field2Image2DBlock() #To block the window
