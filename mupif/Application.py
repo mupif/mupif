@@ -301,7 +301,9 @@ class RemoteApplication (object):
             self._jobMan.terminateJob(self._jobID)
             self._jobID=None
             
-        self._decoratee.terminate()
+        if self._decoratee:
+            self._decoratee.terminate()
+            self._decoratee = None
 
     def __del__(self):
         """
