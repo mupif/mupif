@@ -1,4 +1,4 @@
-# 
+f# 
 #           MuPIF: Multi-Physics Integration Framework 
 #               Copyright (C) 2010-2015 Borek Patzak
 # 
@@ -262,10 +262,12 @@ class Application(MupifObject.MupifObject):
 class RemoteApplication (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
-    However, when application is allocated using JobManager, its instance must be properly terminated (requires interaction with jobManager).
-    This class is a decorator around pyro proxy object represeting application storing the reference to job manager which allocated the application.
+    However, when application is allocated using JobManager or ssh tunnel has to be established, the proper termination
+    of the tunnel or job manager task is required.
+    This class is a decorator around pyro proxy object represeting application storing the reference to job manager and related jobID or/and ssh tunnel.
 
-    The attribute could not be injected into remote instance (using proxy) as the termination has to be done from local computer, which has the neccesary communication link established 
+    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy) and the termination of job and tunnel
+    has to be done from local computer, which has the neccesary communication link established 
     (ssh tunnel in particular, when port translation takes place)
     """
     def __init__ (self, decoratee, jobMan=None, jobID=None, appTunnel=None):
@@ -302,4 +304,7 @@ class RemoteApplication (object):
         self._decoratee.terminate()
 
     def __del__(self):
+        """
+        Destructor, calls terminate if not done before.
+        """
         self.terminate()

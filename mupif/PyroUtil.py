@@ -81,7 +81,20 @@ class sshTunnel(object):
     to ensure correct tunnel termination.
     """
     def __init__(self, remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
+        """ 
+        Constructor. Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux.
 
+        :param str remoteHost: IP of remote host
+        :param str userName: User name, if empty, current user name is used
+        :param int localPort: Local port
+        :param int remotePort: Remote port
+        :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
+        :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
+        :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
+        :param bool Reverse: True if reverse tunnel to be created (default is False)
+        
+        :raises Exception: if creation of a tunnel failed
+        """
 
         if sshHost =='':
             sshHost = remoteHost
@@ -125,6 +138,9 @@ class sshTunnel(object):
         time.sleep(1.0)
 
     def terminate(self):
+        """
+        Terminate the connection.
+        """
         if self.tunnel:
             if not self.tunnel == "manual":
                 self.tunnel.terminate()
@@ -378,7 +394,6 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param str hkey: A password string
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
-    :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags.
 
     :raises Exception: if can not run Pyro4 daemon
     """
@@ -417,14 +432,11 @@ def connectApplicationsViaClient(fromContext, toApplication):
     server1          server2
 
 
-    :param tuple fromSolverAppRec: A tuple defining userName, sshHost
     :param fromContext SSHContext
     :param Application toApplication: Application object to which we want to create a tunnel
-    :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
-    :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
 
-    :return: Instance of subprocess.Popen running the tunneling command
-    :rtype: subprocess.Popen
+    :return: Instance of sshTunnel class
+    :rtype: sshTunnel
     """
     uri = toApplication.getURI()
     natPort = getNATfromUri( uri )
@@ -470,16 +482,13 @@ def getUserInfo ():
 
 def connectJobManager (ns, jobManName, sshContext=None):
     """
-    Connect to jobManager described by given jobManRec and create a ssh tunnel
+    Connect to jobManager described by given jobManRec and create an optional ssh tunnel
 
     :param jobManName name under which jobmanager is registered on NS
-    :param userName username for ssh connection 
-    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
-    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
-    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param sshContext describing optional ssh tunnel connection detail 
 
     :return: (JobManager proxy, jobManager Tunnel)
-    :rtype: tuple (JobManager, subprocess.Popen)
+    :rtype: JobManager.RemoteJobManager
     :raises Exception: if creation of a tunnel failed
     """
 
@@ -510,12 +519,11 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
     :param Pyro4.naming.Nameserver ns: running name server
     :param jobManager jobmanager to use 
     :param int natPort: nat port on a local computer for ssh tunnel for the application
-    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
-    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
-    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param sshContext describing optional ssh tunnel connection detail 
 
-    :return: RemoteAppRecord containing application, tunnel to application, tunnel to jobman, jobid
-    :rtype: RemoteAppRecord
+
+    :return: Application instance
+    :rtype: Application.RemoteApplication 
     :raises Exception: if allocation of job fails
     """
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
@@ -563,48 +571,21 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
     return Application.RemoteApplication(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
 
 
-def allocateNextApplication (ns, jobManName, natPort, userName='', sshClient='ssh', options='', sshHost=''):
+def allocateNextApplication (ns, jobMan, natPort, sshContext=None):
     """
-    Allocate next application instance on a running Job Manager and adds it into
-    existing applicationRecord.
+    Request new application instance to be spawned by  given jobManager
 
     :param Pyro4.naming.Nameserver ns: running name server
-    :param tuple jobManRec: tuple containing (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManDNSName), see clientConfig.py
-    :param int natPort: nat port in local computer for ssh tunnel for the application
-    :param RemoteAppRecord appRec: existing RemoteAppRecord where a new application will be added
-    :param str sshClient: client for ssh tunnel, see :func:`sshTunnel`, default 'ssh'
-    :param str options: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
-    :param str sshHost: parameters for ssh tunnel, see :func:`sshTunnel`, default ''
+    :param jobManager jobmanager to use 
+    :param int natPort: nat port on a local computer for ssh tunnel for the application
+    :param sshContext describing optional ssh tunnel connection detail 
 
-    :return: None
+
+    :return: Application instance
+    :rtype: Application.RemoteApplication 
     :raises Exception: if allocation of job fails
-    :raises Exception: if ssh tunnel to application instance can not be created
     """
-    #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
-    jobMan = _connectApp(ns, jobManName)
-
-    try:
-        (username,hostname)=getUserInfo()
-        retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
-        log.info('Allocated job, returned record from jobMan:' +  str(retRec))
-    except Exception:
-        log.exception("jobMan.allocateJob() failed")
-        raise
-
-    #create tunnel to application's daemon running on (remote) server
-    try:
-        (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
-        tunnelApp = sshTunnel(remoteHost=jobManHostname, userName=userName, localPort=natPort, remotePort=retRec[2], sshClient=sshClient, options=options, sshHost=sshHost)
-    except Exception:
-        log.exception("Creating ssh tunnel for application's daemon failed")
-        raise
-    else:
-        log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
-
-    app = _connectApp(ns, retRec[1])
-    if app==None:
-        tunnelApp.terminate()
-    appRec.appendNextApplication(app,tunnelApp,retRec[1])
+    return allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext)
 
 from . import PyroFile
 def downloadPyroFile (newLocalFileName, pyroFile, compressFlag=False):
