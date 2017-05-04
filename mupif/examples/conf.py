@@ -63,6 +63,13 @@ serverNathost2 = '127.0.0.1'
 serverNatport2 = 5558
 appName2 = 'MuPIFServer2'
 
+#third SERVER - an application running on local computer in VPN
+#this server can be accessed only from script from the same computer
+#otherwise the server address has to be replaced by vpn local adress
+server3 = 'localhost'
+serverPort3 = 44386
+serverNathost2 = '127.0.0.1'
+
 
 #CLIENT
 #User name for ssh connection, empty uses current login name
