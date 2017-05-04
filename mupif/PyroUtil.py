@@ -130,7 +130,8 @@ class sshTunnel(object):
             log.error("Unknown ssh client, exiting")
             exit(0)
         try:
-            self.tunnel = subprocess.Popen(cmd.split())
+            if (cmd):
+                self.tunnel = subprocess.Popen(cmd.split())
         except Exception:
             log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
             raise
