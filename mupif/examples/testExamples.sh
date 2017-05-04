@@ -133,6 +133,37 @@ pushd Example10
 	kill -9 $PID2
 popd
 
+
+pushd Example12-multiscaleThermo:
+        $PYTHON Demo12.py
+popd
+
+pushd Example12-multiscaleThermo:
+        $PYTHON Demo12.py
+popd
+
+
+
+
+pushd Example18-thermoMechanicalNonStatWorkflow-VPN-JobMan
+        echo $PWD
+	$PYTHON thermalServer.py &
+	PID1=$!
+	$PYTHON mechanicalServer.py &
+	PID2=$!
+	sleep 2 #wait for servers to start
+	$PYTHON Demo18.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
+	echo "=================== Exit status $ret ===================="
+	kill -9 $PID1
+	kill -9 $PID2
+popd
+
+
+
+
 echo "*** Global return status $retval."
 
 cnt=${#LOG[@]}
