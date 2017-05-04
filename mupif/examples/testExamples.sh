@@ -138,8 +138,8 @@ pushd Example12-multiscaleThermo:
         $PYTHON Demo12.py
 popd
 
-pushd Example12-multiscaleThermo:
-        $PYTHON Demo12.py
+pushd Example13-thermoMechanicalNonStat
+        $PYTHON Demo13.py
 popd
 
 
