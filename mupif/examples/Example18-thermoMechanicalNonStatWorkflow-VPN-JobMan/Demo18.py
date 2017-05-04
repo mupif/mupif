@@ -4,7 +4,7 @@ import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
 import mupif
-import conf_vpn as cfg
+import conf as cfg
 
 
 class Demo18(Workflow.Workflow):
@@ -18,9 +18,9 @@ class Demo18(Workflow.Workflow):
         self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName)
 
         #allocate the thermal server
-        jobNatport = -1
+        jobNatport = 7100
         try:
-            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, PyroUtil.SSHContext(userName='bp', sshClient='manual', options='', sshHost = '' ))
+            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, PyroUtil.SSHContext(userName='', sshClient=cfg.sshClient, options='', sshHost = '' ))
             #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport )
         except Exception as e:
             mupif.log.exception(e)

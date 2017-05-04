@@ -5,7 +5,7 @@ sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
 import mupif
 import demoapp
-import conf_vpn as cfg
+import conf as cfg
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)

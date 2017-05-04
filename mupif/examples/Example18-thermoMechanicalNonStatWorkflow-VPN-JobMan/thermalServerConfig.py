@@ -1,7 +1,7 @@
 #Configuration file for JobMan2cmd
 import os,sys
 sys.path.extend(['..','../Example10'])
-import conf_vpn as cfg
+import conf as cfg
 
 import demoapp
 applicationClass = demoapp.thermal_nonstat

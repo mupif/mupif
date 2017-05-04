@@ -4,11 +4,11 @@ sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
 import mupif
 import demoapp
-import conf_vpn as cfg
+import conf as cfg
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
-
+hkey = cfg.hkey #Password for accessing nameServer and applications
 #Run a daemon for jobManager on this machine
 daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort)
 
