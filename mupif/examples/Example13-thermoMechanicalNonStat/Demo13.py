@@ -8,6 +8,8 @@ from mupif import log as logger
 sys.path.append('../Example10')
 import demoapp
 
+# enable to see plots
+graphics = False
 
 class Demo13(Workflow.Workflow):
     def __init__ (self, targetTime=3.):
@@ -31,7 +33,8 @@ class Demo13(Workflow.Workflow):
             f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
 
             data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
-            self.matPlotFig = f.field2Image2D(title='Mechanical ' + str(istep.getTime()), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=self.matPlotFig) 
+            if (graphics):
+                self.matPlotFig = f.field2Image2D(title='Mechanical ' + str(istep.getTime()), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=self.matPlotFig) 
             
         except APIError.APIError as e:
             logger.error("Following API error occurred:",e)
