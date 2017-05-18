@@ -12,5 +12,5 @@ ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.h
 
 (user, hostname)=PyroUtil.getUserInfo()
 mechanical = demoapp.mechanical('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputM13.in', '.')
-PyroUtil.runAppServer(server=hostname, port=cfg.serverPort2, nathost=hostname, natport=cfg.serverPort2, nshost=cfg.nshost, nsport=cfg.nsport, nsname='mechanical', hkey=cfg.hkey, app=mechanical)
+PyroUtil.runAppServer(server=hostname, port=cfg.serverPort2, nathost=hostname, natport=cfg.serverPort2, nshost=cfg.nshost, nsport=cfg.nsport, appName='mechanical', hkey=cfg.hkey, app=mechanical)
 

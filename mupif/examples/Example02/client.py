@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-mode = 2 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
+mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
 import os, sys
 sys.path.append('..')
 if mode==3:
@@ -38,7 +38,7 @@ timestepnumber=0
 targetTime = 1.3
 
 sshContext = None
-if mode==1: #just print out how to set up a SSH tunnel
+if mode==2: #just print out how to set up a SSH tunnel
     sshContext =  PyroUtil.SSHContext(userName=cfg.serverUserName, sshClient='ssh', options=cfg.options)
     #PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, 'ssh', cfg.options)
 

@@ -1,4 +1,7 @@
 #!/bin/bash
+#You may run all tests without argumens, or to use selected tests such as ./testExamples.sh '1 2'
+
+arrayTests="$@"
 
 # force running everything locally (ssh clients and servers)
 export TRAVIS=1
@@ -31,6 +34,17 @@ AppendLog () {
 }
 
 
+willRunTest () {
+    if [ -z "$arrayTests" ] || [[ " ${arrayTests[@]} " =~ " $1 " ]] ; then
+        #echo 'TR'
+        return 1
+    else
+        #echo 'FA'
+        return 0
+    fi
+}  
+
+willRunTest '1'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example01; 
 	echo $PWD
 	$PYTHON Example01.py
@@ -39,7 +53,9 @@ pushd Example01;
 	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
+fi
 
+willRunTest '2'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example02
 	echo $PWD
 	$PYTHON server.py &
@@ -53,7 +69,9 @@ pushd Example02
 	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
+fi
 
+willRunTest '3'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example03
 	echo $PWD
 	gcc -o application3 application3.c
@@ -63,7 +81,10 @@ pushd Example03
 	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
+fi
 
+
+willRunTest '4'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example04
 	echo $PWD
 	$PYTHON Example04.py
@@ -72,7 +93,9 @@ pushd Example04
 	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
+fi
 
+willRunTest '5'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example05
 	echo $PWD
 	$PYTHON Example05.py
@@ -81,7 +104,9 @@ pushd Example05
 	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
+fi
 
+willRunTest '6'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example06
 	echo $PWD
 	$PYTHON server.py &
@@ -94,7 +119,9 @@ pushd Example06
 	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
+fi
 
+willRunTest '7'; retval=$?; if [ "$retval" == 1  ] ; then
 if [[ $PYVER == 2* ]]; then
 	pushd Example07
 		echo $PWD
@@ -107,7 +134,9 @@ if [[ $PYVER == 2* ]]; then
 else
 	echo "------------ Example07 skipped with python 3.x --------------"
 fi
+fi
 
+willRunTest '9'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example09
 	echo $PWD
 	$PYTHON Example09.py
@@ -116,7 +145,9 @@ pushd Example09
 	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
 popd
+fi
 
+willRunTest '10'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example10
 	echo $PWD
 	$PYTHON thermalServer.py &
@@ -132,19 +163,22 @@ pushd Example10
 	kill -9 $PID1
 	kill -9 $PID2
 popd
+fi
 
-
+willRunTest '12'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example12-multiscaleThermo:
         $PYTHON Demo12.py
 popd
+fi
 
+willRunTest '13'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example13-thermoMechanicalNonStat
         $PYTHON Demo13.py
 popd
+fi
 
 
-
-
+willRunTest '18'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example18-thermoMechanicalNonStatWorkflow-VPN-JobMan
         echo $PWD
 	$PYTHON thermalServer.py &
@@ -160,9 +194,7 @@ pushd Example18-thermoMechanicalNonStatWorkflow-VPN-JobMan
 	kill -9 $PID1
 	kill -9 $PID2
 popd
-
-
-
+fi
 
 echo "*** Global return status $retval."
 
@@ -170,7 +202,11 @@ cnt=${#LOG[@]}
 if [ $cnt -ne 0 ]; then
     echo "*** Failed directories:"
 else
-    echo "*** All tests passed."
+    if [ -z "$arrayTests" ]; then
+        echo "*** All tests passed."
+    else
+        echo "*** Tests" $arrayTests "passed."
+    fi
 fi
 for ((i=0;i<cnt;i++)); do
     echo ${LOG[i]}

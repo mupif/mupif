@@ -27,5 +27,5 @@ daemon = sConf.cfg.Pyro4.Daemon(host=sConf.server, port=sConf.jobManPort, nathos
 #Run job manager on a server
 jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'serverConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 
-PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport, nshost=sConf.nshost, nsport=sConf.nsport, nsname=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
+PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport, nshost=sConf.nshost, nsport=sConf.nsport, appName=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
 

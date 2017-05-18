@@ -7,6 +7,7 @@
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
 
 from __future__ import print_function, division
+import sys
 
 mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
 
@@ -19,8 +20,16 @@ if mode==3:
 else:
     import conf as cfg
 
+if(len(sys.argv)==1):
+    appName = cfg.appName
+    serverPort = cfg.serverPort
+else:
+    appName = sys.argv[1]
+    serverPort = int(sys.argv[2])
+
 import Pyro4
 from mupif import *
+log.info ("%s %s " % (appName, serverPort))
 
 @Pyro4.expose
 class application2(Application.Application):
@@ -58,4 +67,4 @@ if mode==1: #set NATport=port and local IP
 
 app2 = application2("/dev/null")
 
-PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, app=app2)
+PyroUtil.runAppServer(cfg.server, serverPort, cfg.serverNathost, serverPort, cfg.nshost, cfg.nsport, appName, cfg.hkey, app=app2)

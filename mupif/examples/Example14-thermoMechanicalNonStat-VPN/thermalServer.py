@@ -15,7 +15,7 @@ ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.h
 (user, hostname)=PyroUtil.getUserInfo()
 
 thermal = demoapp.thermal_nonstat('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputT13.in','.')
-PyroUtil.runAppServer(server=hostname, port=cfg.serverPort, nathost=hostname, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, nsname='thermal', hkey=cfg.hkey, app=thermal)
+PyroUtil.runAppServer(server=hostname, port=cfg.serverPort, nathost=hostname, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, appName='thermal', hkey=cfg.hkey, app=thermal)
 
 #register agent
 #uri = daemon.register(thermal)

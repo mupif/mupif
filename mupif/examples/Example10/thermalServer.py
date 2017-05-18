@@ -31,6 +31,6 @@ jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, 
 #waits for requests
 #daemon.requestLoop()
 
-PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport, nshost=sConf.nshost, nsport=sConf.nsport, nsname=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
+PyroUtil.runJobManagerServer(server=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport, nshost=sConf.nshost, nsport=sConf.nsport, appName=sConf.jobManName, hkey=sConf.hkey, jobman=jobMan, daemon=daemon)
 
 

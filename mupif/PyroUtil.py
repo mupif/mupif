@@ -171,7 +171,11 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(timeOut)
-        s.connect((nshost, nsport))
+        try: #Treat socket connection problems separately
+            s.connect((nshost, nsport))
+        except socket.error as msg:
+            raise Exception('Socket connection error to nameServer')
+            #log.exception(msg)
         s.close()
         log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
     except Exception:
@@ -321,8 +325,7 @@ def runDaemon(host, port, nathost, natport):
 
     return daemon
 
-def runServer(server, port, nathost, natport,
-              nshost, nsport, nsname, hkey, app, daemon=None, metadata=None):
+def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -332,7 +335,7 @@ def runServer(server, port, nathost, natport,
     :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
-    :param str nsname: Name of registered application
+    :param str appName: Name of registered application
     :param str hkey: A password string
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
@@ -360,6 +363,14 @@ def runServer(server, port, nathost, natport,
     ns = connectNameServer(nshost, nsport, hkey)
     #register agent; register exposed class 
     #ExposedApp = Pyro4.expose(app)
+    #Check if application name already exists on a nameServer
+    try:
+        (uri, mdata) = ns.lookup(appName, return_metadata=True)
+    except Pyro4.errors.NamingError:
+        pass
+    else:
+        log.warning('Application name \'%s\' is already registered on name server, overwriting.' % appName)
+    
     uri = daemon.register(app)
     try:
         app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
@@ -375,13 +386,13 @@ def runServer(server, port, nathost, natport,
     metadata.add('%s:%s'%(NS_METADATA_port, port))
     metadata.add('%s:%s'%(NS_METADATA_nathost, nathost))
     metadata.add('%s:%s'%(NS_METADATA_natport, natport))
-    ns.register(nsname, uri, metadata=metadata)
+    ns.register(appName, uri, metadata=metadata)
 
-    log.debug('NameServer %s has registered uri %s' % (nsname, uri) )
-    log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, nsname, uri) )
+    log.debug('NameServer %s has registered uri %s' % (appName, uri) )
+    log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri) )
     daemon.requestLoop()
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, app, daemon=None):
+def runAppServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None):
     """
     Runs a simple application server
 
@@ -391,17 +402,17 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, a
     :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
-    :param str nsname: Name of registered application
+    :param str appName: Name of registered application
     :param str hkey: A password string
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
 
     :raises Exception: if can not run Pyro4 daemon
     """
-    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, nsname=nsname, hkey=hkey, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
+    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
 
 
-def runJobManagerServer(server, port, nathost, natport, nshost, nsport, nsname, hkey, jobman, daemon=None):
+def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName, hkey, jobman, daemon=None):
     """
     Registers and runs given jobManager server
 
@@ -411,12 +422,12 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, nsname, 
     :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
-    :param str nsname: Name of job manager to be registered at nameserver
+    :param str appName: Name of job manager to be registered at nameserver
     :param str hkey: A password string
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
-    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, nsname=nsname, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
+    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
 #def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
 def connectApplicationsViaClient(fromContext, toApplication):

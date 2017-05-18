@@ -18,7 +18,7 @@ mechanical = demoapp.mechanical('..'+os.path.sep+'Example13-thermoMechanicalNonS
 
 PyroUtil.runAppServer (server=cfg.server3, port=cfg.serverPort3, natport='', nathost='',
                        nshost=cfg.nshost, nsport=cfg.nsport,
-                       nsname='mechanical', hkey=cfg.hkey, app=mechanical)
+                       appName='mechanical', hkey=cfg.hkey, app=mechanical)
 
 
 #register agent

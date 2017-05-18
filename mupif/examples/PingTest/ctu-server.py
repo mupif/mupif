@@ -28,7 +28,7 @@ PyroUtil.runAppServer(server=appRecord[conf.appIndx_ServerName],
                       port=appRecord[conf.appIndx_RemotePort], 
                       nathost=conf.nathost, natport=appRecord[conf.appIndx_NATPort], 
                       nshost=conf.nshost, nsport=conf.nsport, 
-                      nsname=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
+                      appName=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
 
 
 

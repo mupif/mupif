@@ -10,7 +10,7 @@ import demoapp
 #mechanical = demoapp.mechanical('inputM11.in', '.')
 #log.info(mechanical.getApplicationSignature())
 ##locate nameserver and register application
-#PyroUtil.runAppServer(server=cfg.server2, port=cfg.serverPort2, nathost=cfg.server2, natport=cfg.serverPort2, nshost=cfg.nshost, nsport=cfg.nsport, nsname='mechanicalServer1', hkey=cfg.hkey, app=mechanical)
+#PyroUtil.runAppServer(server=cfg.server2, port=cfg.serverPort2, nathost=cfg.server2, natport=cfg.serverPort2, nshost=cfg.nshost, nsport=cfg.nsport, appName='mechanicalServer1', hkey=cfg.hkey, app=mechanical)
 
 
 ## Distributed setup using VPN and peer-to-peer connection. Nameserver remote, thermal server remote.
@@ -19,7 +19,7 @@ import conf_vpn as cfg
 mechanical = demoapp.mechanical('inputM11.in', '.')
 log.info(mechanical.getApplicationSignature())
 #locate nameserver and register application
-PyroUtil.runAppServer(server=cfg.server3, port=cfg.serverPort3, nathost=cfg.server3, natport=cfg.serverPort3, nshost=cfg.nshost, nsport=cfg.nsport, nsname='mechanicalServer1', hkey=cfg.hkey, app=mechanical)
+PyroUtil.runAppServer(server=cfg.server3, port=cfg.serverPort3, nathost=cfg.server3, natport=cfg.serverPort3, nshost=cfg.nshost, nsport=cfg.nsport, appName='mechanicalServer1', hkey=cfg.hkey, app=mechanical)
 
 
 

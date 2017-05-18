@@ -29,6 +29,6 @@ jobMan = JobManager.SimpleJobManager2(daemon, ns, None, cfg.jobManName, cfg.port
                                       'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 
 PyroUtil.runJobManagerServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.server, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, 
-                             nsname='jobMan1', hkey=cfg.hkey, jobman=jobMan, daemon=daemon)
+                             appName='jobMan1', hkey=cfg.hkey, jobman=jobMan, daemon=daemon)
 
 

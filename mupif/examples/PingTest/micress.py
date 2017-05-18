@@ -31,4 +31,4 @@ appRecord = conf.apps['micress']
 PyroUtil.runAppServer(server=appRecord.serverName, port=appRecord.remotePort, 
                       nathost=conf.nathost, natport=appRecord.natPort, 
                       nshost=conf.nshost, nsport=conf.nsport, 
-                      nsname=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
+                      appName=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
