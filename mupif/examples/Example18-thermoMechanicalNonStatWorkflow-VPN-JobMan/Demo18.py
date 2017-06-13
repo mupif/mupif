@@ -3,9 +3,10 @@ from __future__ import print_function
 import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
-import mupif
 import conf as cfg
+import logging
 
+log = logging.getLogger()
 
 class Demo18(Workflow.Workflow):
    
@@ -23,13 +24,13 @@ class Demo18(Workflow.Workflow):
             self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, PyroUtil.SSHContext(userName='', sshClient=cfg.sshClient, options='', sshHost = '' ))
             #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport )
         except Exception as e:
-            mupif.log.exception(e)
+            log.exception(e)
 
         appsig=self.thermal.getApplicationSignature()
-        mupif.log.info("Working thermal server " + appsig)
+        log.info("Working thermal server " + appsig)
         self.mechanical = PyroUtil.connectApp(ns, 'mechanical')
         appsig=self.mechanical.getApplicationSignature()
-        mupif.log.info("Working mechanical server " + appsig)
+        log.info("Working mechanical server " + appsig)
 
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
@@ -51,9 +52,9 @@ class Demo18(Workflow.Workflow):
         return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
-        
         #self.thermalAppRec.terminateAll()
         self.thermal.terminate()
+        self.thermalJobMan.terminate()
         self.mechanical.terminate()
         super(Demo18, self).terminate()
 
@@ -62,11 +63,9 @@ class Demo18(Workflow.Workflow):
 
     def getAPIVersion(self):
         return "1.0"
-
-
     
 if __name__=='__main__':
-    demo = Demo18(targetTime=10.)
+    demo = Demo18(targetTime=1.)
     demo.solve()
 
 

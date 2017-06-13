@@ -3,8 +3,9 @@ from __future__ import print_function
 
 import sys
 import Celsian
-import mupif
 from mupif import *
+import logging
+log = logging.getLogger()
 
 time  = 0
 timestepnumber = 0
@@ -22,7 +23,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    mupif.log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
+    log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -33,7 +34,7 @@ while (abs(time -targetTime) > 1.e-6):
         field = app1.getField(FieldID.FID_Temperature, istep)
 
     except APIError.APIError as e:
-        mupif.log.error("Following API error occurred: %s",e)
+        log.error("Following API error occurred: %s",e)
         break
 # evaluate field at given point
 position=(-1e-5, -1e-5, -1e-5)
@@ -47,9 +48,9 @@ print ("Field value at position ", position, " is ", value)
 
 
 if (abs(value[0]-728.13) <= 1.e-4):
-    mupif.log.info("Test OK")
+    log.info("Test OK")
 else:
-    mupif.log.error("Test FAILED")
+    log.error("Test FAILED")
     sys.exit(1)
 
 

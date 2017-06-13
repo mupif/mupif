@@ -29,6 +29,8 @@ else:
 
 import Pyro4
 from mupif import *
+import logging
+log = logging.getLogger()
 log.info ("%s %s " % (appName, serverPort))
 
 @Pyro4.expose

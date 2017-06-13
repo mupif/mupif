@@ -14,6 +14,8 @@ else:
     import conf as cfg
 
 from mupif import *
+import logging
+log = logging.getLogger()
 
 class application1(Application.Application):
     """

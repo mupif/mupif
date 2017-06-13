@@ -9,8 +9,10 @@ from builtins import range
 
 import sys
 sys.path.append('../../..')
-import mupif
 from mupif import *
+import logging
+log = logging.getLogger()
+
 
 def main():
 
@@ -48,10 +50,10 @@ def main():
     # evaluate field at given point
     position=(20.1, 7.5, 0.0)
     value1=field1.evaluate(position) #correct answer 154.5
-    mupif.log.debug("Field1 value at position "+str(position)+" is "+str(value1))
+    log.debug("Field1 value at position "+str(position)+" is "+str(value1))
     position=(20.1, 8.5, 0.0)
     value2=field2.evaluate(position) #correct answer 287.0
-    mupif.log.debug("Field2 value at position "+str(position)+" is "+str(value2))
+    log.debug("Field2 value at position "+str(position)+" is "+str(value2))
 
     field1.field2VTKData().tofile('example1')
     field2.field2VTKData().tofile('example2')
@@ -63,9 +65,9 @@ def main():
     value3 = field3.evaluate(position) #correct answer 155.5
 
     if ((abs(value1[0]-154.5) <= 1.e-4) and (abs(value2[0]-288.0) <= 1.e-4) and (abs(value3[0]-155.5) <= 1.e-4)):
-        mupif.log.info("Test OK")
+        log.info("Test OK")
     else:
-        mupif.log.error("Test FAILED")
+        log.error("Test FAILED")
         import sys
         sys.exit(1)
 

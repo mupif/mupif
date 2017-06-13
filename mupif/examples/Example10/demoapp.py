@@ -1,13 +1,14 @@
 from __future__ import print_function, division
 from builtins import range
 from mupif import *
-import mupif
 import Pyro4
 import meshgen
 import math
 import numpy as np
 import time as timeTime
 import os
+import logging
+log = logging.getLogger('demoapp')
 
 def getline (f):
     while True:
@@ -34,8 +35,8 @@ class thermal(Application.Application):
         try:
             lines = open(self.workDir+os.path.sep+self.file, 'r')
         except Exception as e:
-            mupif.log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
-            mupif.log.exception(e)
+            log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
+            log.exception(e)
             exit(1)
 
         #filter out comments wstarting with #
@@ -46,7 +47,7 @@ class thermal(Application.Application):
         size = line.split()
         self.xl=float(size[0])
         self.yl=float(size[1])
-        mupif.log.info ("Thermal problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
+        log.info ("Thermal problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
         line = lines.next()
         ne = line.split()
         self.nx=int(ne[0])
@@ -220,8 +221,8 @@ class thermal(Application.Application):
         #print ndofs
 
         start = timeTime.time()
-        mupif.log.info(self.getApplicationSignature())
-        mupif.log.info("Number of equations: %d" % self.neq)
+        log.info(self.getApplicationSignature())
+        log.info("Number of equations: %d" % self.neq)
 
         #connectivity 
         c=np.zeros((numElements,4), dtype=np.int32)
@@ -245,7 +246,7 @@ class thermal(Application.Application):
                 ii = self.loc[i] 
                 self.T[ii] = self.dirichletBCs[i] #assign temperature
 
-        mupif.log.info("Assembling ...")
+        log.info("Assembling ...")
         for e in mesh.cells():
             A_e = self.compute_elem_conductivity(e)
 
@@ -325,15 +326,15 @@ class thermal(Application.Application):
         self.r = np.zeros(self.pneq)#reactions
 
         #solve linear system
-        mupif.log.info("Solving thermal problem")
+        log.info("Solving thermal problem")
         #self.rhs = np.zeros(self.neq)
         self.rhs = b - np.dot(kup,self.T[self.neq:self.neq+self.pneq])
         self.T[:self.neq] = np.linalg.solve(kuu,self.rhs)
         self.r = np.dot(kup.transpose(),self.T[:self.neq])+np.dot(kpp,self.T[self.neq:self.neq+self.pneq])
         #print (self.r)
 
-        mupif.log.info("Done")
-        mupif.log.info("Time consumed %f s" % (timeTime.time()-start))
+        log.info("Done")
+        log.info("Time consumed %f s" % (timeTime.time()-start))
 
 
     def compute_B(self, elem, lc):
@@ -471,7 +472,7 @@ class thermal(Application.Application):
         if (property.getPropertyID() == PropertyID.PID_effective_conductivity):
             # remember the mapped value
             self.conductivity = property.getValue()
-            #mupif.log.info("Assigning effective conductivity %f" % self.conductivity )
+            #log.info("Assigning effective conductivity %f" % self.conductivity )
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -579,8 +580,8 @@ class thermal_nonstat(thermal):
         #print ndofs
 
         start = timeTime.time()
-        mupif.log.info(self.getApplicationSignature())
-        mupif.log.info("Number of equations: %d" % self.neq)
+        log.info(self.getApplicationSignature())
+        log.info("Number of equations: %d" % self.neq)
         #connectivity 
         c=np.zeros((numElements,ndofs), dtype=np.int32)
         c.fill(-1)
@@ -598,7 +599,7 @@ class thermal_nonstat(thermal):
             self.P = np.zeros((self.neq+self.pneq,self.neq+self.pneq))
             self.init=False
 
-            mupif.log.info("Assembling ...")
+            log.info("Assembling ...")
             for e in mesh.cells():
                 K_e = self.compute_elem_conductivity(e)
                 C_e = self.compute_elem_capacity(e)
@@ -733,13 +734,13 @@ class thermal_nonstat(thermal):
 
         self.r = np.zeros(self.pneq)    #reactions
         #solve linear system
-        mupif.log.info("Solving thermal nonstationary problem")
+        log.info("Solving thermal nonstationary problem")
         self.T[:self.neq] = np.linalg.solve(self.kuu,rhs) #inefficient; should reuse existing factorization !!!
         self.r = np.dot(self.kup.transpose(),self.T[:self.neq])+np.dot(self.kpp,self.T[self.neq:self.neq+self.pneq])
         #print (self.r)
 
-        mupif.log.info("Done")
-        mupif.log.info("Time consumed %f s" % (timeTime.time()-start))
+        log.info("Done")
+        log.info("Time consumed %f s" % (timeTime.time()-start))
 
 
 @Pyro4.expose
@@ -774,7 +775,7 @@ class mechanical(Application.Application):
             self.nx=int(ne[0])
             self.ny=int(ne[1])
 
-            mupif.log.info("Mechanical problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
+            log.info("Mechanical problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
 
             for iedge in range(4):
                 line = getline(f)
@@ -789,7 +790,7 @@ class mechanical(Application.Application):
             f.close()
 
         except  Exception as e:
-            mupif.log.exception(e)
+            log.exception(e)
             exit(1)
 
 
@@ -900,8 +901,8 @@ class mechanical(Application.Application):
         #print ndofs
 
         start = timeTime.time()
-        mupif.log.info(self.getApplicationSignature())
-        mupif.log.info("Number of equations: %d" % self.neq)
+        log.info(self.getApplicationSignature())
+        log.info("Number of equations: %d" % self.neq)
 
         #connectivity 
         c=np.zeros((numElements,elemNodes), dtype=np.int32)
@@ -914,7 +915,7 @@ class mechanical(Application.Application):
         A = np.zeros((self.neq, self.neq ))
         b = np.zeros((self.neq, 1))
 
-        mupif.log.info("Assembling ...")
+        log.info("Assembling ...")
         for e in mesh.cells():
             #element matrix and element vector
             A_e = np.zeros((elemDofs,elemDofs ))
@@ -1023,10 +1024,10 @@ class mechanical(Application.Application):
 
 
         #solve linear system
-        mupif.log.info("Solving mechanical problem")
+        log.info("Solving mechanical problem")
         self.T = np.linalg.solve(A, b)
-        mupif.log.info("Done")
-        mupif.log.info("Time consumed %f s" % (timeTime.time()-start))
+        log.info("Done")
+        log.info("Time consumed %f s" % (timeTime.time()-start))
 
 
     def compute_B(self, elem, lc):

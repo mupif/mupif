@@ -4,7 +4,7 @@ import thermalServerConfig as sConf
 import os
 from mupif import *
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger('example')
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)

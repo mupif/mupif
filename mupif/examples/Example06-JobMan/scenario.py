@@ -1,20 +1,19 @@
 from builtins import str
 import clientConfig as cConf
 from mupif import *
-import mupif
+import logging
+log = logging.getLogger()
 
 import time as timeTime
 start = timeTime.time()
 
-mupif.log.info('Timer started')
+log.info('Timer started')
 
 #if you wish to run no SSH tunnels, set to None
 #sshContext = None
 #sshContext = PyroUtil.SSHContext(userName=cConf.serverUserName, sshClient='manual', options=cConf.options)
 sshContext = PyroUtil.SSHContext(userName=cConf.serverUserName, sshClient=cConf.sshClient, options=cConf.options)
-print ("huhu:")
 print (sshContext)
-
 
 
 try:
@@ -28,22 +27,22 @@ try:
     app1 = PyroUtil.allocateApplicationWithJobManager( ns, jobMan, jobNatport, sshContext)
 
 except Exception as e:
-    mupif.log.exception(e)
+    log.exception(e)
 else:
     if app1 is not None:
         appsig=app1.getApplicationSignature()
-        mupif.log.info("Working application 1 on server " + appsig)
+        log.info("Working application 1 on server " + appsig)
 
         val = Property.Property(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, None)
         app1.setProperty (val)
         app1.solveStep(None)
         retProp = app1.getProperty(PropertyID.PID_Demo_Value, 0.0)
-        mupif.log.info("SUCCESSFULLY Received " + str(retProp.getValue()))
-        mupif.log.info("Terminating " + str(app1.getURI()))
+        log.info("SUCCESSFULLY Received " + str(retProp.getValue()))
+        log.info("Terminating " + str(app1.getURI()))
         #terminate
-        mupif.log.info("Time consumed %f s" % (timeTime.time()-start))
+        log.info("Time consumed %f s" % (timeTime.time()-start))
     else:
-        mupif.log.debug("Connection to server failed, exiting")
+        log.debug("Connection to server failed, exiting")
 
     #allocate the second application, if necessary
     #PyroUtil.allocateNextApplication (ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), appRec)
@@ -53,6 +52,6 @@ else:
 
 finally:
     app1.terminate()
-    mupif.log.info("Workflow terminated")
+    log.info("Workflow terminated")
 
 

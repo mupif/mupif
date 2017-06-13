@@ -3,12 +3,13 @@ from __future__ import print_function
 import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
-import mupif
 import conf_vpn as cfg
+import logging
+log = logging.getLogger()
 
 import time as timeTime
 start = timeTime.time()
-mupif.log.info('Timer started')
+log.info('Timer started')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -20,14 +21,14 @@ jobNatport = -1
 
 try:
     appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, jobNatport, sshClient='manual', options='', sshHost = '' )
-    mupif.log.info("Allocated application %s" % appRec)
+    log.info("Allocated application %s" % appRec)
     thermal = appRec.getApplication()
 except Exception as e:
-    mupif.log.exception(e)
+    log.exception(e)
 else:
     if thermal is not None:
         appsig=thermal.getApplicationSignature()
-        mupif.log.info("Working thermalServer " + appsig)
+        log.info("Working thermalServer " + appsig)
         mechanical = PyroUtil.connectApp(ns, 'mechanical')
         time  = 0.
         dt = 0.
@@ -36,7 +37,7 @@ else:
 
         while (abs(time - targetTime) > 1.e-6):
 
-            mupif.log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
+            log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
             # create a time step
             istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -69,7 +70,7 @@ else:
         mechanical.terminate();     
 
     else:
-        mupif.log.debug("Connection to thermal server failed, exiting")
+        log.debug("Connection to thermal server failed, exiting")
 
 finally:
     if appRec: appRec.terminateAll()

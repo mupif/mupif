@@ -24,8 +24,9 @@
 import os
 import Pyro4
 from . import APIError
-from . import log
 import MupifObject
+import logging
+log = logging.getLogger()
 
 @Pyro4.expose
 class Application(MupifObject.MupifObject):
@@ -60,19 +61,22 @@ class Application(MupifObject.MupifObject):
         self.externalDaemon = False
         self.pyroNS = None
         self.pyroURI = None
+        self.appName = None
         
-    def registerPyro (self, pyroDaemon, pyroNS, pyroURI, externalDaemon = False):
+    def registerPyro (self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """
-        Register the Pyro daemon and nameserver. Required by getFieldURI service
+        Register the Pyro daemon and nameserver. Required by several services
 
         :param Pyro4.Daemon pyroDaemon: Optional pyro daemon
         :param Pyro4.naming.Nameserver pyroNS: Optional nameserver
         :param string PyroURI: Optional URI of receiver
-        :param bool externalDaemon: Optional parameter when damon was allocated externally.
+        :param string appName: Optional application name. Used for removing from pyroNS
+        :param bool externalDaemon: Optional parameter when daemon was allocated externally.
         """
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
         self.pyroURI = pyroURI
+        self.appName = appName
         self.externalDaemon = externalDaemon
 
     def getField(self, fieldID, time):
@@ -236,11 +240,35 @@ class Application(MupifObject.MupifObject):
         """
         return "Application"
 
+    def removeApp(self, nameServer=None, appName=None):
+        """
+        Removes (unregisters) application from the name server.
+
+        :param Pyro4.naming.Nameserver nameServer: Optional instance of a nameServer
+        :param str appName: Optional name of the application to be removed
+        """
+        if nameServer is None:
+            nameServer = self.pyroNS
+        if appName is None:
+            appName = self.appName
+        
+        if nameServer is not None:#local application can run without a nameServer
+            try:
+                nameServer.remove(appName)
+                log.debug("Removing application %s from a nameServer %s" % (appName, nameServer) )
+            except Exception as e:
+                log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer) )
+                raise
+
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Shutdowns daemons if created internally.
         """
+        #Remove application from nameServer
+        if self.pyroNS is not None:
+            self.removeApp()
+                        
         if self.pyroDaemon:
             self.pyroDaemon.unregister(self)
             log.info("Unregistering daemon %s" % self.pyroDaemon)
@@ -258,16 +286,15 @@ class Application(MupifObject.MupifObject):
         return self.pyroURI
 
 
-
+@Pyro4.expose
 class RemoteApplication (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
-    However, when application is allocated using JobManager or ssh tunnel has to be established, the proper termination
-    of the tunnel or job manager task is required.
+    However, when application allocated using JobManager or ssh tunnel needs to be established, the proper termination of the tunnel or job manager task is required.
+    
     This class is a decorator around pyro proxy object represeting application storing the reference to job manager and related jobID or/and ssh tunnel.
 
-    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy) and the termination of job and tunnel
-    has to be done from local computer, which has the neccesary communication link established 
+    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy) and the termination of job and tunnel has to be done from local computer, which has the neccesary communication link established 
     (ssh tunnel in particular, when port translation takes place)
     """
     def __init__ (self, decoratee, jobMan=None, jobID=None, appTunnel=None):
@@ -278,7 +305,7 @@ class RemoteApplication (object):
         
     def __getattr__(self, name):
         """ 
-        Catch all attribute access and pass it to self._decoratee, see python data model, __getattar__ method
+        Catch all attribute access and pass it to self._decoratee, see python data model, __getattr__ method
         """
         return getattr(self._decoratee, name)
 
@@ -291,15 +318,15 @@ class RemoteApplication (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
-        if self._appTunnel:
-            log.info ("RemoteApplication: Terminating app sshTunnel")
-            if self._appTunnel != "manual":
-                self._appTunnel.terminate()
-
         if (self._jobMan and self._jobID):
             log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
             self._jobMan.terminateJob(self._jobID)
             self._jobID=None
+
+        if self._appTunnel:
+            log.info ("RemoteApplication: Terminating sshTunnel of application")
+            if self._appTunnel != "manual":
+                self._appTunnel.terminate()
             
         if self._decoratee:
             self._decoratee.terminate()

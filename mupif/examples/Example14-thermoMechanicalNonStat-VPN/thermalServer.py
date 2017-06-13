@@ -3,9 +3,9 @@ from __future__ import print_function
 import os,sys
 sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
-import mupif
 import demoapp
 import conf_vpn as cfg
+Util.changeRootLogger('thermal.log')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -20,5 +20,5 @@ PyroUtil.runAppServer(server=hostname, port=cfg.serverPort, nathost=hostname, na
 #register agent
 #uri = daemon.register(thermal)
 #ns.register('thermal', uri)
-#mupif.log.debug ("Daemon for thermal problem runs at " + str(uri))
+#log.debug ("Daemon for thermal problem runs at " + str(uri))
 #daemon.requestLoop()

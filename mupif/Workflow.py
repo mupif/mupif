@@ -27,10 +27,11 @@ import Pyro4
 import Application
 import PyroUtil
 from . import APIError
-from . import log
 from . import MetadataKeys
-from . import log
 from . import TimeStep
+import logging
+log = logging.getLogger()
+
 
 @Pyro4.expose
 class Workflow(Application.Application):

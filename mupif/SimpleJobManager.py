@@ -207,7 +207,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         :except: unable to start a thread, no more resources
         """
         self.lock.acquire()
-        logger.info('SimpleJobManager2:allocateJob...')
+        logger.info('SimpleJobManager2: allocateJob...')
         if (len(self.activeJobs) >= self.maxJobs):
             logger.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs) )
             self.lock.release()
@@ -284,18 +284,40 @@ class SimpleJobManager2 (JobManager.JobManager):
         # unregister the applictaion from ns
         self.ns.remove(jobID)
         # terminate the process
-        try:
-            self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
-            # free the assigned port
-            self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
-            # delete entry in the list of active jobs
-            del self.activeJobs[jobID]
-            logger.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
-            
-        except KeyError:
-            logger.debug('SimpleJobManager2:terminateJob: key error, job %s already terminated?'%(jobID))
-
+        if jobID in self.activeJobs:
+            try:
+                self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
+                # free the assigned port
+                self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
+                # delete entry in the list of active jobs
+                logger.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
+                del self.activeJobs[jobID]
+            except KeyError:
+                logger.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?'%(jobID))
         self.lock.release()
+   
+   
+    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    def terminate(self):
+        """
+        Terminates job manager itself.
+        """
+        try:
+            self.ns.remove(self.applicationName)
+            logger.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns) )
+        except Exception as e:
+            logger.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns) )
+        if self.daemon:
+            try:
+                self.daemon.unregister(self)
+            except:
+                pass
+            logger.info("SimpleJobManager2:terminate Shutting down daemon %s" % self.daemon)
+            try:
+                self.daemon.shutdown()
+            except:
+                pass
+            self.daemon=None
 
     def getApplicationSignature(self):
         """

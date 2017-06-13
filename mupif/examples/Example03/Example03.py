@@ -2,9 +2,10 @@ from __future__ import print_function
 from builtins import str
 import sys
 sys.path.append('../../..')
-import mupif
 from mupif import *
 import os
+import logging
+log = logging.getLogger()
 
 
 class application1(Application.Application):
@@ -36,7 +37,7 @@ class application3(Application.Application):
         self.values = []
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            mupif.log.debug("Getting property name: %s with ID  %d" % (PropertyID.PID_CumulativeConcentration.name,PropertyID.PID_CumulativeConcentration.value) )
+            log.debug("Getting property name: %s with ID  %d" % (PropertyID.PID_CumulativeConcentration.name,PropertyID.PID_CumulativeConcentration.value) )
             # parse output of application3 
             f = open('app3.out', 'r')
             answer = float(f.readline())
@@ -80,7 +81,7 @@ while (abs(time -targetTime) > 1.e-6):
         #make sure we reach targetTime at the end
         time = targetTime
     timestepnumber = timestepnumber+1
-    mupif.log.debug("Step: %g %g %g "%(timestepnumber,time,dt))
+    log.debug("Step: %g %g %g "%(timestepnumber,time,dt))
     # create a time step
     istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -96,16 +97,16 @@ while (abs(time -targetTime) > 1.e-6):
 
         
     except APIError.APIError as e:
-        mupif.log.error("Following API error occurred:",e)
+        log.error("Following API error occurred:",e)
         break
 
 prop = app3.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-mupif.log.debug("Result: "+str(prop.getValue()))
+log.debug("Result: "+str(prop.getValue()))
 
 if (abs(prop.getValue()-5.05) <= 1.e-4):
-    mupif.log.info("Test OK")
+    log.info("Test OK")
 else:
-    mupif.log.error("Test FAILED")
+    log.error("Test FAILED")
     sys.exit(1)
 
 

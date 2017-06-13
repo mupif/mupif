@@ -3,9 +3,10 @@ from __future__ import print_function
 import os,sys
 sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
-import mupif
 import demoapp
 import conf_vpn as cfg
+import logging
+log = logging.getLogger()
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -17,5 +18,5 @@ mechanical = demoapp.mechanical('..'+os.path.sep+'Example13-thermoMechanicalNonS
 #register agent
 uri = daemon.register(mechanical)
 ns.register('mechanical', uri)
-mupif.log.debug ("Daemon for mechanical problem runs at " + str(uri))
+log.debug ("Daemon for mechanical problem runs at " + str(uri))
 daemon.requestLoop()

@@ -3,8 +3,9 @@ import os,sys
 sys.path.append('..')
 import conf as cfg
 from mupif import *
-import mupif
 import Pyro4
+import logging
+log = logging.getLogger()
 
 #if you wish to run no SSH tunnels, set to True
 noSSH=False
@@ -27,7 +28,7 @@ class PingServerApplication(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            mupif.log.debug('Getting property from PingServerApplication, exiting')
+            log.debug('Getting property from PingServerApplication, exiting')
             return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, None, 0)
         else:
             raise APIError.APIError ('Unknown property ID')

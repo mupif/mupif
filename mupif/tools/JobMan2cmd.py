@@ -14,7 +14,7 @@ def usage():
     print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile")
 
 def main():
-    logger = Util.setupLogger(loggerName='JobMan2cmd', level=logging.DEBUG)
+    logger = Util.setupLogger(fileName='JobMan2cmd', level=logging.DEBUG)
     
     ##Results are printed through a logger only - communication with this subprocess is peculiar
     #formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
@@ -104,7 +104,7 @@ def main():
               '%s:%s'%(PyroUtil.NS_METADATA_nathost, conf.serverNathost),
               '%s:%s'%(PyroUtil.NS_METADATA_natport, natPort)}
     ns.register(jobID, uri, metadata=metadata)
-    app.registerPyro(daemon, ns, uri)
+    app.registerPyro(daemon, ns, uri,jobID)
     #app.setWorkingDirectory(workDir)
     logger.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
     logger.info('JobMan2cmd: setting workdir as %s', workDir)

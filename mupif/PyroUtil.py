@@ -41,7 +41,9 @@ import time
 from . import RemoteAppRecord
 from . import Application
 from . import JobManager
-from mupif import log
+#from mupif import log
+import logging
+log = logging.getLogger()
 
 Pyro4.config.SERIALIZER="pickle"
 # some versions of Pyro don't have this attribute... (strange, is documented)
@@ -263,7 +265,6 @@ def _connectApp(ns, name):
 
     return app2
 
-
 def connectApp(ns, name, sshContext=None):
     """
     Connects to a remote application, creates the ssh tunnel if necessary
@@ -373,7 +374,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     
     uri = daemon.register(app)
     try:
-        app.registerPyro(daemon, ns, uri, externalDaemon=externalDaemon)
+        app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
     except AttributeError as e:
         # catch attribute error (thrown when method not defined)
         log.warning('Can not register daemon on %s.%d in application')
@@ -391,6 +392,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     log.debug('NameServer %s has registered uri %s' % (appName, uri) )
     log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri) )
     daemon.requestLoop()
+
 
 def runAppServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None):
     """

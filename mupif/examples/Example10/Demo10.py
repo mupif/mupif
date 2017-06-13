@@ -1,6 +1,8 @@
 import clientConfig as cConf
 from mupif import *
 import time as timeTime
+import logging
+log = logging.getLogger()
 
 thermalJobManName = 'Mupif.JobManager@ThermalSolverDemo'
 mechanicalJobManName = 'Mupif.JobManager@MechanicalSolverDemo'
@@ -89,7 +91,9 @@ class Demo10(Workflow.Workflow):
         
         #self.thermalAppRec.terminateAll()
         self.thermalSolver.terminate()
+        self.thermalJobMan.terminate()
         self.mechanicalSolver.terminate()
+        self.mechanicalJobMan.terminate()
         self.appsTunnel.terminate()
         super(Demo10, self).terminate()
 
@@ -98,7 +102,6 @@ class Demo10(Workflow.Workflow):
 
     def getAPIVersion(self):
         return "1.0"
-
 
     
 if __name__=='__main__':

@@ -29,11 +29,12 @@ from . import ValueType
 from . import BBox
 from . import APIError
 from . import MupifObject
-import mupif #for logger
 from numpy import array, arange, random, zeros
 import numpy
 import copy
 import Pyro4
+import logging
+log = logging.getLogger()
 
 try:
    import cPickle as pickle #faster serialization if available

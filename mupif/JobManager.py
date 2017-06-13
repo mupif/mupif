@@ -108,6 +108,11 @@ class JobManager(object):
         :return: JOBMAN_OK indicates sucessfull termination, JOBMAN_ERR means internal error
         :rtype: str
         """
+    def terminate(self):
+        """
+        Terminates job manager itself.
+        """
+
     def getJobStatus (self, jobID):
         """
         Returns the status of the job.
@@ -140,7 +145,7 @@ class JobManager(object):
         :rtype: PyroFile
         """
 
-    def registerPyro(self, daemon, ns, uri, externalDaemon):
+    def registerPyro(self, daemon, ns, uri, appName, externalDaemon):
         """
         Possibility to register the Pyro daemon and nameserver.
 
@@ -169,10 +174,18 @@ class RemoteJobManager (object):
         self._sshTunnel = sshTunnel
         
     def __del__(self):
+        self.terminate()
         if self._sshTunnel:
             logger.info ("RemoteJobManager: autoterminating sshTunnel")
             print ("RemoteJobManager: autoterminating sshTunnel") 
             self._sshTunnel.terminate()
+    
+    #@Pyro4.oneway # in case call returns much later than daemon.shutdown
+    #def terminate(self):
+        #"""
+        #Terminates the application. Terminates the allocated job at jobManager
+        #"""
+        #self.terminate()
 
     def __getattr__(self, name):
         """ 
