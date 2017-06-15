@@ -85,7 +85,7 @@ class Field(MupifObject.MupifObject):
         self.time = time
         self.units = units
         self.uri = None   #pyro uri; used in distributed setting
-        #self.logger = logging.getLogger()
+        #self.log = logging.getLogger()
         self.fieldType = fieldType
         if values == None:
             if (self.fieldType == FieldType.FT_vertexBased):

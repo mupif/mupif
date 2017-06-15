@@ -23,7 +23,7 @@ Example02 supports three communication modes:
 1) Local computer
 2) SSH tunnel
 3) VPN (Virtual private network) communication
-The mode must be set up in server.py and client.py by a variable 'mode' in the preamble, e.g. mode = 1
+The mode must be set up in server.py and Example02.py by a variable 'mode' in the preamble, e.g. mode = 1
 
 
 Ad 1) Local computer
@@ -43,7 +43,7 @@ configured to accept connections at port 44382.
 Similarly, by default the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change
 that, edit the conf.py script by modifying nshost variable.
 
-- Run client script $python client.py
+- Run client script $python Example02.pt
 By default, the nameserver is assumed to be accesible at IP adress '127.0.0.1'. To change that, edit
 the conf.py script by modifying nshost variable.
 
@@ -56,7 +56,7 @@ configurations automatically.
 
 - You need to set up conf.py to reflect your current settings, provide external (public) IP addresses on both machines. This means e.g. nshost = '147.32.130.71', server = '147.32.130.71'.
 
-- Run client.py. It gives you hint how to create a ssh tunnel externally, e.g.
+- Run Example02.pt. It gives you hint how to create a ssh tunnel externally, e.g.
 *NIX: ssh -L 5555:machine1:44382 mmp@mech.fsv.cvut.cz
 WIN: putty.exe -L 5555:machine1:44382 mmp@mech.fsv.cvut.cz -i C:\\Users\\whoever\\FIT-public-SSH2.ppk
 
@@ -64,7 +64,7 @@ WIN: putty.exe -L 5555:machine1:44382 mmp@mech.fsv.cvut.cz -i C:\\Users\\whoever
 
 - On a server side (e.g. mech.fsv.cvut.cz) run $python server.py.
 
-- On a client side run $python client.py.
+- On a client side run $python Example02.pt.
 
 
 
@@ -81,5 +81,5 @@ This assigns a new address to a local computer on a virtual IP address (e.g. 172
 
 - On a server side (e.g. mech.fsv.cvut.cz) run $python server.py.
 
-- On a client side run $python client.py.
+- On a client side run $python Example02.pt.
 

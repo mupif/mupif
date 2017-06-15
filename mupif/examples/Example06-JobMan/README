@@ -10,7 +10,7 @@ serverConfig.py - set up details of your server
 run server.py
 
 clientConfig.py - set up details of your client
-run scenario.py
+run Example06-JobMan.py
 
 ================================================================================
 EXPECTED OUTPUT:

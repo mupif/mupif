@@ -7,6 +7,7 @@ import demoapp
 import conf_vpn as cfg
 import logging
 log = logging.getLogger()
+Util.changeRootLogger('mechanical.log')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)

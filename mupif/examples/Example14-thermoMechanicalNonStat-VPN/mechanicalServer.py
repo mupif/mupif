@@ -6,6 +6,7 @@ from mupif import *
 import mupif
 import demoapp
 import conf_vpn as cfg
+Util.changeRootLogger('mechanical.log')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)

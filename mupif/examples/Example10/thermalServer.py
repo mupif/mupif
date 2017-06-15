@@ -4,7 +4,7 @@ import thermalServerConfig as sConf
 import os
 from mupif import *
 import logging
-logger = logging.getLogger('example')
+log = logging.getLogger('example')
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)
@@ -25,7 +25,7 @@ jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, 
 #uri = daemon.register(jobMan)
 #register JobManager to nameServer
 #ns.register(sConf.jobManName, uri)
-#logger.debug ("Daemon for JobManager runs at " + str(uri))
+#log.debug ("Daemon for JobManager runs at " + str(uri))
 #print(80*'-')
 #print ("Started "+sConf.jobManName)
 #waits for requests

@@ -23,16 +23,6 @@ import re
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
-#
-#import logging - logger moved to __init__.py
-#formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
-#formatTime = '%Y-%m-%d %H:%M:%S'
-#logging.basicConfig(filename='mupif.log',filemode='w',format=formatLog,level=logging.DEBUG)
-#logger = logging.getLogger()#create a logger
-#ch = logging.StreamHandler()
-#ch.setFormatter(logging.Formatter(formatLog, formatTime))
-#logger.addHandler(ch)
-
 import Pyro4
 import socket
 import getpass
@@ -41,7 +31,6 @@ import time
 from . import RemoteAppRecord
 from . import Application
 from . import JobManager
-#from mupif import log
 import logging
 log = logging.getLogger()
 

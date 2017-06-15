@@ -113,7 +113,7 @@ class micress(Application.Application):
         self.workbench = workdir      
         self.resultFiles = None
         
-        self.logger = logging.getLogger()
+        self.log = logging.getLogger()
         
         return
 
@@ -460,7 +460,7 @@ class micress(Application.Application):
                        
         # start MICRESS
         #self.scr = open(self.workbench + "/" + self.resultFiles + "_loc_" + str(self.locIndex) + "_" + str(self.extension[self.locIndex]) +'.scr','w')
-        self.logger.info("solveStep with MICRESS: " + temporaryDrifile)
+        self.log.info("solveStep with MICRESS: " + temporaryDrifile)
         #self.proc = Popen([self.micressExec,temporaryDrifile],stdout=self.scr,stderr=self.scr)
  
         self.extension[self.locIndex] += 1

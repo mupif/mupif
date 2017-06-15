@@ -18,5 +18,6 @@ factor of the photovoltaic thin-film layer. However, there is only data for a fe
 time steps given in this example and the quality factor will remain zero.
     
 The main intention of this example is to present one way of implementing a
-simulation chain for Mupif, not to evaluate a CIGS photovoltaic component.
+simulation chain for Mupif, not to evaluate a CIGS photovoltaic component. Run
+$ python Example17.py
  

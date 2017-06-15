@@ -65,7 +65,7 @@ class Demo18(Workflow.Workflow):
         return "1.0"
     
 if __name__=='__main__':
-    demo = Demo18(targetTime=1.)
+    demo = Demo18(targetTime=2.)
     demo.solve()
 
 

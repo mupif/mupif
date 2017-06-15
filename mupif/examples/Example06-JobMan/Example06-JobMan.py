@@ -48,7 +48,7 @@ else:
     #PyroUtil.allocateNextApplication (ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), appRec)
     #app2 = appRec.getApplication(1)
     #appsig=app2.getApplicationSignature()
-    #logger.info("Working application 2 on server " + appsig)
+    #log.info("Working application 2 on server " + appsig)
 
 finally:
     app1.terminate()

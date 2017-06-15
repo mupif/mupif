@@ -5,6 +5,7 @@ from mupif import *
 import mupif
 import demoapp
 import conf as cfg
+Util.changeRootLogger('thermal.log')
 
 #if you wish to run no SSH tunnels, set to True
 noSSH=False

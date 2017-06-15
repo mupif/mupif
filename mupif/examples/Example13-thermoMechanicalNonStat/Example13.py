@@ -3,10 +3,11 @@ from __future__ import print_function
 import sys
 sys.path.append('../../..')
 from mupif import *
-from mupif import log as logger
 # Import module Example10/demoapp.py
 sys.path.append('../Example10')
 import demoapp
+import logging
+log = logging.getLogger()
 
 # enable to see plots
 graphics = False
@@ -37,7 +38,7 @@ class Demo13(Workflow.Workflow):
                 self.matPlotFig = f.field2Image2D(title='Mechanical ' + str(istep.getTime()), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=self.matPlotFig) 
             
         except APIError.APIError as e:
-            logger.error("Following API error occurred:",e)
+            log.error("Following API error occurred:",e)
 
     def getCriticalTimeStep(self):
         # determine critical time step

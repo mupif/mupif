@@ -4,11 +4,11 @@ import sys
 sys.path.append('../../..')
 from mupif import *
 import logging
-logger = logging.getLogger()
+log = logging.getLogger()
 
 import time as timeTime
 start = timeTime.time()
-logger.info('Timer started')
+log.info('Timer started')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
@@ -19,11 +19,11 @@ try:
     appRec = PyroUtil.allocateApplicationWithJobManager( ns, cConf.demoJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
     app1 = appRec.getApplication()
 except Exception as e:
-    logger.exception(e)
+    log.exception(e)
 else:
     if app1 is not None:
         appsig=app1.getApplicationSignature()
-        logger.info("Working application 1 on server " + appsig)
+        log.info("Working application 1 on server " + appsig)
 
         app1.solveStep(None)
         remoteFile = appRec.getJobManager().getPyroFile (appRec.getJobID(), 'test.txt')

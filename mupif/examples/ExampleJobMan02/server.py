@@ -5,7 +5,7 @@ import serverConfig as sConf
 import os
 from mupif import *
 import logging
-logger = logging.getLogger()
+log = logging.getLogger()
 
 # required firewall settings (on ubuntu):
 # for computer running daemon (this script)

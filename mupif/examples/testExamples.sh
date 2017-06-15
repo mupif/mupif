@@ -62,7 +62,7 @@ pushd Example02
 	PID1=$!
 	echo $PID1
 	sleep 1
-	$PYTHON client.py 
+	$PYTHON Example02.py 
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
@@ -112,7 +112,7 @@ pushd Example06
 	$PYTHON server.py &
 	PID1=$!
 	sleep 1
-	$PYTHON test.py
+	$PYTHON Example06.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
@@ -155,7 +155,7 @@ pushd Example10
 	$PYTHON mechanicalServer.py &
 	PID2=$!
 	sleep 2 #wait for servers to start
-	$PYTHON Demo10.py
+	$PYTHON Example10.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
@@ -167,13 +167,13 @@ fi
 
 willRunTest '12'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example12-multiscaleThermo:
-        $PYTHON Demo12.py
+        $PYTHON Example12.py
 popd
 fi
 
 willRunTest '13'; retval=$?; if [ "$retval" == 1  ] ; then
 pushd Example13-thermoMechanicalNonStat
-        $PYTHON Demo13.py
+        $PYTHON Example13.py
 popd
 fi
 
@@ -186,7 +186,7 @@ pushd Example18-thermoMechanicalNonStatWorkflow-VPN-JobMan
 	$PYTHON mechanicalServer.py &
 	PID2=$!
 	sleep 2 #wait for servers to start
-	$PYTHON Demo18.py
+	$PYTHON Example18.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`

@@ -7,4 +7,4 @@ Microscale simulation considers RVE with a temperature gradient in x direction, 
 
 Effective conductivity from the microscale is passed to the macroscale. Macroscale has dimensions 400 x 200 mm and is discretized into 40 x 20 finite elements, yielding 840 equations for unknown temperature field. Solution time is about 1.0 s. Figure below shows discretization and the resulting temperature field.
 
-This example Demo12.py runs as a local version (non-distributed). It uses instances of demoapp module, allocated on the fly from the script. It can be extended to run on two servers (micro and macro), or using a JobManager, if needed.
+This example Example12.py runs as a local version (non-distributed). It uses instances of demoapp module, allocated on the fly from the script. It can be extended to run on two servers (micro and macro), or using a JobManager, if needed.

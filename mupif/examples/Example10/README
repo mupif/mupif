@@ -7,4 +7,4 @@ This example ilustrates thermo-mechanical task using two running servers and a c
 
 After starting both servers (which will start both JobManagers), the user can:
 1. monitor their status (using tools/jobManStatus.py)
-2. run a coupled simulation Demo10.py, which creates inputs files for thermal and mechanical tasks, get temperature field and send it to the mechanical task. Temperature and displacements are recorded to vtk file.
+2. run a coupled simulation Example10.py, which creates inputs files for thermal and mechanical tasks, get temperature field and send it to the mechanical task. Temperature and displacements are recorded to vtk file.

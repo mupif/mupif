@@ -33,7 +33,7 @@ from . import JobManager
 from . import PyroUtil
 from . import PyroFile
 import os
-logger = logging.getLogger()
+log = logging.getLogger()
 
 #SimpleJobManager
 SJM_APP_INDX = 0
@@ -79,7 +79,7 @@ class SimpleJobManager(JobManager.JobManager):
         #self.pyroDaemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
         #self.pyroDaemon.requestLoop()
         #self.ns = connectNameServer(nshost, nsport, hkey)
-        logger.debug('SimpleJobManager: initialization done')
+        log.debug('SimpleJobManager: initialization done')
 
     def allocateJob(self, user, natPort):
         """
@@ -90,9 +90,9 @@ class SimpleJobManager(JobManager.JobManager):
         :except: unable to start a thread, no more resources
         """
         self.lock.acquire()
-        logger.debug('SimpleJobManager:allocateJob...')
+        log.debug('SimpleJobManager:allocateJob...')
         if (len(self.activeJobs) >= self.maxJobs):
-            logger.error('SimpleJobManager: no more resources')
+            log.error('SimpleJobManager: no more resources')
             self.lock.release()
             raise JobManNoResourcesException("SimpleJobManager: no more resources");
             # return (JOBMAN_NO_RESOURCES,None)
@@ -100,7 +100,7 @@ class SimpleJobManager(JobManager.JobManager):
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
-            logger.debug('SimpleJobManager: trying to allocate '+jobID)
+            log.debug('SimpleJobManager: trying to allocate '+jobID)
             # run the new application instance in a new thread
             try:
                 app = self.appAPIClass()
@@ -111,15 +111,15 @@ class SimpleJobManager(JobManager.JobManager):
                 #uri = self.daemon.register(ExposedApp) #
                 uri = self.daemon.register(app)
                 self.ns.register(jobID, uri)
-                logger.info('NameServer %s registered uri %s' % (jobID, uri) )
+                log.info('NameServer %s registered uri %s' % (jobID, uri) )
 
             except:
-                logger.error('Unable to start thread')
+                log.error('Unable to start thread')
                 self.lock.release()
                 raise
                 return (JobManager.JOBMAN_ERR,None)
 
-            logger.info('SimpleJobManager:allocateJob: successfully allocated ' + jobID)
+            log.info('SimpleJobManager:allocateJob: successfully allocated ' + jobID)
             self.lock.release()
             return (JobManager.JOBMAN_OK, jobID, self.jobPort)
 
@@ -132,7 +132,7 @@ class SimpleJobManager(JobManager.JobManager):
         self.lock.acquire()
         self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
         del self.activeJobs[jobID]
-        logger.debug('SimpleJobManager:terminateJob: job terminated ' + jobID)
+        log.debug('SimpleJobManager:terminateJob: job terminated ' + jobID)
         self.lock.release()
 
     def getApplicationSignature(self):
@@ -187,7 +187,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.jobMan2CmdPath = jobMan2CmdPath
         self.freePorts = list(range(portRange[0], portRange[1]+1))
         if maxJobs > len(self.freePorts):
-            logger.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d'%(self.freePorts.size()))
+            log.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d'%(self.freePorts.size()))
             self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
         jobID = ""
@@ -197,7 +197,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.s.bind(('localhost', self.jobMancmdCommPort))
         self.s.listen(1)
 
-        logger.debug('SimpleJobManager2: initialization done')
+        log.debug('SimpleJobManager2: initialization done')
 
     def allocateJob (self, user, natPort):
         """
@@ -207,9 +207,9 @@ class SimpleJobManager2 (JobManager.JobManager):
         :except: unable to start a thread, no more resources
         """
         self.lock.acquire()
-        logger.info('SimpleJobManager2: allocateJob...')
+        log.info('SimpleJobManager2: allocateJob...')
         if (len(self.activeJobs) >= self.maxJobs):
-            logger.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs) )
+            log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs) )
             self.lock.release()
             raise JobManNoResourcesException("SimpleJobManager: no more resources");
             # return (JOBMAN_NO_RESOURCES,None)
@@ -217,19 +217,19 @@ class SimpleJobManager2 (JobManager.JobManager):
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
-            logger.debug('SimpleJobManager2: trying to allocate '+jobID)
+            log.debug('SimpleJobManager2: trying to allocate '+jobID)
             # run the new application instance served by corresponding pyro daemon in a new process
             jobPort = self.freePorts.pop(0)
-            logger.info('SimpleJobManager2: port to be assigned %d'%(jobPort))
+            log.info('SimpleJobManager2: port to be assigned %d'%(jobPort))
 
             try:
                 targetWorkDir = self.jobManWorkDir+os.path.sep+jobID
-                logger.info('SimpleJobManager2: Checking target workdir %s', targetWorkDir)
+                log.info('SimpleJobManager2: Checking target workdir %s', targetWorkDir)
                 if not os.path.exists(targetWorkDir):
                     os.makedirs(targetWorkDir)
-                    logger.info('SimpleJobManager2: creating target workdir %s', targetWorkDir)
+                    log.info('SimpleJobManager2: creating target workdir %s', targetWorkDir)
             except Exception as e:
-                logger.exception(e)
+                log.exception(e)
                 raise
                 return (JOBMAN_ERR,None)
 
@@ -238,21 +238,21 @@ class SimpleJobManager2 (JobManager.JobManager):
                     proc = subprocess.Popen(["python", self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 else:
                     proc = subprocess.Popen([self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                logger.debug('SimpleJobManager2: new subprocess has been started with JobMan2cmd.py')
+                log.debug('SimpleJobManager2: new subprocess has been started with JobMan2cmd.py')
             except Exception as e:
-                logger.exception(e)
+                log.exception(e)
                 raise
                 return (JOBMAN_ERR,None)
             try:
                 # try to get uri from Property.psubprocess
                 uri = None # avoids UnboundLocalError in py3k
                 conn, addr = self.s.accept()
-                logger.debug('Connected by %s' % str(addr))
+                log.debug('Connected by %s' % str(addr))
                 while True:
                     data = conn.recv(1024)
                     if not data: break
                     uri = repr(data).rstrip('\'').lstrip('\'')
-                    logger.info('Received uri: %s' % uri)
+                    log.info('Received uri: %s' % uri)
                 conn.close()
                 #s.shutdown(socket.SHUT_RDWR)
                 #s.close()
@@ -261,16 +261,16 @@ class SimpleJobManager2 (JobManager.JobManager):
                 # either by doing some sort of regexp or query ns for it
                 start = timeTime.time()
                 self.activeJobs[jobID] = (proc, start, user, uri, jobPort)
-                logger.debug('SimpleJobManager2: new process ')
-                logger.debug(self.activeJobs[jobID])
+                log.debug('SimpleJobManager2: new process ')
+                log.debug(self.activeJobs[jobID])
             except Exception as e:
-                logger.exception(e)
-                logger.error('Unable to start thread')
+                log.exception(e)
+                log.error('Unable to start thread')
                 self.lock.release()
                 raise
                 return (JobManager.JOBMAN_ERR,None)
 
-            logger.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
+            log.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
             return (JobManager.JOBMAN_OK, jobID, jobPort)
 
@@ -290,10 +290,10 @@ class SimpleJobManager2 (JobManager.JobManager):
                 # free the assigned port
                 self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
                 # delete entry in the list of active jobs
-                logger.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
+                log.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d'%(jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
                 del self.activeJobs[jobID]
             except KeyError:
-                logger.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?'%(jobID))
+                log.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?'%(jobID))
         self.lock.release()
    
    
@@ -304,15 +304,15 @@ class SimpleJobManager2 (JobManager.JobManager):
         """
         try:
             self.ns.remove(self.applicationName)
-            logger.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns) )
+            log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns) )
         except Exception as e:
-            logger.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns) )
+            log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns) )
         if self.daemon:
             try:
                 self.daemon.unregister(self)
             except:
                 pass
-            logger.info("SimpleJobManager2:terminate Shutting down daemon %s" % self.daemon)
+            log.info("SimpleJobManager2:terminate Shutting down daemon %s" % self.daemon)
             try:
                 self.daemon.shutdown()
             except:
@@ -347,7 +347,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         See :func:`JobManager.getPyroFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
-        logger.info('SimpleJobManager2:getPyroFile ' + targetFileName)
+        log.info('SimpleJobManager2:getPyroFile ' + targetFileName)
         pfile = PyroFile.PyroFile(targetFileName, mode, buffSize)
         self.daemon.register(pfile)
 

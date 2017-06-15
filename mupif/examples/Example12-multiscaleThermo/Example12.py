@@ -1,10 +1,11 @@
 import sys
 sys.path.append('../../..')
 from mupif import *
-from mupif import log
 #Import module Example10/demoapp.py
 sys.path.append('../Example10')
 import demoapp
+import logging
+log = logging.getLogger()
 
 #Read geometry and boundary condition for the microscale
 thermalMicro = demoapp.thermal('thermalMicro.in','')

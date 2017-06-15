@@ -35,6 +35,10 @@ from shutil import copyfile
 import Pyro4
 import time as timeTime
 from mupif import *
+import logging
+log = logging.getLogger()
+log.setLevel("INFO")
+
 
 import clientConfig as cConf
 
@@ -55,11 +59,6 @@ import Property  # class enhancement for Mupif property class
 import util      # Mupif mesh generation utilities
    
   
-if ( not cConf.mupifLogging ): 
-  log.setLevel("ERROR")
-
-
-
 def runTestCase(xst,mic):
   """
     This method defines the test case procedure itself. It relies on the grid
@@ -534,7 +533,7 @@ def main():
         runTestCase(xst,mic)
         end = timeTime.time()
         
-        print "\nTime for CIGS example: %f s" % (round(end-start,2))
+        log.info("\nTime for CIGS example: %f s" % (round(end-start,2)))
         
       else:
         print "No X-stream interface allocated"
@@ -554,7 +553,7 @@ def main():
         mic[i].terminate()    
       
       end = timeTime.time()
-      print "\nTime for deallocating jobs: %f s \n" % (round(end-start,2))
+      log.info("\nTime for deallocating jobs: %f s \n" % (round(end-start,2)))
 
 
 # invoke the main routine

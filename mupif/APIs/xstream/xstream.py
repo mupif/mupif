@@ -78,7 +78,7 @@ class xstream(Application.Application):
         """
         super(xstream, self).__init__(file,workdir) # call base class
         
-        self.logger = logging.getLogger()
+        self.log = logging.getLogger()
         
         # prepare the environment for X-Stream execution
         # NB: not necessary for this example on pre-calculated data
@@ -97,7 +97,7 @@ class xstream(Application.Application):
             #self.executable )
           #os.chmod(self.executable,stat.S_IEXEC)
         #except Exception as e:
-          #self.logger.exception(e)
+          #self.log.exception(e)
           #raise APIError.APIError('Cannot copy GTM-X exec to working directory')
           #return
         os.chdir(storePath)
@@ -164,7 +164,7 @@ class xstream(Application.Application):
             self.mesh = EnsightReader2.readEnsightGeo(Geofile, self.parts, self.partRec)    
     
         fileName = basePath + self.config['fieldFile'] + '.escl'
-        self.logger.info('Reading file '+ fileName )       
+        self.log.info('Reading file '+ fileName )       
         f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh)
         return f
 
@@ -322,7 +322,7 @@ class xstream(Application.Application):
         ## execute X-stream
         # ATTENTION: not in this example, results will be read from a backup
         command_to_run=self.executable + ' -f ' + self.config['caseFile']
-        self.logger.info('solveStep with X-Stream')
+        self.log.info('solveStep with X-Stream')
         ##command_to_run=xConf.mpirun + ' -machinefile ' + \
           ##xConf.machinefile + ' -np ' + str(xConf.nbOfProcesses) + ' ' + \
           ##self.executable + ' -f ' + \
@@ -386,7 +386,7 @@ class xstream(Application.Application):
               if re.search( r"TIME_STEP ", line, re.IGNORECASE):
                  found_tstep=True 
                  value = float(line.split()[1])
-                 self.logger.info("The critical time step in X-stream is %f" % value)    
+                 self.log.info("The critical time step in X-stream is %f" % value)    
                  return value 
 
         if (found_tstep==False):
@@ -446,7 +446,7 @@ class xstream(Application.Application):
         for num, file in enumerate(files_required, 0):    
             case=files_required[num]
             if os.path.exists(case):
-                #self.logger.info(case + '      ok')
+                #self.log.info(case + '      ok')
                 pass
             else:
                 raise APIError.APIError (case + ' does not exist')
@@ -497,8 +497,8 @@ class xstream(Application.Application):
                 #introduces the new value of the property only if it is in between lines begin and end
                 if ( (re.search( property_to_change, line, re.IGNORECASE)) and (linenumber>begin_boundary_line) and (linenumber<end_boundary_line) ):
                     found_property=True 
-                    #self.logger.info(('The old boundary condition for ' + property_to_change + ' is: '+ line).strip())
-                    self.logger.info(('the new boundary condition for ' + property_to_change + ' is: '+ new_bc_string).strip())
+                    #self.log.info(('The old boundary condition for ' + property_to_change + ' is: '+ line).strip())
+                    self.log.info(('the new boundary condition for ' + property_to_change + ' is: '+ new_bc_string).strip())
                     f_out.write(new_bc_string)
 
                 else:
@@ -563,13 +563,13 @@ class xstream(Application.Application):
         # Check if the file exists and has more than five datapoints
         FieldDatasetName = self.workdir + '/' + FieldDatasetName
         if os.path.exists(FieldDatasetName):
-            self.logger.info(FieldDatasetName + '      ok')
+            self.log.info(FieldDatasetName + '      ok')
         else:
             raise APIError.APIError (FieldDatasetName + ' does not exist') 
 
         npoints_dataset = len(open(FieldDatasetName).readlines())
         if (npoints_dataset<=5):
-            self.logger.error('Warning. dataset contains 5 or less points. No change in boundary condition will be considered this timestep.')
+            self.log.error('Warning. dataset contains 5 or less points. No change in boundary condition will be considered this timestep.')
             return
           
         #store new values            
@@ -588,8 +588,8 @@ class xstream(Application.Application):
                 #introduces the new value of the field only if it is in between lines begin and end
                 if ( (re.search( field_to_change, line, re.IGNORECASE)) and (linenumber>begin_boundary_line) and (linenumber<end_boundary_line) ):
                     found_field=True 
-                    #self.logger.info(('The old boundary condition for ' + field_to_change + ' is: '+ line).strip())
-                    self.logger.info(('the new boundary condition for ' + field_to_change + ' is: '+ new_bc_string).strip())
+                    #self.log.info(('The old boundary condition for ' + field_to_change + ' is: '+ line).strip())
+                    self.log.info(('the new boundary condition for ' + field_to_change + ' is: '+ new_bc_string).strip())
                     f_out.write(new_bc_string)
 
                 else:

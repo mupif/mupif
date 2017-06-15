@@ -88,12 +88,7 @@ def main():
     hkey =""
     nshost=None
     ssh = False#ssh flag (set to tru if ssh tunnel need to be established)
-    logger = logging.getLogger()
-    
-
-
-    
-
+    log = logging.getLogger()
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "h:j:p:k:u:n:r:t")

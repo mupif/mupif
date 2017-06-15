@@ -82,7 +82,7 @@ a public key for putty client. This *.ppk key is slightly different than id_dsa.
 key.
 
 ================================================================================
-Running a test.py
+Running a Example06.py
 ================================================================================
 ssh client needs to be installed on a system. Unix-based systems use "ssh" client,
 windows users need "putty" client. These clients establish a ssh tunnel 
@@ -93,7 +93,7 @@ You need to comment/uncomment line calling the method PyroUtil.sshTunnel,
 depending on Unix/Windows. For windows, you need to specify a filename with a 
 public ssh key.
 
-Run a command: python test.py
+Run a command: python Example06.py
 
 ================================================================================
 EXPECTED OUTPUT:

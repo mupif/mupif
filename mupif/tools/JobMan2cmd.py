@@ -14,24 +14,15 @@ def usage():
     print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile")
 
 def main():
-    logger = Util.setupLogger(fileName='JobMan2cmd', level=logging.DEBUG)
+    log = Util.setupLogger(fileName='JobMan2cmd.log', level=logging.DEBUG)
     
-    ##Results are printed through a logger only - communication with this subprocess is peculiar
-    #formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
-    #formatTime = '%Y-%m-%d %H:%M:%S'
-    #logging.basicConfig(filename='JobMan2cmd.log',filemode='w',format=formatLog,level=logging.DEBUG)
-    #logger = logging.getLogger()#create a logger
-    #ch = logging.StreamHandler()
-    #ch.setFormatter(logging.Formatter(formatLog, formatTime))
-    #logger.addHandler(ch)
-
-    logger.info ("JobMan2cmd: " + str(sys.argv[1:]))
+    log.info ("JobMan2cmd: " + str(sys.argv[1:]))
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:s:i:c:", ['port=','job=','natport='])
     except getopt.GetoptError as err:
         # print help information and exit:
-        logger.exception(err)
+        log.exception(err)
         usage()
         sys.exit(2)
 
@@ -64,7 +55,7 @@ def main():
 
 
     if daemonPort == None or jobID == None:
-        logger.error('missing options -p and -j')
+        log.error('missing options -p and -j')
         usage()
         sys.exit(2)
 
@@ -79,11 +70,11 @@ def main():
         # mupif = importlib.import_module('mupif')
         PyroUtil = importlib.import_module('mupif.PyroUtil')
     else:
-        logger.error('missing options -c specifying server config file')
+        log.error('missing options -c specifying server config file')
         exit(0)
 
     #Results are printed through a logger only - communication with this subprocess is peculiar
-    logger = logging.getLogger()
+    log = logging.getLogger()
 
     #locate nameserver
     ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
@@ -106,9 +97,9 @@ def main():
     ns.register(jobID, uri, metadata=metadata)
     app.registerPyro(daemon, ns, uri,jobID)
     #app.setWorkingDirectory(workDir)
-    logger.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
-    logger.info('JobMan2cmd: setting workdir as %s', workDir)
-    logger.info('Signature is %s' % app.getApplicationSignature() )
+    log.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
+    log.info('JobMan2cmd: setting workdir as %s', workDir)
+    log.info('Signature is %s' % app.getApplicationSignature() )
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', jobManCommPort))

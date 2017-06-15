@@ -10,8 +10,6 @@ Util.changeRootLogger('thermal.log')
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
-
-
 (user, hostname)=PyroUtil.getUserInfo()
 
 thermal = demoapp.thermal_nonstat('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputT13.in','.')

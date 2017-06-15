@@ -19,7 +19,7 @@ results=[]
 tunnel= None
 for apprecord in conf.apps:
     starti = timeTime.time()
-    conf.logger.info("Trying to connect to server " + str(apprecord[conf.appIndx_Name]))
+    conf.log.info("Trying to connect to server " + str(apprecord[conf.appIndx_Name]))
 
     #Find if we need different ssh server for authentication
     if apprecord[conf.appIndx_SshHost] == '':
@@ -39,14 +39,14 @@ for apprecord in conf.apps:
         if app:
             appsig=app.getApplicationSignature()
             msg = "Successfully connected to %-30s (%4.2f s)"%(appsig, timeTime.time()-starti)
-            conf.logger.info(msg)
-            conf.logger.info("Time elapsed %f s" % (timeTime.time()-starti) )
+            conf.log.info(msg)
+            conf.log.info("Time elapsed %f s" % (timeTime.time()-starti) )
         else:
             msg = "Unable to connect to " + apprecord[conf.appIndx_Name]
-            conf.logger.error(msg)
+            conf.log.error(msg)
         results.append(msg)
     finally:
-        conf.logger.debug("Closing ssh tunnel")
+        conf.log.debug("Closing ssh tunnel")
         if tunnel: tunnel.terminate()
 
 print ("=========SUMMARY============")

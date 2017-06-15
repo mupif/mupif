@@ -6,7 +6,7 @@ Correct configuration in conf.py, namely IPs in 'nshost' and 'server'.
 
 Running:
 On a server side (mech.fsv.cvut.cz) run nameserver $python tools/nameserver.py. Run $python thermalServer.py
-On a client side run $python mechanicalServer.py and $python Demo15-client.py
+On a client side run $python mechanicalServer.py and $python Example15.py
 
 
 

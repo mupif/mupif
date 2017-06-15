@@ -318,19 +318,20 @@ class RemoteApplication (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
+        if self._decoratee:
+            self._decoratee.terminate()
+            self._decoratee = None
+        
         if (self._jobMan and self._jobID):
             log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
             self._jobMan.terminateJob(self._jobID)
             self._jobID=None
 
+        #close tunnel as the last step so an application is still reachable
         if self._appTunnel:
             log.info ("RemoteApplication: Terminating sshTunnel of application")
             if self._appTunnel != "manual":
                 self._appTunnel.terminate()
-            
-        if self._decoratee:
-            self._decoratee.terminate()
-            self._decoratee = None
 
     def __del__(self):
         """

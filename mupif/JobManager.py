@@ -30,7 +30,7 @@ import time as timeTime
 import logging
 import os
 import Pyro4
-logger = logging.getLogger()
+log = logging.getLogger()
 
 #error codes
 JOBMAN_OK = 1
@@ -97,7 +97,7 @@ class JobManager(object):
         :rtype: tuple
         :except: JobManException when allocation of new job failed
         """
-        logger.debug('JobManager:allocateJob is abstract')
+        log.debug('JobManager:allocateJob is abstract')
         return (JOBMAN_ERR, None)
 
     def terminateJob (self, jobID):
@@ -176,7 +176,7 @@ class RemoteJobManager (object):
     def __del__(self):
         self.terminate()
         if self._sshTunnel:
-            logger.info ("RemoteJobManager: autoterminating sshTunnel")
+            log.info ("RemoteJobManager: autoterminating sshTunnel")
             print ("RemoteJobManager: autoterminating sshTunnel") 
             self._sshTunnel.terminate()
     

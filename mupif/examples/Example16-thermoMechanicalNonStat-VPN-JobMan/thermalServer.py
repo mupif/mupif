@@ -2,9 +2,9 @@ from __future__ import print_function
 import os,sys
 sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
-import mupif
 import demoapp
 import conf_vpn as cfg
+Util.changeRootLogger('thermal.log')
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)

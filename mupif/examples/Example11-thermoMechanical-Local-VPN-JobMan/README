@@ -4,7 +4,7 @@ The example needs running thermalServer, mechanicalServer, nameServer and a stee
 
 Run nameserver either locally (tools/nameserver.py) or on a remote computer (tools/nameserver-VPN.py)
 
-This example Demo11ext.py runs with three different setups:
+This example Example11.py runs with three different setups:
 
 1-Local setup - nameserver, thermal server, mechanical server, steering script.
 All runs on a local machine.

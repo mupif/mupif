@@ -5,13 +5,13 @@ import re
 sys.path.append('..')
 from mupif import *
 import logging
-logger = logging.getLogger()
+log = logging.getLogger()
 
 
 import time as timeTime
 start = timeTime.time()
 
-#logger.info('Timer started')
+#log.info('Timer started')
 
 
 def usage():
@@ -33,7 +33,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "j:h:p:k:u:n:r:td")
     except getopt.GetoptError as err:
         # print help information and exit:
-        logger.exception(err)
+        log.exception(err)
         usage()
         sys.exit(2)
     
@@ -70,7 +70,7 @@ def main():
         sys.exit(2)
     
     if not debug:
-        PyroUtil.logger.setLevel(logging.WARNING)
+        log.setLevel("WARNING")
     
     print("hkey:"+hkey)
     print("Nameserver:"+nshost+":"+str(nsport))
@@ -93,7 +93,7 @@ def main():
         if tunnel:
             tunnelJobMan = PyroUtil.sshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     except Exception as e:
-        logger.exception(e)
+        log.exception(e)
         tunnelJobMan.terminate()
     else:
         # connect to jobmanager
@@ -116,7 +116,7 @@ def main():
     
     except Exception as e:
         print("test failed")
-        logger.exception(e)
+        log.exception(e)
         
 if __name__ == '__main__':
     main()
