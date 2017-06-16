@@ -6,7 +6,6 @@ from builtins import range
 # pip install pyvtk
 # Note: pyvtk is only available in Python 2.x (Sept, 2014)
 #
-
 import sys
 sys.path.append('../../..')
 from mupif import *

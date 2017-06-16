@@ -7,7 +7,6 @@ from mupif import *
 import logging
 log = logging.getLogger()
 
-
 import time as timeTime
 start = timeTime.time()
 

@@ -213,23 +213,23 @@ class Field(MupifObject.MupifObject):
                     try:
                         if icell.containsPoint(position):
                             if debug:
-                                mupif.log.debug(icell.getVertices())
+                                log.debug(icell.getVertices())
                             try:
                                 answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
                             except IndexError:
-                                mupif.log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
+                                log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
                                 raise
                             return answer
 
                     except ZeroDivisionError:
                         print('ZeroDivisionError?')
-                        mupif.log.debug(icell.number, position)
+                        log.debug(icell.number, position)
                         cell.debug=1
-                        mupif.log.debug(icell.containsPoint(position), icell.glob2loc(position))
+                        log.debug(icell.containsPoint(position), icell.glob2loc(position))
 
-                mupif.log.error('Field::evaluate - no source cell found for position ', position)
+                log.error('Field::evaluate - no source cell found for position ', position)
                 for icell in cells:
-                    mupif.log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                    log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
 
 
             else: #if (self.fieldType == FieldType.FT_vertexBased):
@@ -239,7 +239,7 @@ class Field(MupifObject.MupifObject):
                 for icell in cells:
                     if icell.containsPoint(position):
                         if debug:
-                            mupif.log.debug(icell.getVertices())
+                            log.debug(icell.getVertices())
 
                         try:
                             tmp = self.values[icell.number]
@@ -251,21 +251,21 @@ class Field(MupifObject.MupifObject):
                             count+=1
 
                         except IndexError:
-                            mupif.log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
-                            mupif.log.error(icell.getVertices())
+                            log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
+                            log.error(icell.getVertices())
                             raise
                 # end loop over icells
                 if count == 0:
-                    mupif.log.error('Field::evaluate - no source cell found for position %s', str(position))
+                    log.error('Field::evaluate - no source cell found for position %s', str(position))
                     #for icell in cells:
-                    #    mupif.log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                    #    log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
                 else:
                     answer = [x/count for x in answer]
                     return answer
 
         else:
             #no source cell found
-            mupif.log.error('Field::evaluate - no source cell found for position ' + str(position))
+            log.error('Field::evaluate - no source cell found for position ' + str(position))
             raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
 
     def giveValue(self, componentID):
@@ -309,7 +309,7 @@ class Field(MupifObject.MupifObject):
         # first merge meshes
         mesh = copy.deepcopy(self.mesh)
         mesh.merge(field.mesh)
-        mupif.log.debug(mesh)
+        log.debug(mesh)
         # merge the field values
         # some type checking first
         if (self.fieldType != field.fieldType):
@@ -344,7 +344,7 @@ class Field(MupifObject.MupifObject):
         if name is None:
             name=self.getFieldIDName()
         if lookupTable and not isinstance(lookupTable,pyvtk.LookupTable):
-            mupif.log.info('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
+            log.info('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
             lookupTable=None
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0,.231,.298,1.0),(.4,.865,.865,1.0),(.8,.706,.016,1.0)],name='coolwarm')
@@ -455,7 +455,7 @@ class Field(MupifObject.MupifObject):
                 vertexValue.append(self.giveValue(i)[fieldComponent])
         
         if(len(vertexPoints)==0):
-            mupif.log.info('No valid vertex points found, putting zeros on domain 1 x 1')
+            log.info('No valid vertex points found, putting zeros on domain 1 x 1')
             for i in range(5):
                 vertexPoints.append((i%2,i/4.))
                 vertexValue.append(0)
@@ -659,11 +659,11 @@ class Field(MupifObject.MupifObject):
         '''
         import pyvtk
         from . import fieldID
-        if not fileName.endswith('.vtk'): mupif.log.warn('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
+        if not fileName.endswith('.vtk'): log.warn('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
         ret=[]
         try: data=pyvtk.VtkData(fileName) # this is where reading the file happens (inside pyvtk)
         except NotImplementedError:
-            mupif.log.info('pyvtk fails to open (binary?) file "%s", trying through vtk.vtkGenericDataReader.'%fileName)
+            log.info('pyvtk fails to open (binary?) file "%s", trying through vtk.vtkGenericDataReader.'%fileName)
             return Field.makeFromVTK3(fileName,time=time,forceVersion2=True)
         ugr=data.structure
         if not isinstance(ugr,pyvtk.UnstructuredGrid): raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)."%ugr.__class__.__name__)

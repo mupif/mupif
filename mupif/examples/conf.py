@@ -12,8 +12,6 @@ sys.path.append(mupif_dir)
 mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../.."))
 sys.path.append(mupif_dir)
 
-from mupif import log
-
 #NAME SERVER
 #IP/name of a name server
 nshost = '127.0.0.1'

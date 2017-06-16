@@ -5,10 +5,11 @@ sys.path.extend(['..', '../../..'])
 from mupif import *
 import mupif
 import conf as cfg
-
 import time as timeTime
 start = timeTime.time()
-mupif.log.info('Timer started')
+log = logging.getLogger()
+
+log.info('Timer started')
 
 #if you wish to run no SSH tunnels, set to True
 noSSH=False
@@ -32,11 +33,11 @@ try:
     appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRec, jobNatport, cfg.sshClient, cfg.options, cfg.sshHost )
     thermal = appRec.getApplication()
 except Exception as e:
-    mupif.log.exception(e)
+    log.exception(e)
 else:
     if thermal is not None:
         appsig=thermal.getApplicationSignature()
-        mupif.log.info("Working thermalServer " + appsig)
+        log.info("Working thermalServer " + appsig)
         mechanical = PyroUtil.connectApp(ns, 'mechanical')
         time  = 0.
         dt = 0.
@@ -45,7 +46,7 @@ else:
 
         while (abs(time - targetTime) > 1.e-6):
 
-            mupif.log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
+            log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
             # create a time step
             istep = TimeStep.TimeStep(time, dt, timestepnumber)
 
@@ -78,7 +79,7 @@ else:
         mechanical.terminate();     
 
     else:
-        mupif.log.debug("Connection to thermal server failed, exiting")
+        log.debug("Connection to thermal server failed, exiting")
 
 finally:
     if appRec: appRec.terminateAll()
