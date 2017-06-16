@@ -3,12 +3,12 @@ from __future__ import print_function
 import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
-import mupif
 import conf as cfg
 import time as timeTime
-start = timeTime.time()
+import logging
 log = logging.getLogger()
 
+start = timeTime.time()
 log.info('Timer started')
 
 #if you wish to run no SSH tunnels, set to True
@@ -20,7 +20,6 @@ ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.h
 #allocate the thermal server
 solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
 solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.serverNathost, cfg.serverUserName, cfg.jobManName)
-
 
 if noSSH:
     cfg.solverJobManRec = cfg.solverJobManRecNoSSH

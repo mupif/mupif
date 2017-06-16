@@ -3,6 +3,8 @@ import os,sys
 sys.path.extend(['..','../../..','../Example10','../Example11-thermoMechanical' ])#Path to demoapp
 from mupif import *
 import demoapp
+import logging
+log = logging.getLogger()
 
 ## Local setup - nameserver, thermal server, mechanical server, steering script.
 ## All runs on a local machine ##
@@ -20,8 +22,6 @@ mechanical = demoapp.mechanical('inputM11.in', '.')
 log.info(mechanical.getApplicationSignature())
 #locate nameserver and register application
 PyroUtil.runAppServer(server=cfg.server3, port=cfg.serverPort3, nathost=cfg.server3, natport=cfg.serverPort3, nshost=cfg.nshost, nsport=cfg.nsport, appName='mechanicalServer1', hkey=cfg.hkey, app=mechanical)
-
-
 
 
 

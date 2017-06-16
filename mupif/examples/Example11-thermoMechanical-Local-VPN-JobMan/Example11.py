@@ -4,6 +4,8 @@ sys.path.extend(['..','../../..','../Example10'])
 import demoapp
 from mupif import *
 import time
+import logging
+log = logging.getLogger()
 
 appRec = None
 ## 1-Local setup - nameserver, mechanical server, thermal server, steering script run on a local machine ##
@@ -25,12 +27,13 @@ appRec = None
 ## Mechanical server local, steering script local
 import conf_vpn as cfg
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
-solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', 'jobMan1')
+thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName)
+#solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', 'jobMan1')
 
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, -1, sshClient='manual' )
-    log.info("Allocated application %s" % appRec)
-    thermal = appRec.getApplication()
+    thermal = PyroUtil.allocateApplicationWithJobManager( ns, thermalJobMan, cfg.serverNatport, PyroUtil.SSHContext(userName='', sshClient=cfg.sshClient, options='', sshHost = '' ))
+    #appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRecNoSSH, -1, sshClient='manual' )
+    log.info("Allocated application %s" % thermal.getApplicationSignature())
 except Exception as e:
     log.exception(e)
 

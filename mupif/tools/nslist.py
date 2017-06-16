@@ -5,6 +5,7 @@ import re
 sys.path.append('../..')
 from mupif import *
 import logging
+log = logging.getLogger()
 
 import time as timeTime
 start = timeTime.time()
@@ -22,9 +23,11 @@ def usage():
 
 def main():
 
-    nshost = None
-    nsport = None
-    hkey = ""
+    nshost = '172.30.0.1'
+    nsport = 9090
+    hkey = 'mupif-secret-key'
+    debug = False
+
     try:
         opts, args = getopt.getopt(sys.argv[1:], "n:r:k:d")
     except getopt.GetoptError as err:
@@ -32,8 +35,6 @@ def main():
         log.exception(err)
         usage()
         sys.exit(2)
-    
-    debug = False
     
     for o, a in opts:
         if o in ("-k"):

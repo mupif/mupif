@@ -18,10 +18,8 @@ class Demo18(Workflow.Workflow):
         #connect to JobManager running on (remote) server and create a tunnel to it
         self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName)
 
-        #allocate the thermal server
-        jobNatport = 7100
         try:
-            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport, PyroUtil.SSHContext(userName='', sshClient=cfg.sshClient, options='', sshHost = '' ))
+            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], PyroUtil.SSHContext(userName='', sshClient=cfg.sshClient, options='', sshHost = '' ))
             #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport )
         except Exception as e:
             log.exception(e)

@@ -20,7 +20,7 @@ nsport = 9090
 #Password for accessing nameServer and applications
 hkey = 'mupif-secret-key'
 #name server's name
-
+sshClient='manual'
 
 #SERVER for a single job or for JobManager
 #IP/name of a server's daemon
@@ -59,7 +59,7 @@ serverPort3 = 44385
 appName = 'MuPIFServer'
 
 #Variables declaring not using NAT
-serverNathost = ''
-serverNatport = ''
+serverNathost = -1
+serverNatport = -1
 
 

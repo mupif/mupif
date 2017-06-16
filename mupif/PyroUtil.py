@@ -52,8 +52,6 @@ NS_METADATA_nathost='nathost'
 NS_METADATA_natport='natport'
 
 
-
-
 class SSHContext(object):
     """
     Helper class to store ssh tunnel connection details. It is parameter to different methods (connectJobManager, allocateApplicationWithJobManager, etc.).
@@ -99,6 +97,7 @@ class sshTunnel(object):
         #use direct system command. Paramiko or sshtunnel do not work.
         #put ssh public key on a server - interaction with a keyboard
         #for password will not work here (password goes through TTY, not stdin)
+        cmd=''
         if sshClient=='ssh':
             cmd = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.debug("Creating ssh tunnel via command: " + cmd)
@@ -558,8 +557,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
     if sshContext:
         try:
             (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobMan.getNSName())
-            appTunnel = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=natPort, remotePort=retRec[2],
-                                  sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
+            appTunnel = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=natPort, remotePort=retRec[2], sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
         except Exception:
             log.exception("Creating ssh tunnel for application's daemon failed")
             raise
