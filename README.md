@@ -8,7 +8,7 @@ MuPIF: Multi-Physics Integration Framework
 Description
 ------------
 
-Multi-Physics Integration Framework (MuPIF) is an integration framework, that 
+Multi-Physics Integration Framework ([MuPIF](http://mupif.org)) is an integration framework, that 
 will facilitate the implementation of multi-physic and multi-level simulations,
 built from independently developed components. The principal role of the
 framework is to steer individual components (applications) and to provide 
@@ -17,9 +17,7 @@ an interface that allows to steer application and execute data requests.
 The design supports various coupling strategies, discretization techniques, 
 and also the distributed applications. 
 
-The MuPIF development has been supported by Grant Agency of the Czech Republic 
-(Project No. P105/10/1402) and by 7FP EU Framework programme (MMP project,
-Grant agreement no: 604279).
+MuPIF has been developped at Czech Technical University by Borek Patzak and coworkers and is available under GNU Library or Lesser General Public License version 3.0 (LGPLv3).
 
 What is here
 -------------
@@ -63,7 +61,7 @@ Run ``nosetests`` (or ``nosetests3`` for Python3) anywhere in MuPIF source tree.
 
 Installation
 -------------
-Use ``$ pip install mupif`` to install mupif as a package from PyPI. Use ``$ git clone git://git.code.sf.net/p/mupif/code mupif.git``  to get a git 
+Use ``$ pip install mupif`` to install mupif as a package from PyPI. Use ``$ git clone https://github.com/mupif/mupif.git``  to get a git 
 version.
 
 To build an installable MuPIF package, several options are available.
@@ -89,25 +87,15 @@ Bugs
 Please mail all bug reports and suggestions to mailto:info@oofem.org. I will try to give satisfaction, if the time is at least partially on my side. 
 
 
-Legal notice
-------------
+License
+-------
+MuPIF is available under GNU Library or Lesser General Public License version 3.0 (LGPLv3) 
 
-                Copyright (C) 2010-2014 Borek Patzak
+Acknowledgements
+----------------
 
-       Czech Technical University, Faculty of Civil Engineering,
-    Department of Structural Mechanics, 166 29 Prague, Czech Republic
+The MuPIF development has been supported by Grant Agency of the Czech Republic 
+(Project No. P105/10/1402), by EU under 7th Framework programme (MMP project,
+Grant agreement no: 604279) and by Horizon 2020 programme (Composelector project, Project reference: 721105).
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 

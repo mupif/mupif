@@ -1,6 +1,6 @@
 
            MuPIF: Multi-Physics Integration Framework 
-               Copyright (C) 2010-2014 Borek Patzak
+               Copyright (C) 2010-2017 Borek Patzak
 
     Czech Technical University, Faculty of Civil Engineering,
   Department of Structural Mechanics, 166 29 Prague, Czech Republic
@@ -38,9 +38,10 @@ an interface that allows to steer application and execute data requests.
 The design supports various coupling strategies, discretization techniques, 
 and also the distributed applications. 
 
-The MuPIF development has been supported by Grant Agency of the Czech Republic 
-(Project No. P105/10/1402) and by 7FP EU Framework programme (MMP project,
- Grant agreement no: 604279).
+MuPIF has been developped at Czech Technical University by Borek Patzak
+and coworkers and is available under GNU Library or Lesser General Public
+License version 3.0 (LGPLv3).
+
 
 [2] What is here
 ===============================================================================
@@ -79,8 +80,7 @@ Please read README files in individual example directories for instructions.
 [5] Installation
 ===============================================================================
 Use  $ pip install mupif   to install mupif as a package from PyPI.
-Use  $ git clone git://git.code.sf.net/p/mupif/code mupif.git  to get a git 
-version.
+Use  $ git clone https://github.com/mupif/mupif.git to get a git version.
 
 To build an installable MuPIF package, several options are available.
 A package setuptools is normally used for creating e.g. installable tar files.
@@ -97,6 +97,21 @@ Bugs
 
 Please mail all bug reports and suggestions to [info@oofem.org]. I will try to
 give satisfaction, if the time is at least partially on my side. 
+
+
+License
+-------
+MuPIF is available under GNU Library or Lesser General Public License version 3.0 (LGPLv3) 
+
+Acknowledgements
+----------------
+
+The MuPIF development has been supported by Grant Agency of the Czech Republic 
+(Project No. P105/10/1402), by EU under 7th Framework programme (MMP project,
+Grant agreement no: 604279) and by Horizon 2020 programme (Composelector project, Project reference: 721105).
+
+
+
 
                                 Enjoy
                                         Borek Patzak
