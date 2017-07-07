@@ -29,6 +29,7 @@ from . import ValueType
 from . import BBox
 from . import APIError
 from . import MupifObject
+from . import Mesh
 from numpy import array, arange, random, zeros
 import numpy
 import copy
@@ -618,14 +619,14 @@ class Field(MupifObject.MupifObject):
 
         .. note:: This method has not been tested yet.
         """
-        import h5py, hashlib, mupif.Mesh
+        import h5py, hashlib
         hdf=h5py.File(fileName,'r',libver='latest')
         grp=hdf[group]
         # load mesh and field data from HDF5
         meshObjs=[obj for name,obj in grp.items() if name.startswith('mesh_')]
         fieldObjs=[obj for name,obj in grp.items() if name.startswith('field_')]
         # construct all meshes as mupif objects
-        meshes=[mupif.Mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        meshes=[Mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
         # construct all fields as mupif objects
         ret=[]
         for f in fieldObjs:
@@ -667,7 +668,7 @@ class Field(MupifObject.MupifObject):
             return Field.makeFromVTK3(fileName,time=time,forceVersion2=True)
         ugr=data.structure
         if not isinstance(ugr,pyvtk.UnstructuredGrid): raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)."%ugr.__class__.__name__)
-        mesh=mupif.Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
+        mesh=Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
         # get cell and point data
         pd,cd=data.point_data.data,data.cell_data.data
         for dd,fieldType in (pd,FieldType.FT_vertexBased),(cd,FieldType.FT_cellBased):
@@ -769,7 +770,7 @@ class Field(MupifObject.MupifObject):
         #import sys
         #sys.stderr.write(str((ugrid,ugrid.__class__,vtk.vtkUnstructuredGrid)))
         # make mesh -- implemented separately
-        mesh=mupif.Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
+        mesh=Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
         # fields which will be returned
         ret=[]
         # get cell and point data
