@@ -10,7 +10,7 @@ install:
    # 3. numpy is pre-installed by travis implicitly
    #
    #- pip install pyro4 future nose rednose h5py
-   pip install --upgrade pip setuptools
+   - pip install --upgrade pip setuptools
    # this seems to be the new active upstream for pyvtk supporting 2.x and 3.x
    - pip install git+https://github.com/pearu/pyvtk.git
    # install mupif itself
