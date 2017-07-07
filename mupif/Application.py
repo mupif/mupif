@@ -24,7 +24,7 @@
 import os
 import Pyro4
 from . import APIError
-import MupifObject
+from . import MupifObject
 import logging
 log = logging.getLogger()
 
