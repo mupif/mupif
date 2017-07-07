@@ -44,7 +44,7 @@ willRunTest () {
     fi
 }  
 
-willRunTest '1'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '1'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example01; 
 	echo $PWD
 	$PYTHON Example01.py
@@ -55,7 +55,7 @@ pushd Example01;
 popd
 fi
 
-willRunTest '2'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '2'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example02
 	echo $PWD
 	$PYTHON server.py &
@@ -71,7 +71,7 @@ pushd Example02
 popd
 fi
 
-willRunTest '3'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '3'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example03
 	echo $PWD
 	gcc -o application3 application3.c
@@ -84,7 +84,7 @@ popd
 fi
 
 
-willRunTest '4'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '4'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example04
 	echo $PWD
 	$PYTHON Example04.py
@@ -95,7 +95,7 @@ pushd Example04
 popd
 fi
 
-willRunTest '5'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '5'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example05
 	echo $PWD
 	$PYTHON Example05.py
@@ -106,7 +106,7 @@ pushd Example05
 popd
 fi
 
-willRunTest '6'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '6'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example06
 	echo $PWD
 	$PYTHON server.py &
@@ -121,7 +121,7 @@ pushd Example06
 popd
 fi
 
-willRunTest '7'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '7'; test=$?; if [ "$test" == 1  ] ; then
 if [[ $PYVER == 2* ]]; then
 	pushd Example07
 		echo $PWD
@@ -136,7 +136,7 @@ else
 fi
 fi
 
-willRunTest '9'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '9'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example09
 	echo $PWD
 	$PYTHON Example09.py
@@ -147,7 +147,7 @@ pushd Example09
 popd
 fi
 
-willRunTest '10'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '10'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example10
 	echo $PWD
 	$PYTHON thermalServer.py &
@@ -165,21 +165,22 @@ pushd Example10
 popd
 fi
 
-willRunTest '12'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '12'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example12-multiscaleThermo:
         $PYTHON Example12.py
 popd
 fi
 
-willRunTest '13'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '13'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example13-thermoMechanicalNonStat
         $PYTHON Example13.py
 popd
 fi
 
 
-willRunTest '18'; retval=$?; if [ "$retval" == 1  ] ; then
+willRunTest '18'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example18-thermoMechanicalNonStatWorkflow-VPN-JobMan
+        echo "=================== Retval $retval ===================="
         echo $PWD
 	$PYTHON thermalServer.py &
 	PID1=$!
@@ -191,6 +192,7 @@ pushd Example18-thermoMechanicalNonStatWorkflow-VPN-JobMan
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
 	echo "=================== Exit status $ret ===================="
+	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
