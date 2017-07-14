@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #Common configuration for examples
 import sys, os, os.path
 import Pyro4

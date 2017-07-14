@@ -11,7 +11,7 @@
 # version 2.1 of the License, or (at your option) any later version.
 # 
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 # 
@@ -24,8 +24,8 @@
 from builtins import object
 import os
 import Pyro4
-import Application
-import PyroUtil
+from . import Application
+from . import PyroUtil
 from . import APIError
 from . import MetadataKeys
 from . import TimeStep
@@ -82,7 +82,6 @@ class Workflow(Application.Application):
         
             log.debug("Step %g: t=%g dt=%g"%(timeStepNumber,time,dt))
 
-            
             self.solveStep(istep)
             self.finishStep(istep)
         self.terminate()

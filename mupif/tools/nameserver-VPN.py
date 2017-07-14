@@ -15,17 +15,11 @@ def main():
     nshost = cfg.nshost
     nsport = cfg.nsport
     hkey = cfg.hkey
-    python = 'python'
     os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
     os.environ['PYRO_PICKLE_PROTOCOL_VERSION']='2'
     os.environ['PYRO_SERIALIZER']='pickle'
     os.environ['PYRO_SERVERTYPE']='multiplex'
-    
-    ##Creation of nameserver
-    #cmd = '%s -m Pyro4.naming -n %s -p %d -k %s' % (python, nshost, nsport, hkey)
-    #p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
-    #output, error = p.communicate()
-    #print(output if output else "", error if error else "")
+
     #Creation of nameserver
     cmd = 'pyro4-check-config'
     p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)

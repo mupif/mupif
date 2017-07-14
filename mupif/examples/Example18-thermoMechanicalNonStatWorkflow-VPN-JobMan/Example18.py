@@ -16,11 +16,12 @@ class Demo18(Workflow.Workflow):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server and create a tunnel to it
-        self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName)
+        self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         self.thermal = None
 
         try:
-            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost ) )
+            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost ) )
+            print(self.thermal)
             #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport )
         except Exception as e:
             log.exception(e)
@@ -34,6 +35,9 @@ class Demo18(Workflow.Workflow):
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
 
+        appsig=self.thermal.getApplicationSignature()
+        log.info("Working thermal server " + appsig)
+        
         self.thermal.solveStep(istep)
         f = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
         data = f.field2VTKData().tofile('T_%s'%str(istep.getNumber()))

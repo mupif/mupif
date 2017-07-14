@@ -18,7 +18,7 @@ Util.changeRootLogger('mechanical.log')
 ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport)
+daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport, hkey=sConf.hkey)
 #Run job manager on a server
 jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'mechanicalServerConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 

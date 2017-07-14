@@ -7,13 +7,16 @@ arrayTests="$@"
 export TRAVIS=1
 
 # in Travis virtualenv with python3, python is actually python3
-export PYTHON=python
+#export PYTHON=python
+export PYTHON=python3
 export PYVER=`$PYTHON -c 'import sys; print(sys.version_info[0])'`
 
 # kill all subprocesses when exiting
 # http://stackoverflow.com/a/22644006/761090
-trap "exit" INT TERM
-trap "kill 0 " TERM
+#trap "exit" INT TERM
+#trap "kill 0" TERM
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+
 
 # run testing SSH server, will be killed by the trap
 bash ssh/test_ssh_server.sh &
@@ -166,7 +169,7 @@ popd
 fi
 
 willRunTest '12'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example12-multiscaleThermo:
+pushd Example12-multiscaleThermo
         $PYTHON Example12.py
 popd
 fi

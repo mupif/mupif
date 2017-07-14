@@ -1,6 +1,6 @@
-from __future__ import print_function
+#from __future__ import print_function
 from builtins import str
-import future.utils
+#import future.utils
 import sys
 sys.path.extend(['../..','../../..'])
 
@@ -80,7 +80,7 @@ def main():
     ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
     #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-    daemon = PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort)
+    daemon = PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort, hkey=conf.hkey)
 
 
     #Initialize application
@@ -104,8 +104,10 @@ def main():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('localhost', jobManCommPort))
     # needs something w/ buffer interface, which is bytes (and not str)
-    if future.utils.PY3: s.sendall(bytes(uri.asString(),'utf-8'))
-    else: s.sendall(uri.asString())
+    #if future.utils.PY3:
+    s.sendall(bytes(uri.asString(),'utf-8'))
+    #else:
+    #s.sendall(uri.asString())
     s.close()
 
     daemon.requestLoop()

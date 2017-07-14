@@ -33,28 +33,27 @@ class thermal(Application.Application):
         dirichletModelEdges=[]
         convectionModelEdges=[]
         try:
-            lines = open(self.workDir+os.path.sep+self.file, 'r')
+            lines = []
+            for line in open(self.workDir+os.path.sep+self.file, 'r'):
+                if not line.startswith('#'):
+                    lines.append(line)
         except Exception as e:
             log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
             log.exception(e)
             exit(1)
 
-        #filter out comments wstarting with #
-        lines = (l for l in lines if (l.startswith('#')==False) )
-        # more filters and mappings you might want
-        #print (lines.next())
-        line = lines.next()
+        line = lines.pop(0)
         size = line.split()
         self.xl=float(size[0])
         self.yl=float(size[1])
         log.info ("Thermal problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
-        line = lines.next()
+        line = lines.pop(0)
         ne = line.split()
         self.nx=int(ne[0])
         self.ny=int(ne[1])
 
         for iedge in range(4):
-            line = lines.next()
+            line = lines.pop(0)
             #print (line)
             rec = line.split()
             edge = int(rec[0])
@@ -68,7 +67,7 @@ class thermal(Application.Application):
 
         #print (convectionModelEdges)
 
-        line = lines.next()
+        line = lines.pop(0)
         rec = line.split()
         if len(rec)>0:
             if rec[0] =='Inclusion':
@@ -206,7 +205,6 @@ class thermal(Application.Application):
         self.Field = field
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-
         self.readInput()
         mesh = self.mesh
         self.volume = 0.0;
@@ -495,9 +493,8 @@ class thermal(Application.Application):
             raise APIError.APIError ('Unknown property ID')
 
 
-
     def getApplicationSignature(self):
-        return "Thermal-demo-solver, ver 1.0"
+        return "Stationary thermal-demo-solver, ver 1.0"
 
 
 @Pyro4.expose
@@ -585,7 +582,7 @@ class thermal_nonstat(thermal):
         #connectivity 
         c=np.zeros((numElements,ndofs), dtype=np.int32)
         c.fill(-1)
-	for e in range(0,numElements):
+        for e in range(0,numElements):
             numVert = self.mesh.getCell(e).getNumberOfVertices()
             for i in range(0,numVert):
                 c[e,i]=self.mesh.getVertex(mesh.getCell(e).vertices[i]).label

@@ -25,7 +25,7 @@ try:
 
     # locate remote PingServer application, request remote proxy
     # tunnel created on the fly and terminated with application
-    serverApp = PyroUtil.connectApp(ns, cfg.appName, sshContext)
+    serverApp = PyroUtil.connectApp(ns, cfg.appName, hkey=None, sshContext=sshContext)
 
     try:
         appsig=serverApp.getApplicationSignature()
@@ -59,10 +59,9 @@ try:
         log.error("Test FAILED")
         sys.exit(1)
 
-    serverApp.terminate();
     log.debug("Time consumed %f s" % (timeTime.time()-start))
     log.debug("Ping test finished")
-
+    serverApp.terminate()
 
 finally:
     log.info("Test Terminated")

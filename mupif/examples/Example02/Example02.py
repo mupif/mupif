@@ -50,7 +50,7 @@ ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 # application1 is local, create its instance
 app1 = application1(None)
 # application2 is remote, request remote proxy
-app2=PyroUtil.connectApp(ns, cfg.appName, sshContext)
+app2=PyroUtil.connectApp(ns, cfg.appName, cfg.hkey, sshContext)
 
 while (abs(time -targetTime) > 1.e-6):
     #determine critical time step

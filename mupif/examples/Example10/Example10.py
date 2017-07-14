@@ -19,13 +19,14 @@ class Demo10(Workflow.Workflow):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
         #connect to JobManager running on (remote) server and create a tunnel to it
-        self.thermalJobMan = PyroUtil.connectJobManager(ns, thermalJobManName, PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost) )
-        self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mechanicalJobManName, PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost) )
+        self.thermalJobMan = PyroUtil.connectJobManager(ns, thermalJobManName, cConf.hkey,  PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost) )
+        self.thermalSolver = None
+        self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mechanicalJobManName, cConf.hkey, PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost) )
 
         #allocate the application instances
         try:
-            self.thermalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cConf.jobNatPorts.pop(0), PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost) )
-            self.mechanicalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.mechanicalJobMan, cConf.jobNatPorts.pop(0),PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost ))
+            self.thermalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cConf.jobNatPorts.pop(0), cConf.hkey, PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost) )
+            self.mechanicalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.mechanicalJobMan, cConf.jobNatPorts.pop(0), cConf.hkey, PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=cConf.sshHost ))
 
             #Create a reverse tunnel so mechanical server can access thermal server directly
             self.appsTunnel = PyroUtil.connectApplicationsViaClient(PyroUtil.SSHContext(sshClient=cConf.sshClient, options=cConf.options, sshHost=PyroUtil.getNSConnectionInfo(ns, mechanicalJobManName)[0]), self.thermalSolver)
@@ -42,9 +43,9 @@ class Demo10(Workflow.Workflow):
 
                 log.info("Uploading input files to servers")
                 pf = self.thermalJobMan.getPyroFile(self.thermalSolver.getJobID(), "input.in", 'wb')
-                PyroUtil.uploadPyroFile("inputT.in", pf)
+                PyroUtil.uploadPyroFile("inputT.in", pf, cConf.hkey)
                 mf = self.mechanicalJobMan.getPyroFile(self.mechanicalSolver.getJobID(), "input.in", 'wb')
-                PyroUtil.uploadPyroFile("inputM.in", mf)
+                PyroUtil.uploadPyroFile("inputM.in", mf, cConf.hkey)
             else:
                 log.debug("Connection to server failed, exiting")
 
@@ -55,7 +56,9 @@ class Demo10(Workflow.Workflow):
         start = timeTime.time()
         log.info('Timer started')
         log.info("Solving thermal problem")
-        self.thermalSolver.solveStep(None)
+        print(self.thermalSolver.getApplicationSignature())
+        #self.thermalSolver._pyroHmacKey = cConf.hkey.encode(encoding='UTF-8')
+        self.thermalSolver.solveStep(tstep=1.)
         #Get field's uri from thermal application and send it to mechanical application.
         #This prevents copying data to Demo10's computer,
         #mechanical solver will use direct access to thermal field.
@@ -63,6 +66,7 @@ class Demo10(Workflow.Workflow):
         uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, 0.0)
         log.info("URI of thermal problem's field is " + str(uri) )
         field = cConf.cfg.Pyro4.Proxy(uri)
+        #field._pyroHmacKey = cConf.hkey.encode(encoding='UTF-8')
         self.mechanicalSolver.setField(field)
 
         #Original version copied data to Demo10's computer and then to thermal solver.

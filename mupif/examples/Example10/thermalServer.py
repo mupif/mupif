@@ -12,12 +12,11 @@ log = logging.getLogger('example')
 # for computer running a nameserver
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
-
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport)
+daemon = PyroUtil.runDaemon(host=sConf.server, port=sConf.serverPort, nathost=sConf.serverNathost, natport=sConf.serverNatport, hkey=sConf.hkey)
 #Run job manager on a server
 jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, sConf.jobManName, sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'thermalServerConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 

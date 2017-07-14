@@ -29,6 +29,7 @@ import socket
 import time as timeTime
 import Pyro4
 import logging
+import sys
 from . import JobManager
 from . import PyroUtil
 from . import PyroFile
@@ -235,7 +236,10 @@ class SimpleJobManager2 (JobManager.JobManager):
 
             try:
                 if self.jobMan2CmdPath[-3:] == '.py':
-                    proc = subprocess.Popen(["python", self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                    #use the same python interpreter as running this code
+                    interpreter = sys.executable
+                    print("Using python interpreter %s" % interpreter)
+                    proc = subprocess.Popen([interpreter, self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 else:
                     proc = subprocess.Popen([self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
                 log.debug('SimpleJobManager2: new subprocess has been started with JobMan2cmd.py')
