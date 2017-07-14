@@ -22,6 +22,7 @@
 #
 from __future__ import division
 import logging, os
+import argparse
 
 debug = False
 
@@ -52,11 +53,15 @@ def setupLogger(fileName,level=logging.DEBUG):
 
 
 def changeRootLogger(newLoggerName):
+    """
+    Change root logger by giving a new file name. Useful in parallel processes on a single machine.
+    
+    :return: Nothing
+    """
     l = logging.getLogger()  #root logger
     for hdlr in l.handlers[:]:  # remove all old handlers
         l.removeHandler(hdlr)
     setupLogger(newLoggerName) # set the new handler
-
 
 def quadratic_real (a, b, c): 
     """ 
@@ -84,5 +89,17 @@ def quadratic_real (a, b, c):
             return ()
         y2 = -y1 
         return (y1 - t, y2 - t)
+
+def getParentParser():
+    """ 
+    Parent parser for controling running mode. Used in MuPIF's examples.
+    Mode 0-local (default), 1-ssh, 2-VPN with option -m.
+    
+    :return: parent parser object
+    :rtype: argparse object
+    """
+    parentParser = argparse.ArgumentParser(add_help=False)
+    parentParser.add_argument('-m', required=False, type=int, default=0, dest="mode", help='Network mode 0-local (default), 1-ssh, 2-VPN')
+    return parentParser
 
     

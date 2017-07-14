@@ -1,37 +1,26 @@
 # This script starts a server for Pyro4 on this machine with Application2
-# Works with Pyro4 version 4.28
-# Tested on Ubuntu 14.04 and Win XP
+# Works with Pyro4 version 4.54
+# Tested on Ubuntu 16.04 and Win XP
 # Vit Smilauer 03/2017, vit.smilauer (et) fsv.cvut.cz
 
 # If firewall is blocking daemonPort, run on Ubuntu
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
 
-from __future__ import print_function, division
 import sys
-
-mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
-
-import sys
-import socket
 sys.path.append('..')
-
-if mode==3:
-    import conf_vpn as cfg
-else:
-    import conf as cfg
-
-if(len(sys.argv)==1):
-    appName = cfg.appName
-    serverPort = cfg.serverPort
-else:
-    appName = sys.argv[1]
-    serverPort = int(sys.argv[2])
-
-import Pyro4
+sys.path.append('../../..')
 from mupif import *
+import Pyro4
 import logging
 log = logging.getLogger()
-log.info ("%s %s " % (appName, serverPort))
+Util.changeRootLogger('server.log')
+
+import argparse
+#Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+from Config import config
+cfg=config(mode)
+
 
 @Pyro4.expose
 class application2(Application.Application):
@@ -63,10 +52,7 @@ class application2(Application.Application):
     def getCriticalTimeStep(self):
         return 1.0
 
-if mode==1: #set NATport=port and local IP
-    cfg.server = cfg.serverNathost
-    cfg.serverNatport = cfg.serverPort
 
 app2 = application2("/dev/null")
 
-PyroUtil.runAppServer(cfg.server, serverPort, cfg.serverNathost, serverPort, cfg.nshost, cfg.nsport, appName, cfg.hkey, app=app2)
+PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, app=app2)

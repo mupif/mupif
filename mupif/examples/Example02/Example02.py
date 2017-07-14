@@ -1,21 +1,21 @@
 # This script starts a client for Pyro4 on this machine with Application1
-# Works with Pyro4 version 4.28
-# Tested on Ubuntu 14.04 and Win XP
-# Vit Smilauer 09/2014, vit.smilauer (et) fsv.cvut.cz
+# Works with Pyro4 version 4.54
+# Tested on Ubuntu 16.04 and Win XP
+# Vit Smilauer 07/2017, vit.smilauer (et) fsv.cvut.cz
 
-from __future__ import print_function
-
-mode = 1 #Communication type 1=local(default), 2=ssh tunnel, 3=VPN
-import os, sys
+import sys
 sys.path.append('..')
-if mode==3:
-    import conf_vpn as cfg
-else:
-    import conf as cfg
-
+sys.path.append('../../..')
 from mupif import *
 import logging
 log = logging.getLogger()
+
+import argparse
+#Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+from Config import config
+cfg=config(mode)
+
 
 class application1(Application.Application):
     """
