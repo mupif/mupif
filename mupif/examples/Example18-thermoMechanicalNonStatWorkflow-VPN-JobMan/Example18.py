@@ -1,11 +1,14 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
-import conf as cfg
-import logging
+import argparse
+#Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+from Config import config
+cfg=config(mode)
 
+import logging
 log = logging.getLogger()
 
 class Demo18(Workflow.Workflow):

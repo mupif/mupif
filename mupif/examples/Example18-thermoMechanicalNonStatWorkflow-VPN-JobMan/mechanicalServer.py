@@ -1,12 +1,15 @@
 #Mechanical server for nonstationary problem
-from __future__ import print_function
 import os,sys
 sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
 import demoapp
-import conf as cfg
-
 Util.changeRootLogger('mechanical.log')
+import Pyro4
+import argparse
+#Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+from Config import config
+cfg=config(mode)
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -16,7 +19,7 @@ ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.h
 
 mechanical = demoapp.mechanical('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputM13.in', '.')
 
-PyroUtil.runAppServer (server=cfg.server3, port=cfg.serverPort3, natport='', nathost='',
+PyroUtil.runAppServer (server=cfg.server2, port=cfg.serverPort2, natport='', nathost='',
                        nshost=cfg.nshost, nsport=cfg.nsport,
                        appName='mechanical', hkey=cfg.hkey, app=mechanical)
 

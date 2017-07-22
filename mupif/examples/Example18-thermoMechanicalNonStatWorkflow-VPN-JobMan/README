@@ -1,9 +1,16 @@
-This example illustrates workflow consisting of two applications running on a network over VPN. NameServer runs on mech.fsv.cvut.cz. JobManager for thermalServer runs on mech.fsv.cvut.cz. MechanicalServer and scenario script runs on a local computer. No ssh tunnels are created for JobManager and for a thermalServer, communication runs on a VPN network. In such particular case, serverNathost=server, serverNatport=serverPort. VPN can access ports on remote server directly.
+This example illustrates a workflow consisting of thermo-mechanical simulation chain using JobManager.
+
+It can run locally, on ssh or VPN network, see Config.py. Network behavior is controlled by parameter -m is every script.
+
+The thermalServer.py runs on remote computer, mechanicalServer.py and steering script Example18.py run on a local computer.
+On VPN network, no ssh tunnels are created for JobManager and for a thermalServer. VPN can access ports on a remote server directly.
 
 Prerequisites:
-Correct configuration in conf-VPN.py.
+Correct configuration in Config.py.
 
-Running:
-On a server side (mech.fsv.cvut.cz) run nameserver $python tools/nameserver-VPN.py. Run $python thermalServer.py there.
+On a server side (such as mech.fsv.cvut.cz) run:
+$python3 tools/nameserver.py -m0   (or other -m depending on network configuration)
+$python3 thermalServer.py -m0
 
-On a client side run $ python mechanicalServer.py and $python Example18.py
+On a client side run:
+$python3 Example18.py -m0

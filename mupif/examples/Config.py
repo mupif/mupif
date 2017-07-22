@@ -1,10 +1,22 @@
 #Common configuration for running examples in local, ssh or VPN mode
 import sys, os, os.path
 import Pyro4
+import logging
+log = logging.getLogger()
 
 class config(object):
+    """
+    Auxiliary class holding configuration variables for local, ssh, or VPN connection.
+    Used mainly in mupif/examples/*
+    Numerical value of parameter -m sets up internal variables.
+    Typically, -m0 is local configuration, -m1 is ssh configuration, -m2 VPN configuration
+    """
+    
     def __init__(self,mode):
         self.mode = mode
+        if mode not in [0,1,2]:
+           log.error("Unknown mode -m %d" % mode)
+        
         Pyro4.config.SERIALIZER="pickle"
         Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
         Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
@@ -111,7 +123,7 @@ class config(object):
             self.serverNatport = -1
 
             #SECOND SERVER for another application (usually runs locally)
-            self.server2 = '172.30.0.1'
+            self.server2 = '127.0.0.1'
             self.serverPort2 = 44383
             #self.serverNathost2 = self.server2
             #self.serverNatport2 = 5558
@@ -120,12 +132,10 @@ class config(object):
             #third SERVER - an application running on local computer in VPN
             #this server can be accessed only from script from the same computer
             #otherwise the server address has to be replaced by vpn local adress
-            self.server3 = 'localhost'
-            self.serverPort3 = 44385
-           
-           
+            #self.server3 = 'localhost'
+            #self.serverPort3 = 44385
 
-
+        self.sshHost = ''
         #SSH CLIENT
         #User name for ssh connection, empty uses current login name
         #serverUserName = os.environ.get( "USERNAME" )#current user-not working
@@ -133,18 +143,15 @@ class config(object):
                 thisdir=os.path.dirname(os.path.abspath(__file__))
                 self.sshClient = 'ssh'
                 self.options="-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key -oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts"%(thisdir,thisdir)
-                self.sshHosts=''
                 self.serverUserName=os.environ['USER']    
         elif (mode==0 or mode==1):
             self.serverUserName = os.getenv('USER')
             if(sys.platform.lower().startswith('win')):#Windows ssh client
                 self.sshClient = 'C:\\Program Files\\Putty\\putty.exe'
                 self.options = '-i L:\\.ssh\\mech\id_rsa.ppk'
-                self.sshHost = ''
             else:#Unix ssh client
                 self.sshClient = 'ssh'
                 self.options = '-oStrictHostKeyChecking=no'
-                self.sshHost = ''
         elif (mode==2):#VPN
             self.sshClient='manual'
 

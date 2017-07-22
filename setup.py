@@ -4,12 +4,12 @@ Created 19.6.2015
 '''
 
 # A typical workflow
-# $ python setup.py install       test your installation locally as a root as it would be downloaded from PyPI server
-# $ python setup.py install --user   test your installation locally as a user, installs under /home/user/.local/lib/
-# $ python setup.py sdist         creates an archive on local computer
-# $ python setup.py register      registers to PyPI server
-# $ python setup.py sdist upload  creates an archive on local computer and upload to PyPI server
-# $ python setup.py sdist --format=zip creates source archive on local computer
+# $ python3 setup.py install       test your installation locally as a root as it would be downloaded from PyPI server
+# $ python3 setup.py install --user   test your installation locally as a user, installs under /home/user/.local/lib/
+# $ python3 setup.py sdist         creates an archive on local computer
+# $ python3 setup.py register      registers to PyPI server
+# $ python3 setup.py sdist upload  creates an archive on local computer and upload to PyPI server
+# $ python3 setup.py sdist --format=zip creates source archive on local computer
 
 # The mupif module can be tested under python $ python   and  >> from mupif import * . Correct path is automatically added.
 # Uninstall with $ pip uninstall mupif . This also shows you the location of files.
@@ -58,8 +58,9 @@ setup(name='mupif',
       packages = find_packages(),
       #packages = ['mupif'],
         #Tell what to install (these files must be already in a sdist archive file) - package_data useful only for bdist, not for pip. Extra added files are in MANIFEST.in
-      #package_data={'': [ 'README', '*.sh', '*.c', '*.in', 'tools/*.py', 'examples/Ex*/*.py', 'examples/Pi*/*.py', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
-      install_requires=['numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'future>=0.15', 'Pyro4==4.54'],
+      #package_data={'': [ 'README', '*.sh', '*.c', '*.in', 'tools/*.py', 'examples/Ex*/*.py', 'examples/Pi*/*.py', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]}, 
+      #'scipy' fails due to missing compiler for Lapack etc.
+      install_requires=['numpy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'future>=0.15', 'Pyro4==4.54'],
       include_package_data=True,
       url='http://sourceforge.net/projects/mupif/',
       entry_points={
