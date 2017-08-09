@@ -64,6 +64,6 @@ if __name__ == "__main__":
     f = Field.Field(m, FieldID.FID_Displacement, ValueType.Scalar, 'm', 0.0, values)
     #check
     v=f.evaluate((0.01,0.01,0))
-    print v
+    print (v)
     f.field2VTKData().tofile('test')
     

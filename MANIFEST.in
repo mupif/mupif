@@ -2,23 +2,19 @@
 # It is also necessary to specify package_data in setup.py which tells what will be installed from *.tar.gz
 # It is strongly advised to remove built and dist directories before new build
 
-# A typical workflow
-# $ python3 setup.py install       test your installation locally as it would be downloaded from PyPI server
-# $ python3 setup.py install --user test your installation locally as a user, installs under /home/user/.local/lib/
-# $ python3 setup.py sdist         creates an archive on local computer
-# $ python3 setup.py register      registers to PyPI server
-# $ python3 setup.py sdist upload  creates an archive on local computer and upload to PyPI server
-
 #include README.txt
 include mupif/doc/refManual/MuPIF-ReferenceManual-1.0.0.pdf
 include mupif/doc/userManual/MuPIF-UserManual-1.0.0.pdf
 #prune *.pyc - should be kept in distro
 include mupif/examples/testExamples.sh
+
 recursive-include mupif/examples *.py README *.in *.c
+prune mupif/examples/Example05/paraview
+recursive-include mupif/examples/Example05/paraview MMPTestCase_v1.geo fld_TEMPERATURE.escl
+
 recursive-include mupif/APIs *.py README *.in
 recursive-include mupif/examples/ssh *
-#recursive-include mupif/examples/Example05/paraview MMPTestCase_v1.geo fld_TEMPERATURE.escl
 
 prune mupif/examples/obsolete
-#prune mupif/examples/ssh
+#prune mupif/examples/ssh - need for local tests
 prune mupif/examples/Workshop-2017

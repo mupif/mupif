@@ -4,12 +4,14 @@ Created 19.6.2015
 '''
 
 # A typical workflow
-# $ python3 setup.py install       test your installation locally as a root as it would be downloaded from PyPI server
 # $ python3 setup.py install --user   test your installation locally as a user, installs under /home/user/.local/lib/
-# $ python3 setup.py sdist         creates an archive on local computer
-# $ python3 setup.py register      registers to PyPI server
-# $ python3 setup.py sdist upload  creates an archive on local computer and upload to PyPI server
+# $ python3 setup.py install       test your installation locally as a root as it would be downloaded from PyPI server
+# $ python3 setup.py sdist         creates an archive on a local computer
 # $ python3 setup.py sdist --format=zip creates source archive on local computer
+
+# UPLOAD
+# python3 setup.py sdist         creates an archive on a local computer
+# twine upload dist/*            uploads to pypi.python.org, needs .pypirc config file
 
 # The mupif module can be tested under python $ python   and  >> from mupif import * . Correct path is automatically added.
 # Uninstall with $ pip uninstall mupif . This also shows you the location of files.
@@ -50,7 +52,8 @@ else:
 
 setup(name='mupif',
       version=version[0],
-      description='Mupif platform for multiscale/multiphysics modeling',
+      description='MuPIF platform for multiscale/multiphysics modeling',
+      long_description=open('README.txt','r').read(),
       license='LGPL',
       author=author[0],
       author_email='info@oofem.org',
@@ -62,7 +65,7 @@ setup(name='mupif',
       #'scipy' fails due to missing compiler for Lapack etc.
       install_requires=['numpy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'future>=0.15', 'Pyro4==4.54'],
       include_package_data=True,
-      url='http://sourceforge.net/projects/mupif/',
+      url='http://www.mupif.org/',
       entry_points={
           'console_scripts': ['jobMan2cmd = mupif.tools.JobMan2cmd:main',
                               'jobManStatus = mupif.tools.jobManStatus:main',
