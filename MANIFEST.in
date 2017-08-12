@@ -4,7 +4,7 @@
 
 #include README.txt
 include mupif/doc/refManual/MuPIF-ReferenceManual-1.0.0.pdf
-include mupif/doc/userManual/MuPIF-UserManual-1.0.0.pdf
+recursive-include mupif/doc/userManual *.pdf
 #prune *.pyc - should be kept in distro
 include mupif/examples/testExamples.sh
 

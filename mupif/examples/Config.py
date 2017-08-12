@@ -9,12 +9,12 @@ class config(object):
     Auxiliary class holding configuration variables for local, ssh, or VPN connection.
     Used mainly in mupif/examples/*
     Numerical value of parameter -m sets up internal variables.
-    Typically, -m0 is local configuration, -m1 is ssh configuration, -m2 VPN configuration
+    Typically, -m0 is local configuration, -m1 is ssh configuration, -m2 is VPN configuration, -m3 is VPN emulated as local
     """
     
     def __init__(self,mode):
         self.mode = mode
-        if mode not in [0,1,2]:
+        if mode not in [0,1,2,3]:
            log.error("Unknown mode -m %d" % mode)
         
         Pyro4.config.SERIALIZER="pickle"
@@ -54,7 +54,7 @@ class config(object):
         if 'TRAVIS' in os.environ:#run everything locally on TRAVIS
             self.mode == 0    
         
-        if self.mode == 0:#localhost
+        if self.mode == 0:#localhost. Jobmanager uses NAT with ssh tunnels
             #NAME SERVER
             #IP/name of a name server
             self.nshost = '127.0.0.1'
@@ -105,7 +105,7 @@ class config(object):
             self.serverNatport2 = 5558
             self.appName2 = 'MuPIFServer2'
         
-        if self.mode == 2:#VPN   
+        if self.mode == 2:#VPN, no ssh tunnels   
             #NAME SERVER
             #IP/name of a name server
             self.nshost = '172.30.0.1'
@@ -121,6 +121,7 @@ class config(object):
             self.serverNathost = -1
             #Nat port (-1 for no tunnel)
             self.serverNatport = -1
+            self.jobNatPorts = [-1]
 
             #SECOND SERVER for another application (usually runs locally)
             self.server2 = '127.0.0.1'
@@ -134,6 +135,39 @@ class config(object):
             #otherwise the server address has to be replaced by vpn local adress
             #self.server3 = 'localhost'
             #self.serverPort3 = 44385
+
+        if self.mode == 3:#VPN emulated as local, no ssh tunnels  
+            #NAME SERVER
+            #IP/name of a name server
+            self.nshost = '127.0.0.1'
+            #Port of name server
+            self.nsport = 9090
+            
+            #SERVER for a single job or for JobManager
+            #IP/name of a server's daemon
+            self.server = '127.0.0.1'
+            #Port of server's daemon
+            self.serverPort = 44382
+            #Nat IP/name (-1 for no tunnel)
+            self.serverNathost = -1
+            #Nat port (-1 for no tunnel)
+            self.serverNatport = -1
+            self.jobNatPorts = [-1]
+
+
+            #SECOND SERVER for another application (usually runs locally)
+            self.server2 = '127.0.0.1'
+            self.serverPort2 = 44383
+            #self.serverNathost2 = self.server2
+            #self.serverNatport2 = 5558
+            #self.appName2 = 'MuPIFServer2'
+           
+            #third SERVER - an application running on local computer in VPN
+            #this server can be accessed only from script from the same computer
+            #otherwise the server address has to be replaced by vpn local adress
+            #self.server3 = 'localhost'
+            #self.serverPort3 = 44385
+
 
         self.sshHost = ''
         #SSH CLIENT
@@ -152,8 +186,9 @@ class config(object):
             else:#Unix ssh client
                 self.sshClient = 'ssh'
                 self.options = '-oStrictHostKeyChecking=no'
-        elif (mode==2):#VPN
+        elif (mode==2 or mode==3):#VPN
             self.sshClient='manual'
+            self.options = ''
 
 
             
