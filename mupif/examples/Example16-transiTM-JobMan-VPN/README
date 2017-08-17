@@ -1,0 +1,11 @@
+This example illustrates two applications running on a network over VPN and this example is based on Example13.py. NameServer runs on mech.fsv.cvut.cz. JobManager for thermalServer runs on mech.fsv.cvut.cz. MechanicalServer and scenario script runs on a local computer. No ssh tunnels are created for JobManager and for a thermalServer, communication runs on a VPN network. In such particular case, serverNathost=server, serverNatport=serverPort. VPN can access ports on remote server directly.
+
+Prerequisites:
+Correct configuration in Config.py.
+
+Running in  local mode:
+On a server side (mech.fsv.cvut.cz) run nameserver $python3 tools/nameserver.py. Run $python3 thermalServer.py there.
+On a client side run $python3 mechanicalServer.py and $python3 Example16.py
+
+Running in VPN mode: just add -m2 at the end of all python3 commands.
+

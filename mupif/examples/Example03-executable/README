@@ -1,0 +1,21 @@
+This example illustrates the top level control script representing
+simulation pipeline made of two simple applications. 
+The overall simulation is performed in a time loop, 
+where one application provides data for the second application, 
+which computes the arithmetical average value of given data.
+
+The main difference to Example01 is that the second application, 
+computing the avarage is considered as external executable. The Python wrapper
+implementing Application interface around this application is created. 
+Its role is to cache the mapped properties, execute the external
+application and parse its output, when data are requested. 
+
+To run the example, the application3 should be compiled on your system
+using any c compiler. For example, on unix/linux use following command
+to create an executable:
+
+$ gcc -o application3 application3.c
+
+To run this example, invoke python interpreter on Example03.py:
+$ python Example03.py
+

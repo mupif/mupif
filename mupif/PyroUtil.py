@@ -112,6 +112,7 @@ class sshTunnel(object):
             log.debug("Creating ssh tunnel via command: " + cmd)
         elif sshClient=='manual':
             #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
+            print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd1 = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd2 = 'putty.exe -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
@@ -294,7 +295,7 @@ def getNSAppName(jobname, appname):
     """
     return 'Mupif'+'.'+jobname+'.'+appname
 
-def runDaemon(host, port, nathost, natport, hkey=None):
+def runDaemon(host, port, nathost=-1, natport=-1, hkey=None):
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
@@ -307,6 +308,10 @@ def runDaemon(host, port, nathost, natport, hkey=None):
     :rtype Pyro4.Daemon
     """
     try:
+        if nathost==-1:
+            nathost = host
+        if natport==-1:
+            natport = port
         daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
         #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
         log.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
@@ -428,21 +433,22 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
 #def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
-def connectApplicationsViaClient(fromContext, toApplication):
+def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
     """
     Create a reverse ssh tunnel so one server application can connect to another one.
 
     Typically, steering_computer creates connection to server1 and server2. However, there
     is no direct link server1-server2 which is needed for Field operations (getField, setField).
     Assume a working connection server1-steering_computer on NAT port 6000. This function creates
-    a tunnel steering_computer:6000 and server2:6000 so server2 has direct access to server1's data.
+    a tunnel steering_computer:6000 and server2:7000 so server2 has direct access to server1's data.
 
-        steering_computer
-          /           \
-    server1          server2
+           steering_computer
+            /              \
+    from server1:6000     to server2:7000
 
 
-    :param fromContext SSHContext
+    :param SSHContext fromContext: Remote application
+    :param Application fromApplication: Application object from which we want to create a tunnel
     :param Application toApplication: Application object to which we want to create a tunnel
 
     :return: Instance of sshTunnel class
@@ -450,7 +456,10 @@ def connectApplicationsViaClient(fromContext, toApplication):
     """
     uri = toApplication.getURI()
     natPort = getNATfromUri( uri )
-    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=natPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
+    uri = fromApplication.getURI()
+    fromNatPort = getNATfromUri( uri )
+    
+    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
     return tunnel
 
 def getNATfromUri (uri):
@@ -504,7 +513,7 @@ def connectJobManager (ns, jobManName, hkey=None, sshContext=None):
     """
 
     (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
-    print ( (jobManHostname, jobManPort, jobManNatHost, jobManNatport))
+    log.info('Located Job Manager %s at: %s %s %s %s' % (jobManName, jobManHostname, jobManPort, jobManNatHost, jobManNatport))
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
     tunnelJobMan = None
@@ -513,8 +522,7 @@ def connectJobManager (ns, jobManName, hkey=None, sshContext=None):
             tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
                                      sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
         except Exception:
-            log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, sshContext.userName,
-                                                                                                                                                                     jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
+            log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, sshContext.userName, jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
             raise
 
     # locate remote jobManager on (remote) server
@@ -557,7 +565,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=Non
     try:
         (username,hostname)=getUserInfo()
         retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
-        log.info('Allocated job, returned record from jobMan:' +  str(retRec))
+        log.info('Allocated job, returned record from jobManagaer:' +  str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
         raise

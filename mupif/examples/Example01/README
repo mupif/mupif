@@ -7,9 +7,9 @@ here illustrated using property exchange for simplicity.
 
 Even though its simplicity, it illustrates the basic concept of
 steering, mutual data exchange, and error handling using the
-proposed API. 
+proposed API. Everything runs on a local computer. 
 
 To run this example, invoke python interpreter on Example01.py:
-> python Example01.py
+$ python Example01.py
 
 

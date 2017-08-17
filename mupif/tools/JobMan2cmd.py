@@ -10,20 +10,19 @@ import logging
 import importlib
 from mupif import Util
 
-def usage():
-    print("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile")
+def usage(log):
+    log.info("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile -m configMode")
 
 def main():
     log = Util.setupLogger(fileName='JobMan2cmd.log', level=logging.DEBUG)
-    
-    log.info ("JobMan2cmd: " + str(sys.argv[1:]))
+    log.info("JobMan2cmd: " + str(sys.argv[1:]))
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:s:i:c:", ['port=','job=','natport='])
+        opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:s:i:c:m:", ['port=','job=','natport='])
     except getopt.GetoptError as err:
         # print help information and exit:
         log.exception(err)
-        usage()
+        usage(log)
         sys.exit(2)
 
     daemonPort = None
@@ -32,6 +31,7 @@ def main():
     configName = None
     mupif = None
     moduleDir = None
+    configMode = 0
 
     for o, a in opts:
         if o in ("-p", "--port"):
@@ -50,13 +50,15 @@ def main():
             moduleDir = a
         elif o in ("-c", "--config"):
             configName = a
+        elif o in ("-m", "--mode"):
+            configMode = int(a)    
         else:
-            assert False, "unhandled option"
+            log.error("unhandled option")
 
 
     if daemonPort == None or jobID == None:
-        log.error('missing options -p and -j')
-        usage()
+        log.error('missing at least options -p and -j')
+        usage(log)
         sys.exit(2)
 
     if natPort == -1:
@@ -65,7 +67,10 @@ def main():
     if configName:
         if moduleDir:
             sys.path.append(moduleDir)
-        conf = importlib.import_module(configName)
+        moduleImport = importlib.import_module(configName)
+        print (moduleImport)
+        conf=moduleImport.serverConfig(configMode)
+        #conf = moduleImport.variables(configMode)
         # import PyroUtil module from mupif
         # mupif = importlib.import_module('mupif')
         PyroUtil = importlib.import_module('mupif.PyroUtil')
@@ -73,18 +78,19 @@ def main():
         log.error('missing options -c specifying server config file')
         exit(0)
 
-    #Results are printed through a logger only - communication with this subprocess is peculiar
-    log = logging.getLogger()
-
     #locate nameserver
     ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
     #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
+    if conf.serverNathost==-1:
+        conf.serverNathost = conf.server
+    
     daemon = PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort, hkey=conf.hkey)
-
+    log.info('Running daemon on hosts %s port %d nathost %s natport %d hkey %s' % (conf.server, daemonPort, conf.serverNathost, natPort, conf.hkey))
 
     #Initialize application
     #app = DemoApplication.DemoApplication()
+    log.info('Initializing application with initial file %s and workdir %s' % (conf.applicationInitialFile, workDir) )
     app = conf.applicationClass(conf.applicationInitialFile, workDir)
 
     #register agent

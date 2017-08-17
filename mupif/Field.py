@@ -420,8 +420,9 @@ class Field(MupifObject.MupifObject):
             matplotlib.use('TkAgg')#Qt4Agg gives an empty, black window
             import matplotlib.pyplot as plt
         except ImportError as e:
-            print(e)
-            raise
+            log.error('Skipping field2Image2D due to missing modules: %s' % e)
+            return None
+            #raise
         
         if ( self.fieldType != FieldType.FT_vertexBased):
             raise APIError.APIError ('Only FieldType.FT_vertexBased is now supported')

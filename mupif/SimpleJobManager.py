@@ -167,7 +167,7 @@ class SimpleJobManager2 (JobManager.JobManager):
     :param str configFile: path to server config file
 
     """
-    def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
+    def __init__ (self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
         """
         Constructor.
 
@@ -185,6 +185,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.jobMancmdCommPort = jobMancmdCommPort
         self.serverConfigPath = serverConfigPath
         self.configFile = serverConfigFile
+        self.serverConfigMode = serverConfigMode
         self.jobMan2CmdPath = jobMan2CmdPath
         self.freePorts = list(range(portRange[0], portRange[1]+1))
         if maxJobs > len(self.freePorts):
@@ -198,7 +199,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.s.bind(('localhost', self.jobMancmdCommPort))
         self.s.listen(1)
 
-        log.debug('SimpleJobManager2: initialization done')
+        log.debug('SimpleJobManager2: initialization done for application name %s' % self.applicationName)
 
     def allocateJob (self, user, natPort):
         """
@@ -238,15 +239,16 @@ class SimpleJobManager2 (JobManager.JobManager):
                 if self.jobMan2CmdPath[-3:] == '.py':
                     #use the same python interpreter as running this code
                     interpreter = sys.executable
-                    print("Using python interpreter %s" % interpreter)
-                    proc = subprocess.Popen([interpreter, self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                    log.info("Using python interpreter %s" % interpreter)
+                    proc = subprocess.Popen([interpreter, self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c', str(self.configFile), '-m', str(self.serverConfigMode)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 else:
-                    proc = subprocess.Popen([self.jobMan2CmdPath, '-p', str(jobPort), '-j', jobID, '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath, '-c', self.configFile])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                log.debug('SimpleJobManager2: new subprocess has been started with JobMan2cmd.py')
+                    proc = subprocess.Popen([self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c', str(self.configFile), '-m', str(self.serverConfigMode)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                log.debug('SimpleJobManager2: new subprocess has been started with JobMan2cmd.py ')
             except Exception as e:
                 log.exception(e)
                 raise
                 return (JOBMAN_ERR,None)
+            
             try:
                 # try to get uri from Property.psubprocess
                 uri = None # avoids UnboundLocalError in py3k

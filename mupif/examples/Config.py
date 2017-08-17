@@ -38,9 +38,9 @@ class config(object):
 
         #Jobs in JobManager
         #Range of ports to be assigned on the server to jobs
-        self.portsForJobs=( 9095, 9200 )
+        self.portsForJobs=( 9000, 9100 )
         #NAT client ports used to establish ssh connections
-        self.jobNatPorts = list(range(6000, 6050))
+        self.jobNatPorts = list(range(6000, 6100))
 
         #Maximum number of jobs
         self.maxJobs=20
@@ -80,6 +80,8 @@ class config(object):
             self.serverNatport2 = 5558
             self.appName2 = 'MuPIFServer2'
 
+            self.server3 = 'localhost'
+            self.serverPort3 = 44386
            
         if self.mode == 1:#ssh
             #NAME SERVER
@@ -133,8 +135,8 @@ class config(object):
             #third SERVER - an application running on local computer in VPN
             #this server can be accessed only from script from the same computer
             #otherwise the server address has to be replaced by vpn local adress
-            #self.server3 = 'localhost'
-            #self.serverPort3 = 44385
+            self.server3 = 'localhost'
+            self.serverPort3 = 44386
 
         if self.mode == 3:#VPN emulated as local, no ssh tunnels  
             #NAME SERVER
@@ -165,8 +167,8 @@ class config(object):
             #third SERVER - an application running on local computer in VPN
             #this server can be accessed only from script from the same computer
             #otherwise the server address has to be replaced by vpn local adress
-            #self.server3 = 'localhost'
-            #self.serverPort3 = 44385
+            self.server3 = 'localhost'
+            self.serverPort3 = 44386
 
 
         self.sshHost = ''
@@ -189,7 +191,5 @@ class config(object):
         elif (mode==2 or mode==3):#VPN
             self.sshClient='manual'
             self.options = ''
-
-
-            
+           
             

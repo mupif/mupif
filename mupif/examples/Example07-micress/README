@@ -1,0 +1,18 @@
+This example illustrates a skeleton for Micress API (defined in Micress.py). 
+It shows how to import vtk data files into internal framework
+representation using fields defined on general structured grid.
+It evaluates field position at specific point from micress/sim.vtk file.
+
+
+To run the example:
+-------------------
+> python Example07.py
+
+
+If you have this error when you run the example:
+> SyntaxError: unexpected EOF while parsing
+
+it comes from pyvtk package. You have to open the PolyData.py and Scalars.py source code files, and replace all split(' ') by split().
+
+This error is explained in details here:
+http://code.google.com/p/pyvtk/wiki/unexpectedEOF
