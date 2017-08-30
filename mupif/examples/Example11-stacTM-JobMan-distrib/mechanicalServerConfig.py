@@ -10,10 +10,11 @@ class serverConfig(config):
         super(serverConfig, self).__init__(mode)
         #Let Daemon run on higher ports
         self.serverPort = self.serverPort+1
-        self.serverNatport = self.serverNatport+1
+        if self.serverNatport != None:
+            self.serverNatport+=1
         self.socketApps = self.socketApps+1
         self.portsForJobs=( 9200, 9300 )
-        self.jobNatPorts = [-1] if self.jobNatPorts[0]==-1 else list(range(6200, 6300)) 
+        self.jobNatPorts = [None] if self.jobNatPorts[0]==None else list(range(6200, 6300)) 
         
         self.applicationClass = demoapp.mechanical
         self.applicationInitialFile = 'input.in' #dummy file

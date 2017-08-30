@@ -48,7 +48,7 @@ willRunTest () {
 }  
 
 willRunTest '1'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example01; 
+pushd Example01-local; 
 	echo $PWD
 	$PYTHON Example01.py
 	ret=$?
@@ -59,7 +59,7 @@ popd
 fi
 
 willRunTest '2'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example02-distributed
+pushd Example02-distrib
 	echo $PWD
 	$PYTHON server.py &
 	PID1=$!
@@ -75,7 +75,7 @@ popd
 fi
 
 willRunTest '3'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example03-executable
+pushd Example03-executable-local
 	echo $PWD
 	gcc -o application3 application3.c
 	$PYTHON Example03.py
@@ -88,7 +88,7 @@ fi
 
 
 willRunTest '4'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example04-field
+pushd Example04-field-local
 	echo $PWD
 	$PYTHON Example04.py
 	ret=$?
@@ -99,7 +99,7 @@ popd
 fi
 
 willRunTest '5'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example05-celsian
+pushd Example05-celsian-local
 	echo $PWD
 	$PYTHON Example05.py
 	ret=$?
@@ -110,7 +110,7 @@ popd
 fi
 
 willRunTest '6'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example06-jobMan
+pushd Example06-jobMan-distrib
 	echo $PWD
 	$PYTHON server.py &
 	PID1=$!
@@ -125,22 +125,18 @@ popd
 fi
 
 willRunTest '7'; test=$?; if [ "$test" == 1  ] ; then
-if [[ $PYVER == 2* ]]; then
-	pushd Example07-micress
-		echo $PWD
-		$PYTHON Example07.py
-		ret=$?
-		(( retval=$retval || $ret ))
-		AppendLog $ret `pwd`
-		echo "=================== Exit status $ret ===================="
-	popd
-else
-	echo "------------ Example07 skipped with python 3.x --------------"
-fi
+pushd Example07-micress-local
+	echo $PWD
+	$PYTHON Example07.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
+	echo "=================== Exit status $ret ===================="
+popd
 fi
 
 willRunTest '9'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example09-units
+pushd Example09-units-local
 	echo $PWD
 	$PYTHON Example09.py
 	ret=$?
@@ -162,7 +158,7 @@ popd
 fi
 
 willRunTest '11'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example11-stacTM-JobMan
+pushd Example11-stacTM-JobMan-distrib
 	echo $PWD
 	$PYTHON thermalServer.py &
 	PID1=$!
@@ -192,7 +188,7 @@ popd
 fi
 
 willRunTest '14'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example14-transiTM-VPN
+pushd Example14-transiTM-distrib
         echo "=================== Retval $retval ===================="
         echo $PWD
 	$PYTHON thermalServer.py &
@@ -212,7 +208,7 @@ popd
 fi
 
 willRunTest '16'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example16-transiTM-JobMan-VPN
+pushd Example16-transiTM-JobMan-distrib
         echo "=================== Retval $retval ===================="
         echo $PWD
 	$PYTHON thermalServer.py &
@@ -232,14 +228,14 @@ popd
 fi
 
 willRunTest '17'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example17-micress-Xstream
+pushd Example17-micress-Xstream-local
         $PYTHON Example17.py
 popd
 fi
 
 
 willRunTest '18'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example18-transiTM-JobMan-VPN
+pushd Example18-transiTM-JobMan-distrib
         echo "=================== Retval $retval ===================="
         echo $PWD
 	$PYTHON thermalServer.py &

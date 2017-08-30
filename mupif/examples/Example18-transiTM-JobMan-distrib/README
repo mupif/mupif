@@ -1,0 +1,32 @@
+This example illustrates a workflow consisting of thermo-mechanical simulation chain using JobManager.
+
+It can run locally, on ssh or VPN network, see Config.py. Network behavior is controlled by parameter -m is every script.
+
+The thermalServer.py runs on remote computer (if in network), mechanicalServer.py and steering script Example18.py run on a local computer.
+On VPN network, no ssh tunnels are created for JobManager and for a thermalServer since VPN can access ports on a remote server directly.
+
+Prerequisites:
+Correct configuration in Config.py.
+
+Local setup:
+------------
+Run on a single computer:
+$python3 tools/nameserver.py
+$python3 thermalServer.py
+$python3 Example18.py
+
+VPN setup with mech.fsv.cvut.cz server:
+-------------------
+Set up VPN connection with openvpn client as a root, e.g. $openvpn --config CTU.ovpn
+Open the VPN monitor http://mupif.org/openvpn-monitor/
+
+Start the nameserver on mech $python3 nameserver.py -m2
+Start thermalServer on mech $python3 thermalServer.py -m2
+
+Start mechanicalServer on local computer $python3 mechanicalServer.py -m2
+Run steering script on local computer $python3 Example18.py -m2
+
+
+
+
+

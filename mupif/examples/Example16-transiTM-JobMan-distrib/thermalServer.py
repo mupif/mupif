@@ -20,7 +20,7 @@ daemon = PyroUtil.runDaemon(host=cfg.server, port=cfg.serverPort)
 #Run job manager on a server
 jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', mode, cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 
-PyroUtil.runJobManagerServer(server=cfg.server, port=cfg.serverPort, nathost='', natport='', nshost=cfg.nshost, nsport=cfg.nsport, appName=cfg.jobManName, hkey=cfg.hkey, jobman=jobMan, daemon=daemon)
+PyroUtil.runJobManagerServer(server=cfg.server, port=cfg.serverPort, nathost=None, natport=None, nshost=cfg.nshost, nsport=cfg.nsport, appName=cfg.jobManName, hkey=cfg.hkey, jobman=jobMan, daemon=daemon)
 
 
 

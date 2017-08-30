@@ -25,7 +25,7 @@ from __future__ import print_function, absolute_import
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '1.1.4'
+__version__ = '1.1.5'
 __author__  = 'Borek Patzak and Vit Smilauer'
 
 from .fieldID import FieldID
@@ -40,7 +40,6 @@ import logging,os
 
 #Create default logger
 Util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
-
 
 ## temporarily disabled (does not work on travis, even though future is installed there??)
 ## more helpful error message

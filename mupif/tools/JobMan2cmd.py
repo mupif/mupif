@@ -35,11 +35,11 @@ def main():
 
     for o, a in opts:
         if o in ("-p", "--port"):
-            daemonPort = int(a)
+            daemonPort = a
         elif o in ("-j", "--job"):
             jobID = a
         elif o in ("-n", "--natport"):
-            natPort = int(a)
+            natPort = a
         elif o in ("-d", "--workdir"):
             workDir = a
         elif o in ("-f", "--file"):
@@ -61,9 +61,6 @@ def main():
         usage(log)
         sys.exit(2)
 
-    if natPort == -1:
-        natPort = daemonPort
-
     if configName:
         if moduleDir:
             sys.path.append(moduleDir)
@@ -78,15 +75,20 @@ def main():
         log.error('missing options -c specifying server config file')
         exit(0)
 
+    if natPort == 'None' or natPort == None:
+        natPort = None
+    elif conf.serverNathost==None:
+        conf.serverNathost = conf.server
+
     #locate nameserver
     ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
     #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-    if conf.serverNathost==-1:
-        conf.serverNathost = conf.server
+    #if conf.serverNathost==None:
+        #conf.serverNathost = conf.server
     
-    daemon = PyroUtil.runDaemon(host=conf.server, port=daemonPort, nathost=conf.serverNathost, natport=natPort, hkey=conf.hkey)
-    log.info('Running daemon on hosts %s port %d nathost %s natport %d hkey %s' % (conf.server, daemonPort, conf.serverNathost, natPort, conf.hkey))
+    daemon = PyroUtil.runDaemon(host=conf.server, port=int(daemonPort), nathost=conf.serverNathost, natport=natPort, hkey=conf.hkey)
+    log.info('Running daemon on hosts %s port %s nathost %s natport %s hkey %s' % (conf.server, daemonPort, conf.serverNathost, natPort, conf.hkey))
 
     #Initialize application
     #app = DemoApplication.DemoApplication()

@@ -102,4 +102,11 @@ def getParentParser():
     parentParser.add_argument('-m', required=False, type=int, default=0, dest="mode", help='Network mode 0-local (default), 1-ssh, 2-VPN')
     return parentParser
 
+def NoneOrInt(arg):
+        if arg == None:
+            return None
+        else:
+            return int(arg)
+    
+
     

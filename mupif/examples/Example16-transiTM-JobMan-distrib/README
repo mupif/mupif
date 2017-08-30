@@ -3,9 +3,9 @@ This example illustrates two applications running on a network over VPN and this
 Prerequisites:
 Correct configuration in Config.py.
 
-Running in  local mode:
-On a server side (mech.fsv.cvut.cz) run nameserver $python3 tools/nameserver.py. Run $python3 thermalServer.py there.
-On a client side run $python3 mechanicalServer.py and $python3 Example16.py
+Running in distributed mode (e.g. VPN):
+On a server side (mech.fsv.cvut.cz) run nameserver $python3 tools/nameserver.py -m2 and $python3 thermalServer.py -m2.
+On a client side run $python3 mechanicalServer.py -m2 and $python3 Example16.py -m2
 
-Running in VPN mode: just add -m2 at the end of all python3 commands.
+Running in local mode: omit -m2 so the default value is used (-m0).
 

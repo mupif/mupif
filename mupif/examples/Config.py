@@ -69,18 +69,18 @@ class config(object):
             #Port of server's daemon
             self.serverPort = 44382
             #Nat IP/name (necessary for ssh tunnel)
-            self.serverNathost = self.server
+            self.serverNathost = None
             #Nat port (necessary for ssh tunnel)
-            self.serverNatport = self.serverPort
+            self.serverNatport = None
 
-            #SECOND SERVER for another application
+            #SECOND SERVER for another application on remote computer
             self.server2 = self.server
             self.serverPort2 = 44385
             self.serverNathost2 = self.server
             self.serverNatport2 = 5558
             self.appName2 = 'MuPIFServer2'
 
-            self.server3 = 'localhost'
+            self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
            
         if self.mode == 1:#ssh
@@ -119,23 +119,23 @@ class config(object):
             self.server = '172.30.0.1'
             #Port of server's daemon
             self.serverPort = 44382
-            #Nat IP/name (-1 for no tunnel)
-            self.serverNathost = -1
-            #Nat port (-1 for no tunnel)
-            self.serverNatport = -1
-            self.jobNatPorts = [-1]
+            #Nat IP/name
+            self.serverNathost = None
+            #Nat port
+            self.serverNatport = None
+            self.jobNatPorts = [None]
 
             #SECOND SERVER for another application (usually runs locally)
             self.server2 = '127.0.0.1'
             self.serverPort2 = 44383
-            #self.serverNathost2 = self.server2
-            #self.serverNatport2 = 5558
+            self.serverNathost2 = None
+            self.serverNatport2 = None
             #self.appName2 = 'MuPIFServer2'
            
             #third SERVER - an application running on local computer in VPN
             #this server can be accessed only from script from the same computer
             #otherwise the server address has to be replaced by vpn local adress
-            self.server3 = 'localhost'
+            self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
 
         if self.mode == 3:#VPN emulated as local, no ssh tunnels  
@@ -150,11 +150,11 @@ class config(object):
             self.server = '127.0.0.1'
             #Port of server's daemon
             self.serverPort = 44382
-            #Nat IP/name (-1 for no tunnel)
-            self.serverNathost = -1
-            #Nat port (-1 for no tunnel)
-            self.serverNatport = -1
-            self.jobNatPorts = [-1]
+            #Nat IP/name
+            self.serverNathost = None
+            #Nat port
+            self.serverNatport = None
+            self.jobNatPorts = [None]
 
 
             #SECOND SERVER for another application (usually runs locally)
@@ -167,7 +167,7 @@ class config(object):
             #third SERVER - an application running on local computer in VPN
             #this server can be accessed only from script from the same computer
             #otherwise the server address has to be replaced by vpn local adress
-            self.server3 = 'localhost'
+            self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
 
 

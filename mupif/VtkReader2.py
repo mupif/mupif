@@ -160,8 +160,8 @@ def patched_scalars_fromfile(f,n,sl):
         numcomp = 1
     l = common._getline(f)
     l = l.split()
-    assert len(l)==2 and l[0].lower() == 'lookup_table'
-    tablename = l[1]
+    assert len(l)==2 and l[0].lower().decode('UTF-8') == 'lookup_table'
+    tablename = l[1].decode('UTF-8')
     scalars = []
     while len(scalars) < n:
         scalars += list(map(eval,common._getline(f).split()))

@@ -37,8 +37,8 @@ def generateBackgroundMesh (nx, ny, lx, ly, origin):
     #generate cells
     cells = []
     num=1
-    for i in range(nx/2):
-        for j in range(ny/2):
+    for i in range(int(nx/2)):
+        for j in range(int(ny/2)):
             # index of lower left node
             si = j*(nx*2)+i*2
             #elem = Cell.Triangle_2d_quad (mesh, num, num, vertices=(si,si+10,si+2,si+5,si+6,si+1))

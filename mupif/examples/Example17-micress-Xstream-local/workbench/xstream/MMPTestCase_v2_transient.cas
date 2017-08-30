@@ -1,0 +1,457 @@
+!
+!
+!  MMP (Multiscale Modeling Platform) - EU Project
+!  funded by FP7 under NMP-2013-1.4-1 call with Grant agreement no: 604279
+!
+!  Copyright (C) 2014-2016 
+!  Luuk Thielen, Adriaan Lankhorst
+!  (CelSian Glass&Solar, The Netherlands)
+! 
+!  CIGS example: X-Stream case definition
+!  This file is a direct input file for the X-Stream application.
+!  It provides the necessary simplified test case definition
+!  for the oven simulation by X-Stream itself.
+!  This file will be manipulated by the X-Stream interface.
+!  
+!
+!--------------------------------
+! File definition settings
+!--------------------------------
+BEGIN NAMES
+   CASE_NAME Demonstration case for MMP simulation chain
+   VERSION V4.5
+   OUTPUT_FILENAME MMPTestCase2.out
+   GRID_FILENAME   MMPTESTCASE.grd
+END NAMES
+
+!--------------------------------
+! Case-file control settings
+!--------------------------------
+BEGIN RUNTIME_CONTROL
+   ACTION RUN   ! Automatically reset by GTM-X.
+   CHECK_CASEFILE_AFTER_ITER 1
+   CHECK_CASEFILE_AFTER_STEP 1
+END RUNTIME_CONTROL
+
+!--------------------------------
+! Transient settings
+!--------------------------------
+BEGIN TRANSIENT
+  TIME_DEPENDENT_CASE    TRUE
+  TIME_STEP              1.0
+  TIME_STEPS             1
+  STOP_AT_STEADY_STATE   FALSE
+  MIN_ITER_PER_STEP      2
+END TRANSIENT
+
+!--------------------------------
+! Iteration/convergence settings
+!--------------------------------
+BEGIN ITERATIONS
+   STOP_METHOD                      by_stop_criteria
+   OUTER_ITERATIONS                 1000
+   CONVERGENCE_THRESHOLD            1.0E-06
+   DIVERGENCE_THRESHOLD             1.0E+15
+   SIMPLE_STABILISER_ITERATIONS     2 ! steady 8
+   DEFAULT_INNER_ITERATIONS         5
+   DEFAULT_UNDERRELAXATION          1.0
+   DEFAULT_INNER_CONV_CRIT          1.0E-03
+   DEFAULT_BLENDING_FACTOR          0.0
+   DEFAULT_CONVECTION_SCHEME        CDS
+   DEFAULT_TVD_LIMITER              UMIST
+   DEFAULT_ENERGYBC_UNDERRELAXATION 1.00
+   BEGIN INNER_ITERATIONS
+      U_VELOCITY          15
+      V_VELOCITY          15
+      W_VELOCITY          15
+      PRESSURE            10
+      ENERGY              15
+   END INNER_ITERATIONS
+END ITERATIONS
+
+!--------------------------------
+! Monitoring
+!--------------------------------
+BEGIN MONITOR
+   MONITOR_FILENAME              mon
+   CHECK_MONITOR_AFTER_ITER       1
+   CHECK_MONITOR_AFTER_TIMESTEP   1
+   MONITOR_APPEND                TRUE
+   INTERPOLATION_METHOD          TAYLOR ! TRILINEAR
+
+   BEGIN DEFINE_MONITOR ponctr
+      POINT 0.0E-03 0.0E-03  8.0E-03   ! on center location in flow
+   END DEFINE_MONITOR
+   
+   BEGIN DEFINE_MONITOR pingls
+      POINT 0.0E-03 0.0E-03 -2.0E-03   ! on center location in glass
+   END DEFINE_MONITOR
+   
+   BEGIN DEFINE_MONITOR Se_surf
+      BOUNDARY FLOWGLAS
+   END DEFINE_MONITOR
+
+   BEGIN DEFINE_MONITOR inlet
+      BOUNDARY BC_FLLE
+   END DEFINE_MONITOR
+
+   BEGIN DEFINE_MONITOR wall
+      BOUNDARY BC_FLTO
+   END DEFINE_MONITOR
+
+   BEGIN MONITOR_OUTPUT
+     RESIDUAL D_FLOW   U_VELOCITY V_VELOCITY W_VELOCITY PRESSURE ENERGY
+     RESIDUAL D_GLASS  ENERGY
+     ENERGYBALANCE     D_FLOW
+     ENERGYBALANCE     D_GLASS
+     MY_MONITOR        ponctr  PRESSURE U_VELOCITY V_VELOCITY W_VELOCITY
+     MY_MONITOR        pingls  TEMPERATURE
+     MY_MONITOR        Se_surf TEMPERATURE
+     MY_MONITOR        inlet   TEMPERATURE
+     MY_MONITOR        wall    TEMPERATURE
+     USED_ITERATIONS
+  END MONITOR_OUTPUT
+
+  BEGIN STOP_CRITERIA
+    RESIDUAL      D_FLOW U_VELOCITY          1.0E-04
+    RESIDUAL      D_FLOW V_VELOCITY          1.0E-04
+    RESIDUAL      D_FLOW W_VELOCITY          1.0E-04
+    RESIDUAL      D_FLOW PRESSURE            1.0E-04
+    RESIDUAL      D_FLOW ENERGY              1.0E-04
+    ENERGYBALANCE D_FLOW                     2.0E-03
+    ENERGYBALANCE D_GLASS                    2.0E-03
+  END STOP_CRITERIA
+
+END MONITOR
+
+!--------------------------------
+! General purpose settings
+!--------------------------------
+BEGIN MODEL_CONSTANTS
+   GRAVITY 9.813 NEGATIVE Z
+   MACHINE_UNDERFLOW 1.0E-15
+   MACHINE_OVERFLOW  1.0E+15
+END MODEL_CONSTANTS
+
+!------------------------
+! RADIATION
+!------------------------
+BEGIN RADIATION
+   RADIATION_ITER 1
+   BEAMS 2 2
+END RADIATION
+
+!--------------------------------
+! I/O Group
+!--------------------------------
+BEGIN IO
+   RESTART_FILENAME             MMPTestCase2
+   SAVE_AFTER_ITER              10000000
+   SAVE_AFTER_STEP              10000000
+   READ_FROM_RESTART_FILE       FALSE
+   WRITE_TO_RESTART_FILE        TRUE
+   RESTART_LEVEL                1
+   VISUALISATION_FORMAT         ensight6
+   DEBUG_OUTPUT                 FALSE
+   RESTART_FILE_FORMAT_READ     binary
+   RESTART_FILE_FORMAT_WRITE    binary
+   WRITE_BLOCK_INFO             FALSE
+   MESSAGELEVEL                 warnings
+   ENSIGHT_PATH                 ./paraview
+   ENSIGHT_FILE_TYPE            ascii
+   ENSIGHT_SAVE_AFTER_ITER      1000000
+   ENSIGHT_SAVE_AFTER_STEP      1
+   ENSIGHT_PRINT_BOUNDARIES     TRUE
+   ENSIGHT_PRINT_TRACE_GEOMETRY TRUE
+   BEGIN PRINT
+!     U_VELOCITY                     TRUE
+!     V_VELOCITY                     TRUE
+!     W_VELOCITY                     TRUE
+!     PRESSURE                       TRUE
+      TEMPERATURE                    TRUE
+!     DENSITY                        TRUE
+!     VISCOSITY                      TRUE
+!     THERMAL_CONDUCTIVITY           TRUE
+!     SPECIFIC_HEAT                  TRUE
+!     MASS_IMBALANCE                 TRUE
+!     ENRG_IMBALANCE                 TRUE
+! 2D fields
+!     BOUND_TEMPERATURE              TRUE
+!     HEAT_FLUX                      TRUE
+!     RADIATIVE_FLUX                 TRUE
+!     CONVECTIVE_FLUX                TRUE
+!     DIFFUSIVE_FLUX                 TRUE
+   END PRINT
+END IO
+
+!--------------------------------
+! Boundaries
+!--------------------------------
+BEGIN BOUNDARY BC_FLTO  WALL
+   TEMPERATURE         DIRICHLET     FROM_UDF  TEMP_RAMP_TOPW
+   RADIATION_INTENSITY NEUMANN       UNIFORM    1.0
+END BOUNDARY BC_FLTO
+
+BEGIN BOUNDARY BC_FLBA  WALL ! OUTLET
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+   RADIATION_INTENSITY NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_FLBA
+
+BEGIN BOUNDARY BC_FLFR  WALL ! OUTLET
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+   RADIATION_INTENSITY NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_FLFR
+
+BEGIN BOUNDARY BC_FLRI  OUTLET
+   PRESSURE            DIRICHLET     UNIFORM    1.0E+05
+   RADIATION_INTENSITY NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_FLRI
+
+BEGIN BOUNDARY BC_FLLE  INLET
+   TEMPERATURE         DIRICHLET     FROM_UDF  TEMP_RAMP_TOPW
+   N_VELOCITY          DIRICHLET     UNIFORM    1.0
+   INFLOWRATE          KGPERSEC                 2.5E-07
+   RADIATION_INTENSITY NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_FLLE
+
+BEGIN BOUNDARY BC_GLBO  WALL
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_GLBO
+
+BEGIN BOUNDARY BC_GLBA  WALL
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_GLBA
+
+BEGIN BOUNDARY BC_GLFR  WALL
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_GLFR
+
+BEGIN BOUNDARY BC_GLRI  WALL
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_GLRI
+
+BEGIN BOUNDARY BC_GLLE  WALL
+   TEMPERATURE         NEUMANN       UNIFORM    0.0
+END BOUNDARY BC_GLLE
+
+!----------------------------------------
+! Domain boundaries
+!----------------------------------------
+BEGIN BOUNDARY FLOWGLAS DOMAIN
+   TEMPERATURE         MIXED         EXCHANGE
+   RADIATION_INTENSITY NEUMANN       DATASET EmissivityFld_Dataset
+END BOUNDARY FLOWGLAS
+
+BEGIN BOUNDARY GLASFLOW DOMAIN
+  TEMPERATURE          MIXED         EXCHANGE
+   RADIATION_INTENSITY NEUMANN       UNIFORM    1.0
+END BOUNDARY GLASFLOW
+
+BEGIN MATERIAL AIR
+   CONTINUUM_TYPE          FLUID
+   DENSITY                 CONSTANT    3.949E-01 ! density N2 @ 580oC and 10^5 Pa
+   VISCOSITY               CONSTANT    3.781E-05 ! viscosity N2 @ 580oC
+   SPECIFIC_HEAT           CONSTANT  742.1
+   THERMAL_CONDUCTIVITY    CONSTANT   42.090E-03 ! thermal conductivity N2 @ 580oC
+   SCATTERING_COEFFICIENT  CONSTANT    0.0
+   ABSORPTION_COEFFICIENT  CONSTANT    0.0
+   REFRACTIVE_INDEX        CONSTANT    1.0
+   SURFACE_EMISSIVITY      CONSTANT    1.0
+END MATERIAL
+
+BEGIN MATERIAL GLASS
+   CONTINUUM_TYPE          SOLID
+   DENSITY                 CONSTANT 2500.0
+   VISCOSITY               CONSTANT    1.0E-04 ! fake value
+   SPECIFIC_HEAT           CONSTANT  840.0
+   THERMAL_CONDUCTIVITY    CONSTANT    3.0
+   SURFACE_EMISSIVITY      CONSTANT    1.0
+END MATERIAL
+
+BEGIN UDF TEMP_RAMP_TOPW
+   LET T1           =  853.15                                    ! 580 oC
+   LET T2           =  773.15                                    ! 500 oC
+   LET T3           =  623.15                                    ! 350 oC
+   LET T4           =  298.15                                    !  25 oC
+   LET Time1        =  250.0
+   LET Time2        =  500.0
+   LET Time3        =  1000.0
+   LET Tbound = IF ( TIME < Time1 ) THEN &
+        T1 &
+   ELSE IF ( TIME < Time2 ) THEN &
+        T2 &
+   ELSE IF ( TIME < Time3 ) THEN &
+        T3 &
+   ELSE &
+        T4 &
+   ENDIF
+   VALUE Tbound
+END UDF
+
+!-----------------------------------------------------------------
+! Domain definitions
+!-----------------------------------------------------------------
+BEGIN DOMAIN D_FLOW
+   BEGIN APPLY_MODEL
+      APPLY_FLOW         TRUE
+      APPLY_ENERGY       TRUE
+      APPLY_RADIATION    TRUE
+   END APPLY_MODEL
+   BEGIN INITIAL_VALUE
+      PRESSURE         1.0E+05
+      TEMPERATURE    298.15                                    ! 25 oC
+   END INITIAL_VALUE
+   BEGIN UNDERRELAXATION
+      U_VELOCITY                   0.30
+      V_VELOCITY                   0.30
+      W_VELOCITY                   0.30
+      PRESSURE                     0.90
+      ENERGY                       1.00
+      TEMPERATURE                  1.00
+      DENSITY                      1.00
+      SPECIFIC_HEAT                1.00
+      VISCOSITY                    1.00
+      THERMAL_CONDUCTIVITY         1.00
+   END UNDERRELAXATION
+   RADIATION_MODEL dom
+END DOMAIN
+
+BEGIN DOMAIN D_GLASS
+  BEGIN APPLY_MODEL
+    APPLY_ENERGY         TRUE
+  END APPLY_MODEL
+  BEGIN INITIAL_VALUE
+      TEMPERATURE    298.15                                    ! 25 oC
+  END INITIAL_VALUE
+  BEGIN UNDERRELAXATION
+    ENERGY                         1.00
+    THERMAL_CONDUCTIVITY           1.00
+    SPECIFIC_HEAT                  1.00
+  END UNDERRELAXATION
+END DOMAIN
+
+
+BEGIN PROFILE EmissivityFld_Dataset
+   AXES X Y
+   DATA_POINT               -0.015               -0.015           0.15384208
+   DATA_POINT               -0.012               -0.015       0.153842997747
+   DATA_POINT               -0.009               -0.015       0.153843711551
+   DATA_POINT               -0.006               -0.015       0.153844221411
+   DATA_POINT               -0.003               -0.015       0.153844527327
+   DATA_POINT                  0.0               -0.015       0.153844629299
+   DATA_POINT                0.003               -0.015       0.153844527327
+   DATA_POINT                0.006               -0.015       0.153844221411
+   DATA_POINT                0.009               -0.015       0.153843711551
+   DATA_POINT                0.012               -0.015       0.153842997747
+   DATA_POINT                0.015               -0.015           0.15384208
+   DATA_POINT               -0.015               -0.012       0.153842997747
+   DATA_POINT               -0.012               -0.012       0.153843711551
+   DATA_POINT               -0.009               -0.012       0.153844221411
+   DATA_POINT               -0.006               -0.012       0.153844527327
+   DATA_POINT               -0.003               -0.012       0.153844629299
+   DATA_POINT                  0.0               -0.012       0.153844527327
+   DATA_POINT                0.003               -0.012       0.153844221411
+   DATA_POINT                0.006               -0.012       0.153843711551
+   DATA_POINT                0.009               -0.012       0.153842997747
+   DATA_POINT                0.012               -0.012           0.15384208
+   DATA_POINT                0.015               -0.012       0.153842997747
+   DATA_POINT               -0.015               -0.009       0.153843711551
+   DATA_POINT               -0.012               -0.009       0.153844221411
+   DATA_POINT               -0.009               -0.009       0.153844527327
+   DATA_POINT               -0.006               -0.009       0.153844629299
+   DATA_POINT               -0.003               -0.009       0.153844527327
+   DATA_POINT                  0.0               -0.009       0.153844221411
+   DATA_POINT                0.003               -0.009       0.153843711551
+   DATA_POINT                0.006               -0.009       0.153842997747
+   DATA_POINT                0.009               -0.009           0.15384208
+   DATA_POINT                0.012               -0.009       0.153842997747
+   DATA_POINT                0.015               -0.009       0.153843711551
+   DATA_POINT               -0.015               -0.006       0.153844221411
+   DATA_POINT               -0.012               -0.006       0.153844527327
+   DATA_POINT               -0.009               -0.006       0.153844629299
+   DATA_POINT               -0.006               -0.006       0.153844527327
+   DATA_POINT               -0.003               -0.006       0.153844221411
+   DATA_POINT                  0.0               -0.006       0.153843711551
+   DATA_POINT                0.003               -0.006       0.153842997747
+   DATA_POINT                0.006               -0.006           0.15384208
+   DATA_POINT                0.009               -0.006       0.153842997747
+   DATA_POINT                0.012               -0.006       0.153843711551
+   DATA_POINT                0.015               -0.006       0.153844221411
+   DATA_POINT               -0.015               -0.003       0.153844527327
+   DATA_POINT               -0.012               -0.003       0.153844629299
+   DATA_POINT               -0.009               -0.003       0.153844527327
+   DATA_POINT               -0.006               -0.003       0.153844221411
+   DATA_POINT               -0.003               -0.003       0.153843711551
+   DATA_POINT                  0.0               -0.003       0.153842997747
+   DATA_POINT                0.003               -0.003           0.15384208
+   DATA_POINT                0.006               -0.003       0.153842997747
+   DATA_POINT                0.009               -0.003       0.153843711551
+   DATA_POINT                0.012               -0.003       0.153844221411
+   DATA_POINT                0.015               -0.003       0.153844527327
+   DATA_POINT               -0.015                  0.0       0.153844629299
+   DATA_POINT               -0.012                  0.0       0.153844527327
+   DATA_POINT               -0.009                  0.0       0.153844221411
+   DATA_POINT               -0.006                  0.0       0.153843711551
+   DATA_POINT               -0.003                  0.0       0.153842997747
+   DATA_POINT                  0.0                  0.0           0.15384208
+   DATA_POINT                0.003                  0.0       0.153842997747
+   DATA_POINT                0.006                  0.0       0.153843711551
+   DATA_POINT                0.009                  0.0       0.153844221411
+   DATA_POINT                0.012                  0.0       0.153844527327
+   DATA_POINT                0.015                  0.0       0.153844629299
+   DATA_POINT               -0.015                0.003       0.153844527327
+   DATA_POINT               -0.012                0.003       0.153844221411
+   DATA_POINT               -0.009                0.003       0.153843711551
+   DATA_POINT               -0.006                0.003       0.153842997747
+   DATA_POINT               -0.003                0.003           0.15384208
+   DATA_POINT                  0.0                0.003       0.153842997747
+   DATA_POINT                0.003                0.003       0.153843711551
+   DATA_POINT                0.006                0.003       0.153844221411
+   DATA_POINT                0.009                0.003       0.153844527327
+   DATA_POINT                0.012                0.003       0.153844629299
+   DATA_POINT                0.015                0.003       0.153844527327
+   DATA_POINT               -0.015                0.006       0.153844221411
+   DATA_POINT               -0.012                0.006       0.153843711551
+   DATA_POINT               -0.009                0.006       0.153842997747
+   DATA_POINT               -0.006                0.006           0.15384208
+   DATA_POINT               -0.003                0.006       0.153842997747
+   DATA_POINT                  0.0                0.006       0.153843711551
+   DATA_POINT                0.003                0.006       0.153844221411
+   DATA_POINT                0.006                0.006       0.153844527327
+   DATA_POINT                0.009                0.006       0.153844629299
+   DATA_POINT                0.012                0.006       0.153844527327
+   DATA_POINT                0.015                0.006       0.153844221411
+   DATA_POINT               -0.015                0.009       0.153843711551
+   DATA_POINT               -0.012                0.009       0.153842997747
+   DATA_POINT               -0.009                0.009           0.15384208
+   DATA_POINT               -0.006                0.009       0.153842997747
+   DATA_POINT               -0.003                0.009       0.153843711551
+   DATA_POINT                  0.0                0.009       0.153844221411
+   DATA_POINT                0.003                0.009       0.153844527327
+   DATA_POINT                0.006                0.009       0.153844629299
+   DATA_POINT                0.009                0.009       0.153844527327
+   DATA_POINT                0.012                0.009       0.153844221411
+   DATA_POINT                0.015                0.009       0.153843711551
+   DATA_POINT               -0.015                0.012       0.153842997747
+   DATA_POINT               -0.012                0.012           0.15384208
+   DATA_POINT               -0.009                0.012       0.153842997747
+   DATA_POINT               -0.006                0.012       0.153843711551
+   DATA_POINT               -0.003                0.012       0.153844221411
+   DATA_POINT                  0.0                0.012       0.153844527327
+   DATA_POINT                0.003                0.012       0.153844629299
+   DATA_POINT                0.006                0.012       0.153844527327
+   DATA_POINT                0.009                0.012       0.153844221411
+   DATA_POINT                0.012                0.012       0.153843711551
+   DATA_POINT                0.015                0.012       0.153842997747
+   DATA_POINT               -0.015                0.015  0.15384207999955776
+   DATA_POINT               -0.012                0.015       0.153842997747
+   DATA_POINT               -0.009                0.015       0.153843711551
+   DATA_POINT               -0.006                0.015       0.153844221411
+   DATA_POINT               -0.003                0.015       0.153844527327
+   DATA_POINT                  0.0                0.015       0.153844629299
+   DATA_POINT                0.003                0.015       0.153844527327
+   DATA_POINT                0.006                0.015       0.153844221411
+   DATA_POINT                0.009                0.015       0.153843711551
+   DATA_POINT                0.012                0.015       0.153842997747
+   DATA_POINT                0.015                0.015           0.15384208
+END PROFILE

@@ -1,6 +1,6 @@
 #Configuration file for JobMan2cmd
 import os,sys
-sys.path.extend(['..','../Example02-distributed'])
+sys.path.extend(['..','../Example02-distrib'])
 from Config import config
 import application2
 

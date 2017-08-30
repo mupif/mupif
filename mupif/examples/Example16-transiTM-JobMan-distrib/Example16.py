@@ -18,7 +18,6 @@ log.info('Timer started')
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the thermal server
 #solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
-#jobNatport = -1
 
 class Demo16(Workflow.Workflow):
    

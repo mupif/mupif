@@ -236,14 +236,15 @@ class SimpleJobManager2 (JobManager.JobManager):
                 return (JOBMAN_ERR,None)
 
             try:
+                args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c', str(self.configFile), '-m', str(self.serverConfigMode)]
                 if self.jobMan2CmdPath[-3:] == '.py':
-                    #use the same python interpreter as running this code
-                    interpreter = sys.executable
-                    log.info("Using python interpreter %s" % interpreter)
-                    proc = subprocess.Popen([interpreter, self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c', str(self.configFile), '-m', str(self.serverConfigMode)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    #use the same python interpreter as running this code, prepend to the arguments
+                    args.insert(0, sys.executable)
+                    log.info("Using python interpreter %s" % sys.executable)
+                    proc = subprocess.Popen(args)#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 else:
-                    proc = subprocess.Popen([self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c', str(self.configFile), '-m', str(self.serverConfigMode)])#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                log.debug('SimpleJobManager2: new subprocess has been started with JobMan2cmd.py ')
+                    proc = subprocess.Popen(args)#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                log.debug('SimpleJobManager2: new subprocess has been started: %s', " ".join(args))
             except Exception as e:
                 log.exception(e)
                 raise

@@ -25,28 +25,30 @@ MuPIF is distributed as a module with the following directory tree structure:
        |    +--tests - tests for nosetests module 
        |    +--*.py - MuPIF classes
        |    +--__init__.py - description of MuPIF module
-       +--README.md - general description
-       +--setup.py - support for setuptools
+       +--LICENSE.txt - LGPL license conditions
        +--MANIFEST.in - support for setuptools
+       +--README.txt - general description
+       +--setup.py - support for setuptools, Pypi upload etc.
+
 
 
 Prerequisites
 =============
 
-MuPIF requires the python interpreter, version 3.2 or newer. It has been tested on Linux / Windows systems. Network communication irelies on Pyro4 module.
+MuPIF requires the python interpreter, version 3.2 or newer. It has been tested on Linux / Windows systems. Network communication relies on Pyro4 module.
 
 Installing
 ----------
 
-There are two options for MuPIF installation. The first one relies on Python Package Index which is installed via
-*pip install mupif* systemwide, needing root priviledges or
-*pip install mupif --user* as a user
-
-The second option is using the most advanced version on github
-*git clone https://github.com/mupif/mupif.git*
+There are two options for MuPIF installation. The first one relies on Python Package Index (run as pip3 or pip) which is installed via
+*pip3 install mupif* systemwide, needing root priviledges or
+*pip3 install mupif --user* as a user
 
 To uninstall, run 
-*pip uninstall mupif*
+*pip3 uninstall mupif*
+
+The second option relies on the most advanced version on github
+*git clone https://github.com/mupif/mupif.git mupif.git*
 
 mupif.fast
 ----------
@@ -95,3 +97,4 @@ Acknowledgements
 The MuPIF development has been supported by Grant Agency of the Czech Republic 
 (Project No. P105/10/1402), by EU under 7th Framework programme (MMP project,
 Grant agreement no: 604279) and by Horizon 2020 programme (Composelector project, Project reference: 721105).
+
