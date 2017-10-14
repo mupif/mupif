@@ -1,4 +1,4 @@
-# This file works only for $ python setup.py sdist, which creates *.tar.gz, necessary for uploading to PyPI.
+# This file works only for $ python3 setup.py sdist, which creates *.tar.gz, necessary for uploading to PyPI.
 # It is also necessary to specify package_data in setup.py which tells what will be installed from *.tar.gz
 # It is strongly advised to remove built and dist directories before new build
 
@@ -18,3 +18,6 @@ recursive-include mupif/examples/ssh *
 prune mupif/examples/obsolete
 #prune mupif/examples/ssh - need for local tests
 prune mupif/examples/Workshop-2017
+
+# Global patterns to exclude from any directory
+global-exclude *secret*

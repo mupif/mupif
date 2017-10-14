@@ -1,0 +1,11 @@
+This example tests interaction with an operator. It needs to setup SMTP server, IMAP server, email addresses etc.
+
+During simulation workflow, email with a request is sent to the operator. The subject contains workflowID with jobID, which
+is a unique identifier.
+
+Json serialization module is used to pack necessary input information into the message. Also, the message includes 
+empty key entry 'Operator-results'. The operator receives that email, and replies with filled-out value for key entry 
+'Operator-results'.
+
+Simulation script searches further on IMAP server for an operator's response and extracts value from key 'Operator-results'.
+
