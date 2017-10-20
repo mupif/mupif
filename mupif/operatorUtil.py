@@ -95,7 +95,7 @@ class OperatorEMailInteraction(OperatorInteraction):
             if (self.smtp_passwd):
                 psswd = self.smtp_passwd
             else:
-                psswd = getpass.getpass('Enter imap server passwd: ')
+                psswd = getpass.getpass('Enter smtp server passwd: ')
             server.login(self.smtp_username, psswd)
         
         msg = MIMEMultipart()

@@ -10,7 +10,7 @@ log = logging.getLogger()
 #
 # Expected response from operator: E-mail with "CSJ01" (workflow + jobID)
 # in the subject line, message body: json encoded dictionary with 'Operator-results' key, e.g.
-# {"Result": 3.14}
+# {"Operator-results": 3.14}
 #
 
 class emailAPI(Application.Application):
