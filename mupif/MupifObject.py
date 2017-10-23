@@ -23,6 +23,7 @@
 
 from builtins import object
 import Pyro4
+import json
 
 @Pyro4.expose
 class MupifObject(object):
@@ -61,3 +62,14 @@ class MupifObject(object):
         """
         self.metadata[key] = val
         
+    def __str__(self):
+        """
+        Returns printable string representation of an object.
+        """
+        return str(self.__dict__)
+
+    def toJSON(self):
+        """
+        JSON serialization method
+        """
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
