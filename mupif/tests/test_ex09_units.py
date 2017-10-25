@@ -38,7 +38,7 @@ class TestUnits(unittest.TestCase):
             v = app1.getProperty(PropertyID.PID_Velocity, istep)
           
             #Create a PhysicalQuantity object 
-            V = PQ(v.getValue(), v.getUnits())
+            V = PQ.PhysicalQuantity(v.getValue(), v.getUnits())
 
             velocity = V.inBaseUnits()
             self.assert_(v.getValue()==time)
