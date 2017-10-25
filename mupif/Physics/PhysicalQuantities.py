@@ -185,6 +185,10 @@ class PhysicalQuantity(object):
         diff = self._sum(other, 1, -1)
         return cmp(diff.value, 0)
 
+    def __lt__(self, other): #python3 stuff
+        diff = self._sum(other, 1, -1)
+        return (diff.value < 0)
+    
     def __mul__(self, other):
         if not isPhysicalQuantity(other):
             return self.__class__(self.value*other, self.unit)
