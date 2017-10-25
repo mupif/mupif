@@ -1,6 +1,6 @@
 language: python
 python:
-   - 2.7
+   #- 2.7
    - 3.4
 install:
    #  APT stuff is below separately
@@ -9,7 +9,10 @@ install:
    # 2. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
    # 3. numpy is pre-installed by travis implicitly
    #
-   - pip install pyro4 future nose rednose h5py
+   - pip install --upgrade pip setuptools
+   # Install libraries for nosetests
+   - pip install h5py
+   - pip install pyvtk
    # this seems to be the new active upstream for pyvtk supporting 2.x and 3.x
    - pip install git+https://github.com/pearu/pyvtk.git
    # install mupif itself

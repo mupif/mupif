@@ -176,8 +176,8 @@ class RemoteJobManager (object):
     def __del__(self):
         self.terminate()
         if self._sshTunnel:
-            log.info ("RemoteJobManager: autoterminating sshTunnel")
-            print ("RemoteJobManager: autoterminating sshTunnel") 
+            #log.info ("RemoteJobManager: autoterminating sshTunnel")
+            #print ("RemoteJobManager: autoterminating sshTunnel") 
             self._sshTunnel.terminate()
     
     #@Pyro4.oneway # in case call returns much later than daemon.shutdown

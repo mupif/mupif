@@ -418,7 +418,8 @@ class xstream(Application.Application):
                   found_word = True
                   value = line.split()[1]
                   # Change the line          
-                  line = string.replace(line, str(value), new_value , 1) 
+                  #line = string.replace(line, str(value), new_value , 1)#Python 2.7
+                  line.replace(str(value), new_value , 1)
                   f.write(line)
                else:
                   f.write(line)

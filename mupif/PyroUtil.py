@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+#from __future__ import absolute_import
 from builtins import str
 import os
 import re
@@ -31,6 +31,7 @@ import time
 from . import RemoteAppRecord
 from . import Application
 from . import JobManager
+from . import Util
 import logging
 log = logging.getLogger()
 
@@ -99,21 +100,22 @@ class sshTunnel(object):
         #for password will not work here (password goes through TTY, not stdin)
         cmd=''
         if sshClient=='ssh':
-            cmd = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd = 'ssh -%s %s:%s:%s %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.debug("Creating ssh tunnel via command: " + cmd)
         elif sshClient=='autossh':
-            cmd = 'autossh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd = 'autossh -%s %s:%s:%s %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.debug("Creating autossh tunnel via command: " + cmd)
         elif 'putty' in sshClient.lower():
             #need to create a public key *.ppk using puttygen.
             #It can be created by importing Linux private key.
             #The path to that key is given as -i option
-            cmd = '%s -%s %d:%s:%d %s@%s -N %s' % (sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd = '%s -%s %s:%s:%s %s@%s -N %s' % (sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.debug("Creating ssh tunnel via command: " + cmd)
         elif sshClient=='manual':
             #You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-            cmd1 = 'ssh -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            cmd2 = 'putty.exe -%s %d:%s:%d %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
             self.tunnel = 'manual'
         else:
@@ -175,7 +177,7 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 
     #locate nameserver
     try:
-        ns = Pyro4.locateNS(host=nshost, port=nsport,hmac_key=hkey)
+        ns = Pyro4.locateNS(host=nshost, port=int(nsport), hmac_key=hkey)
         msg = "Connected to NameServer on %s:%s. Pyro4 version on your localhost is %s" %(nshost, nsport, Pyro4.constants.VERSION)
         log.debug(msg)
     except Exception:
@@ -220,45 +222,51 @@ def getNSConnectionInfo(ns, name):
             nathost=match.group(1)
         match = re.search('\A'+NS_METADATA_natport+':(\w+)', i)
         if match:
-            natport=int(match.group(1))
+            natport=match.group(1)
         
     return (host, port, nathost, natport)
             
 
-def _connectApp(ns, name):
+def _connectApp(ns, name, hkey=None):
     """
     Connects to a remote application.
 
     :param Pyro4.naming.Nameserver ns: Instance of a nameServer
     :param str name: Name of the application to be connected to
+    :param str hkey: A password string
     :return: Application
     :rtype: Instance of an application
     :raises Exception: When cannot find registered server or Cannot connect to application
     """
     try:
         uri = ns.lookup(name)
-        log.debug("Found URI %s from a nameServer %s" % (uri, ns) )
+        log.debug("Application %s, found URI %s on %s from a nameServer %s" % (name, uri, getNSConnectionInfo(ns,name), ns) )
         app2 = Pyro4.Proxy(uri)
+        #app2._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
     except Exception as e:
         log.error("Cannot find registered server %s on %s" % (name, ns) )
         raise
 
     try:
-        log.info("Connecting to %s"%(app2))
+        log.info("Connecting to application %s with %s"%(name, app2))
         sig = app2.getApplicationSignature()
-        log.debug("Connected to " + sig + " with the name " + name)
+        log.debug("Connected to " + sig + " with the application " + name)
+    except Pyro4.errors.CommunicationError as e:
+        log.error("Communication error, perhaps a wrong key hkey=%s?" % hkey)
+        raise
     except Exception as e:
         log.exception("Cannot connect to application " + name + ". Is the server running?")
         raise
 
     return app2
 
-def connectApp(ns, name, sshContext=None):
+def connectApp(ns, name, hkey=None, sshContext=None):
     """
     Connects to a remote application, creates the ssh tunnel if necessary
 
     :param Pyro4.naming.Nameserver ns: Instance of a nameServer
     :param str name: Name of the application to be connected to
+    :param str hkey: A password string
     :return: Application Decorator (docorating pyro proxy with ssh tunnel instance)
     :rtype: Instance of an application decorator
     :raises Exception: When cannot find registered server or Cannot connect to application
@@ -274,7 +282,7 @@ def connectApp(ns, name, sshContext=None):
                           (jobManHostname, sshContext.userName, jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
             raise
 
-    app = _connectApp(ns, name)
+    app = _connectApp(ns, name, hkey)
     return Application.RemoteApplication (app, appTunnel=tunnel)
 
 def getNSAppName(jobname, appname):
@@ -288,27 +296,28 @@ def getNSAppName(jobname, appname):
     """
     return 'Mupif'+'.'+jobname+'.'+appname
 
-def runDaemon(host, port, nathost, natport):
+def runDaemon(host, port, nathost=None, natport=None, hkey=None):
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
     :param int port: Port number where daemon will listen (internal port number)
     :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
     :param int natport: Server NAT port, optional (external port)
+    :param str hkey: A password string
 
     :return Instance of the running daemon, None if a problem
     :rtype Pyro4.Daemon
     """
     try:
-        daemon = Pyro4.Daemon(host=host, port=port, nathost=nathost, natport=natport)
-        log.info('Pyro4 daemon runs on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+        daemon = Pyro4.Daemon(host=host, port=int(port), nathost=nathost, natport=Util.NoneOrInt(natport))
+        #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
+        log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, port, nathost, natport))
     except socket.error as e:
-        log.debug('Socket port %s:%d seems to be already in use' % (host,port))
+        log.debug('Socket port %s:%s seems to be already in use' % (host,port))
         daemon = None
         raise e
-
     except Exception:
-        log.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d' % (host, port, nathost, natport))
+        log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (host, port, nathost, natport))
         daemon = None
         raise
 
@@ -325,25 +334,21 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
     :param str appName: Name of registered application
-    :param str hkey: A password string
     :param instance app: Application instance
+    :param str hkey: A password string
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be authomatically generated.
 
     :raises Exception: if can not run Pyro4 daemon
     """
-    if nathost=='':
-        nathost = server
-    if natport=='':
-        natport = port
-
     externalDaemon = False
     if not daemon:
         try:
-            daemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-            log.info('Pyro4 daemon runs on %s:%d using nathost %s:%d and hkey %s' % (server, port, nathost, natport, hkey))
+            daemon = Pyro4.Daemon(host=server, port=int(port), nathost=nathost, natport=Util.NoneOrInt(natport))
+            #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8') #needed probably in future
+            log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
         except Exception:
-            log.exception('Can not run Pyro4 daemon on %s:%d using nathost %s:%d  and hmac %s' % (server, port, nathost, natport, hkey))
+            log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
             raise
             exit(1)
     else:
@@ -351,7 +356,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
 
     ns = connectNameServer(nshost, nsport, hkey)
     #register agent; register exposed class 
-    #ExposedApp = Pyro4.expose(app)
+    #ExposedApp = Pyro4.expose(app)172.30.0.1
     #Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
@@ -365,9 +370,9 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
         app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
     except AttributeError as e:
         # catch attribute error (thrown when method not defined)
-        log.warning('Can not register daemon on %s.%d in application')
+        log.warning('Can not register daemon on for application %s' % appName)
     except:
-        log.exception('Can not register daemon on %s:%d using nathost %s:%d and hkey %s on nameServer' % (server, port, nathost, natport, hkey))
+        log.exception('Can not register daemon on %s:%s using nathost %s:%s on nameServer' % (server, port, nathost, natport))
         raise
         exit(1)
     # generate connection metadata entry
@@ -378,7 +383,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     ns.register(appName, uri, metadata=metadata)
 
     log.debug('NameServer %s has registered uri %s' % (appName, uri) )
-    log.debug('Running runAppServer: server:%s, port:%d, nathost:%s, natport:%d, nameServer:%s, nameServerPort:%d, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri) )
+    log.debug('Running runAppServer: server:%s, port:%s, nathost:%s, natport:%s, nameServer:%s, nameServerPort:%s, applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri) )
     daemon.requestLoop()
 
 
@@ -393,8 +398,8 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, appName, hkey, 
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
     :param str appName: Name of registered application
-    :param str hkey: A password string
     :param instance app: Application instance
+    :param str hkey: A password string
     :param daemon: Reference to already running daemon, if available. Optional parameter.
 
     :raises Exception: if can not run Pyro4 daemon
@@ -420,21 +425,22 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
 #def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
-def connectApplicationsViaClient(fromContext, toApplication):
+def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
     """
     Create a reverse ssh tunnel so one server application can connect to another one.
 
     Typically, steering_computer creates connection to server1 and server2. However, there
     is no direct link server1-server2 which is needed for Field operations (getField, setField).
     Assume a working connection server1-steering_computer on NAT port 6000. This function creates
-    a tunnel steering_computer:6000 and server2:6000 so server2 has direct access to server1's data.
+    a tunnel steering_computer:6000 and server2:7000 so server2 has direct access to server1's data.
 
-        steering_computer
-          /           \
-    server1          server2
+           steering_computer
+            /              \
+    from server1:6000     to server2:7000
 
 
-    :param fromContext SSHContext
+    :param SSHContext fromContext: Remote application
+    :param Application fromApplication: Application object from which we want to create a tunnel
     :param Application toApplication: Application object to which we want to create a tunnel
 
     :return: Instance of sshTunnel class
@@ -442,7 +448,10 @@ def connectApplicationsViaClient(fromContext, toApplication):
     """
     uri = toApplication.getURI()
     natPort = getNATfromUri( uri )
-    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=natPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
+    uri = fromApplication.getURI()
+    fromNatPort = getNATfromUri( uri )
+    
+    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
     return tunnel
 
 def getNATfromUri (uri):
@@ -482,11 +491,12 @@ def getUserInfo ():
     hostname = socket.gethostname()
     return (username, hostname)
 
-def connectJobManager (ns, jobManName, sshContext=None):
+def connectJobManager (ns, jobManName, hkey=None, sshContext=None):
     """
     Connect to jobManager described by given jobManRec and create an optional ssh tunnel
 
     :param jobManName name under which jobmanager is registered on NS
+    :param str hkey: A password string
     :param sshContext describing optional ssh tunnel connection detail 
 
     :return: (JobManager proxy, jobManager Tunnel)
@@ -495,7 +505,7 @@ def connectJobManager (ns, jobManName, sshContext=None):
     """
 
     (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
-    print ( (jobManHostname, jobManPort, jobManNatHost, jobManNatport))
+    log.info('Located Job Manager %s at: %s %s %s %s' % (jobManName, jobManHostname, jobManPort, jobManNatHost, jobManNatport))
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     #create tunnel to JobManager running on (remote) server
     tunnelJobMan = None
@@ -504,23 +514,23 @@ def connectJobManager (ns, jobManName, sshContext=None):
             tunnelJobMan = sshTunnel(remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
                                      sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
         except Exception:
-            log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, sshContext.userName,
-                                                                                                                                                                     jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
+            log.exception('Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' % (jobManHostname, sshContext.userName, jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
             raise
 
     # locate remote jobManager on (remote) server
-    jobMan = _connectApp(ns, jobManName)
+    jobMan = _connectApp(ns, jobManName, hkey)
     #return (jobMan, tunnelJobMan)
     return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
+def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=None):
     """
     Request new application instance to be spawned by  given jobManager
 
     :param Pyro4.naming.Nameserver ns: running name server
     :param jobManager jobmanager to use 
     :param int natPort: nat port on a local computer for ssh tunnel for the application
+    :param str hkey: A password string
     :param sshContext describing optional ssh tunnel connection detail 
 
 
@@ -547,7 +557,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
     try:
         (username,hostname)=getUserInfo()
         retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
-        log.info('Allocated job, returned record from jobMan:' +  str(retRec))
+        log.info('Allocated job, returned record from jobManagaer:' +  str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
         raise
@@ -566,7 +576,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext=None):
 
     #time.sleep(1)
     # connect to (remote) application, requests remote proxy
-    app = _connectApp(ns, retRec[1])
+    app = _connectApp(ns, retRec[1], hkey)
     if app==None:
         appTunnel.terminate()
     return Application.RemoteApplication(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
@@ -616,12 +626,13 @@ def downloadPyroFileFromServer (newLocalFileName, pyroFile, compressFlag=False):
     downloadPyroFile (newLocalFileName, pyroFile, compressFlag)
 
 
-def uploadPyroFile (clientFileName, pyroFile, size = 1024, compressFlag=False):
+def uploadPyroFile (clientFileName, pyroFile, hkey, size = 1024, compressFlag=False):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
     :param PyroFile pyroFile: represenation of remote file, this file will be created
+    :param str hkey: A password string
     :param int size: optional chunk size. The data are read and written in byte chunks of this size
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
@@ -631,9 +642,11 @@ def uploadPyroFile (clientFileName, pyroFile, size = 1024, compressFlag=False):
         pyroFile.setCompressionFlag()
     data = file.getChunk()
     while data:
+        #pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8') #needed probably in future
         pyroFile.setChunk(data) #this is where the data are sent over net via Pyro
         data = file.getChunk()
-    pyroFile.setChunk(file.getTerminalChunk())
+    getTermChunk = file.getTerminalChunk()
+    pyroFile.setChunk(getTermChunk.encode(encoding='utf-8'))
     file.close()
     pyroFile.close()
 

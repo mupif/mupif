@@ -1,0 +1,15 @@
+This example illustrates:
+- how to set up unstructured grid, 
+- how to set up field representation defined on that grid, 
+- how to evaluate the defined field in a given point,
+- how to export field to vtk file
+
+Prerequisites:
+--------------
+pyvtk python module is required. To install pyvtk, we recommend to use pip, a tool for installing and managing Python packages:
+$ pip install pyvtk
+
+To run the example:
+$ python Example04.py 
+
+

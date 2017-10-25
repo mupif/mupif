@@ -25,7 +25,7 @@ from __future__ import print_function, absolute_import
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '1.0.5'
+__version__ = '1.1.6'
 __author__  = 'Borek Patzak and Vit Smilauer'
 
 from .fieldID import FieldID
@@ -33,14 +33,13 @@ from .propertyID import PropertyID
 from .functionID import FunctionID
 
 #List all submodules, so they can all be imported: from mupif import *
-__all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject','Workflow', 'MetadataKeys']
+__all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field', 'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree', 'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex', 'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject','Workflow', 'MetadataKeys', 'Physics']
 
 from . import Util
 import logging,os
 
 #Create default logger
 Util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
-
 
 ## temporarily disabled (does not work on travis, even though future is installed there??)
 ## more helpful error message

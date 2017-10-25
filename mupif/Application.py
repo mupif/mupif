@@ -24,7 +24,7 @@
 import os
 import Pyro4
 from . import APIError
-import MupifObject
+from . import MupifObject
 import logging
 log = logging.getLogger()
 
@@ -266,6 +266,7 @@ class Application(MupifObject.MupifObject):
         Terminates the application. Shutdowns daemons if created internally.
         """
         #Remove application from nameServer
+        #print("Removing")
         if self.pyroNS is not None:
             self.removeApp()
                         
@@ -329,7 +330,7 @@ class RemoteApplication (object):
 
         #close tunnel as the last step so an application is still reachable
         if self._appTunnel:
-            log.info ("RemoteApplication: Terminating sshTunnel of application")
+            #log.info ("RemoteApplication: Terminating sshTunnel of application")
             if self._appTunnel != "manual":
                 self._appTunnel.terminate()
 

@@ -1,0 +1,770 @@
+#
+#
+#  MMP (Multiscale Modeling Platform) - EU Project
+#  funded by FP7 under NMP-2013-1.4-1 call with Grant agreement no: 604279
+#
+#  Copyright (C) 2014-2015 Markus Apel (Access e.V., Germany)
+# 
+#  CIGS example: MICRESS driving file
+#  
+#  This file provides the input parameters for MICRESS for the
+#  simplified test case.
+#  This file will be manipulated by the MICRESS interface. The marked
+#  parameters are the respective positions to set properties, e.g. 
+#  1.0 will be replaced by the target time given as a parameter 
+#  in the solveStep() method of the MICRESS interface.
+#
+#  ATTENTION: In this example, MICRESS will not be run directly.
+#  All result data is pre-calculated
+#
+#
+#
+# Language settings
+# =================
+#  Please select a language: 'English', 'Deutsch' or 'Francais'
+English
+#
+#
+# Flags and settings
+# ==================
+#
+# Geometry
+# --------
+# Grid size?
+# (for 2D calculations: CellsY=1, for 1D calculations: CellsX=1, CellsY=1)
+# Cells in X-direction (CellsX):
+200
+#100
+#50
+# Cells in Y-direction (CellsY):
+200
+#100
+#50
+# Cells in Z-direction (CellsZ):
+120
+#60
+#30
+# Cell dimension (grid spacing in micrometers):
+# (optionally followed by rescaling factor for the output in the form of '3/4')
+0.025
+#0.1
+#
+# Flags
+# -----
+# Type of coupling?
+# Options:  phase  concentration  temperature  temp_cyl_coord
+#    [stress] [stress_coupled] [flow] [flow_coarse] [dislocation]
+phase
+# Type of potential?
+# Options:  double_obstacle  multi_obstacle   [fd_correction]
+multi_obstacle fd_correction
+#
+# Phase field data structure
+# --------------------------
+# Coefficient for initial dimension of field iFace
+#  [minimum usage] [target usage]
+0.25 0.7
+# Coefficient for initial dimension of field nTupel
+#  [minimum usage] [target usage]
+0.25 0.7
+#
+#
+# Restart options
+# ===============
+# Restart using old results?
+# Options:    new       restart [reset_time | structure_only]
+new
+
+#
+#
+# Name of output files
+# ====================
+# Name of result files?
+RVE5_3Phases_mobT_B_T2a_loc_1
+# Overwrite files with the same name?
+# Options:    overwrite      write_protected     append
+#             [zipped|not_zipped|vtk]
+#             [unix|windows|non_native]
+overwrite vtk
+binary_zip
+#
+#
+# Selection of the outputs
+# ========================
+# [legacy|verbose|terse]
+# Finish selection of outputs with 'end_of_outputs'.
+terse
+#out_fraction 1 2 3
+#out_grains
+out_phases
+out_restart
+tab_grains
+tab_grain_data
+tab_fractions
+tab_log 5.e-1
+end_of_outputs
+#
+#
+# Time input data
+# ===============
+# Finish input of output times (in seconds) with 'end_of_simulation'
+# 'regularly-spaced' outputs can be set with 'linear_step'
+# or 'logarithmic_step' and then specifying the increment
+# and end value
+# ('automatic_outputs' optionally followed by the number
+#  of outputs can be used in conjuction with 'linear_from_file')
+#  'first'                  : additional output for first time-step
+#  'end_at_temperature'    : additional output and end of simulation
+#                             at given temperature
+1.0
+end_of_simulation
+# Time-step?
+# Options:   fix ...[s]   automatic    automatic_limited
+automatic
+# Coefficient for phase-field criterion 1.00
+# Number of steps to adjust profiles of initially sharp interfaces [exclude_inactive]?
+50
+#
+#
+# Phase data
+# ==========
+# Number of distinct solid phases?
+5
+#
+# Data for phase 1:
+# -----------------
+# Simulation of recrystallisation in phase 1?
+# Options:   recrystall     no_recrystall   [verbose|no_verbose]
+no_recrystall
+# Is phase 1 anisotrop?
+# Options:   isotropic   anisotropic    faceted     antifaceted
+faceted_b
+# Crystal symmetry of the phase?
+# Options:   none  cubic  hexagonal  tetragonal orthorhombic
+cubic
+# Number of type of facets in phase 1
+1
+# kin. anisotropy parameter Kappa?
+# only one value for all facets/phases
+# 0 < kappa <= 1
+0.5500000
+# Number of possible orientations of a facet 1
+4
+#  1 -th normal vector facet  1 ?  3*
+1.000000
+1.000000
+1.000000
+#  2 -th normal vector facet  1 ?  3*
+-1.000000
+1.000000
+1.000000
+#  3 -th normal vector facet  1 ?  3*
+1.000000
+-1.000000
+1.000000
+#  4 -th normal vector facet  1 ?  3*
+-1.000000
+-1.000000
+1.000000
+# Should grains of phase 1 be reduced to categories?
+# Options:   categorize no_categorize
+no_categorize
+#
+# Data for phase 2:
+# -----------------
+# [identical phase number]
+identical 1
+# Data for phase 2 taken over from phase 1.
+#
+# Data for phase 3:
+# -----------------
+# [identical phase number]
+identical 1
+# Data for phase 3 taken over from phase 1.
+#
+# Data for phase 4:
+# -----------------
+# [identical phase number]
+identical 1
+# Data for phase 4 taken over from phase 1.
+#
+# Data for phase 5:
+# -----------------
+# [identical phase number]
+identical 1
+# Data for phase 5 taken over from phase 1.
+#
+# Orientation
+# -----------
+# How shall grain orientations be defined?
+# Options:  angle_2d  euler_zxz  angle_axis  miller_indices  quaternion
+euler_zxz
+#
+#
+# Grain input
+# ===========
+# Type of grain positioning?
+# Options:  deterministic   random [deterministic_infile]   from_file
+random
+# Integer for randomization?
+7
+# Number of different types of grains?
+5
+# Number of grains of type 1?
+100
+# Number of grains of type 2?
+20
+# Number of grains of type 3?
+1
+# Number of grains of type 4?
+10
+# Number of grains of type 5?
+10
+# Input for grain type 1
+# ----------------------
+# Geometry of grain type 1
+# Options:  round     rectangular    elliptic
+elliptic
+# Minimal value of x-coordinates?  [micrometers]
+0.00000
+# Maximal value of x-coordinates?  [micrometers]
+5.00000
+# Minimal value of y-coordinates?  [micrometers]
+0.00000
+# Maximal value of y-coordinates?  [micrometers]
+5.00000
+# Minimal value of z-coordinates?  [micrometers]
+0.00000
+# Maximal value of z-coordinates?  [micrometers]
+2.500000E-02
+# Minimal length of axis along x-axis?  [micrometers]
+0.800000
+# Maximal length of axis along x-axis?  [micrometers]
+1.10000
+# Minimal length of axis along y-axis?  [micrometers]
+0.800000
+# Maximal length of axis along y-axis?  [micrometers]
+1.10000
+# Minimal length of axis along z-axis?  [micrometers]
+1.10000
+# Maximal length of axis along z-axis?  [micrometers]
+1.10000
+# Should the Voronoi criterion for grains of type 1 be applied?
+# Options:    voronoi     no_voronoi
+voronoi
+# Phase number for grain type 1? (int)
+1
+# Determination of grain orientations?
+# Options:   random    fix     fix_direction
+random
+# Minimal distance between grains (real) [micrometers]?
+0.40000
+# Input for grain type 2
+# ----------------------
+# Geometry of grain type 2
+# Options:  round     rectangular    elliptic
+elliptic
+# Minimal value of x-coordinates?  [micrometers]
+0.00000
+# Maximal value of x-coordinates?  [micrometers]
+5.00000
+# Minimal value of y-coordinates?  [micrometers]
+0.00000
+# Maximal value of y-coordinates?  [micrometers]
+5.00000
+# Minimal value of z-coordinates?  [micrometers]
+1.95000
+# Maximal value of z-coordinates?  [micrometers]
+2.00000
+# Minimal length of axis along x-axis?  [micrometers]
+0.250000
+# Maximal length of axis along x-axis?  [micrometers]
+0.350000
+# Minimal length of axis along y-axis?  [micrometers]
+0.250000
+# Maximal length of axis along y-axis?  [micrometers]
+0.350000
+# Minimal length of axis along z-axis?  [micrometers]
+0.250000
+# Maximal length of axis along z-axis?  [micrometers]
+0.350000
+# Should the Voronoi criterion for grains of type 2 be applied?
+# Options:    voronoi     no_voronoi
+voronoi
+# Phase number for grain type 2? (int)
+2
+# Determination of grain orientations?
+# Options:   random    fix     fix_direction
+random
+# Minimal distance between grains (real) [micrometers]?
+0.50000
+# Input for grain type 3
+# ----------------------
+# Geometry of grain type 3
+# Options:  round     rectangular    elliptic
+rectangular
+# Minimal value of x-coordinates?  [micrometers]
+0.00000
+# Maximal value of x-coordinates?  [micrometers]
+0.100000
+# Minimal value of y-coordinates?  [micrometers]
+0.00000
+# Maximal value of y-coordinates?  [micrometers]
+0.100000
+# Minimal value of z-coordinates?  [micrometers]
+2.90000
+# Maximal value of z-coordinates?  [micrometers]
+2.91000
+# Minimal length of side along x-axis?  [micrometers]
+10.0000
+# Maximal length of side along x-axis?  [micrometers]
+10.0000
+# Minimal length of side along y-axis?  [micrometers]
+10.0000
+# Maximal length of side along y-axis?  [micrometers]
+10.0000
+# Minimal length of side along z-axis?  [micrometers]
+1.50000
+# Maximal length of side along z-axis?  [micrometers]
+1.50000
+# Should the Voronoi criterion for grains of type 3 be applied?
+# Options:    voronoi     no_voronoi
+no_voronoi
+# Phase number for grain type 3? (int)
+3
+# Determination of grain orientations?
+# Options:   random    fix     fix_direction
+fix
+# Euler angles z (phi), x (theta), z' (psi)? [Degree]
+0.000000000000000E+000
+10.0000000000000
+15.0000000000000
+# Input for grain type 4
+# ----------------------
+# Geometry of grain type 4
+# Options:  round     rectangular    elliptic
+elliptic
+# Minimal value of x-coordinates?  [micrometers]
+0.00000
+# Maximal value of x-coordinates?  [micrometers]
+5.00000
+# Minimal value of y-coordinates?  [micrometers]
+0.00000
+# Maximal value of y-coordinates?  [micrometers]
+5.00000
+# Minimal value of z-coordinates?  [micrometers]
+1.75000
+# Maximal value of z-coordinates?  [micrometers]
+1.90000
+# Minimal length of axis along x-axis?  [micrometers]
+0.250000
+# Maximal length of axis along x-axis?  [micrometers]
+0.350000
+# Minimal length of axis along y-axis?  [micrometers]
+0.250000
+# Maximal length of axis along y-axis?  [micrometers]
+0.350000
+# Minimal length of axis along z-axis?  [micrometers]
+0.250000
+# Maximal length of axis along z-axis?  [micrometers]
+0.350000
+# Should the Voronoi criterion for grains of type 4 be applied?
+# Options:    voronoi     no_voronoi
+voronoi
+# Phase number for grain type 4? (int)
+4
+# Determination of grain orientations?
+# Options:   random    fix     fix_direction
+random
+# Minimal distance between grains (real) [micrometers]?
+0.50000
+# Input for grain type 5
+# ----------------------
+# Geometry of grain type 5
+# Options:  round     rectangular    elliptic
+elliptic
+# Minimal value of x-coordinates?  [micrometers]
+0.00000
+# Maximal value of x-coordinates?  [micrometers]
+5.00000
+# Minimal value of y-coordinates?  [micrometers]
+0.00000
+# Maximal value of y-coordinates?  [micrometers]
+5.00000
+# Minimal value of z-coordinates?  [micrometers]
+1.85000
+# Maximal value of z-coordinates?  [micrometers]
+1.95000
+# Minimal length of axis along x-axis?  [micrometers]
+0.250000
+# Maximal length of axis along x-axis?  [micrometers]
+0.350000
+# Minimal length of axis along y-axis?  [micrometers]
+0.250000
+# Maximal length of axis along y-axis?  [micrometers]
+0.350000
+# Minimal length of axis along z-axis?  [micrometers]
+0.250000
+# Maximal length of axis along z-axis?  [micrometers]
+0.350000
+# Should the Voronoi criterion for grains of type 5 be applied?
+# Options:    voronoi     no_voronoi
+voronoi
+# Phase number for grain type 5? (int)
+5
+# Determination of grain orientations?
+# Options:   random    fix     fix_direction
+random
+# Minimal distance between grains (real) [micrometers]?
+0.50000
+#
+#
+# Data for further nucleation
+# ===========================
+# Enable further nucleation?
+# Options:  nucleation   nucleation_symm   no_nucleation  [verbose|no_verbose]
+no_nucleation
+#
+#
+# Phase interaction data
+# ======================
+# Finish input of phase interactions with 'end_phase_interactions'.
+#
+# Data for phase interaction 0 / 2:
+# ---------------------------------
+# Simulation of interaction between phase 0 and 2?
+# Options: phase_interaction  no_phase_interaction
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+0 2 phase_interaction
+# Type of surface energy definition between phases LIQUID and 2?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases LIQUID and 2? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases LIQUID and 2?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases LIQUID and 2?  [ min. value ] [cm**4/(Js)]
+mob_CIGS_calibrated.txt
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 0 / 4:
+# ---------------------------------
+# Simulation of interaction between phase 0 and 4?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+0 4 phase_interaction
+# Type of surface energy definition between phases LIQUID and 4?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases LIQUID and 4? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases LIQUID and 4?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases LIQUID and 4?  [ min. value ] [cm**4/(Js)]
+mob_CIGS_calibrated.txt
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 0 / 5:
+# ---------------------------------
+# Simulation of interaction between phase 0 and 5?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+0 5 phase_interaction
+# Type of surface energy definition between phases LIQUID and 5?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases LIQUID and 5? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases LIQUID and 5?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases LIQUID and 5?  [ min. value ] [cm**4/(Js)]
+mob_CIGS_calibrated.txt
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 2 / 3:
+# ---------------------------------
+# Simulation of interaction between phase 2 and 3?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+2 3 phase_interaction
+# Type of surface energy definition between phases 2 and 3?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases 2 and 3? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases 2 and 3?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases 2 and 3?  [ min. value ] [cm**4/(Js)]
+mob_gas_exp.txt
+# Shall misorientation be considered?
+# Options:   misorientation   no_misorientation [transition LAB/HAB in degree]
+no_misorientation
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# This anisotropic interaction is not yet implemented.
+# Instead: isotropic-faceted
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 2 / 4:
+# ---------------------------------
+# Simulation of interaction between phase 2 and 4?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+2 4 phase_interaction
+# Type of surface energy definition between phases 2 and 4?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases 2 and 4? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases 2 and 4?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases 2 and 4?  [ min. value ] [cm**4/(Js)]
+mob_gas_exp.txt
+# Shall misorientation be considered?
+# Options:   misorientation   no_misorientation [transition LAB/HAB in degree]
+no_misorientation
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# This anisotropic interaction is not yet implemented.
+# Instead: isotropic-faceted
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 2 / 5:
+# ---------------------------------
+# Simulation of interaction between phase 2 and 5?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+2 5 phase_interaction
+# Type of surface energy definition between phases 2 and 5?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases 2 and 5? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases 2 and 5?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases 2 and 5?  [ min. value ] [cm**4/(Js)]
+mob_gas_exp.txt
+# Shall misorientation be considered?
+# Options:   misorientation   no_misorientation [transition LAB/HAB in degree]
+no_misorientation
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# This anisotropic interaction is not yet implemented.
+# Instead: isotropic-faceted
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 3 / 4:
+# ---------------------------------
+# Simulation of interaction between phase 3 and 4?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+3 4 phase_interaction
+# Type of surface energy definition between phases 3 and 4?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases 3 and 4? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases 3 and 4?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases 3 and 4?  [ min. value ] [cm**4/(Js)]
+mob_gas_exp.txt
+# Shall misorientation be considered?
+# Options:   misorientation   no_misorientation [transition LAB/HAB in degree]
+no_misorientation
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# This anisotropic interaction is not yet implemented.
+# Instead: isotropic-faceted
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+#
+# Data for phase interaction 3 / 5:
+# ---------------------------------
+# Simulation of interaction between phase 3 and 5?
+# Options: phase_interaction  no_phase_interaction  identical phases nb
+#  [standard|particle_pinning[_temperature]|solute_drag]
+#   |[no_junction_force|junction_force]
+3 5 phase_interaction
+# Type of surface energy definition between phases 3 and 5?
+# Options:  constant  temp_dependent
+constant
+# Surface energy between phases 3 and 5? [J/cm**2]
+#     [max. value for num. interface stabilisation [J/cm**2]]
+1.00E-06 5.000E-06
+# Type of mobility definition between phases 3 and 5?
+# Options: constant temp_dependent dg_dependent thin_interface_correction [fixed_minimum]
+temp_dependent
+# File for kinetic coefficient between phases 3 and 5?  [ min. value ] [cm**4/(Js)]
+mob_gas_exp.txt
+# Shall misorientation be considered?
+# Options:   misorientation   no_misorientation [transition LAB/HAB in degree]
+no_misorientation
+# Is interaction isotropic?
+# Optionen: isotropic  anisotropic
+anisotropic
+# This anisotropic interaction is not yet implemented.
+# Instead: isotropic-faceted
+# static anisotropy coefficient of facet 1 (0 < a <= 1, 1=isotrop, 0 not defined)
+1.0
+# kinetic anisotropy coefficient of facet 1 (0 <= a <= 1, 1=isotrop)
+0.15000
+end_phase_interactions
+#
+#
+# Warning: no interaction defined between phase 1 and any other!
+#
+#
+# Phase diagram - input data
+# ==========================
+# Equilibrium temperature [K] between 0  and 2
+900.000000000000
+# Entropy of fusion between phase 0  and 2 ?  [J/(cm**3 K)]
+1.100000000000000E-003
+# Equilibrium temperature [K] between 0  and 4
+900.000000000000
+# Entropy of fusion between phase 0  and 4 ?  [J/(cm**3 K)]
+1.250000000000000E-003
+# Equilibrium temperature [K] between 0  and 5
+900.000000000000
+# Entropy of fusion between phase 0  and 5 ?  [J/(cm**3 K)]
+1.250000000000000E-003
+# Equilibrium temperature [K] between 2  and 3
+900.000000000000
+# Entropy of fusion between phase 2  and 3 ?  [J/(cm**3 K)]
+-2.500000000000000E-002
+# Equilibrium temperature [K] between 2  and 4
+900.000000000000
+# Entropy of fusion between phase 2  and 4 ?  [J/(cm**3 K)]
+-1.500000000000000E-002
+# Equilibrium temperature [K] between 2  and 5
+900.000000000000
+# Entropy of fusion between phase 2  and 5 ?  [J/(cm**3 K)]
+-1.500000000000000E-002
+# Equilibrium temperature [K] between 3  and 4
+900.000000000000
+# Entropy of fusion between phase 3  and 4 ?  [J/(cm**3 K)]
+1.250000000000000E-002
+# Equilibrium temperature [K] between 3  and 5
+900.000000000000
+# Entropy of fusion between phase 3  and 5 ?  [J/(cm**3 K)]
+1.250000000000000E-002
+#
+#
+# Boundary conditions
+# ===================
+# Type of temperature trend?
+# Options:   linear     linear_from_file     profiles_from_file
+linear
+# Number of connecting points?    (integer)
+1
+# Initial temperature at the bottom?  (real)  [K]
+343.92999999999995
+# Temperature gradient in z-direction?  [K/cm]
+0.0
+# 1 Connecting point, time  t [sec]?
+1.0
+# 1 Connecting point, temperature
+343.92999999999995
+# 1 connecting point, temperature gradient in z-direction (real)  [K/cm]
+0.0
+# Moving-frame system in z-direction?
+# Options:      moving_frame      no_moving_frame
+no_moving_frame
+#
+# Boundary conditions for phase field in each direction
+# Options: i (insulation) s (symmetric) p (periodic/wrap-around)
+#          g (gradient)   f (fixed)     w (wetting)
+# Sequence: W E (S N, if 3D) B T borders
+ppppwi
+# Contact angles for B-direction [degree](real)?
+# ( default contact angle in terse mode = 90 degree)
+# angle for phase interaction:  0  2?
+70.000
+# angle for phase interaction:  0  4?
+70.000
+# angle for phase interaction:  0  5?
+70.000
+# angle for phase interaction:  2  3?
+70.000
+# angle for phase interaction:  2  4?
+70.000
+# angle for phase interaction:  2  5?
+70.000
+# angle for phase interaction:  3  4?
+70.000
+# angle for phase interaction:  3  5?
+70.000
+# Unit-cell model symmetric with respect to the x/y diagonal plane?
+# Options:    unit_cell_symm   no_unit_cell_symm
+no_unit_cell_symm
+#
+#
+# Other numerical parameters
+# ==========================
+# Phase minimum?
+1.E-4
+# Interface thickness (in cells)?
+4.00
+#
+#
+#
+# Number of parallel threads?
+# ===========================
+1
+# Number of parallel threads: 1
+#
+#

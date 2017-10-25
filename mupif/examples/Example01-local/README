@@ -1,0 +1,15 @@
+This example illustrates the top level control script representing 
+simulation pipeline made of two simle applications. The overall
+simulation is performed in a time loop, where one application 
+provides data for the second application, which computes the 
+arithmetical average value of given data. The data exchange is
+here illustrated using property exchange for simplicity. 
+
+Even though its simplicity, it illustrates the basic concept of
+steering, mutual data exchange, and error handling using the
+proposed API. Everything runs on a local computer. 
+
+To run this example, invoke python interpreter on Example01.py:
+$ python Example01.py
+
+

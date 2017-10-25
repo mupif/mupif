@@ -29,6 +29,7 @@ from . import ValueType
 from . import BBox
 from . import APIError
 from . import MupifObject
+from . import Mesh
 from numpy import array, arange, random, zeros
 import numpy
 import copy
@@ -72,7 +73,7 @@ class Field(MupifObject.MupifObject):
 
         :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType valueType: Type of field values (scalear, vector, tensor)
+        :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor should have tuple format 3x3 on each vertex or cell
         :param obj units: Units of the field values
         :param float time: Time associated with field values
         :param list of tuples representing individual values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
@@ -358,21 +359,25 @@ class Field(MupifObject.MupifObject):
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable),
-                                     'Unstructured Grid Example')
+                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable),
-                                     'Unstructured Grid Example')
+                                     pyvtk.PointData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable), 'Unstructured Grid Example')
+            elif (self.getValueType() == ValueType.Tensor):
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                     pyvtk.PointData(pyvtk.Tensors(self.values,**vectorsKw),lookupTable),'Unstructured Grid Example')
+            
         else:
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable),
-                                     'Unstructured Grid Example')
+                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable),
-                                     'Unstructured Grid Example')
+                                     pyvtk.CellData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable), 'Unstructured Grid Example')
+            elif (self.getValueType() == ValueType.Tensor):
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
+                                     pyvtk.CellData(pyvtk.Tensors(self.values,**vectorsKw),lookupTable),'Unstructured Grid Example')
+            
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
@@ -419,8 +424,9 @@ class Field(MupifObject.MupifObject):
             matplotlib.use('TkAgg')#Qt4Agg gives an empty, black window
             import matplotlib.pyplot as plt
         except ImportError as e:
-            print(e)
-            raise
+            log.error('Skipping field2Image2D due to missing modules: %s' % e)
+            return None
+            #raise
         
         if ( self.fieldType != FieldType.FT_vertexBased):
             raise APIError.APIError ('Only FieldType.FT_vertexBased is now supported')
@@ -450,9 +456,15 @@ class Field(MupifObject.MupifObject):
         for i in range (0, numVertices):
             coords = mesh.getVertex(i).getCoordinates()
             #print(coords)
+            if self.valueType == ValueType.Tensor:#3x3 list
+                value = self.giveValue(i)
+                value = sum(value, ())[fieldComponent]
+            else:
+                self.giveValue(i)[fieldComponent]
+            
             if (coords[elev]>elevation[0] and coords[elev]<elevation[1]):
                 vertexPoints.append((coords[indX], coords[indY]))
-                vertexValue.append(self.giveValue(i)[fieldComponent])
+                vertexValue.append(value)
         
         if(len(vertexPoints)==0):
             log.info('No valid vertex points found, putting zeros on domain 1 x 1')
@@ -618,14 +630,14 @@ class Field(MupifObject.MupifObject):
 
         .. note:: This method has not been tested yet.
         """
-        import h5py, hashlib, mupif.Mesh
+        import h5py, hashlib
         hdf=h5py.File(fileName,'r',libver='latest')
         grp=hdf[group]
         # load mesh and field data from HDF5
         meshObjs=[obj for name,obj in grp.items() if name.startswith('mesh_')]
         fieldObjs=[obj for name,obj in grp.items() if name.startswith('field_')]
         # construct all meshes as mupif objects
-        meshes=[mupif.Mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        meshes=[Mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
         # construct all fields as mupif objects
         ret=[]
         for f in fieldObjs:
@@ -667,7 +679,7 @@ class Field(MupifObject.MupifObject):
             return Field.makeFromVTK3(fileName,time=time,forceVersion2=True)
         ugr=data.structure
         if not isinstance(ugr,pyvtk.UnstructuredGrid): raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)."%ugr.__class__.__name__)
-        mesh=mupif.Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
+        mesh=Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
         # get cell and point data
         pd,cd=data.point_data.data,data.cell_data.data
         for dd,fieldType in (pd,FieldType.FT_vertexBased),(cd,FieldType.FT_cellBased):
@@ -769,7 +781,7 @@ class Field(MupifObject.MupifObject):
         #import sys
         #sys.stderr.write(str((ugrid,ugrid.__class__,vtk.vtkUnstructuredGrid)))
         # make mesh -- implemented separately
-        mesh=mupif.Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
+        mesh=Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
         # fields which will be returned
         ret=[]
         # get cell and point data

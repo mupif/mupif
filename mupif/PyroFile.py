@@ -64,7 +64,7 @@ class PyroFile (object):
         """
         Reads and returns the terminal bytes from source. In case of of source without compression, an empty string should be returned,
         in case of compressed stream the termination sequence is returned (see zlib flush(Z_FINAL))
-        :rtupe: str
+        :rtype: str
         """
         if (self.compressFlag):
             return self.compressor.flush(zlib.Z_FINISH)

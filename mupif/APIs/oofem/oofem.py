@@ -20,6 +20,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
+from __future__ import print_function
+
 import sys
 sys.path.append('../../..')
 from mupif import *
@@ -67,7 +69,7 @@ class OOFEM(Application.Application):
         self.oofem_mesh = self.oofem_pb.giveDomain(1)
         self.mesh = None # MuPIF representation of oofem mesh
 
-        print "Imported %d node and %d elements"%(self.oofem_mesh.giveNumberOfDofManagers(), self.oofem_mesh.giveNumberOfElements())
+        print ("Imported %d node and %d elements" % (self.oofem_mesh.giveNumberOfDofManagers(), self.oofem_mesh.giveNumberOfElements()))
 
     def getField(self, fieldID, time):
         """
@@ -139,7 +141,7 @@ class OOFEM(Application.Application):
         # register converted field in oofem
         ft = fieldTypeMap.get((field.getFieldID()))[0]
         if ft == None: raise ValueError ("Field type not recognized")
-        print "oofem: registering extermal field ", field, "as ...", target
+        print ("oofem: registering extermal field ", field, "as ...", target)
         #print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
 
         self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
@@ -383,9 +385,9 @@ if __name__ == "__main__":
     
     for i in range(9):
         f.setVertexValue(i,t2f((i%3,)))
-        print i, i%3
+        print (i, i%3)
     
-    print f.evaluateAtPos (t2f((2,1,0)), liboofem.ValueModeType.VM_Total)
+    print (f.evaluateAtPos (t2f((2,1,0)), liboofem.ValueModeType.VM_Total))
 
 
     if 1:

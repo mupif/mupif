@@ -1,3 +1,0 @@
-This example demonstrates a coupled thermo-mechanical analysis consisting of cantilever, clamped on the left hand side edge and subjected to temperature loading. The top and bottom edges are subjected to prescribed temperature, while left and right are isolated. First, the temperature distribution has to be solved in the whole specimen from the given boundary conditions. Then the temperature filed is passed to mechanical analysis, which evaluates the corresponding deformations.  
-
-This example Example11.py runs as a local version (non-distributed). It uses instances of demoapp module, allocated on the fly from the script. It can be extended to run on two servers, or using a JobManager, if needed.
