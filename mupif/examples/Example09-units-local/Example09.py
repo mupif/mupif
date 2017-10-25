@@ -5,10 +5,12 @@ from builtins import str
 import sys
 sys.path.append('../../..')
 
-from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
 from mupif import *
 import logging
 log = logging.getLogger()
+
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class application1(Application.Application):
     """
@@ -24,10 +26,10 @@ class application1(Application.Application):
 
             
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1,'s')
 
 
 time  = 0
@@ -40,7 +42,7 @@ app1 = application1(None)
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = app1.getCriticalTimeStep()
+    dt = app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
     #update time
     time = time+dt
     if (time > targetTime):
@@ -49,7 +51,7 @@ while (abs(time -targetTime) > 1.e-6):
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
     
     #solve problem 1
     app1.solveStep(istep)

@@ -5,11 +5,11 @@ from builtins import str
 import unittest,sys
 sys.path.append('../..')
 
-from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
 from mupif import *
 from mupif.tests import demo
+import mupif.Physics.PhysicalQuantities as PQ
 
-
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class TestUnits(unittest.TestCase):
     def setUp(self):
@@ -21,7 +21,7 @@ class TestUnits(unittest.TestCase):
         time,targetTime,timestepnumber=0,10,0
         while True:
             #determine critical time step
-            dt = app1.getCriticalTimeStep()
+            dt = app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
             #update time
             time = time+dt
             if (time > targetTime):
@@ -30,7 +30,7 @@ class TestUnits(unittest.TestCase):
             timestepnumber = timestepnumber+1
             # print ("Step: ", timestepnumber, time, dt)
             # create a time step
-            istep = TimeStep.TimeStep(time, dt, timestepnumber)
+            istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
           
             #solve problem 1
             app1.solveStep(istep)

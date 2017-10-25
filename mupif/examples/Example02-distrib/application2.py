@@ -2,6 +2,9 @@ from mupif import *
 import Pyro4
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
+
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 @Pyro4.expose
 class application2(Application.Application):
@@ -31,6 +34,6 @@ class application2(Application.Application):
         self.value=self.value+self.contrib
         self.count = self.count+1
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0, 's')
     def getApplicationSignature(self):
         return "Application2"

@@ -7,6 +7,9 @@ import logging
 log = logging.getLogger()
 Util.changeRootLogger('server.log')
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 #if you wish to run no SSH tunnels, set to True
 noSSH=False
 
@@ -44,7 +47,7 @@ class PingServerApplication(Application.Application):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ. PhysicalQuantity(1.0,'s')
 
     def getApplicationSignature(self):
         return cfg.appName

@@ -7,7 +7,9 @@ sys.path.append('../..')
 
 import mupif
 from mupif import *
+import mupif.Physics.PhysicalQuantities as PQ
 
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 def meshgen_grid2d(origin, size, nx, ny, tria=False,debug=False):
     """ 
@@ -104,7 +106,7 @@ class AppGridAvg(Application.Application):
         return
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return  PQ.PhysicalQuantity(1.0, 's')
 
     def getApplicationSignature(self):
         return "Demo app. 1.0"
@@ -185,16 +187,16 @@ class AppCurrTime(Application.Application):
         super(self.__class__,self).__init__(file)
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, None, 0)
         if (propID == PropertyID.PID_Velocity):
             return Property.Property(self.value, PropertyID.PID_Velocity, ValueType.Scalar, time, 'm/s', 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1, 's')
 
 class AppPropAvg(Application.Application):
     """
@@ -222,5 +224,5 @@ class AppPropAvg(Application.Application):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0, 's')
 

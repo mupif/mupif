@@ -32,6 +32,8 @@ from . import TimeStep
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 @Pyro4.expose
 class Workflow(Application.Application):
@@ -73,12 +75,12 @@ class Workflow(Application.Application):
         timeStepNumber = 0
 
         while (abs(time-self.targetTime) > 1.e-6):
-            dt = self.getCriticalTimeStep()
+            dt = self.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
             time=time+dt
             if (time > self.targetTime):
                          time = targetTime
             timeStepNumber = timeStepNumber+1
-            istep=TimeStep.TimeStep(time,dt, timeStepNumber)
+            istep=TimeStep.TimeStep(time, dt, self.targetTime, timeUnits, timeStepNumber)
         
             log.debug("Step %g: t=%g dt=%g"%(timeStepNumber,time,dt))
 

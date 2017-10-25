@@ -4,6 +4,9 @@ sys.path.append('../../..')
 from mupif import *
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
+
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class application1(Application.Application):
     """
@@ -19,10 +22,10 @@ class application1(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1, 's')
 
 
 class application2(Application.Application):
@@ -51,7 +54,7 @@ class application2(Application.Application):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0, 's')
 
 time  = 0
 timestepnumber=0
@@ -64,7 +67,8 @@ app2 = application2(None)
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = min(app1.getCriticalTimeStep(), app2.getCriticalTimeStep())
+    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
+             app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
     #update time
     time = time+dt
     if (time > targetTime):
@@ -72,7 +76,7 @@ while (abs(time -targetTime) > 1.e-6):
         time = targetTime
     timestepnumber = timestepnumber+1
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         #solve problem 1
@@ -85,7 +89,7 @@ while (abs(time -targetTime) > 1.e-6):
         app2.solveStep(istep)
         # get the averaged concentration
         prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
+        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(), prop.getValue()))
         
         
     except APIError.APIError as e:

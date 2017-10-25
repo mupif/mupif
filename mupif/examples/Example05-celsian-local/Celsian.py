@@ -3,6 +3,9 @@ import sys
 sys.path.append('../../..')
 from mupif import *
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 class Celsian(Application.Application):
 
     def __init__ (self, file):
@@ -22,6 +25,6 @@ class Celsian(Application.Application):
         time = tstep.getTime()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1,'s')
 
 

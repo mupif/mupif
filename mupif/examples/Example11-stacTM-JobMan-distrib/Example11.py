@@ -13,6 +13,10 @@ import logging
 log = logging.getLogger()
 import time as timeT
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
+
 class Demo11(Workflow.Workflow):
    
     def __init__ (self, targetTime=0.):
@@ -100,7 +104,7 @@ class Demo11(Workflow.Workflow):
 
     def getCriticalTimeStep(self):
         # determine critical time step
-        return 1.0
+        return PQ.PhysicalQuantity(1.0, 's')
 
     def terminate(self):
         

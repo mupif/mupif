@@ -6,6 +6,8 @@ import jsonpickle
 import time #for sleep
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #
 # Expected response from operator: E-mail with "CSJ01" (workflow + jobID)
@@ -66,7 +68,7 @@ class emailAPI(Application.Application):
                 time.sleep(60) #wait
             
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQauntity(1.0,'s')
 
 
 #################################################
@@ -81,7 +83,7 @@ try:
     # set concentration as input
     app.setProperty(p)
     # solve (involves operator interaction)
-    app.solveStep (TimeStep.TimeStep(0.0, 0.1, 1))
+    app.solveStep (TimeStep.TimeStep(0.0, 0.1, 1.0, timeUnits, 1))
     # get result of the simulation
     r = app.getProperty(PropertyID.PID_Demo_Value, 0.0)
     log.info("Application API return value is %f", r.getValue())

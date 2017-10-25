@@ -384,7 +384,7 @@ class micress(Application.Application):
         
         """
       
-        mictime = tstep.getTime()
+        mictime = tstep.getTime().getValue()
 
         if ( self.locIndex == -1 ):
           raise APIError.APIError('No RVE location specified')

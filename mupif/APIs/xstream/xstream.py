@@ -43,12 +43,13 @@ import ast
 from datetime import datetime
 
 from mupif import *
-
+import mupif.Physics.PhysicalQuantities as PQ
 import logging
 
 import xstreamConfig as xConf
 import XStPropertyID
 import XStFieldID
+
 
 
 class xstream(Application.Application):
@@ -387,7 +388,7 @@ class xstream(Application.Application):
                  found_tstep=True 
                  value = float(line.split()[1])
                  self.log.info("The critical time step in X-stream is %f" % value)    
-                 return value 
+                 return PQ.PhysicalQuantity(value, "s")
 
         if (found_tstep==False):
             raise APIError.APIError('The timestep (keyword TIME_STEP) can not be found')

@@ -6,6 +6,9 @@ import unittest
 from mupif import *
 from mupif.tests import demo
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 class TestEx01(unittest.TestCase):
     def setUp(self):
         self.app1,self.app2=demo.AppCurrTime(None),demo.AppPropAvg(None)
@@ -16,7 +19,8 @@ class TestEx01(unittest.TestCase):
         targetTime = 1.0
         while (abs(time -targetTime) > 1.e-6):
             #determine critical time step
-            dt = min(app1.getCriticalTimeStep(), app2.getCriticalTimeStep())
+            dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
+                     app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
             #update time
             time = time+dt
             if (time > targetTime):
@@ -24,7 +28,7 @@ class TestEx01(unittest.TestCase):
                 time = targetTime
             timestepnumber = timestepnumber+1
             # create a time step
-            istep = TimeStep.TimeStep(time, dt, timestepnumber)
+            istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
             # solve problem 1
             app1.solveStep(istep)
@@ -36,7 +40,7 @@ class TestEx01(unittest.TestCase):
             app2.solveStep(istep)
             # get the averaged concentration
             prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-            print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
+            print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(), prop.getValue()))
         self.assertAlmostEqual(prop.getValue(),0.55)
     def tearDown(self):
         # terminate

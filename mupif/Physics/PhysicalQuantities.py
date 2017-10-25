@@ -130,7 +130,7 @@ class PhysicalQuantity(object):
         There are two constructor calling patterns:
 
             1. PhysicalQuantity(value, unit), where value is any number
-            and unit is a string defining the unit
+            and unit is either string defining the unit or PhysicalUnit instance
 
             2. PhysicalQuantity(value_with_unit), where value_with_unit
             is a string that contains both the value and the unit,
@@ -142,7 +142,10 @@ class PhysicalQuantity(object):
         """
         if len(args) == 2:
             self.value = args[0]
-            self.unit = _findUnit(args[1])
+            if (isPhysicalUnit(args[1])):
+                self.unit = args[1]
+            else:
+                self.unit = _findUnit(args[1])
         else:
             s = string.strip(args[0])
             match = PhysicalQuantity._number.match(s)

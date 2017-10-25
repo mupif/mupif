@@ -39,6 +39,9 @@ import logging
 log = logging.getLogger()
 log.setLevel("INFO")
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 
 import clientConfig as cConf
 
@@ -176,11 +179,11 @@ def runTestCase(xst,mic):
       # ---------------------------
       # where the critical time step is given by the macro scale output interval,
       # i.e. get the next available output  
-      dt = xst.getCriticalTimeStep()
+      dt = xst.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
       
       time = time + dt
       timeStepNumber = timeStepNumber + 1
-      istep = TimeStep.TimeStep(time, dt, timeStepNumber)
+      istep = TimeStep.TimeStep(time, dt, cConf.targetTime, timeUnits, timeStepNumber)
 
       timing.append(timeStepNumber)
       timing.append(time)

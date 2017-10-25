@@ -8,6 +8,9 @@ import time as timeTime
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 #if you wish to run no SSH tunnels, set to None
 #sshContext = None
 sshContext = PyroUtil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
@@ -37,11 +40,12 @@ try:
 
     log.info("Generating test sequence ...")
 
-    for i in range (10):
+    targetTime = 10
+    for i in range (targetTime):
         time = i
         timestepnumber = i
         # create a time step
-        istep = TimeStep.TimeStep(time, dt, timestepnumber)
+        istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
         try:
             serverApp.setProperty (Property.Property(i, PropertyID.PID_Concentration, ValueType.Scalar, i, None, 0))
             serverApp.solveStep(istep)

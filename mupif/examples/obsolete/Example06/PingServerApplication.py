@@ -1,6 +1,9 @@
 from mupif import *
 import Pyro4
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 @Pyro4.expose
 class PingServerApplication(Application.Application):
     """
@@ -28,7 +31,7 @@ class PingServerApplication(Application.Application):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0,'s')
 
     def getApplicationSignature(self):
         return "PingServerApplication"

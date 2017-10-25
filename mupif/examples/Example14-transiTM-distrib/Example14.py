@@ -9,6 +9,9 @@ from Config import config
 cfg=config(mode)
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
+
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -27,7 +30,7 @@ while (abs(time - targetTime) > 1.e-6):
 
     log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         # solve problem 1
@@ -48,7 +51,8 @@ while (abs(time - targetTime) > 1.e-6):
         mechanical.finishStep(istep)
 
         # determine critical time step
-        dt = min (thermal.getCriticalTimeStep(), mechanical.getCriticalTimeStep())
+        dt = min (thermal.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
+                  mechanical.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
 
         # update time
         time = time+dt

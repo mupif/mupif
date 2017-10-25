@@ -6,6 +6,9 @@ from mupif import *
 import os
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
+
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 
 class application1(Application.Application):
@@ -21,10 +24,10 @@ class application1(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1,'s')
 
 
 class application3(Application.Application):
@@ -61,7 +64,7 @@ class application3(Application.Application):
         os.system("./application3")
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0,'s')
 
 time  = 0
 timestepnumber=0
@@ -74,7 +77,8 @@ app3 = application3(None)
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = min(app1.getCriticalTimeStep(), app3.getCriticalTimeStep())
+    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
+             app3.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
     #update time
     time = time+dt
     if (time > targetTime):
@@ -83,7 +87,7 @@ while (abs(time -targetTime) > 1.e-6):
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g "%(timestepnumber,time,dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         #solve problem 1

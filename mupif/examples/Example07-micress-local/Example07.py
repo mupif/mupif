@@ -11,6 +11,8 @@ from mupif import APIError
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 time  = 0
 timestepnumber = 0
@@ -21,7 +23,7 @@ app1 = Micress.Micress(None)
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = app1.getCriticalTimeStep()
+    dt = app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
     #update time
     time = time+dt
     if (time > targetTime):
@@ -30,7 +32,7 @@ while (abs(time -targetTime) > 1.e-6):
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g "%(timestepnumber, time, dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         #solve problem 1

@@ -10,6 +10,9 @@ import os
 import logging
 log = logging.getLogger('demoapp')
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 def getline (f):
     while True:
         line=f.readline()
@@ -515,7 +518,7 @@ class thermal_nonstat(thermal):
         return
 
     def getCriticalTimeStep(self):
-        return 1.0;
+        return PQ.PhysicalQuantity(1.0, 's')
 
     def compute_elem_capacity (self, e):
         #compute element capacity matrix
@@ -562,7 +565,7 @@ class thermal_nonstat(thermal):
         mesh = self.mesh
         self.volume = 0.0;
         self.integral = 0.0;
-        dt = tstep.getTimeIncrement()
+        dt = tstep.getTimeIncrement().inUnitsOf(timeUnits).getValue()
 
         if tstep.getNumber()==0:#assign mesh only for 0th time step
             return
@@ -754,7 +757,7 @@ class mechanical(Application.Application):
         self.alpha = 12.e-6
 
     def getCriticalTimeStep(self):
-        return 1.0;
+        return PQ.PhysicalQuantity(1.0, 's');
 
     def readInput(self):
 
