@@ -277,7 +277,7 @@ class PhysicalQuantity(object):
         :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = map(_findUnit, units)
+        units = list(map(_findUnit, units))
         if len(units) == 1:
             unit = units[0]
             value = _convertValue (self.value, self.unit, unit)
