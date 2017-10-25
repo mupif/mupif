@@ -59,7 +59,7 @@ while (abs(time -targetTime) > 1.e-6):
     v = app1.getProperty(PropertyID.PID_Velocity, istep)
     
     #Create a PhysicalQuantity object 
-    V = PQ(v.getValue(), v.getUnits())
+    V = PQ.PhysicalQuantity(v.getValue(), v.getUnits())
 
     velocity = V.inBaseUnits()
     log.debug(velocity)
