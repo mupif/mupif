@@ -32,7 +32,7 @@ class application1(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1, 's')

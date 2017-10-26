@@ -51,7 +51,7 @@ class Demo16(Workflow.Workflow):
         log.info("Solving thermal problem")
         log.info(self.thermal.getApplicationSignature())
         
-        log.debug("Step: %g %g %g"%(istep.time, istep.dt, istep.number))
+        log.debug("Step: %g %g %g"%(istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
         
         self.thermal.solveStep(istep)
         f = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
