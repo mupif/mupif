@@ -263,16 +263,16 @@ def runTestCase(xst,mic):
             # i.e. see variable names
             #pComponentNames = mic[interface].getProperty(MICPropertyID.PID_ComponentNames, time)
             #pPhaseNames = mic[interface].getProperty(MICPropertyID.PID_PhaseNames, time)
-            pDimensions = mic[interface].getProperty(MICPropertyID.PID_Dimensions, time)
+            pDimensions = mic[interface].getProperty(MICPropertyID.PID_Dimensions, istep.getTime())
             #componentNames = pComponentNames.getValue()
             #phaseNames = pPhaseNames.getValue()
             dimensions = pDimensions.getValue()
             if cConf.debug:
               print ("Dimensions [um] = ",dimensions[0] * 1E6, dimensions[1] * 1E6, dimensions[2] * 1E6)
           
-          pT = mic[interface].getProperty(MICPropertyID.PID_Temperature,time)
-          pPF = mic[interface].getProperty(MICPropertyID.PID_PhaseFractions,time)
-          pGS = mic[interface].getProperty(MICPropertyID.PID_AvgGrainSizePerPhase,time)
+          pT = mic[interface].getProperty(MICPropertyID.PID_Temperature,istep.getTime())
+          pPF = mic[interface].getProperty(MICPropertyID.PID_PhaseFractions,istep.getTime())
+          pGS = mic[interface].getProperty(MICPropertyID.PID_AvgGrainSizePerPhase,istep.getTime())
             
           vT.append(pT.getValue())
            

@@ -78,7 +78,7 @@ class Demo11(Workflow.Workflow):
         #This prevents copying data to Demo11's computer,
         #mechanical solver will use direct access to thermal field.
         log.info("Thermal problem solved")
-        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, 0.0)
+        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, istep.getTime())
         log.info("URI of thermal problem's field is " + str(uri) )
         field = Pyro4.Proxy(uri)
         #field._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
@@ -86,15 +86,15 @@ class Demo11(Workflow.Workflow):
 
         #Original version copied data to Demo11's computer and then to thermal solver.
         #This can be time/memory consuming for large data
-        #temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        #temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
         #self.mechanicalSolver.setField(temperatureField)
 
         log.info("Solving mechanical problem")
         self.mechanicalSolver.solveStep(None)
-        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, 0.0)) )
-        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, 0.0)
+        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTime())) )
+        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTime())
         # save results as vtk
-        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
         temperatureField.field2VTKData().tofile('temperatureField')
         displacementField.field2VTKData().tofile('displacementField')
 

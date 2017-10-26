@@ -40,7 +40,7 @@ class Demo06(Workflow.Workflow):
         val = Property.Property(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, None)
         self.app1.setProperty (val)
         self.app1.solveStep(None)
-        retProp = self.app1.getProperty(PropertyID.PID_Demo_Value, 0.0)
+        retProp = self.app1.getProperty(PropertyID.PID_Demo_Value, istep)
         log.info("Sucessfully received " + str(retProp.getValue()))
         
     def terminate(self):    

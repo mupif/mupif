@@ -96,7 +96,7 @@ class AppGridAvg(Application.Application):
                         dist = math.sqrt((x-self.xl/2.)*(x-self.xl/2.)+(y-self.yl/2.)*(y-self.yl/2.))
                         val = math.cos(coeff*dist) * math.exp(-4.0*dist/self.xl)
                         values.append((val,))
-                self.field=Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, 0.0, values)
+                self.field=Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, None, time, values)
                 
             return self.field
         else:

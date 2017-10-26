@@ -27,11 +27,11 @@ class Demo13(Workflow.Workflow):
             # solve problem 1
             self.thermal.solveStep(istep)
             # request Temperature from thermal
-            ft = self.thermal.getField(FieldID.FID_Temperature, istep.getTime().inUnitsOf(timeUnits).getValue())
+            ft = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
             
             self.mechanical.setField(ft)
             sol = self.mechanical.solveStep(istep) 
-            f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime().inUnitsOf(timeUnits).getValue())
+            f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
 
             data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
             if (graphics):

@@ -171,11 +171,11 @@ class thermal(Application.Application):
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if time==0.0:#put zeros everywhere
+                if time.getValue()==0.0:#put zeros everywhere
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values);
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
             for e in self.mesh.cells():
@@ -184,7 +184,7 @@ class thermal(Application.Application):
                 else:
                     values.append((0,))
             #print (values)
-            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, None, 0.0, values,fieldType=Field.FieldType.FT_cellBased);
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, None, time, values,fieldType=Field.FieldType.FT_cellBased);
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -865,7 +865,7 @@ class mechanical(Application.Application):
         if (fieldID == FieldID.FID_Displacement):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if time==0.0:#put zeros everywhere
+                if time.getValue()==0.0:#put zeros everywhere
                     values.append((0.,0.,0.))
                 else:
                     if i in self.dirichletBCs:
@@ -873,7 +873,7 @@ class mechanical(Application.Application):
                     else:
                         values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
 
-            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, 'm', 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, 'm', time, values);
         else:
             raise APIError.APIError ('Unknown field ID')
 

@@ -35,7 +35,7 @@ class TestUnits(unittest.TestCase):
             #solve problem 1
             app1.solveStep(istep)
             #request Concentration property from app1
-            v = app1.getProperty(PropertyID.PID_Velocity, istep)
+            v = app1.getProperty(PropertyID.PID_Velocity, PQ.PhysicalQuantity(time, timeUnits))
           
             #Create a PhysicalQuantity object 
             V = PQ.PhysicalQuantity(v.getValue(), v.getUnits())

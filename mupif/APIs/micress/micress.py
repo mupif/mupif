@@ -37,6 +37,8 @@ import pyvtk
 
 from mupif import *
 import logging
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 import micressConfig as mConf
 
@@ -188,13 +190,13 @@ class micress(Application.Application):
           with one file parsing step, only.
           
           :param PropertyID propID: property ID, e.g. PID_Concentration
-          :param double time: simulation time
+          :param Physics.PhysicalQuantity time: simulation time
           
           :return: Property object with value set
           :rtype: Property
           
         """
-        
+        time = time.inUnitsOf(timeUnits).getValue()
         if ( ( propID == PropertyID.PID_Concentration ) or \
              ( propID == MICPropertyID.PID_PhaseNames ) or \
              ( propID == MICPropertyID.PID_ComponentNames ) or \
@@ -336,7 +338,7 @@ class micress(Application.Application):
                  results written in the VTK format.
           
           :param Mupif.FieldID fieldID: ID of requested field, e.g. FID_Phase
-          :param double time: simulation time
+          :param PQ.PhysicalQuantity time: simulation time
           
           :return: result field in Mupif field format 
           :rtype: Mupif.Field 

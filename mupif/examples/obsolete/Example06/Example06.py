@@ -55,7 +55,7 @@ try:
             break
 
     log.debug("Done")
-    prop = serverApp.getProperty(PropertyID.PID_CumulativeConcentration, i)
+    prop = serverApp.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
     log.debug("Received " + str(prop.getValue()) + " expected " + str(expectedValue) )
     if (prop.getValue() == expectedValue):
         log.info("Test PASSED")

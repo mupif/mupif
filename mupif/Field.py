@@ -604,7 +604,8 @@ class Field(MupifObject.MupifObject):
             # see http://docs.h5py.org/en/2.3/strings.html
             # that's why we cast to opaque type "void" and uncast using tostring before unpickling
             fieldGrp.attrs['units']=numpy.void(pickle.dumps(self.units))
-            fieldGrp.attrs['time']=self.time
+            fieldGrp.attrs['time']=numpy.void(pickle.dumps(self.time))
+            #fieldGrp.attrs['time']=self.time.getValue()
             if self.fieldType==FieldType.FT_vertexBased:
                 val=numpy.empty(shape=(self.getMesh().getNumberOfVertices(),self.getRecordSize()),dtype=numpy.float)
                 for vert in range(self.getMesh().getNumberOfVertices()): val[vert]=self.giveValue(vert)
@@ -644,9 +645,12 @@ class Field(MupifObject.MupifObject):
             if 'vertex_values' in f: fieldType,values=FieldType.FT_vertexBased,f['vertex_values']
             elif 'cell_values' in f: fieldType,values=FieldType.FT_cellBase,f['cell_values']
             else: ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID,valueType,units,time=FieldID(f.attrs['fieldID']),f.attrs['valueType'],f.attrs['units'].tostring(),f.attrs['time']
+            fieldID,valueType,units,time=FieldID(f.attrs['fieldID']),f.attrs['valueType'],f.attrs['units'].tostring(),f.attrs['time'].tostring()
             if units=='': units=None # special case, handled at saving time
             else: units=pickle.loads(units)
+            if time=='': time=None # special case, handled at saving time
+            else: time=pickle.loads(time)
+           
             meshIndex=meshObjs.index(f['mesh']) # find which mesh object this field refers to
             ret.append(Field(mesh=meshes[meshIndex],fieldID=fieldID,units=units,time=time,valueType=valueType,values=values,fieldType=fieldType))
         return ret

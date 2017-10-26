@@ -43,7 +43,7 @@ class emailAPI(Application.Application):
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' %(self.key,value))
-                    return Property.Property(value, propID, ValueType.Scalar, 0.0, None, 0)
+                    return Property.Property(value, propID, ValueType.Scalar, time, None, 0)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -83,9 +83,10 @@ try:
     # set concentration as input
     app.setProperty(p)
     # solve (involves operator interaction)
-    app.solveStep (TimeStep.TimeStep(0.0, 0.1, 1.0, timeUnits, 1))
+    tstep = TimeStep.TimeStep(0.0, 0.1, 1.0, timeUnits, 1)
+    app.solveStep (tstep)
     # get result of the simulation
-    r = app.getProperty(PropertyID.PID_Demo_Value, 0.0)
+    r = app.getProperty(PropertyID.PID_Demo_Value, tstep.getTime())
     log.info("Application API return value is %f", r.getValue())
     # terminate app
 

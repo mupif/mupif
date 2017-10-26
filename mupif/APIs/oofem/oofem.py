@@ -89,7 +89,7 @@ class OOFEM(Application.Application):
         self.mesh = self.getMesh(ts)
 
         #print "Mesh conversion finished"
-        if (abs(ts.targetTime - time) < 1.e-6):
+        if (abs(ts.targetTime - time.inUnitsOf(timeUnits).getValue()) < 1.e-6):
             values=[]
             ne=self.oofem_mesh.giveNumberOfElements()
             nd=self.oofem_mesh.giveNumberOfDofManagers()

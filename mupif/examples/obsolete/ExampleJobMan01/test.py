@@ -15,6 +15,8 @@ logger = logging.getLogger()
 
 start = timeTime.time()
 logger.info('Timer started')
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
@@ -36,8 +38,9 @@ else:
 
         val = Property.Property(10, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, None)
         app.setProperty (val)
-        app.solveStep(None)
-        retProp = app.getProperty(PropertyID.PID_Demo_Value, 0.0)
+        tstep=TimeStep(0., 1., 1., timeUnits)
+        app.solveStep(tstep)
+        retProp = app.getProperty(PropertyID.PID_Demo_Value, tstep.getTime())
         logger.info("Received " + str(retProp.getValue()))
         #terminate
         logger.info("Time consumed %f s" % (timeTime.time()-start))

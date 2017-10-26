@@ -1,7 +1,8 @@
 import unittest
 import tempfile
 from mupif import *
-from mupif.Physics.PhysicalQuantities import PhysicalUnit as PQ 
+from mupif.Physics.PhysicalQuantities import PhysicalUnit as PU
+import mupif.Physics.PhysicalQuantities as PQ
 import math
 import numpy as np
 
@@ -27,13 +28,13 @@ class Field_TestCase(unittest.TestCase):
         self.mesh4.setup([Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(2.,0.,2.)), Vertex.Vertex(2,2,(0.,5.,3.)),Vertex.Vertex(3,3,(3.,3.,2.)),Vertex.Vertex(4,4,(8.,15.,0.))], [Cell.Tetrahedron_3d_lin(self.mesh4,1,1,(0,1,2,3)),Cell.Tetrahedron_3d_lin(self.mesh4,2,2,(1,2,3,4))])
         
         
-        self.f1=Field.Field(self.mesh,FieldID.FID_Displacement,ValueType.Scalar,PQ({'m': 1}, 1,(1,0,0,0,0,0,0)),13,[(0,),(12,),(175,),(94,)],1)
-        self.f2=Field.Field(self.mesh,FieldID.FID_Strain,ValueType.Vector,PQ({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),128,[(3,6),(2,8),(2,3)],1)
-        self.f3=Field.Field(self.mesh,FieldID.FID_Stress,ValueType.Tensor,PQ({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),66,[(3,6,4),(2,8,5),(2,3,6)],1)
-        self.f4=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PQ({'m': 1}, 1,(1,0,0,0,0,0,0)),16,[(6,),(16,),(36,),(33,),(32,)])
-        self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PQ({'m': 1}, 1,(1,0,0,0,0,0,0)),13,[(3,),(5,),(4,)],1)
-        self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PQ({'m': 1}, 1,(1,0,0,0,0,0,0)),16,[(0,),(12,),(39,),(33,),(114,)])
-        self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PQ({'m': 1}, 1,(1,0,0,0,0,0,0)),16,[(2,),(16,)],Field.FieldType.FT_cellBased)
+        self.f1=Field.Field(self.mesh,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13, 's'),[(0,),(12,),(175,),(94,)],1)
+        self.f2=Field.Field(self.mesh,FieldID.FID_Strain,ValueType.Vector,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(128,'s'),[(3,6),(2,8),(2,3)],1)
+        self.f3=Field.Field(self.mesh,FieldID.FID_Stress,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(66,'s'),[(3,6,4),(2,8,5),(2,3,6)],1)
+        self.f4=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(6,),(16,),(36,),(33,),(32,)])
+        self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
+        self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
+        self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],Field.FieldType.FT_cellBased)
   
     def tearDown(self):
         
@@ -79,10 +80,10 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f7.getFieldType(),Field.FieldType.FT_cellBased,'error in FieldType for f4')
                 
     def test_getTime(self):
-        self.assertEqual(self.f1.getTime(),13, 'error in getTime for f1') 
-        self.assertEqual(self.f2.getTime(),128, 'error in getTime for f2')
-        self.assertEqual(self.f3.getTime(),66, 'error in getTime for f3')
-        self.assertEqual(self.f4.getTime(),16, 'error in getTime for f4')
+        self.assertEqual(self.f1.getTime().getValue(),13, 'error in getTime for f1') 
+        self.assertEqual(self.f2.getTime().getValue(),128, 'error in getTime for f2')
+        self.assertEqual(self.f3.getTime().getValue(),66, 'error in getTime for f3')
+        self.assertEqual(self.f4.getTime().getValue(),16, 'error in getTime for f4')
         
     def test_evaluate(self):
         self.assertEqual(self.f1.evaluate((1.,2.5,0.)),(93.5,),'error in evaluate for f1(point 1.,2.5,0.)')
@@ -108,8 +109,8 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.giveValue(3),[5],'error in setValue for f4')
     def test_getUnits(self):
         # NB: PhysicalQuantity does not define __eq__ operator, hence string representation (name()) is compared
-        self.assertEqual(self.f1.getUnits().name(),PQ({'m': 1}, 1,(1,0,0,0,0,0,0)).name(),'error in getUnits for f1')
-        self.assertEqual(self.f2.getUnits().name(),PQ({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)).name(),'error in getUnits for f2')
+        self.assertEqual(self.f1.getUnits().name(),PU({'m': 1}, 1,(1,0,0,0,0,0,0)).name(),'error in getUnits for f1')
+        self.assertEqual(self.f2.getUnits().name(),PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)).name(),'error in getUnits for f2')
         
     def test_merge(self):
         self.f5.merge(self.f1)
@@ -164,7 +165,7 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toHdf5(getValueType for res)')    
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toHdf5(getFieldID for res)')
         self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in toHdf5(getFieldIDName for res)')
-        self.assertEqual(self.res.getTime(),self.f1.getTime(), 'error in toHdf5(getTime for res)')
+        self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toHdf5(getTime for res)')
         self.assertEqual(self.res.giveValue(0),self.f1.giveValue(0),'error in toHdf5(giveValue for res)')
         self.assertEqual(self.res.giveValue(1),self.f1.giveValue(1),'error in toHdf5(giveValue for res)')
         self.assertEqual(self.res.giveValue(2),self.f1.giveValue(2),'error in toHdf5(giveValue for res)')

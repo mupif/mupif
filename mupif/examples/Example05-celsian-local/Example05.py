@@ -34,7 +34,7 @@ while (abs(time -targetTime) > 1.e-6):
         #solve problem 1
         app1.solveStep(istep)
         #request Temperature from app1
-        field = app1.getField(FieldID.FID_Temperature, istep)
+        field = app1.getField(FieldID.FID_Temperature, istep.getTime())
 
     except APIError.APIError as e:
         log.error("Following API error occurred: %s",e)

@@ -93,7 +93,7 @@ while (abs(time -targetTime) > 1.e-6):
         #solve problem 1
         app1.solveStep(istep)
         #request Concentration property from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep)
+        c = app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
         # register Concentration property in app3
         app3.setProperty (c)
         # solve second sub-problem 
@@ -104,7 +104,7 @@ while (abs(time -targetTime) > 1.e-6):
         log.error("Following API error occurred:",e)
         break
 
-prop = app3.getProperty(PropertyID.PID_CumulativeConcentration, istep)
+prop = app3.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
 log.debug("Result: "+str(prop.getValue()))
 
 if (abs(prop.getValue()-5.05) <= 1.e-4):

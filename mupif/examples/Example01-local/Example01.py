@@ -82,13 +82,13 @@ while (abs(time -targetTime) > 1.e-6):
         #solve problem 1
         app1.solveStep(istep)
         #request Concentration property from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep)
+        c = app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
         # register Concentration property in app2
         app2.setProperty (c)
         # solve second sub-problem 
         app2.solveStep(istep)
         # get the averaged concentration
-        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
+        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
         log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(), prop.getValue()))
         
         
