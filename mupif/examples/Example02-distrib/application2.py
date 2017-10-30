@@ -29,7 +29,7 @@ class application2(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        log.debug("Solving step: %d %f %f" % (tstep.number, tstep.time, tstep.dt) )
+        log.debug("Solving step: %d %f%s %f%s" % (tstep.getNumber(), tstep.getTime().getValue(), tstep.getTime().getUnitName(), tstep.getTimeIncrement().getValue(), tstep.getTime().getUnitName() ) )
         # here we actually accumulate the value using value of mapped property
         self.value=self.value+self.contrib
         self.count = self.count+1

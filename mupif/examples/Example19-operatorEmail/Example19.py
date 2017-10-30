@@ -68,7 +68,7 @@ class emailAPI(Application.Application):
                 time.sleep(60) #wait
             
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQauntity(1.0,'s')
+        return PQ.PhysicalQuantity(1.0,'s')
 
 
 #################################################
