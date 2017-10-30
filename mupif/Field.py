@@ -460,7 +460,7 @@ class Field(MupifObject.MupifObject):
                 value = self.giveValue(i)
                 value = sum(value, ())[fieldComponent]
             else:
-                self.giveValue(i)[fieldComponent]
+                value = self.giveValue(i)[fieldComponent]
             
             if (coords[elev]>elevation[0] and coords[elev]<elevation[1]):
                 vertexPoints.append((coords[indX], coords[indY]))
