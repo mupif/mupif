@@ -43,9 +43,10 @@ from .NumberDict import NumberDict
 import numpy
 import re, string
 from functools import reduce
+import Pyro4
 
 # Class definitions
-
+@Pyro4.expose
 class PhysicalQuantity(object):
 
     """
@@ -367,7 +368,7 @@ class PhysicalQuantity(object):
         else:
             raise TypeError('Argument of tan must be an angle')
 
-
+@Pyro4.expose
 class PhysicalUnit(object):
 
     """
