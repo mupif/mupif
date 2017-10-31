@@ -71,7 +71,7 @@ class Property_TestCase(unittest.TestCase):
         
 #Testing dumpToLocalFile and loadFromLocalFile     
     def test_dumpToLocalFile(self):
-        self.res=Property.Property(0.,0,0,0,0)
+        self.res=Property.Property(0.,0,0,0,'km')
         self.p1.dumpToLocalFile('dumpfile')
         self.res=self.p1.loadFromLocalFile('dumpfile')
         self.assertEqual(self.res.getValue(),16.,'error in dumpToLocal File_getValue for p1')
@@ -81,7 +81,7 @@ class Property_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getObjectID(),1,'wrong dumpToLocal File_getObjectID for p1')
         self.assertEqual(self.res.getUnits().isCompatible(PQ({'m':1}, 1,(1,0,0,0,0,0,0))), True, 'wrong getUnits for p1')
         
-        self.res=Property.Property(0.,0,0,0,0)
+        self.res=Property.Property(0.,0,0,0,'m')
         self.p3.dumpToLocalFile('dumpfile')
         self.res=self.p3.loadFromLocalFile('dumpfile')
         self.assertEqual(self.res.getValue(),16.,'error in dumpToLocal File_getValue for p3')

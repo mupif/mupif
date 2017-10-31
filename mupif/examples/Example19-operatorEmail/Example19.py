@@ -43,7 +43,7 @@ class emailAPI(Application.Application):
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' %(self.key,value))
-                    return Property.Property(value, propID, ValueType.Scalar, time, None, 0)
+                    return Property.Property(value, propID, ValueType.Scalar, time, PQ.getDimensionlessUnit(), 0)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -79,7 +79,7 @@ app = emailAPI(None)
 try:
 
     # CumulativeConcentration property on input
-    p = Property.Property(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 0.0, None, 0)
+    p = Property.Property(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 0.0, 'kg/m**3', 0)
     # set concentration as input
     app.setProperty(p)
     # solve (involves operator interaction)

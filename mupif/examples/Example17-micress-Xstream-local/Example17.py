@@ -165,7 +165,7 @@ def runTestCase(xst,mic):
     propEpsXstream = Property.Property( \
                       cConf.startEmissivity, \
                       XStPropertyID.PID_Emissivity, \
-                      ValueType.Scalar, time, 0, 0 )   
+                      ValueType.Scalar, time, PQ.getDimensionlessUnit(), 0 )   
     if (cConf.debug):
       print ("set uniform start emissivity: ", propEpsXstream.getValue() )
     xst.setProperty(propEpsXstream)
@@ -232,10 +232,10 @@ def runTestCase(xst,mic):
           tcStart = timeTime.time()
           
           # generate Mupif property objects from values
-          propLocation = Property.Property( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, time, 0, 0 )
-          propT = Property.Property( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, time, 0, 0 )
+          propLocation = Property.Property( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, time, 'm', 0 )
+          propT = Property.Property( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, time, 'K', 0 )
           # z-gradient constant at 0.0 at the moment
-          propzG = Property.Property( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, time, 0, 0 )
+          propzG = Property.Property( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, time, 'K/m', 0 )
   
           ## set the properties for micro simulation
           mic[interface].setProperty(propLocation)

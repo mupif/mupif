@@ -597,6 +597,14 @@ def isPhysicalQuantity(x):
     return hasattr(x, 'value') and hasattr(x, 'unit')
 
 
+
+def getDimensionlessUnit():
+    """
+    return dimensionless unit
+    """
+    return PhysicalUnit('',   0.0,    [0,0,0,0,0,0,0,0,0])
+
+
 # Helper functions
 
 def _findUnit(unit):

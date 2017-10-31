@@ -465,7 +465,7 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, 'W/m/K', 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -491,7 +491,7 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, 'W/m/K', 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 

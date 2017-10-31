@@ -136,9 +136,9 @@ class AppMinMax(Application.Application):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Min):
-            return Property.Property(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, time, propID, PQ.getDimensionlessUnit())
         elif (propID == PropertyID.PID_Demo_Max):
-            return Property.Property(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, time, propID, PQ.getDimensionlessUnit())
         else:
             raise APIError.APIError ('Unknown property ID')
     
@@ -171,9 +171,9 @@ class AppIntegrateField(Application.Application):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Integral):
-            return Property.Property(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, time, propID, 0)
+            return Property.Property(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, time, propID, PQ.getDimensionlessUnit())
         elif (propID == PropertyID.PID_Demo_Volume):
-            return Property.Property(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, time, propID, 0)
+            return Property.Property(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, time, propID, PQ.getDimensionlessUnit())
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -187,7 +187,7 @@ class AppCurrTime(Application.Application):
         super(self.__class__,self).__init__(file)
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, None, 0)
+            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, 'kg/m**3')
         if (propID == PropertyID.PID_Velocity):
             return Property.Property(self.value, PropertyID.PID_Velocity, ValueType.Scalar, time, 'm/s', 0)
         else:
@@ -209,7 +209,7 @@ class AppPropAvg(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, propID, 0)
+            return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, 'kg/m**3', 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):

@@ -47,7 +47,7 @@ try:
         # create a time step
         istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
         try:
-            serverApp.setProperty (Property.Property(i, PropertyID.PID_Concentration, ValueType.Scalar, i, None, 0))
+            serverApp.setProperty (Property.Property(i, PropertyID.PID_Concentration, ValueType.Scalar, i, 'kg/m**3', 0))
             serverApp.solveStep(istep)
 
         except APIError.APIError as e:
