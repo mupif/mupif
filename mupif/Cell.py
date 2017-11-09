@@ -98,7 +98,7 @@ class Cell(object):
         :return: The list of cell vertices
         :rtype: tuple
         """
-        if all(isinstance(v,int) for v in self.vertices):
+        if all(isinstance(v, (int, np.integer)) for v in self.vertices):
             return [self.mesh.getVertex(i) for i in self.vertices]
         return self.vertices
 

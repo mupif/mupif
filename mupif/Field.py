@@ -216,7 +216,7 @@ class Field(MupifObject.MupifObject):
                             if debug:
                                 log.debug(icell.getVertices())
                             try:
-                                answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                                answer = icell.interpolate(position, [self.values[i.getNumber()] for i in icell.getVertices()])
                             except IndexError:
                                 log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
                                 raise

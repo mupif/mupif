@@ -451,7 +451,7 @@ class PhysicalUnit(object):
     def __pow__(self, other):
         if self.offset != 0:
             raise TypeError("cannot exponentiate units with non-zero offset")
-        if isinstance(other, int):
+        if isinstance(other, (int, numpy.integer)):
             return PhysicalUnit(other*self.names, pow(self.factor, other),
                                 map(lambda x,p=other: x*p, self.powers))
         if isinstance(other, float):
