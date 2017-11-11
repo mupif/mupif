@@ -23,8 +23,8 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             :param tuple value: A tuple (array) representing property value
             :param PropertyID propID: Property ID
             :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor
-            :param float time: Time
-            :param (PhysicalUnits or string) units: Property units
+            :param Physics.PhysicalQuantity: Time
+            :param (Physics.PhysicalUnits or string) units: Property units
             :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
             """
             super(Property, self).__init__()
@@ -85,7 +85,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             Returns time associated with this property.
 
             :return: Time
-            :rtype: float
+            :rtype: Physics.PhysicalQuantity
             """
             return self.time
 

@@ -178,7 +178,7 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
     # next part record found
     return (line, enum)
     
-def readEnsightField (name, parts, partRec, type, fieldID, mesh):
+def readEnsightField (name, parts, partRec, type, fieldID, mesh, units, time):
     """
     Reads either Per-node or Per-element variable file and returns corresponding Field representation.
 
@@ -188,6 +188,8 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
     :param int type: Determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
     :param FieldID fieldID: Field type (displacement, strain, temperature ...)
     :param Mesh mesh: Corresponding mesh
+    :param PhysicalUnit units: field units
+    :param PhysicalQuantity time: time
     :return: FieldID for unknowns
     :rtype: Field
     """
@@ -247,7 +249,7 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
                                vertexVals[i*6+2],vertexVals[i*6+3],
                                vertexVals[i*6+4],vertexVals[i*6+4]))
 
-        field = Field.Field(mesh, fieldID, ftype, None, None, values, Field.FieldType.FT_vertexBased )
+        field = Field.Field(mesh, fieldID, ftype, units, time, values, Field.FieldType.FT_vertexBased )
         return field
 
     else:
@@ -303,6 +305,6 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh):
             else:
                 line=f.readline()
         # so this should be per-cell variable file -> cell based field
-        field = Field.Field(mesh, fieldID, ftype, None, None, values, Field.FieldType.FT_cellBased )
+        field = Field.Field(mesh, fieldID, ftype, units, time, values, Field.FieldType.FT_cellBased )
         return field
 

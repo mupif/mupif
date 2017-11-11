@@ -184,7 +184,7 @@ class thermal(Application.Application):
                 else:
                     values.append((0,))
             #print (values)
-            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, None, time, values,fieldType=Field.FieldType.FT_cellBased);
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased);
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -960,8 +960,8 @@ class mechanical(Application.Application):
                 if self.temperatureField:
                     t = self.temperatureField.evaluate(x)
                     et = np.zeros((3,1))
-                    et[0]=self.alpha*t[0]
-                    et[1]=self.alpha*t[0]
+                    et[0]=self.alpha*t.getValue()[0]
+                    et[1]=self.alpha*t.getValue()[0]
                     et[2]=0.0
                     b_e = np.dot(Grad.T, np.dot(D, et))*dv
             #print "A_e :",A_e

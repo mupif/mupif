@@ -141,7 +141,7 @@ class xstream(Application.Application):
         return
 
       
-    def getField(self, fieldID):
+    def getField(self, fieldID, time):
         """
           This method reads native application results at the current 
           simulation time (see solveStep) and converts them to a
@@ -149,10 +149,13 @@ class xstream(Application.Application):
           
           :note: In the current implementation the ID will be ignored. The field file
                  specified in the configuration will be read, i.e. for temperature.
+          :todo: The units  are not properly set
           
           :param FieldID fieldID: ID of the field to get (see XStFieldID.py or Mupif FieldID.py)
+          :param PhysicalQuantity time: time
 
           :return: returns Field instance
+
           :rtype: Field
           
         """
@@ -165,8 +168,11 @@ class xstream(Application.Application):
             self.mesh = EnsightReader2.readEnsightGeo(Geofile, self.parts, self.partRec)    
     
         fileName = basePath + self.config['fieldFile'] + '.escl'
-        self.log.info('Reading file '+ fileName )       
-        f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh)
+        self.log.info('Reading file '+ fileName )
+        # determine units and time
+        units =  PQ.getDimensionlessUnit()
+        
+        f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh,units,time )
         return f
 
 

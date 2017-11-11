@@ -5,6 +5,7 @@ from mupif import *
 
 import mupif.Physics.PhysicalQuantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+temperatureUnits = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
 
 class Celsian(Application.Application):
 
@@ -18,7 +19,7 @@ class Celsian(Application.Application):
         if (self.mesh == None):
             self.mesh = EnsightReader2.readEnsightGeo('paraview/MMPTestCase_v1.geo', parts, partRec)
 
-        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh)
+        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh, temperatureUnits, time)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):

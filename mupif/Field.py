@@ -30,6 +30,9 @@ from . import BBox
 from . import APIError
 from . import MupifObject
 from . import Mesh
+from .Physics import PhysicalQuantities 
+from .Physics.PhysicalQuantities import PhysicalQuantity
+
 from numpy import array, arange, random, zeros
 import numpy
 import copy
@@ -54,7 +57,7 @@ class FieldType(object):
     FT_cellBased   = 2
 
 @Pyro4.expose
-class Field(MupifObject.MupifObject):
+class Field(MupifObject.MupifObject, PhysicalQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -74,8 +77,8 @@ class Field(MupifObject.MupifObject):
         :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor should have tuple format 3x3 on each vertex or cell
-        :param obj units: Units of the field values
-        :param float time: Time associated with field values
+        :param Physics.PhysicalUnits: Field value units
+        :param Physics.PhysicalQuantity time: Time associated with field values
         :param list of tuples representing individual values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
@@ -84,7 +87,6 @@ class Field(MupifObject.MupifObject):
         self.fieldID = fieldID
         self.valueType = valueType
         self.time = time
-        self.units = units
         self.uri = None   #pyro uri; used in distributed setting
         #self.log = logging.getLogger()
         self.fieldType = fieldType
@@ -93,9 +95,15 @@ class Field(MupifObject.MupifObject):
                 ncomponents = mesh.getNumberOfVertices()
             else:
                 ncomponents = mesh.getNumberOfCells()
-            self.values=zeros((ncomponents, self.getRecordSize()))
+            self.value=zeros((ncomponents, self.getRecordSize()))
         else:
-            self.values = values
+            self.value = values
+
+        if (PhysicalQuantities.isPhysicalUnit(units)):
+            self.unit = units
+        else:
+            self.unit = PhysicalQuantities._findUnit(units)
+
 
     @classmethod
     def loadFromLocalFile(cls,fileName):
@@ -171,7 +179,7 @@ class Field(MupifObject.MupifObject):
         Get time of the field.
 
         :return: Time of field data
-        :rtype: float
+        :rtype: Physics.PhysicalQuantity
         """
         return self.time
 
@@ -183,17 +191,17 @@ class Field(MupifObject.MupifObject):
         :type position: tuple, a list of tuples
         :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
         :return: field value(s)
-        :rtype: tuple or a list of tuples
+        :rtype: Physics.PhysicalQuantity with given value or tuple of values
         """
         # test if positions is a list of positions
         if isinstance(positions, list):
             ans=[]
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return ans
+            return PhysicalQuantity(ans, self.unit)
         else:
             # single position passed
-            return self._evaluate(positions, eps)
+            return PhysicalQuantity(self._evaluate(positions, eps), self.unit)
 
     def _evaluate(self, position, eps):
         """
@@ -202,7 +210,7 @@ class Field(MupifObject.MupifObject):
         :param tuple position: 1D/2D/3D position vector
         :param float eps: Optional tolerance
         :return: field value
-        :rtype: tuple
+        :rtype: tuple  of doubles 
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
@@ -216,7 +224,7 @@ class Field(MupifObject.MupifObject):
                             if debug:
                                 log.debug(icell.getVertices())
                             try:
-                                answer = icell.interpolate(position, [self.values[i.number] for i in icell.getVertices()])
+                                answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
                             except IndexError:
                                 log.error('Field::evaluate failed, inconsistent data at cell %d'%(icell.label))
                                 raise
@@ -243,7 +251,7 @@ class Field(MupifObject.MupifObject):
                             log.debug(icell.getVertices())
 
                         try:
-                            tmp = self.values[icell.number]
+                            tmp = self.value[icell.number]
                             if count==0:
                                 answer = list(tmp)
                             else:
@@ -269,26 +277,56 @@ class Field(MupifObject.MupifObject):
             log.error('Field::evaluate - no source cell found for position ' + str(position))
             raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
 
-    def giveValue(self, componentID):
+
+
+    def getVertexValue(self, componentID):
         """
-        Returns the value associated with a given component (vertex or integration point on a cell).
+        Returns the value associated with a given vertex component
+
+        :param tuple componentID: A tuple identifying a component: vertex (vertexID,)
+        :return: The value
+        :rtype: Physics.PhysicalQuantity
+        """
+        if (self.fieldType == FieldType.FT_vertexBased):
+           return PhysicalQuantity(self.value[componentID], self.unit)
+        else:
+           raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
+        
+    def getCellValue(self, componentID):
+        """
+        Returns the value associated with a given integration point on a cell.
 
         :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
         :return: The value
-        :rtype: tuple
+        :rtype: Physics.PhysicalQuantity
         """
-        return self.values[componentID]
+        if (self.fieldType == FieldType.FT_cellBased):
+           return PhysicalQuantity(self.value[componentID], self.unit)
+        else:
+           raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
+
+       
+    def _giveValue(self, componentID):
+        """
+        Returns the value associated with a given component (vertex or integration point on a cell).
+        Depreceated, use getVertexValue() or getCellValue()
+
+        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :return: The value
+        :rtype: Physics.PhysicalQuantity
+        """
+        return PhysicalQuantity(self.value[componentID], self.unit)
 
     def setValue(self, componentID, value):
         """
         Sets the value associated with a given component (vertex or integration point on a cell).
 
         :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
-        :param tuple value: Value to be set for a given component
+        :param tuple value: Value to be set for a given component, should have the same units as receiver
 
         .. Note:: If a mesh has mapping attached (a mesh view) then we have to remember value locally and record change. The source field values are updated after commit() method is invoked.
         """
-        self.values[componentID] = value
+        self.value[componentID] = value
 
     def commit(self):
         """
@@ -299,7 +337,7 @@ class Field(MupifObject.MupifObject):
         :return: Returns units of the receiver
         :rtype: obj
         """
-        return self.units
+        return self.unit
 
     def merge(self, field):
         """
@@ -318,18 +356,18 @@ class Field(MupifObject.MupifObject):
         if (self.fieldType == FieldType.FT_vertexBased):
             values=[0]*mesh.getNumberOfVertices()
             for v in range(self.mesh.getNumberOfVertices()):
-                values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)]=self.values[v]
+                values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)]=self.value[v]
             for v in range(field.mesh.getNumberOfVertices()):
-                values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.values[v]
+                values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)]=field.value[v]
         else:
             values=[0]*mesh.getNumberOfCells()
             for v in range(self.mesh.getNumberOfCells()):
-                values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)]=self.values[v]
+                values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)]=self.value[v]
             for v in range(field.mesh.getNumberOfCells()):
-                values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)]=field.values[v]
+                values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)]=field.value[v]
 
         self.mesh=mesh
-        self.values=values
+        self.value=values
 
     def field2VTKData (self,name=None,lookupTable=None):
         """
@@ -359,24 +397,24 @@ class Field(MupifObject.MupifObject):
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable), 'Unstructured Grid Example')
+                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable), 'Unstructured Grid Example')
+                                     pyvtk.PointData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Tensor):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Tensors(self.values,**vectorsKw),lookupTable),'Unstructured Grid Example')
+                                     pyvtk.PointData(pyvtk.Tensors(self.value,**vectorsKw),lookupTable),'Unstructured Grid Example')
             
         else:
             if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.values],**scalarsKw),lookupTable), 'Unstructured Grid Example')
+                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable), 'Unstructured Grid Example')
+                                     pyvtk.CellData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Tensor):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Tensors(self.values,**vectorsKw),lookupTable),'Unstructured Grid Example')
+                                     pyvtk.CellData(pyvtk.Tensors(self.value,**vectorsKw),lookupTable),'Unstructured Grid Example')
             
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
@@ -457,10 +495,10 @@ class Field(MupifObject.MupifObject):
             coords = mesh.getVertex(i).getCoordinates()
             #print(coords)
             if self.valueType == ValueType.Tensor:#3x3 list
-                value = self.giveValue(i)
+                value = self.getVertexValue(i)
                 value = sum(value, ())[fieldComponent]
             else:
-                value = self.giveValue(i)[fieldComponent]
+                value = self.getVertexValue(i).getValue()[fieldComponent]
             
             if (coords[elev]>elevation[0] and coords[elev]<elevation[1]):
                 vertexPoints.append((coords[indX], coords[indY]))
@@ -510,8 +548,8 @@ class Field(MupifObject.MupifObject):
             if colorBarLegend != None:
                 if colorBarLegend == '':
                     colorBarLegend = self.getFieldIDName() + '_' + str(fieldComponent)
-                    if self.units != None:
-                        colorBarLegend = colorBarLegend + ' (' + self.units + ')'
+                    if self.unit != None:
+                        colorBarLegend = colorBarLegend + ' (' + self.unit + ')'
                 cbar.set_label(colorBarLegend, rotation=0 if colorBar=='horizontal' else 90)
         if title:
             plt.title(title)
@@ -595,7 +633,7 @@ class Field(MupifObject.MupifObject):
         newgrp=lowestUnused(trsf=lambda i:'mesh_%02d'%i,predicate=lambda t:t in gg)
         mh5=self.getMesh().asHdf5Object(parentgroup=gg,newgroup=newgrp)
 
-        if self.values:
+        if self.value:
             fieldGrp=hdf.create_group(lowestUnused(trsf=lambda i,group=group: group+'/field_%02d'%i,predicate=lambda t: t in hdf))
             fieldGrp['mesh']=mh5
             fieldGrp.attrs['fieldID']=self.fieldID
@@ -603,18 +641,18 @@ class Field(MupifObject.MupifObject):
             # string/bytes may not contain NULL when stored as string in HDF5
             # see http://docs.h5py.org/en/2.3/strings.html
             # that's why we cast to opaque type "void" and uncast using tostring before unpickling
-            fieldGrp.attrs['units']=numpy.void(pickle.dumps(self.units))
+            fieldGrp.attrs['units']=numpy.void(pickle.dumps(self.unit))
             fieldGrp.attrs['time']=numpy.void(pickle.dumps(self.time))
             #fieldGrp.attrs['time']=self.time.getValue()
             if self.fieldType==FieldType.FT_vertexBased:
                 val=numpy.empty(shape=(self.getMesh().getNumberOfVertices(),self.getRecordSize()),dtype=numpy.float)
-                for vert in range(self.getMesh().getNumberOfVertices()): val[vert]=self.giveValue(vert)
+                for vert in range(self.getMesh().getNumberOfVertices()): val[vert]=self.getVertexValue(vert).getValue()
                 fieldGrp['vertex_values']=val
             elif self.fieldType==FieldType.FT_cellBased:
                 # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
                 val=numpy.empty(shape=(self.getMesh().getNumberOfCells(),self.getRecordSize()),dtype=numpy.float)
                 for cell in range(self.getMesh().getNumberOfCells()):
-                    val[cell]=self.giveValue(cell)
+                    val[cell]=self.getCellValue(cell)
                 fieldGrp['cell_values']=val
             else: raise RuntimeError("Unknown fieldType %d."%(self.fieldType))
 
@@ -665,11 +703,12 @@ class Field(MupifObject.MupifObject):
         self.field2VTKData().tofile(filename=fileName,format=format)
 
     @staticmethod
-    def makeFromVTK2(fileName,time=0,skip=['coolwarm']):
+    def makeFromVTK2(fileName,unit,time=0,skip=['coolwarm']):
         '''
         Return fields stored in *fileName* in the VTK2 (``.vtk``) format.
 
         :param str fileName: filename to load from
+        :param unit PhysicalUnit: physical unit of filed values
         :param float time: time value for created fields (time is not saved in VTK2, thus cannot be recovered)
         :param [string,] skip: file names to be skipped when reading the input file; the default value skips the default coolwarm colormap.
         '''
@@ -680,7 +719,7 @@ class Field(MupifObject.MupifObject):
         try: data=pyvtk.VtkData(fileName) # this is where reading the file happens (inside pyvtk)
         except NotImplementedError:
             log.info('pyvtk fails to open (binary?) file "%s", trying through vtk.vtkGenericDataReader.'%fileName)
-            return Field.makeFromVTK3(fileName,time=time,forceVersion2=True)
+            return Field.makeFromVTK3(fileName,time=time,units=unit,forceVersion2=True)
         ugr=data.structure
         if not isinstance(ugr,pyvtk.UnstructuredGrid): raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)."%ugr.__class__.__name__)
         mesh=Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
@@ -699,7 +738,7 @@ class Field(MupifObject.MupifObject):
                 ret.append(Field(
                     mesh=mesh,
                     fieldID=fid,
-                    units=None, # not stored at all
+                    units=unit, # not stored at all
                     time=time,  # not stored either, set by caller
                     valueType=valueType,
                     values=values,
@@ -743,7 +782,7 @@ class Field(MupifObject.MupifObject):
             if f.getFieldType()==FieldType.FT_vertexBased: nn=mesh.getNumberOfVertices()
             else: nn=mesh.getNumberOfCells()
             arr.SetNumberOfValues(nn)
-            for i in range(nn): arr.SetTuple(i,f.giveValue(i))
+            for i in range(nn): arr.SetTuple(i,f._giveValue(i).getValue())
             if f.getFieldType()==FieldType.FT_vertexBased: vtkgrid.GetPointData().AddArray(arr)
             else: vtkgrid.GetCellData().AddArray(arr)
         # write the unstructured grid to file
@@ -759,7 +798,7 @@ class Field(MupifObject.MupifObject):
 
 
     @staticmethod
-    def makeFromVTK3(fileName,time=0,forceVersion2=False):
+    def makeFromVTK3(fileName,units, time=0,forceVersion2=False):
         '''
         Create fields from a VTK unstructured grid file (``.vtu``, format version 3, or ``.vtp`` with *forceVersion2*); the mesh is shared between fields.
 
@@ -768,6 +807,7 @@ class Field(MupifObject.MupifObject):
         .. note:: Units are not supported when loading from VTK, all fields will have ``None`` unit assigned.
 
         :param str fileName: VTK (``*.vtu``) file
+        :param PhysicalUnit units: units of read values
         :param float time: time value for created fields (time is not saved in VTK3, thus cannot be recovered)
         :param bool forceVersion2: if ``True``, ``vtk.vtkGenericDataObjectReader`` (for VTK version 2) will be used to open the file, isntead of ``vtk.vtkXMLGenericDataObjectReader``; this also supposes *fileName* ends with ``.vtk`` (not checked, but may cause an error).
         :return: list of new :obj:`Field` instances
@@ -804,7 +844,7 @@ class Field(MupifObject.MupifObject):
                 ret.append(Field(
                     mesh=mesh,
                     fieldID=fid,
-                    units=None, # not stored at all
+                    units=units, # not stored at all
                     time=time,  # not stored either, set by caller
                     valueType=valueType,
                     values=values,
@@ -812,6 +852,19 @@ class Field(MupifObject.MupifObject):
                 ))
         return ret
 
+    def _sum(self, other, sign1, sign2):
+       """ 
+       Should return a new instance. As deep copy is expensive, 
+       this operation should be avoided. Better to modify the field values.
+       """
+       raise TypeError('Not supported')
+    def inUnitsOf(self, *units):
+       """ 
+       Should return a new instance. As deep copy is expensive, 
+       this operation should be avoided. Better to use convertToUnits method
+       performing in place conversion.
+       """
+       raise TypeError('Not supported')
 
 #    def __deepcopy__(self, memo):
 #        """ Deepcopy operatin modified not to include attributes starting with underscore.

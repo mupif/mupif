@@ -7,4 +7,7 @@
 	* Applications and JobManagers now store their connection data (host, port, natPort) in nameserver metadata list. This allowed to reduce some argument passed to various methods (connectJobManager, allocateApplicationWithJobManager, etc).
 	* Introduced new decorator classes representing remote application and remote jobmanager connected using ssh tunnels, decorating the pyro proxy instances and allowing to store local data related to connection and allowing to terminate established tunnels. So the external RemoteApplicationRecord is not necessary any more.
 
-
+2017-11-11  Borek Patzak  <Borek.Patzak@fsv.cvut.cz>
+	branch origin/devel-ver2.0:
+	* Field giveValue() method removed, replaced by getVertexValue() and getCellValue() performing type checking. The old method can be recovered by calling _giveValue()
+	* Propertty and Field classes now enforce strong unit checking, thus it is compulsory to pass relevant parameters as PhysicalQuantities

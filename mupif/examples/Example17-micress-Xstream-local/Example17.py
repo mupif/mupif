@@ -99,7 +99,7 @@ def runTestCase(xst,mic):
       f = open(cConf.monFilenames[i],'w')
       f.close()
       
-    time  = cConf.startTime
+    time  = PQ.PhysicalQuantity(cConf.startTime, 's')
 
     # initialize TNO converter with lookup table
     lookup = LU.LU(cConf.qfactPrefix + '/' + cConf.qFactInputFiles[0])
@@ -170,7 +170,7 @@ def runTestCase(xst,mic):
       print ("set uniform start emissivity: ", propEpsXstream.getValue() )
     xst.setProperty(propEpsXstream)
        
-    while ( (time+eps) < cConf.targetTime ):
+    while ( (time..inUnitsOf(timeUnits).getValue()+eps) < cConf.targetTime ):
     
       print ('Simulation Time: '+ str(time))
       print ('---------------------------')
@@ -179,7 +179,7 @@ def runTestCase(xst,mic):
       # ---------------------------
       # where the critical time step is given by the macro scale output interval,
       # i.e. get the next available output  
-      dt = xst.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
+      dt = xst.getCriticalTimeStep()#.inUnitsOf(timeUnits).getValue()
       
       time = time + dt
       timeStepNumber = timeStepNumber + 1
@@ -189,7 +189,7 @@ def runTestCase(xst,mic):
       timing.append(time)
       timing.append(dt)
       
-      monTempLine = "{0:13s}".format(str(time))
+      monTempLine = "{0:13s}".format(str(time.getValue()))
     
       # ---------------------------
       # macro step (X-Stream)
@@ -197,7 +197,7 @@ def runTestCase(xst,mic):
       xst.solveStep(istep,runInBackground=False)       
       
       # get the macro temperature field
-      fieldTemperature = xst.getField(FieldID.FID_Temperature)
+      fieldTemperature = xst.getField(FieldID.FID_Temperature, time)
                
 
       # ---------------------------

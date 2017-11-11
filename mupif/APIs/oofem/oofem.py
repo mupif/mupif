@@ -138,7 +138,7 @@ class OOFEM(Application.Application):
         # set values
         if (field.getFieldType() == Field.FieldType.FT_vertexBased):
             for node in mesh.vertices():
-                target.setVertexValue(node.getNumber(), field.giveValue(node.getNumber()))
+                target.setVertexValue(node.getNumber(), field.getVertexValue(node.getNumber()))
         else:
             for node in mesh.vertices():
                 target.setVertexValue(node.getNumber(), field.evaluate(node.getCoordinates()))

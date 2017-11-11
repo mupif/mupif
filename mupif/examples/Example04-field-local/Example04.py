@@ -12,6 +12,8 @@ from mupif import *
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+temperatureUnit = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
 
 def main():
 
@@ -40,11 +42,12 @@ def main():
     mesh.dumpToLocalFile('mesh.dat')
     Mesh.Mesh.loadFromLocalFile('mesh.dat')
 
+    time = PQ.PhysicalQuantity(1.0, 's')
     # field1 is vertex based, i.e., field values are provided at vertices
-    field1 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values1)
+    field1 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values1)
     #field1.field2Image2D(title='Field', barFormatNum='%.0f')
     # field2 is cell based, i.e., field values are provided for cells
-    field2 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values2, Field.FieldType.FT_cellBased)
+    field2 = Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values2, Field.FieldType.FT_cellBased)
 
     # evaluate field at given point
     position=(20.1, 7.5, 0.0)
@@ -63,7 +66,7 @@ def main():
     position=(20.1, 9.5, 0.0)
     value3 = field3.evaluate(position) #correct answer 155.5
 
-    if ((abs(value1[0]-154.5) <= 1.e-4) and (abs(value2[0]-288.0) <= 1.e-4) and (abs(value3[0]-155.5) <= 1.e-4)):
+    if ((abs(value1.getValue()[0]-154.5) <= 1.e-4) and (abs(value2.getValue()[0]-288.0) <= 1.e-4) and (abs(value3.getValue()[0]-155.5) <= 1.e-4)):
         log.info("Test OK")
     else:
         log.error("Test FAILED")

@@ -50,7 +50,7 @@ value=field.evaluate(position)
 print ("Field value at position ", position, " is ", value)
 
 
-if (abs(value[0]-728.13) <= 1.e-4):
+if (abs(value.getValue()[0]-728.13) <= 1.e-4):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

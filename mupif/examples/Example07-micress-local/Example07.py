@@ -52,7 +52,7 @@ value=field.evaluate(position)
 log.debug("Field value at position "+str(position)+" is "+str(value))
 field.field2VTKData().tofile('example2')
 
-if (abs(value[0]-22.0) <= 1.e-4):
+if (abs(value.getValue()[0]-22.0) <= 1.e-4):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

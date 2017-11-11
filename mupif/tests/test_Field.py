@@ -35,7 +35,10 @@ class Field_TestCase(unittest.TestCase):
         self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
         self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
         self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],Field.FieldType.FT_cellBased)
-  
+
+        #register assertEqual operation for PhysicalQuantities
+        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
+        
     def tearDown(self):
         
         self.f1 = None
@@ -47,6 +50,14 @@ class Field_TestCase(unittest.TestCase):
         self.mesh = None
         self.mesh3=None
         self.mesh5=None
+
+
+    # unit tests support
+    def assertPhysicalQuantitiesEqual (self, first, second, msg=None):
+        if not first.__cmp__(second):
+            raise self.failureException(msg)
+    
+    
     def test_getRecordSize(self):
         self.assertEqual(self.f1.getRecordSize(), 1, 'error in getRecordSize for f1')
         self.assertEqual(self.f2.getRecordSize(), 3, 'error in getRecordSize for f2')
@@ -86,27 +97,27 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getTime().getValue(),16, 'error in getTime for f4')
         
     def test_evaluate(self):
-        self.assertEqual(self.f1.evaluate((1.,2.5,0.)),(93.5,),'error in evaluate for f1(point 1.,2.5,0.)')
-        self.assertEqual(self.f1.evaluate((3.,1.,0.)),(53.,),'error in evaluate for f1(point 3.,1.,0.)')
-        self.assertEqual(self.f6.evaluate((2.,2.,2.)),(24.,),'error in evaluate for f1(point 2.,2.,2.)')
-        self.assertEqual(self.f6.evaluate((1.5,1.5,1.5)),(18.,),'error in evaluate for f1(point 2.,2.,2.)')
+        self.assertEqual(self.f1.evaluate((1.,2.5,0.)).getValue(),(93.5,),'error in evaluate for f1(point 1.,2.5,0.)')
+        self.assertEqual(self.f1.evaluate((3.,1.,0.)).getValue(),(53.,),'error in evaluate for f1(point 3.,1.,0.)')
+        self.assertEqual(self.f6.evaluate((2.,2.,2.)).getValue(),(24.,),'error in evaluate for f1(point 2.,2.,2.)')
+        self.assertEqual(self.f6.evaluate((1.5,1.5,1.5)).getValue(),(18.,),'error in evaluate for f1(point 2.,2.,2.)')
 
-    def test_giveValue(self):
-        self.assertEqual(self.f1.giveValue(0),(0,),'error in giveValue for f1')
-        self.assertEqual(self.f1.giveValue(1),(12,),'error in giveValue for f1')
-        self.assertEqual(self.f1.giveValue(2),(175,),'error in giveValue for f1')
-        self.assertEqual(self.f4.giveValue(0),(6,),'error in giveValue for f4')
-        self.assertEqual(self.f4.giveValue(1),(16,),'error in giveValue for f4')
-        self.assertEqual(self.f4.giveValue(2),(36,),'error in giveValue for f4')
-        self.assertEqual(self.f4.giveValue(3),(33,),'error in giveValue for f4')
+    def test_getVertexValue(self):
+        self.assertEqual(self.f1.getVertexValue(0).getValue(),(0,),'error in getVertexValuep for f1')
+        self.assertEqual(self.f1.getVertexValue(1).getValue(),(12,),'error in getVertexValue for f1')
+        self.assertEqual(self.f1.getVertexValue(2).getValue(),(175,),'error in getVertexValue for f1')
+        self.assertEqual(self.f4.getVertexValue(0).getValue(),(6,),'error in getVertexValue for f4')
+        self.assertEqual(self.f4.getVertexValue(1).getValue(),(16,),'error in getVertexValue for f4')
+        self.assertEqual(self.f4.getVertexValue(2).getValue(),(36,),'error in getVertexValue for f4')
+        self.assertEqual(self.f4.getVertexValue(3).getValue(),(33,),'error in getVertexValue for f4')
     def test_setValue(self):
         self.f1.setValue(0,[5])
         self.f1.commit()
-        self.assertEqual(self.f1.giveValue(0),[5],'error in setValue for f1') 
+        self.assertEqual(self.f1.getVertexValue(0).getValue(),[5],'error in setValue for f1') 
         
         self.f4.setValue(3,[5])
         self.f4.commit()
-        self.assertEqual(self.f4.giveValue(3),[5],'error in setValue for f4')
+        self.assertEqual(self.f4.getVertexValue(3).getValue(),[5],'error in setValue for f4')
     def test_getUnits(self):
         # NB: PhysicalQuantity does not define __eq__ operator, hence string representation (name()) is compared
         self.assertEqual(self.f1.getUnits().name(),PU({'m': 1}, 1,(1,0,0,0,0,0,0)).name(),'error in getUnits for f1')
@@ -138,9 +149,9 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in dumpToLocalFile(getFieldID for res)')
         self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in dumpToLocalFile(getFieldIDName for res)')
         self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in dumpToLocalFile(getTime for res)')
-        self.assertEqual(self.res.giveValue(0),self.f1.giveValue(0),'error in dumpToLocalFile(giveValue for res)')
-        self.assertEqual(self.res.giveValue(1),self.f1.giveValue(1),'error in dumpToLocalFile(giveValue for res)')
-        self.assertEqual(self.res.giveValue(2),self.f1.giveValue(2),'error in dumpToLocalFile(giveValue for res)')
+        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in dumpToLocalFile(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in dumpToLocalFile(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in dumpToLocalFile(getVertexValue for res)')
         print(self.res.getUnits())
         print(self.f1.getUnits())
         self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in dumpToLocalFile(getUnits for res)')
@@ -152,10 +163,10 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getFieldID(),self.f4.getFieldID(),'error in dumpToLocalFile(getFieldID for res)')
         self.assertEqual(self.res.getFieldIDName(),self.f4.getFieldIDName(),'error in dumpToLocalFile(getFieldIDName for res)')
         self.assertEqual(self.res.getTime().getValue(),self.f4.getTime().getValue(), 'error in dumpToLocalFile(getTime for res)')
-        self.assertEqual(self.res.giveValue(0),self.f4.giveValue(0),'error in dumpToLocalFile(giveValue for res)')
-        self.assertEqual(self.res.giveValue(1),self.f4.giveValue(1),'error in dumpToLocalFile(giveValue for res)')
-        self.assertEqual(self.res.giveValue(2),self.f4.giveValue(2),'error in dumpToLocalFile(giveValue for res)')
-        self.assertEqual(self.res.giveValue(3),self.f4.giveValue(3),'error in dumpToLocalFile(giveValue for res)')
+        self.assertEqual(self.res.getVertexValue(0),self.f4.getVertexValue(0),'error in dumpToLocalFile(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(1),self.f4.getVertexValue(1),'error in dumpToLocalFile(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(2),self.f4.getVertexValue(2),'error in dumpToLocalFile(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(3),self.f4.getVertexValue(3),'error in dumpToLocalFile(getVertexValue for res)')
         
     def test_toHdf5(self):
         with tempfile.NamedTemporaryFile(suffix='.hdf5') as tmp:
@@ -166,15 +177,15 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toHdf5(getFieldID for res)')
         self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in toHdf5(getFieldIDName for res)')
         self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toHdf5(getTime for res)')
-        self.assertEqual(self.res.giveValue(0),self.f1.giveValue(0),'error in toHdf5(giveValue for res)')
-        self.assertEqual(self.res.giveValue(1),self.f1.giveValue(1),'error in toHdf5(giveValue for res)')
-        self.assertEqual(self.res.giveValue(2),self.f1.giveValue(2),'error in toHdf5(giveValue for res)')
+        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in toHdf5(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in toHdf5(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in toHdf5(getVertexValue for res)')
         self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in toHdf5(getUnits for res)')
         
     def test_toVTK2(self):
         with tempfile.NamedTemporaryFile(suffix='.vtk') as tmp:
             self.f1.toVTK2(tmp.name)
-            self.res=self.f1.makeFromVTK2(tmp.name, time=self.f1.getTime())[0]
+            self.res=self.f1.makeFromVTK2(tmp.name, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
         print(self.res)
         self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toVTK2(getRecordSize for res)')
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toVTK2(getValueType for res)')    
@@ -183,9 +194,9 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toVTK2(getTime for res)')
         # XXX: makeFromVTK2 returns 1-list, original field has 1-tuple
         # what is right?
-        self.assertEqual(tuple(self.res.giveValue(0)),self.f1.giveValue(0),'error in toVTK2(giveValue for res)')
-        self.assertEqual(tuple(self.res.giveValue(1)),self.f1.giveValue(1),'error in toVTK2(giveValue for res)')
-        self.assertEqual(tuple(self.res.giveValue(2)),self.f1.giveValue(2),'error in toVTK2(giveValue for res)')
+        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in toVTK2(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in toVTK2(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in toVTK2(getVertexValue for res)')
         # VTK2 does not store units
         # self.assertEqual(self.res.getUnits(),self.f1.getUnits(),'error in toVTK2(getUnits for res)')
        
@@ -193,15 +204,15 @@ class Field_TestCase(unittest.TestCase):
     def test_toVTK3(self):
         with tempfile.NamedTemporaryFile(suffix='.vtu') as tmp:
             self.f1.toVTK3(tmp.name)
-            self.res=self.f1.makeFromVTK3(tmp.name,time=self.f1.getTime())[0]
+            self.res=self.f1.makeFromVTK3(tmp.name,self.f1.getUnits(),time=self.f1.getTime())[0]
         self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toVTK3(getRecordSize for res)')
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toVTK3(getValueType for res)')    
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toVTK3(getFieldID for res)')
         self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in toVTK3(getFieldIDName for res)')
         self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toVTK3(getTime for res)')
-        self.assertEqual(self.res.giveValue(0),self.f1.giveValue(0),'error in toVTK3(giveValue for res)')
-        self.assertEqual(self.res.giveValue(1),self.f1.giveValue(1),'error in toVTK3(giveValue for res)')
-        self.assertEqual(self.res.giveValue(2),self.f1.giveValue(2),'error in toVTK3(giveValue for res)')
+        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in toVTK3(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in toVTK3(getVertexValue for res)')
+        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in toVTK3(getVertexValue for res)')
         # VTK3 does not store units
         # self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in toVTK3(getUnits for res)')
         

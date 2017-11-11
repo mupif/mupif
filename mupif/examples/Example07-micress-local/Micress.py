@@ -46,7 +46,7 @@ class Micress(Application.Application):
         if (self.mesh == None):
             self.mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)
 
-        f = VtkReader2.readField(self.mesh, Data,FieldID.FID_Concentration, "conc1", "micress/sim.vtk", 1)
+        f = VtkReader2.readField(self.mesh, Data,FieldID.FID_Concentration, PQ.getDimensionlessUnit(), timeUnits, "conc1", "micress/sim.vtk", 1)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
