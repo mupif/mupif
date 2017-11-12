@@ -73,7 +73,7 @@ class Field(MupifObject.MupifObject):
 
         :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor should have tuple format 3x3 on each vertex or cell
+        :param ValueType valueType: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param obj units: Units of the field values
         :param float time: Time associated with field values
         :param list of tuples representing individual values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
@@ -224,13 +224,16 @@ class Field(MupifObject.MupifObject):
 
                     except ZeroDivisionError:
                         print('ZeroDivisionError?')
-                        log.debug(icell.number, position)
+                        log.debug(icell.number)
+                        log.debug(position)
                         cell.debug=1
                         log.debug(icell.containsPoint(position), icell.glob2loc(position))
 
-                log.error('Field::evaluate - no source cell found for position ', position)
+                log.error('Field::evaluate - no source cell found for position %s' % str(position) )
                 for icell in cells:
-                    log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                    log.debug(icell.number)
+                    log.debug(icell.containsPoint(position) )
+                    log.debug(icell.glob2loc(position))
 
 
             else: #if (self.fieldType == FieldType.FT_vertexBased):
@@ -365,7 +368,7 @@ class Field(MupifObject.MupifObject):
                                      pyvtk.PointData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Tensor):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Tensors(self.values,**vectorsKw),lookupTable),'Unstructured Grid Example')
+                                     pyvtk.PointData(pyvtk.Tensors( self.getMartixForTensor(self.values), **vectorsKw),lookupTable),'Unstructured Grid Example')
             
         else:
             if (self.getValueType() == ValueType.Scalar):
@@ -376,8 +379,21 @@ class Field(MupifObject.MupifObject):
                                      pyvtk.CellData(pyvtk.Vectors(self.values,**vectorsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Tensor):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Tensors(self.values,**vectorsKw),lookupTable),'Unstructured Grid Example')
-            
+                                     pyvtk.CellData(pyvtk.Tensors( self.getMartixForTensor(self.values), **vectorsKw),lookupTable),'Unstructured Grid Example')
+    
+    def getMartixForTensor(self,values):
+        """
+        Reshape values to a list with 3x3 arrays. Usable for VTK export.
+
+        :param list values: List containing tuples of 9 values, e.g. [(1,2,3,4,5,6,7,8,9), (1,2,3,4,5,6,7,8,9), ...]
+        
+        :return: List containing 3x3 matrices for each tensor
+        :rtype: list
+        """ 
+        tensor = []
+        for i in values:
+            tensor.append(numpy.reshape (i, (3,3)))
+        return tensor
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
@@ -456,11 +472,7 @@ class Field(MupifObject.MupifObject):
         for i in range (0, numVertices):
             coords = mesh.getVertex(i).getCoordinates()
             #print(coords)
-            if self.valueType == ValueType.Tensor:#3x3 list
-                value = self.giveValue(i)
-                value = sum(value, ())[fieldComponent]
-            else:
-                value = self.giveValue(i)[fieldComponent]
+            value = self.giveValue(i)[fieldComponent]
             
             if (coords[elev]>elevation[0] and coords[elev]<elevation[1]):
                 vertexPoints.append((coords[indX], coords[indY]))
