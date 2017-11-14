@@ -78,7 +78,7 @@ class Workflow(Application.Application):
             dt = self.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
             time=time+dt
             if (time > self.targetTime):
-                         time = targetTime
+                         time = self.targetTime
             timeStepNumber = timeStepNumber+1
             istep=TimeStep.TimeStep(time, dt, self.targetTime, timeUnits, timeStepNumber)
         
