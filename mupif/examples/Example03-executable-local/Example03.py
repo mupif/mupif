@@ -66,54 +66,72 @@ class application3(Application.Application):
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0,'s')
 
-time  = 0
-timestepnumber=0
-targetTime = 10.0
 
 
-app1 = application1(None)
-app3 = application3(None)
-
-while (abs(time -targetTime) > 1.e-6):
-
-    #determine critical time step
-    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
-             app3.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
-    #update time
-    time = time+dt
-    if (time > targetTime):
-        #make sure we reach targetTime at the end
-        time = targetTime
-    timestepnumber = timestepnumber+1
-    log.debug("Step: %g %g %g "%(timestepnumber,time,dt))
-    # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
-
-    try:
-        #solve problem 1
-        app1.solveStep(istep)
-        #request Concentration property from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
-        # register Concentration property in app3
-        app3.setProperty (c)
-        # solve second sub-problem 
-        app3.solveStep(istep)
-
+class Demo03(Workflow.Workflow):
+    def __init__ (self, targetTime=0.):
+        super(Demo03, self).__init__(file='', workdir='', targetTime=targetTime)
         
-    except APIError.APIError as e:
-        log.error("Following API error occurred:",e)
-        break
+        self.app1 = application1(None)
+        self.app3 = application3(None)
+        self.userDT = None
 
-prop = app3.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
-log.debug("Result: "+str(prop.getValue()))
+    def solveStep (self, istep, stageID=0, runInBackground=False):
 
-if (abs(prop.getValue()-5.05) <= 1.e-4):
+        #solve problem 1
+        self.app1.solveStep(istep)
+        #request Concentration property from app1
+        c = self.app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
+        # register Concentration property in app3
+        self.app3.setProperty (c)
+        # solve second sub-problem 
+        self.app3.solveStep(istep)
+
+        self.app1.finishStep(istep)
+        self.app3.finishStep(istep)
+
+    def getCriticalTimeStep(self):
+        # determine critical time step
+        if (self.userDT==None): self.userDT = self.app1.getCriticalTimeStep()
+        print (self.userDT)
+        
+        return min (self.userDT, self.app1.getCriticalTimeStep(), self.app3.getCriticalTimeStep())
+
+    def terminate(self):
+        #self.thermalAppRec.terminateAll()
+        self.app1.terminate()
+        self.app3.terminate()
+        super(Demo03, self).terminate()
+
+    def getApplicationSignature(self):
+        return "Demo03 workflow 1.0"
+
+    def getAPIVersion(self):
+        return "1.0"
+
+    def setProperty(self, property, objectID=0):
+         if (property.getPropertyID() == PropertyID.PID_UserTimeStep):
+             # remember the mapped value
+             self.userDT = PQ.PhysicalQuantity(property.getValue()[0], property.getUnits())
+         else:
+             raise APIError.APIError ('Unknown property ID')
+    def getProperty(self, propID, time, objectID=0):
+         if (propID == PropertyID.PID_KPI01):
+             return self.app3.getProperty (PropertyID.PID_CumulativeConcentration, time)
+         else:
+             raise APIError.APIError ('Unknown property ID')
+        
+if __name__=='__main__':
+    # instanciate workflow
+    demo = Demo03(targetTime=5.)
+    # pass some parameters using set ops
+    demo.setProperty(Property.Property((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar,
+                                       None, timeUnits, 0))
+    #execute workflow
+    demo.solve()
+    #get resulting KPI for workflow
+    kpi01 = demo.getProperty (PropertyID.PID_KPI01, None)
+
+    log.info("KPI returned " +  str(kpi01.getValue()) + str(kpi01.getUnits()))
     log.info("Test OK")
-else:
-    log.error("Test FAILED")
-    sys.exit(1)
 
-
-# terminate
-app1.terminate();
-app3.terminate();
