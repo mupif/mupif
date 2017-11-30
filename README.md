@@ -7,7 +7,7 @@ MuPIF is modular, object-oriented integration platform allowing to create comple
 
 
 ## Project website
-http://www.oofem.org
+http://www.mupif.org
 
 ## Prerequisites
 MuPIF requires the python interpreter, version 3.2 or newer. It has been tested on Linux / Windows systems. Network communication relies on Pyro4 module.
