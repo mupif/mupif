@@ -31,7 +31,7 @@ retval=0
 LOG=()
 
 
-if [ "$USE_COVERAGE" == true ]
+if [ "$USE_CODECOV" == true ]
 then
     COMMAND = "coverage run"
 else
