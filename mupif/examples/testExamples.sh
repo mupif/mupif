@@ -31,12 +31,17 @@ retval=0
 LOG=()
 
 
+echo CODECOV flag is set to $USE_CODECOV
+
 if [ "$USE_CODECOV" == true ]
 then
     COMMAND = "coverage run"
 else
     COMMAND = $PYTHON
 fi
+echo Setting command to $COMMAND
+
+
 
 
 AppendLog () {
