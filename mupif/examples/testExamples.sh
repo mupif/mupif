@@ -35,9 +35,9 @@ echo CODECOV flag is set to $USE_CODECOV
 
 if [ "$USE_CODECOV" == true ]
 then
-    COMMAND = "coverage run"
+    COMMAND="coverage run"
 else
-    COMMAND = $PYTHON
+    COMMAND=$PYTHON
 fi
 echo Setting command to $COMMAND
 
