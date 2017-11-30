@@ -30,7 +30,7 @@ script:
    - codecov -F unittests
    - pwd
    - pushd mupif/examples
-   - export USE_CODECOV
+   - export USE_CODECOV=true
    - /bin/bash testExamples.sh
    - popd
    - codecov -T examples
