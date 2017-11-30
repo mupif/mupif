@@ -15,6 +15,8 @@ install:
    - pip install pyvtk
    # this seems to be the new active upstream for pyvtk supporting 2.x and 3.x
    - pip install git+https://github.com/pearu/pyvtk.git
+   # codecov-python
+   - pip install codecov
    # install mupif itself
    - python setup.py install 
 
@@ -24,10 +26,15 @@ install:
 script:
    - ls -l
    - pwd
+   - nosetests --rednose -v --with-coverage
+   - codecov -F unittests
+   - pwd
    - pushd mupif/examples
+   - export USE_CODECOV
    - /bin/bash testExamples.sh
    - popd
-   - nosetests --rednose -v
+   - codecov -T examples
+
 ##
 ## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
 ##
