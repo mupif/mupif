@@ -19,7 +19,7 @@ timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class Demo11(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -124,7 +124,7 @@ class Demo11(Workflow.Workflow):
 
     
 if __name__=='__main__':
-    demo = Demo11(targetTime=1.)
+    demo = Demo11(targetTime=PQ.PhysicalQuantity(1.,'s'))
     demo.solve()
     log.info("Test OK")
 

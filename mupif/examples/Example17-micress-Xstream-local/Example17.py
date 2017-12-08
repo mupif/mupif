@@ -170,7 +170,7 @@ def runTestCase(xst,mic):
       print ("set uniform start emissivity: ", propEpsXstream.getValue() )
     xst.setProperty(propEpsXstream)
        
-    while ( (time..inUnitsOf(timeUnits).getValue()+eps) < cConf.targetTime ):
+    while ( (time.inUnitsOf(timeUnits).getValue()+eps) < cConf.targetTime ):
     
       print ('Simulation Time: '+ str(time))
       print ('---------------------------')

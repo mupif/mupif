@@ -14,7 +14,7 @@ timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 graphics = False
 
 class Demo13(Workflow.Workflow):
-    def __init__ (self, targetTime=3.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,timeUnits)):
         super(Demo13, self).__init__(file='', workdir='', targetTime=targetTime)
         
         self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
@@ -56,7 +56,7 @@ class Demo13(Workflow.Workflow):
 
     
 if __name__=='__main__':
-    demo = Demo13(targetTime=3.0)
+    demo = Demo13(targetTime=PQ.PhysicalQuantity(3.0,'s'))
     demo.solve()
     #ft.field2Image2DBlock() #To block the window
     log.info("Test OK")
