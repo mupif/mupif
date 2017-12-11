@@ -52,6 +52,7 @@ class Workflow(Application.Application):
 
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
+        :param (float or Physics.PhysicalQuantity) targetTime: Optional parameter for target time
         """
         super(Workflow, self).__init__(file=file, workdir=workdir)
         self.targetTime = targetTime
