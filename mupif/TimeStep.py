@@ -14,9 +14,12 @@ class TimeStep(object):
         """
         Initializes time step.
 
-        :param (float or Physics.PhysicalQuantity) t: Time
-        :param (float or Physics.PhysicalQuantity) dt: Step length (time increment)
-        :param (float or Physics.PhysicalQuantity) targetTime: target simulation time
+        :param t: Time, type depends on 'units'
+        :type t: float or Physics.PhysicalQuantity
+        :param dt: Step length (time increment), type depends on 'units'
+        :type dt: float or Physics.PhysicalQuantity
+        :param targetTime: target simulation time, type depends on 'units' 
+        :type targetTime: float or Physics.PhysicalQuantity
         :param Physics.PhysicalUnit units: optional units for t,dt,tarrgetTime if given as float values 
         :param int n: Optional, solution time step number, default = 1
         """

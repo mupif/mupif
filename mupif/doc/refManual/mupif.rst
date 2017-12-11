@@ -107,6 +107,22 @@ mupif.Mesh module
     :undoc-members:
     :show-inheritance:
 
+mupif.MetadataKeys module
+-------------------------
+
+.. automodule:: mupif.MetadataKeys
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mupif.MupifObject module
+------------------------
+
+.. automodule:: mupif.MupifObject
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mupif.Octree module
 -------------------
 
@@ -143,6 +159,14 @@ mupif.RemoteAppRecord module
 ----------------------------
 
 .. automodule:: mupif.RemoteAppRecord
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mupif.SimpleJobManager module
+-----------------------------
+
+.. automodule:: mupif.SimpleJobManager
     :members:
     :undoc-members:
     :show-inheritance:
@@ -195,6 +219,14 @@ mupif.VtkReader2 module
     :undoc-members:
     :show-inheritance:
 
+mupif.Workflow module
+---------------------
+
+.. automodule:: mupif.Workflow
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mupif.fieldID module
 --------------------
 
@@ -207,6 +239,14 @@ mupif.functionID module
 -----------------------
 
 .. automodule:: mupif.functionID
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mupif.operatorUtil module
+-------------------------
+
+.. automodule:: mupif.operatorUtil
     :members:
     :undoc-members:
     :show-inheritance:

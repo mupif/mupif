@@ -40,8 +40,8 @@ log = logging.getLogger()
 log.setLevel("INFO")
 
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-
+timeUnits = PQ.PhysicalUnit('s', 1., [0,0,1,0,0,0,0,0,0])
+dummyUnits = PQ.PhysicalUnit('dummy', 1., [0,0,0,0,0,0,0,0,0])
 
 import clientConfig as cConf
 
@@ -183,7 +183,8 @@ def runTestCase(xst,mic):
       
       time = time + dt
       timeStepNumber = timeStepNumber + 1
-      istep = TimeStep.TimeStep(time, dt, cConf.targetTime, timeUnits, timeStepNumber)
+      #we have units with Time
+      istep = TimeStep.TimeStep(time, dt, PQ.PhysicalQuantity(cConf.targetTime, time.getUnitName()), None, timeStepNumber)
 
       timing.append(timeStepNumber)
       timing.append(time)
@@ -198,7 +199,6 @@ def runTestCase(xst,mic):
       
       # get the macro temperature field
       fieldTemperature = xst.getField(FieldID.FID_Temperature, time)
-               
 
       # ---------------------------
       # micro step (MICRESS)
@@ -216,16 +216,17 @@ def runTestCase(xst,mic):
       timeMicroStep = 0
       pos = 0         
       while ( pos < len(p) ): # loop over macro locations
-
         usedInterfaces = len(mic)            
         if ( (pos + usedInterfaces - 1) >= len(p) ):
           # deactivate interfaces which will get no new location, resp. no work to do anymore
           usedInterfaces = len(p) - pos
-
+        
         for interface in range(usedInterfaces):
     
           # get macro value for temperature, gradient always zero here
-          temp = fieldTemperature.evaluate(p[pos+interface])[0]
+          
+          
+          temp = fieldTemperature.evaluate(p[pos+interface]).getValue()[0]
           tcEnd = timeTime.time()
           timing.append(tcEnd - tcStart)
           
@@ -358,7 +359,7 @@ def runTestCase(xst,mic):
       for val in vEm:
         emissivityValues.append((val,))
       fieldEmissivity = Field.Field( bgMesh, XStFieldID.FID_Emissivity, \
-                          ValueType.Scalar, 'bgMesh', 0.0, emissivityValues )
+                          ValueType.Scalar, dummyUnits, 0.0, emissivityValues )
       #if cConf.debug:
         #print "writing emissivity field"
         #sys.stdout.flush()
@@ -417,6 +418,7 @@ def runTestCase(xst,mic):
       # ---------------------------     
            
   except Exception as e:
+    print(e)
     log.exception(e)
     raise e
     
@@ -542,8 +544,7 @@ def main():
         print ("... skipping MICRESS interface allocation")
     
     except: # logger output for exception will be done before
-      pass
-    
+      raise ValueError
     
     finally:
             
@@ -560,5 +561,9 @@ def main():
 
 # invoke the main routine
 if __name__ == '__main__':
+    try:
         main()
         log.info("Test OK")
+    except:
+        log.info("Test FAILED")
+        

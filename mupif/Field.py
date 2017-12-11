@@ -77,11 +77,13 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor should have tuple format 3x3 on each vertex or cell
-        :param Physics.PhysicalUnits: Field value units
+        :param Physics.PhysicalUnits units: Field value units
         :param Physics.PhysicalQuantity time: Time associated with field values
-        :param list of tuples representing individual values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
+        :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
+        :type values: list of tuples representing individual values
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         """
+        
         super(Field, self).__init__()
         self.mesh = mesh
         self.fieldID = fieldID
@@ -431,29 +433,30 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         Plots and/or saves 2D image using a matplotlib library. Works for structured and unstructured 2D/3D fields. 2D/3D fields need to define plane. This method gives only basic viewing options, for aesthetic and more elaborated output use e.g. VTK field export with 
         postprocessors such as ParaView or Mayavi. Idea from https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html#id1
         
-        :param Field field : field of unknowns
-        :param str plane: what plane to extract from field, valid values are 'xy', 'xz', 'yz' 
+        :param Field field: field of unknowns
+        :param str plane: what plane to extract from field, valid values are 'xy', 'xz', 'yz'
         :param tuple elevation: range of third coordinate. For example, in plane='xy' is grabs z coordinates in the range
-        :param int numX : number of divisions on x graph axis
-        :param int numY : number of divisions on y graph axis
-        :param str interp : interpolation type when transferring to a grid. Valid values 'linear', 'nearest' or 'cubic'
+        :param int numX: number of divisions on x graph axis
+        :param int numY: number of divisions on y graph axis
+        :param str interp: interpolation type when transferring to a grid. Valid values 'linear', 'nearest' or 'cubic'
         :param int fieldComponent: component of the field
-        :param bool vertex : if vertices shoud be plot as points
-        :param str colorBar : color bar details. Valid values '' for no colorbar, 'vertical' or 'horizontal'  
-        :param str colorBarLegend : Legend for color bar. If '', current field name and units are printed. None prints nothing.
+        :param bool vertex: if vertices shoud be plot as points
+        :param str colorBar: color bar details. Valid values '' for no colorbar, 'vertical' or 'horizontal'  
+        :param str colorBarLegend: Legend for color bar. If '', current field name and units are printed. None prints nothing.
         :param tuple barRange: min and max bar range. If barRange=('NaN','NaN'), it is adjusted automatically
-        :param str barFormatNum : format of color bar numbers
-        :param str title : title
-        :param str xlabel : x axis label
-        :param str ylabel : y axis label
-        :param str fileName : if nonempty, a filename is written to the disk, usually png, pdf, ps, eps and svg are supported
-        :param bool show : if the plot should be showed
-        :param tuple figsize : size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
-        :param obj matPlotFig : False means plot window remains in separate thread, True waits until a plot window becomes closed
+        :param str barFormatNum: format of color bar numbers
+        :param str title: title
+        :param str xlabel: x axis label
+        :param str ylabel: y axis label
+        :param str fileName: if nonempty, a filename is written to the disk, usually png, pdf, ps, eps and svg are supported
+        :param bool show: if the plot should be showed
+        :param tuple figsize: size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
+        :param obj matPlotFig: False means plot window remains in separate thread, True waits until a plot window becomes closed
         
-        :return: Two real roots if they exist
-        :rtype: tuple
-        """ 
+        :return: hadle to matPlotFig
+        :rtype: matPlotFig
+        """
+        
         try:
             import numpy as np
             import math
@@ -496,7 +499,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             #print(coords)
             if self.valueType == ValueType.Tensor:#3x3 list
                 value = self.getVertexValue(i)
-                value = sum(value, ())[fieldComponent]
+                value = sum(value.getValue(), ())[fieldComponent]
             else:
                 value = self.getVertexValue(i).getValue()[fieldComponent]
             
@@ -549,7 +552,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 if colorBarLegend == '':
                     colorBarLegend = self.getFieldIDName() + '_' + str(fieldComponent)
                     if self.unit != None:
-                        colorBarLegend = colorBarLegend + ' (' + self.unit + ')'
+                        colorBarLegend = colorBarLegend + ' (' + self.unit.name() + ')'
                 cbar.set_label(colorBarLegend, rotation=0 if colorBar=='horizontal' else 90)
         if title:
             plt.title(title)

@@ -712,13 +712,13 @@ linear
 # Number of connecting points?    (integer)
 1
 # Initial temperature at the bottom?  (real)  [K]
-339.36999999999995
+339.37
 # Temperature gradient in z-direction?  [K/cm]
 0.0
 # 1 Connecting point, time  t [sec]?
 1.0
 # 1 Connecting point, temperature
-339.36999999999995
+339.37
 # 1 connecting point, temperature gradient in z-direction (real)  [K/cm]
 0.0
 # Moving-frame system in z-direction?

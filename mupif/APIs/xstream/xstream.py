@@ -149,7 +149,7 @@ class xstream(Application.Application):
           
           :note: In the current implementation the ID will be ignored. The field file
                  specified in the configuration will be read, i.e. for temperature.
-          :todo: The units  are not properly set
+          :todo: The units are not properly set
           
           :param FieldID fieldID: ID of the field to get (see XStFieldID.py or Mupif FieldID.py)
           :param PhysicalQuantity time: time
@@ -170,7 +170,7 @@ class xstream(Application.Application):
         fileName = basePath + self.config['fieldFile'] + '.escl'
         self.log.info('Reading file '+ fileName )
         # determine units and time
-        units =  PQ.getDimensionlessUnit()
+        units = PQ.getDimensionlessUnit()
         
         f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh,units,time )
         return f
@@ -274,8 +274,8 @@ class xstream(Application.Application):
             a = mina
             while (a <= maxa):
                 p = (a,b,fix)
-                v = field.evaluate(p)[0]
-                f.write(str(a).rjust(20) + ' ' + str(b).rjust(20) + ' ' + str(v).rjust(20) + '\n')            
+                v = field.evaluate(p).getValue()[0]
+                f.write(str(a).rjust(20) + ' ' + str(b).rjust(20) + ' ' + str(v).rjust(20) + '\n')           
                 a = round(a + spacing,7)
             b = round(b + spacing, 7)
         f.close()

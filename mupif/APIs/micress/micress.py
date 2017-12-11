@@ -38,6 +38,7 @@ import pyvtk
 from mupif import *
 import logging
 import mupif.Physics.PhysicalQuantities as PQ
+dummyUnits = PQ.PhysicalUnit('dummy',   1.,    [0,0,0,0,0,0,0,0,0])
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 import micressConfig as mConf
@@ -196,6 +197,7 @@ class micress(Application.Application):
           :rtype: Property
           
         """
+        timeWithUnits = time
         time = time.inUnitsOf(timeUnits).getValue()
         if ( ( propID == PropertyID.PID_Concentration ) or \
              ( propID == MICPropertyID.PID_PhaseNames ) or \
@@ -263,17 +265,17 @@ class micress(Application.Application):
 
             
         if (propID == MICPropertyID.PID_PhaseFractions):
-          return Property.Property([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, time, MICPropertyID.UNIT_Percent, 0)
+          return Property.Property([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, time, dummyUnits, 0)
         elif (propID == MICPropertyID.PID_Dimensions):
-          return Property.Property(self.dimensions,MICPropertyID.PID_Dimensions, ValueType.Vector, time, MICPropertyID.UNIT_Meter, 0)
+          return Property.Property(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, timeWithUnits, PQ._base_units[0][1], 0)
         elif (propID == MICPropertyID.PID_Temperature):
-          return Property.Property(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, time, MICPropertyID.UNIT_Kelvin, 0)
+          return Property.Property(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, time, PQ._base_units[4][1], 0)
         elif (propID == MICPropertyID.PID_ComponentNames):
-          return Property.Property(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, time, MICPropertyID.UNIT_String, 0)
+          return Property.Property(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, time, dummyUnits, 0)
         elif (propID == MICPropertyID.PID_PhaseNames):
-          return Property.Property(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, time, MICPropertyID.UNIT_String, 0)          
+          return Property.Property(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, time, dummyUnits, 0)          
         elif (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
-          return Property.Property(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, time, MICPropertyID.UNIT_Qubicmeter, 0)        
+          return Property.Property(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, time, dummyUnits, 0)        
         elif (propID == PropertyID.PID_Concentration):
           idx = 0
           while ( idx < len(self.t) ):

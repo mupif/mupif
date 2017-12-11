@@ -72,8 +72,11 @@ class Demo18(Workflow.Workflow):
         return "1.0"
     
 if __name__=='__main__':
-    demo = Demo18(targetTime=PQ.PhysicalQuantity(2.,'s'))
-    demo.solve()
-    log.info("Test OK")
+    try:
+        demo = Demo18(targetTime=PQ.PhysicalQuantity(2.,'s'))
+        demo.solve()
+        log.info("Test OK")
+    except:
+        log.info("Test FAILED")
 
 

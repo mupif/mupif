@@ -74,7 +74,7 @@ class Workflow(Application.Application):
         The default implementation solves the problem
         in series of time steps using solveStep method (inheritted) until the final time is reached.
 
-        :param bool runInBackground: optional argument, defualt False. If True, the solution will run in background (in separate thread or remotely).
+        :param bool runInBackground: optional argument, default False. If True, the solution will run in background (in separate thread or remotely).
 
         """
         time = PQ.PhysicalQuantity(0., timeUnits)

@@ -525,19 +525,20 @@ def connectJobManager (ns, jobManName, hkey=None, sshContext=None):
 
 def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=None):
     """
-    Request new application instance to be spawned by  given jobManager
-
+    Request new application instance to be spawned by  given jobManager.
+    
     :param Pyro4.naming.Nameserver ns: running name server
-    :param jobManager jobmanager to use 
+    :param jobManager jobManager: jobmanager to use
     :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param str hkey: A password string
-    :param sshContext describing optional ssh tunnel connection detail 
+    :param sshContext sshContext: describing optional ssh tunnel connection detail
 
-
-    :return: Application instance
-    :rtype: Application.RemoteApplication 
+    :returns: Application instance
+    :rtype: Application.RemoteApplication
     :raises Exception: if allocation of job fails
+    
     """
+
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     log.debug('Trying to connect to JobManager')
     #(jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
@@ -591,8 +592,7 @@ def allocateNextApplication (ns, jobMan, natPort, sshContext=None):
     :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param sshContext describing optional ssh tunnel connection detail 
 
-
-    :return: Application instance
+    :returns: Application instance
     :rtype: Application.RemoteApplication 
     :raises Exception: if allocation of job fails
     """
