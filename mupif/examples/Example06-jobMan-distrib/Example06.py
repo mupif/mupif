@@ -18,7 +18,7 @@ log.info('Timer started')
 
 class Demo06(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
         super(Demo06, self).__init__(file='', workdir='', targetTime=targetTime)
         
         #locate nameserver

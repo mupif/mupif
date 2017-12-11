@@ -44,13 +44,16 @@ class MupifObject(object):
     def getMetadata (self, key):
         """ 
         Returns metadata associated to given key
+        :param key: unique metadataID 
         :return: metadata associated to key, throws TypeError if key does not exist
+        :raises: TypeError
         """
         return self.metadata[key];
     
     def hasMetadata (self, key):
         """ 
         Returns true if key defined
+        :param key: unique metadataID 
         :return: true if key defined, false otherwise
         :rtype: bool
         """
@@ -59,17 +62,21 @@ class MupifObject(object):
     def setMetadata (self, key, val):
         """ 
         Sets metadata associated to given key
+        :param key: unique metadataID 
+        :param val: any type
         """
         self.metadata[key] = val
         
     def __str__(self):
         """
         Returns printable string representation of an object.
+        :retrun: string
         """
         return str(self.__dict__)
 
     def toJSON(self):
         """
         JSON serialization method
+        :return: string
         """
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)

@@ -69,7 +69,7 @@ class application3(Application.Application):
 
 
 class Demo03(Workflow.Workflow):
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
         super(Demo03, self).__init__(file='', workdir='', targetTime=targetTime)
         
         self.app1 = application1(None)
@@ -123,7 +123,7 @@ class Demo03(Workflow.Workflow):
         
 if __name__=='__main__':
     # instanciate workflow
-    demo = Demo03(targetTime=5.)
+    demo = Demo03(targetTime=PQ.PhysicalQuantity(3.0, 's'))
     # pass some parameters using set ops
     demo.setProperty(Property.Property((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar,
                                        None, timeUnits, 0))

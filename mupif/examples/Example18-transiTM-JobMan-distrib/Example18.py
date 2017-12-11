@@ -17,7 +17,7 @@ timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class Demo18(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity(0.,'s')):
         super(Demo18, self).__init__(file='', workdir='', targetTime=targetTime)
         
         #locate nameserver
@@ -72,7 +72,7 @@ class Demo18(Workflow.Workflow):
         return "1.0"
     
 if __name__=='__main__':
-    demo = Demo18(targetTime=2.)
+    demo = Demo18(targetTime=PQ.PhysicalQuantity(2.,'s'))
     demo.solve()
     log.info("Test OK")
 

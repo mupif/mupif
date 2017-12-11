@@ -1,6 +1,6 @@
 from . import MupifObject
-from .Physics import PhysicalQuantities
-from .Physics.PhysicalQuantities import PhysicalQuantity
+from mupif.Physics import PhysicalQuantities
+from mupif .Physics.PhysicalQuantities import PhysicalQuantity
 import Pyro4
 try:
    import cPickle as pickle #faster serialization if available
