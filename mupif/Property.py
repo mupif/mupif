@@ -167,7 +167,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
            expresses the quantity in that unit. If several units
            are specified, the return value is a tuple of
            PhysicalObject instances with with one element per unit such
-           that the sum of all quantities in the tuple equals the the
+           that the sum of all quantities in the tuple equals the
            original quantity and all the values except for the last one
            are integers. This is used to convert to irregular unit
            systems like hour/minute/second.

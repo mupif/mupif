@@ -471,7 +471,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :param tuple figsize: size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
         :param obj matPlotFig: False means plot window remains in separate thread, True waits until a plot window becomes closed
         
-        :return: hadle to matPlotFig
+        :return: handle to matPlotFig
         :rtype: matPlotFig
         """
         
@@ -728,6 +728,10 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :param unit PhysicalUnit: physical unit of filed values
         :param float time: time value for created fields (time is not saved in VTK2, thus cannot be recovered)
         :param [string,] skip: file names to be skipped when reading the input file; the default value skips the default coolwarm colormap.
+        
+        :returns: one field from VTK
+        :rtype: Field 
+        
         '''
         import pyvtk
         from . import fieldID
@@ -779,7 +783,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         Save all fields passed as argument into VTK3 Unstructured Grid file (``*.vtu``).
 
         All *fields* must be defined on the same mesh object; exception will be raised if this is not the case.
-
+        
+        :param fileName: output file name
         :param bool ascii: write numbers are ASCII in the XML-based VTU file (rather than base64-encoded binary in XML)
         :param bool compress: apply compression to the data
         '''
