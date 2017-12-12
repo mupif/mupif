@@ -11,8 +11,6 @@ import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-
 #locate nameserver
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
@@ -30,19 +28,21 @@ while (abs(time - targetTime) > 1.e-6):
 
     log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, time+dt, 's', timestepnumber)
 
     try:
         # solve problem 1
         thermal.solveStep(istep)
         # request Temperature from thermal
-        f = thermal.getField(FieldID.FID_Temperature, istep.getTime())
+        print( istep.getTime(),  istep.getTargetTime())
+        
+        f = thermal.getField(FieldID.FID_Temperature, istep.getTargetTime())
         #print ("T(l/2)=", f.evaluate((2.5,0.2,0.0)))
         data = f.field2VTKData().tofile('T_%s'%str(timestepnumber))
 
         mechanical.setField(f)
         sol = mechanical.solveStep(istep) 
-        f = mechanical.getField(FieldID.FID_Displacement, istep.getTime())
+        f = mechanical.getField(FieldID.FID_Displacement, istep.getTargetTime())
         #print ("D(l,1)=", f.evaluate((5.0,1.0,0.0)))
         data = f.field2VTKData().tofile('M_%s'%str(timestepnumber))
 
@@ -51,8 +51,8 @@ while (abs(time - targetTime) > 1.e-6):
         mechanical.finishStep(istep)
 
         # determine critical time step
-        dt = min (thermal.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
-                  mechanical.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
+        dt = min (thermal.getCriticalTimeStep().inUnitsOf('s').getValue(),
+                  mechanical.getCriticalTimeStep().inUnitsOf('s').getValue())
 
         # update time
         time = time+dt

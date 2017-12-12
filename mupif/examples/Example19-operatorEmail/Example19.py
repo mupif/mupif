@@ -7,7 +7,6 @@ import time #for sleep
 import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #
 # Expected response from operator: E-mail with "CSJ01" (workflow + jobID)
@@ -83,7 +82,7 @@ try:
     # set concentration as input
     app.setProperty(p)
     # solve (involves operator interaction)
-    tstep = TimeStep.TimeStep(0.0, 0.1, 1.0, timeUnits, 1)
+    tstep = TimeStep.TimeStep(0.0, 0.1, 1.0, 's', 1)
     app.solveStep (tstep)
     # get result of the simulation
     r = app.getProperty(PropertyID.PID_Demo_Value, tstep.getTime())

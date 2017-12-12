@@ -40,8 +40,6 @@ log = logging.getLogger()
 log.setLevel("INFO")
 
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s', 1., [0,0,1,0,0,0,0,0,0])
-dummyUnits = PQ.PhysicalUnit('dummy', 1., [0,0,0,0,0,0,0,0,0])
 
 import clientConfig as cConf
 
@@ -170,7 +168,7 @@ def runTestCase(xst,mic):
       print ("set uniform start emissivity: ", propEpsXstream.getValue() )
     xst.setProperty(propEpsXstream)
        
-    while ( (time.inUnitsOf(timeUnits).getValue()+eps) < cConf.targetTime ):
+    while ( (time.inUnitsOf('s').getValue()+eps) < cConf.targetTime ):
     
       print ('Simulation Time: '+ str(time))
       print ('---------------------------')
@@ -264,16 +262,16 @@ def runTestCase(xst,mic):
             # i.e. see variable names
             #pComponentNames = mic[interface].getProperty(MICPropertyID.PID_ComponentNames, time)
             #pPhaseNames = mic[interface].getProperty(MICPropertyID.PID_PhaseNames, time)
-            pDimensions = mic[interface].getProperty(MICPropertyID.PID_Dimensions, istep.getTime())
+            pDimensions = mic[interface].getProperty(MICPropertyID.PID_Dimensions, istep.getTargetTime())
             #componentNames = pComponentNames.getValue()
             #phaseNames = pPhaseNames.getValue()
             dimensions = pDimensions.getValue()
             if cConf.debug:
               print ("Dimensions [um] = ",dimensions[0] * 1E6, dimensions[1] * 1E6, dimensions[2] * 1E6)
           
-          pT = mic[interface].getProperty(MICPropertyID.PID_Temperature,istep.getTime())
-          pPF = mic[interface].getProperty(MICPropertyID.PID_PhaseFractions,istep.getTime())
-          pGS = mic[interface].getProperty(MICPropertyID.PID_AvgGrainSizePerPhase,istep.getTime())
+          pT = mic[interface].getProperty(MICPropertyID.PID_Temperature,istep.getTargetTime())
+          pPF = mic[interface].getProperty(MICPropertyID.PID_PhaseFractions,istep.getTargetTime())
+          pGS = mic[interface].getProperty(MICPropertyID.PID_AvgGrainSizePerPhase,istep.getTargetTime())
             
           vT.append(pT.getValue())
            
@@ -359,7 +357,7 @@ def runTestCase(xst,mic):
       for val in vEm:
         emissivityValues.append((val,))
       fieldEmissivity = Field.Field( bgMesh, XStFieldID.FID_Emissivity, \
-                          ValueType.Scalar, dummyUnits, 0.0, emissivityValues )
+                          ValueType.Scalar, 'NoUnit', 0.0, emissivityValues )
       #if cConf.debug:
         #print "writing emissivity field"
         #sys.stdout.flush()

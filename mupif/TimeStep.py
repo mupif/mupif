@@ -23,12 +23,9 @@ class TimeStep(object):
         :param Physics.PhysicalUnit units: optional units for t,dt,tarrgetTime if given as float values 
         :param int n: Optional, solution time step number, default = 1
         """
-        if (PQ.isPhysicalUnit(units)):
-            self.time = PQ.PhysicalQuantity(t, units)
-            self.dt   = PQ.PhysicalQuantity(dt, units)
-            self.targetTime = PQ.PhysicalQuantity(targetTime, units)
-        else:
-            
+        self.number = n #solution step number, dimensionless
+        
+        if (units==None):
             if not PQ.isPhysicalQuantity(t):
                 raise TypeError (str(t) + ' is not physical quantity')
 
@@ -40,9 +37,17 @@ class TimeStep(object):
 
             self.time = t
             self.dt = dt
-            self.targetTime = targetTime
-        self.number = n #solution step number
-        
+            self.targetTime = targetTime    
+        else:
+            if (PQ.isPhysicalUnit(units)):
+                unitsTemp = units
+            else:
+                unitsTemp = PQ._findUnit(units)
+                
+            self.time = PQ.PhysicalQuantity(t, unitsTemp)
+            self.dt   = PQ.PhysicalQuantity(dt, unitsTemp)
+            self.targetTime = PQ.PhysicalQuantity(targetTime, unitsTemp)
+           
     def getTime(self):
         """
         :return: Time

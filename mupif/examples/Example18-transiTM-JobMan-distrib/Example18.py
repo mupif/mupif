@@ -12,8 +12,6 @@ cfg=config(mode)
 
 import logging
 log = logging.getLogger()
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-
 
 class Demo18(Workflow.Workflow):
    
@@ -43,12 +41,12 @@ class Demo18(Workflow.Workflow):
     def solveStep(self, istep, stageID=0, runInBackground=False):
 
         self.thermal.solveStep(istep)
-        f = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
+        f = self.thermal.getField(FieldID.FID_Temperature, istep.getTargetTime())
         data = f.field2VTKData().tofile('T_%s'%str(istep.getNumber()))
         
         self.mechanical.setField(f)
         sol = self.mechanical.solveStep(istep) 
-        f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
+        f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTargetTime())
         data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
         
         self.thermal.finishStep(istep)

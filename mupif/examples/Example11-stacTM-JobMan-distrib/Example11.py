@@ -12,9 +12,7 @@ mCfg = serverConfig(mode)
 import logging
 log = logging.getLogger()
 import time as timeT
-
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 
 class Demo11(Workflow.Workflow):
@@ -78,7 +76,7 @@ class Demo11(Workflow.Workflow):
         #This prevents copying data to Demo11's computer,
         #mechanical solver will use direct access to thermal field.
         log.info("Thermal problem solved")
-        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, istep.getTime())
+        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, istep.getTargetTime())
         log.info("URI of thermal problem's field is " + str(uri) )
         field = Pyro4.Proxy(uri)
         #field._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
@@ -91,10 +89,10 @@ class Demo11(Workflow.Workflow):
 
         log.info("Solving mechanical problem")
         self.mechanicalSolver.solveStep(None)
-        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTime())) )
-        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTime())
+        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTargetTime())) )
+        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTargetTime())
         # save results as vtk
-        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
+        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTargetTime())
         temperatureField.field2VTKData().tofile('temperatureField')
         displacementField.field2VTKData().tofile('displacementField')
 

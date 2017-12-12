@@ -6,15 +6,13 @@ from mupif import *
 import demoapp
 import logging
 log = logging.getLogger()
-
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 # enable to see plots
 graphics = False
 
 class Demo13(Workflow.Workflow):
-    def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,timeUnits)):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,'s')):
         super(Demo13, self).__init__(file='', workdir='', targetTime=targetTime)
         
         self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
@@ -27,15 +25,15 @@ class Demo13(Workflow.Workflow):
             # solve problem 1
             self.thermal.solveStep(istep)
             # request Temperature from thermal
-            ft = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
+            ft = self.thermal.getField(FieldID.FID_Temperature, istep.getTargetTime())
             
             self.mechanical.setField(ft)
             sol = self.mechanical.solveStep(istep) 
-            f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
+            f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTargetTime())
 
             data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
             if (graphics):
-                self.matPlotFig = f.field2Image2D(title='Mechanical ' + str(istep.getTime().inUnitsOf(timeUnits).getValue()), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=self.matPlotFig) 
+                self.matPlotFig = f.field2Image2D(title='Mechanical ' + str(istep.getTargetTime().inUnitsOf(timeUnits).getValue()), barRange=(-9e-5, 1.6e-6), fileName='mechanical.png', fieldComponent=1, figsize = (12,6), matPlotFig=self.matPlotFig) 
             
         except APIError.APIError as e:
             log.error("Following API error occurred:",e)

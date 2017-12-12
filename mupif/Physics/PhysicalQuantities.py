@@ -700,6 +700,7 @@ _base_units = [('m',   PhysicalUnit('m',   1.,    [1,0,0,0,0,0,0,0,0])),
                ('cd',  PhysicalUnit('cd',  1.,    [0,0,0,0,0,0,1,0,0])),
                ('rad', PhysicalUnit('rad', 1.,    [0,0,0,0,0,0,0,1,0])),
                ('sr',  PhysicalUnit('sr',  1.,    [0,0,0,0,0,0,0,0,1])),
+               ('NoUnit',  PhysicalUnit('m',  1.,    [0,0,0,0,0,0,0,0,0])),#No units
                ]
 
 _prefixes = [('Y',  1.e24),

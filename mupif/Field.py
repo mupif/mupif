@@ -76,7 +76,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor should have tuple format 3x3 on each vertex or cell
+        :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param Physics.PhysicalUnits units: Field value units
         :param Physics.PhysicalQuantity time: Time associated with field values
         :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
@@ -318,6 +318,16 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :rtype: Physics.PhysicalQuantity
         """
         return PhysicalQuantity(self.value[componentID], self.unit)
+    
+    def giveValue(self, componentID):
+        """
+        Returns the value associated with a given component (vertex or integration point on a cell).
+
+        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :return: The value
+        :rtype: tuple
+        """
+        return self.value[componentID]    
 
     def setValue(self, componentID, value):
         """
@@ -398,26 +408,34 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         if (self.fieldType == FieldType.FT_vertexBased):
             if (self.getValueType() == ValueType.Scalar):
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Tensor):
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.PointData(pyvtk.Tensors(self.value,**vectorsKw),lookupTable),'Unstructured Grid Example')
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Tensors(self.getMartixForTensor(self.value),**vectorsKw),lookupTable),'Unstructured Grid Example')
             
         else:
             if (self.getValueType() == ValueType.Scalar):
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Vector):
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),                                pyvtk.CellData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
             elif (self.getValueType() == ValueType.Tensor):
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),
-                                     pyvtk.CellData(pyvtk.Tensors(self.value,**vectorsKw),lookupTable),'Unstructured Grid Example')
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(),                                    pyvtk.CellData(pyvtk.Tensors(self.getMartixForTensor(self.value),**vectorsKw),lookupTable),'Unstructured Grid Example')
             
+    def getMartixForTensor(self,values):
+        """
+        Reshape values to a list with 3x3 arrays. Usable for VTK export.
+
+        :param list values: List containing tuples of 9 values, e.g. [(1,2,3,4,5,6,7,8,9), (1,2,3,4,5,6,7,8,9), ...]
+        
+        :return: List containing 3x3 matrices for each tensor
+        :rtype: list
+        """ 
+        tensor = []
+        for i in values:
+            tensor.append(numpy.reshape (i, (3,3)))
+        return tensor
+
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
@@ -497,11 +515,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         for i in range (0, numVertices):
             coords = mesh.getVertex(i).getCoordinates()
             #print(coords)
-            if self.valueType == ValueType.Tensor:#3x3 list
-                value = self.getVertexValue(i)
-                value = sum(value.getValue(), ())[fieldComponent]
-            else:
-                value = self.getVertexValue(i).getValue()[fieldComponent]
+            value = self.giveValue(i)[fieldComponent]
             
             if (coords[elev]>elevation[0] and coords[elev]<elevation[1]):
                 vertexPoints.append((coords[indX], coords[indY]))
