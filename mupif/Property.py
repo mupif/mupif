@@ -63,11 +63,12 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
                     repr(self.propID)+',' +
                     repr(self.valueType) + ')')
 
-        def getValue(self):
+        def getValue(self, time=None):
             """
             Returns the value of property in a tuple.
+            :param Physics.PhysicalQuantity time: Time of property evaluation
 
-            :return: Property value as array
+            :return: Property value as an array
             :rtype: tuple
             """
             return self.value
@@ -140,7 +141,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
         def _convertValue (self, value, src_unit, target_unit):
            """
            Helper function to evaluate value+offset*factor, where
-           factor and offset are obtsained from 
+           factor and offset are obtained from 
            conversionTupleTo(target_unit)
            """
            (factor, offset) = src_unit.conversionTupleTo(target_unit)

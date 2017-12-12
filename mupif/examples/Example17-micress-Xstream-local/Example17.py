@@ -357,7 +357,7 @@ def runTestCase(xst,mic):
       for val in vEm:
         emissivityValues.append((val,))
       fieldEmissivity = Field.Field( bgMesh, XStFieldID.FID_Emissivity, \
-                          ValueType.Scalar, 'NoUnit', 0.0, emissivityValues )
+                          ValueType.Scalar, 'None', 0.0, emissivityValues )
       #if cConf.debug:
         #print "writing emissivity field"
         #sys.stdout.flush()
