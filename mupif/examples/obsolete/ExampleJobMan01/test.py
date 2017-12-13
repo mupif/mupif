@@ -36,7 +36,7 @@ else:
         solverSignature=app.getApplicationSignature()
         logger.info("Working solver on server " + solverSignature)
 
-        val = Property.Property(10, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, PQ.getDimensionlessUnit())
+        val = Property.ConstantProperty(10, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit(), '0 s', 0)
         app.setProperty (val)
         tstep=TimeStep(0., 1., 1., timeUnits)
         app.solveStep(tstep)

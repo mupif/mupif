@@ -20,7 +20,7 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, 'kg/m**3', 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3')
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -45,20 +45,20 @@ class application3(Application.Application):
             f = open('app3.out', 'r')
             answer = float(f.readline())
             f.close()
-            return Property.Property(answer, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, 'kg/m**3', 0)
+            return Property.ConstantProperty(answer, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
-            self.values.append(property.getValue())
+            self.values.append(property)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         f = open('app3.in', 'w')
         # process list of mapped values and store them into an external file 
         for val in self.values:
-            f.write(str(val)+'\n')
+            f.write(str(val.getValue())+'\n')
         f.close()
         # execute external application to compute the average
         os.system("./application3")
@@ -74,7 +74,6 @@ class Demo03(Workflow.Workflow):
         
         self.app1 = application1(None)
         self.app3 = application3(None)
-        self.userDT = None
 
     def solveStep (self, istep, stageID=0, runInBackground=False):
 
@@ -92,10 +91,8 @@ class Demo03(Workflow.Workflow):
 
     def getCriticalTimeStep(self):
         # determine critical time step
-        if (self.userDT==None): self.userDT = self.app1.getCriticalTimeStep()
-        print (self.userDT)
         
-        return min (self.userDT, self.app1.getCriticalTimeStep(), self.app3.getCriticalTimeStep())
+        return min (self.app1.getCriticalTimeStep(), self.app3.getCriticalTimeStep())
 
     def terminate(self):
         #self.thermalAppRec.terminateAll()
@@ -125,8 +122,7 @@ if __name__=='__main__':
     # instanciate workflow
     demo = Demo03(targetTime=PQ.PhysicalQuantity(3.0, 's'))
     # pass some parameters using set ops
-    demo.setProperty(Property.Property((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar,
-                                       None, timeUnits, 0))
+    demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, timeUnits))
     #execute workflow
     demo.solve()
     #get resulting KPI for workflow

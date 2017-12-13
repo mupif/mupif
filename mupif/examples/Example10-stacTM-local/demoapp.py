@@ -28,7 +28,7 @@ class thermal(Application.Application):
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
         self.morphologyType=None
-        self.conductivity=1.0
+        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'kg/m**3')
         self.tria=False
 
     def readInput(self, tria=False):
@@ -249,7 +249,7 @@ class thermal(Application.Application):
 
         log.info("Assembling ...")
         for e in mesh.cells():
-            A_e = self.compute_elem_conductivity(e)
+            A_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime()))
 
             # #Assemble
             #print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
@@ -404,7 +404,7 @@ class thermal(Application.Application):
         #print Grad
         return Grad
 
-    def compute_elem_conductivity (self, e):
+    def compute_elem_conductivity (self, e, k):
         #compute element conductivity matrix
         numVert = e.getNumberOfVertices()
         A_e = np.zeros((numVert,numVert))
@@ -434,7 +434,7 @@ class thermal(Application.Application):
             #print "global coords :", x
 
             #conductivity
-            k=self.conductivity
+            #k=self.conductivity.getValue()
             if self.morphologyType=='Inclusion':
                 if self.isInclusion(e):
                     k=0.001
@@ -465,15 +465,15 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, 'W/m/K', 0)
+            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_effective_conductivity):
             # remember the mapped value
-            self.conductivity = property.getValue()
-            #log.info("Assigning effective conductivity %f" % self.conductivity )
+            self.conductivity = property.inUnitsOf('W/m/K')
+            #log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -491,7 +491,7 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, 'W/m/K', 0)
+            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -601,7 +601,7 @@ class thermal_nonstat(thermal):
 
             log.info("Assembling ...")
             for e in mesh.cells():
-                K_e = self.compute_elem_conductivity(e)
+                K_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime()))
                 C_e = self.compute_elem_capacity(e)
                 A_e = K_e*self.Tau + C_e/dt
                 P_e = np.subtract(C_e/dt, K_e*(1.-self.Tau))

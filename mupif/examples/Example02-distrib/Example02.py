@@ -28,7 +28,7 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, 'kg/m**3', 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -91,9 +91,9 @@ while (abs(time - targetTime) > 1.e-6):
         break
 
 prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
-log.debug("Result: %f" % prop.getValue() )
+log.debug("Result: %f" % prop.getValue(istep.getTime()) )
 
-if (abs(prop.getValue()-0.35) <= 1.e-4):
+if (abs(prop.getValue(istep.getTime())-0.35) <= 1.e-4):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

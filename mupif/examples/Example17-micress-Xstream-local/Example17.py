@@ -56,7 +56,7 @@ import micress
 #from xstream
 import TNO_LU as LU   # local lookup table module (TNO)
 import TNO_Qfactor_v1_2 as QFactor # quality factor calculation (TNO)
-import Property  # class enhancement for Mupif property class
+from mupif import Property  
 import util      # Mupif mesh generation utilities
    
   
@@ -160,10 +160,10 @@ def runTestCase(xst,mic):
     tcStart = timeTime.time() 
     
     # set constant start emissivity (will be modified in homogenization step)
-    propEpsXstream = Property.Property( \
-                      cConf.startEmissivity, \
-                      XStPropertyID.PID_Emissivity, \
-                      ValueType.Scalar, time, PQ.getDimensionlessUnit(), 0 )   
+    propEpsXstream = Property.ConstantProperty(cConf.startEmissivity, 
+                                               XStPropertyID.PID_Emissivity,\
+                                               ValueType.Scalar, PQ.getDimensionlessUnit(),
+                                               time, 0 )   
     if (cConf.debug):
       print ("set uniform start emissivity: ", propEpsXstream.getValue() )
     xst.setProperty(propEpsXstream)
@@ -231,10 +231,10 @@ def runTestCase(xst,mic):
           tcStart = timeTime.time()
           
           # generate Mupif property objects from values
-          propLocation = Property.Property( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, time, 'm', 0 )
-          propT = Property.Property( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, time, 'K', 0 )
+          propLocation = Property.ConstantProperty( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, 'm')
+          propT = Property.ConstantProperty( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, 'K', time, 0 )
           # z-gradient constant at 0.0 at the moment
-          propzG = Property.Property( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, time, 'K/m', 0 )
+          propzG = Property.ConstantProperty( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, 'K/m', time, 0 )
   
           ## set the properties for micro simulation
           mic[interface].setProperty(propLocation)
@@ -564,4 +564,5 @@ if __name__ == '__main__':
         log.info("Test OK")
     except:
         log.info("Test FAILED")
+        sys.exit(1)
         

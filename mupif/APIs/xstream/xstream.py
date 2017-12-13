@@ -119,6 +119,10 @@ class xstream(Application.Application):
 
         self.field = None
         self.valid = False
+
+        self.temp_property = None
+        self.emissivity_property = None
+
         return
 
     
@@ -214,9 +218,11 @@ class xstream(Application.Application):
         self.__config()
         
         if (property.getPropertyID() == XStPropertyID.PID_Temperature):
-           self.__setUniformBC(property)
+           self.temp_prop = property
+           #self.__setUniformBC(property)
         elif (property.getPropertyID() == XStPropertyID.PID_Emissivity):
-           self.__setUniformBC(property)
+           self.emissivity_prop = property
+           #self.__setUniformBC(property)
         else:
            raise APIError.APIError ('Unknown property ID')         
 
@@ -305,7 +311,14 @@ class xstream(Application.Application):
         
         self.valid = False
         self.timeStep = self.timeStep + 1
-        
+        #update mapped properties
+        if (self.temp_property):
+            self.__setUniformBC(self.temp_property)
+            self.temp_property=None
+            
+        if (self.emissivity_property):
+            self.__setUniformBC(self.emissivity_property)
+            self.emissivity_property=None
         storePath= os.getcwd()
         os.chdir(self.workdir)
         

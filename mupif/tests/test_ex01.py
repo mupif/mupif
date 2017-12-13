@@ -40,8 +40,8 @@ class TestEx01(unittest.TestCase):
             app2.solveStep(istep)
             # get the averaged concentration
             prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, PQ.PhysicalQuantity(time,timeUnits))
-            print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(), prop.getValue()))
-        self.assertAlmostEqual(prop.getValue(),0.55)
+            print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(istep.getTime()), prop.getValue(istep.getTime())))
+        self.assertAlmostEqual(prop.getValue(istep.getTime()),0.55)
     def tearDown(self):
         # terminate
         self.app1.terminate();

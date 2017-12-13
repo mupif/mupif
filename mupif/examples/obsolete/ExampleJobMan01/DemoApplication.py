@@ -25,7 +25,7 @@ class DemoApplication (Application.Application):
     def setProperty(self, property, objectID=0):
         propID = property.getPropertyID()
         if (propID == PropertyID.PID_Demo_Value):
-            self.count = property.getValue()
+            self.count = property
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -34,13 +34,13 @@ class DemoApplication (Application.Application):
         val = 0
         for i in range (10000):
             arry.append(i)
-        for i in range (self.count):
+        for i in range (self.count.getValue()):
             for j in range (10000):
                 val = val+arry[j]
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Value):
-            return Property.Property(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, time, PQ.getDimensionlessUnit(), 0)
+            return Property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit())
         else:
             raise APIError.APIError ('Unknown property ID')
 

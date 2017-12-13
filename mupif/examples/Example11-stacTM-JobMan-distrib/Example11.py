@@ -71,7 +71,7 @@ class Demo11(Workflow.Workflow):
         log.info("Solving thermal problem")
         log.info(self.thermalSolver.getApplicationSignature())
         #self.thermalSolver._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
-        self.thermalSolver.solveStep(tstep=1.)
+        self.thermalSolver.solveStep(istep)
         #Get field's uri from thermal application and send it to mechanical application.
         #This prevents copying data to Demo11's computer,
         #mechanical solver will use direct access to thermal field.
@@ -88,7 +88,7 @@ class Demo11(Workflow.Workflow):
         #self.mechanicalSolver.setField(temperatureField)
 
         log.info("Solving mechanical problem")
-        self.mechanicalSolver.solveStep(None)
+        self.mechanicalSolver.solveStep(istep)
         log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTargetTime())) )
         displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTargetTime())
         # save results as vtk

@@ -18,7 +18,7 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, 'kg/m**3', 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -39,18 +39,18 @@ class application2(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, 'kg/m**3', 0)
+            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
-            self.contrib = property.getValue()
+            self.contrib = property
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value=self.value+self.contrib
+        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(tstep.getTime())
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
@@ -89,7 +89,8 @@ while (abs(time -targetTime) > 1.e-6):
         app2.solveStep(istep)
         # get the averaged concentration
         prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
-        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(), prop.getValue()))
+        #print (istep.getTime(), c, prop)
+        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(istep.getTime()), prop.getValue(istep.getTime())))
         
         
     except APIError.APIError as e:
@@ -97,7 +98,7 @@ while (abs(time -targetTime) > 1.e-6):
         log.error("Test FAILED")
         raise
 
-if (abs(prop.getValue()-0.55) <= 1.e-4):
+if (abs(prop.getValue(istep.getTime())-0.55) <= 1.e-4):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

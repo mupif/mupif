@@ -202,6 +202,14 @@ class PhysicalQuantity(object):
         else:
             return cmp(diff.value, 0)
 
+    def __eq__(self, other): #python3 stuff
+        diff = self._sum(other, 1, -1)
+        if isinstance(diff.value, collections.Iterable):
+            return all(v==0 for v in diff.value)
+        else:
+            return diff.value == 0
+
+        
     def __lt__(self, other): #python3 stuff
         diff = self._sum(other, 1, -1)
         if isinstance(diff.value, collections.Iterable):
@@ -458,9 +466,12 @@ class PhysicalUnit(object):
     __str__ = __repr__
 
     def __cmp__(self, other):
-        if self.powers != other.powers:
-            raise TypeError('Incompatible units')
-        return cmp(self.factor, other.factor)
+        if (isPhysicalUnit(other)):
+            if self.powers != other.powers:
+                raise TypeError('Incompatible units')
+            return cmp(self.factor, other.factor)
+        else:
+            return -1;
 
     def __mul__(self, other):
         if self.offset != 0 or (isPhysicalUnit (other) and other.offset != 0):
@@ -633,7 +644,11 @@ def isPhysicalUnit(x):
     :returns: C{True} if x is a L{PhysicalUnit}
     :rtype: C{bool}
     """
-    return hasattr(x, 'factor') and hasattr(x, 'powers')
+    try:
+        return hasattr(x, 'factor') and hasattr(x, 'powers')
+    except AttributeError:
+        return False;
+       
 
 def isPhysicalQuantity(x):
     """
@@ -643,7 +658,11 @@ def isPhysicalQuantity(x):
     :returns: C{True} if x is a L{PhysicalQuantity}
     :rtype: C{bool}
     """
-    return hasattr(x, 'value') and hasattr(x, 'unit')
+    try:
+        return hasattr(x, 'value') and hasattr(x, 'unit')
+    except AttributeError:
+        return False;
+       
 
 
 

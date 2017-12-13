@@ -14,18 +14,18 @@ class TimeStep(object):
         """
         Initializes time step.
 
-        :param t: Time, type depends on 'units'
+        :param t: Time(intrisic where the governing equation is assembled)
         :type t: float or Physics.PhysicalQuantity
         :param dt: Step length (time increment), type depends on 'units'
         :type dt: float or Physics.PhysicalQuantity
-        :param targetTime: target simulation time, type depends on 'units' 
+        :param targetTime: target simulation time (unknowns are solved at target time)
         :type targetTime: float or Physics.PhysicalQuantity
         :param Physics.PhysicalUnit units: optional units for t,dt,tarrgetTime if given as float values 
         :param int n: Optional, solution time step number, default = 1
         """
         self.number = n #solution step number, dimensionless
-        
-        if (units==None):
+
+        if (units == None):
             if not PQ.isPhysicalQuantity(t):
                 raise TypeError (str(t) + ' is not physical quantity')
 

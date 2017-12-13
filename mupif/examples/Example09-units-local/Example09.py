@@ -20,7 +20,7 @@ class application1(Application.Application):
         super(application1,self).__init__(self,file)
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Velocity):
-            return Property.Property(self.value, PropertyID.PID_Velocity, ValueType.Scalar, time, 'm/s', 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -59,7 +59,7 @@ while (abs(time -targetTime) > 1.e-6):
     v = app1.getProperty(PropertyID.PID_Velocity, istep.getTime())
     
     #Create a PhysicalQuantity object 
-    V = PQ.PhysicalQuantity(v.getValue(), v.getUnits())
+    V = PQ.PhysicalQuantity(v.getValue(istep.getTime()), v.getUnits())
 
     velocity = V.inBaseUnits()
     log.debug(velocity)

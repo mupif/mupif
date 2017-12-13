@@ -38,7 +38,7 @@ class Demo06(Workflow.Workflow):
             log.info("Working application 1 on server " + appsig)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = Property.Property(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, PQ.getDimensionlessUnit())
+        val = Property.ConstantProperty(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit())
         self.app1.setProperty (val)
         self.app1.solveStep(None)
         retProp = self.app1.getProperty(PropertyID.PID_Demo_Value, istep.getTime())

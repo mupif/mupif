@@ -242,9 +242,13 @@ popd
 fi
 
 willRunTest '17'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example17-micress-Xstream-local
-        $COMMAND Example17.py
-popd
+                               pushd Example17-micress-Xstream-local
+                               $COMMAND Example17.py
+	                       ret=$?
+	                       (( retval=$retval || $ret ))
+                               echo "=================== Exit status $ret ===================="
+	                       echo "=================== Retval $retval ===================="
+                               popd
 fi
 
 
