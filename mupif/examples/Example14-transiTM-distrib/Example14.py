@@ -34,15 +34,15 @@ while (abs(time - targetTime) > 1.e-6):
         # solve problem 1
         thermal.solveStep(istep)
         # request Temperature from thermal
-        print( istep.getTime(),  istep.getTargetTime())
+        print( istep.getTime(),  istep.getTime())
         
-        f = thermal.getField(FieldID.FID_Temperature, istep.getTargetTime())
+        f = thermal.getField(FieldID.FID_Temperature, mechanical.getAssemblyTime(istep))
         #print ("T(l/2)=", f.evaluate((2.5,0.2,0.0)))
         data = f.field2VTKData().tofile('T_%s'%str(timestepnumber))
 
         mechanical.setField(f)
         sol = mechanical.solveStep(istep) 
-        f = mechanical.getField(FieldID.FID_Displacement, istep.getTargetTime())
+        f = mechanical.getField(FieldID.FID_Displacement, istep.getTime())
         #print ("D(l,1)=", f.evaluate((5.0,1.0,0.0)))
         data = f.field2VTKData().tofile('M_%s'%str(timestepnumber))
 
