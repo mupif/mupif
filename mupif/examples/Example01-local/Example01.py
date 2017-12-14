@@ -22,10 +22,12 @@ class application1(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
+        time = self.getAssemblyTime(tstep).inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1, 's')
+    def getAssemblyTime (self, tstep):
+        return tstep.getTime()
 
 
 class application2(Application.Application):
@@ -50,11 +52,13 @@ class application2(Application.Application):
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(tstep.getTime())
+        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(self.getAssemblyTime(tstep))
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
+    def getAssemblyTime (self, tstep):
+        return tstep.getTime()
 
 time  = 0
 timestepnumber=0
@@ -81,16 +85,16 @@ while (abs(time -targetTime) > 1.e-6):
     try:
         #solve problem 1
         app1.solveStep(istep)
-        #request Concentration property from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
-        # register Concentration property in app2
+        # handshake the data
+        c = app1.getProperty(PropertyID.PID_Concentration, app2.getAssemblyTime(istep))
         app2.setProperty (c)
         # solve second sub-problem 
         app2.solveStep(istep)
         # get the averaged concentration
-        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
+        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, app2.getAssemblyTime(istep))
         #print (istep.getTime(), c, prop)
-        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(istep.getTime()), prop.getValue(istep.getTime())))
+        atime = app2.getAssemblyTime(istep)
+        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (atime.getValue(), c.getValue(atime), prop.getValue(atime)))
         
         
     except APIError.APIError as e:
