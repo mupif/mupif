@@ -35,5 +35,7 @@ class application2(Application.Application):
         self.count = self.count+1
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
+    def getAssemblyTime(self,tstep):
+        return tstep.getTime()
     def getApplicationSignature(self):
         return "Application2"

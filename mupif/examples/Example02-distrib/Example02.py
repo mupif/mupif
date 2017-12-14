@@ -36,6 +36,8 @@ class application1(Application.Application):
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1, 's')
+    def getAsssemblyTime (self,tstep):
+        return tstep.getTime()
 
 time = 0
 timestepnumber=0
@@ -79,10 +81,9 @@ while (abs(time - targetTime) > 1.e-6):
     try:
         #solve problem 1
         app1.solveStep(istep)
-        #request concentration from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
-        # register concentration in app2
-        app2.setProperty (c)
+        #handshake the data
+        app2.setProperty(app1.getProperty(PropertyID.PID_Concentration,
+                                          app2.getAssemblyTime(istep)))
         # solve second sub-problem 
         app2.solveStep(istep)
 
