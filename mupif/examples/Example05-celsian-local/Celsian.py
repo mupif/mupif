@@ -27,5 +27,7 @@ class Celsian(Application.Application):
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1,'s')
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
 
