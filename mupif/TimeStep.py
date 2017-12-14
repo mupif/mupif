@@ -10,10 +10,10 @@ class TimeStep(object):
     The folowing attributes are use to characterize time step:
 
     |-------|-------|---i-th time step---|----------|----------|
-                    ^                                          ^
-                    |<--------dt-------->                      |
-                    |                                          |
-                  time                                     targetTime
+                    ^                    ^                     ^
+                    |<--------dt-------->|                     |
+                    |                    |                     |
+                  time-dt               time                targetTime
 
     Note: Individual models (applications) assemble theit governing 
     equations at specific time, called asssemblyTime, this time
@@ -27,7 +27,7 @@ class TimeStep(object):
         """
         Initializes time step.
 
-        :param t: Time(time at the beginning of time step)
+        :param t: Time(time at the end of time step)
         :type t: float or Physics.PhysicalQuantity
         :param dt: Step length (time increment), type depends on 'units'
         :type dt: float or Physics.PhysicalQuantity
