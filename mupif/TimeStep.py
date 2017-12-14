@@ -18,8 +18,8 @@ class TimeStep(object):
     Note: Individual models (applications) assemble theit governing 
     equations at specific time, called asssemblyTime, this time
     is reported by individual models. For explicit model, asssembly time
-    is equal to timeStep.time, for fully implicit model, assembly time
-    is equal to timeStep.time+timestep.dt
+    is equal to timeStep.time-timestep.dt, for fully implicit model, 
+    assembly time is equal to timeStep.time
 
     .. automethod:: __init__
     """
