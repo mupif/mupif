@@ -41,11 +41,12 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             else:
                self.unit = PhysicalQuantities._findUnit(units)
 
-
-        def getValue(self, time=None):
+        def getValue(self, time=None, **kwargs):
             """
             Returns the value of property in a tuple.
             :param Physics.PhysicalQuantity time: Time of property evaluation
+            :param \**kwargs: Arbitrary keyword arguments,see documentation
+                of derived classes.
 
             :return: Property value as an array
             :rtype: tuple
@@ -129,10 +130,11 @@ class ConstantProperty(Property):
                     't=' + repr(self.time) +
                     ')')
 
-        def getValue(self, time=None):
+        def getValue(self, time=None, **kwargs):
             """
             Returns the value of property in a tuple.
             :param Physics.PhysicalQuantity time: Time of property evaluation
+            :param \**kwargs: None.
 
             :return: Property value as an array
             :rtype: tuple
