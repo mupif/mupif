@@ -495,6 +495,11 @@ class thermal(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
 
+    def getCriticalTimeStep(self):
+        return PQ.PhysicalQuantity(1.0, 's')
+
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
     def getApplicationSignature(self):
         return "Stationary thermal-demo-solver, ver 1.0"
@@ -520,6 +525,9 @@ class thermal_nonstat(thermal):
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
 
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()-tstep.getTimeIncrement()*self.Tau
+    
     def compute_elem_capacity (self, e):
         #compute element capacity matrix
         numVert = e.getNumberOfVertices()
@@ -758,6 +766,8 @@ class mechanical(Application.Application):
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's');
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
     def readInput(self):
 

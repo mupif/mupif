@@ -13,7 +13,7 @@ if True:
 
     tstep = TimeStep.TimeStep(0,1,1,'s')
     sol = app.solveStep(tstep) 
-    f = app.getField(FieldID.FID_Temperature, tstep.getTargetTime())
+    f = app.getField(FieldID.FID_Temperature, app.getAssemblyTime(tstep))
     f.field2VTKData().tofile('thermal10')
     f.field2Image2D(title='Thermal', fileName='thermal.png')
 
