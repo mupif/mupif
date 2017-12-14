@@ -46,8 +46,8 @@ class Demo06(Workflow.Workflow):
         
     def terminate(self):    
         self.app1.terminate()
-        #self.jobMan.terminate
-        #super(Demo06, self).terminate()
+        self.jobMan.terminate()
+        super(Demo06, self).terminate()
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
     def getProperty(self, propID, time, objectID=0):
@@ -80,9 +80,11 @@ if __name__=='__main__':
     demo.terminate()
     if (kpi.getValue(targetTime) == 1000):
         log.info("Test OK")
+        kpi = 0
         sys.exit(0)
     else:
         log.info("Test FAILED")
+        kpi = 0
         sys.exit(1)
 
 
