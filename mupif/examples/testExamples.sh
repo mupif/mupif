@@ -1,7 +1,7 @@
 #!/bin/bash
 #You may run all tests without argumens, or to use selected tests such as ./testExamples.sh '1 2'
 
-arrayTests="$@"
+arrayTests="$@" #arguments from command line, i.e. test numbers
 
 # force running everything locally (ssh clients and servers)
 export TRAVIS=1
@@ -24,7 +24,7 @@ bash ssh/test_ssh_server.sh &
 $PYTHON ../tools/nameserver.py &
 sleep 1
 
-# accumulates failures, which are stored in $ret for each example
+# accumulates failures, which are stored in $ret for each example, 1 for failure
 retval=0
 
 #Logging failing examples
@@ -45,6 +45,7 @@ echo Setting command to $COMMAND
 
 
 AppendLog () {
+        echo "=================== Exit status $1 ===================="
         if [ $1 -ne 0 ]; then
             LOG+=($2)
         fi
@@ -68,7 +69,6 @@ pushd Example01-local;
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -83,7 +83,6 @@ pushd Example02-distrib
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
 fi
@@ -96,7 +95,6 @@ pushd Example03-executable-local
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -108,7 +106,6 @@ pushd Example04-field-local
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -119,7 +116,6 @@ pushd Example05-celsian-local
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -133,7 +129,6 @@ pushd Example06-jobMan-distrib
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
 fi
@@ -145,7 +140,6 @@ pushd Example07-micress-local
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -156,7 +150,6 @@ pushd Example09-units-local
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -167,7 +160,6 @@ pushd Example10-stacTM-local
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -183,7 +175,6 @@ pushd Example11-stacTM-JobMan-distrib
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
@@ -191,19 +182,24 @@ fi
 
 willRunTest '12'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example12-stacTmultiscale-local
-        $COMMAND Example12.py
+    $COMMAND Example12.py
+    ret=$?
+    (( retval=$retval || $ret ))
+    AppendLog $ret `pwd`
 popd
 fi
 
 willRunTest '13'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example13-transiTM-local
-        $COMMAND Example13.py
+    $COMMAND Example13.py
+    ret=$?
+    (( retval=$retval || $ret ))
+    AppendLog $ret `pwd`
 popd
 fi
 
 willRunTest '14'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example14-transiTM-distrib
-        echo "=================== Retval $retval ===================="
         echo $PWD
 	$COMMAND thermalServer.py &
 	PID1=$!
@@ -214,8 +210,6 @@ pushd Example14-transiTM-distrib
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
-	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
@@ -223,7 +217,6 @@ fi
 
 willRunTest '16'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example16-transiTM-JobMan-distrib
-        echo "=================== Retval $retval ===================="
         echo $PWD
 	$COMMAND thermalServer.py &
 	PID1=$!
@@ -234,27 +227,23 @@ pushd Example16-transiTM-JobMan-distrib
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
-	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
 fi
 
 willRunTest '17'; test=$?; if [ "$test" == 1  ] ; then
-                               pushd Example17-micress-Xstream-local
-                               $COMMAND Example17.py
-	                       ret=$?
-	                       (( retval=$retval || $ret ))
-                               echo "=================== Exit status $ret ===================="
-	                       echo "=================== Retval $retval ===================="
-                               popd
+        pushd Example17-micress-Xstream-local
+        $COMMAND Example17.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
+popd
 fi
 
 
 willRunTest '18'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example18-transiTM-JobMan-distrib
-        echo "=================== Retval $retval ===================="
         echo $PWD
 	$COMMAND thermalServer.py &
 	PID1=$!
@@ -265,12 +254,12 @@ pushd Example18-transiTM-JobMan-distrib
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
-	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
 fi
+
+
 
 echo "*** Global return status $retval."
 
@@ -291,5 +280,3 @@ done
 echo "*** Bye."
 
 exit $retval
-
-

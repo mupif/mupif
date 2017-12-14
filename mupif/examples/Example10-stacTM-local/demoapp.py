@@ -956,7 +956,7 @@ class mechanical(Application.Application):
                 k=1.
                 Grad= np.zeros((3,elemDofs))
                 Grad = self.compute_B(e,p[0])
-                D= self.compute_D(self.E, self.nu)
+                D = self.compute_D(self.E, self.nu)
                 #print "Grad :",Grad
                 K=np.zeros((elemDofs,elemDofs))
                 K=k*(np.dot(Grad.T,np.dot(D, Grad)))

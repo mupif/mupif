@@ -44,7 +44,7 @@ timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 import micressConfig as mConf
 
 #Micress import
-import Property
+#import Property
 import MICPropertyID
 import MICFieldID
 
@@ -262,20 +262,19 @@ class micress(Application.Application):
           if ( tabKEntry is None ):
             raise APIError.APIError('No time matching entry in result table')
             return 0
-
             
         if (propID == MICPropertyID.PID_PhaseFractions):
-          return Property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, dummyUnits, time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Dimensions):
-          return Property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, timeWithUnits, PQ._base_units[0][1], time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, PQ._base_units[0][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Temperature):
-          return Property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, time, PQ._base_units[4][1], time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, PQ._base_units[4][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_ComponentNames):
-          return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_PhaseNames):
-          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=timeWithUnits, objectID=0)          
+          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)          
         elif (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
-          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=timeWithUnits, objectID=0)        
+          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)        
         elif (propID == PropertyID.PID_Concentration):
           idx = 0
           while ( idx < len(self.t) ):
@@ -394,7 +393,7 @@ class micress(Application.Application):
           raise APIError.APIError('No RVE location specified')
                
         # check properties
-        if ( self.T0[self.locIndex] == None ):
+        if ( self.T0[self.locIndex] is None ):
             self.T0[self.locIndex] = self.T1[self.locIndex].getValue(tstep.getTime())
             self.TGrad0[self.locIndex] = self.TGrad1[self.locIndex]
 

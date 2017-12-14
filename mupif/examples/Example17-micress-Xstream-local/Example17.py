@@ -234,7 +234,7 @@ def runTestCase(xst,mic):
           propLocation = Property.ConstantProperty( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, 'm')
           propT = Property.ConstantProperty( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, 'K', time, 0 )
           # z-gradient constant at 0.0 at the moment
-          propzG = Property.ConstantProperty( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, 'K/m', time, 0 )
+          propzG = Property.ConstantProperty( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, 'K/m', time=None, objectID=0 )
   
           ## set the properties for micro simulation
           mic[interface].setProperty(propLocation)
@@ -357,7 +357,7 @@ def runTestCase(xst,mic):
       for val in vEm:
         emissivityValues.append((val,))
       fieldEmissivity = Field.Field( bgMesh, XStFieldID.FID_Emissivity, \
-                          ValueType.Scalar, 'None', 0.0, emissivityValues )
+                          ValueType.Scalar, 'none', 0.0, emissivityValues )
       #if cConf.debug:
         #print "writing emissivity field"
         #sys.stdout.flush()

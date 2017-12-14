@@ -89,7 +89,6 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             return self.unit
 
 
-
 @Pyro4.expose
 class ConstantProperty(Property):
         """
@@ -106,7 +105,7 @@ class ConstantProperty(Property):
             :param tuple value: A tuple (array) representing property value
             :param PropertyID propID: Property ID
             :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
-            :param Physics.PhysicalQuantity time: Time
+            :param Physics.PhysicalQuantity time: Time when property is evaluated. If None (default), no time dependence
             :param units: Property units or string
             :type units: Physics.PhysicalUnits or string
             :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
@@ -144,7 +143,7 @@ class ConstantProperty(Property):
             elif (self.time == time):
                return self.value
             else:
-               print ("Property get Value time test", self.time, time)
+               print ("Property propID %d " %self.propID, "self.time" ,self.time, "time", time)
                raise ValueError ('Time out of range')
 
         def getTime(self):

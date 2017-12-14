@@ -37,4 +37,4 @@ try:
 except Exception as e:
     log.info("Test FAILED")
     print (e)
-    exit(0)
+    sys.exit(1)

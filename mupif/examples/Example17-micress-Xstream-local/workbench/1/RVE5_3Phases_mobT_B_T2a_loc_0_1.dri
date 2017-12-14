@@ -712,7 +712,7 @@ linear
 # Number of connecting points?    (integer)
 1
 # Initial temperature at the bottom?  (real)  [K]
-470.155
+470.155{K,1001,1}@1.0 s
 # Temperature gradient in z-direction?  [K/cm]
 0.0
 # 1 Connecting point, time  t [sec]?
