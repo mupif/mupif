@@ -33,7 +33,7 @@ class TestEx01(unittest.TestCase):
             # solve problem 1
             app1.solveStep(istep)
             #request Concentration property from app1
-            c = app1.getProperty(PropertyID.PID_Concentration, PQ.PhysicalQuantity(time,timeUnits))
+            c = app1.getProperty(PropertyID.PID_Concentration, app2.getAssemblyTime(istep))
             # register Concentration property in app2
             app2.setProperty (c)
             # solve second sub-problem 
