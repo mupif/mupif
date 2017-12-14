@@ -55,12 +55,12 @@ class Demo16(Workflow.Workflow):
         log.debug("Step: %g %g %g"%(istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
         
         self.thermal.solveStep(istep)
-        f = self.thermal.getField(FieldID.FID_Temperature, istep.getTargetTime())
+        f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
         data = f.field2VTKData().tofile('T_%s'%str(istep.getNumber()))
 
         self.mechanical.setField(f)
         sol = self.mechanical.solveStep(istep) 
-        f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTargetTime())
+        f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
         data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
 
         self.thermal.finishStep(istep)
