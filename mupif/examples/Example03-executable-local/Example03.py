@@ -20,7 +20,7 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3')
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -28,6 +28,8 @@ class application1(Application.Application):
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1,'s')
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
 
 class application3(Application.Application):
@@ -51,21 +53,24 @@ class application3(Application.Application):
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
-            self.values.append(property)
+            self.concentration=property
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        f = open('app3.in', 'w')
+        if (tstep.getNumber() == 1):
+            f=open('app3.in', 'w')
+        else:
+            f = open('app3.in', 'a')
         # process list of mapped values and store them into an external file 
-        for val in self.values:
-            f.write(str(val.getValue())+'\n')
+        f.write(str(self.concentration.getValue(self.getAssemblyTime(tstep)))+'\n')
         f.close()
         # execute external application to compute the average
         os.system("./application3")
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0,'s')
-
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
 
 class Demo03(Workflow.Workflow):
@@ -79,10 +84,9 @@ class Demo03(Workflow.Workflow):
 
         #solve problem 1
         self.app1.solveStep(istep)
-        #request Concentration property from app1
-        c = self.app1.getProperty(PropertyID.PID_Concentration, istep.getTime())
-        # register Concentration property in app3
-        self.app3.setProperty (c)
+        #handshake Concentration property from app1 to app2
+        self.app3.setProperty (self.app1.getProperty(PropertyID.PID_Concentration,
+                                                     self.app3.getAssemblyTime(istep)))
         # solve second sub-problem 
         self.app3.solveStep(istep)
 
@@ -120,14 +124,22 @@ class Demo03(Workflow.Workflow):
         
 if __name__=='__main__':
     # instanciate workflow
-    demo = Demo03(targetTime=PQ.PhysicalQuantity(3.0, 's'))
+    targetTime =PQ.PhysicalQuantity(3.0, 's')
+    demo = Demo03(targetTime)
     # pass some parameters using set ops
     demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, timeUnits))
     #execute workflow
     demo.solve()
     #get resulting KPI for workflow
-    kpi01 = demo.getProperty (PropertyID.PID_KPI01, None)
+    kpi01 = demo.getProperty (PropertyID.PID_KPI01, targetTime)
 
-    log.info("KPI returned " +  str(kpi01.getValue()) + str(kpi01.getUnits()))
-    log.info("Test OK")
+    log.info("KPI returned " +  str(kpi01.getValue(targetTime)) + str(kpi01.getUnits()))
+
+    if (kpi01.getValue(targetTime) == 1.55):
+        log.info("Test OK")
+        sys.exit(0)
+    else:
+        log.info("Test FAILED")
+        sys.exit(1)
+
 
