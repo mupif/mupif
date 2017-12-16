@@ -350,7 +350,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
     def getUnits(self):
         """
         :return: Returns units of the receiver
-        :rtype: obj
+        :rtype: Physics.PhysicalUnits
         """
         return self.unit
 
