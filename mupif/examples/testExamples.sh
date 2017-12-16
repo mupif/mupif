@@ -109,16 +109,6 @@ pushd Example04-field-local
 popd
 fi
 
-willRunTest '5'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example05-celsian-local
-	echo $PWD
-	$COMMAND Example05.py
-	ret=$?
-	(( retval=$retval || $ret ))
-	AppendLog $ret `pwd`
-popd
-fi
-
 willRunTest '6'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example06-jobMan-distrib
 	echo $PWD
@@ -130,16 +120,6 @@ pushd Example06-jobMan-distrib
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
 	kill -9 $PID1
-popd
-fi
-
-willRunTest '7'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example07-micress-local
-	echo $PWD
-	$COMMAND Example07.py
-	ret=$?
-	(( retval=$retval || $ret ))
-	AppendLog $ret `pwd`
 popd
 fi
 
@@ -231,16 +211,6 @@ pushd Example16-transiTM-JobMan-distrib
 	kill -9 $PID2
 popd
 fi
-
-willRunTest '17'; test=$?; if [ "$test" == 1  ] ; then
-        pushd Example17-micress-Xstream-local
-        $COMMAND Example17.py
-	ret=$?
-	(( retval=$retval || $ret ))
-	AppendLog $ret `pwd`
-popd
-fi
-
 
 willRunTest '18'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example18-transiTM-JobMan-distrib
