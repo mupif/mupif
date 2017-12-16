@@ -3,6 +3,8 @@ import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
+import mupif.Physics.PhysicalQuantities as PQ
+
 #Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
 mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
 from Config import config
@@ -13,7 +15,7 @@ log = logging.getLogger()
 
 class Demo18(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity(0.,'s')):
         super(Demo18, self).__init__(file='', workdir='', targetTime=targetTime)
         
         #locate nameserver
@@ -39,7 +41,7 @@ class Demo18(Workflow.Workflow):
     def solveStep(self, istep, stageID=0, runInBackground=False):
 
         self.thermal.solveStep(istep)
-        f = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
+        f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
         data = f.field2VTKData().tofile('T_%s'%str(istep.getNumber()))
         
         self.mechanical.setField(f)
@@ -68,8 +70,11 @@ class Demo18(Workflow.Workflow):
         return "1.0"
     
 if __name__=='__main__':
-    demo = Demo18(targetTime=2.)
-    demo.solve()
-    log.info("Test OK")
+    try:
+        demo = Demo18(targetTime=PQ.PhysicalQuantity(2.,'s'))
+        demo.solve()
+        log.info("Test OK")
+    except:
+        log.info("Test FAILED")
 
 

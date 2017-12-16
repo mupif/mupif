@@ -5,6 +5,9 @@ sys.path.append('../..')
 from mupif import *
 import mupif
 from mupif.tests import demo
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+tstep = TimeStep.TimeStep(0., 1., 1., timeUnits)
 
 # check for python-vtk before running related tests
 try:
@@ -17,9 +20,18 @@ except ImportError:
 class TestSaveLoad(unittest.TestCase):
     def setUp(self):
         self.app1=demo.AppGridAvg(None)
+        #register assertEqual operation for PhysicalQuantities
+        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
+
+    # unit tests support
+    def assertPhysicalQuantitiesEqual (self, first, second, msg=None):
+        if not first.__cmp__(second):
+            raise self.failureException(msg)
+
+        
     def testFieldSaveLoad(self):
         # get field from the app
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         t22a=f.evaluate((2.0,2.0,0.)) # temperature at (2,2)
         import pickle
         p=pickle.dumps(f)
@@ -29,7 +41,7 @@ class TestSaveLoad(unittest.TestCase):
         self.assertEqual(t22a,t22b)
     def testFieldHdf5SaveLoad(self):
         import mupif.Field
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         if 1: # when testing locally, set to 0 so that the dump file can be inspected
             import tempfile
             with tempfile.NamedTemporaryFile() as tmp:
@@ -45,12 +57,12 @@ class TestSaveLoad(unittest.TestCase):
 
     @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
     def testFieldVtk3SaveLoad(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         if 1:
             import tempfile
             with tempfile.NamedTemporaryFile() as tmp:
                 f.toVTK3(tmp.name)
-                ff2=mupif.Field.Field.makeFromVTK3(tmp.name)
+                ff2=mupif.Field.Field.makeFromVTK3(tmp.name, f.getUnits())
         else:
             name='/tmp/mupif-field-test.vtu'
             f.toVTK3(name,ascii=True,compress=False)
@@ -64,12 +76,12 @@ class TestSaveLoad(unittest.TestCase):
         # as tried, however, saving to VTK again yields byte-to-byte identical .vtu
         ## self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
     def _testFieldVtk2SaveLoad(self,format):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         if 1:
             import tempfile
             with tempfile.NamedTemporaryFile(suffix='.vtk') as tmp:
                 f.toVTK2(tmp.name,format=format)
-                ff2=mupif.Field.Field.makeFromVTK2(tmp.name)
+                ff2=mupif.Field.Field.makeFromVTK2(tmp.name, f.getUnits())
         else:
             name='/tmp/mupif-field-test.'+format+'.vtk'
             f.toVTK2(name,format=format)
@@ -85,7 +97,7 @@ class TestSaveLoad(unittest.TestCase):
         self._testFieldVtk2SaveLoad(format='binary')
 
     def testOctreeNotPickled(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,time=0)
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         import pickle
         m=f.getMesh()
         # this creates localizers on-request

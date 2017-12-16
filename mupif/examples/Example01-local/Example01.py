@@ -4,6 +4,9 @@ sys.path.append('../../..')
 from mupif import *
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
+
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class application1(Application.Application):
     """
@@ -15,14 +18,16 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, propID, 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = self.getAssemblyTime(tstep).inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1, 's')
+    def getAssemblyTime (self, tstep):
+        return tstep.getTime()
 
 
 class application2(Application.Application):
@@ -36,22 +41,24 @@ class application2(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.Property(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, time, propID, 0)
+            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
-            self.contrib = property.getValue()
+            self.contrib = property
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value=self.value+self.contrib
+        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(self.getAssemblyTime(tstep))
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0, 's')
+    def getAssemblyTime (self, tstep):
+        return tstep.getTime()
 
 time  = 0
 timestepnumber=0
@@ -64,7 +71,8 @@ app2 = application2(None)
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = min(app1.getCriticalTimeStep(), app2.getCriticalTimeStep())
+    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
+             app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
     #update time
     time = time+dt
     if (time > targetTime):
@@ -72,20 +80,21 @@ while (abs(time -targetTime) > 1.e-6):
         time = targetTime
     timestepnumber = timestepnumber+1
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         #solve problem 1
         app1.solveStep(istep)
-        #request Concentration property from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep)
-        # register Concentration property in app2
+        # handshake the data
+        c = app1.getProperty(PropertyID.PID_Concentration, app2.getAssemblyTime(istep))
         app2.setProperty (c)
         # solve second sub-problem 
         app2.solveStep(istep)
         # get the averaged concentration
-        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
+        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, app2.getAssemblyTime(istep))
+        #print (istep.getTime(), c, prop)
+        atime = app2.getAssemblyTime(istep)
+        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (atime.getValue(), c.getValue(atime), prop.getValue(atime)))
         
         
     except APIError.APIError as e:
@@ -93,7 +102,7 @@ while (abs(time -targetTime) > 1.e-6):
         log.error("Test FAILED")
         raise
 
-if (abs(prop.getValue()-0.55) <= 1.e-4):
+if (abs(prop.getValue(istep.getTime())-0.55) <= 1.e-4):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

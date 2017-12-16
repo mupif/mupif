@@ -6,6 +6,7 @@ import jsonpickle
 import time #for sleep
 import logging
 log = logging.getLogger()
+import mupif.Physics.PhysicalQuantities as PQ
 
 #
 # Expected response from operator: E-mail with "CSJ01" (workflow + jobID)
@@ -41,7 +42,7 @@ class emailAPI(Application.Application):
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' %(self.key,value))
-                    return Property.Property(value, propID, ValueType.Scalar, 0.0, None, 0)
+                    return Property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -66,7 +67,7 @@ class emailAPI(Application.Application):
                 time.sleep(60) #wait
             
     def getCriticalTimeStep(self):
-        return 1.0
+        return PQ.PhysicalQuantity(1.0,'s')
 
 
 #################################################
@@ -77,13 +78,14 @@ app = emailAPI(None)
 try:
 
     # CumulativeConcentration property on input
-    p = Property.Property(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 0.0, None, 0)
+    p = Property.ConstantProperty(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3')
     # set concentration as input
     app.setProperty(p)
     # solve (involves operator interaction)
-    app.solveStep (TimeStep.TimeStep(0.0, 0.1, 1))
+    tstep = TimeStep.TimeStep(0.0, 0.1, 1.0, 's', 1)
+    app.solveStep (tstep)
     # get result of the simulation
-    r = app.getProperty(PropertyID.PID_Demo_Value, 0.0)
+    r = app.getProperty(PropertyID.PID_Demo_Value, tstep.getTime())
     log.info("Application API return value is %f", r.getValue())
     # terminate app
 

@@ -13,6 +13,7 @@ log = logging.getLogger()
 import time as timeTime
 start = timeTime.time()
 log.info('Timer started')
+import mupif.Physics.PhysicalQuantities as PQ
 
 
 #localize JobManager running on (remote) server and create a tunnel to it
@@ -21,7 +22,7 @@ log.info('Timer started')
 
 class Demo16(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity(0.,'s')):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -51,10 +52,10 @@ class Demo16(Workflow.Workflow):
         log.info("Solving thermal problem")
         log.info(self.thermal.getApplicationSignature())
         
-        log.debug("Step: %g %g %g"%(istep.time, istep.dt, istep.number))
+        log.debug("Step: %g %g %g"%(istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
         
         self.thermal.solveStep(istep)
-        f = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
+        f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
         data = f.field2VTKData().tofile('T_%s'%str(istep.getNumber()))
 
         self.mechanical.setField(f)
@@ -83,7 +84,7 @@ class Demo16(Workflow.Workflow):
         return "1.0"
 
 if __name__=='__main__':
-    demo = Demo16(targetTime=10.)
+    demo = Demo16(targetTime=PQ.PhysicalQuantity(10.,'s'))
     demo.solve()
     log.info("Test OK")
 

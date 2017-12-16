@@ -10,6 +10,9 @@ import os
 import logging
 log = logging.getLogger('demoapp')
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 def getline (f):
     while True:
         line=f.readline()
@@ -25,7 +28,7 @@ class thermal(Application.Application):
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
         self.morphologyType=None
-        self.conductivity=1.0
+        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'kg/m**3')
         self.tria=False
 
     def readInput(self, tria=False):
@@ -168,11 +171,11 @@ class thermal(Application.Application):
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if time==0.0:#put zeros everywhere
+                if time.getValue()==0.0:#put zeros everywhere
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values);
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
             for e in self.mesh.cells():
@@ -181,7 +184,7 @@ class thermal(Application.Application):
                 else:
                     values.append((0,))
             #print (values)
-            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, None, 0.0, values,fieldType=Field.FieldType.FT_cellBased);
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased);
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -246,7 +249,7 @@ class thermal(Application.Application):
 
         log.info("Assembling ...")
         for e in mesh.cells():
-            A_e = self.compute_elem_conductivity(e)
+            A_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime()))
 
             # #Assemble
             #print e, self.loc[c[e.number-1,0]],self.loc[c[e.number-1,1]], self.loc[c[e.number-1,2]], self.loc[c[e.number-1,3]] 
@@ -401,7 +404,7 @@ class thermal(Application.Application):
         #print Grad
         return Grad
 
-    def compute_elem_conductivity (self, e):
+    def compute_elem_conductivity (self, e, k):
         #compute element conductivity matrix
         numVert = e.getNumberOfVertices()
         A_e = np.zeros((numVert,numVert))
@@ -431,7 +434,7 @@ class thermal(Application.Application):
             #print "global coords :", x
 
             #conductivity
-            k=self.conductivity
+            #k=self.conductivity.getValue()
             if self.morphologyType=='Inclusion':
                 if self.isInclusion(e):
                     k=0.001
@@ -462,15 +465,15 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
+            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_effective_conductivity):
             # remember the mapped value
-            self.conductivity = property.getValue()
-            #log.info("Assigning effective conductivity %f" % self.conductivity )
+            self.conductivity = property.inUnitsOf('W/m/K')
+            #log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -488,10 +491,15 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.Property(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, time, propID, 0)
+            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
+    def getCriticalTimeStep(self):
+        return PQ.PhysicalQuantity(1.0, 's')
+
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
     def getApplicationSignature(self):
         return "Stationary thermal-demo-solver, ver 1.0"
@@ -515,8 +523,11 @@ class thermal_nonstat(thermal):
         return
 
     def getCriticalTimeStep(self):
-        return 1.0;
+        return PQ.PhysicalQuantity(1.0, 's')
 
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()-tstep.getTimeIncrement()*self.Tau
+    
     def compute_elem_capacity (self, e):
         #compute element capacity matrix
         numVert = e.getNumberOfVertices()
@@ -562,7 +573,7 @@ class thermal_nonstat(thermal):
         mesh = self.mesh
         self.volume = 0.0;
         self.integral = 0.0;
-        dt = tstep.getTimeIncrement()
+        dt = tstep.getTimeIncrement().inUnitsOf(timeUnits).getValue()
 
         if tstep.getNumber()==0:#assign mesh only for 0th time step
             return
@@ -598,7 +609,7 @@ class thermal_nonstat(thermal):
 
             log.info("Assembling ...")
             for e in mesh.cells():
-                K_e = self.compute_elem_conductivity(e)
+                K_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime()))
                 C_e = self.compute_elem_capacity(e)
                 A_e = K_e*self.Tau + C_e/dt
                 P_e = np.subtract(C_e/dt, K_e*(1.-self.Tau))
@@ -754,7 +765,9 @@ class mechanical(Application.Application):
         self.alpha = 12.e-6
 
     def getCriticalTimeStep(self):
-        return 1.0;
+        return PQ.PhysicalQuantity(1.0, 's');
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
     def readInput(self):
 
@@ -862,7 +875,7 @@ class mechanical(Application.Application):
         if (fieldID == FieldID.FID_Displacement):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
-                if time==0.0:#put zeros everywhere
+                if time.getValue()==0.0:#put zeros everywhere
                     values.append((0.,0.,0.))
                 else:
                     if i in self.dirichletBCs:
@@ -870,7 +883,7 @@ class mechanical(Application.Application):
                     else:
                         values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
 
-            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, 'm', 0.0, values);
+            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, 'm', time, values);
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -943,7 +956,7 @@ class mechanical(Application.Application):
                 k=1.
                 Grad= np.zeros((3,elemDofs))
                 Grad = self.compute_B(e,p[0])
-                D= self.compute_D(self.E, self.nu)
+                D = self.compute_D(self.E, self.nu)
                 #print "Grad :",Grad
                 K=np.zeros((elemDofs,elemDofs))
                 K=k*(np.dot(Grad.T,np.dot(D, Grad)))
@@ -957,8 +970,8 @@ class mechanical(Application.Application):
                 if self.temperatureField:
                     t = self.temperatureField.evaluate(x)
                     et = np.zeros((3,1))
-                    et[0]=self.alpha*t[0]
-                    et[1]=self.alpha*t[0]
+                    et[0]=self.alpha*t.getValue()[0]
+                    et[1]=self.alpha*t.getValue()[0]
                     et[2]=0.0
                     b_e = np.dot(Grad.T, np.dot(D, et))*dv
             #print "A_e :",A_e

@@ -180,12 +180,14 @@ class RemoteJobManager (object):
             #print ("RemoteJobManager: autoterminating sshTunnel") 
             self._sshTunnel.terminate()
     
-    #@Pyro4.oneway # in case call returns much later than daemon.shutdown
-    #def terminate(self):
-        #"""
-        #Terminates the application. Terminates the allocated job at jobManager
-        #"""
-        #self.terminate()
+    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    def terminate(self):
+        """
+        Terminates the application. Terminates the allocated job at jobManager
+        """
+        if self._decoratee:
+            self._decoratee.terminate()
+            self._decoratee = None
 
     def __getattr__(self, name):
         """ 

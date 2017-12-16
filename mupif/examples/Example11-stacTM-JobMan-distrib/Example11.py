@@ -12,10 +12,12 @@ mCfg = serverConfig(mode)
 import logging
 log = logging.getLogger()
 import time as timeT
+import mupif.Physics.PhysicalQuantities as PQ
+
 
 class Demo11(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -69,12 +71,12 @@ class Demo11(Workflow.Workflow):
         log.info("Solving thermal problem")
         log.info(self.thermalSolver.getApplicationSignature())
         #self.thermalSolver._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
-        self.thermalSolver.solveStep(tstep=1.)
+        self.thermalSolver.solveStep(istep)
         #Get field's uri from thermal application and send it to mechanical application.
         #This prevents copying data to Demo11's computer,
         #mechanical solver will use direct access to thermal field.
         log.info("Thermal problem solved")
-        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, 0.0)
+        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri) )
         field = Pyro4.Proxy(uri)
         #field._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
@@ -82,15 +84,15 @@ class Demo11(Workflow.Workflow):
 
         #Original version copied data to Demo11's computer and then to thermal solver.
         #This can be time/memory consuming for large data
-        #temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        #temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
         #self.mechanicalSolver.setField(temperatureField)
 
         log.info("Solving mechanical problem")
-        self.mechanicalSolver.solveStep(None)
-        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, 0.0)) )
-        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, 0.0)
+        self.mechanicalSolver.solveStep(istep)
+        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTargetTime())) )
+        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTime())
         # save results as vtk
-        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, 0.0)
+        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
         temperatureField.field2VTKData().tofile('temperatureField')
         displacementField.field2VTKData().tofile('displacementField')
 
@@ -100,7 +102,7 @@ class Demo11(Workflow.Workflow):
 
     def getCriticalTimeStep(self):
         # determine critical time step
-        return 1.0
+        return PQ.PhysicalQuantity(1.0, 's')
 
     def terminate(self):
         
@@ -120,7 +122,7 @@ class Demo11(Workflow.Workflow):
 
     
 if __name__=='__main__':
-    demo = Demo11(targetTime=1.)
+    demo = Demo11(targetTime=PQ.PhysicalQuantity(1.,'s'))
     demo.solve()
     log.info("Test OK")
 

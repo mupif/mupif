@@ -32,6 +32,8 @@ from . import TimeStep
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 @Pyro4.expose
 class Workflow(Application.Application):
@@ -44,15 +46,21 @@ class Workflow(Application.Application):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file='', workdir='', targetTime=0.):
+    def __init__ (self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Constructor. Initializes the workflow
 
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
+        :param PhysicalQuantity targetTime: target simulation time
         """
         super(Workflow, self).__init__(file=file, workdir=workdir)
-        self.targetTime = targetTime
+
+        print (targetTime)
+        if (PQ.isPhysicalQuantity(targetTime)):
+            self.targetTime = targetTime
+        else:
+            raise TypeError ('targetTime is not PhysicalQuantity')
 
         (username, hostname) = PyroUtil.getUserInfo()
         self.setMetadata(MetadataKeys.USERNAME, username)
@@ -66,21 +74,21 @@ class Workflow(Application.Application):
         The default implementation solves the problem
         in series of time steps using solveStep method (inheritted) until the final time is reached.
 
-        :param bool runInBackground: optional argument, defualt False. If True, the solution will run in background (in separate thread or remotely).
+        :param bool runInBackground: optional argument, default False. If True, the solution will run in background (in separate thread or remotely).
 
         """
-        time = 0.
+        time = PQ.PhysicalQuantity(0., timeUnits)
         timeStepNumber = 0
 
-        while (abs(time-self.targetTime) > 1.e-6):
+        while (abs(time.inUnitsOf(timeUnits).getValue()-self.targetTime.inUnitsOf(timeUnits).getValue()) > 1.e-6):
             dt = self.getCriticalTimeStep()
             time=time+dt
             if (time > self.targetTime):
-                         time = targetTime
+                         time = self.targetTime
             timeStepNumber = timeStepNumber+1
-            istep=TimeStep.TimeStep(time,dt, timeStepNumber)
+            istep=TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
         
-            log.debug("Step %g: t=%g dt=%g"%(timeStepNumber,time,dt))
+            log.debug("Step %g: t=%g dt=%g"%(timeStepNumber,time.inUnitsOf(timeUnits).getValue(),dt.inUnitsOf(timeUnits).getValue()))
 
             self.solveStep(istep)
             self.finishStep(istep)

@@ -6,6 +6,7 @@ import argparse
 mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
 from Config import config
 cfg=config(mode)
+import mupif.Physics.PhysicalQuantities as PQ
 
 import logging
 log = logging.getLogger()
@@ -17,7 +18,7 @@ log.info('Timer started')
 
 class Demo06(Workflow.Workflow):
    
-    def __init__ (self, targetTime=0.):
+    def __init__ (self, targetTime=PQ.PhysicalQuantity('1 s')):
         super(Demo06, self).__init__(file='', workdir='', targetTime=targetTime)
         
         #locate nameserver
@@ -37,19 +38,34 @@ class Demo06(Workflow.Workflow):
             log.info("Working application 1 on server " + appsig)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = Property.Property(1000, PropertyID.PID_Demo_Value, ValueType.Scalar, 0.0, None)
+        val = Property.ConstantProperty(1000, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3')
         self.app1.setProperty (val)
-        self.app1.solveStep(None)
-        retProp = self.app1.getProperty(PropertyID.PID_Demo_Value, 0.0)
-        log.info("Sucessfully received " + str(retProp.getValue()))
+        self.app1.solveStep(istep)
+        self.retprop = self.app1.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
+        log.info("Sucessfully received " + str(self.retprop.getValue(istep.getTime())))
         
     def terminate(self):    
-        log.info("Terminating " + str(self.app1.getURI()))
         self.app1.terminate()
-        self.jobMan.terminate
+        self.jobMan.terminate()
         super(Demo06, self).terminate()
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
+    def getProperty(self, propID, time, objectID=0):
+        if (propID == PropertyID.PID_KPI01):
+            return Property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_KPI01, ValueType.Scalar, 'kg/m**3', time)
+        else:
+            raise APIError.APIError ('Unknown property ID')
+        
+    def setProperty(self, property, objectID=0):
+        if (property.getPropertyID() == PropertyID.PID_Concentration):
+            # remember the mapped value
+            self.contrib = property
+        else:
+            raise APIError.APIError ('Unknown property ID')
+
+
+    def getCriticalTimeStep(self):
+        return PQ.PhysicalQuantity(1.0,'s')
     def getApplicationSignature(self):
         return "Demo06 workflow 1.0"
 
@@ -57,8 +73,18 @@ class Demo06(Workflow.Workflow):
         return "1.0"
     
 if __name__=='__main__':
-    demo = Demo06()
+    targetTime=PQ.PhysicalQuantity('1 s')
+    demo = Demo06(targetTime)
     demo.solve()
-    log.info("Test OK")
+    kpi = demo.getProperty(PropertyID.PID_KPI01, targetTime)
+    demo.terminate()
+    if (kpi.getValue(targetTime) == 1000):
+        log.info("Test OK")
+        kpi = 0
+        sys.exit(0)
+    else:
+        log.info("Test FAILED")
+        kpi = 0
+        sys.exit(1)
 
 

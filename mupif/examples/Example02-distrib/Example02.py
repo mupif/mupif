@@ -15,6 +15,9 @@ mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mo
 from Config import config
 cfg=config(mode)
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 
 class application1(Application.Application):
     """
@@ -25,14 +28,16 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.Property(self.value, PropertyID.PID_Concentration, ValueType.Scalar, time, propID, 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime()
+        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1, 's')
+    def getAsssemblyTime (self,tstep):
+        return tstep.getTime()
 
 time = 0
 timestepnumber=0
@@ -61,8 +66,8 @@ except Exception as e:
 
 while (abs(time - targetTime) > 1.e-6):
     #determine critical time step
-    dt2 = app2.getCriticalTimeStep()
-    dt = min(app1.getCriticalTimeStep(), dt2)
+    dt2 = app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
+    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(), dt2)
     #update time
     time = time+dt
     if (time > targetTime):
@@ -71,15 +76,14 @@ while (abs(time - targetTime) > 1.e-6):
     timestepnumber = timestepnumber+1
     log.debug("Step: %d %f %f" % (timestepnumber, time, dt) )
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         #solve problem 1
         app1.solveStep(istep)
-        #request concentration from app1
-        c = app1.getProperty(PropertyID.PID_Concentration, istep)
-        # register concentration in app2
-        app2.setProperty (c)
+        #handshake the data
+        app2.setProperty(app1.getProperty(PropertyID.PID_Concentration,
+                                          app2.getAssemblyTime(istep)))
         # solve second sub-problem 
         app2.solveStep(istep)
 
@@ -87,10 +91,10 @@ while (abs(time - targetTime) > 1.e-6):
         log.error("Following API error occurred: %s" % e )
         break
 
-prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
-log.debug("Result: %f" % prop.getValue() )
+prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
+log.debug("Result: %f" % prop.getValue(istep.getTime()) )
 
-if (abs(prop.getValue()-0.35) <= 1.e-4):
+if (abs(prop.getValue(istep.getTime())-0.35) <= 1.e-4):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

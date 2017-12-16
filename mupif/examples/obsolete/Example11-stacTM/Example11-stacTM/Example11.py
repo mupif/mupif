@@ -7,6 +7,9 @@ import time
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 appRec = None
 ## 1-Local setup - nameserver, mechanical server, thermal server, steering script run on a local machine ##
 #import conf as cfg
@@ -43,8 +46,9 @@ log.info(thermal.getApplicationSignature())
 mechanical = PyroUtil.connectApp(ns, 'mechanicalServer1')
 log.info(mechanical.getApplicationSignature())
 #Solve thermal part
-thermal.solveStep(TimeStep.TimeStep(0,1))
-temperature = thermal.getField(FieldID.FID_Temperature, 1.0)
+tstep = TimeStep.TimeStep(0,1,1,timeUnits)
+thermal.solveStep(tstep)
+temperature = thermal.getField(FieldID.FID_Temperature, tstep.getTime())
 temperature.field2VTKData().tofile('thermalVTK')
 temperature.field2Image2D(title='Thermal', fileName='thermal.png')
 #thermal.terminate()
@@ -52,8 +56,8 @@ temperature.field2Image2D(title='Thermal', fileName='thermal.png')
 #Solve mechanical part
 log.info(mechanical.getApplicationSignature())
 mechanical.setField(temperature)
-mechanical.solveStep(TimeStep.TimeStep(0,1))
-displacement = mechanical.getField(FieldID.FID_Displacement, 1.0)
+mechanical.solveStep(tstep)
+displacement = mechanical.getField(FieldID.FID_Displacement, tstep.getTime())
 displacement.field2VTKData().tofile('mechanicalVTK')
 displacement.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
 #mechanical.terminate()

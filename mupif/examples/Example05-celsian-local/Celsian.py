@@ -3,6 +3,10 @@ import sys
 sys.path.append('../../..')
 from mupif import *
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+temperatureUnits = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
+
 class Celsian(Application.Application):
 
     def __init__ (self, file):
@@ -15,13 +19,15 @@ class Celsian(Application.Application):
         if (self.mesh == None):
             self.mesh = EnsightReader2.readEnsightGeo('paraview/MMPTestCase_v1.geo', parts, partRec)
 
-        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh)
+        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh, temperatureUnits, time)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1,'s')
+    def getAssemblyTime(self, tstep):
+        return tstep.getTime()
 
 

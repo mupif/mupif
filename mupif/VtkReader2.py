@@ -73,13 +73,16 @@ def readMesh(numNodes,nx,ny,nz,coords):
     mesh.setup(vertices, cells)
     return mesh
 
-def readField(mesh, Data, fieldID, name, filename, type):
+def readField(mesh, Data, fieldID, units, time, name, filename, type):
     """
     :param Mesh mesh: Source mesh
     :param vtkData Data: vtkData obtained by pyvtk
     :param FieldID fieldID: Field type (displacement, strain, temperature ...)
+    :param PhysicalUnit units: field units
+    :param PhysicalQuantity time: time
     :param str name: name of the field to visualize
     :param int type: type of value of the field (1:Scalar, 3:Vector, 6:Tensor) 
+
     :return: Field of unknowns
     :rtype: Field
     """
@@ -124,7 +127,7 @@ def readField(mesh, Data, fieldID, name, filename, type):
             values.append((scalar[i],))
             #print "values : ", values
 
-    field = Field.Field(mesh, fieldID ,ftype, None, None, values, Field.FieldType.FT_vertexBased )
+    field = Field.Field(mesh, fieldID ,ftype, units, time, values, Field.FieldType.FT_vertexBased )
     return field
 
 

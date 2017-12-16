@@ -43,12 +43,13 @@ import ast
 from datetime import datetime
 
 from mupif import *
-
+import mupif.Physics.PhysicalQuantities as PQ
 import logging
 
 import xstreamConfig as xConf
 import XStPropertyID
 import XStFieldID
+
 
 
 class xstream(Application.Application):
@@ -118,6 +119,10 @@ class xstream(Application.Application):
 
         self.field = None
         self.valid = False
+
+        self.temp_property = None
+        self.emissivity_property = None
+
         return
 
     
@@ -140,7 +145,7 @@ class xstream(Application.Application):
         return
 
       
-    def getField(self, fieldID):
+    def getField(self, fieldID, time):
         """
           This method reads native application results at the current 
           simulation time (see solveStep) and converts them to a
@@ -148,10 +153,13 @@ class xstream(Application.Application):
           
           :note: In the current implementation the ID will be ignored. The field file
                  specified in the configuration will be read, i.e. for temperature.
+          :todo: The units are not properly set
           
           :param FieldID fieldID: ID of the field to get (see XStFieldID.py or Mupif FieldID.py)
+          :param PhysicalQuantity time: time
 
           :return: returns Field instance
+
           :rtype: Field
           
         """
@@ -164,8 +172,11 @@ class xstream(Application.Application):
             self.mesh = EnsightReader2.readEnsightGeo(Geofile, self.parts, self.partRec)    
     
         fileName = basePath + self.config['fieldFile'] + '.escl'
-        self.log.info('Reading file '+ fileName )       
-        f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh)
+        self.log.info('Reading file '+ fileName )
+        # determine units and time
+        units = PQ.getDimensionlessUnit()
+        
+        f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh,units,time )
         return f
 
 
@@ -207,9 +218,11 @@ class xstream(Application.Application):
         self.__config()
         
         if (property.getPropertyID() == XStPropertyID.PID_Temperature):
-           self.__setUniformBC(property)
+           self.temp_prop = property
+           #self.__setUniformBC(property)
         elif (property.getPropertyID() == XStPropertyID.PID_Emissivity):
-           self.__setUniformBC(property)
+           self.emissivity_prop = property
+           #self.__setUniformBC(property)
         else:
            raise APIError.APIError ('Unknown property ID')         
 
@@ -267,8 +280,8 @@ class xstream(Application.Application):
             a = mina
             while (a <= maxa):
                 p = (a,b,fix)
-                v = field.evaluate(p)[0]
-                f.write(str(a).rjust(20) + ' ' + str(b).rjust(20) + ' ' + str(v).rjust(20) + '\n')            
+                v = field.evaluate(p).getValue()[0]
+                f.write(str(a).rjust(20) + ' ' + str(b).rjust(20) + ' ' + str(v).rjust(20) + '\n')           
                 a = round(a + spacing,7)
             b = round(b + spacing, 7)
         f.close()
@@ -298,7 +311,14 @@ class xstream(Application.Application):
         
         self.valid = False
         self.timeStep = self.timeStep + 1
-        
+        #update mapped properties
+        if (self.temp_property):
+            self.__setUniformBC(self.temp_property)
+            self.temp_property=None
+            
+        if (self.emissivity_property):
+            self.__setUniformBC(self.emissivity_property)
+            self.emissivity_property=None
         storePath= os.getcwd()
         os.chdir(self.workdir)
         
@@ -387,7 +407,7 @@ class xstream(Application.Application):
                  found_tstep=True 
                  value = float(line.split()[1])
                  self.log.info("The critical time step in X-stream is %f" % value)    
-                 return value 
+                 return PQ.PhysicalQuantity(value, "s")
 
         if (found_tstep==False):
             raise APIError.APIError('The timestep (keyword TIME_STEP) can not be found')

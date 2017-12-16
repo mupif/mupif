@@ -48,3 +48,5 @@ class PropertyID(IntEnum):
     PID_Demo_Integral = 9992
     PID_Demo_Volume = 9993
     PID_Demo_Value = 9994
+    PID_UserTimeStep = 9995
+    PID_KPI01 = 9996

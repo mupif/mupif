@@ -37,11 +37,14 @@ import pyvtk
 
 from mupif import *
 import logging
+import mupif.Physics.PhysicalQuantities as PQ
+dummyUnits = PQ.PhysicalUnit('dummy',   1.,    [0,0,0,0,0,0,0,0,0])
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 import micressConfig as mConf
 
 #Micress import
-import Property
+#import Property
 import MICPropertyID
 import MICFieldID
 
@@ -143,14 +146,14 @@ class micress(Application.Application):
         """
         if (property.getPropertyID() == MICPropertyID.PID_Temperature):
           if (self.locIndex != -1):
-            self.T1[self.locIndex] = property.getValue()
+            self.T1[self.locIndex] = property
           else:
             msg = 'First property to set is the RVE location!'
             log.exception(msg)
             raise APIError.APIError(msg)
         elif (property.getPropertyID() == MICPropertyID.PID_zTemperatureGradient):
           if (self.locIndex != -1):
-            self.TGrad1[self.locIndex] = property.getValue()
+            self.TGrad1[self.locIndex] = property
           else:
             msg = 'First property to set is the RVE location!'
             log.exception(msg)
@@ -188,13 +191,14 @@ class micress(Application.Application):
           with one file parsing step, only.
           
           :param PropertyID propID: property ID, e.g. PID_Concentration
-          :param double time: simulation time
+          :param Physics.PhysicalQuantity time: simulation time
           
           :return: Property object with value set
           :rtype: Property
           
         """
-        
+        timeWithUnits = time
+        time = time.inUnitsOf(timeUnits).getValue()
         if ( ( propID == PropertyID.PID_Concentration ) or \
              ( propID == MICPropertyID.PID_PhaseNames ) or \
              ( propID == MICPropertyID.PID_ComponentNames ) or \
@@ -258,20 +262,19 @@ class micress(Application.Application):
           if ( tabKEntry is None ):
             raise APIError.APIError('No time matching entry in result table')
             return 0
-
             
         if (propID == MICPropertyID.PID_PhaseFractions):
-          return Property.Property([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, time, MICPropertyID.UNIT_Percent, 0)
+          return Property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Dimensions):
-          return Property.Property(self.dimensions,MICPropertyID.PID_Dimensions, ValueType.Vector, time, MICPropertyID.UNIT_Meter, 0)
+          return Property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, PQ._base_units[0][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Temperature):
-          return Property.Property(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, time, MICPropertyID.UNIT_Kelvin, 0)
+          return Property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, PQ._base_units[4][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_ComponentNames):
-          return Property.Property(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, time, MICPropertyID.UNIT_String, 0)
+          return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_PhaseNames):
-          return Property.Property(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, time, MICPropertyID.UNIT_String, 0)          
+          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)          
         elif (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
-          return Property.Property(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, time, MICPropertyID.UNIT_Qubicmeter, 0)        
+          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)        
         elif (propID == PropertyID.PID_Concentration):
           idx = 0
           while ( idx < len(self.t) ):
@@ -281,13 +284,13 @@ class micress(Application.Application):
           if ( idx == len(self.t) ):
             raise APIError.APIError('No time matching entry in log file')
             return 0
-          return Property.Property(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, time, MICPropertyID.UNIT_WeightPercent, 0)            
+          return Property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)            
         elif (propID == MICPropertyID.PID_NativeBaseFileName):
           baseFilename = self.resultFiles + "_loc_" + str(self.locIndex)
-          return Property.Property(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.Scalar, time, MICPropertyID.UNIT_String, 0)
+          return Property.ConstantProperty(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
         elif (propID == MICPropertyID.PID_NativeFieldFileName):
           vtkFile = self.__getResultsVTKFile(time)
-          return Property.Property(vtkFile, MICPropertyID.PID_NativeFieldFileName, ValueType.Scalar, time, MICPropertyID.UNIT_String, 0)
+          return Property.ConstantProperty(vtkFile, MICPropertyID.PID_NativeFieldFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
         else:
           raise APIError.APIError('Unknown property ID')
 
@@ -336,7 +339,7 @@ class micress(Application.Application):
                  results written in the VTK format.
           
           :param Mupif.FieldID fieldID: ID of requested field, e.g. FID_Phase
-          :param double time: simulation time
+          :param PQ.PhysicalQuantity time: simulation time
           
           :return: result field in Mupif field format 
           :rtype: Mupif.Field 
@@ -384,14 +387,14 @@ class micress(Application.Application):
         
         """
       
-        mictime = tstep.getTime()
+        mictime = tstep.getTime().getValue()
 
         if ( self.locIndex == -1 ):
           raise APIError.APIError('No RVE location specified')
                
         # check properties
-        if ( self.T0[self.locIndex] == None ):
-            self.T0[self.locIndex] = self.T1[self.locIndex]
+        if ( self.T0[self.locIndex] is None ):
+            self.T0[self.locIndex] = self.T1[self.locIndex].getValue(tstep.getTime())
             self.TGrad0[self.locIndex] = self.TGrad1[self.locIndex]
 
         if ( not self.resultFiles ):
@@ -443,11 +446,11 @@ class micress(Application.Application):
           if ( line.find('<t0>') > -1 ):
             line = line.replace('<t0>',str(self.T0[self.locIndex]))
           if ( line.find('<t1>') > -1 ):
-            line = line.replace('<t1>',str(self.T1[self.locIndex]))
+            line = line.replace('<t1>',str(self.T1[self.locIndex].getValue(tstep.getTime())))
           if ( line.find('<zg0>') > -1 ):
-            line = line.replace('<zg0>',str(self.TGrad0[self.locIndex]))
+            line = line.replace('<zg0>',str(self.TGrad0[self.locIndex].getValue(tstep.getTime())))
           if ( line.find('<zg1>') > -1 ):
-            line = line.replace('<zg1>',str(self.TGrad1[self.locIndex]))
+            line = line.replace('<zg1>',str(self.TGrad1[self.locIndex].getValue(tstep.getTime())))
                       
           g.write(line)
             

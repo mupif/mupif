@@ -10,6 +10,8 @@ import pyvtk
 import logging
 log = logging.getLogger()
 
+import mupif.Physics.PhysicalQuantities as PQ
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 ##
 VtkReader2.pyvtk_monkeypatch()
 
@@ -44,12 +46,12 @@ class Micress(Application.Application):
         if (self.mesh == None):
             self.mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)
 
-        f = VtkReader2.readField(self.mesh, Data,FieldID.FID_Concentration, "conc1", "micress/sim.vtk", 1)
+        f = VtkReader2.readField(self.mesh, Data,FieldID.FID_Concentration, PQ.getDimensionlessUnit(), timeUnits, "conc1", "micress/sim.vtk", 1)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime()
         self.value=1.0*time
     def getCriticalTimeStep(self):
-        return 0.1
+        return PQ.PhysicalQuantity(0.1,'s')
 

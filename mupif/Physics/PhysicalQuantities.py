@@ -43,9 +43,11 @@ from .NumberDict import NumberDict
 import numpy
 import re, string
 from functools import reduce
+import Pyro4
+import collections
 
 # Class definitions
-
+@Pyro4.expose
 class PhysicalQuantity(object):
 
     """
@@ -109,6 +111,15 @@ class PhysicalQuantity(object):
     F = m*a
     print F 
 
+    #vector valued quantities:
+    a = PQ((1,2,3),'m')
+    scalar = PQ(2.0, 's')
+    a.convertToUnit('km')
+    a.inUnitsOf('dm')
+    a*3.0
+    a*scalar
+
+    #
     F = F.inBaseUnits()
     print F
 
@@ -130,7 +141,7 @@ class PhysicalQuantity(object):
         There are two constructor calling patterns:
 
             1. PhysicalQuantity(value, unit), where value is any number
-            and unit is a string defining the unit
+            and unit is either string defining the unit or PhysicalUnit instance
 
             2. PhysicalQuantity(value_with_unit), where value_with_unit
             is a string that contains both the value and the unit,
@@ -142,13 +153,16 @@ class PhysicalQuantity(object):
         """
         if len(args) == 2:
             self.value = args[0]
-            self.unit = _findUnit(args[1])
+            if (isPhysicalUnit(args[1])):
+                self.unit = args[1]
+            else:
+                self.unit = _findUnit(args[1])
         else:
-            s = string.strip(args[0])
+            s = args[0].strip()
             match = PhysicalQuantity._number.match(s)
             if match is None:
                 raise TypeError('No number found')
-            self.value = string.atof(match.group(0))
+            self.value = float(match.group(0))
             self.unit = _findUnit(s[len(match.group(0)):])
 
     _number = re.compile('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?')
@@ -163,8 +177,11 @@ class PhysicalQuantity(object):
     def _sum(self, other, sign1, sign2):
         if not isPhysicalQuantity(other):
             raise TypeError('Incompatible types')
-        new_value = sign1*self.value + \
-                    sign2*other.value*other.unit.conversionFactorTo(self.unit)
+        factor = other.unit.conversionFactorTo(self.unit)
+        if isinstance(self.value, collections.Iterable):
+            new_value = tuple((sign1*v1+sign2*v2*factor for v1, v2 in zip(self.value, other.value)))
+        else:
+            new_value = sign1*self.value + sign2*other.value*factor
         return self.__class__(new_value, self.unit)
 
     def __add__(self, other):
@@ -180,29 +197,77 @@ class PhysicalQuantity(object):
 
     def __cmp__(self, other):
         diff = self._sum(other, 1, -1)
-        return cmp(diff.value, 0)
-
-    def __mul__(self, other):
-        if not isPhysicalQuantity(other):
-            return self.__class__(self.value*other, self.unit)
-        value = self.value*other.value
-        unit = self.unit*other.unit
-        if unit.isDimensionless():
-            return value*unit.factor
+        if isinstance(diff.value, collections.Iterable):
+            return all(v==0 for v in diff.value)
         else:
-            return self.__class__(value, unit)
+            return cmp(diff.value, 0)
+
+    def __eq__(self, other): #python3 stuff
+        diff = self._sum(other, 1, -1)
+        if isinstance(diff.value, collections.Iterable):
+            return all(v==0 for v in diff.value)
+        else:
+            return diff.value == 0
+
+        
+    def __lt__(self, other): #python3 stuff
+        diff = self._sum(other, 1, -1)
+        if isinstance(diff.value, collections.Iterable):
+            return all(v<0 for v in diff.value)
+        else:
+            return (diff.value < 0)
+    
+    def __mul__(self, other):
+        if isinstance(self.value, collections.Iterable):
+            # tuple valued (vector)
+            if not isPhysicalQuantity(other):
+                newVal = tuple((v*other for v in self.value))
+                return self.__class__(newVal, self.unit)
+            else:
+                # other is physical quantity with units
+                if isinstance(other.value, collections.Iterable):
+                    raise TypeError('Incompatible types')
+                else:
+                    #scalar
+                    newVal = tuple((v*other.value for v in self.value))
+                    unit = self.unit*other.unit
+                    return self.__class__(newVal, unit)
+        else:
+            if not isPhysicalQuantity(other):
+                return self.__class__(self.value*other, self.unit)
+            value = self.value*other.value
+            unit = self.unit*other.unit
+            if unit.isDimensionless():
+                return value*unit.factor
+            else:
+                return self.__class__(value, unit)
 
     __rmul__ = __mul__
 
     def __truediv__(self, other):
-        if not isPhysicalQuantity(other):
-            return self.__class__(self.value/other, self.unit)
-        value = self.value/other.value
-        unit = self.unit/other.unit
-        if unit.isDimensionless():
-            return value*unit.factor
+        if isinstance(self.value, collections.Iterable):
+            # tuple valued (vector)
+            if not isPhysicalQuantity(other):
+                newVal = tuple((v/other for v in self.value))
+                return self.__class__(newVal, self.unit)
+            else:
+                # other is physical quantity with units
+                if isinstance(other.value, collections.Iterable):
+                    raise TypeError('Incompatible types')
+                else:
+                    #scalar
+                    newVal = tuple((v/other.value for v in self.value))
+                    unit = self.unit/other.unit
+                    return self.__class__(newVal, unit)
         else:
-            return self.__class__(value, unit)
+            if not isPhysicalQuantity(other):
+                return self.__class__(self.value/other, self.unit)
+            value = self.value/other.value
+            unit = self.unit/other.unit
+            if unit.isDimensionless():
+                return value*unit.factor
+            else:
+                return self.__class__(value, unit)
 
     def __rtruediv__(self, other):
         if not isPhysicalQuantity(other):
@@ -270,7 +335,7 @@ class PhysicalQuantity(object):
         :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = map(_findUnit, units)
+        units = list(map(_findUnit, units))
         if len(units) == 1:
             unit = units[0]
             value = _convertValue (self.value, self.unit, unit)
@@ -360,7 +425,7 @@ class PhysicalQuantity(object):
         else:
             raise TypeError('Argument of tan must be an angle')
 
-
+@Pyro4.expose
 class PhysicalUnit(object):
 
     """
@@ -401,9 +466,12 @@ class PhysicalUnit(object):
     __str__ = __repr__
 
     def __cmp__(self, other):
-        if self.powers != other.powers:
-            raise TypeError('Incompatible units')
-        return cmp(self.factor, other.factor)
+        if (isPhysicalUnit(other)):
+            if self.powers != other.powers:
+                raise TypeError('Incompatible units')
+            return cmp(self.factor, other.factor)
+        else:
+            return -1;
 
     def __mul__(self, other):
         if self.offset != 0 or (isPhysicalUnit (other) and other.offset != 0):
@@ -576,7 +644,11 @@ def isPhysicalUnit(x):
     :returns: C{True} if x is a L{PhysicalUnit}
     :rtype: C{bool}
     """
-    return hasattr(x, 'factor') and hasattr(x, 'powers')
+    try:
+        return hasattr(x, 'factor') and hasattr(x, 'powers')
+    except AttributeError:
+        return False;
+       
 
 def isPhysicalQuantity(x):
     """
@@ -586,7 +658,19 @@ def isPhysicalQuantity(x):
     :returns: C{True} if x is a L{PhysicalQuantity}
     :rtype: C{bool}
     """
-    return hasattr(x, 'value') and hasattr(x, 'unit')
+    try:
+        return hasattr(x, 'value') and hasattr(x, 'unit')
+    except AttributeError:
+        return False;
+       
+
+
+
+def getDimensionlessUnit():
+    """
+    return dimensionless unit
+    """
+    return PhysicalUnit('',   0.0,    [0,0,0,0,0,0,0,0,0])
 
 
 # Helper functions
@@ -612,9 +696,16 @@ def _round(x):
 
 def _convertValue (value, src_unit, target_unit):
     (factor, offset) = src_unit.conversionTupleTo(target_unit)
-    return (value + offset) * factor
+    if isinstance(value, collections.Iterable):
+        return tuple((v+offset)*factor for v in value)
+    else:
+        return (value + offset) * factor
 
 
+# unit tests support
+def assertPhysicalUnitEqual (first, second, msg=None):
+    return first.__cmp__(second)
+    
 # SI unit definitions
 
 _base_names = ['m', 'kg', 's', 'A', 'K', 'mol', 'cd', 'rad', 'sr']
@@ -628,6 +719,7 @@ _base_units = [('m',   PhysicalUnit('m',   1.,    [1,0,0,0,0,0,0,0,0])),
                ('cd',  PhysicalUnit('cd',  1.,    [0,0,0,0,0,0,1,0,0])),
                ('rad', PhysicalUnit('rad', 1.,    [0,0,0,0,0,0,0,1,0])),
                ('sr',  PhysicalUnit('sr',  1.,    [0,0,0,0,0,0,0,0,1])),
+               ('none',PhysicalUnit('',  1.,    [0,0,0,0,0,0,0,0,0])),#No units
                ]
 
 _prefixes = [('Y',  1.e24),

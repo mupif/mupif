@@ -25,7 +25,11 @@ from __future__ import print_function
 import sys
 sys.path.append('../../..')
 from mupif import *
+import mupif.Physics.PhysicalQuantities as PQ
 import liboofem
+
+timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+
 
 # shorthands
 _EGT=liboofem.Element_Geometry_Type 
@@ -85,7 +89,7 @@ class OOFEM(Application.Application):
         self.mesh = self.getMesh(ts)
 
         #print "Mesh conversion finished"
-        if (abs(ts.targetTime - time) < 1.e-6):
+        if (abs(ts.targetTime - time.inUnitsOf(timeUnits).getValue()) < 1.e-6):
             values=[]
             ne=self.oofem_mesh.giveNumberOfElements()
             nd=self.oofem_mesh.giveNumberOfDofManagers()
@@ -134,7 +138,7 @@ class OOFEM(Application.Application):
         # set values
         if (field.getFieldType() == Field.FieldType.FT_vertexBased):
             for node in mesh.vertices():
-                target.setVertexValue(node.getNumber(), field.giveValue(node.getNumber()))
+                target.setVertexValue(node.getNumber(), field.getVertexValue(node.getNumber()))
         else:
             for node in mesh.vertices():
                 target.setVertexValue(node.getNumber(), field.evaluate(node.getCoordinates()))
@@ -251,9 +255,9 @@ class OOFEM(Application.Application):
         ts = self.oofem_pb.generateNextStep()
         ##print ts
         #override ts settings by the given ones
-        ts.setTargetTime(tstep.getTime())
-        ts.setIntrinsicTime(tstep.getTime())
-        ts.setTimeIncrement(tstep.getTimeIncrement())
+        ts.setTargetTime(tstep.getTime().getValue())
+        ts.setIntrinsicTime(tstep.getTime().getValue())
+        ts.setTimeIncrement(tstep.getTimeIncrement().getValue())
         self.oofem_pb.initializeYourself(ts)
         self.oofem_pb.solveYourselfAt(ts)
 

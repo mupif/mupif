@@ -39,6 +39,7 @@ import logging
 log = logging.getLogger()
 log.setLevel("INFO")
 
+import mupif.Physics.PhysicalQuantities as PQ
 
 import clientConfig as cConf
 
@@ -55,7 +56,7 @@ import micress
 #from xstream
 import TNO_LU as LU   # local lookup table module (TNO)
 import TNO_Qfactor_v1_2 as QFactor # quality factor calculation (TNO)
-import Property  # class enhancement for Mupif property class
+from mupif import Property  
 import util      # Mupif mesh generation utilities
    
   
@@ -96,7 +97,7 @@ def runTestCase(xst,mic):
       f = open(cConf.monFilenames[i],'w')
       f.close()
       
-    time  = cConf.startTime
+    time  = PQ.PhysicalQuantity(cConf.startTime, 's')
 
     # initialize TNO converter with lookup table
     lookup = LU.LU(cConf.qfactPrefix + '/' + cConf.qFactInputFiles[0])
@@ -159,15 +160,15 @@ def runTestCase(xst,mic):
     tcStart = timeTime.time() 
     
     # set constant start emissivity (will be modified in homogenization step)
-    propEpsXstream = Property.Property( \
-                      cConf.startEmissivity, \
-                      XStPropertyID.PID_Emissivity, \
-                      ValueType.Scalar, time, 0, 0 )   
+    propEpsXstream = Property.ConstantProperty(cConf.startEmissivity, 
+                                               XStPropertyID.PID_Emissivity,\
+                                               ValueType.Scalar, PQ.getDimensionlessUnit(),
+                                               time, 0 )   
     if (cConf.debug):
       print ("set uniform start emissivity: ", propEpsXstream.getValue() )
     xst.setProperty(propEpsXstream)
        
-    while ( (time+eps) < cConf.targetTime ):
+    while ( (time.inUnitsOf('s').getValue()+eps) < cConf.targetTime ):
     
       print ('Simulation Time: '+ str(time))
       print ('---------------------------')
@@ -176,17 +177,18 @@ def runTestCase(xst,mic):
       # ---------------------------
       # where the critical time step is given by the macro scale output interval,
       # i.e. get the next available output  
-      dt = xst.getCriticalTimeStep()
+      dt = xst.getCriticalTimeStep()#.inUnitsOf(timeUnits).getValue()
       
       time = time + dt
       timeStepNumber = timeStepNumber + 1
-      istep = TimeStep.TimeStep(time, dt, timeStepNumber)
+      #we have units with Time
+      istep = TimeStep.TimeStep(time, dt, PQ.PhysicalQuantity(cConf.targetTime, time.getUnitName()), None, timeStepNumber)
 
       timing.append(timeStepNumber)
       timing.append(time)
       timing.append(dt)
       
-      monTempLine = "{0:13s}".format(str(time))
+      monTempLine = "{0:13s}".format(str(time.getValue()))
     
       # ---------------------------
       # macro step (X-Stream)
@@ -194,8 +196,7 @@ def runTestCase(xst,mic):
       xst.solveStep(istep,runInBackground=False)       
       
       # get the macro temperature field
-      fieldTemperature = xst.getField(FieldID.FID_Temperature)
-               
+      fieldTemperature = xst.getField(FieldID.FID_Temperature, time)
 
       # ---------------------------
       # micro step (MICRESS)
@@ -213,26 +214,27 @@ def runTestCase(xst,mic):
       timeMicroStep = 0
       pos = 0         
       while ( pos < len(p) ): # loop over macro locations
-
         usedInterfaces = len(mic)            
         if ( (pos + usedInterfaces - 1) >= len(p) ):
           # deactivate interfaces which will get no new location, resp. no work to do anymore
           usedInterfaces = len(p) - pos
-
+        
         for interface in range(usedInterfaces):
     
           # get macro value for temperature, gradient always zero here
-          temp = fieldTemperature.evaluate(p[pos+interface])[0]
+          
+          
+          temp = fieldTemperature.evaluate(p[pos+interface]).getValue()[0]
           tcEnd = timeTime.time()
           timing.append(tcEnd - tcStart)
           
           tcStart = timeTime.time()
           
           # generate Mupif property objects from values
-          propLocation = Property.Property( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, time, 0, 0 )
-          propT = Property.Property( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, time, 0, 0 )
+          propLocation = Property.ConstantProperty( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, 'm')
+          propT = Property.ConstantProperty( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, 'K', time, 0 )
           # z-gradient constant at 0.0 at the moment
-          propzG = Property.Property( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, time, 0, 0 )
+          propzG = Property.ConstantProperty( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, 'K/m', time=None, objectID=0 )
   
           ## set the properties for micro simulation
           mic[interface].setProperty(propLocation)
@@ -260,16 +262,16 @@ def runTestCase(xst,mic):
             # i.e. see variable names
             #pComponentNames = mic[interface].getProperty(MICPropertyID.PID_ComponentNames, time)
             #pPhaseNames = mic[interface].getProperty(MICPropertyID.PID_PhaseNames, time)
-            pDimensions = mic[interface].getProperty(MICPropertyID.PID_Dimensions, time)
+            pDimensions = mic[interface].getProperty(MICPropertyID.PID_Dimensions, istep.getTargetTime())
             #componentNames = pComponentNames.getValue()
             #phaseNames = pPhaseNames.getValue()
             dimensions = pDimensions.getValue()
             if cConf.debug:
               print ("Dimensions [um] = ",dimensions[0] * 1E6, dimensions[1] * 1E6, dimensions[2] * 1E6)
           
-          pT = mic[interface].getProperty(MICPropertyID.PID_Temperature,time)
-          pPF = mic[interface].getProperty(MICPropertyID.PID_PhaseFractions,time)
-          pGS = mic[interface].getProperty(MICPropertyID.PID_AvgGrainSizePerPhase,time)
+          pT = mic[interface].getProperty(MICPropertyID.PID_Temperature,istep.getTargetTime())
+          pPF = mic[interface].getProperty(MICPropertyID.PID_PhaseFractions,istep.getTargetTime())
+          pGS = mic[interface].getProperty(MICPropertyID.PID_AvgGrainSizePerPhase,istep.getTargetTime())
             
           vT.append(pT.getValue())
            
@@ -355,7 +357,7 @@ def runTestCase(xst,mic):
       for val in vEm:
         emissivityValues.append((val,))
       fieldEmissivity = Field.Field( bgMesh, XStFieldID.FID_Emissivity, \
-                          ValueType.Scalar, 'bgMesh', 0.0, emissivityValues )
+                          ValueType.Scalar, 'none', 0.0, emissivityValues )
       #if cConf.debug:
         #print "writing emissivity field"
         #sys.stdout.flush()
@@ -414,6 +416,7 @@ def runTestCase(xst,mic):
       # ---------------------------     
            
   except Exception as e:
+    print(e)
     log.exception(e)
     raise e
     
@@ -539,8 +542,7 @@ def main():
         print ("... skipping MICRESS interface allocation")
     
     except: # logger output for exception will be done before
-      pass
-    
+      raise ValueError
     
     finally:
             
@@ -557,5 +559,10 @@ def main():
 
 # invoke the main routine
 if __name__ == '__main__':
+    try:
         main()
         log.info("Test OK")
+    except:
+        log.info("Test FAILED")
+        sys.exit(1)
+        

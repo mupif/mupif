@@ -11,7 +11,7 @@
 #  simplified test case.
 #  This file will be manipulated by the MICRESS interface. The marked
 #  parameters are the respective positions to set properties, e.g. 
-#  3.0 will be replaced by the target time given as a parameter 
+#  2.0 will be replaced by the target time given as a parameter 
 #  in the solveStep() method of the MICRESS interface.
 #
 #  ATTENTION: In this example, MICRESS will not be run directly.
@@ -74,13 +74,13 @@ multi_obstacle fd_correction
 # Restart using old results?
 # Options:    new       restart [reset_time | structure_only]
 restart
-RVE5_3Phases_mobT_B_T2a_loc_1
+RVE5_3Phases_mobT_B_T2a_loc_0
 #
 #
 # Name of output files
 # ====================
 # Name of result files?
-RVE5_3Phases_mobT_B_T2a_loc_1
+RVE5_3Phases_mobT_B_T2a_loc_0
 # Overwrite files with the same name?
 # Options:    overwrite      write_protected     append
 #             [zipped|not_zipped|vtk]
@@ -116,7 +116,7 @@ end_of_outputs
 #  'first'                  : additional output for first time-step
 #  'end_at_temperature'    : additional output and end of simulation
 #                             at given temperature
-3.0
+2.0
 end_of_simulation
 # Time-step?
 # Options:   fix ...[s]   automatic    automatic_limited
@@ -712,13 +712,13 @@ linear
 # Number of connecting points?    (integer)
 1
 # Initial temperature at the bottom?  (real)  [K]
-301.58
+470.155{K,1001,1}@1.0 s
 # Temperature gradient in z-direction?  [K/cm]
 0.0
 # 1 Connecting point, time  t [sec]?
-3.0
+2.0
 # 1 Connecting point, temperature
-303.495
+470.155
 # 1 connecting point, temperature gradient in z-direction (real)  [K/cm]
 0.0
 # Moving-frame system in z-direction?

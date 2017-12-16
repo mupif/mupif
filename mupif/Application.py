@@ -84,7 +84,7 @@ class Application(MupifObject.MupifObject):
         Returns the requested field at given time. Field is identified by fieldID.
 
         :param FieldID fieldID: Identifier of the field
-        :param float time: Target time
+        :param Physics.PhysicalQuantity time: Target time
 
         :return: Returns requested field.
         :rtype: Field
@@ -94,7 +94,7 @@ class Application(MupifObject.MupifObject):
         Returns the uri of requested field at given time. Field is identified by fieldID.
 
         :param FieldID fieldID: Identifier of the field
-        :param float time: Target time
+        :param Physics.PhysicalQuantity time: Target time
 
         :return: Requested field uri
         :rtype: Pyro4.core.URI
@@ -126,7 +126,7 @@ class Application(MupifObject.MupifObject):
         Returns property identified by its ID evaluated at given time.
 
         :param PropertyID propID: property ID
-        :param float time: Time when property should to be evaluated
+        :param Physics.PhysicalQuantity time: Time when property should to be evaluated
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
 
         :return: Returns representation of requested property 
@@ -204,7 +204,7 @@ class Application(MupifObject.MupifObject):
         Returns a critical time step for an application.
         
         :return: Returns the actual (related to current state) critical time step increment
-        :rtype: float
+        :rtype: Physics.PhysicalQuantity
         """
     def getAssemblyTime(self, tstep):
         """
@@ -213,7 +213,7 @@ class Application(MupifObject.MupifObject):
 
         :param TimeStep tstep: Solution step
         :return: Assembly time
-        :rtype: float, TimeStep
+        :rtype: Physics.PhysicalQuantity, TimeStep
         """
     def storeState(self, tstep):
         """

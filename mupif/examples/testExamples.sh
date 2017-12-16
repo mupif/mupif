@@ -1,7 +1,7 @@
 #!/bin/bash
 #You may run all tests without argumens, or to use selected tests such as ./testExamples.sh '1 2'
 
-arrayTests="$@"
+arrayTests="$@" #arguments from command line, i.e. test numbers
 
 # force running everything locally (ssh clients and servers)
 export TRAVIS=1
@@ -24,13 +24,28 @@ bash ssh/test_ssh_server.sh &
 $PYTHON ../tools/nameserver.py &
 sleep 1
 
-# accumulates failures, which are stored in $ret for each example
+# accumulates failures, which are stored in $ret for each example, 1 for failure
 retval=0
 
 #Logging failing examples
 LOG=()
 
+
+echo CODECOV flag is set to $USE_CODECOV
+
+if [ "$USE_CODECOV" == true ]
+then
+    COMMAND="coverage run"
+else
+    COMMAND=$PYTHON
+fi
+echo Setting command to $COMMAND
+
+
+
+
 AppendLog () {
+        echo "=================== Exit status $1 ===================="
         if [ $1 -ne 0 ]; then
             LOG+=($2)
         fi
@@ -50,11 +65,10 @@ willRunTest () {
 willRunTest '1'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example01-local; 
 	echo $PWD
-	$PYTHON Example01.py
+	$COMMAND Example01.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -65,11 +79,10 @@ pushd Example02-distrib
 	PID1=$!
 	echo $PID1
 	sleep 1
-	$PYTHON Example02.py 
+	$COMMAND Example02.py 
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
 fi
@@ -78,11 +91,10 @@ willRunTest '3'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example03-executable-local
 	echo $PWD
 	gcc -o application3 application3.c
-	$PYTHON Example03.py
+	$COMMAND Example03.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -90,22 +102,20 @@ fi
 willRunTest '4'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example04-field-local
 	echo $PWD
-	$PYTHON Example04.py
+	$COMMAND Example04.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
 willRunTest '5'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example05-celsian-local
 	echo $PWD
-	$PYTHON Example05.py
+	$COMMAND Example05.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
@@ -115,11 +125,10 @@ pushd Example06-jobMan-distrib
 	$PYTHON server.py &
 	PID1=$!
 	sleep 1
-	$PYTHON Example06.py
+	$COMMAND Example06.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 popd
 fi
@@ -127,49 +136,45 @@ fi
 willRunTest '7'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example07-micress-local
 	echo $PWD
-	$PYTHON Example07.py
+	$COMMAND Example07.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
 willRunTest '9'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example09-units-local
 	echo $PWD
-	$PYTHON Example09.py
+	$COMMAND Example09.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
 willRunTest '10'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example10-stacTM-local
 	echo $PWD
-	$PYTHON Example10.py
+	$COMMAND Example10.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 popd
 fi
 
 willRunTest '11'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example11-stacTM-JobMan-distrib
 	echo $PWD
-	$PYTHON thermalServer.py &
+	$COMMAND thermalServer.py &
 	PID1=$!
-	$PYTHON mechanicalServer.py &
+	$COMMAND mechanicalServer.py &
 	PID2=$!
 	sleep 2 #wait for servers to start
-	$PYTHON Example11.py
+	$COMMAND Example11.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
@@ -177,31 +182,34 @@ fi
 
 willRunTest '12'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example12-stacTmultiscale-local
-        $PYTHON Example12.py
+    $COMMAND Example12.py
+    ret=$?
+    (( retval=$retval || $ret ))
+    AppendLog $ret `pwd`
 popd
 fi
 
 willRunTest '13'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example13-transiTM-local
-        $PYTHON Example13.py
+    $COMMAND Example13.py
+    ret=$?
+    (( retval=$retval || $ret ))
+    AppendLog $ret `pwd`
 popd
 fi
 
 willRunTest '14'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example14-transiTM-distrib
-        echo "=================== Retval $retval ===================="
         echo $PWD
-	$PYTHON thermalServer.py &
+	$COMMAND thermalServer.py &
 	PID1=$!
-	$PYTHON mechanicalServer.py &
+	$COMMAND mechanicalServer.py &
 	PID2=$!
 	sleep 2 #wait for servers to start
-	$PYTHON Example14.py
+	$COMMAND Example14.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
-	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
@@ -209,50 +217,49 @@ fi
 
 willRunTest '16'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example16-transiTM-JobMan-distrib
-        echo "=================== Retval $retval ===================="
         echo $PWD
-	$PYTHON thermalServer.py &
+	$COMMAND thermalServer.py &
 	PID1=$!
-	$PYTHON mechanicalServer.py &
+	$COMMAND mechanicalServer.py &
 	PID2=$!
 	sleep 2 #wait for servers to start
-	$PYTHON Example16.py
+	$COMMAND Example16.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
-	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
 fi
 
 willRunTest '17'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example17-micress-Xstream-local
-        $PYTHON Example17.py
+        pushd Example17-micress-Xstream-local
+        $COMMAND Example17.py
+	ret=$?
+	(( retval=$retval || $ret ))
+	AppendLog $ret `pwd`
 popd
 fi
 
 
 willRunTest '18'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example18-transiTM-JobMan-distrib
-        echo "=================== Retval $retval ===================="
         echo $PWD
-	$PYTHON thermalServer.py &
+	$COMMAND thermalServer.py &
 	PID1=$!
-	$PYTHON mechanicalServer.py &
+	$COMMAND mechanicalServer.py &
 	PID2=$!
 	sleep 2 #wait for servers to start
-	$PYTHON Example18.py
+	$COMMAND Example18.py
 	ret=$?
 	(( retval=$retval || $ret ))
 	AppendLog $ret `pwd`
-	echo "=================== Exit status $ret ===================="
-	echo "=================== Retval $retval ===================="
 	kill -9 $PID1
 	kill -9 $PID2
 popd
 fi
+
+
 
 echo "*** Global return status $retval."
 
@@ -273,5 +280,3 @@ done
 echo "*** Bye."
 
 exit $retval
-
-

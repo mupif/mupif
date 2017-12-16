@@ -8,7 +8,7 @@ VER=`awk '/__version__/ {$1=$2=""; print $0}' ../__init__.py | sed "s/'//g"`
 AUTHORS=`awk '/__author__/ {$1=$2=""; print $0}' ../__init__.py | sed "s/'//g"`
 
 #Overwrite now
-VER='1.0.0'
+VER='2.0.0'
 AUTHORS='Bořek Patzák, Vít Šmilauer'
 
 cd ../doc/refManual
