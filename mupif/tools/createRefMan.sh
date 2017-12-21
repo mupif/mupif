@@ -9,7 +9,7 @@ AUTHORS=`awk '/__author__/ {$1=$2=""; print $0}' ../__init__.py | sed "s/'//g"`
 
 #Overwrite now
 VER='2.0.0'
-AUTHORS='Bořek Patzák, Vít Šmilauer'
+AUTHORS='Bořek Patzák and Vít Šmilauer'
 
 cd ../doc/refManual
 

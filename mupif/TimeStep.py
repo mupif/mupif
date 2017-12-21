@@ -8,12 +8,8 @@ class TimeStep(object):
     """
     Class representing a time step.
     The folowing attributes are used to characterize a time step:
-
-    |-------|-------|---i-th time step---|----------|----------|
-                    ^                    ^                     ^
-                    |<--------dt-------->|                     |
-                    |                    |                     |
-                  time-dt               time                targetTime
+    
+    ||- - -||(time-dt)- - - i-th time step(dt) - - -||(time)- - - -||- - - -||(targetTime)
 
     Note: Individual models (applications) assemble theit governing 
     equations at specific time, called asssemblyTime, this time
@@ -32,8 +28,8 @@ class TimeStep(object):
         :param dt: Step length (time increment), type depends on 'units'
         :type dt: float or Physics.PhysicalQuantity
         :param targetTime: target simulation time (time at the end of simulation, not of a single TimeStep)
-        :type targetTime: float or Physics.PhysicalQuantity
-        :param Physics.PhysicalUnit units: optional units for t,dt,tarrgetTime if given as float values 
+        :type targetTime: float or Physics.PhysicalQuantity. targetTime is not related to particular time step rather to the material model (load duration, relaxation spectra etc.)
+        :param Physics.PhysicalUnit units: optional units for t, dt, targetTime if given as float values 
         :param int n: Optional, solution time step number, default = 1
         """
         self.number = n #solution step number, dimensionless
