@@ -67,6 +67,18 @@ class Triangle_2d_lin_TestCase(unittest.TestCase):
         b = self.cell.containsPoint((0., 5.1))
         self.assertFalse(b)
 
+    def test_getTransformationJacobian(self):
+        J = self.cell.getTransformationJacobian([])
+        self.assertAlmostEqual(J,10, msg='error in getTransformationJacobian', delta=1.e-8)
+
+    def test_evalN(self):
+        lc = (0.5,0.5)
+        N = self.cell._evalN(lc)
+        self.assertAlmostEqual(N[0], 0.5, msg='error in _evalN', delta=1.e-10)
+        self.assertAlmostEqual(N[1], 0.5, msg='error in _evalN', delta=1.e-10)
+        self.assertAlmostEqual(N[2], 0.0, msg='error in _evalN', delta=1.e-10)
+        
+
 
 class Triangle_2d_quad_TestCase(unittest.TestCase):
     def setUp(self):
@@ -127,6 +139,21 @@ class Triangle_2d_quad_TestCase(unittest.TestCase):
         self.assertTrue(b)
         b = self.cell.containsPoint((0., 5.1))
         self.assertFalse(b)
+
+
+    def test_evalN(self):
+        l1 = 0.5;
+        l2 = 0.5
+        l3 = 1-l1-l2
+        lc = (l1,l2)
+
+        N = self.cell._evalN(lc)
+        self.assertAlmostEqual(N[0], ( 2. * l1 - 1. ) * l1, msg='error in _evalN', delta=1.e-5)
+        self.assertAlmostEqual(N[1], ( 2. * l2 - 1. ) * l2, msg='error in _evalN', delta=1.e-5) 
+        self.assertAlmostEqual(N[2], ( 2. * l3 - 1. ) * l3, msg='error in _evalN', delta=1.e-5) 
+        self.assertAlmostEqual(N[3],   4. * l1 * l2, msg='error in _evalN', delta=1.e-5)
+        self.assertAlmostEqual(N[4],   4. * l2 * l3, msg='error in _evalN', delta=1.e-5)
+        self.assertAlmostEqual(N[5],   4. * l3 * l1, msg='error in _evalN', delta=1.e-5)
         
 class Quad_2d_lin_TestCase(unittest.TestCase):
     def setUp(self):
