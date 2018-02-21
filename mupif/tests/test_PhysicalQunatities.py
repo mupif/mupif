@@ -252,13 +252,9 @@ class PhysicalQuantity_TestCase(unittest.TestCase):
         else:
             self.fail('Exception not raised')
 
-
-
-
         self.assertTrue(timeUnits.__cmp__(timeUnits2) < 0)
         self.assertTrue(timeUnits.__cmp__(timeUnits3) > 0)
         self.assertTrue(timeUnits.__cmp__(timeUnits4) == 0)
-
         self.assertTrue(timeUnits.__cmp__(5) == -1)
 
     # python test_Cell.py for stand-alone test being run
