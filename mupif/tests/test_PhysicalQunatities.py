@@ -16,6 +16,26 @@ class PhysicalQuantity_TestCase(unittest.TestCase):
         self.assertTrue(velocity.value == 1.0)
         self.assertEqual(velocity.getUnitName(), 'm/s')
 
+        try:
+            V = PQ.PhysicalQuantity('s m s')
+        except TypeError:
+            pass
+        except Exception as e:
+            self.fail('Unexpected exception raised:', e)
+        else:
+            self.fail('Exception not raised')
+
+
+        try:
+            V = PQ.PhysicalQuantity('2 m s')
+        except SyntaxError:
+            pass
+        except Exception as e:
+            self.fail('Unexpected exception raised:', e)
+        else:
+            self.fail('Exception not raised')
+
+
     def test_SumFail(self):
         V = PQ.PhysicalQuantity('3.6 km/h')
         F = PQ.PhysicalQuantity('20 N')
@@ -27,6 +47,18 @@ class PhysicalQuantity_TestCase(unittest.TestCase):
             self.fail('Unexpected exception raised:',e)
         else:
             self.fail('Exception not raised')
+
+        try:
+            V._sum(10, 1, 1)
+        except TypeError:
+            pass
+        except Exception as e:
+            self.fail('Unexpected exception raised:', e)
+        else:
+            self.fail('Exception not raised')
+
+
+
 
     def test_Add(self):
         V1 = PQ.PhysicalQuantity('1 km/h')
@@ -79,6 +111,14 @@ class PhysicalQuantity_TestCase(unittest.TestCase):
         w = len*time
         ms = PQ.PhysicalQuantity('2 m*s')
         self.assertEqual(w,ms)
+
+        w = len * 5
+        len5 = PQ.PhysicalQuantity('5 m')
+        self.assertEqual(w, len5)
+
+
+
+
 
     def test_TrueDiv(self):
         # division with a number
