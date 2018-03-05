@@ -759,10 +759,11 @@ class mechanical(Application.Application):
         super(mechanical, self).__init__(file, workdir)
         self.E = 30.0e+9 #ceramics
         self.nu = 0.25   #ceramics
-        self.fx = 0.0    #load in x
-        self.fy = 0.0    #load in y
+        self.fx = [0.,0.,0.,0.]    #load in x
+        self.fy = [0.,0.,0.,0.]    #load in y
         self.temperatureField = None
         self.alpha = 12.e-6
+        self.thick = 1.0
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's');
@@ -775,15 +776,26 @@ class mechanical(Application.Application):
         loadModelEdges=[]
         try:
             f = open(self.workDir+os.path.sep+self.file, 'r')
+            #size
             line = getline(f)
             size = line.split()
             self.xl=float(size[0])
             self.yl=float(size[1])
-
+            #mesh
             line = getline(f)
             ne = line.split()
             self.nx=int(ne[0])
             self.ny=int(ne[1])
+            #Thickness
+            rec = getline(f).split()
+            self.thick=float(rec[0])
+            #Young's modulus and Poissons' ratio
+            rec = getline(f).split()
+            self.E = float(rec[0])
+            self.nu = float(rec[1])
+            #thermal dilation
+            rec = getline(f).split()
+            self.alpha = float(rec[0])
 
             log.info("Mechanical problem's dimensions: (%g, %g)" % (self.xl,self.yl) )
 
@@ -796,7 +808,10 @@ class mechanical(Application.Application):
                     dirichletModelEdges.append(edge)
                 elif (code == 'C'):
                     loadModelEdges.append(edge)
+                    self.fx[iedge] = float(rec[2])
+                    self.fy[iedge] = float(rec[3])
 
+            #print(self.fx, self.fy)
             f.close()
 
         except  Exception as e:
@@ -842,21 +857,19 @@ class mechanical(Application.Application):
 
         #convectionModelEdges=(2,)
         self.loadBC = []
-        fx = self.fx
-        fy = self.fy
         for ice in loadModelEdges:
-            if ice ==1:
+            if ice==1:
                 for i in range(self.nx):
-                    self.loadBC.append((self.ny*i,0, fx, fy))
-            elif ice ==2:
+                    self.loadBC.append((self.ny*i,0, self.fx[ice-1], self.fy[ice-1]))
+            elif ice==2:
                 for i in range(self.ny):
-                    self.loadBC.append(((self.nx-1)*self.ny+i, 1, fx, fy))
-            elif ice ==3:
+                    self.loadBC.append(((self.nx-1)*self.ny+i, 1, self.fx[ice-1], self.fy[ice-1]))
+            elif ice==3:
                 for i in range(self.nx):
-                    self.loadBC.append((self.ny*(i+1)-1, 2, fx, fy))
-            elif ice ==4:
+                    self.loadBC.append((self.ny*(i+1)-1, 2, self.fx[ice-1], self.fy[ice-1]))
+            elif ice==4:
                 for i in range(self.ny):
-                    self.loadBC.append((i, 3, fx, fy))
+                    self.loadBC.append((i, 3, self.fx[ice-1], self.fy[ice-1]))
 
         self.loc=np.zeros((self.mesh.getNumberOfVertices(),2), dtype=np.int32) # Du, Dv dofs per node
         for i in self.dirichletBCs:
@@ -1000,8 +1013,9 @@ class mechanical(Application.Application):
             #print "Processing bc:", i
             elem = mesh.getCell(i[0])
             side = i[1]
-            fx = i[2] # specified as intensity per edge length
-            fy = i[3] # specified as intensity per edge length
+            fx = i[2] # specified as intensity per edge length [N/m]
+            fy = i[3] # specified as intensity per edge length [N/m]
+            #print(fx,fy)
 
             n1 = elem.getVertices()[side];
             #print n1
@@ -1112,7 +1126,28 @@ class mechanical(Application.Application):
         D[1,0] = nu * ee;
         D[1,1] = ee;
         D[2,2] = G;
+        D = D * self.thick
         return D
 
     def getApplicationSignature(self):
         return "Mechanical-demo-solver, ver 1.0"
+    
+@Pyro4.expose
+class EulerBernoulli(Application.Application):
+    """Calculates maximum deflection of cantilever beam with a uniform vertical distributed load. Uses Euler-Bernoulli beam neglecting shear deformation."""
+    
+    def __init__(self, b, h, L, E, f):
+        self.b = b
+        self.h = h
+        self.L = L
+        self.E = E
+        self.f = f
+        self.deflection = 0.
+    
+    def solveStep(self, tstep, stageID=0, runInBackground=False):
+        I = self.b*self.h**3/12.
+        self.deflection = self.f*self.L**4/8./self.E/I
+        
+    def getField(self, fieldID, time):
+        if (fieldID == FieldID.FID_Displacement):
+            return self.deflection
