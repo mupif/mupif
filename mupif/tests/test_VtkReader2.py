@@ -38,7 +38,7 @@ class VtkReader2_TestCase(unittest.TestCase):
         numNodes = len(coords)
         mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)
 
-        fc = VtkReader2.readField(mesh, Data,FieldID.FID_Concentration, Physics.PhysicalQuantities.getDimensionlessUnit(), "s", "conc", "testVtkReader2.vtk", 1)
+        fc = VtkReader2.readField(mesh, Data,FieldID.FID_Concentration, Physics.PhysicalQuantities.getDimensionlessUnit(), "s", "conc", my_file, 1)
         self.assertTrue(fc.fieldID == FieldID.FID_Concentration)
         self.assertTrue(fc.fieldType == Field.FieldType.FT_vertexBased)
 
