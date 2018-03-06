@@ -137,6 +137,8 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
     """
     # if the next line is not next part record, then should be element section
     while (not re.search('\s*part\s+(\d+)', line)):
+        if(line == ''):
+            break
         # ok no "part" keyword, parse element section
         eltype=line.rstrip('\r\n')
         if debug: 
@@ -160,19 +162,19 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
                     _vert = [vertexMapping[i] for i in elnodes]
                     cells.append(Cell.Brick_3d_lin(mesh, enum, enum, tuple(_vert)))
                     enum=enum+1
-                elif (eltype == "quad4"):
-                    match = re.match('(.{8})(.{8})(.{8})(.{8})(.{8})', elemRec)
-                    if match:
-                        elnum = int(match.group(1))
-                        elnodes = (int(match.group(2)), int(match.group(3)), int(match.group(4)), int(match.group(5)))
-                        if debug:
-                            print ("Quad: %d (%d %d %d %d)"%(elnum, elnodes[0],elnodes[1],elnodes[2],elnodes[3]))
-                        _vert = [vertexMapping[i] for i in elnodes]
-                        cells.append(Cell.Quad_2d_lin(mesh, enum, enum, tuple(_vert)))
-                        enum=enum+1
-                else:
-                    pass
-                    print ("Element type %s not suported" % (eltype))
+            elif (eltype == "quad4"):
+                match = re.match('(.{8})(.{8})(.{8})(.{8})(.{8})', elemRec)
+                if match:
+                    elnum = int(match.group(1))
+                    elnodes = (int(match.group(2)), int(match.group(3)), int(match.group(4)), int(match.group(5)))
+                    if debug:
+                        print ("Quad: %d (%d %d %d %d)"%(elnum, elnodes[0],elnodes[1],elnodes[2],elnodes[3]))
+                    _vert = [vertexMapping[i] for i in elnodes]
+                    cells.append(Cell.Quad_2d_lin(mesh, enum, enum, tuple(_vert)))
+                    enum=enum+1
+            else:
+                pass
+                print ("Element type %s not suported" % (eltype))
         #finished parsing part for specific element type
         line = f.readline()
     # next part record found
