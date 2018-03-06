@@ -6,7 +6,7 @@ from mupif import *
 import math
 from mupif import VtkReader2
 import pyvtk
-
+import os
 
 
 
@@ -21,7 +21,9 @@ class VtkReader2_TestCase(unittest.TestCase):
         self.assertTrue(nC == 1)
 
     def test_ReadField(self):
-        Data = pyvtk.VtkData('./testVtkReader2.vtk')
+        THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+        my_file = os.path.join(THIS_FOLDER, 'testVtkReader2.vtk')
+        Data = pyvtk.VtkData(my_file)
 
         dim=[]
         dim=Data.structure.dimensions

@@ -5,7 +5,7 @@ import unittest
 from mupif import *
 import math
 import mupif.Physics.PhysicalQuantities as PQ
-
+import os
 
 
 
@@ -14,7 +14,9 @@ class EnsightReader2_TestCase(unittest.TestCase):
     def test_ReadEnsightGeo(self):
         parts=[1, 2]
         partRec=[]
-        mesh = EnsightReader2.readEnsightGeo('testEnsightReader.geo', parts, partRec)
+        THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+        my_file = os.path.join(THIS_FOLDER, 'testEnsightReader.geo')
+        mesh = EnsightReader2.readEnsightGeo(my_file, parts, partRec)
 #        mesh = EnsightReader2.readEnsightGeo('MMPTestCase_v1.geo', parts, partRec)
         timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
         temperatureUnits = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
