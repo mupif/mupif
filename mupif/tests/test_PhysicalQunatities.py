@@ -222,7 +222,8 @@ class PhysicalQuantity_TestCase(unittest.TestCase):
     def test_getUnitName(self):
         A = PQ.PhysicalQuantity('152 m*km/N/W')
         s = A.getUnitName()
-        self.assertEqual(s,'m*km/W/N')
+        #self.assertEqual(s,'m*km/W/N')
+        self.assertEqual(s, 'm*km/N/W')
 
     def test_Sqrt(self):
         A = PQ.PhysicalQuantity('4 m*m')
