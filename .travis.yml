@@ -33,7 +33,7 @@ script:
    - export USE_CODECOV=true
    - /bin/bash testExamples.sh
    - popd
-   - codecov -F examples
+#   - codecov -F examples
 
 ##
 ## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
