@@ -42,6 +42,12 @@ class PropertyID(IntEnum):
     PID_ParticleMu = 30
     PID_ParticleSigma = 31
     PID_PhosphorEfficiency = 32
+    PID_Length = 33
+    PID_Height = 34
+    PID_Thickness = 35
+    PID_Deflection = 36
+    PID_EModulus = 37 #Young's modulus
+    
 
     PID_Demo_Min = 9990
     PID_Demo_Max = 9991

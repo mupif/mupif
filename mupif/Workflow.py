@@ -56,7 +56,7 @@ class Workflow(Application.Application):
         """
         super(Workflow, self).__init__(file=file, workdir=workdir)
 
-        print (targetTime)
+        #print (targetTime)
         if (PQ.isPhysicalQuantity(targetTime)):
             self.targetTime = targetTime
         else:
