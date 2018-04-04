@@ -1,0 +1,12 @@
+This example ilustrates simple stationary thermal task. 
+
+This example contains:
+1. Local schema - Example15l.py
+2. Distributed schema without Workflow approach - Example15d.py
+3. Distributed schema using Workflow approach - Example15d_workflow.py
+ 
+
+In the Distributed case:
+1. Start the server for thermal problem thermalServer.py, optionally with parameter -mX where X is 0 by default. A JobManager Mupif.JobManager@ThermalSolverDemo is started and allocates the thermal application.
+2. Run the appropriate Example15.py
+ 
