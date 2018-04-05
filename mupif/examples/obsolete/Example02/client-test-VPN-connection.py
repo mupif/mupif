@@ -3,7 +3,6 @@
 # Tested on Ubuntu 14.04-16.04, Win XP and Win 8.1
 # Vit Smilauer 03/2017, vit.smilauer (et) fsv.cvut.cz
 
-from __future__ import print_function
 import os, sys
 sys.path.append('..')
 import conf_vpn as cfg

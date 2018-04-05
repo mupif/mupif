@@ -1,5 +1,4 @@
 #Mechanical server for nonstationary problem
-from __future__ import print_function
 import os,sys
 sys.path.extend(['..','../../..','../Example10'])
 from mupif import *

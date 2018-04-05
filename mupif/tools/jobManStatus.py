@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
 
 import sys
 sys.path.append('../..') #Path to mupif if installed locally

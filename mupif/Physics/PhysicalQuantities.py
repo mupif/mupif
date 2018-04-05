@@ -28,10 +28,6 @@ recommended values from CODATA. Other conversion factors
 guarantee for the correctness of all entries in the unit
 table, so use this at your own risk.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-# from __future__ import unicode_literals
 from builtins import range, object, str # py2k compat
 
 # http://stackoverflow.com/a/22679982/761090

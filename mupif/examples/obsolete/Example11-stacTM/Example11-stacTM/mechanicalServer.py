@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os,sys
 sys.path.extend(['..','../../..','../Example10-stacTM-local','../Example11-thermoMechanical' ])#Path to demoapp
 from mupif import *

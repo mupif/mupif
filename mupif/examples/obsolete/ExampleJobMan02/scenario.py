@@ -1,4 +1,3 @@
-from __future__ import print_function
 import clientConfig as cConf
 import sys
 sys.path.append('../../..')

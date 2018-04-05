@@ -1,5 +1,4 @@
 #!/usr/bin/env pythonoun            
-from __future__ import print_function
 import sys
 sys.path.extend(['../../..', '../Example10-stacTM-local'])
 from mupif import *

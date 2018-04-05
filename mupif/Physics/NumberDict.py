@@ -30,7 +30,6 @@
 """
 Dictionary storing numerical values
 """
-from __future__ import division
 
 class NumberDict(dict):
 

@@ -19,13 +19,12 @@
 #  License along with this library; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
-from __future__ import print_function, absolute_import
 
 """
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 __author__  = 'Borek Patzak and Vit Smilauer'
 
 from .fieldID import FieldID
