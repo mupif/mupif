@@ -116,7 +116,7 @@ class sshTunnel(object):
             print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.info("If ssh tunnel does not exist, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
+            log.info("If ssh tunnel does not exist and you need it, do it manually using a command e.g. " + cmd1 + " , or " + cmd2)
             self.tunnel = 'manual'
         else:
             log.error("Unknown ssh client, exiting")

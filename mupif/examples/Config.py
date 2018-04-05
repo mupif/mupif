@@ -111,12 +111,14 @@ class config(object):
             #NAME SERVER
             #IP/name of a name server
             self.nshost = '172.30.0.1'
+            #self.nshost = '172.30.0.6'
             #Port of name server
             self.nsport = 9090
             
             #SERVER for a single job or for JobManager
             #IP/name of a server's daemon
-            self.server = '172.30.0.1'
+            #self.server = '172.30.0.1'
+            self.server = '172.30.0.6'
             #Port of server's daemon
             self.serverPort = 44382
             #Nat IP/name
@@ -183,7 +185,7 @@ class config(object):
         elif (mode==0 or mode==1):
             self.serverUserName = os.getenv('USER')
             if(sys.platform.lower().startswith('win')):#Windows ssh client
-                self.sshClient = 'C:\\Program Files\\Putty\\putty.exe'
+                self.sshClient = 'C:\\Program Files (x86)\\Putty\\putty.exe'
                 self.options = '-i L:\\.ssh\\mech\id_rsa.ppk'
             else:#Unix ssh client
                 self.sshClient = 'ssh'
@@ -191,5 +193,3 @@ class config(object):
         elif (mode==2 or mode==3):#VPN
             self.sshClient='manual'
             self.options = ''
-           
-            

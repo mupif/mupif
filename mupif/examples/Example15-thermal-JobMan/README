@@ -4,9 +4,32 @@ This example contains:
 1. Local schema - Example15l.py
 2. Distributed schema without Workflow approach - Example15d.py
 3. Distributed schema using Workflow approach - Example15d_workflow.py
- 
 
-In the Distributed case:
-1. Start the server for thermal problem thermalServer.py, optionally with parameter -mX where X is 0 by default. A JobManager Mupif.JobManager@ThermalSolverDemo is started and allocates the thermal application.
-2. Run the appropriate Example15.py
- 
+You need to configure Config.py to correspond to network topology.
+There must be nameserver running (locally or remotely) to register
+MuPIF objects. Scripts can run with -m parameter which picks up corresponding
+setup in Config.py.
+
+Distributed schema on localhost with workflow approach and job manager
+=======================================================================
+1. Start nameserver on 127.0.0.1, e.g. python3 mupif/tools/nameserver.py -m0
+2. Start python3 thermalServer.py -m0. It runs a jobmanager on 127.0.0.1 and waits
+for request to alloate the application.
+3. Make sure you have ssh server and client and you are able to create local ssh
+tunnel on localhost (e.g. from port 6000 to 9000). This is configured in Config.py
+4. Run the steering script python3 Example15d_workflow.py -m0. It triggers your application.
+performs necessary time steps, creates fields, properties etc. ready for further
+processing.
+
+Distributed schema using VPN with workflow approach and job manager
+====================================================================
+1. Connect to VPN network. You receive VPN IP e.g. 172.30.0.6. This IP address needs
+to be specified correctly in Config.py under self.mode == 2 as self.server = '172.30.0.6'.
+Nameserver runs by default on the server 172.30.0.1.
+
+2. Start python3 thermalServer.py -m2. It runs a jobmanager on 172.30.0.6 and waits
+for request to alloate the application.
+
+3. Run the steering script Example15d_workflow.py -m2. It triggers your application.
+performs necessary time steps, creates fields, properties etc. ready for further
+processing.
