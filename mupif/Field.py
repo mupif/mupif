@@ -815,7 +815,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         writer.SetFileName(fileName)
         # change between VTK5 and VTK6
         if vtk.vtkVersion().GetVTKMajorVersion()==6: writer.SetInputData(vtkgrid)
-        else: writer.SetInput(vtkgrid)
+        else: writer.SetInputData(vtkgrid)
         writer.Write()
         # finito
 
