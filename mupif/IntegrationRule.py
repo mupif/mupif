@@ -94,7 +94,7 @@ class GaussIntegrationRule(IntegrationRule):
                 return 1
             elif ( order <= 2 ):
                 return 3
-            elif ( approxOrder <= 3 ):
+            elif ( order <= 3 ):
                 return 4
             else:
                 return -1
