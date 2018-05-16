@@ -131,9 +131,17 @@ class Mesh_TestCase(unittest.TestCase):
         self.assertEqual(self.mesh3.getCell(2).getVertices()[0].label, 16, 'error in merge')
         self.assertEqual(self.mesh3.getCell(2).getVertices()[1].label, 5, 'error in merge')
 
+    def test_asVtkUnstructuredGrid(self):
+        # @todo: not working with mesh1 because points have only two coordinates
+        # @todo: not working with mesh4 because cell types are not supported ?
+        self.testMesh = Mesh.UnstructuredMesh()
+        self.testMesh.setup([Vertex.Vertex(0, 0, (0., 0., 0.)), Vertex.Vertex(1, 1, (1., 0., 0.)), Vertex.Vertex(2, 2, (1., 1., 0)),
+                             Vertex.Vertex(3, 3, (0., 1., 0.)), Vertex.Vertex(4, 4, (0., 0., 1.)), Vertex.Vertex(5, 5, (1., 0., 1.)),
+                             Vertex.Vertex(6, 6, (1., 1., 0)),
+                             Vertex.Vertex(7, 7, (0., 1., 1.))], [Cell.Brick_3d_lin(self.testMesh, 1, 1, (0, 1, 2, 3, 4, 5, 6, 7))])
+        self.testMesh.asVtkUnstructuredGrid()
 
-        
-#Testing getVTKRepresentation      
+    #Testing getVTKRepresentation
     def test_getVTKRepresentation(self):
        self.res=self.mesh5.getVTKRepresentation()
        import pyvtk

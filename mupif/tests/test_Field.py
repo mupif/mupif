@@ -35,6 +35,17 @@ class Field_TestCase(unittest.TestCase):
         self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
         self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
         self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],Field.FieldType.FT_cellBased)
+        self.f8 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
+                              PU({'m': 1}, 1, (1, 0, 0, 0, 0, 0, 0)), PQ.PhysicalQuantity(13, 's'), None, 1)
+        self.f9 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
+                              PU({'m': 1}, 1, (1, 0, 0, 0, 0, 0, 0)), PQ.PhysicalQuantity(13, 's'), None,
+                              Field.FieldType.FT_cellBased)
+
+        l = len(self.f8.value)
+        self.assertEqual(l, self.mesh.getNumberOfVertices())
+        l = len(self.f9.value)
+        self.assertEqual(l, self.mesh.getNumberOfCells())
+
 
         #register assertEqual operation for PhysicalQuantities
         self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)

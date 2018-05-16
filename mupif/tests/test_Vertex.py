@@ -3,6 +3,7 @@ sys.path.append('../..')
 from mupif import *
 import math
 import numpy as np
+import ast
 
 class Vertex_TestCase(unittest.TestCase):
     def setUp(self):
@@ -89,7 +90,15 @@ class Vertex_TestCase(unittest.TestCase):
         self.assertEqual(res.containsPoint ((1.5,4.001,3.)), False, 'error in getBBox for v33')
         self.assertEqual(res.containsPoint ((1.501,4.,3.)), False, 'error in getBBox for v33')
         self.assertEqual(res.containsPoint ((1.5,4.,3.001)), False, 'error in getBBox for v33')
-        
+
+    def test_Repr(self):
+        res = repr(self.v21)
+        vertex = ast.literal_eval(res)
+        num = vertex[0]
+        label = vertex[1]
+        coords = vertex[2]
+        self.assertEqual(coords, self.v21.getCoordinates(), 'error in getCoordinates __repr__')
+        self.assertEqual(num, self.v21.getNumber(), 'error in getCoordinates __repr__')
 
 
 # python test_Vertex.py for stand-alone test being run
