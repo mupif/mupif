@@ -13,6 +13,7 @@ install:
    # Install libraries for nosetests
    - pip install h5py
    - pip install pyvtk
+   - pip install vtk
    # this seems to be the new active upstream for pyvtk supporting 2.x and 3.x
    - pip install git+https://github.com/pearu/pyvtk.git
    # codecov-python
