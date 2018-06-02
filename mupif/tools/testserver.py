@@ -20,7 +20,8 @@ class SingleTCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
         # self.request is the client connection
         print("Connection from: ", self.client_address)
-        self.request.send('Hello!\n'.encode('utf-8'))
+        msg = 'Hello! you are comming from '+self.client_address[0]+'\n'
+        self.request.send(msg.encode('utf-8'))
         data = self.request.recv(1024)  # clip input at 1Kb
         text = data.decode('utf-8')
         print('Received:'+text)
