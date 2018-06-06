@@ -448,7 +448,7 @@ def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
     uri = toApplication.getURI()
     natPort = getNATfromUri( uri )
     uri = fromApplication.getURI()
-    fromNatPort = getNATfromUri( uri )
+    fromNatPort = natPort #getNATfromUri( uri )
     
     tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
     return tunnel
