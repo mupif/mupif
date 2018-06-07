@@ -27,10 +27,13 @@ class Demo11(Workflow.Workflow):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server
-        self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
-        #, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
-        self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mCfg.jobManName, cfg.hkey)
-        #, PyroUtil.SSHContext(sshClient=mCfg.sshClient, options=mCfg.options, sshHost=mCfg.sshHost) )
+        if(mode == 1):
+            self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey, PyroUtil.SSHContext(userName = cfg.userName,sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost))
+            self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mCfg.jobManName, cfg.hkey, PyroUtil.SSHContext(userName, mCfg.userName, sshClient=mCfg.sshClient, options=mCfg.options, sshHost=mCfg.sshHost))
+        else:
+            self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
+            self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mCfg.jobManName, cfg.hkey)
+
         self.thermalSolver = None
         self.mechanicalSolver = None
 
