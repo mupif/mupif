@@ -27,23 +27,26 @@ class Demo11(Workflow.Workflow):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server
-        self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
-        #, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
-        self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mCfg.jobManName, cfg.hkey)
-        #, PyroUtil.SSHContext(sshClient=mCfg.sshClient, options=mCfg.options, sshHost=mCfg.sshHost) )
+        if(mode == 1):
+            self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey, PyroUtil.SSHContext(userName = cfg.serverUserName,sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
+            self.mechanicalJobMan = PyroUtil.connectJobManager(ns,mCfg.jobManName, cfg.hkey,PyroUtil.SSHContext(userName = mCfg.serverUserName, sshClient=mCfg.sshClient, options=mCfg.options, sshHost=mCfg.sshHost) )
+        else:
+            self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
+            self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mCfg.jobManName, cfg.hkey)
+
         self.thermalSolver = None
         self.mechanicalSolver = None
 
         #allocate the application instances
         try:
-            self.thermalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
+            self.thermalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], cfg.hkey, PyroUtil.SSHContext(userName = cfg.serverUserName,sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
             log.info('Created thermal job')
-            self.mechanicalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.mechanicalJobMan, mCfg.jobNatPorts[0], mCfg.hkey, PyroUtil.SSHContext(sshClient=mCfg.sshClient, options=mCfg.options, sshHost=mCfg.sshHost ))
+            self.mechanicalSolver = PyroUtil.allocateApplicationWithJobManager( ns, self.mechanicalJobMan, mCfg.jobNatPorts[0], mCfg.hkey, PyroUtil.SSHContext(userName = mCfg.serverUserName,sshClient=mCfg.sshClient, options=mCfg.options, sshHost=mCfg.sshHost ))
             log.info('Created mechanical job')
             log.info('Creating reverse tunnel')
             
             #Create a reverse tunnel so mechanical server can access thermal server directly
-            self.appsTunnel = PyroUtil.connectApplicationsViaClient(PyroUtil.SSHContext(sshClient=mCfg.sshClient, options=mCfg.options, sshHost=PyroUtil.getNSConnectionInfo(ns, mCfg.jobManName)[0]), self.mechanicalSolver, self.thermalSolver)
+            self.appsTunnel = PyroUtil.connectApplicationsViaClient(PyroUtil.SSHContext(userName = mCfg.serverUserName, sshClient=mCfg.sshClient, options=mCfg.options, sshHost=PyroUtil.getNSConnectionInfo(ns, mCfg.jobManName)[0]), self.mechanicalSolver, self.thermalSolver)
         except Exception as e:
             log.exception(e)
         else:

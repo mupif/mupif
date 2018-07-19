@@ -92,8 +92,8 @@ class TestSaveLoad(unittest.TestCase):
     def testFieldVtk2SaveLoad_ascii(self):
         self._testFieldVtk2SaveLoad(format='ascii')
     @unittest.skipUnless(vtkAvailable,'Reading binary not supported by pyvtk, vtk (python-vtk/python-vtk6) would be used transparently instead but is not importable.') # vtkAvailable defined above
-    def testFieldVtk2SaveLoad_binary(self):
-        self._testFieldVtk2SaveLoad(format='binary')
+#    def testFieldVtk2SaveLoad_binary(self):
+#        self._testFieldVtk2SaveLoad(format='binary')
 
     def testOctreeNotPickled(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
