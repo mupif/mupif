@@ -324,9 +324,17 @@ class RemoteApplication (object):
             self._decoratee = None
         
         if (self._jobMan and self._jobID):
-            log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(self._jobID, self._jobMan))
-            self._jobMan.terminateJob(self._jobID)
-            self._jobID=None
+            try:
+                log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(str(self._jobID), self._jobMan.getNSName()))
+                self._jobMan.terminateJob(self._jobID)
+                self._jobID=None
+            except Exception as e:
+                print (e)
+            finally:
+                self._jobMan.terminateJob(self._jobID)
+                self._jobID=None
+                
+                
 
         #close tunnel as the last step so an application is still reachable
         if self._appTunnel:
