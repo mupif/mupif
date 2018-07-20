@@ -31,6 +31,7 @@ from . import RemoteAppRecord
 from . import Application
 from . import JobManager
 from . import Util
+from . import APIError
 import logging
 log = logging.getLogger()
 
@@ -299,7 +300,7 @@ def runDaemon(host, port, nathost=None, natport=None, hkey=None):
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
-    :param int port: Port number where daemon will listen (internal port number)
+    :param int or tuple port: Port number where daemon will listen (internal port number) or tuple of possible ports
     :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
     :param int natport: Server NAT port, optional (external port)
     :param str hkey: A password string
@@ -307,18 +308,29 @@ def runDaemon(host, port, nathost=None, natport=None, hkey=None):
     :return Instance of the running daemon, None if a problem
     :rtype Pyro4.Daemon
     """
-    try:
-        daemon = Pyro4.Daemon(host=host, port=int(port), nathost=nathost, natport=Util.NoneOrInt(natport))
-        #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
-        log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, port, nathost, natport))
-    except socket.error as e:
-        log.debug('Socket port %s:%s seems to be already in use' % (host,port))
-        daemon = None
-        raise e
-    except Exception:
-        log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (host, port, nathost, natport))
-        daemon = None
-        raise
+    
+    if isinstance (port, (tuple, list)):
+        ports = port
+    else:
+        ports = (port,)
+
+    for iport in ports:
+        try:
+            daemon = Pyro4.Daemon(host=host, port=int(iport), nathost=nathost, natport=Util.NoneOrInt(natport))
+            #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
+            log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
+            return daemon
+        except socket.error as e:
+            log.debug('Socket port %s:%s seems to be already in use' % (host,iport))
+            daemon = None
+            #raise e
+        except Exception:
+            log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
+            daemon = None
+            #raise
+    
+    raise APIError ('Can not run Pyro4 daemon on configured ports')
+
 
     return daemon
 
