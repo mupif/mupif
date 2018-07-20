@@ -38,3 +38,4 @@ class FieldID(IntEnum):
     FID_Thermal_absorption_volume = 7
     FID_Thermal_absorption_surface = 8
     FID_Material_number = 9
+    FID_ESI_VPS_Displacement = 10001
