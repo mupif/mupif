@@ -20,7 +20,9 @@ class serverConfig(config):
         self.applicationInitialFile = 'input.in' #dummy file
         self.jobManName='Mupif.JobManager@MechanicalSolverDemo'#Name of job manager
         self.jobManWorkDir=os.path.abspath(os.path.join(os.getcwd(), 'mechanicalWorkDir'))
-        self.sshHost = '147.32.130.71'
+        #self.sshHost = '147.32.130.71'
+        self.sshHost = '127.0.0.1' # ip adress of the server running mechanical server 
+        
         self.serverPort = 44550
         if mode == 1:
             self.serverNathost = '127.0.0.1'

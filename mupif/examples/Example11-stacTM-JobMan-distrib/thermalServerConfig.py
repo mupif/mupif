@@ -13,7 +13,7 @@ class serverConfig(config):
         self.applicationInitialFile = 'input.in' #dummy file
         self.jobManName='Mupif.JobManager@ThermalSolverDemo'#Name of job manager
         self.jobManWorkDir=os.path.abspath(os.path.join(os.getcwd(), 'thermalWorkDir'))
-        self.sshHost = '147.32.130.14'
+        self.sshHost = '127.0.0.1'# ip adress of the server running thermal server 
         self.serverPort = 44520
         if mode == 1:
             self.serverNathost = '127.0.0.1'
