@@ -23,7 +23,7 @@ class serverConfig(config):
         #self.sshHost = '147.32.130.71'
         self.sshHost = '127.0.0.1' # ip adress of the server running mechanical server 
         
-        self.serverPort = 44550
+        self.serverPort = 44521
         if mode == 1:
             self.serverNathost = '127.0.0.1'
             self.serverNatport = 6050
