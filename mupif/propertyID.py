@@ -47,6 +47,7 @@ class PropertyID(IntEnum):
     PID_Thickness = 35
     PID_Deflection = 36
     PID_EModulus = 37 #Young's modulus
+    PID_PoissonRatio = 38
     
 
     PID_Demo_Min = 9990
@@ -85,3 +86,22 @@ class PropertyID(IntEnum):
     PID_ESI_VPS_THNOD_2   = 91002
     PID_ESI_VPS_SECFO_1   = 91003
     PID_ESI_VPS_SECFO_2   = 91004
+
+
+    # unist properties
+    PID_SMILE_MOLECULAR_STRUCTURE = 92000
+    PID_MOLECULAR_WEIGHT          = 92001
+    PID_POLYDISPERSITY_INDEX      = 92002
+    PID_CROSSLINKER_TYPE          = 92003
+    PID_FILLER_DESIGNATION        = 92004
+    PID_SMILE_MODIFIER_MOLECULAR_STRUCTURE = 92005
+    PID_SMILE_FILLER_MOLECULAR_STRUCTURE   = 92006
+    PID_CROSSLINKONG_DENSITY      = 92007
+    PID_FILLER_CONCENTRATION      = 92008
+    PID_DENSITY_OF_FUNCTIONALIZATION       = 92009
+    PID_TEMPERATURE               = 92010
+    PID_PRESSURE                  = 92011
+    PID_DENSITY                   = 92100
+    PID_TRANSITION_TEMPERATURE    = 92101
+    
+    
