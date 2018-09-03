@@ -569,7 +569,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=Non
     try:
         (username,hostname)=getUserInfo()
         retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
-        log.info('Allocated job, returned record from jobManagaer:' +  str(retRec))
+        log.info('Allocated job, returned record from jobManager:' +  str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
         raise
