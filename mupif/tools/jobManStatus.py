@@ -86,7 +86,7 @@ def main():
     port = 9090
     hkey =""
     nshost=None
-    ssh = False#ssh flag (set to tru if ssh tunnel need to be established)
+    ssh = False#ssh flag (set to True if ssh tunnel need to be established)
     log = logging.getLogger()
 
     try:
@@ -130,7 +130,7 @@ def main():
     ns     = PyroUtil.connectNameServer(nshost, nsport, hkey)
     # locate remote jobManager application, request remote proxy
     jobManUri = ns.lookup(jobmanname)
-    #get local port of jabmanager (from uri)
+    #get local port of jobmanager (from uri)
     jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
     
     
@@ -139,16 +139,13 @@ def main():
         (host, jobmannatport, jobManNatHost, port) = PyroUtil.getNSConnectionInfo(ns, jobmanname)
         tunnel = PyroUtil.sshTunnel(remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     
-    
-    jobMan = PyroUtil.connectApp(ns, jobmanname)
-    
-    #ssh flag (set to True if ssh tunnel need to be established)
-    ssh = False
-    
+    jobMan = PyroUtil.connectJobManager(ns, jobmanname, hkey=hkey)
+  
     curses.wrapper(processor, jobMan)
     
     if ssh:
         tunnel.terminate()
+        
     
     
     ###########################################################

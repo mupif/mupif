@@ -291,7 +291,7 @@ class Application(MupifObject.MupifObject):
 class RemoteApplication (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
-    However, when application allocated using JobManager or ssh tunnel needs to be established, the proper termination of the tunnel or job manager task is required.
+    However, when application is allocated using JobManager or ssh tunnel, the proper termination of the tunnel or job manager task is required.
     
     This class is a decorator around pyro proxy object represeting application storing the reference to job manager and related jobID or/and ssh tunnel.
 
