@@ -48,7 +48,15 @@ class PropertyID(IntEnum):
     PID_Deflection = 36
     PID_EModulus = 37 #Young's modulus
     PID_PoissonRatio = 38
-
+    PID_YoungModulus1 = 39
+    PID_YoungModulus2 = 40
+    PID_YoungModulus3 = 41
+    PID_PoissonRatio23 = 42
+    PID_PoissonRatio13 = 43
+    PID_PoissonRatio12 = 44
+    PID_ShearModulus23 = 45
+    PID_ShearModulus13 = 46
+    PID_ShearModulus12 = 47
     #CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
     PID_Direction = 1001
