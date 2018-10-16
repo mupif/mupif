@@ -42,6 +42,7 @@ if hasattr(Pyro4.config,'PICKLE_PROTOCOL_VERSION'):
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
 #Pyro4.config.THREADPOOL_SIZE=100
 Pyro4.config.SERVERTYPE="multiplex"
+Pyro4.config.COMMTIMEOUT = 1.5      # 1.5 seconds
 
 
 #pyro4 nameserver metadata
