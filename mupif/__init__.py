@@ -24,7 +24,7 @@
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 #Major.Minor.Patch
-__version__ = '2.0.3'
+__version__ = '2.0.4'
 __author__  = 'Borek Patzak and Vit Smilauer'
 
 from .fieldID import FieldID

@@ -69,7 +69,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased):
+    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased, objectID=0):
         """
         Initializes the field instance.
 
@@ -81,6 +81,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
         :type values: list of tuples representing individual values
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
+        :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
         """
         
         super(Field, self).__init__()
@@ -91,6 +92,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         self.uri = None   #pyro uri; used in distributed setting
         #self.log = logging.getLogger()
         self.fieldType = fieldType
+        self.objectID = objectID        
         if values == None:
             if (self.fieldType == FieldType.FT_vertexBased):
                 ncomponents = mesh.getNumberOfVertices()
@@ -346,6 +348,16 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         """
         Commits the recorded changes (via setValue method) to a primary field.
         """
+    
+    def getObjectID(self):
+        """
+        Returns field objectID.
+
+        :return: Object's ID 
+        :rtype: int
+        """
+        return self.objectID
+    
     def getUnits(self):
         """
         :return: Returns units of the receiver

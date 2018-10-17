@@ -79,22 +79,24 @@ class Application(MupifObject.MupifObject):
         self.appName = appName
         self.externalDaemon = externalDaemon
 
-    def getField(self, fieldID, time):
+    def getField(self, fieldID, time, objectID=0):
         """
         Returns the requested field at given time. Field is identified by fieldID.
 
         :param FieldID fieldID: Identifier of the field
         :param Physics.PhysicalQuantity time: Target time
+        :param int objectID: Identifies field with objectID (optional, default 0)
 
         :return: Returns requested field.
         :rtype: Field
         """
-    def getFieldURI(self, fieldID, time):
+    def getFieldURI(self, fieldID, time, objectID=0):
         """
         Returns the uri of requested field at given time. Field is identified by fieldID.
 
         :param FieldID fieldID: Identifier of the field
         :param Physics.PhysicalQuantity time: Target time
+        :param int objectID: Identifies field with objectID (optional, default 0)
 
         :return: Requested field uri
         :rtype: Pyro4.core.URI
@@ -102,7 +104,7 @@ class Application(MupifObject.MupifObject):
         if (self.pyroDaemon == None):
             raise APIError.APIError ('Error: getFieldURI requires to register pyroDaemon in application')
         try:
-            field = self.getField(fieldID, time)
+            field = self.getField(fieldID, time, objectID=objectID)
         except:
             raise APIError.APIError ('Error: can not obtain field')
         if (hasattr(field, '_PyroURI')):
@@ -115,11 +117,12 @@ class Application(MupifObject.MupifObject):
             #self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
             return uri
 
-    def setField(self, field):
+    def setField(self, field, objectID=0):
         """
         Registers the given (remote) field in application. 
 
         :param Field field: Remote field to be registered by the application
+        :param int objectID: Identifies field with objectID (optional, default 0)
         """
     def getProperty(self, propID, time, objectID=0):
         """

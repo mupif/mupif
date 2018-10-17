@@ -166,7 +166,7 @@ class thermal(Application.Application):
         #print (self.loc)
 
 
-    def getField(self, fieldID, time):
+    def getField(self, fieldID, time, objectID=0):
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
@@ -883,7 +883,7 @@ class mechanical(Application.Application):
 
         #print "loc:", self.loc
 
-    def getField(self, fieldID, time):
+    def getField(self, fieldID, time, objectID=0):
         if (fieldID == FieldID.FID_Displacement):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
@@ -1147,6 +1147,6 @@ class EulerBernoulli(Application.Application):
         I = self.b*self.h**3/12.
         self.deflection = self.f*self.L**4/8./self.E/I
         
-    def getField(self, fieldID, time):
+    def getField(self, fieldID, time, objectID=0):
         if (fieldID == FieldID.FID_Displacement):
             return self.deflection
