@@ -57,7 +57,7 @@ class MupifObject(object):
         :return: true if key defined, false otherwise
         :rtype: bool
         """
-        return self.metadata.has_key(key)
+        return (key in self.metadata)
     
     def setMetadata (self, key, val):
         """ 
