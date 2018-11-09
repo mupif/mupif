@@ -28,6 +28,8 @@ Definition of common metadata keys
 # generic
 USERNAME = 1
 HOSTNAME = 2
+UseCaseID = 3
+ExecID = 4
 #data related
 UNITS    = 100
     
