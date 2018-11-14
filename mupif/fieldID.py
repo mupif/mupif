@@ -40,4 +40,5 @@ class FieldID(IntEnum):
     FID_Material_number = 9
     FID_BucklingShape = 10
     FID_FibreOrientation = 11
+    FID_DomainNumber = 12
     FID_ESI_VPS_Displacement = 10001
