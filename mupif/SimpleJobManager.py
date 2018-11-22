@@ -302,6 +302,16 @@ class SimpleJobManager2 (JobManager.JobManager):
                 log.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?'%(jobID))
         self.lock.release()
    
+    def terminateAllJobs(self):
+        """
+        Terminates all registered jobs, frees the associated recources.
+        """
+        for key in self.activeJobs:
+            try:
+                self.terminateJob(key)
+            except Exception as e:
+                log.debug("Can not terminate job %s" % (key) )
+   
    
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
     def terminate(self):

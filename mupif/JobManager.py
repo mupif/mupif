@@ -185,7 +185,7 @@ class RemoteJobManager (object):
         Terminates the application. Terminates the allocated job at jobManager
         """
         if self._decoratee:
-            #self._decoratee.terminate()
+            #self._decoratee.terminate() #so far, leave the jobManager registered on nameserver
             self._decoratee = None
 
     def __getattr__(self, name):

@@ -48,6 +48,7 @@ def main():
     log.info('Timer started')
     log.info("Solving thermal problem")
     thermalSolver.solveStep(istep)
+    #timeT.sleep(20)
     log.info("Thermal problem solved")
     # get temperature field
     temperatureField = thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())

@@ -118,7 +118,7 @@ class config(object):
             #SERVER for a single job or for JobManager
             #IP/name of a server's daemon
             #self.server = '172.30.0.1'
-            self.server = '172.30.0.6'
+            self.server = '172.30.0.74'
             #Port of server's daemon
             self.serverPort = 44382
             #Nat IP/name
