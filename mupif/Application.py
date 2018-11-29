@@ -25,6 +25,13 @@ import os
 import Pyro4
 from . import APIError
 from . import MupifObject
+from . import propertyID
+from . import fieldID
+from . import functionID
+from . import Property
+from . import Field
+from . import Function
+
 import logging
 log = logging.getLogger()
 
@@ -79,6 +86,38 @@ class Application(MupifObject.MupifObject):
         self.appName = appName
         self.externalDaemon = externalDaemon
 
+    def get(self, objectType, time=None, objectID=0):
+        """
+        Returns the requested object at given time. Object is identified by id.
+
+        :param id: Identifier of the object
+        :param Physics.PhysicalQuantity time: Target time
+        :param int objectID: Identifies object with objectID (optional, default 0)
+
+        :return: Returns requested object.
+        """
+        if isinstance(objectType, propertyID.PropertyID):
+            return self.getProperty(objectType, time, objectID)
+        if isinstance(objectType, fieldID.FieldID):
+            return self.getField(objectType, time, objectID)
+        if isinstance(objectType, functionID.FunctionID):
+            return self.getFunction(objectType, time, objectID)
+        return None
+
+    def set(self, obj, objectID=0):
+        """
+        Registers the given (remote) object in application.
+
+        :param object: Remote object to be registered by the application
+        :param int objectID: Identifies object with objectID (optional, default 0)
+        """
+        if isinstance(obj, Property.Property):
+            return self.setProperty(obj, objectID)
+        if isinstance(obj, Field.Field):
+            return self.setField(obj, objectID)
+        if isinstance(obj, Function.Function):
+            return self.setFunction(obj, objectID)
+
     def getField(self, fieldID, time, objectID=0):
         """
         Returns the requested field at given time. Field is identified by fieldID.
@@ -121,7 +160,7 @@ class Application(MupifObject.MupifObject):
         """
         Registers the given (remote) field in application. 
 
-        :param Field field: Remote field to be registered by the application
+        :param Field.Field field: Remote field to be registered by the application
         :param int objectID: Identifies field with objectID (optional, default 0)
         """
     def getProperty(self, propID, time, objectID=0):
@@ -139,14 +178,15 @@ class Application(MupifObject.MupifObject):
         """
         Register given property in the application
 
-        :param Property property: Setting property
+        :param Property.Property property: Setting property
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
         """
-    def getFunction(self, funcID, objectID=0):
+    def getFunction(self, funcID, time, objectID=0):
         """
         Returns function identified by its ID
 
         :param FunctionID funcID: function ID
+        :param Physics.PhysicalQuantity time: Time when function should to be evaluated
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
 
         :return: Returns requested function
@@ -156,7 +196,7 @@ class Application(MupifObject.MupifObject):
         """
         Register given function in the application.
 
-        :param Function func: Function to register
+        :param Function.Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
     def getMesh (self, tstep):

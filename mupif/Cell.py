@@ -53,7 +53,7 @@ class Cell(object):
         """
         Initializes the cell.
 
-        :param Mesh mesh: The mesh to which a cell belongs to
+        :param Mesh.Mesh mesh: The mesh to which a cell belongs to
         :param int number: A local cell number. Local numbering should start from 0 and should be continuous.
         :param int label: A cell label. Arbitrary unique number.
         :param tuple vertices: A cell vertices (local numbers)

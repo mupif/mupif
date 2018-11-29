@@ -73,7 +73,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         """
         Initializes the field instance.
 
-        :param Mesh mesh: Instance of a Mesh class representing the underlying discretization
+        :param Mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param Physics.PhysicalUnits units: Field value units
