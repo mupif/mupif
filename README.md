@@ -5,6 +5,8 @@ MuPIF is modular, object-oriented integration platform allowing to create comple
 [![Build Status](https://travis-ci.org/mupif/mupif.svg?branch=master)](https://travis-ci.org/mupif/mupif)
 [![codecov](https://codecov.io/gh/mupif/mupif/branch/master/graph/badge.svg)](https://codecov.io/gh/mupif/mupif)
 [![PyPI version](https://badge.fury.io/py/mupif.svg)](https://badge.fury.io/py/mupif)
+[![Downloads](https://pepy.tech/badge/mupif)](https://pepy.tech/project/mupif)
+[![Downloads](https://pepy.tech/badge/mupif/month)](https://pepy.tech/project/mupif)
 
 ## Project website
 http://www.mupif.org
