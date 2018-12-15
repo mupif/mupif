@@ -1,6 +1,6 @@
 #!/usr/bin/env pythonoun            
 import sys
-sys.path.extend(['../../..', '../Example10-stacTM-local'])
+sys.path.extend(['..', '../../..', '../Example10-stacTM-local'])
 from mupif import *
 import demoapp
 import logging
@@ -15,6 +15,14 @@ class Demo13(Workflow.Workflow):
         self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
         self.mechanical = demoapp.mechanical('inputM13.in', '.')
         self.matPlotFig = None
+        if (True):
+            from Config import config
+            import Pyro4
+            cfg=config(2)
+            ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+            uri = ns.lookup(cfg.monitorName)
+            self.workflowMonitor = Pyro4.Proxy(uri)
+
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         try:

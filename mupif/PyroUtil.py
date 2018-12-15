@@ -380,7 +380,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
         app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
     except AttributeError as e:
         # catch attribute error (thrown when method not defined)
-        log.warning('Can not register daemon on for application %s' % appName)
+        log.warning('Can not register daemon for application %s' % appName)
     except:
         log.exception('Can not register daemon on %s:%s using nathost %s:%s on nameServer' % (server, port, nathost, natport))
         raise

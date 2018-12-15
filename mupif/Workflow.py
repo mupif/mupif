@@ -24,6 +24,7 @@
 from builtins import object
 import os
 import Pyro4
+import time
 from . import Application
 from . import PyroUtil
 from . import APIError
@@ -62,6 +63,8 @@ class Workflow(Application.Application):
             self.targetTime = targetTime
         else:
             raise TypeError ('targetTime is not PhysicalQuantity')
+
+        self.workflowMonitor = None # no monitor by default
 
         # define workflow metadata
         (username, hostname) = PyroUtil.getUserInfo()
@@ -110,4 +113,33 @@ class Workflow(Application.Application):
         :rtype: str
         """
         return "Workflow"
+    
+    def updateStaus(self, status, progress=0):
+        """
+        Updates the workflow status. The status is subnitted to workflow monitor. The self.workflowMonitor
+        should be (proxy) to workflowManager
+        :param str status: string describing the workflow status (initialized, running, failed, finished)
+        :param int progress: integer number indicating execution progress (in percent)
+        """
+        #PyroUtil.connectNameServer(nshost, nsport, hkey)
+        #try:
+        #    uri = ns.lookup(workflowMonitorName)
+        #    workflowMonitor = Pyro4.Proxy(uri)
+        #except Exception as e:
+        #    log.error("Cannot find workflow monitor")
+        #    return # do not raise, silently continue without updating status
+
+        if (self.workflowMonitor):
+            date = time.strftime("%d %b %Y %H:%M:%S", time.gmtime())
+            metadata = {'status': status, 'progress': progress, 'date': date}
+            try:
+                self.workflowMonitor.updateMetadata(self.getMetadata(MetadataKeys.ComponentID), metadata)
+                # could not use nameserver metadata capability, as this requires workflow to be registered
+                # thus Pyro daemon is required
+
+                log.debug(self.getMetadata(MetadataKeys.ComponentID)+": Updated status to " + status + ", progress=" + progress)
+            except Exception as e:
+                log.exception("Connection to workflow monitor broken")
+                raise e
+
     
