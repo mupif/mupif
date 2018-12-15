@@ -15,7 +15,7 @@ class Demo13(Workflow.Workflow):
         self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
         self.mechanical = demoapp.mechanical('inputM13.in', '.')
         self.matPlotFig = None
-        if (True):
+        if (False):
             from Config import config
             import Pyro4
             cfg=config(2)
