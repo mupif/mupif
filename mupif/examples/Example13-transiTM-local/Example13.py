@@ -15,7 +15,8 @@ class Demo13(Workflow.Workflow):
         self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
         self.mechanical = demoapp.mechanical('inputM13.in', '.')
         self.matPlotFig = None
-        if (False):
+        
+        if (False): # experimental section by bp
             from Config import config
             import Pyro4
             cfg=config(2)
@@ -31,8 +32,8 @@ class Demo13(Workflow.Workflow):
             # request Temperature from thermal
             ft = self.thermal.getField(FieldID.FID_Temperature, istep.getTime())
 
-            self.matPlotFig = ft.field2Image2D()
-            ft.field2Image2DBlock()  # To block the window
+            #self.matPlotFig = ft.field2Image2D()
+            #ft.field2Image2DBlock()  # To block the window
 
             self.mechanical.setField(self.thermal.getField(FieldID.FID_Temperature,
                                                            self.mechanical.getAssemblyTime(istep)))
