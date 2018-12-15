@@ -25,7 +25,7 @@ time_col = 70
 
 
 def usage():
-    print("Usage: jobManStatus -n nshost -r nsPort -j jobmanname -k hkey [-t -u user]")
+    print("Usage: jobManStatus -j jbmanname [-n nshost -r nsPort] [-k hkey] [-t -u user]")
 
 
 def processor(win, jobman):
@@ -82,10 +82,12 @@ def processor(win, jobman):
 def main():
     global host
     global jobmanname
-    host = 'ksm.fsv.cvut.cz'    
-    port = 9090
-    hkey =""
-    nshost=None
+    nshost = '172.30.0.1'
+    nsport = 9090
+    hkey = 'mupif-secret-key'
+    jobmanname = None
+    debug = False
+    #nshost=None
     ssh = False#ssh flag (set to True if ssh tunnel need to be established)
     log = logging.getLogger()
 
@@ -120,7 +122,7 @@ def main():
     
     # print("huhu:"+host+str(port))
 
-    if (not nshost):
+    if (not jobmanname):
         usage()
         sys.exit(2)
         
@@ -132,7 +134,7 @@ def main():
     jobManUri = ns.lookup(jobmanname)
     #get local port of jobmanager (from uri)
     jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
-    
+    host = PyroUtil.getIPfromUri(jobManUri)
     
     #extablish secure ssh tunnel connection
     if ssh:
