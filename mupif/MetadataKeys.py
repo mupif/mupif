@@ -29,7 +29,8 @@ Definition of common metadata keys
 USERNAME = 1
 HOSTNAME = 2
 UseCaseID = 3
-ExecID = 4
+ExecutionID = 4
+ComponentID = 5
 #data related
 UNITS    = 100
     

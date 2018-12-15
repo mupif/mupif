@@ -31,6 +31,7 @@ from . import functionID
 from . import Property
 from . import Field
 from . import Function
+from . import MetadataKeys
 
 import logging
 log = logging.getLogger()
@@ -49,12 +50,13 @@ class Application(MupifObject.MupifObject):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file='', workdir=''):
+    def __init__ (self, file='', workdir='', executionID = None):
         """
         Constructor. Initializes the application.
 
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
+        :param str executionID: Optional application execution ID (typically set by workflow)
         """
         super(Application, self).__init__()
         self.file = file
@@ -69,7 +71,11 @@ class Application(MupifObject.MupifObject):
         self.pyroNS = None
         self.pyroURI = None
         self.appName = None
-        
+
+        # define app metadata 
+        self.setMetadata(MetadataKeys.ExecutionID, executionID)
+        self.setMetadata(MetadataKeys.ComponentID, self.getApplicationSignature()) #use signature as component ID
+
     def registerPyro (self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """
         Register the Pyro daemon and nameserver. Required by several services

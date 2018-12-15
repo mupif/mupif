@@ -46,15 +46,16 @@ class Workflow(Application.Application):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's')):
+    def __init__ (self, file='', workdir='', executionID = None, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Constructor. Initializes the workflow
 
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
+        :param str executionID: Optional workflow execution ID (typically set by scheduler)
         :param PhysicalQuantity targetTime: target simulation time
         """
-        super(Workflow, self).__init__(file=file, workdir=workdir)
+        super(Workflow, self).__init__(file=file, workdir=workdir, executionID=executionID)
 
         #print (targetTime)
         if (PQ.isPhysicalQuantity(targetTime)):
@@ -62,10 +63,11 @@ class Workflow(Application.Application):
         else:
             raise TypeError ('targetTime is not PhysicalQuantity')
 
+        # define workflow metadata
         (username, hostname) = PyroUtil.getUserInfo()
         self.setMetadata(MetadataKeys.USERNAME, username)
         self.setMetadata(MetadataKeys.HOSTNAME, hostname)
-
+        
 
     def solve(self, runInBackground=False):
         """ 
@@ -108,4 +110,4 @@ class Workflow(Application.Application):
         :rtype: str
         """
         return "Workflow"
-
+    
