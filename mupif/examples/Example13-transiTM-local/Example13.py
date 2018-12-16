@@ -8,7 +8,7 @@ log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 from   mupif import WorkflowMonitor
 import time
-status = 1
+status = 0
 
 
 class Demo13(Workflow.Workflow):
