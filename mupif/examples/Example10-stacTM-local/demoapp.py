@@ -450,24 +450,6 @@ class thermal(Application.Application):
                     A_e[i,j] += K[i,j]
         return A_e
 
-    def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_effective_conductivity):
-            #average reactions from solution - use nodes on edge 4 (coordinate x==0.)
-            sumQ = 0.
-            for i in range(self.mesh.getNumberOfVertices()):
-                coord = (self.mesh.getVertex(i).getCoordinates())
-                if coord[0] < 1.e-6:
-                    ipneq = self.loc[i]
-                    if ipneq>=self.neq:
-                        #print (coord, ipneq)
-                        #print (i,ipneq)
-                        sumQ -= self.r[ipneq-self.neq]
-            self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
-            #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.ValueType.Scalar, 'W/m/K', time, 0)
-        else:
-            raise APIError.APIError ('Unknown property ID')
-
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_effective_conductivity):
             # remember the mapped value
