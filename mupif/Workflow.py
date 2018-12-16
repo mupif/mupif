@@ -30,6 +30,7 @@ from . import PyroUtil
 from . import APIError
 from . import MetadataKeys
 from . import TimeStep
+from . import WorkflowMonitor
 import logging
 log = logging.getLogger()
 
@@ -131,13 +132,15 @@ class Workflow(Application.Application):
 
         if (self.workflowMonitor):
             date = time.strftime("%d %b %Y %H:%M:%S", time.gmtime())
-            metadata = {'status': status, 'progress': progress, 'date': date}
+            metadata = {WorkflowMonitor.WorkflowMonitorKeys.Status: status,
+                        WorkflowMonitor.WorkflowMonitorKeys.Progress: progress,
+                        WorkflowMonitor.WorkflowMonitorKeys.Date: date}
             try:
                 self.workflowMonitor.updateMetadata(self.getMetadata(MetadataKeys.ComponentID), metadata)
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required
 
-                log.debug(self.getMetadata(MetadataKeys.ComponentID)+": Updated status to " + status + ", progress=" + progress)
+                log.debug(self.getMetadata(MetadataKeys.ComponentID)+": Updated status to " + status + ", progress=" + str(progress))
             except Exception as e:
                 log.exception("Connection to workflow monitor broken")
                 raise e

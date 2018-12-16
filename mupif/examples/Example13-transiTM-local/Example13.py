@@ -6,6 +6,9 @@ import demoapp
 import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
+from   mupif import WorkflowMonitor
+import time
+status = 1
 
 
 class Demo13(Workflow.Workflow):
@@ -16,17 +19,23 @@ class Demo13(Workflow.Workflow):
         self.mechanical = demoapp.mechanical('inputM13.in', '.')
         self.matPlotFig = None
         
-        if (False): # experimental section by bp
+        if (status): # experimental section by bp
             from Config import config
             import Pyro4
-            cfg=config(2)
+            cfg=config(3)
             ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
             uri = ns.lookup(cfg.monitorName)
             self.workflowMonitor = Pyro4.Proxy(uri)
+        self.updateStaus(WorkflowMonitor.WorkflowMonitorStatus.Initialized)     
+        if (status):
+            time.sleep(10)
 
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         try:
+            self.updateStaus(WorkflowMonitor.WorkflowMonitorStatus.Running, 0)
+            if (status):
+                time.sleep(10)
             # solve problem 1
             self.thermal.solveStep(istep)
             # request Temperature from thermal
@@ -43,7 +52,7 @@ class Demo13(Workflow.Workflow):
             data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
 
         except APIError.APIError as e:
-            log.error("Following API error occurred:",e)
+            log.error("Following API error occurred:"+str(e))
 
     def getCriticalTimeStep(self):
         # determine critical time step
@@ -52,6 +61,7 @@ class Demo13(Workflow.Workflow):
     def terminate(self):
         self.thermal.terminate()
         self.mechanical.terminate()
+        self.updateStaus(WorkflowMonitor.WorkflowMonitorStatus.Finished, 100)
 
     def getApplicationSignature(self):
         return "Demo13 workflow 1.0"

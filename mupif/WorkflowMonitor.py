@@ -28,6 +28,18 @@ import Pyro4
 WM_METADATA_STATUS='status'
 WM_METADATA_PROGRESS='progress'
 
+
+class WorkflowMonitorKeys(object):
+    Status = "status"
+    Progress = "progress"
+    Date = "date"
+    
+class WorkflowMonitorStatus(object):
+    Initialized="Initialized"
+    Running="Running"
+    Finished="Finished"
+    Failed="Failed"
+
 @Pyro4.expose
 class WorkflowMonitor(MupifObject.MupifObject):
     """
@@ -54,7 +66,7 @@ class WorkflowMonitor(MupifObject.MupifObject):
     """
     def updateMetadata (self, key, valueDict):
         if (isinstance(valueDict, dict)):
-            self.metadata[key].update(valueDict)
+            self.metadata.setdefault(key,{}).update(valueDict)
     """
         Returns the metadata for given key if provided or all metadata 
         :param str key: optional unique execution ID of workflow

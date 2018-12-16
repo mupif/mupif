@@ -1,9 +1,9 @@
 from builtins import str
 import getopt, sys
-import re
 sys.path.extend(['../..', '../examples'])
 import Pyro4
 from mupif import *
+from mupif import WorkflowMonitor
 import logging
 log = logging.getLogger()
 from Config import config
@@ -19,43 +19,15 @@ def usage():
     print() 
 
 
-def main():
+def formatLine(k,v,status):
+    if isinstance(v, dict):
+        if v.get(WorkflowMonitor.WorkflowMonitorKeys.Status) == status:
+            print ('{:30.30}|{:12.12}|{:3}%|{:20.20}|'.format(k,v.get(WorkflowMonitor.WorkflowMonitorKeys.Status), 
+                                                        v.get(WorkflowMonitor.WorkflowMonitorKeys.Progress), 
+                                                        v.get(WorkflowMonitor.WorkflowMonitorKeys.Date)))
 
-    nshost = '127.0.0.1'
-    nsport = 9090
-    #hkey = 'mupif-secret-key'
-    debug = False
-    mode = 3
+def main(nshost, nsport, hkey):
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "n:r:k:m:d")
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        log.exception(err)
-        usage()
-        sys.exit(2)
-    
-    for o, a in opts:
-        if o in ("-k"):
-            hkey = a
-        elif o in ("-n"):
-            nshost = a
-        elif o in ("-r"):
-            nsport = int(a)
-        elif o in ("-d"):
-            debug = True
-        elif o in ("-m"):
-            #Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
-            mode = int(a)
-        else:
-            assert False, "unhandled option"
-
-    cfg=config(mode)
-
-
-    if nshost == None or nsport == None:
-        usage()
-        sys.exit(2)
     
     print("hkey:"+cfg.hkey)
     print("Nameserver:"+cfg.nshost+":"+str(cfg.nsport))
@@ -67,18 +39,68 @@ def main():
 
     monitorUri = ns.lookup('monitor.MuPIF')
     monitor = Pyro4.Proxy(monitorUri)
-    print ('Monitor:'+str(monitorUri)+str(monitor))
-    print ("=======ENTRIES=========")
-    if (1):
-        data = monitor.getAllMetadata()
-        for k,v in data.items():
-            print ('{:8}:{}'.format(k,v))
-        
-    #except Exception as e:
-    #    print("\nConnection to nameserver failed\n")
-    #    log.exception(e)
-    #else:
-    #    print ("\nConnection to nameserver is OK\n")
-        
+    data = monitor.getAllMetadata()
+ 
+    print ('Monitor:'+str(monitorUri))
+    print ("=======SCHEDULED=========")
+    for k,v in data.items():
+        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Initialized)
+
+    print ("========RUNNING==========")
+    for k,v in data.items():
+        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Running)
+
+    print ("========FINISHED=========")
+    for k,v in data.items():
+        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Finished)
+
+    print ("========FAILED=========")
+    for k,v in data.items():
+        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Failed)
+
+         
 if __name__ == '__main__':
-    main()
+
+    mode = 3
+    debug = 0
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "n:r:k:m:d")
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        log.exception(err)
+        usage()
+        sys.exit(2)
+
+    for o,a in opts:
+        if o in ("-m"):
+            #Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+            mode = int(a)
+
+    cfg=config(mode)
+    # get vars from config first
+    nshost = cfg.nshost
+    nsport = cfg.nsport
+    hkey = cfg.hkey
+
+    # override by commandline setting, if provided
+    for o, a in opts:
+        if o in ("-k"):
+            hkey = a
+        elif o in ("-n"):
+            nshost = a
+        elif o in ("-r"):
+            nsport = int(a)
+        elif o in ("-d"):
+            debug = True
+        elif o in ("-m"):
+            pass
+        else:
+            assert False, "unhandled option"
+
+    if nshost == None or nsport == None:
+        usage()
+        sys.exit(2)
+
+
+    main(nshost, nsport, hkey)
