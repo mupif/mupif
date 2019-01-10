@@ -27,7 +27,7 @@ class thermal(Application.Application):
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
         self.morphologyType=None
-        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.ValueType.Scalar, 'kg/m**3')
+        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.ValueType.Scalar, 'W/m/K')
         self.tria=False
 
     def readInput(self, tria=False):
