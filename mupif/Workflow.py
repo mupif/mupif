@@ -24,11 +24,13 @@
 from builtins import object
 import os
 import Pyro4
+import time
 from . import Application
 from . import PyroUtil
 from . import APIError
 from . import MetadataKeys
 from . import TimeStep
+from . import WorkflowMonitor
 import logging
 log = logging.getLogger()
 
@@ -46,15 +48,16 @@ class Workflow(Application.Application):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's')):
+    def __init__ (self, file='', workdir='', executionID = None, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Constructor. Initializes the workflow
 
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
+        :param str executionID: Optional workflow execution ID (typically set by scheduler)
         :param PhysicalQuantity targetTime: target simulation time
         """
-        super(Workflow, self).__init__(file=file, workdir=workdir)
+        super(Workflow, self).__init__(file=file, workdir=workdir, executionID=executionID)
 
         #print (targetTime)
         if (PQ.isPhysicalQuantity(targetTime)):
@@ -62,10 +65,13 @@ class Workflow(Application.Application):
         else:
             raise TypeError ('targetTime is not PhysicalQuantity')
 
+        self.workflowMonitor = None # no monitor by default
+
+        # define workflow metadata
         (username, hostname) = PyroUtil.getUserInfo()
         self.setMetadata(MetadataKeys.USERNAME, username)
         self.setMetadata(MetadataKeys.HOSTNAME, hostname)
-
+        
 
     def solve(self, runInBackground=False):
         """ 
@@ -108,4 +114,35 @@ class Workflow(Application.Application):
         :rtype: str
         """
         return "Workflow"
+    
+    def updateStaus(self, status, progress=0):
+        """
+        Updates the workflow status. The status is subnitted to workflow monitor. The self.workflowMonitor
+        should be (proxy) to workflowManager
+        :param str status: string describing the workflow status (initialized, running, failed, finished)
+        :param int progress: integer number indicating execution progress (in percent)
+        """
+        #PyroUtil.connectNameServer(nshost, nsport, hkey)
+        #try:
+        #    uri = ns.lookup(workflowMonitorName)
+        #    workflowMonitor = Pyro4.Proxy(uri)
+        #except Exception as e:
+        #    log.error("Cannot find workflow monitor")
+        #    return # do not raise, silently continue without updating status
 
+        if (self.workflowMonitor):
+            date = time.strftime("%d %b %Y %H:%M:%S", time.gmtime())
+            metadata = {WorkflowMonitor.WorkflowMonitorKeys.Status: status,
+                        WorkflowMonitor.WorkflowMonitorKeys.Progress: progress,
+                        WorkflowMonitor.WorkflowMonitorKeys.Date: date}
+            try:
+                self.workflowMonitor.updateMetadata(self.getMetadata(MetadataKeys.ComponentID), metadata)
+                # could not use nameserver metadata capability, as this requires workflow to be registered
+                # thus Pyro daemon is required
+
+                log.debug(self.getMetadata(MetadataKeys.ComponentID)+": Updated status to " + status + ", progress=" + str(progress))
+            except Exception as e:
+                log.exception("Connection to workflow monitor broken")
+                raise e
+
+    

@@ -199,11 +199,11 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh, units, time):
     values=[]
 
     if (type == 1):
-        ftype = ValueType.Scalar
+        ftype = ValueType.ValueType.Scalar
     elif (type == 3):
-        ftype = ValueType.Vector
+        ftype = ValueType.ValueType.Vector
     else:
-        ftype = ValueType.Tensor
+        ftype = ValueType.ValueType.Tensor
 
 
     # open the geo file

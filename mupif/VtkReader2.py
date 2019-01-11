@@ -88,11 +88,11 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
     values=[]
 
     if (type == 1):
-        ftype = ValueType.Scalar
+        ftype = ValueType.ValueType.Scalar
     elif (type == 3):
-        ftype = ValueType.Vector
+        ftype = ValueType.ValueType.Vector
     else:
-        ftype = ValueType.Tensor
+        ftype = ValueType.ValueType.Tensor
 
 
     f=open(filename, "r")

@@ -35,6 +35,7 @@ class config(object):
         self.jobManName='Mupif.JobManager@Example'
         #Name of first application
         self.appName = 'MuPIFServer'
+        self.monitorName = 'monitor.MuPIF'
 
         #Jobs in JobManager
         #Range of ports to be assigned on the server to jobs
@@ -61,6 +62,9 @@ class config(object):
             #self.nshost = '147.32.130.71'
             #Port of name server
             self.nsport = 9090
+
+            self.monitorServer = '127.0.0.1'
+            self.monitorPort = 9091
 
             #SERVER for a single job or for JobManager
             #IP/name of a server's daemon
@@ -90,6 +94,9 @@ class config(object):
             #Port of name server
             self.nsport = 9090
 
+            self.monitorServer = '127.0.0.1'
+            self.monitorPort = 9091
+
             #SERVER for a single job or for JobManager
             #IP/name of a server's daemon
             self.server = '147.32.130.71'
@@ -114,7 +121,10 @@ class config(object):
             #self.nshost = '172.30.0.6'
             #Port of name server
             self.nsport = 9090
-            
+
+            self.monitorServer = '172.30.0.1'
+            self.monitorPort = 9091
+
             #SERVER for a single job or for JobManager
             #IP/name of a server's daemon
             #self.server = '172.30.0.1'
@@ -146,7 +156,10 @@ class config(object):
             self.nshost = '127.0.0.1'
             #Port of name server
             self.nsport = 9090
-            
+
+            self.monitorServer = '127.0.0.1'
+            self.monitorPort = 9091
+
             #SERVER for a single job or for JobManager
             #IP/name of a server's daemon
             self.server = '127.0.0.1'

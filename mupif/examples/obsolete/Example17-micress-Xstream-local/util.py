@@ -61,7 +61,7 @@ if __name__ == "__main__":
     for i in range(5):
         for j in range(5):
             values.append((1.0*i*j,))
-    f = Field.Field(m, FieldID.FID_Displacement, ValueType.Scalar, 'm', 0.0, values)
+    f = Field.Field(m, FieldID.FID_Displacement, ValueType.ValueType.Scalar, 'm', 0.0, values)
     #check
     v=f.evaluate((0.01,0.01,0))
     print (v)

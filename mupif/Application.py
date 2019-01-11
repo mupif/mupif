@@ -25,8 +25,17 @@ import os
 import Pyro4
 from . import APIError
 from . import MupifObject
+from . import propertyID
+from . import fieldID
+from . import functionID
+from . import Property
+from . import Field
+from . import Function
+from . import MetadataKeys
+
 import logging
 log = logging.getLogger()
+
 
 @Pyro4.expose
 class Application(MupifObject.MupifObject):
@@ -42,17 +51,18 @@ class Application(MupifObject.MupifObject):
 
     .. automethod:: __init__
     """
-    def __init__ (self, file='', workdir=''):
+    def __init__(self, file='', workdir='', executionID = None):
         """
         Constructor. Initializes the application.
 
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
+        :param str executionID: Optional application execution ID (typically set by workflow)
         """
         super(Application, self).__init__()
         self.file = file
         if workdir == '':
-            self.workDir =  os.getcwd()
+            self.workDir = os.getcwd()
         else:
             self.workDir = workdir
 
@@ -62,14 +72,23 @@ class Application(MupifObject.MupifObject):
         self.pyroNS = None
         self.pyroURI = None
         self.appName = None
-        
-    def registerPyro (self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
+
+        # define app metadata 
+        self.setMetadata(MetadataKeys.ExecutionID, executionID)
+        self.setMetadata(MetadataKeys.ComponentID, self.getApplicationSignature()) #use signature as component ID
+
+    def initialize(self):
+        """
+        Initializes the application for specific usecase.
+        """
+
+    def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """
         Register the Pyro daemon and nameserver. Required by several services
 
         :param Pyro4.Daemon pyroDaemon: Optional pyro daemon
         :param Pyro4.naming.Nameserver pyroNS: Optional nameserver
-        :param string PyroURI: Optional URI of receiver
+        :param string pyroURI: Optional URI of receiver
         :param string appName: Optional application name. Used for removing from pyroNS
         :param bool externalDaemon: Optional parameter when daemon was allocated externally.
         """
@@ -78,6 +97,38 @@ class Application(MupifObject.MupifObject):
         self.pyroURI = pyroURI
         self.appName = appName
         self.externalDaemon = externalDaemon
+
+    def get(self, objectTypeID, time=None, objectID=0):
+        """
+        Returns the requested object at given time. Object is identified by id.
+
+        :param objectTypeID: Identifier of the object
+        :param Physics.PhysicalQuantity time: Target time
+        :param int objectID: Identifies object with objectID (optional, default 0)
+
+        :return: Returns requested object.
+        """
+        if isinstance(objectTypeID, propertyID.PropertyID):
+            return self.getProperty(objectTypeID, time, objectID)
+        if isinstance(objectTypeID, fieldID.FieldID):
+            return self.getField(objectTypeID, time, objectID)
+        if isinstance(objectTypeID, functionID.FunctionID):
+            return self.getFunction(objectTypeID, time, objectID)
+        return None
+
+    def set(self, obj, objectID=0):
+        """
+        Registers the given (remote) object in application.
+
+        :param object: Remote object to be registered by the application
+        :param int objectID: Identifies object with objectID (optional, default 0)
+        """
+        if isinstance(obj, Property.Property):
+            return self.setProperty(obj, objectID)
+        if isinstance(obj, Field.Field):
+            return self.setField(obj, objectID)
+        if isinstance(obj, Function.Function):
+            return self.setFunction(obj, objectID)
 
     def getField(self, fieldID, time, objectID=0):
         """
@@ -121,7 +172,7 @@ class Application(MupifObject.MupifObject):
         """
         Registers the given (remote) field in application. 
 
-        :param Field field: Remote field to be registered by the application
+        :param Field.Field field: Remote field to be registered by the application
         :param int objectID: Identifies field with objectID (optional, default 0)
         """
     def getProperty(self, propID, time, objectID=0):
@@ -139,14 +190,15 @@ class Application(MupifObject.MupifObject):
         """
         Register given property in the application
 
-        :param Property property: Setting property
+        :param Property.Property property: Setting property
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
         """
-    def getFunction(self, funcID, objectID=0):
+    def getFunction(self, funcID, time, objectID=0):
         """
         Returns function identified by its ID
 
         :param FunctionID funcID: function ID
+        :param Physics.PhysicalQuantity time: Time when function should to be evaluated
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
 
         :return: Returns requested function
@@ -156,7 +208,7 @@ class Application(MupifObject.MupifObject):
         """
         Register given function in the application.
 
-        :param Function func: Function to register
+        :param Function.Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
     def getMesh (self, tstep):
@@ -281,7 +333,6 @@ class Application(MupifObject.MupifObject):
                 self.pyroDaemon.shutdown()
             self.pyroDaemon=None
 
-
     def getURI(self):
         """
         :return: Returns the application URI or None if application not registered in Pyro
@@ -316,7 +367,6 @@ class RemoteApplication (object):
     def getJobID(self):
         return self._jobID
 
-    
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
@@ -336,8 +386,6 @@ class RemoteApplication (object):
             finally:
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID=None
-                
-                
 
         #close tunnel as the last step so an application is still reachable
         if self._appTunnel:

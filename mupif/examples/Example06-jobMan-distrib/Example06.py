@@ -38,7 +38,7 @@ class Demo06(Workflow.Workflow):
             log.info("Working application 1 on server " + appsig)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = Property.ConstantProperty(1000, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3')
+        val = Property.ConstantProperty(1000, PropertyID.PID_Concentration, ValueType.ValueType.Scalar, 'kg/m**3')
         self.app1.setProperty (val)
         self.app1.solveStep(istep)
         self.retprop = self.app1.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
@@ -52,7 +52,7 @@ class Demo06(Workflow.Workflow):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_KPI01):
-            return Property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_KPI01, ValueType.Scalar, 'kg/m**3', time)
+            return Property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_KPI01, ValueType.ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
         

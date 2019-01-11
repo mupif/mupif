@@ -3,9 +3,9 @@ from mupif.Physics import PhysicalQuantities
 from mupif .Physics.PhysicalQuantities import PhysicalQuantity
 import Pyro4
 try:
-   import cPickle as pickle #faster serialization if available
+    import cPickle as pickle #faster serialization if available
 except:
-   import pickle
+    import pickle
 import collections
 
 @Pyro4.expose
@@ -23,7 +23,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
 
             :param tuple value: A tuple (array) representing property value
             :param PropertyID propID: Property ID
-            :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
+            :param ValueType.ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
             :param Physics.PhysicalQuantity time: Time
             :param units: Property units or string
             :type units: Physics.PhysicalUnits or string
@@ -37,9 +37,9 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             self.objectID = objectID
 
             if (PhysicalQuantities.isPhysicalUnit(units)):
-               self.unit = units
+                self.unit = units
             else:
-               self.unit = PhysicalQuantities._findUnit(units)
+                self.unit = PhysicalQuantities._findUnit(units)
 
         def getValue(self, time=None, **kwargs):
             """
@@ -104,7 +104,7 @@ class ConstantProperty(Property):
 
             :param tuple value: A tuple (array) representing property value
             :param PropertyID propID: Property ID
-            :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
+            :param ValueType.ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
             :param Physics.PhysicalQuantity time: Time when property is evaluated. If None (default), no time dependence
             :param units: Property units or string
             :type units: Physics.PhysicalUnits or string
@@ -149,11 +149,11 @@ class ConstantProperty(Property):
                raise ValueError ('Time out of range')
 
         def getTime(self):
-           """
-           :return: Receiver time
-           :rtype: PhysicalQuantity or None
-           """
-           return self.time
+            """
+            :return: Receiver time
+            :rtype: PhysicalQuantity or None
+            """
+            return self.time
             
         def _sum(self, other, sign1, sign2):
             """
@@ -168,30 +168,30 @@ class ConstantProperty(Property):
             return self.__class__(new_value, self.propID, self.valueType, self.time, self.unit)
 
         def _convertValue (self, value, src_unit, target_unit):
-           """
-           Helper function to evaluate value+offset*factor, where
-           factor and offset are obtained from 
-           conversionTupleTo(target_unit)
-           """
-           (factor, offset) = src_unit.conversionTupleTo(target_unit)
-           if isinstance(value, collections.Iterable):
-              return tuple((v+offset)*factor for v in value)
-           else:
-              return (value + offset) * factor
+            """
+            Helper function to evaluate value+offset*factor, where
+            factor and offset are obtained from
+            conversionTupleTo(target_unit)
+            """
+            (factor, offset) = src_unit.conversionTupleTo(target_unit)
+            if isinstance(value, collections.Iterable):
+                return tuple((v+offset)*factor for v in value)
+            else:
+                return (value + offset) * factor
         
         def convertToUnit(self, unit):
-           """
-           Change the unit and adjust the value such that
-           the combination is equivalent to the original one. The new unit
-           must be compatible with the previous unit of the object.
-           
-           :param C{str} unit: a unit
-         
-           :raise TypeError: if the unit string is not a know unit or a unit incompatible with the current one
-           """
-           unit = PhysicalQuantities._findUnit(unit)
-           self.value = self._convertValue (self.value, self.unit, unit)
-           self.unit = unit
+            """
+            Change the unit and adjust the value such that
+            the combination is equivalent to the original one. The new unit
+            must be compatible with the previous unit of the object.
+
+            :param C{str} unit: a unit
+
+            :raise TypeError: if the unit string is not a know unit or a unit incompatible with the current one
+            """
+            unit = PhysicalQuantities._findUnit(unit)
+            self.value = self._convertValue(self.value, self.unit, unit)
+            self.unit = unit
 
 
         def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
@@ -221,26 +221,26 @@ class ConstantProperty(Property):
             return ans
 
         def inUnitsOf(self, *units):
-           """
-           Express the quantity in different units. If one unit is
-           specified, a new PhysicalQuantity object is returned that
-           expresses the quantity in that unit. If several units
-           are specified, the return value is a tuple of
-           PhysicalObject instances with with one element per unit such
-           that the sum of all quantities in the tuple equals the
-           original quantity and all the values except for the last one
-           are integers. This is used to convert to irregular unit
-           systems like hour/minute/second.
-           
-           :param units: one units
-           :type units: C{str} 
-           
-           :returns: one physical quantity
-           :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
-           :raises TypeError: if any of the specified units are not compatible with the original unit
-           """
-           units = list(map(PhysicalQuantities._findUnit, units))
-           #unit = PhysicalQuantities._findUnit(units[0])
-           unit = units[0]
-           value = self._convertValue (self.value, self.unit, unit)
-           return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)
+            """
+            Express the quantity in different units. If one unit is
+            specified, a new PhysicalQuantity object is returned that
+            expresses the quantity in that unit. If several units
+            are specified, the return value is a tuple of
+            PhysicalObject instances with with one element per unit such
+            that the sum of all quantities in the tuple equals the
+            original quantity and all the values except for the last one
+            are integers. This is used to convert to irregular unit
+            systems like hour/minute/second.
+
+            :param units: one units
+            :type units: C{str}
+
+            :returns: one physical quantity
+            :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
+            :raises TypeError: if any of the specified units are not compatible with the original unit
+            """
+            units = list(map(PhysicalQuantities._findUnit, units))
+            #unit = PhysicalQuantities._findUnit(units[0])
+            unit = units[0]
+            value = self._convertValue (self.value, self.unit, unit)
+            return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)

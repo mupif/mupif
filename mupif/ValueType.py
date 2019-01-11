@@ -1,18 +1,28 @@
 """
 Enumeration defining supported types of field and property values, e.g. scalar, vector, tensor
 """
-Scalar = 1
-Vector = 2
-Tensor = 3
+from enum import IntEnum
 
-def fromNumberOfComponents(i):
-    '''
-    :param int i: number of components
-    :return: value type corresponding to the number of components
-    
-    RuntimeError is raised if *i* does not match any value known.
-    '''
-    if i==1: return Scalar
-    elif i==3: return Vector
-    elif i==9: return Tensor
-    else: raise RuntimeError('No ValueType with %i components'%i)
+
+class ValueType(IntEnum):
+    Scalar = 1
+    Vector = 2
+    Tensor = 3
+
+    @staticmethod
+    def fromNumberOfComponents(i):
+        '''
+        :param int i: number of components
+        :return: value type corresponding to the number of components
+
+        RuntimeError is raised if *i* does not match any value known.
+        '''
+        if i == 1:
+            return ValueType.Scalar
+        elif i == 3:
+            return ValueType.Vector
+        elif i == 9:
+            return ValueType.Tensor
+        else:
+            raise RuntimeError('No ValueType with %i components' % i)
+

@@ -15,9 +15,9 @@ class Property_TestCase(unittest.TestCase):
         self.t3 = PQ(9,'s')
 
         
-        self.p1=Property.ConstantProperty(16.,PropertyID.PID_Concentration,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
-        self.p2=Property.ConstantProperty(7.,PropertyID.PID_Velocity,ValueType.Vector,PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
-        self.p3=Property.ConstantProperty(9.,PropertyID.PID_ParticleSigma,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
+        self.p1=Property.ConstantProperty(16.,PropertyID.PID_Concentration,ValueType.ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
+        self.p2=Property.ConstantProperty(7.,PropertyID.PID_Velocity,ValueType.ValueType.Vector,PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
+        self.p3=Property.ConstantProperty(9.,PropertyID.PID_ParticleSigma,ValueType.ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
 
     def tearDown(self):
         
@@ -42,11 +42,11 @@ class Property_TestCase(unittest.TestCase):
         
 # Testing getValueType        
     def test_getValueType(self):
-        self.assertEqual(self.p1.getValueType(),ValueType.Scalar,'wrong ValueType for p1')
+        self.assertEqual(self.p1.getValueType(),ValueType.ValueType.Scalar,'wrong ValueType for p1')
         
-        self.assertEqual(self.p2.getValueType(),ValueType.Vector,'wrong ValueType for p2')
+        self.assertEqual(self.p2.getValueType(),ValueType.ValueType.Vector,'wrong ValueType for p2')
         
-        self.assertEqual(self.p3.getValueType(),ValueType.Tensor,'wrong ValueType for p3')
+        self.assertEqual(self.p3.getValueType(),ValueType.ValueType.Tensor,'wrong ValueType for p3')
         
 # Testing getTime
     def test_getTime(self):
@@ -86,7 +86,7 @@ class Property_TestCase(unittest.TestCase):
         self.p1.dumpToLocalFile('dumpfile')
         self.res=Property.ConstantProperty.loadFromLocalFile('dumpfile')
         self.assertEqual(self.res.getValue(self.t1),16.,'error in dumpToLocal File_getValue for p1')
-        self.assertEqual(self.res.getValueType(),ValueType.Scalar,'wrong in dumpToLocal File_ValueType for p1')
+        self.assertEqual(self.res.getValueType(),ValueType.ValueType.Scalar,'wrong in dumpToLocal File_ValueType for p1')
         self.assertEqual(self.res.getTime(),PQ(6,'s'),'wrong dumpToLocal File_getTime for p1')
         self.assertEqual(self.res.getPropertyID(),PropertyID.PID_Concentration,'wrong dumpToLocal File_getPropertyID for p1')
         self.assertEqual(self.res.getObjectID(),1,'wrong dumpToLocal File_getObjectID for p1')
@@ -96,7 +96,7 @@ class Property_TestCase(unittest.TestCase):
         self.p3.dumpToLocalFile('dumpfile2')
         self.res=Property.ConstantProperty.loadFromLocalFile('dumpfile2')
         self.assertEqual(self.res.getValue(self.t3),9.,'error in dumpToLocal File_getValue for p3')
-        self.assertEqual(self.res.getValueType(),ValueType.Tensor,'wrong dumpToLocal File_ValueType for p3')
+        self.assertEqual(self.res.getValueType(),ValueType.ValueType.Tensor,'wrong dumpToLocal File_ValueType for p3')
         self.assertEqual(self.res.getTime(),PQ(9,'s'),'wrong dumpToLocal File_getTime for p3')
         self.assertEqual(self.res.getPropertyID(),PropertyID.PID_ParticleSigma,'wrong dumpToLocal File_getPropertyID for p3')
         self.assertEqual(self.res.getObjectID(),8,'wrong dumpToLocal File_getObjectID for p3')
