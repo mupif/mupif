@@ -1,3 +1,6 @@
+import sys
+sys.path.extend(['..','../../..'])
+
 from mupif import *
 import Pyro4
 import logging

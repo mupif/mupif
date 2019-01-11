@@ -226,7 +226,7 @@ def getNSConnectionInfo(ns, name):
     return (host, port, nathost, natport)
             
 
-def _connectApp(ns, name, hkey=None):
+def _connectApp(ns, name, hkey):
     """
     Connects to a remote application.
 
@@ -241,7 +241,7 @@ def _connectApp(ns, name, hkey=None):
         uri = ns.lookup(name)
         log.debug("Application %s, found URI %s on %s from a nameServer %s" % (name, uri, getNSConnectionInfo(ns,name), ns) )
         app2 = Pyro4.Proxy(uri)
-        #app2._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
+        app2._pyroHmacKey = hkey.encode(encoding='UTF-8')
     except Exception as e:
         log.error("Cannot find registered server %s on %s" % (name, ns) )
         raise
@@ -259,7 +259,7 @@ def _connectApp(ns, name, hkey=None):
 
     return app2
 
-def connectApp(ns, name, hkey=None, sshContext=None):
+def connectApp(ns, name, hkey, sshContext=None):
     """
     Connects to a remote application, creates the ssh tunnel if necessary
 
@@ -295,14 +295,14 @@ def getNSAppName(jobname, appname):
     """
     return 'Mupif'+'.'+jobname+'.'+appname
 
-def runDaemon(host, port, nathost=None, natport=None, hkey=None):
+def runDaemon(host, port, hkey, nathost=None, natport=None):
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
     :param int or tuple port: Port number where daemon will listen (internal port number) or tuple of possible ports
+    :param str hkey: A password string
     :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
     :param int natport: Server NAT port, optional (external port)
-    :param str hkey: A password string
 
     :return Instance of the running daemon, None if a problem
     :rtype Pyro4.Daemon
@@ -316,7 +316,7 @@ def runDaemon(host, port, nathost=None, natport=None, hkey=None):
     for iport in ports:
         try:
             daemon = Pyro4.Daemon(host=host, port=int(iport), nathost=nathost, natport=Util.NoneOrInt(natport))
-            #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')#needed probably in future
+            daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
             log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             return daemon
         except socket.error as e:
@@ -355,7 +355,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     if not daemon:
         try:
             daemon = Pyro4.Daemon(host=server, port=int(port), nathost=nathost, natport=Util.NoneOrInt(natport))
-            #daemon._pyroHmacKey = hkey.encode(encoding='UTF-8') #needed probably in future
+            daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
             log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
         except Exception:
             log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
@@ -490,7 +490,19 @@ def getIPfromUri (uri):
     else:
         log.error("getIPfromUri: uri format mismatch (%s)"%(uri))
         return None
-    
+
+def getObjectFromURI(uri, hkey):
+    """
+    Returns object from given URI, e.g. returns a field
+    :param str uri: URI from an object
+    :param str hkey: A password string
+
+    :return: Field, Property etc.
+    :rtype: object including hkey
+    """
+    ret = Pyro4.Proxy(uri)
+    ret._pyroHmacKey = hkey.encode(encoding='UTF-8')
+    return ret
 
 def getUserInfo ():
     """
@@ -501,7 +513,7 @@ def getUserInfo ():
     hostname = socket.gethostname()
     return (username, hostname)
 
-def connectJobManager (ns, jobManName, hkey=None, sshContext=None):
+def connectJobManager (ns, jobManName, hkey, sshContext=None):
     """
     Connect to jobManager described by given jobManRec and create an optional ssh tunnel
 
@@ -652,7 +664,7 @@ def uploadPyroFile (clientFileName, pyroFile, hkey, size = 1024, compressFlag=Fa
         pyroFile.setCompressionFlag()
     data = file.getChunk()
     while data:
-        #pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8') #needed probably in future
+        pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8')
         pyroFile.setChunk(data) #this is where the data are sent over net via Pyro
         data = file.getChunk()
     getTermChunk = file.getTerminalChunk()

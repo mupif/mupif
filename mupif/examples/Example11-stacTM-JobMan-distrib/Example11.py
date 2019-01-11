@@ -81,8 +81,9 @@ class Demo11(Workflow.Workflow):
         log.info("Thermal problem solved")
         uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri) )
-        field = Pyro4.Proxy(uri)
+        #field = Pyro4.Proxy(uri)
         #field._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
+        field = PyroUtil.getObjectFromURI(uri,cfg.hkey)
         self.mechanicalSolver.setField(field)
 
         #Original version copied data to Demo11's computer and then to thermal solver.
