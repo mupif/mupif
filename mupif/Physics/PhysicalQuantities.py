@@ -643,7 +643,7 @@ def isPhysicalUnit(x):
     try:
         return hasattr(x, 'factor') and hasattr(x, 'powers')
     except AttributeError:
-        return False;
+        return False
        
 
 def isPhysicalQuantity(x):
@@ -657,7 +657,7 @@ def isPhysicalQuantity(x):
     try:
         return hasattr(x, 'value') and hasattr(x, 'unit')
     except AttributeError:
-        return False;
+        return False
        
 
 
@@ -682,6 +682,7 @@ def _findUnit(unit):
     if not isPhysicalUnit(unit):
         raise TypeError(str(unit) + ' is not a unit')
     return unit
+
 
 def _round(x):
     if numpy.greater(x, 0.):

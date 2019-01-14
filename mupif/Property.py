@@ -8,6 +8,7 @@ except:
     import pickle
 import collections
 
+
 @Pyro4.expose
 class Property(MupifObject.MupifObject, PhysicalQuantity):
         """
@@ -123,9 +124,9 @@ class ConstantProperty(Property):
         def __repr__(self):
             return (self.__class__.__name__ + '(' +
                     repr(self.value) + ',' +
-                    repr(self.unit.name()) +',' +
+                    repr(self.unit.name()) + ',' +
                     repr(self.propID)+',' +
-                    repr(self.valueType) + ','+
+                    repr(self.valueType) + ',' +
                     't=' + repr(self.time) +
                     ')')
 
@@ -138,15 +139,15 @@ class ConstantProperty(Property):
             :return: Property value as an array
             :rtype: tuple
             """
-            if (self.time is None or self.time == time):
-               for key, value in kwargs.items():
+            if self.time is None or self.time == time:
+                for key, value in kwargs.items():
                     if key == 'unit':
-                        #print(key,value)
+                        # print(key,value)
                         self.convertToUnit(unit=value)
-               return self.value
+                return self.value
             else:
-               print ("Property propID %d " %self.propID, "self.time" ,self.time, "time", time)
-               raise ValueError ('Time out of range')
+                print("Property propID %d " % self.propID, "self.time", self.time, "time", time)
+                raise ValueError ('Time out of range')
 
         def getTime(self):
             """
@@ -192,7 +193,6 @@ class ConstantProperty(Property):
             unit = PhysicalQuantities._findUnit(unit)
             self.value = self._convertValue(self.value, self.unit, unit)
             self.unit = unit
-
 
         def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
             """

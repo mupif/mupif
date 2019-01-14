@@ -3,6 +3,7 @@ import Pyro4
 import mupif.Physics.PhysicalQuantities as PQ
 import re
 
+
 @Pyro4.expose
 class TimeStep(object):
     """
@@ -24,57 +25,60 @@ class TimeStep(object):
         Initializes time step.
 
         :param t: Time(time at the end of time step)
-        :type t: float or Physics.PhysicalQuantity
+        :type t: PQ.PhysicalQuantity
         :param dt: Step length (time increment), type depends on 'units'
-        :type dt: float or Physics.PhysicalQuantity
+        :type dt: PQ.PhysicalQuantity
         :param targetTime: target simulation time (time at the end of simulation, not of a single TimeStep)
-        :type targetTime: float or Physics.PhysicalQuantity. targetTime is not related to particular time step rather to the material model (load duration, relaxation spectra etc.)
-        :param Physics.PhysicalUnit units: optional units for t, dt, targetTime if given as float values 
+        :type targetTime: PQ.PhysicalQuantity. targetTime is not related to particular time step rather to the material model (load duration, relaxation spectra etc.)
+        :param PQ.PhysicalUnit units: optional units for t, dt, targetTime if given as float values
         :param int n: Optional, solution time step number, default = 1
         """
-        self.number = n #solution step number, dimensionless
+        self.number = n  # solution step number, dimensionless
 
-        if (units == None):
+        if units is None:
             if not PQ.isPhysicalQuantity(t):
-                raise TypeError (str(t) + ' is not physical quantity')
+                raise TypeError(str(t) + ' is not physical quantity')
 
             if not PQ.isPhysicalQuantity(dt):
-                raise TypeError (str(dt) + ' is not physical quantity')
+                raise TypeError(str(dt) + ' is not physical quantity')
 
             if not PQ.isPhysicalQuantity(targetTime):
-                raise TypeError (str(targetTime) + ' is not physical quantity')
+                raise TypeError(str(targetTime) + ' is not physical quantity')
 
             self.time = t
             self.dt = dt
             self.targetTime = targetTime    
         else:
-            if (PQ.isPhysicalUnit(units)):
-                unitsTemp = units
+            if PQ.isPhysicalUnit(units):
+                units_temp = units
             else:
-                unitsTemp = PQ._findUnit(units)
+                units_temp = PQ._findUnit(units)
                 
-            self.time = PQ.PhysicalQuantity(t, unitsTemp)
-            self.dt   = PQ.PhysicalQuantity(dt, unitsTemp)
-            self.targetTime = PQ.PhysicalQuantity(targetTime, unitsTemp)
+            self.time = PQ.PhysicalQuantity(t, units_temp)
+            self.dt = PQ.PhysicalQuantity(dt, units_temp)
+            self.targetTime = PQ.PhysicalQuantity(targetTime, units_temp)
            
     def getTime(self):
         """
         :return: Time
-        :rtype:  Physics.PhysicalQuantity
+        :rtype:  PQ.PhysicalQuantity
         """
         return self.time
+
     def getTimeIncrement(self):
         """
         :return: Time increment
-        :rtype:  Physics.PhysicalQuantity
+        :rtype:  PQ.PhysicalQuantity
         """
         return self.dt
+
     def getTargetTime (self):
         """
         :return: Target time
-        :rtype:  Physics.PhysicalQuantity
+        :rtype:  PQ.PhysicalQuantity
         """
         return self.targetTime
+
     def getNumber(self):
         """
         :return: Receiver's solution step number

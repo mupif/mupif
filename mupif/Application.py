@@ -32,6 +32,7 @@ from . import Property
 from . import Field
 from . import Function
 from . import MetadataKeys
+from . import TimeStep
 
 import logging
 log = logging.getLogger()
@@ -152,20 +153,20 @@ class Application(MupifObject.MupifObject):
         :return: Requested field uri
         :rtype: Pyro4.core.URI
         """
-        if (self.pyroDaemon == None):
-            raise APIError.APIError ('Error: getFieldURI requires to register pyroDaemon in application')
+        if self.pyroDaemon is None:
+            raise APIError.APIError('Error: getFieldURI requires to register pyroDaemon in application')
         try:
             field = self.getField(fieldID, time, objectID=objectID)
         except:
             raise APIError.APIError ('Error: can not obtain field')
-        if (hasattr(field, '_PyroURI')):
+        if hasattr(field, '_PyroURI'):
             return field._PyroURI
         else:
             uri = self.pyroDaemon.register(field)
-            #inject uri into field attributes, note: _PyroURI is avoided 
-            #for deepcopy operation
+            # inject uri into field attributes, note: _PyroURI is avoided
+            # for deepcopy operation
             field._PyroURI = uri
-            #self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
+            # self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
             return uri
 
     def setField(self, field, objectID=0):
@@ -215,7 +216,7 @@ class Application(MupifObject.MupifObject):
         """
         Returns the computational mesh for given solution step.
 
-        :param TimeStep tstep: Solution step
+        :param TimeStep.TimeStep tstep: Solution step
         :return: Returns the representation of mesh
         :rtype: Mesh
         """
@@ -232,7 +233,7 @@ class Application(MupifObject.MupifObject):
         In between the stages the additional data exchange can be performed.
         See also wait and isSolved services.
 
-        :param TimeStep tstep: Solution step
+        :param TimeStep.TimeStep tstep: Solution step
         :param int stageID: optional argument identifying solution stage (default 0)
         :param bool runInBackground: optional argument, defualt False. If True, the solution will run in background (in separate thread or remotely).
 
@@ -252,7 +253,7 @@ class Application(MupifObject.MupifObject):
         """
         Called after a global convergence within a time step is achieved.
 
-        :param TimeStep tstep: Solution step
+        :param TimeStep.TimeStep tstep: Solution step
         """
     def getCriticalTimeStep(self):
         """
@@ -266,20 +267,20 @@ class Application(MupifObject.MupifObject):
         Returns the assembly time related to given time step.
         The registered fields (inputs) should be evaluated in this time.
 
-        :param TimeStep tstep: Solution step
+        :param TimeStep.TimeStep tstep: Solution step
         :return: Assembly time
-        :rtype: Physics.PhysicalQuantity, TimeStep
+        :rtype: Physics.PhysicalQuantity, TimeStep.TimeStep
         """
     def storeState(self, tstep):
         """
         Store the solution state of an application.
 
-        :param TimeStep tstep: Solution step
+        :param TimeStep.TimeStep tstep: Solution step
         """
     def restoreState(self, tstep):
         """
         Restore the saved state of an application.
-        :param TimeStep tstep: Solution step
+        :param TimeStep.TimeStep tstep: Solution step
         """
     def getAPIVersion(self):
         """
