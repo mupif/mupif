@@ -41,7 +41,7 @@ class Demo16(Workflow.Workflow):
         except Exception as e:
             log.exception(e)
        
-        self.mechanical = PyroUtil.connectApp(ns, 'mechanical')
+        self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
        
         thermalSignature=self.thermal.getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)

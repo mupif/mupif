@@ -28,6 +28,7 @@ def main():
     os.environ['PYRO_PICKLE_PROTOCOL_VERSION']='2'
     os.environ['PYRO_SERIALIZER']='pickle'
     os.environ['PYRO_SERVERTYPE']='multiplex'
+    os.environ['PYRO_HMAC_KEY']=hkey
     
     ##Creation of nameserver
     cmd = 'pyro4-check-config'
@@ -36,7 +37,7 @@ def main():
     print(output.decode('utf-8') if output else "", error if error else "")
 
     #Able to kill this process by referrring to pyro4-ns
-    cmd = 'pyro4-ns -n %s -p %d -k %s' % (nshost, nsport, hkey)
+    cmd = 'pyro4-ns -n %s -p %d' % (nshost, nsport)
     p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
     output, error = p2.communicate()
     print(output.decode('utf-8') if output else "", error.decode('utf-8') if error else "")

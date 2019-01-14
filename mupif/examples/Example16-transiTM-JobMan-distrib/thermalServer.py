@@ -15,7 +15,7 @@ Util.changeRootLogger('thermal.log')
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Run a daemon for jobMamager on this machine
-daemon = PyroUtil.runDaemon(host=cfg.server, port=cfg.serverPort)
+daemon = PyroUtil.runDaemon(host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport, hkey=cfg.hkey)
 
 #Run job manager on a server
 jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', mode, cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)

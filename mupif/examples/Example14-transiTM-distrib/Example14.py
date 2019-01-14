@@ -15,9 +15,9 @@ import mupif.Physics.PhysicalQuantities as PQ
 ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Locate thermal server
-thermal = PyroUtil.connectApp(ns, 'thermal')
+thermal = PyroUtil.connectApp(ns, 'thermal', cfg.hkey)
 #Locate mechanical server
-mechanical = PyroUtil.connectApp(ns, 'mechanical')
+mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
 
 time  = 0.
 dt = 0.
