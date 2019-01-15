@@ -48,12 +48,14 @@ except:
 #debug flag
 debug = 0
 
+
 class FieldType(object):
     """
     Represent the supported values of FieldType, i.e. FT_vertexBased or FT_cellBased.
     """
     FT_vertexBased = 1
     FT_cellBased   = 2
+
 
 @Pyro4.expose
 class Field(MupifObject.MupifObject, PhysicalQuantity):
@@ -75,7 +77,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         :param Mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType.ValueType valueType: Type of field values (scalear, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
+        :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param Physics.PhysicalUnits units: Field value units
         :param Physics.PhysicalQuantity time: Time associated with field values
         :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
@@ -127,10 +129,14 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :return: number of scalars (1,3,9 respectively for scalar, vector, tensor)
         :rtype: int
         """
-        if self.valueType==ValueType.ValueType.Scalar: return 1
-        elif self.valueType==ValueType.ValueType.Vector: return 3
-        elif self.valueType==ValueType.ValueType.Tensor: return 9
-        else: raise ValueError("Invalid value of Field.valueType (%d)."%self.valueType)
+        if self.valueType == ValueType.Scalar:
+            return 1
+        elif self.valueType == ValueType.Vector:
+            return 3
+        elif self.valueType == ValueType.Tensor:
+            return 9
+        else:
+            raise ValueError("Invalid value of Field.valueType (%d)." % self.valueType)
 
     def getMesh(self):
         """
@@ -421,19 +427,19 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         vectorsKw=dict(name=name) # vectors don't have a lookup_table
 
         if (self.fieldType == FieldType.FT_vertexBased):
-            if (self.getValueType() == ValueType.ValueType.Scalar):
+            if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
-            elif (self.getValueType() == ValueType.ValueType.Vector):
+            elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
-            elif (self.getValueType() == ValueType.ValueType.Tensor):
+            elif (self.getValueType() == ValueType.Tensor):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Tensors(self.getMartixForTensor(self.value),**vectorsKw),lookupTable),'Unstructured Grid Example')
             
         else:
-            if (self.getValueType() == ValueType.ValueType.Scalar):
+            if (self.getValueType() == ValueType.Scalar):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value],**scalarsKw),lookupTable), 'Unstructured Grid Example')
-            elif (self.getValueType() == ValueType.ValueType.Vector):
+            elif (self.getValueType() == ValueType.Vector):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Vectors(self.value,**vectorsKw),lookupTable), 'Unstructured Grid Example')
-            elif (self.getValueType() == ValueType.ValueType.Tensor):
+            elif (self.getValueType() == ValueType.Tensor):
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Tensors(self.getMartixForTensor(self.value),**vectorsKw),lookupTable),'Unstructured Grid Example')
             
     def getMartixForTensor(self,values):
@@ -767,7 +773,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 # determine the number of components using the expected number of values from the mesh
                 expectedNumVal=(mesh.getNumberOfVertices() if fieldType==FieldType.FT_vertexBased else mesh.getNumberOfCells())
                 nc=len(d.scalars)//expectedNumVal
-                valueType=ValueType.ValueType.fromNumberOfComponents(nc)
+                valueType=ValueType.fromNumberOfComponents(nc)
                 values=[d.scalars[i*nc:i*nc+nc] for i in range(len(d.scalars))]
                 ret.append(Field(
                     mesh=mesh,
@@ -871,7 +877,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 nt=arr.GetNumberOfTuples()
                 if nt==0: raise RuntimeError("Zero values in field '%s', unable to determine value type."%aname)
                 t0=arr.GetTuple(0)
-                valueType=ValueType.ValueType.fromNumberOfComponents(len(arr.GetTuple(0)))
+                valueType=ValueType.fromNumberOfComponents(len(arr.GetTuple(0)))
                 # this will raise KeyError if fieldID with that name not defined
                 fid=fieldID.FieldID[aname]
                 # get actual values as tuples

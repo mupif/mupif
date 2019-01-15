@@ -25,9 +25,9 @@ import os
 import Pyro4
 from . import APIError
 from . import MupifObject
-from . import propertyID
-from . import fieldID
-from . import functionID
+from .propertyID import PropertyID
+from .fieldID import FieldID
+from .functionID import FunctionID
 from . import Property
 from . import Field
 from . import Function
@@ -76,7 +76,7 @@ class Application(MupifObject.MupifObject):
 
         # define app metadata 
         self.setMetadata(MetadataKeys.ExecutionID, executionID)
-        self.setMetadata(MetadataKeys.ComponentID, self.getApplicationSignature()) #use signature as component ID
+        self.setMetadata(MetadataKeys.ComponentID, self.getApplicationSignature())  # use signature as component ID
 
     def initialize(self):
         """
@@ -103,17 +103,17 @@ class Application(MupifObject.MupifObject):
         """
         Returns the requested object at given time. Object is identified by id.
 
-        :param objectTypeID: Identifier of the object
+        :param PropertyID or FieldID or FunctionID objectTypeID: Identifier of the object
         :param Physics.PhysicalQuantity time: Target time
         :param int objectID: Identifies object with objectID (optional, default 0)
 
         :return: Returns requested object.
         """
-        if isinstance(objectTypeID, propertyID.PropertyID):
+        if isinstance(objectTypeID, PropertyID):
             return self.getProperty(objectTypeID, time, objectID)
-        if isinstance(objectTypeID, fieldID.FieldID):
+        if isinstance(objectTypeID, FieldID):
             return self.getField(objectTypeID, time, objectID)
-        if isinstance(objectTypeID, functionID.FunctionID):
+        if isinstance(objectTypeID, FunctionID):
             return self.getFunction(objectTypeID, time, objectID)
         return None
 
@@ -121,7 +121,7 @@ class Application(MupifObject.MupifObject):
         """
         Registers the given (remote) object in application.
 
-        :param object: Remote object to be registered by the application
+        :param Property.Property or Field.Field or Function.Function obj: Remote object to be registered by the application
         :param int objectID: Identifies object with objectID (optional, default 0)
         """
         if isinstance(obj, Property.Property):
@@ -158,7 +158,7 @@ class Application(MupifObject.MupifObject):
         try:
             field = self.getField(fieldID, time, objectID=objectID)
         except:
-            raise APIError.APIError ('Error: can not obtain field')
+            raise APIError.APIError('Error: can not obtain field')
         if hasattr(field, '_PyroURI'):
             return field._PyroURI
         else:
@@ -308,12 +308,12 @@ class Application(MupifObject.MupifObject):
         if appName is None:
             appName = self.appName
         
-        if nameServer is not None:#local application can run without a nameServer
+        if nameServer is not None:  # local application can run without a nameServer
             try:
                 nameServer.remove(appName)
-                log.debug("Removing application %s from a nameServer %s" % (appName, nameServer) )
+                log.debug("Removing application %s from a nameServer %s" % (appName, nameServer))
             except Exception as e:
-                log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer) )
+                log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer))
                 raise
 
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
@@ -321,15 +321,15 @@ class Application(MupifObject.MupifObject):
         """
         Terminates the application. Shutdowns daemons if created internally.
         """
-        #Remove application from nameServer
-        #print("Removing")
+        # Remove application from nameServer
+        # print("Removing")
         if self.pyroNS is not None:
             self.removeApp()
                         
         if self.pyroDaemon:
             self.pyroDaemon.unregister(self)
             log.info("Unregistering daemon %s" % self.pyroDaemon)
-            #log.info(self.pyroDaemon)
+            # log.info(self.pyroDaemon)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
             self.pyroDaemon=None
@@ -353,7 +353,7 @@ class RemoteApplication (object):
     These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy) and the termination of job and tunnel has to be done from local computer, which has the neccesary communication link established 
     (ssh tunnel in particular, when port translation takes place)
     """
-    def __init__ (self, decoratee, jobMan=None, jobID=None, appTunnel=None):
+    def __init__(self, decoratee, jobMan=None, jobID=None, appTunnel=None):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID
@@ -377,20 +377,20 @@ class RemoteApplication (object):
             self._decoratee.terminate()
             self._decoratee = None
         
-        if (self._jobMan and self._jobID):
+        if self._jobMan and self._jobID:
             try:
-                log.info ("RemoteApplication: Terminating jobManager job %s on %s"%(str(self._jobID), self._jobMan.getNSName()))
+                log.info("RemoteApplication: Terminating jobManager job %s on %s" % (str(self._jobID), self._jobMan.getNSName()))
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID=None
             except Exception as e:
-                print (e)
+                print(e)
             finally:
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID=None
 
-        #close tunnel as the last step so an application is still reachable
+        # close tunnel as the last step so an application is still reachable
         if self._appTunnel:
-            #log.info ("RemoteApplication: Terminating sshTunnel of application")
+            # log.info ("RemoteApplication: Terminating sshTunnel of application")
             if self._appTunnel != "manual":
                 self._appTunnel.terminate()
 

@@ -105,7 +105,7 @@ class OOFEM(Application.Application):
                 for j in range(len(val)):
                     v.append(val[j])
                 values.append(tuple(v))
-            return Field.Field(self.mesh, fieldID, ValueType.ValueType.Scalar, None, time, values)
+            return Field.Field(self.mesh, fieldID, ValueType.Scalar, None, time, values)
 
         else:
             raise APIError.APIError ('Can\'t return field for other than current time step')

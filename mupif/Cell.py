@@ -206,7 +206,6 @@ class Triangle_2d_lin(Cell):
     0-----1
 
     """
-    
 
     def copy(self):
         """
@@ -218,7 +217,7 @@ class Triangle_2d_lin(Cell):
         return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(self):
+    def getGeometryType(cls):
         """
         Returns geometry type of receiver.
 
@@ -318,6 +317,7 @@ class Triangle_2d_lin(Cell):
         """
         return (lc[0], lc[1], 1.-lc[0]-lc[1])
 
+
 @Pyro4.expose
 class Triangle_2d_quad(Cell):
     """
@@ -344,7 +344,7 @@ class Triangle_2d_quad(Cell):
         return Triangle_2d_quad(self.mesh, self.number, self.label, tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(self):
+    def getGeometryType(cls):
         """
         Returns geometry type of receiver.
 
@@ -371,13 +371,13 @@ class Triangle_2d_quad(Cell):
         for nite in range(10):
             # compute the residual
             guess = self.loc2glob(lcoords_guess)
-            res[0] = coords[0]- guess[0]
-            res[1] = coords[1]- guess[1]
+            res[0] = coords[0] - guess[0]
+            res[1] = coords[1] - guess[1]
 
             # check for convergence
             error = math.sqrt(res[0]*res[0] + res[1]*res[1])
-            if ( error < convergence_limit ):
-                break;
+            if error < convergence_limit:
+                break
 
             # compute the corrections
             jac = self._getTransformationJacobianMtrx(lcoords_guess)
@@ -388,7 +388,7 @@ class Triangle_2d_quad(Cell):
             lcoords_guess[0] = lcoords_guess[0] + delta[0]
             lcoords_guess[1] = lcoords_guess[1] + delta[1]
 
-        if ( error > convergence_limit ):
+        if error > convergence_limit:
             # failed convergence
             return None
 
@@ -409,8 +409,7 @@ class Triangle_2d_quad(Cell):
             x += n[i] * self.mesh.getVertex(self.vertices[i]).coords[0]
             y += n[i] * self.mesh.getVertex(self.vertices[i]).coords[1]
 
-
-        return (x,y)
+        return (x, y)
 
     def interpolate(self, point, vertexValues):
         """
@@ -438,7 +437,7 @@ class Triangle_2d_quad(Cell):
         for li in ac:
             if li < -tolerance or li > 1.0+tolerance:
                 return False
-        return True;
+        return True
 
     def getTransformationJacobian(self, coords):
         """
@@ -448,9 +447,7 @@ class Triangle_2d_quad(Cell):
         :return: jacobian
         :rtype: float
         """
-        return np.linalg.det(self._getTransformationJacobianMtrx(coords));
-
-
+        return np.linalg.det(self._getTransformationJacobianMtrx(coords))
 
     def _getTransformationJacobianMtrx (self, lcoords):
         """
@@ -460,20 +457,19 @@ class Triangle_2d_quad(Cell):
         :rtype: numpy.matrix
         """
 
-        jacobianMatrix = np.zeros((2,2))
+        jacobianMatrix = np.zeros((2, 2))
 
-        dn=self._evalDerivatives(lcoords);
+        dn = self._evalDerivatives(lcoords)
 
         for i in range(dn.shape[0]):
             c = self.mesh.getVertex(self.vertices[i]).coords
             x = c[0]
             y = c[1]
 
-            jacobianMatrix[0][0] += dn[i][0] * x;
-            jacobianMatrix[0][1] += dn[i][0] * y;
-            jacobianMatrix[1][0] += dn[i][1] * x;
-            jacobianMatrix[1][1] += dn[i][1] * y;
-
+            jacobianMatrix[0][0] += dn[i][0] * x
+            jacobianMatrix[0][1] += dn[i][0] * y
+            jacobianMatrix[1][0] += dn[i][1] * x
+            jacobianMatrix[1][1] += dn[i][1] * y
 
         return jacobianMatrix
 
@@ -496,7 +492,6 @@ class Triangle_2d_quad(Cell):
                 4. * l1 * l2,
                 4. * l2 * l3,
                 4. * l3 * l1)
-
 
     def _evalDerivatives (self, lc):
         """
@@ -530,8 +525,8 @@ class Triangle_2d_quad(Cell):
 
     def _evalArea(self):
         p = self.mesh.getVertex(self.vertices[0]).coords
-        x1 = p[0];
-        y1 = p[1];
+        x1 = p[0]
+        y1 = p[1]
         p = self.mesh.getVertex(self.vertices[1]).coords
         x2 = p[0]
         y2 = p[1]
@@ -568,7 +563,7 @@ class Quad_2d_lin(Cell):
         return Quad_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(self):
+    def getGeometryType(cls):
         """
         Returns geometry type of receiver.
 
@@ -619,7 +614,7 @@ class Quad_2d_lin(Cell):
         b = a1 * b4 + a2 * b3 - a3 * b2 - b1 * a4 - b4 * 4.0 * coords[0] + a4 * 4.0 * coords[1]
         c = a1 * b3 - a3 * b1 - 4.0 * coords[0] * b3 + 4.0 * coords[1] * a3
 
-        #solve quadratic equation
+        # solve quadratic equation
         ksi=Util.quadratic_real(a,b,c)
         if debug: print ("quadratic_real returned ",ksi, "for a,b,c ", a,b,c)
         if len(ksi)==0:
@@ -786,7 +781,7 @@ class Tetrahedron_3d_lin(Cell):
         return Tetrahedron_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(self):
+    def getGeometryType(cls):
         """
         Returns geometry type of receiver.
 
@@ -927,7 +922,7 @@ class Brick_3d_lin(Cell):
         return Brick_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(self):
+    def getGeometryType(cls):
         """
         Returns geometry type of receiver.
 

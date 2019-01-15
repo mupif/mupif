@@ -18,7 +18,7 @@ class application1(Application.Application):
         super(application1,self).__init__(self,file)
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Velocity):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.ValueType.Scalar, 'm/s', time, 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 

@@ -748,6 +748,7 @@ for unit in _base_units:
 
 _help = []
 
+
 def _addUnit(name, unit, comment=''):
     if name in _unit_table:
         raise KeyError('Unit ' + name + ' already defined')
@@ -761,6 +762,7 @@ def _addUnit(name, unit, comment=''):
     unit.setName(name)
     _unit_table[name] = unit
 
+
 def _addPrefixed(unit):
     _help.append('Prefixed units for %s:' % unit)
     _prefixed_names = []
@@ -772,11 +774,10 @@ def _addPrefixed(unit):
 
 
 # SI derived units; these automatically get prefixes
-_help.append('SI derived units; these automatically get prefixes:\n' + \
-     ', '.join([prefix + ' (%.0E)' % value for prefix, value in _prefixes]) + \
-             '\n')
+_help.append('SI derived units; these automatically get prefixes:\n' +
+             ', '.join([prefix + ' (%.0E)' % value for prefix, value in _prefixes]) + '\n')
 
-_unit_table['kg'] = PhysicalUnit('kg',   1., [0,1,0,0,0,0,0,0,0])
+_unit_table['kg'] = PhysicalUnit('kg',   1., [0, 1, 0, 0, 0, 0, 0, 0, 0])
 
 _addUnit('Hz', '1/s', 'Hertz')
 _addUnit('N', 'm*kg/s**2', 'Newton')

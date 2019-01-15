@@ -40,7 +40,7 @@ class DemoApplication (Application.Application):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Value):
-            return Property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.ValueType.Scalar, PQ.getDimensionlessUnit())
+            return Property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit())
         else:
             raise APIError.APIError ('Unknown property ID')
 

@@ -24,7 +24,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
 
             :param tuple value: A tuple (array) representing property value
             :param PropertyID propID: Property ID
-            :param ValueType.ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
+            :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
             :param Physics.PhysicalQuantity time: Time
             :param units: Property units or string
             :type units: Physics.PhysicalUnits or string
@@ -105,7 +105,7 @@ class ConstantProperty(Property):
 
             :param tuple value: A tuple (array) representing property value
             :param PropertyID propID: Property ID
-            :param ValueType.ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
+            :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
             :param Physics.PhysicalQuantity time: Time when property is evaluated. If None (default), no time dependence
             :param units: Property units or string
             :type units: Physics.PhysicalUnits or string
