@@ -177,6 +177,7 @@ def readEnsightGeo_Part (f, line, mesh, enum, cells, vertexMapping, partnum, par
         line = f.readline()
     # next part record found
     return (line, enum)
+
     
 def readEnsightField (name, parts, partRec, type, fieldID, mesh, units, time):
     """
@@ -198,12 +199,12 @@ def readEnsightField (name, parts, partRec, type, fieldID, mesh, units, time):
     indx = list(range(6))
     values=[]
 
-    if (type == 1):
-        ftype = ValueType.ValueType.Scalar
-    elif (type == 3):
-        ftype = ValueType.ValueType.Vector
+    if type == 1:
+        ftype = ValueType.Scalar
+    elif type == 3:
+        ftype = ValueType.Vector
     else:
-        ftype = ValueType.ValueType.Tensor
+        ftype = ValueType.Tensor
 
 
     # open the geo file

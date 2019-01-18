@@ -27,7 +27,7 @@ class thermal(Application.Application):
     def __init__(self, file, workdir):
         super(thermal, self).__init__(file, workdir)
         self.morphologyType=None
-        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.ValueType.Scalar, 'W/m/K')
+        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
         self.tria=False
 
     def readInput(self, tria=False):
@@ -208,7 +208,7 @@ class thermal(Application.Application):
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.ValueType.Scalar, 'C', time, values);
+            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values);
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
             for e in self.mesh.cells():
@@ -217,7 +217,7 @@ class thermal(Application.Application):
                 else:
                     values.append((0,))
             #print (values)
-            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased);
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased);
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -506,7 +506,7 @@ class thermal(Application.Application):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.ValueType.Scalar, 'W/m/K', time, 0)
+            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -951,7 +951,7 @@ class mechanical(Application.Application):
                     else:
                         values.append((self.T[self.loc[i,0],0],self.T[self.loc[i,1],0],0.0))
 
-            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.ValueType.Vector, 'm', time, values);
+            return Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Vector, 'm', time, values);
         else:
             raise APIError.APIError ('Unknown field ID')
 

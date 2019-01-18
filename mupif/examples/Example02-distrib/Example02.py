@@ -28,7 +28,7 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.ValueType.Scalar, 'kg/m**3', time, 0)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):

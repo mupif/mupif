@@ -11,12 +11,12 @@ class ValueType(IntEnum):
 
     @staticmethod
     def fromNumberOfComponents(i):
-        '''
+        """
         :param int i: number of components
         :return: value type corresponding to the number of components
 
         RuntimeError is raised if *i* does not match any value known.
-        '''
+        """
         if i == 1:
             return ValueType.Scalar
         elif i == 3:

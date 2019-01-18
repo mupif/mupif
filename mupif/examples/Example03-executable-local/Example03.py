@@ -19,7 +19,7 @@ class application1(Application.Application):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.ValueType.Scalar, 'kg/m**3', time)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -46,7 +46,7 @@ class application3(Application.Application):
             f = open('app3.out', 'r')
             answer = float(f.readline())
             f.close()
-            return Property.ConstantProperty(answer, PropertyID.PID_CumulativeConcentration, ValueType.ValueType.Scalar, 'kg/m**3', time, 0)
+            return Property.ConstantProperty(answer, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
@@ -126,7 +126,7 @@ if __name__=='__main__':
     targetTime =PQ.PhysicalQuantity(3.0, 's')
     demo = Demo03(targetTime)
     # pass some parameters using set ops
-    demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.ValueType.Scalar, timeUnits))
+    demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, timeUnits))
     #execute workflow
     demo.solve()
     #get resulting KPI for workflow

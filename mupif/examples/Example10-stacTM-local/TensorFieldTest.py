@@ -14,7 +14,7 @@ for i in range(vert):
     values.append( (i*0.5,i*1.5,i*2.5, i*0.5,0,i*0.5, -i*0.5,-i*1.5,-i*3.5 ) )
 
 #Several units are predefined in PhysicalQuantities, such as Pa and all prefixes
-g = Field.Field(mesh, FieldID.FID_Stress, ValueType.ValueType.Tensor, 'MPa', 0.0, values)
+g = Field.Field(mesh, FieldID.FID_Stress, ValueType.Tensor, 'MPa', 0.0, values)
 
 print( g.evaluate( (0.8, 2.0, 0) ) )
 log.debug( g.evaluate( (0.8, 2.0, 0) ) )

@@ -128,7 +128,7 @@ class EnsightReader(object):
                     alues.append ((self.giveValueAtCell(fieldName, i), ))
                 elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
                     values.append ((self.giveValueAtCell(fieldName, i), ))
-        return Field.Field(mesh, FieldID.FID_Temperature, ValueType.ValueType.Scalar, None, None, values, Field.FieldType.FT_cellBased)
+        return Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values, Field.FieldType.FT_cellBased)
                     
     def giveValueAtPoint(self, fieldName, componentID):
         """

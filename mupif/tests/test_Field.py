@@ -28,16 +28,16 @@ class Field_TestCase(unittest.TestCase):
         self.mesh4.setup([Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(2.,0.,2.)), Vertex.Vertex(2,2,(0.,5.,3.)),Vertex.Vertex(3,3,(3.,3.,2.)),Vertex.Vertex(4,4,(8.,15.,0.))], [Cell.Tetrahedron_3d_lin(self.mesh4,1,1,(0,1,2,3)),Cell.Tetrahedron_3d_lin(self.mesh4,2,2,(1,2,3,4))])
         
         
-        self.f1=Field.Field(self.mesh,FieldID.FID_Displacement,ValueType.ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13, 's'),[(0,),(12,),(175,),(94,)],1)
-        self.f2=Field.Field(self.mesh,FieldID.FID_Strain,ValueType.ValueType.Vector,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(128,'s'),[(3,6),(2,8),(2,3)],1)
-        self.f3=Field.Field(self.mesh,FieldID.FID_Stress,ValueType.ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(66,'s'),[(3,6,4),(2,8,5),(2,3,6)],1)
-        self.f4=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(6,),(16,),(36,),(33,),(32,)])
-        self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
-        self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
-        self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],Field.FieldType.FT_cellBased)
-        self.f8 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.ValueType.Scalar,
+        self.f1=Field.Field(self.mesh,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13, 's'),[(0,),(12,),(175,),(94,)],1)
+        self.f2=Field.Field(self.mesh,FieldID.FID_Strain,ValueType.Vector,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(128,'s'),[(3,6),(2,8),(2,3)],1)
+        self.f3=Field.Field(self.mesh,FieldID.FID_Stress,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(66,'s'),[(3,6,4),(2,8,5),(2,3,6)],1)
+        self.f4=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(6,),(16,),(36,),(33,),(32,)])
+        self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
+        self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
+        self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],Field.FieldType.FT_cellBased)
+        self.f8 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
                               PU({'m': 1}, 1, (1, 0, 0, 0, 0, 0, 0)), PQ.PhysicalQuantity(13, 's'), None, 1)
-        self.f9 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.ValueType.Scalar,
+        self.f9 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
                               PU({'m': 1}, 1, (1, 0, 0, 0, 0, 0, 0)), PQ.PhysicalQuantity(13, 's'), None,
                               Field.FieldType.FT_cellBased)
 
@@ -80,10 +80,10 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getMesh(),self.mesh4, 'error in getMesh for f4')
         
     def test_getValueType(self):
-        self.assertEqual(self.f1.getValueType(),ValueType.ValueType.Scalar, 'error in getValueType for f1')
-        self.assertEqual(self.f2.getValueType(),ValueType.ValueType.Vector, 'error in getValueType for f2')
-        self.assertEqual(self.f3.getValueType(),ValueType.ValueType.Tensor, 'error in getValueType for f3')
-        self.assertEqual(self.f4.getValueType(),ValueType.ValueType.Scalar, 'error in getValueType for f4')
+        self.assertEqual(self.f1.getValueType(),ValueType.Scalar, 'error in getValueType for f1')
+        self.assertEqual(self.f2.getValueType(),ValueType.Vector, 'error in getValueType for f2')
+        self.assertEqual(self.f3.getValueType(),ValueType.Tensor, 'error in getValueType for f3')
+        self.assertEqual(self.f4.getValueType(),ValueType.Scalar, 'error in getValueType for f4')
         
     def test_getFieldID(self):
         self.assertEqual(self.f1.getFieldID(),FieldID.FID_Displacement,'error in getFieldID for f1')

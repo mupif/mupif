@@ -96,7 +96,7 @@ class AppGridAvg(Application.Application):
                         dist = math.sqrt((x-self.xl/2.)*(x-self.xl/2.)+(y-self.yl/2.)*(y-self.yl/2.))
                         val = math.cos(coeff*dist) * math.exp(-4.0*dist/self.xl)
                         values.append((val,))
-                self.field=Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.ValueType.Scalar, temperatureUnit, time, values)
+                self.field=Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values)
                 
             return self.field
         else:
@@ -136,9 +136,9 @@ class AppMinMax(Application.Application):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Min):
-            return Property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return Property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
         elif (propID == PropertyID.PID_Demo_Max):
-            return Property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return Property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
         else:
             raise APIError.APIError ('Unknown property ID')
     
@@ -171,9 +171,9 @@ class AppIntegrateField(Application.Application):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Integral):
-            return Property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return Property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
         elif (propID == PropertyID.PID_Demo_Volume):
-            return Property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.ValueType.Scalar, propID, PQ.getDimensionlessUnit(),time=time)
+            return Property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, propID, PQ.getDimensionlessUnit(),time=time)
         else:
             raise APIError.APIError ('Unknown property ID')
 
@@ -187,9 +187,9 @@ class AppCurrTime(Application.Application):
         super(self.__class__,self).__init__(file)
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.ValueType.Scalar, 'kg/m**3', time=time)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time=time)
         if (propID == PropertyID.PID_Velocity):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.ValueType.Scalar, 'm/s', time=time)
+            return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time=time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -209,7 +209,7 @@ class AppPropAvg(Application.Application):
         self.contrib = None
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.ValueType.Scalar, 'kg/m**3', time=time)
+            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time=time)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):

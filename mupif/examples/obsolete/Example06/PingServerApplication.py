@@ -16,7 +16,7 @@ class PingServerApplication(Application.Application):
         self.contrib = 0.0
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Value):
-            return Property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0)
+            return Property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):

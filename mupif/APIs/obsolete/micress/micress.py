@@ -264,17 +264,17 @@ class micress(Application.Application):
             return 0
             
         if (propID == MICPropertyID.PID_PhaseFractions):
-          return Property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return Property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Dimensions):
-          return Property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.ValueType.Vector, PQ._base_units[0][1], time=None, objectID=0)
+          return Property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, PQ._base_units[0][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Temperature):
-          return Property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.ValueType.Scalar, PQ._base_units[4][1], time=None, objectID=0)
+          return Property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, PQ._base_units[4][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_ComponentNames):
-          return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_PhaseNames):
-          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
-          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == PropertyID.PID_Concentration):
           idx = 0
           while ( idx < len(self.t) ):
@@ -284,13 +284,13 @@ class micress(Application.Application):
           if ( idx == len(self.t) ):
             raise APIError.APIError('No time matching entry in log file')
             return 0
-          return Property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)
         elif (propID == MICPropertyID.PID_NativeBaseFileName):
           baseFilename = self.resultFiles + "_loc_" + str(self.locIndex)
-          return Property.ConstantProperty(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
         elif (propID == MICPropertyID.PID_NativeFieldFileName):
           vtkFile = self.__getResultsVTKFile(time)
-          return Property.ConstantProperty(vtkFile, MICPropertyID.PID_NativeFieldFileName, ValueType.ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
+          return Property.ConstantProperty(vtkFile, MICPropertyID.PID_NativeFieldFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
         else:
           raise APIError.APIError('Unknown property ID')
 
