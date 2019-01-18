@@ -7,12 +7,14 @@ import time
 import logging
 log = logging.getLogger()
 
+
+
+
 if True:
     app = demoapp.thermal('inputT10.in','.')
-    print(app.getApplicationSignature())
-
     tstep = TimeStep.TimeStep(1.,1.,10,'s')
     sol = app.solveStep(tstep)
+    print(app.printMetadata())
     f = app.getField(FieldID.FID_Temperature, app.getAssemblyTime(tstep))
     f.field2VTKData().tofile('thermal10')
     f.field2Image2D(title='Thermal', fileName='thermal.png')

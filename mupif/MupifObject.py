@@ -24,6 +24,7 @@
 from builtins import object
 import Pyro4
 import json
+import pprint
 
 @Pyro4.expose
 class MupifObject(object):
@@ -58,6 +59,14 @@ class MupifObject(object):
         :rtype: bool
         """
         return (key in self.metadata)
+    
+    def printMetadata(self):
+        """ 
+        Print all metadata
+        :return: None
+        :rtype: None
+        """
+        pprint.pprint(self.metadata,width=300)
     
     def setMetadata (self, key, val):
         """ 

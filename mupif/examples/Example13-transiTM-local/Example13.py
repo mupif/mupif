@@ -59,6 +59,8 @@ class Demo13(Workflow.Workflow):
         return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
+        self.thermal.printMetadata()
+        self.mechanical.printMetadata()
         self.thermal.terminate()
         self.mechanical.terminate()
         self.updateStaus(WorkflowMonitor.WorkflowMonitorStatus.Finished, 100)

@@ -164,7 +164,41 @@ class thermal(Application.Application):
                 self.loc[i] = ineq
                 ineq += 1
         #print (self.loc)
-
+        self.setMetadata('Model.Model_ID','1')
+        self.setMetadata('Model.Model_name','Thermal')
+        self.setMetadata('Model.Model_description','Stationary heat conduction using finite elements on rectangular domain')
+        self.setMetadata('Model.Model_material','Isotropic heat conducting material')
+        self.setMetadata('Model.Model_type','Continuum')
+        self.setMetadata('Model.Model_geometry','2D rectangle')
+        self.setMetadata('Model.Model_time_lapse','seconds')
+        self.setMetadata('Model.Model_manufacturing_service','Temperature')
+        self.setMetadata('Model.Model_publication','Felippa: Introduction to finite element methods, 2004')
+        self.setMetadata('Model.Model_entity',['Finite volume'])
+        self.setMetadata('Model.Model_equation',['Heat balance'])
+        self.setMetadata('Model.Model_equation_quantities',['Temperature','Heat-flow'])
+        self.setMetadata('Model.Model_relation_formulation',['Flow-gradient'])
+        self.setMetadata('Model.Model_relation_description ',['Conservation of energy'])
+        self.setMetadata('Model.Model_numerical_solver','Finite element method')
+        self.setMetadata('Model.Model_numerical_solver_additional_params','Time step, finite difference discretization of the time derivative')
+        self.setMetadata('Model.Solver_name','Stationary thermal solver')
+        self.setMetadata('Model.Solver_version_date','1.0, Dec 31 2018')
+        self.setMetadata('Model.Solver_license','None')
+        self.setMetadata('Model.Solver_creator','Borek Patzak')
+        self.setMetadata('Model.Solver_language','Python')
+        self.setMetadata('Model.Solver_time_step','seconds')
+        self.setMetadata('Model.Model_computational_representation','Finite element')
+        self.setMetadata('Model.Model_boundary_conditions','Dirichlet, Neumann')
+        self.setMetadata('Model.Accuracy',0.75)
+        self.setMetadata('Model.Sensitivity','Medium')
+        self.setMetadata('Model.Complexity','Low')
+        self.setMetadata('Model.Robustness','High')
+        self.setMetadata('Model.Estimated_execution cost','0.01€')
+        self.setMetadata('Model.Estimated_personnel cost','0.01€')
+        self.setMetadata('Model.Required_expertise','User')
+        self.setMetadata('Model.Estimated_computational_time','Seconds')
+        self.setMetadata('Model.Required expertise','User')
+        self.setMetadata('Model.Inputs_and_relation_to_Data',['Boundary temperature',1,'Scalar','','Ambient temperature on edges with heat convection'])
+        self.setMetadata('Model.Outputs_and_relation_to_Data',['Temperature field',1,'Field','Resulting thermal field'])
 
     def getField(self, fieldID, time, objectID=0):
         if (fieldID == FieldID.FID_Temperature):
@@ -551,6 +585,11 @@ class thermal_nonstat(thermal):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 
         self.readInput(tria=True)
+        self.setMetadata('Model.Model_ID','2')
+        self.setMetadata('Model.Model_name','Nonstationary thermal')
+        self.setMetadata('Model.Model_description','Nonstationary heat conduction using finite elements on rectangular domain')
+        self.setMetadata('Model.Solver_name','Nonstationary thermal solver')
+        
         mesh = self.mesh
         self.volume = 0.0;
         self.integral = 0.0;
@@ -864,6 +903,41 @@ class mechanical(Application.Application):
                     self.neq=self.neq+1
 
         #print "loc:", self.loc
+        self.setMetadata('Model.Model_ID','3')
+        self.setMetadata('Model.Model_name','Plane stress linear elastic')
+        self.setMetadata('Model.Model_description','Plane stress problem with linear elastic thermo-elastic material')
+        self.setMetadata('Model.Model_material','Isotropic elastic')
+        self.setMetadata('Model.Model_type','Continuum')
+        self.setMetadata('Model.Model_geometry','2D rectangle')
+        self.setMetadata('Model.Model_time_lapse','seconds')
+        self.setMetadata('Model.Model_manufacturing_service','Stress')
+        self.setMetadata('Model.Model_publication','Felippa: Introduction to finite element methods, 2004')
+        self.setMetadata('Model.Model_entity',['Finite volume'])
+        self.setMetadata('Model.Model_equation',['Equilibrium'])
+        self.setMetadata('Model.Model_equation_quantities',['Displacement'])
+        self.setMetadata('Model.Model_relation_formulation',['Stress-strain'])
+        self.setMetadata('Model.Model_relation_description ',['Equilibrium'])
+        self.setMetadata('Model.Model_numerical_solver','Finite element method')
+        self.setMetadata('Model.Model_numerical_solver_additional_params','')
+        self.setMetadata('Model.Solver_name','Mechanical solver')
+        self.setMetadata('Model.Solver_version_date','1.0, Dec 31 2018')
+        self.setMetadata('Model.Solver_license','None')
+        self.setMetadata('Model.Solver_creator','Borek Patzak')
+        self.setMetadata('Model.Solver_language','Python')
+        self.setMetadata('Model.Solver_time_step','seconds')
+        self.setMetadata('Model.Model_computational_representation','Finite element')
+        self.setMetadata('Model.Model_boundary_conditions','Dirichlet')
+        self.setMetadata('Model.Accuracy',0.75)
+        self.setMetadata('Model.Sensitivity','Medium')
+        self.setMetadata('Model.Complexity','Low')
+        self.setMetadata('Model.Robustness','High')
+        self.setMetadata('Model.Estimated_execution cost','0.01€')
+        self.setMetadata('Model.Estimated_personnel cost','0.01€')
+        self.setMetadata('Model.Required_expertise','User')
+        self.setMetadata('Model.Estimated_computational_time','Seconds')
+        self.setMetadata('Model.Required expertise','User')
+        self.setMetadata('Model.Inputs_and_relation_to_Data',['Thermal field',2,'Scalar','','Thermal field across domain'])
+        self.setMetadata('Model.Outputs_and_relation_to_Data',[['Displacement field',2,'Vector','Resulting displacement field'], ['Stress field',3,'Vector','Resulting stress field'],['Strain field',4,'Vector','Resulting strain field']])
 
     def getField(self, fieldID, time, objectID=0):
         if (fieldID == FieldID.FID_Displacement):
