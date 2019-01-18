@@ -3,7 +3,7 @@ from mupif.Physics import PhysicalQuantities
 from mupif .Physics.PhysicalQuantities import PhysicalQuantity
 import Pyro4
 try:
-    import cPickle as pickle #faster serialization if available
+    import cPickle as pickle  # faster serialization if available
 except:
     import pickle
 import collections
@@ -33,11 +33,11 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             MupifObject.MupifObject.__init__(self)
             
             self.propID = propID
-            #self.units = units
+            # self.units = units
             self.valueType = valueType
             self.objectID = objectID
 
-            if (PhysicalQuantities.isPhysicalUnit(units)):
+            if PhysicalQuantities.isPhysicalUnit(units):
                 self.unit = units
             else:
                 self.unit = PhysicalQuantities._findUnit(units)
@@ -99,7 +99,7 @@ class ConstantProperty(Property):
 
         .. automethod:: __init__
         """
-        def __init__(self, value, propID, valueType, units, time = None, objectID=0):
+        def __init__(self, value, propID, valueType, units, time=None, objectID=0):
             """
             Initializes the property.
 
@@ -113,10 +113,10 @@ class ConstantProperty(Property):
             """
             Property.__init__(self, propID, valueType, units, objectID)
             self.value = value
-            if (PhysicalQuantities.isPhysicalQuantity(time) or (time == None)):
-               self.time = time
+            if PhysicalQuantities.isPhysicalQuantity(time) or time is None:
+                self.time = time
             else:
-               raise TypeError("PhysicalValue expected for time")
+                raise TypeError("PhysicalValue expected for time")
 
         def __str__(self):
             return str(self.value) + '{' + self.unit.name() + ',' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
@@ -161,14 +161,14 @@ class ConstantProperty(Property):
             Override of PhysicalQuantity._sum method
             """
             if not PhysicalQuantities.isPhysicalQuantity(other):
-               raise TypeError('Incompatible types')
+                raise TypeError('Incompatible types')
             factor = other.unit.conversionFactorTo(self.unit)
-            new_value = tuple(sign1*s+sign2*o*factor for (s,o) in zip(self.value, other.value))
-            #new_value = sign1*self.value + \
+            new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
+            # new_value = sign1*self.value + \
             #            sign2*other.value*other.unit.conversionFactorTo(self.unit)
             return self.__class__(new_value, self.propID, self.valueType, self.time, self.unit)
 
-        def _convertValue (self, value, src_unit, target_unit):
+        def _convertValue(self, value, src_unit, target_unit):
             """
             Helper function to evaluate value+offset*factor, where
             factor and offset are obtained from
@@ -201,12 +201,12 @@ class ConstantProperty(Property):
             :param str fileName: File name
             :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
             """
-            file = open(fileName,'wb')
+            file = open(fileName, 'wb')
             pickle.dump(self, file, protocol)
             file.close()
 
         @classmethod
-        def loadFromLocalFile(cls,fileName):
+        def loadFromLocalFile(cls, fileName):
             """
             Alternative constructor from a Pickle module
 
@@ -215,7 +215,7 @@ class ConstantProperty(Property):
             :return: Returns Property instance
             :rtype: Property
             """
-            file = open(fileName,'rb')
+            file = open(fileName, 'rb')
             ans = pickle.load(file)
             file.close()
             return ans
@@ -240,7 +240,7 @@ class ConstantProperty(Property):
             :raises TypeError: if any of the specified units are not compatible with the original unit
             """
             units = list(map(PhysicalQuantities._findUnit, units))
-            #unit = PhysicalQuantities._findUnit(units[0])
+            # unit = PhysicalQuantities._findUnit(units[0])
             unit = units[0]
-            value = self._convertValue (self.value, self.unit, unit)
+            value = self._convertValue(self.value, self.unit, unit)
             return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)
