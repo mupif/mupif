@@ -1,6 +1,6 @@
 # This script starts a workflow monitor server on this machine
 import os,sys
-sys.path.append('../examples')
+sys.path.extend(['..', '../..','../examples'])
 from mupif import WorkflowMonitor
 from mupif import Util
 from mupif import PyroUtil

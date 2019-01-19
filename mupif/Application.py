@@ -31,7 +31,7 @@ from .functionID import FunctionID
 from . import Property
 from . import Field
 from . import Function
-from . import MetadataKeys
+#from . import MetadataKeys
 from . import TimeStep
 
 import logging
@@ -75,8 +75,8 @@ class Application(MupifObject.MupifObject):
         self.appName = None
 
         # define app metadata 
-        self.setMetadata(MetadataKeys.ExecutionID, executionID)
-        self.setMetadata(MetadataKeys.ComponentID, self.getApplicationSignature())  # use signature as component ID
+        self.setMetadata('Model.ExecutionID', executionID)
+        self.setMetadata('Model.ComponentID', self.getApplicationSignature())  # use signature as component ID
 
     def initialize(self):
         """

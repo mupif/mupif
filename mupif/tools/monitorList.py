@@ -3,7 +3,7 @@ import getopt, sys
 sys.path.extend(['../..', '../examples'])
 import Pyro4
 from mupif import *
-from mupif import WorkflowMonitor
+#from mupif import WorkflowMonitor
 import logging
 log = logging.getLogger()
 from Config import config
@@ -21,10 +21,10 @@ def usage():
 
 def formatLine(k,v,status):
     if isinstance(v, dict):
-        if v.get(WorkflowMonitor.WorkflowMonitorKeys.Status) == status:
-            print ('{:30.30}|{:12.12}|{:3}%|{:20.20}|'.format(k,v.get(WorkflowMonitor.WorkflowMonitorKeys.Status), 
-                                                        v.get(WorkflowMonitor.WorkflowMonitorKeys.Progress), 
-                                                        v.get(WorkflowMonitor.WorkflowMonitorKeys.Date)))
+        if v.get('WorkflowMonitor.Status') == status:
+            print ('{:30.30}|{:12.12}|{:3}%|{:20.20}|'.format(k,v.get('WorkflowMonitor.Status'), 
+                                                        v.get('WorkflowMonitor.Progress'), 
+                                                        v.get('WorkflowMonitor.Date')))
 
 def main(nshost, nsport, hkey):
 
@@ -44,19 +44,19 @@ def main(nshost, nsport, hkey):
     print ('Monitor:'+str(monitorUri))
     print ("=======SCHEDULED=========")
     for k,v in data.items():
-        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Initialized)
+        formatLine(k,v, 'WorkflowMonitor.Initialized')
 
     print ("========RUNNING==========")
     for k,v in data.items():
-        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Running)
+        formatLine(k,v, 'WorkflowMonitor.Running')
 
     print ("========FINISHED=========")
     for k,v in data.items():
-        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Finished)
+        formatLine(k,v, 'WorkflowMonitor.Finished')
 
     print ("========FAILED=========")
     for k,v in data.items():
-        formatLine(k,v, WorkflowMonitor.WorkflowMonitorStatus.Failed)
+        formatLine(k,v, 'WorkflowMonitor.Failed')
 
          
 if __name__ == '__main__':

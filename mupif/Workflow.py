@@ -69,8 +69,10 @@ class Workflow(Application.Application):
 
         # define workflow metadata
         (username, hostname) = PyroUtil.getUserInfo()
-        self.setMetadata(MetadataKeys.USERNAME, username)
-        self.setMetadata(MetadataKeys.HOSTNAME, hostname)
+        #self.setMetadata(MetadataKeys.USERNAME, username)
+        #self.setMetadata(MetadataKeys.HOSTNAME, hostname)
+        self.setMetadata('Workflow.Username', username)
+        self.setMetadata('Workflow.Hostname', hostname)
         
 
     def solve(self, runInBackground=False):
@@ -115,7 +117,7 @@ class Workflow(Application.Application):
         """
         return "Workflow"
     
-    def updateStaus(self, status, progress=0):
+    def updateStatus(self, status, progress=0):
         """
         Updates the workflow status. The status is subnitted to workflow monitor. The self.workflowMonitor
         should be (proxy) to workflowManager
@@ -132,15 +134,19 @@ class Workflow(Application.Application):
 
         if (self.workflowMonitor):
             date = time.strftime("%d %b %Y %H:%M:%S", time.gmtime())
-            metadata = {WorkflowMonitor.WorkflowMonitorKeys.Status: status,
-                        WorkflowMonitor.WorkflowMonitorKeys.Progress: progress,
-                        WorkflowMonitor.WorkflowMonitorKeys.Date: date}
+            #metadata = {WorkflowMonitor.WorkflowMonitorKeys.Status: status,
+                        #WorkflowMonitor.WorkflowMonitorKeys.Progress: progress,
+                        #WorkflowMonitor.WorkflowMonitorKeys.Date: date}
+            metadata = {'WorkflowMonitor.Status': status,
+                        'WorkflowMonitor.Progress': progress,
+                        'WorkflowMonitor.Date': date}
+            
             try:
-                self.workflowMonitor.updateMetadata(self.getMetadata(MetadataKeys.ComponentID), metadata)
+                self.workflowMonitor.updateMetadata(self.getMetadata('WorkflowMonitor.ComponentID'), metadata)
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required
 
-                log.debug(self.getMetadata(MetadataKeys.ComponentID)+": Updated status to " + status + ", progress=" + str(progress))
+                log.debug(self.getMetadata('WorkflowMonitor.ComponentID')+": Updated status to " + status + ", progress=" + str(progress))
             except Exception as e:
                 log.exception("Connection to workflow monitor broken")
                 raise e

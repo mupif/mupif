@@ -25,20 +25,20 @@ from . import MupifObject
 log = logging.getLogger()
 import Pyro4
 
-WM_METADATA_STATUS='status'
-WM_METADATA_PROGRESS='progress'
+#WM_METADATA_STATUS='status'
+#WM_METADATA_PROGRESS='progress'
 
 
-class WorkflowMonitorKeys(object):
-    Status = "status"
-    Progress = "progress"
-    Date = "date"
+#class WorkflowMonitorKeys(object):
+    #Status = "status"
+    #Progress = "progress"
+    #Date = "date"
     
-class WorkflowMonitorStatus(object):
-    Initialized="Initialized"
-    Running="Running"
-    Finished="Finished"
-    Failed="Failed"
+#class WorkflowMonitorStatus(object):
+#    Initialized="Initialized"
+#    Running="Running"
+#    Finished="Finished"
+#    Failed="Failed"
 
 @Pyro4.expose
 class WorkflowMonitor(MupifObject.MupifObject):
