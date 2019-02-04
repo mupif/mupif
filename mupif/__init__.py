@@ -27,9 +27,9 @@ This is a MuPIF module (Multi-Physics Integration Framework)
 __version__ = '2.1.0'
 __author__ = 'Borek Patzak and Vit Smilauer'
 
-from .fieldID import FieldID
-from .propertyID import PropertyID
-from .functionID import FunctionID
+from .dataID import FieldID
+from .dataID import PropertyID
+from .dataID import FunctionID
 from .valueType import ValueType
 
 from . import APIError

@@ -762,7 +762,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         
         """
         import pyvtk
-        from . import fieldID
+        from .dataID import FieldID
         if not fileName.endswith('.vtk'):
             log.warning('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
         ret = []
@@ -782,7 +782,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 # will raise KeyError if fieldID with that name is not defined
                 if d.name in skip:
                     continue
-                fid = fieldID.FieldID[d.name]
+                fid = FieldID[d.name]
                 # determine the number of components using the expected number of values from the mesh
                 expectedNumVal = (mesh.getNumberOfVertices() if fieldType == FieldType.FT_vertexBased else mesh.getNumberOfCells())
                 nc = len(d.scalars)//expectedNumVal
@@ -877,7 +877,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :rtype: [Field,Field,...]
         """
         import vtk
-        from . import fieldID
+        from .dataID import FieldID
         # rr=vtk.vtkXMLUnstructuredGridReader()
         if forceVersion2 or fileName.endswith('.vtk'):
             rr = vtk.vtkGenericDataObjectReader()
@@ -905,7 +905,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 t0 = arr.GetTuple(0)
                 valueType = ValueType.fromNumberOfComponents(len(arr.GetTuple(0)))
                 # this will raise KeyError if fieldID with that name not defined
-                fid = fieldID.FieldID[aname]
+                fid = FieldID[aname]
                 # get actual values as tuples
                 values = [arr.GetTuple(t) for t in range(nt)]
                 ret.append(Field(

@@ -25,9 +25,9 @@ import os
 import Pyro4
 from . import APIError
 from . import MupifObject
-from .propertyID import PropertyID
-from .fieldID import FieldID
-from .functionID import FunctionID
+from .dataID import PropertyID
+from .dataID import FieldID
+from .dataID import FunctionID
 from . import Property
 from . import Field
 from . import Function
