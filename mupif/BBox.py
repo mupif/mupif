@@ -48,14 +48,14 @@ class BBox(object):
         self.coords_ll = coords_ll
         self.coords_ur = coords_ur
         
-    def __str__ (self):
+    def __str__(self):
         """
         :return: Returns lower left and upper right coordinate of the bounding box
         :rtype: str
         """
         return "BBox ["+str(self.coords_ll)+"-"+str(self.coords_ur)+"]"
 
-    def containsPoint (self, point):
+    def containsPoint(self, point):
         """
         Check whether a point lies within a receiver.
         
@@ -68,7 +68,7 @@ class BBox(object):
                 return False
         return True
 
-    def intersects (self, bbox):
+    def intersects(self, bbox):
         """ 
         Check intersection of a receiver with a bounding box
         
@@ -84,7 +84,7 @@ class BBox(object):
                 return False
         return True
 
-    def merge (self, entity):
+    def merge(self, entity):
         """
         Merges receiver with given entity (position vector or a BBox).
         

@@ -145,7 +145,7 @@ class ConstantProperty(Property):
                 return self.value
             else:
                 print("Property propID %d " % self.propID, "self.time", self.time, "time", time)
-                raise ValueError ('Time out of range')
+                raise ValueError('Time out of range')
 
         def getTime(self):
             """
