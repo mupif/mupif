@@ -23,26 +23,27 @@
 from builtins import object
 import Pyro4
 
+
 @Pyro4.expose
 class Localizer(object):
     """
     A Localizer is an abstract class representing an algorithm used to partition space and quicly localize the contained objects.
     """
-    def insert (self, item):
+    def insert(self, item):
         """
         Inserts given object to Localizer. Object is assume to provide giveBBox() method returning bounding volume if itself.
 
         :param object item: Inserted object
         """
 
-    def delete (self, item):
+    def delete(self, item):
         """
         Deletes the given object from Localizer data structure.
 
         :param object item: Object to be removed
         """
 
-    def giveItemsInBBox (self, bbox):
+    def giveItemsInBBox(self, bbox):
         """
         :param BBox bbox: Bounding box
 

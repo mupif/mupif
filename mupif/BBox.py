@@ -26,6 +26,7 @@ import Pyro4
 
 debug = 0
 
+
 @Pyro4.expose
 class BBox(object):
     """
@@ -62,8 +63,8 @@ class BBox(object):
         :return: Returns True if point is inside receiver, otherwise False
         :rtype: bool
         """
-        for l, u, x in zip (self.coords_ll, self.coords_ur, point):
-            if (x<l or x>u):
+        for l, u, x in zip(self.coords_ll, self.coords_ur, point):
+            if x < l or x > u:
                 return False
         return True
 
@@ -78,7 +79,7 @@ class BBox(object):
         nsd = len(self.coords_ll)
         for i in range(nsd):
             maxleft = max(self.coords_ll[i], bbox.coords_ll[i])
-            minright= min(self.coords_ur[i], bbox.coords_ur[i])
+            minright = min(self.coords_ur[i], bbox.coords_ur[i])
             if maxleft > minright: 
                 return False
         return True
@@ -93,35 +94,45 @@ class BBox(object):
         nsd = len(self.coords_ll)
         if isinstance(entity, BBox):
             # Merge with given bbox
-            self.coords_ll=tuple([min(self.coords_ll[i],entity.coords_ll[i]) for i in range(nsd)])
-            self.coords_ur=tuple([max(self.coords_ur[i],entity.coords_ur[i]) for i in range(nsd)])
+            self.coords_ll = tuple([min(self.coords_ll[i], entity.coords_ll[i]) for i in range(nsd)])
+            self.coords_ur = tuple([max(self.coords_ur[i], entity.coords_ur[i]) for i in range(nsd)])
         else:
             # Merge with given coordinates
-            self.coords_ll=tuple([min(self.coords_ll[i],entity[i]) for i in range(nsd)])
-            self.coords_ur=tuple([max(self.coords_ur[i],entity[i]) for i in range(nsd)])
+            self.coords_ll = tuple([min(self.coords_ll[i], entity[i]) for i in range(nsd)])
+            self.coords_ur = tuple([max(self.coords_ur[i], entity[i]) for i in range(nsd)])
 
 
 try:
     from minieigen import AlignedBox3
-    BBoxBase=AlignedBox3
+    BBoxBase = AlignedBox3
+
     # add zero 3rd coordinate to 2-tuples
-    def extend2d(arg): return (arg[0],arg[1],0) if len(arg)==2 else arg
+    def extend2d(arg): return (arg[0], arg[1], 0) if len(arg) == 2 else arg
     # some methods are called different, this adds the API of BBox from above
-    BBoxBase.containsPoint=lambda self,p: self.contains(extend2d(p))
-    def BBoxBase_merge(self,p):
-        if isinstance(p,BBoxBase): self.extend(p)
-        else: self.extend(extend2d(p))
-    BBoxBase.merge=BBoxBase_merge
-    BBoxBase.coords_ll=property(lambda self: self.min, lambda self,val: setattr(self,'min',extend2d(val)))
-    BBoxBase.coords_ur=property(lambda self: self.max, lambda self,val: setattr(self,'max',extend2d(val)))
-    BBoxBase.intersects=lambda self,b: not self.intersection(b).empty()
+    BBoxBase.containsPoint = lambda self, p: self.contains(extend2d(p))
+
+    def BBoxBase_merge(self, p):
+        if isinstance(p, BBoxBase):
+            self.extend(p)
+        else:
+            self.extend(extend2d(p))
+
+    BBoxBase.merge = BBoxBase_merge
+    BBoxBase.coords_ll = property(lambda self: self.min, lambda self, val: setattr(self, 'min', extend2d(val)))
+    BBoxBase.coords_ur = property(lambda self: self.max, lambda self, val: setattr(self, 'max', extend2d(val)))
+    BBoxBase.intersects = lambda self, b: not self.intersection(b).empty()
+
     # this definition hijacks the plain BBox class defined without fastOctant
     # it acts as pseudo-ctor which handles 2d coords by adding the 3rd, and checks for consistency
-    def BBox(mn,mx):
-        if len(mn)!=len(mx): raise ValueError("Min/max must have the same dimension (not %d/%d)."%(len(mn),len(mx)))
-        if len(mn)==2: return BBoxBase((mn[0],mn[1],0),(mx[0],mx[1],0))
-        elif len(mn)==3: return BBoxBase(mn,mx)
-        else: raise ValueError("Min/max dimension must be 2 or 3 (not %d)."%len(mn))
+    def BBox(mn, mx):
+        if len(mn) != len(mx):
+            raise ValueError("Min/max must have the same dimension (not %d/%d)." % (len(mn), len(mx)))
+        if len(mn) == 2:
+            return BBoxBase((mn[0], mn[1], 0), (mx[0], mx[1], 0))
+        elif len(mn) == 3:
+            return BBoxBase(mn, mx)
+        else:
+            raise ValueError("Min/max dimension must be 2 or 3 (not %d)." % len(mn))
     print('mupif.fast: using minieigen.AlignedBox3')
 except ImportError:
     pass

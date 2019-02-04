@@ -23,6 +23,8 @@
 from builtins import object
 
 from . import CellGeometryType
+from . import APIError
+
 
 class IntegrationRule(object):
     """ 
@@ -32,6 +34,7 @@ class IntegrationRule(object):
     """
     def __init__(self):
         return
+
     def getIntegrationPoints(self, cgt, npt):
         """
         Returns a list of integration points and corresponding weights.
@@ -49,6 +52,7 @@ class IntegrationRule(object):
         :param int order: Target polynomial order
         """
 
+
 class GaussIntegrationRule(IntegrationRule):
     """ 
     Gauss integration rule.
@@ -57,31 +61,31 @@ class GaussIntegrationRule(IntegrationRule):
         """
         See :func:`IntegrationRule.getIntegrationPoints`.
         """
-        if (cgt == CellGeometryType.CGT_TRIANGLE_1):
-            if (npt == 1):
+        if cgt == CellGeometryType.CGT_TRIANGLE_1:
+            if npt == 1:
                 return [((0.333333333333, 0.333333333333), 0.5)]
-            elif (npt == 3):
+            elif npt == 3:
                 return [((0.166666666666667, 0.166666666666667),  0.166666666666667),
                         ((0.666666666666667, 0.166666666666667),  0.166666666666667),
                         ((0.166666666666667, 0.666666666666667),  0.166666666666667)]
-            elif (npt == 4):
+            elif npt == 4:
                 return [((0.333333333333333, 0.333333333333333), -0.281250000000000),
                         ((0.200000000000000, 0.600000000000000),  0.260416666666667),
                         ((0.200000000000000, 0.200000000000000),  0.260416666666667),
                         ((0.600000000000000, 0.200000000000000),  0.260416666666667)]
             else:
-                raise APIError.APIError("getIntegrationPoints (CGT_TRIANGLE, %d) not implemented"%(npt))
-        elif (cgt == CellGeometryType.CGT_QUAD):
-            if (npt == 1):
+                raise APIError.APIError("getIntegrationPoints (CGT_TRIANGLE, %d) not implemented" % npt)
+        elif cgt == CellGeometryType.CGT_QUAD:
+            if npt == 1:
                 return [((0.0, 0.0), 4.0)]
-            elif (npt == 4):
+            elif npt == 4:
                 return [(( 0.577350269189626,  0.577350269189626), 1),
                         ((-0.577350269189626,  0.577350269189626), 1),
                         ((-0.577350269189626, -0.577350269189626), 1),
                         (( 0.577350269189626, -0.577350269189626), 1)]
 
             else:
-                raise APIError.APIError("getIntegrationPoints (CGT_QUAD, %d) not implemented"%(npt))
+                raise APIError.APIError("getIntegrationPoints (CGT_QUAD, %d) not implemented" % npt)
         else:
             raise APIError.APIError("getIntegrationPoints: geometry not supported")
 
@@ -89,20 +93,18 @@ class GaussIntegrationRule(IntegrationRule):
         """
         See :func:`IntegrationRule.getRequiredNumberOfPoints`.
         """
-        if (cgt == CellGeometryType.CGT_TRIANGLE_1):
-            if ( order <= 1 ):
+        if cgt == CellGeometryType.CGT_TRIANGLE_1:
+            if order <= 1:
                 return 1
-            elif ( order <= 2 ):
+            elif order <= 2:
                 return 3
-            elif ( order <= 3 ):
+            elif order <= 3:
                 return 4
             else:
                 return -1
-        elif (cgt == CellGeometryType.CGT_QUAD):
-            requiredNIP = max( ( order + 1 ) / 2, 2 )
-            if (requiredNIP > 4):
-                return -1;
+        elif cgt == CellGeometryType.CGT_QUAD:
+            requiredNIP = max((order + 1) / 2, 2)
+            if requiredNIP > 4:
+                return -1
             else:
                 return requiredNIP*2
-
-

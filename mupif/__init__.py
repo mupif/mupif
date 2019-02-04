@@ -66,7 +66,7 @@ from . import Physics
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field',
            'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
-           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject','Workflow', 'MetadataKeys', 'Physics']
+           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics']
 
 from . import Util
 import logging

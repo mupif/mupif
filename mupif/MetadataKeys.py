@@ -26,11 +26,10 @@ Definition of common metadata keys
 """
 
 # generic
-#USERNAME = 1
-#HOSTNAME = 2
-#UseCaseID = 3
-#ExecutionID = 4
-#ComponentID = 5
-#data related
-#UNITS    = 100
-    
+# USERNAME = 1
+# HOSTNAME = 2
+# UseCaseID = 3
+# ExecutionID = 4
+# ComponentID = 5
+# data related
+# UNITS    = 100

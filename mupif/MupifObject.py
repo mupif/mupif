@@ -26,6 +26,7 @@ import Pyro4
 import json
 import pprint
 
+
 @Pyro4.expose
 class MupifObject(object):
     """
@@ -36,29 +37,29 @@ class MupifObject(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self):
+    def __init__(self):
         """
         Constructor. Initializes the object
         """
         self.metadata = {}
 
-    def getMetadata (self, key):
+    def getMetadata(self, key):
         """ 
         Returns metadata associated to given key
         :param key: unique metadataID 
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
-        return self.metadata[key];
+        return self.metadata[key]
     
-    def hasMetadata (self, key):
+    def hasMetadata(self, key):
         """ 
         Returns true if key defined
         :param key: unique metadataID 
         :return: true if key defined, false otherwise
         :rtype: bool
         """
-        return (key in self.metadata)
+        return key in self.metadata
     
     def printMetadata(self):
         """ 
@@ -66,9 +67,9 @@ class MupifObject(object):
         :return: None
         :rtype: None
         """
-        pprint.pprint(self.metadata,width=300)
+        pprint.pprint(self.metadata, width=300)
     
-    def setMetadata (self, key, val):
+    def setMetadata(self, key, val):
         """ 
         Sets metadata associated to given key
         :param key: unique metadataID 
@@ -79,7 +80,7 @@ class MupifObject(object):
     def __str__(self):
         """
         Returns printable string representation of an object.
-        :retrun: string
+        :return: string
         """
         return str(self.__dict__)
 
