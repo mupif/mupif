@@ -2,6 +2,7 @@ from builtins import object
 from . import BBox
 import Pyro4
 
+
 @Pyro4.expose
 class Vertex(object):
     """
@@ -18,9 +19,9 @@ class Vertex(object):
         :param int label: Vertex label
         :param tuple coords: 3D position vector of a vertex
         """
-        self.number=number
-        self.label=label
-        self.coords=coords
+        self.number = number
+        self.label = label
+        self.coords = coords
 
     def getCoordinates(self):
         """
@@ -28,11 +29,12 @@ class Vertex(object):
         :rtype: tuple
         """
         return self.coords
+
     def getNumber(self):
-        '''
+        """
         :return: Number of the instance
         :rtype: int
-        '''
+        """
         return self.number
 
     def getBBox(self):
@@ -40,7 +42,7 @@ class Vertex(object):
         :return: Receiver's bounding-box (containing only one point)
         :rtype: mupif.BBox.BBox
         """
-        return BBox.BBox(self.coords,self.coords)
+        return BBox.BBox(self.coords, self.coords)
 
     def __repr__(self):
         """
@@ -48,4 +50,3 @@ class Vertex(object):
         :rtype: string
         """
         return '['+repr(self.number)+','+repr(self.label)+','+repr(self.coords)+']'
-

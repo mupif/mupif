@@ -1,6 +1,7 @@
 from builtins import object
 import time
 
+
 class Timer(object):
     """
     Class for measuring time.

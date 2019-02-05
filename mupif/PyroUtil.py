@@ -641,14 +641,15 @@ def downloadPyroFile (newLocalFileName, pyroFile, compressFlag=False):
     pyroFile.close()
     file.close()
 
-def downloadPyroFileFromServer (newLocalFileName, pyroFile, compressFlag=False):
+
+def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=False):
     """
     See :func:'downloadPyroFileFromServer'
     """
-    downloadPyroFile (newLocalFileName, pyroFile, compressFlag)
+    downloadPyroFile(newLocalFileName, pyroFile, compressFlag)
 
 
-def uploadPyroFile (clientFileName, pyroFile, hkey, size = 1024, compressFlag=False):
+def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024, compressFlag=False):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
@@ -665,7 +666,7 @@ def uploadPyroFile (clientFileName, pyroFile, hkey, size = 1024, compressFlag=Fa
     data = file.getChunk()
     while data:
         pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8')
-        pyroFile.setChunk(data) #this is where the data are sent over net via Pyro
+        pyroFile.setChunk(data)  # this is where the data are sent over net via Pyro
         data = file.getChunk()
     getTermChunk = file.getTerminalChunk()
     pyroFile.setChunk(getTermChunk.encode(encoding='utf-8'))

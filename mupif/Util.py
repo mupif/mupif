@@ -20,12 +20,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-import logging, os
+import logging
+import os
 import argparse
 
 debug = False
 
-def setupLogger(fileName,level=logging.DEBUG):
+
+def setupLogger(fileName, level=logging.DEBUG):
     """
     Set up a logger which prints messages on the screen and simultaneously saves them to a file.
     The file has the suffix '.log' after a loggerName.
@@ -35,7 +37,7 @@ def setupLogger(fileName,level=logging.DEBUG):
     :rtype: logger instance
     """
     l = logging.getLogger()
-    #l = logging.getLogger(loggerName)
+    # l = logging.getLogger(loggerName)
     formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
     formatTime = '%Y-%m-%d %H:%M:%S'
     formatter = logging.Formatter(formatLog, formatTime)
@@ -57,12 +59,13 @@ def changeRootLogger(newLoggerName):
     
     :return: Nothing
     """
-    l = logging.getLogger()  #root logger
+    l = logging.getLogger()  # root logger
     for hdlr in l.handlers[:]:  # remove all old handlers
         l.removeHandler(hdlr)
-    setupLogger(newLoggerName) # set the new handler
+    setupLogger(newLoggerName)  # set the new handler
 
-def quadratic_real (a, b, c): 
+
+def quadratic_real(a, b, c):
     """ 
     Finds real roots of quadratic equation: ax^2 + bx + c = 0. By substituting x = y-t and t = a/2, the equation reduces to y^2 + (b-t^2) = 0 which has easy solution y = +/-sqrt(t^2-b)
 
@@ -72,7 +75,8 @@ def quadratic_real (a, b, c):
     :return: Two real roots if they exist
     :rtype: tuple
     """ 
-    import math, cmath 
+    import math
+    import cmath
     if math.fabs(a) <= 1.e-10:
         if math.fabs(b) <= 1.e-10:
             return ()
@@ -82,12 +86,13 @@ def quadratic_real (a, b, c):
         a, b = b / float(a), c / float(a) 
         t = a / 2.0 
         r = t**2 - b 
-        if r >= 0: # real roots 
+        if r >= 0:  # real roots
             y1 = math.sqrt(r) 
         else: # complex roots 
             return ()
         y2 = -y1 
         return (y1 - t, y2 - t)
+
 
 def getParentParser():
     """ 
@@ -101,11 +106,9 @@ def getParentParser():
     parentParser.add_argument('-m', required=False, type=int, default=0, dest="mode", help='Network mode 0-local (default), 1-ssh, 2-VPN')
     return parentParser
 
+
 def NoneOrInt(arg):
-        if arg == None:
+        if arg is None:
             return None
         else:
             return int(arg)
-    
-
-    
