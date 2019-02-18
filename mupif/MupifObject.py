@@ -30,6 +30,7 @@ import pprint
 #from dotmap import DotMap
 
 
+
 @Pyro4.expose
 class MupifObject(object):
     """
@@ -40,29 +41,29 @@ class MupifObject(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self):
+    def __init__(self):
         """
         Constructor. Initializes the object
         """
         self.metadata = {}
 
-    def getMetadata (self, key):
+    def getMetadata(self, key):
         """ 
         Returns metadata associated to given key
         :param key: unique metadataID 
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
-        return self.metadata[key];
+        return self.metadata[key]
     
-    def hasMetadata (self, key):
+    def hasMetadata(self, key):
         """ 
         Returns true if key defined
         :param key: unique metadataID 
         :return: true if key defined, false otherwise
         :rtype: bool
         """
-        return (key in self.metadata)
+        return key in self.metadata
     
     def printMetadata(self):
         """ 
@@ -70,9 +71,9 @@ class MupifObject(object):
         :return: None
         :rtype: None
         """
-        pprint.pprint(self.metadata,width=300)
+        pprint.pprint(self.metadata, width=300)
     
-    
+   
     def createNestedDict(self, data, val):
         if len(data) == 0:
             return data #trivial case, we have no element therefore we return empty list
@@ -120,7 +121,7 @@ class MupifObject(object):
     def __str__(self):
         """
         Returns printable string representation of an object.
-        :retrun: string
+        :return: string
         """
         return str(self.__dict__)
 

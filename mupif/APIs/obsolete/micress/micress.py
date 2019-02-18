@@ -338,11 +338,11 @@ class micress(Application.Application):
           :note: This implementation of the interface supports only MICRESS
                  results written in the VTK format.
           
-          :param Mupif.FieldID fieldID: ID of requested field, e.g. FID_Phase
+          :param mupif.FieldID fieldID: ID of requested field, e.g. FID_Phase
           :param PQ.PhysicalQuantity time: simulation time
           
           :return: result field in Mupif field format 
-          :rtype: Mupif.Field 
+          :rtype: mupif.Field
         
         """
                 

@@ -25,4 +25,3 @@ class ValueType(IntEnum):
             return ValueType.Tensor
         else:
             raise RuntimeError('No ValueType with %i components' % i)
-

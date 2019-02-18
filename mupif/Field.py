@@ -288,38 +288,38 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             log.error('Field::evaluate - no source cell found for position ' + str(position))
             raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
 
-    def getVertexValue(self, componentID):
+    def getVertexValue(self, vertexID):
         """
-        Returns the value associated with a given vertex component
+        Returns the value associated with a given vertex.
 
-        :param tuple componentID: A tuple identifying a component: vertex (vertexID,)
+        :param int vertexID: Vertex identifier
         :return: The value
         :rtype: Physics.PhysicalQuantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
-            return PhysicalQuantity(self.value[componentID], self.unit)
+            return PhysicalQuantity(self.value[vertexID], self.unit)
         else:
             raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
         
-    def getCellValue(self, componentID):
+    def getCellValue(self, cellID):
         """
-        Returns the value associated with a given integration point on a cell.
+        Returns the value associated with a given cell.
 
-        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :param int cellID: Cell identifier
         :return: The value
         :rtype: Physics.PhysicalQuantity
         """
         if self.fieldType == FieldType.FT_cellBased:
-            return PhysicalQuantity(self.value[componentID], self.unit)
+            return PhysicalQuantity(self.value[cellID], self.unit)
         else:
             raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
 
     def _giveValue(self, componentID):
         """
-        Returns the value associated with a given component (vertex or integration point on a cell).
+        Returns the value associated with a given component (vertex or cell).
         Depreceated, use getVertexValue() or getCellValue()
 
-        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :param int componentID: An identifier of a component: vertexID or cellID
         :return: The value
         :rtype: Physics.PhysicalQuantity
         """
@@ -327,19 +327,19 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
     
     def giveValue(self, componentID):
         """
-        Returns the value associated with a given component (vertex or integration point on a cell).
+        Returns the value associated with a given component (vertex or cell).
 
-        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :param int componentID: An identifier of a component: vertexID or cellID
         :return: The value
-        :rtype: tuple
+        :rtype:
         """
         return self.value[componentID]    
 
     def setValue(self, componentID, value):
         """
-        Sets the value associated with a given component (vertex or integration point on a cell).
+        Sets the value associated with a given component (vertex or cell).
 
-        :param tuple componentID: A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
+        :param int componentID: An identifier of a component: vertexID or cellID
         :param tuple value: Value to be set for a given component, should have the same units as receiver
 
         .. Note:: If a mesh has mapping attached (a mesh view) then we have to remember value locally and record change. The source field values are updated after commit() method is invoked.
@@ -762,7 +762,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         
         """
         import pyvtk
-        from . import fieldID
+        from .dataID import FieldID
         if not fileName.endswith('.vtk'):
             log.warning('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
         ret = []
@@ -782,7 +782,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 # will raise KeyError if fieldID with that name is not defined
                 if d.name in skip:
                     continue
-                fid = fieldID.FieldID[d.name]
+                fid = FieldID[d.name]
                 # determine the number of components using the expected number of values from the mesh
                 expectedNumVal = (mesh.getNumberOfVertices() if fieldType == FieldType.FT_vertexBased else mesh.getNumberOfCells())
                 nc = len(d.scalars)//expectedNumVal
@@ -877,7 +877,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :rtype: [Field,Field,...]
         """
         import vtk
-        from . import fieldID
+        from .dataID import FieldID
         # rr=vtk.vtkXMLUnstructuredGridReader()
         if forceVersion2 or fileName.endswith('.vtk'):
             rr = vtk.vtkGenericDataObjectReader()
@@ -905,7 +905,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 t0 = arr.GetTuple(0)
                 valueType = ValueType.fromNumberOfComponents(len(arr.GetTuple(0)))
                 # this will raise KeyError if fieldID with that name not defined
-                fid = fieldID.FieldID[aname]
+                fid = FieldID[aname]
                 # get actual values as tuples
                 values = [arr.GetTuple(t) for t in range(nt)]
                 ret.append(Field(

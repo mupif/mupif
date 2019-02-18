@@ -8,8 +8,9 @@ from . import Field
 from . import FieldID
 from . import ValueType
 
-#debug flag
+# debug flag
 debug = 0
+
 
 def readMesh(numNodes,nx,ny,nz,coords):
     """
@@ -27,37 +28,37 @@ def readMesh(numNodes,nx,ny,nz,coords):
     vertices = []
     cells = []
 
-    for i in range(0,numNodes):
-        (x,y,z) = coords[i]
-        #print (x,y,z)
-        vertices.append(Vertex.Vertex(i, i+1, (x,y,z)))
+    for i in range(0, numNodes):
+        (x, y, z) = coords[i]
+        # print (x,y,z)
+        vertices.append(Vertex.Vertex(i, i+1, (x, y, z)))
 
     print(numNodes)
 
     numElts = (nx-1)*(ny-1)*(nz-1)
     print(numElts)
 
-    print("nx: ",nx)
-    print("ny: ",ny)
-    print("nz: ",nz)
+    print("nx: ", nx)
+    print("ny: ", ny)
+    print("nz: ", nz)
 
-    for e in range(0,numElts):
-        #print "elem :",e
+    for e in range(0, numElts):
+        # print "elem :",e
         i = e % (nx-1)
-        #print "ligne i :", i
-        j = (e//(nx-1))%(ny-1) 
-        #print "col j :", j
+        # print "ligne i :", i
+        j = (e//(nx-1)) % (ny-1)
+        # print "col j :", j
         k = e//((nx-1)*(ny-1)) 
-        #print "k :", k
+        # print "k :", k
 
-        n1=i + j*nx + k*nx*ny
-        n2=n1+1
-        n3=i + (j+1)*nx + k*nx*ny
-        n4=n3+1
-        n5=i + j*nx + (k+1)*nx*ny
-        n6=n5+1
-        n7=i + (j+1)*nx + (k+1)*nx*ny
-        n8=n7+1
+        n1 = i + j*nx + k*nx*ny
+        n2 = n1+1
+        n3 = i + (j+1)*nx + k*nx*ny
+        n4 = n3+1
+        n5 = i + j*nx + (k+1)*nx*ny
+        n6 = n5+1
+        n7 = i + (j+1)*nx + (k+1)*nx*ny
+        n8 = n7+1
 
         # print "n1 :", n1
         # print "n2 :", n2
@@ -67,25 +68,27 @@ def readMesh(numNodes,nx,ny,nz,coords):
         # print "n6 :", n6
         # print "n7 :", n7
         # print "n8 :", n8
-        cells.append(Cell.Brick_3d_lin(mesh, e, e+1, (n1,n2,n4,n3,n5,n6,n8,n7)))
+        cells.append(Cell.Brick_3d_lin(mesh, e, e+1, (n1, n2, n4, n3, n5, n6, n8, n7)))
 
     mesh.setup(vertices, cells)
     return mesh
 
+
 def readField(mesh, Data, fieldID, units, time, name, filename, type):
     """
-    :param Mesh mesh: Source mesh
+    :param Mesh.Mesh mesh: Source mesh
     :param vtkData Data: vtkData obtained by pyvtk
     :param FieldID fieldID: Field type (displacement, strain, temperature ...)
     :param PhysicalUnit units: field units
     :param PhysicalQuantity time: time
     :param str name: name of the field to visualize
+    :param str filename:
     :param int type: type of value of the field (1:Scalar, 3:Vector, 6:Tensor) 
 
     :return: Field of unknowns
     :rtype: Field
     """
-    values=[]
+    values = []
 
     if type == 1:
         ftype = ValueType.Scalar
@@ -94,26 +97,24 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
     else:
         ftype = ValueType.Tensor
 
-
-    f=open(filename, "r")
-    numScalars=0
+    f = open(filename, "r")
+    numScalars = 0
     for line in f.readlines():
-        if line.find('SCALARS')>= 0:
-            numScalars=numScalars+1
+        if line.find('SCALARS') >= 0:
+            numScalars = numScalars+1
     print("numScalars : ",  numScalars)
 
-    count=0
-    for i in range(0,numScalars):
-        Name=Data.point_data.data[i].name
-        if (Name==name):
+    count = 0
+    for i in range(0, numScalars):
+        Name = Data.point_data.data[i].name
+        if Name == name:
             indice = count
-        count=count+1
+        count = count+1
 
-    fieldName=Data.point_data.data[indice].name
+    fieldName = Data.point_data.data[indice].name
     print("fieldName : ", fieldName)
 
-    scalar=[]
-    scalar=Data.point_data.data[indice].scalars
+    scalar = Data.point_data.data[indice].scalars
 
     numNodes = Data.point_data.length
 
@@ -121,57 +122,55 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
     #     print scalar[i]
 
     print("name : ", name)
-    if(name==fieldName):
-        for i in range(0,numNodes):
+    if name == fieldName:
+        for i in range(0, numNodes):
             values.append((scalar[i],))
-            #print "values : ", values
+            # print "values : ", values
 
-    field = Field.Field(mesh, fieldID ,ftype, units, time, values, Field.FieldType.FT_vertexBased )
+    field = Field.Field(mesh, fieldID, ftype, units, time, values, Field.FieldType.FT_vertexBased)
     return field
 
 
-##
-## The rest is to work around ambiguous legacy VTK format specification
-## which leads to errors in the strict implementation (pyvtk), as described
-## in https://github.com/pearu/pyvtk/wiki/unexpectedEOF
-##
-## Monkey-patches are not applied automatically, the user has to call
-## mupif.VtkReader2.pyvtk_monkeypatch() (can be made the default if useful).
-##
-## Works for both python 2.x and 3.x (adapted from fghorow-pyvtk-python3-port)
-##
-## Long-term solution is to patch upstream, and select behavior
-## split(' ') vs. split() based on some switch like pyvtk.permissive=True.
-##
-##
+# #
+# # The rest is to work around ambiguous legacy VTK format specification
+# # which leads to errors in the strict implementation (pyvtk), as described
+# # in https://github.com/pearu/pyvtk/wiki/unexpectedEOF
+# #
+# # Monkey-patches are not applied automatically, the user has to call
+# # mupif.VtkReader2.pyvtk_monkeypatch() (can be made the default if useful).
+# #
+# # Works for both python 2.x and 3.x (adapted from fghorow-pyvtk-python3-port)
+# #
+# # Long-term solution is to patch upstream, and select behavior
+# # split(' ') vs. split() based on some switch like pyvtk.permissive=True.
+# #
+# #
 
-import pyvtk
-import pyvtk.Scalars, pyvtk.PolyData
 from pyvtk.Scalars import Scalars
 from pyvtk.PolyData import PolyData
 from pyvtk import common
 
 
-def patched_scalars_fromfile(f,n,sl):
+def patched_scalars_fromfile(f, n, sl):
     dataname = sl[0]
     datatype = sl[1].lower()
-    assert datatype in ['bit','unsigned_char','char','unsigned_short','short','unsigned_int','int','unsigned_long','long','float','double'],repr(datatype)
-    if len(sl)>2:
+    assert datatype in ['bit', 'unsigned_char', 'char', 'unsigned_short', 'short', 'unsigned_int', 'int', 'unsigned_long', 'long', 'float', 'double'], repr(datatype)
+    if len(sl) > 2:
         numcomp = eval(sl[2])
     else:
         numcomp = 1
     l = common._getline(f)
     l = l.split()
-    assert len(l)==2 and l[0].lower().decode('UTF-8') == 'lookup_table'
+    assert len(l) == 2 and l[0].lower().decode('UTF-8') == 'lookup_table'
     tablename = l[1].decode('UTF-8')
     scalars = []
     while len(scalars) < n:
-        scalars += list(map(eval,common._getline(f).split()))
-    assert len(scalars)==n
-    return Scalars(scalars,dataname,tablename)
+        scalars += list(map(eval, common._getline(f).split()))
+    assert len(scalars) == n
+    return Scalars(scalars, dataname, tablename)
 
 
-def patched_polydata_fromfile(f,self):
+def patched_polydata_fromfile(f, self):
     """Use VtkData(<filename>)."""
     points = []
     vertices = []
@@ -179,52 +178,52 @@ def patched_polydata_fromfile(f,self):
     polygons = []
     triangle_strips = []
     l = common._getline(f)
-    k,n,datatype = [s.strip().lower() for s in l.split()]
-    if k!='points':
-        raise ValueError('expected points but got %s'%(repr(k)))
+    k, n, datatype = [s.strip().lower() for s in l.split()]
+    if k != 'points':
+        raise ValueError('expected points but got %s' % (repr(k)))
     n = eval(n)
-    assert datatype in ['bit','unsigned_char','char','unsigned_short','short','unsigned_int','int','unsigned_long','long','float','double'],repr(datatype)
+    assert datatype in ['bit', 'unsigned_char', 'char', 'unsigned_short', 'short', 'unsigned_int', 'int', 'unsigned_long', 'long', 'float', 'double'], repr(datatype)
 
-    self.message('\tgetting %s points'%n)
+    self.message('\tgetting %s points' % n)
     while len(points) < 3*n:
         l = common._getline(f)
-        points += list(map(eval,l.split()))
-    assert len(points)==3*n
+        points += list(map(eval, l.split()))
+    assert len(points) == 3*n
     while 1:
         l = common._getline(f)
         if l is None:
             break
         sl = l.split()
         k = sl[0].strip().lower()
-        if k not in ['vertices','lines','polygons','triangle_strips']:
+        if k not in ['vertices', 'lines', 'polygons', 'triangle_strips']:
             break
-        assert len(sl)==3
-        n,size = list(map(eval,[sl[1],sl[2]]))
+        assert len(sl) == 3
+        n, size = list(map(eval, [sl[1], sl[2]]))
         lst = []
         while len(lst) < size:
             l = common._getline(f)
-            lst += list(map(eval,l.split()))
-        assert len(lst)==size
+            lst += list(map(eval, l.split()))
+        assert len(lst) == size
         lst2 = []
         j = 0
         for i in range(n):
             lst2.append(lst[j+1:j+lst[j]+1])
             j += lst[j]+1
-        exec('%s = lst2'%k)
-    return PolyData(points,vertices,lines,polygons,triangle_strips),l
+        exec('%s = lst2' % k)
+    return PolyData(points, vertices, lines, polygons, triangle_strips), l
 
 
 def pyvtk_monkeypatch():
     'Apply monkey-patches to work around https://github.com/pearu/pyvtk/wiki/unexpectedEOF in pyvtk without changing the source code.'
     print('Monkey-patching pyVTK, see https://github.com/pearu/pyvtk/wiki/unexpectedEOF for details.')
-    import pyvtk, pyvtk.Scalars, pyvtk.PolyData
+    import pyvtk.PolyData
     # pyVTK 0.4.x
-    pyvtk.scalars_fromfile=patched_scalars_fromfile
-    polydata_fromfile=patched_polydata_fromfile
+    pyvtk.scalars_fromfile = patched_scalars_fromfile
+    polydata_fromfile = patched_polydata_fromfile
     # PyVTK >= 0.5
-    if hasattr(pyvtk,'parsers'):
-        pyvtk.parsers['scalars']=patched_scalars_fromfile
-        pyvtk.parsers['polydata']=patched_polydata_fromfile
+    if hasattr(pyvtk, 'parsers'):
+        pyvtk.parsers['scalars'] = patched_scalars_fromfile
+        pyvtk.parsers['polydata'] = patched_polydata_fromfile
 
 
 

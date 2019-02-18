@@ -2,8 +2,35 @@
 Module defining PropertyID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
 """
-#needs a module enum34
 from enum import IntEnum
+
+
+class FieldID(IntEnum):
+    """
+    This class represents the supported values of field IDs, e.g. displacement, strain, temperature.
+    Immutable class Enum allows accessing members by .name and .value methods
+    """
+    FID_Displacement = 1
+    FID_Strain = 2
+    FID_Stress = 3
+    FID_Temperature = 4
+    FID_Humidity = 5
+    FID_Concentration = 6
+    FID_Thermal_absorption_volume = 7
+    FID_Thermal_absorption_surface = 8
+    FID_Material_number = 9
+    FID_BucklingShape = 10
+    FID_FibreOrientation = 11
+    FID_DomainNumber = 12
+    FID_ESI_VPS_Displacement = 10001
+
+
+class FunctionID(IntEnum):
+    """
+    This classenumeration represent the supported values of FunctionID, e.g. FuncID_ProbabilityDistribution
+    """
+    FuncID_ProbabilityDistribution = 1
+
 
 class PropertyID(IntEnum):
     """
@@ -46,7 +73,7 @@ class PropertyID(IntEnum):
     PID_Height = 34
     PID_Thickness = 35
     PID_Deflection = 36
-    PID_EModulus = 37 #Young's modulus
+    PID_EModulus = 37  # Young's modulus
     PID_PoissonRatio = 38
     # Mul2 properties
     PID_YoungModulus1 = 39
@@ -78,7 +105,7 @@ class PropertyID(IntEnum):
     PID_CompositeTransverseShear    = 9003
     PID_CompositeInPlanePoisson     = 9004
     PID_CompositeTransversePoisson  = 9005
-    #CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
+    # CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
     PID_Direction = 1001
     PID_Status = 1002
@@ -96,7 +123,7 @@ class PropertyID(IntEnum):
     PID_Occupancy = 1014
     PID_Bond_label = 1015
     PID_Bond_type = 1016
-    #PID_Velocity = 1017 Duplicate
+    # PID_Velocity = 1017 Duplicate
     PID_Acceleration = 1018
     PID_Radius = 1019
     PID_Size = 1020
@@ -127,7 +154,7 @@ class PropertyID(IntEnum):
     PID_Force = 1045
     PID_Torque = 1046
     PID_Density = 1047
-    #PID_Concentration = 1048 Duplicity
+    # PID_Concentration = 1048 Duplicity
     PID_Pressure = 1049
     PID_Temperature = 1050
     PID_Distribution = 1051
@@ -198,7 +225,7 @@ class PropertyID(IntEnum):
     PID_Magnitude = 1116
     PID_Number_of_physics_states = 1117
     PID_Cohesive_group = 1118
-    #End of CUBA keywords
+    # End of CUBA keywords
     
     PID_Demo_Min = 9990
     PID_Demo_Max = 9991

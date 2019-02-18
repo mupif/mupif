@@ -25,20 +25,20 @@ from . import MupifObject
 log = logging.getLogger()
 import Pyro4
 
-#WM_METADATA_STATUS='status'
-#WM_METADATA_PROGRESS='progress'
+# WM_METADATA_STATUS='status'
+# WM_METADATA_PROGRESS='progress'
 
-
-#class WorkflowMonitorKeys(object):
-    #Status = "status"
-    #Progress = "progress"
-    #Date = "date"
+# class WorkflowMonitorKeys(object):
+#     Status = "status"
+#     Progress = "progress"
+#     Date = "date"
     
-#class WorkflowMonitorStatus(object):
+# class WorkflowMonitorStatus(object):
 #    Initialized="Initialized"
 #    Running="Running"
 #    Finished="Finished"
 #    Failed="Failed"
+
 
 @Pyro4.expose
 class WorkflowMonitor(MupifObject.MupifObject):
@@ -46,32 +46,29 @@ class WorkflowMonitor(MupifObject.MupifObject):
     An class implementing workflow monitor; a server keeping track of individual workflow executions and their status.
     it internally maintains workflows dict, where keys are workflow execution IDs, 
     and values are dicts containing metadata.
-    """
 
-    """
     .. automethod:: __init__
     """
-    def __init__ (self):
+    def __init__(self):
         """
         Constructor. Initializes the monitor server
-
         """
         super(WorkflowMonitor, self).__init__()
-        #self.workflows={}
+        # self.workflows={}
 
-    """
-        Updates the entry. 
+    def updateMetadata(self, key, valueDict):
+        """
+        Updates the entry.
         :param str key: unique execution ID of workflow, application, etc.
         :param dict valueDict: metadata
-    """
-    def updateMetadata (self, key, valueDict):
-        if (isinstance(valueDict, dict)):
-            self.metadata.setdefault(key,{}).update(valueDict)
-    """
-        Returns the metadata for given key if provided or all metadata 
-        :param str key: optional unique execution ID of workflow
-        :return dict: metadata dictionary for given key, or dictionary of dictionaries for all defined keys  
-    """
-    def getAllMetadata (self):
-            return self.metadata
+        """
+        if isinstance(valueDict, dict):
+            self.metadata.setdefault(key, {}).update(valueDict)
+
+    def getAllMetadata(self):
+        """
+        Returns all metadata
+        :return dict: all metadata
+        """
+        return self.metadata
 

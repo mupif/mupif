@@ -27,9 +27,9 @@ This is a MuPIF module (Multi-Physics Integration Framework)
 __version__ = '2.1.0'
 __author__ = 'Borek Patzak and Vit Smilauer'
 
-from .fieldID import FieldID
-from .propertyID import PropertyID
-from .functionID import FunctionID
+from .dataID import FieldID
+from .dataID import PropertyID
+from .dataID import FunctionID
 from .mValType import MValType
 from .valueType import ValueType
 
@@ -68,7 +68,7 @@ from . import Physics
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field',
            'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'MValType', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
-           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject','Workflow', 'MetadataKeys', 'Physics']
+           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics']
 
 from . import Util
 import logging

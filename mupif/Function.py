@@ -23,6 +23,7 @@
 from builtins import object
 import Pyro4
 
+
 @Pyro4.expose
 class Function(object):
         """
@@ -42,7 +43,7 @@ class Function(object):
             :param FunctionID funcID: function ID, e.g. FuncID_ProbabilityDistribution
             :param int objectID: Optional ID of associated subdomain, default 0
             """
-        def evaluate (self, d):
+        def evaluate(self, d):
             """
             Evaluates the function for given parameters packed as a dictionary.
             
@@ -56,7 +57,7 @@ class Function(object):
             :return: Function value evaluated at given position and time
             :rtype: int, float, tuple
             """
-        def getID (self):
+        def getID(self):
             """
             Obtain function's ID.
             

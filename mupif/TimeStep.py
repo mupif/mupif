@@ -72,7 +72,7 @@ class TimeStep(object):
         """
         return self.dt
 
-    def getTargetTime (self):
+    def getTargetTime(self):
         """
         :return: Target time
         :rtype:  PQ.PhysicalQuantity
