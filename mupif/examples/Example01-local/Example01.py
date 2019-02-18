@@ -11,9 +11,9 @@ class application1(Application.Application):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, file):
+    def __init__(self):
         #calls constructor from Application module
-        super(application1, self).__init__(file)
+        super(application1, self).__init__()
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -33,8 +33,8 @@ class application2(Application.Application):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, file):
-        super(application2, self).__init__(file)
+    def __init__(self):
+        super(application2, self).__init__()
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
@@ -64,8 +64,28 @@ timestepnumber=0
 targetTime = 1.0
 
 
-app1 = application1(None)
-app2 = application2(None)
+app1 = application1()
+app2 = application2()
+
+#TODO
+app1Metadata = {'Model.Model_ID' : 'Model ID 1234',
+                'Model.Model_name' : 'Simple application cummulating calling time',
+                'Model.Model_description' : 'Cummulates calling time',
+                'Model.Model_time_lapse' : PQ.PhysicalQuantity(0.1,'s'),
+                'Model.Inputs_and_relation_to_Data' : [{'name':'Temperature field', 'type': 'Field', 'optional':True,'obj_type':'mupif.FieldID.FID_Temperature', 'units':'T', 'obj_id': None}],
+                'Model.Outputs_and_relation_to_Data' : ['Displacement field',2,'Vector']
+               }
+
+app1.initialize(metaData=app1Metadata)
+#app1.initialize()
+#app1.printMetadata()
+print(app1.metadata)
+
+app2.initialize(metaData=app1Metadata)
+
+
+
+
 
 while (abs(time -targetTime) > 1.e-6):
 

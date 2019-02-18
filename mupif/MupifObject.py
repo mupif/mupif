@@ -22,9 +22,13 @@
 #
 
 from builtins import object
+from .mValType import MValType
+from . import mValType
 import Pyro4
 import json
 import pprint
+#from dotmap import DotMap
+
 
 @Pyro4.expose
 class MupifObject(object):
@@ -68,13 +72,50 @@ class MupifObject(object):
         """
         pprint.pprint(self.metadata,width=300)
     
+    
+    def createNestedDict(self, data, val):
+        if len(data) == 0:
+            return data #trivial case, we have no element therefore we return empty list
+        else: #if we have elements
+            first_value = data[0] #we take the first value
+            return {first_value : val} if len(data)==1 else {first_value : self.createNestedDict(data[1:],val)}
+    
+    
+    
     def setMetadata (self, key, val):
         """ 
         Sets metadata associated to given key
         :param key: unique metadataID 
         :param val: any type
+        
+        TODO-dot
         """
-        self.metadata[key] = val
+        #dm = DotMap(self.metadata)
+        #dm[key] = val
+        #We can not use aa.bb as a single key since it could be nested dictionary
+        #keys = key.split('.')
+        #d=self.createNestedDict(keys,val)
+        
+        self.metadata[key]=val
+        
+        #print(self.metadata)
+        #aa={'Model': 1, 'b': 3, 'c': 4}
+        #self.metadata.update(aa)
+        #print(self.metadata)
+        
+        #print(type(self.metadata))
+        #print(self.metadata)
+        
+        
+        
+    def validateMetadata(self, template):
+        """
+        TODO
+        """
+        #metadataFlat = mValType.flattenDict(self.metadata)
+        #templateFlat = mValType.flattenDict(template)
+        mValType.compare(template, self.metadata)
+        
         
     def __str__(self):
         """
@@ -89,3 +130,13 @@ class MupifObject(object):
         :return: string
         """
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+    
+    
+#@Pyro4.expose
+#class mDict:
+    #def __init__(self, type, compulsory):
+        #self.valType = type
+        #self.compulsory = compulsory
+    #def __repr__(self): #hide details when printing a dictionary
+        #return (self.valType.__name__)
+

@@ -25,18 +25,43 @@ import os
 import Pyro4
 from . import APIError
 from . import MupifObject
+from . import MValType
 from .propertyID import PropertyID
 from .fieldID import FieldID
 from .functionID import FunctionID
 from . import Property
 from . import Field
 from . import Function
-#from . import MetadataKeys
 from . import TimeStep
+from .Physics import PhysicalQuantities as PQ
 
 import logging
 log = logging.getLogger()
 
+MDTemplate = {  'Model.Model_ID' : MValType(1,(str,int) ),
+                'Model.Model_name' : MValType(1,(str,) ),
+                'Model.Model_description' : MValType(1,(str,) ),
+                'Model.Model_time_lapse' : MValType(1,(PQ.PhysicalQuantity,) ),
+                'Model.Model_publication' : MValType(0,(str,) ),
+                'Model.Solver_name' : MValType(0,(str,) ),
+                'Model.Solver_version_date' : MValType(0,(str,) ),
+                'Model.Solver_license' : MValType(0,(str,) ),
+                'Model.Solver_creator' : MValType(0,(str,) ),    
+                'Model.Solver_language' : MValType(0,(str,) ),
+                'Model.Solver_time_step' : MValType(0,(str,) ),
+                'Model.Model_boundary_conditions' : MValType(0,(str,) ),
+                'Model.Workflow_model_reference' : MValType(0,(str,) ),
+                'Model.Accuracy' : MValType(0,(str,) ),
+                'Model.Sensitivity' : MValType(0,(str,) ),
+                'Model.Complexity' : MValType(0,(str,) ),
+                'Model.Robustness' : MValType(0,(str,) ),
+                'Model.Estimated_execution cost' : MValType(0,(float,) ),#EUR
+                'Model.Estimated_personnel cost' : MValType(0,(float,) ),#working day
+                'Model.Required_expertise' : MValType(0,(str,) ),
+                'Model.Estimated_computational_time' : MValType(0,(PQ.PhysicalQuantity,) ),
+                'Model.Inputs_and_relation_to_Data' : MValType(1,(list,) ),
+                'Model.Outputs_and_relation_to_Data' : MValType(1,(list,) )
+             }
 
 @Pyro4.expose
 class Application(MupifObject.MupifObject):
@@ -52,7 +77,7 @@ class Application(MupifObject.MupifObject):
 
     .. automethod:: __init__
     """
-    def __init__(self, file='', workdir='', executionID = None):
+    def __init__(self):
         """
         Constructor. Initializes the application.
 
@@ -61,11 +86,6 @@ class Application(MupifObject.MupifObject):
         :param str executionID: Optional application execution ID (typically set by workflow)
         """
         super(Application, self).__init__()
-        self.file = file
-        if workdir == '':
-            self.workDir = os.getcwd()
-        else:
-            self.workDir = workdir
 
         # mupif internals (do not change)
         self.pyroDaemon = None
@@ -74,14 +94,31 @@ class Application(MupifObject.MupifObject):
         self.pyroURI = None
         self.appName = None
 
-        # define app metadata 
-        self.setMetadata('Model.ExecutionID', executionID)
-        self.setMetadata('Model.ComponentID', self.getApplicationSignature())  # use signature as component ID
 
-    def initialize(self):
+    def initialize(self, file='', workdir='', executionID = None, metaData={}, **kwargs):
         """
-        Initializes the application for specific usecase.
         """
+        self.metadata.update(metaData)
+        self.printMetadata()
+
+        # define futher app metadata 
+        self.setMetadata('Model.ExecutionID', executionID)
+        self.setMetadata('Model.Model_ID','2')
+        self.setMetadata('Model.Model_name', self.getApplicationSignature())
+        
+        #self.printMetadata()
+        #self.metadata.Model.Model_ID.aa=2000
+        #print(self.metadata['Model']['Model_ID'])
+        #print(self.metadata)
+                
+        self.file = file
+        if workdir == '':
+            self.workDir = os.getcwd()
+        else:
+            self.workDir = workdir
+        
+        self.validateMetadata(MDTemplate)
+        
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """

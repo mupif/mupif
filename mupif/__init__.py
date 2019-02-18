@@ -30,6 +30,7 @@ __author__ = 'Borek Patzak and Vit Smilauer'
 from .fieldID import FieldID
 from .propertyID import PropertyID
 from .functionID import FunctionID
+from .mValType import MValType
 from .valueType import ValueType
 
 from . import APIError
@@ -45,6 +46,7 @@ from . import JobManager
 from . import SimpleJobManager
 from . import Localizer
 from . import Mesh
+from . import MValType
 from . import Octree
 from . import operatorUtil
 from . import Property
@@ -64,7 +66,7 @@ from . import Physics
 
 # List all submodules, so they can all be imported: from mupif import *
 __all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field',
-           'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree',
+           'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'MValType', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
            'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject','Workflow', 'MetadataKeys', 'Physics']
 
