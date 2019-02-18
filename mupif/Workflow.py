@@ -35,7 +35,7 @@ import logging
 log = logging.getLogger()
 
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0, 0, 1, 0, 0, 0, 0, 0, 0])
+#timeUnits = PQ.PhysicalUnit('s',   1.,    [0, 0, 1, 0, 0, 0, 0, 0, 0])
 
 
 @Pyro4.expose
@@ -49,7 +49,7 @@ class Workflow(Application.Application):
 
     .. automethod:: __init__
     """
-    def __init__(self, file='', workdir='', executionID = None, targetTime=PQ.PhysicalQuantity(0., 's')):
+    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Constructor. Initializes the workflow
 
@@ -58,7 +58,7 @@ class Workflow(Application.Application):
         :param str executionID: Optional workflow execution ID (typically set by scheduler)
         :param PhysicalQuantity targetTime: target simulation time
         """
-        super(Workflow, self).__init__(file=file, workdir=workdir, executionID=executionID)
+        super(Workflow, self).__init__()
 
         # print (targetTime)
         if PQ.isPhysicalQuantity(targetTime):
@@ -70,10 +70,21 @@ class Workflow(Application.Application):
 
         # define workflow metadata
         (username, hostname) = PyroUtil.getUserInfo()
-        # self.setMetadata(MetadataKeys.USERNAME, username)
-        # self.setMetadata(MetadataKeys.HOSTNAME, hostname)
         self.setMetadata('Workflow.Username', username)
         self.setMetadata('Workflow.Hostname', hostname)
+        
+    def initialize(self, file='', workdir='', executionID = None, metaData={}, **kwargs):
+        """
+        Initializes application, i.e. all functions after constructor and before run.
+        
+        :param str file: Name of file
+        :param str workdir: Optional parameter for working directory
+        :param str executionID: Optional application execution ID (typically set by workflow)
+        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param named_arguments kwargs: Arbitrary further parameters 
+        """
+        super(Workflow, self).initialize(file, workdir, executionID, metaData, **kwargs)
+        
 
     def solve(self, runInBackground=False):
         """ 
@@ -85,10 +96,10 @@ class Workflow(Application.Application):
         :param bool runInBackground: optional argument, default False. If True, the solution will run in background (in separate thread or remotely).
 
         """
-        time = PQ.PhysicalQuantity(0., timeUnits)
+        time = PQ.PhysicalQuantity(0., 's')
         timeStepNumber = 0
 
-        while abs(time.inUnitsOf(timeUnits).getValue()-self.targetTime.inUnitsOf(timeUnits).getValue()) > 1.e-6:
+        while abs(time.inUnitsOf('s').getValue()-self.targetTime.inUnitsOf('s').getValue()) > 1.e-6:
             dt = self.getCriticalTimeStep()
             time = time+dt
             if time > self.targetTime:
@@ -96,7 +107,7 @@ class Workflow(Application.Application):
             timeStepNumber = timeStepNumber+1
             istep = TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
         
-            log.debug("Step %g: t=%g dt=%g"%(timeStepNumber, time.inUnitsOf(timeUnits).getValue(), dt.inUnitsOf(timeUnits).getValue()))
+            log.debug("Step %g: t=%g dt=%g"%(timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 
             self.solveStep(istep)
             self.finishStep(istep)

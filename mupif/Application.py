@@ -39,10 +39,10 @@ from .Physics import PhysicalQuantities as PQ
 import logging
 log = logging.getLogger()
 
-MDTemplate = {  'Model.Model_ID' : MValType(1,(str,int) ),
+MDTemplate = {  'Model.Model_ID' : MValType(0,(str,int) ),
                 'Model.Model_name' : MValType(1,(str,) ),
                 'Model.Model_description' : MValType(1,(str,) ),
-                'Model.Model_time_lapse' : MValType(1,(PQ.PhysicalQuantity,) ),
+                'Model.Model_time_lapse' : MValType(0,(PQ.PhysicalQuantity,) ),
                 'Model.Model_publication' : MValType(0,(str,) ),
                 'Model.Solver_name' : MValType(0,(str,) ),
                 'Model.Solver_version_date' : MValType(0,(str,) ),
@@ -52,7 +52,7 @@ MDTemplate = {  'Model.Model_ID' : MValType(1,(str,int) ),
                 'Model.Solver_time_step' : MValType(0,(str,) ),
                 'Model.Model_boundary_conditions' : MValType(0,(str,) ),
                 'Model.Workflow_model_reference' : MValType(0,(str,) ),
-                'Model.Accuracy' : MValType(0,(str,) ),
+                'Model.Accuracy' : MValType(0,(float,) ),
                 'Model.Sensitivity' : MValType(0,(str,) ),
                 'Model.Complexity' : MValType(0,(str,) ),
                 'Model.Robustness' : MValType(0,(str,) ),
@@ -60,8 +60,8 @@ MDTemplate = {  'Model.Model_ID' : MValType(1,(str,int) ),
                 'Model.Estimated_personnel cost' : MValType(0,(float,) ),#working day
                 'Model.Required_expertise' : MValType(0,(str,) ),
                 'Model.Estimated_computational_time' : MValType(0,(PQ.PhysicalQuantity,) ),
-                'Model.Inputs_and_relation_to_Data' : MValType(1,(list,) ),
-                'Model.Outputs_and_relation_to_Data' : MValType(1,(list,) )
+                'Model.Inputs_and_relation_to_Data' : MValType(0,(list,) ),
+                'Model.Outputs_and_relation_to_Data' : MValType(0,(list,) )
              }
 
 @Pyro4.expose
@@ -81,10 +81,6 @@ class Application(MupifObject.MupifObject):
     def __init__(self):
         """
         Constructor. Initializes the application.
-
-        :param str file: Name of file
-        :param str workdir: Optional parameter for working directory
-        :param str executionID: Optional application execution ID (typically set by workflow)
         """
         super(Application, self).__init__()
 
@@ -98,13 +94,19 @@ class Application(MupifObject.MupifObject):
 
     def initialize(self, file='', workdir='', executionID = None, metaData={}, **kwargs):
         """
+        Initializes application, i.e. all functions after constructor and before run.
+        
+        :param str file: Name of file
+        :param str workdir: Optional parameter for working directory
+        :param str executionID: Optional application execution ID (typically set by workflow)
+        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param named_arguments kwargs: Arbitrary further parameters 
         """
         self.metadata.update(metaData)
         self.printMetadata()
 
         # define futher app metadata 
         self.setMetadata('Model.ExecutionID', executionID)
-        self.setMetadata('Model.Model_ID','2')
         self.setMetadata('Model.Model_name', self.getApplicationSignature())
         
         #self.printMetadata()

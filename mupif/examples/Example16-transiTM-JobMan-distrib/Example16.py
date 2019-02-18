@@ -27,7 +27,7 @@ class Demo16(Workflow.Workflow):
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Demo16, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo16, self).__init__(targetTime=targetTime)
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         #connect to JobManager running on (remote) server

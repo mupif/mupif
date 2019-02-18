@@ -7,18 +7,17 @@ import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-
 @Pyro4.expose
 class application2(Application.Application):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, file=None, workdir=None):
-        super(application2, self).__init__(file, workdir)
+    def __init__(self):
+        super(application2, self).__init__()
         self.value = 0.0
         self.count = 0.0
         self.contrib = None
+        self.setMetadata('Model.Model_description', 'Cummulate time')
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
             log.debug('Getting property from this application2')

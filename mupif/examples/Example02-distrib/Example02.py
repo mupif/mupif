@@ -23,8 +23,8 @@ class application1(Application.Application):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, file):
-        super(application1, self).__init__(file)
+    def __init__(self):
+        super(application1, self).__init__()
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -52,7 +52,7 @@ if mode==1: #just print out how to set up a SSH tunnel
 ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
 # application1 is local, create its instance
-app1 = application1(None)
+app1 = application1()
 # locate (remote) application2, request remote proxy
 app2=PyroUtil.connectApp(ns, cfg.appName, cfg.hkey, sshContext)
 

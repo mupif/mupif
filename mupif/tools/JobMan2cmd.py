@@ -91,7 +91,8 @@ def main():
     #Initialize application
     #app = DemoApplication.DemoApplication()
     log.info('Initializing application with initial file %s and workdir %s' % (conf.applicationInitialFile, workDir) )
-    app = conf.applicationClass(conf.applicationInitialFile, workDir)
+    app = conf.applicationClass()
+    app.initialize(file=conf.applicationInitialFile, workdir=workDir)
 
     #register agent
     uri = daemon.register(app)

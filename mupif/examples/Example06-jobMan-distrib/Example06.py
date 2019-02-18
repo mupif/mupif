@@ -19,7 +19,7 @@ log.info('Timer started')
 class Demo06(Workflow.Workflow):
    
     def __init__ (self, targetTime=PQ.PhysicalQuantity('1 s')):
-        super(Demo06, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo06, self).__init__(targetTime=targetTime)
         
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -37,6 +37,12 @@ class Demo06(Workflow.Workflow):
             appsig=self.app1.getApplicationSignature()
             log.info("Working application 1 on server " + appsig)
 
+    def initialize(self):
+        MD = { 'Model.Model_description' : 'Computes the average of time' }
+        super().initialize(metaData=MD)
+        MD = { 'Model.Model_description' : 'Computes the average of time' }
+        self.app1.initialize(metaData=MD)
+    
     def solveStep(self, istep, stageID=0, runInBackground=False):
         val = Property.ConstantProperty(1000, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3')
         self.app1.setProperty (val)

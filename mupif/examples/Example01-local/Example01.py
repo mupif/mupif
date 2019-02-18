@@ -5,8 +5,6 @@ import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-
 class application1(Application.Application):
     """
     Simple application that generates a property with a value equal to actual time
@@ -21,7 +19,7 @@ class application1(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = self.getAssemblyTime(tstep).inUnitsOf(timeUnits).getValue()
+        time = self.getAssemblyTime(tstep).inUnitsOf('s').getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1, 's')
@@ -67,22 +65,22 @@ targetTime = 1.0
 app1 = application1()
 app2 = application2()
 
-#TODO
-app1Metadata = {'Model.Model_ID' : 'Model ID 1234',
+app1Metadata = {'Model.Model_ID' : 'Model ID-1234',
                 'Model.Model_name' : 'Simple application cummulating calling time',
                 'Model.Model_description' : 'Cummulates calling time',
-                'Model.Model_time_lapse' : PQ.PhysicalQuantity(0.1,'s'),
-                'Model.Inputs_and_relation_to_Data' : [{'name':'Temperature field', 'type': 'Field', 'optional':True,'obj_type':'mupif.FieldID.FID_Temperature', 'units':'T', 'obj_id': None}],
-                'Model.Outputs_and_relation_to_Data' : ['Displacement field',2,'Vector']
+                'Model.Model_time_lapse' : PQ.PhysicalQuantity(0.01,'s'),
+                'Model.Inputs_and_relation_to_Data' : [{'Input_name':'Time', 'Input_description':'Time of the task', 'Input_type': 'PhysicalQuantity', 'Input_object_type':'mupif.PQ.PhysicalQuantity', 'Input_object_id': None, 'Input_optional':True,'Input_units':'s'}],
+                'Model.Outputs_and_relation_to_Data' : [{'Output_name':'Concentration', 'Output_description':'Concentration', 'Output_type': 'ConstantProperty', 'Output_object_type':'mupif.PropertyID.PID_Concentration', 'Output_object_id': None, 'Output_optional':True,'Output_units':'kg/m**3'}]
                }
 
 app1.initialize(metaData=app1Metadata)
-#app1.initialize()
-#app1.printMetadata()
-print(app1.metadata)
+app1.printMetadata()
 
+
+
+#TODO - update app2
 app2.initialize(metaData=app1Metadata)
-
+app2.printMetadata()
 
 
 
@@ -90,8 +88,8 @@ app2.initialize(metaData=app1Metadata)
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
-             app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
+    dt = min(app1.getCriticalTimeStep().inUnitsOf('s').getValue(),
+             app2.getCriticalTimeStep().inUnitsOf('s').getValue())
     #update time
     time = time+dt
     if (time > targetTime):
@@ -99,7 +97,7 @@ while (abs(time -targetTime) > 1.e-6):
         time = targetTime
     timestepnumber = timestepnumber+1
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, 's', timestepnumber)
 
     try:
         #solve problem 1

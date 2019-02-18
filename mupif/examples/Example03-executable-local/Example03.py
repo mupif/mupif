@@ -7,15 +7,12 @@ import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-
-
 class application1(Application.Application):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, file):
-        super(application1, self).__init__(file)
+    def __init__(self):
+        super(application1, self).__init__()
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -23,7 +20,7 @@ class application1(Application.Application):
         else:
             raise APIError.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
+        time = tstep.getTime().inUnitsOf('s').getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1,'s')
@@ -35,9 +32,9 @@ class application3(Application.Application):
     """
     Simple application that computes an arithmetical average of mapped property using an external code
     """
-    def __init__(self, file):
+    def __init__(self):
         # list storing all mapped values from the beginning
-        super(application3, self).__init__(file)
+        super(application3, self).__init__()
         self.values = []
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
@@ -71,13 +68,20 @@ class application3(Application.Application):
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
 
-
 class Demo03(Workflow.Workflow):
     def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
-        super(Demo03, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo03, self).__init__(targetTime=targetTime)
         
-        self.app1 = application1(None)
-        self.app3 = application3(None)
+        self.app1 = application1()
+        self.app3 = application3()
+        
+    def initialize(self):
+        MD = { 'Model.Model_description' : 'Workflow with two applications computing average' }
+        super(Demo03, self).initialize(metaData=MD)
+        MD = { 'Model.Model_description' : 'App1 stores actual time' }
+        self.app1.initialize(metaData=MD)
+        MD = { 'Model.Model_description' : 'App3 computes the average' }
+        self.app3.initialize(metaData=MD)
 
     def solveStep (self, istep, stageID=0, runInBackground=False):
 
@@ -125,8 +129,9 @@ if __name__=='__main__':
     # instanciate workflow
     targetTime =PQ.PhysicalQuantity(3.0, 's')
     demo = Demo03(targetTime)
+    demo.initialize()
     # pass some parameters using set ops
-    demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, timeUnits))
+    demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, 's'))
     #execute workflow
     demo.solve()
     #get resulting KPI for workflow

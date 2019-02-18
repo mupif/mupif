@@ -75,13 +75,12 @@ class MupifObject(object):
     
    
     def createNestedDict(self, data, val):
+        #TODO
         if len(data) == 0:
             return data #trivial case, we have no element therefore we return empty list
         else: #if we have elements
             first_value = data[0] #we take the first value
             return {first_value : val} if len(data)==1 else {first_value : self.createNestedDict(data[1:],val)}
-    
-    
     
     def setMetadata (self, key, val):
         """ 
@@ -115,7 +114,7 @@ class MupifObject(object):
         """
         #metadataFlat = mValType.flattenDict(self.metadata)
         #templateFlat = mValType.flattenDict(template)
-        mValType.compare(template, self.metadata)
+        mValType.compare(template, self.metadata, self)
         
         
     def __str__(self):
