@@ -10,10 +10,11 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 class Demo15l(Workflow.Workflow):
     def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,'s')):
-        super(Demo15l, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo15l, self).__init__(targetTime=targetTime)
+        self.thermal = demoapp.thermal()
         
-        self.thermal = demoapp.thermal('inputT.in','.')
-        
+    def initialize(self):
+        self.thermal.initialize('inputT.in','.')
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         try:
@@ -43,5 +44,6 @@ class Demo15l(Workflow.Workflow):
     
 if __name__=='__main__':
     demo = Demo15l(targetTime=PQ.PhysicalQuantity(1.0,'s'))
+    demo.initialize()
     demo.solve()
     log.info("Test OK")

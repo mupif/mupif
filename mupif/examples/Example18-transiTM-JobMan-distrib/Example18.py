@@ -16,24 +16,26 @@ log = logging.getLogger()
 class Demo18(Workflow.Workflow):
    
     def __init__ (self, targetTime=PQ.PhysicalQuantity(0.,'s')):
-        super(Demo18, self).__init__(file='', workdir='', targetTime=targetTime)
-        
+        super(Demo18, self).__init__(targetTime=targetTime)
+
+    def initialize(self):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server and create a tunnel to it
         self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         self.thermal = None
-
+        self.mechanical = None
+        
         try:
             self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost ) )
-            log.info(self.thermal)
-            #self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, jobNatport )
+            log.info('Created thermal job')
         except Exception as e:
             log.exception(e)
 
         appsig=self.thermal.getApplicationSignature()
         log.info("Working thermal server " + appsig)
-        self.mechanical = PyroUtil.connectApp(ns, 'mechanical')
+        
+        self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
         appsig=self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + appsig)
 
@@ -72,6 +74,7 @@ class Demo18(Workflow.Workflow):
 if __name__=='__main__':
     try:
         demo = Demo18(targetTime=PQ.PhysicalQuantity(2.,'s'))
+        demo.initialize()
         demo.solve()
         log.info("Test OK")
     except:

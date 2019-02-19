@@ -36,7 +36,7 @@ class thermal(Application.Application):
         self.setMetadata('Model.Model_material','Isotropic heat conducting material')
         self.setMetadata('Model.Model_type','Continuum')
         self.setMetadata('Model.Model_geometry','2D rectangle')
-        self.setMetadata('Model.Model_time_lapse', PQ.PhysicalQuantity(1,'s'))
+        self.setMetadata('Model.Model_time_lapse', '1 s')
         self.setMetadata('Model.Model_manufacturing_service','Temperature')
         self.setMetadata('Model.Model_publication','Felippa: Introduction to finite element methods, 2004')
         self.setMetadata('Model.Model_entity',['Finite volume'])
@@ -61,7 +61,7 @@ class thermal(Application.Application):
         self.setMetadata('Model.Estimated_execution cost',0.01)
         self.setMetadata('Model.Estimated_personnel cost',0.01)
         self.setMetadata('Model.Required_expertise','User')
-        self.setMetadata('Model.Estimated_computational_time',PQ.PhysicalQuantity(1,'s'))
+        self.setMetadata('Model.Estimated_computational_time', '1 s')
         self.setMetadata('Model.Required expertise','User')
         self.setMetadata('Model.Inputs_and_relation_to_Data',['Boundary temperature',1,'Scalar','','Ambient temperature on edges with heat convection'])
         self.setMetadata('Model.Outputs_and_relation_to_Data',['Temperature field',1,'Field','Resulting thermal field'])
@@ -539,7 +539,7 @@ class thermal_nonstat(thermal):
         self.setMetadata('Model.Model_description','Nonstationary heat conduction using finite elements on rectangular domain')
         self.setMetadata('Model.Solver_name','Nonstationary thermal solver')
         super().initialize(file,workdir,executionID,metaData,**kwargs)
-
+        
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"
 
@@ -592,10 +592,7 @@ class thermal_nonstat(thermal):
 
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-
         self.readInput(tria=True)
-       
-        
         mesh = self.mesh
         self.volume = 0.0;
         self.integral = 0.0;
@@ -798,7 +795,7 @@ class mechanical(Application.Application):
         self.setMetadata('Model.Model_material','Isotropic elastic')
         self.setMetadata('Model.Model_type','Continuum')
         self.setMetadata('Model.Model_geometry','2D rectangle')
-        self.setMetadata('Model.Model_time_lapse',PQ.PhysicalQuantity(1,'s'))
+        self.setMetadata('Model.Model_time_lapse', '1 s')
         self.setMetadata('Model.Model_manufacturing_service','Stress')
         self.setMetadata('Model.Model_publication','Felippa: Introduction to finite element methods, 2004')
         self.setMetadata('Model.Model_entity',['Finite volume'])
@@ -823,12 +820,11 @@ class mechanical(Application.Application):
         self.setMetadata('Model.Estimated_execution cost',0.01)
         self.setMetadata('Model.Estimated_personnel cost',0.01)
         self.setMetadata('Model.Required_expertise','User')
-        self.setMetadata('Model.Estimated_computational_time',PQ.PhysicalQuantity(1,'s'))
+        self.setMetadata('Model.Estimated_computational_time', '1 s')
         self.setMetadata('Model.Required expertise','User')
         self.setMetadata('Model.Inputs_and_relation_to_Data',['Thermal field',2,'Scalar','','Thermal field across domain'])
         self.setMetadata('Model.Outputs_and_relation_to_Data',[['Displacement field',2,'Vector','Resulting displacement field'], ['Stress field',3,'Vector','Resulting stress field'],['Strain field',4,'Vector','Resulting strain field']])
         super().initialize(file,workdir,executionID,metaData,**kwargs)
-        
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's');

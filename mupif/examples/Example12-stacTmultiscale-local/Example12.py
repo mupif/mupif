@@ -8,9 +8,11 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 try:
     #Read geometry and boundary condition for the microscale
-    thermalMicro = demoapp.thermal('thermalMicro.in','')
+    thermalMicro = demoapp.thermal()
+    thermalMicro.initialize('thermalMicro.in','')
     #Read geometry and boundary condition for the macroscale
-    thermalMacro = demoapp.thermal('thermalMacro.in','')
+    thermalMacro = demoapp.thermal()
+    thermalMacro.initialize('thermalMacro.in','')
     log.info(thermalMicro.getApplicationSignature())
     #Solve the microscale problem
     tstep = TimeStep.TimeStep(0., 1., 1., 's')

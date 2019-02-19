@@ -9,12 +9,12 @@ log = logging.getLogger()
 
 
 
-
 if True:
-    app = demoapp.thermal('inputT10.in','.')
+    app = demoapp.thermal()
+    app.initialize('inputT10.in','.')
     tstep = TimeStep.TimeStep(1.,1.,10,'s')
     sol = app.solveStep(tstep)
-    print(app.printMetadata())
+    #print(app.printMetadata())
     f = app.getField(FieldID.FID_Temperature, app.getAssemblyTime(tstep))
     f.field2VTKData().tofile('thermal10')
     f.field2Image2D(title='Thermal', fileName='thermal.png')
@@ -23,7 +23,8 @@ if True:
     #print (valueT)
 
 if True:
-    app2 = demoapp.mechanical('inputM10.in', '.')
+    app2 = demoapp.mechanical()
+    app2.initialize('inputM10.in','.')
     print(app2.getApplicationSignature())
 
     app2.setField(f)

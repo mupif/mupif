@@ -68,7 +68,7 @@ app2 = application2()
 app1Metadata = {'Model.Model_ID' : 'Model ID-1234',
                 'Model.Model_name' : 'Simple application cummulating calling time',
                 'Model.Model_description' : 'Cummulates calling time',
-                'Model.Model_time_lapse' : PQ.PhysicalQuantity(0.01,'s'),
+                'Model.Model_time_lapse' : '0.01 s',
                 'Model.Inputs_and_relation_to_Data' : [{'Input_name':'Time', 'Input_description':'Time of the task', 'Input_type': 'PhysicalQuantity', 'Input_object_type':'mupif.PQ.PhysicalQuantity', 'Input_object_id': None, 'Input_optional':True,'Input_units':'s'}],
                 'Model.Outputs_and_relation_to_Data' : [{'Output_name':'Concentration', 'Output_description':'Concentration', 'Output_type': 'ConstantProperty', 'Output_object_type':'mupif.PropertyID.PID_Concentration', 'Output_object_id': None, 'Output_optional':True,'Output_units':'kg/m**3'}]
                }
@@ -76,7 +76,9 @@ app1Metadata = {'Model.Model_ID' : 'Model ID-1234',
 app1.initialize(metaData=app1Metadata)
 app1.printMetadata()
 
-
+app1.toJSONFile('aa.json')
+aa = MupifObject.MupifObject('aa.json')
+aa.printMetadata()
 
 #TODO - update app2
 app2.initialize(metaData=app1Metadata)

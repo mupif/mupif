@@ -28,6 +28,8 @@ class Demo16(Workflow.Workflow):
         applications and store them within a class.
         """
         super(Demo16, self).__init__(targetTime=targetTime)
+    
+    def initialize(self):    
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         #connect to JobManager running on (remote) server
@@ -85,6 +87,7 @@ class Demo16(Workflow.Workflow):
 
 if __name__=='__main__':
     demo = Demo16(targetTime=PQ.PhysicalQuantity(10.,'s'))
+    demo.initialize()
     demo.solve()
     log.info("Test OK")
 

@@ -19,8 +19,9 @@ class Demo15d(Workflow.Workflow):
         """
         Initializes the workflow.
         """
-        super(Demo15d, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo15d, self).__init__(targetTime=targetTime)
 
+    def initialize(self):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server
@@ -45,8 +46,6 @@ class Demo15d(Workflow.Workflow):
             else:
                 log.debug("Connection to server failed, exiting")
 
-
-
     def solveStep(self, istep, stageID=0, runInBackground=False):
 
         start = timeT.time()
@@ -67,7 +66,6 @@ class Demo15d(Workflow.Workflow):
         return PQ.PhysicalQuantity(1.0, 's')
 
     def terminate(self):
-        
         #terminate solver, job manager, and super
         self.thermalSolver.terminate()
         self.thermalJobMan.terminate()
@@ -82,6 +80,7 @@ class Demo15d(Workflow.Workflow):
     
 if __name__=='__main__':
     demo = Demo15d(targetTime=PQ.PhysicalQuantity(1.,'s'))
+    demo.initialize()
     demo.solve()
     log.info("Test OK")
 

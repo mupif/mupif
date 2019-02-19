@@ -41,11 +41,17 @@ class MupifObject(object):
 
     .. automethod:: __init__
     """
-    def __init__(self):
+    def __init__(self, jsonFileName=''):
         """
         Constructor. Initializes the object
+        :param str jsonFileName: Optionally instantiate from JSON file
         """
         self.metadata = {}
+        
+        if jsonFileName:
+            with open(jsonFileName) as f:
+                self.metadata = json.load(f)
+        
 
     def getMetadata(self, key):
         """ 
@@ -73,41 +79,16 @@ class MupifObject(object):
         """
         pprint.pprint(self.metadata, width=300)
     
-   
-    def createNestedDict(self, data, val):
-        #TODO
-        if len(data) == 0:
-            return data #trivial case, we have no element therefore we return empty list
-        else: #if we have elements
-            first_value = data[0] #we take the first value
-            return {first_value : val} if len(data)==1 else {first_value : self.createNestedDict(data[1:],val)}
-    
     def setMetadata (self, key, val):
         """ 
         Sets metadata associated to given key
         :param key: unique metadataID 
         :param val: any type
         
-        TODO-dot
         """
-        #dm = DotMap(self.metadata)
-        #dm[key] = val
-        #We can not use aa.bb as a single key since it could be nested dictionary
-        #keys = key.split('.')
-        #d=self.createNestedDict(keys,val)
-        
         self.metadata[key]=val
         
-        #print(self.metadata)
-        #aa={'Model': 1, 'b': 3, 'c': 4}
-        #self.metadata.update(aa)
-        #print(self.metadata)
-        
-        #print(type(self.metadata))
-        #print(self.metadata)
-        
-        
-        
+
     def validateMetadata(self, template):
         """
         TODO
@@ -124,19 +105,16 @@ class MupifObject(object):
         """
         return str(self.__dict__)
 
-    def toJSON(self):
+    def toJSON(self, indent=4):
         """
+        By default, the JSON encoder only understands native Python data types (str, int, float, bool, list, tuple, and dict). Other classes need 
         JSON serialization method
         :return: string
         """
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
     
+    def toJSONFile(self, filename, indent=4):
+        with open(filename,"w") as f:
+            json.dump(self.metadata,f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
     
-#@Pyro4.expose
-#class mDict:
-    #def __init__(self, type, compulsory):
-        #self.valType = type
-        #self.compulsory = compulsory
-    #def __repr__(self): #hide details when printing a dictionary
-        #return (self.valType.__name__)
-
+        

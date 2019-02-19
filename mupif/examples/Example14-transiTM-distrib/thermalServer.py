@@ -16,5 +16,7 @@ ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.h
 
 #(user, hostname)=PyroUtil.getUserInfo()
 
-thermal = demoapp.thermal_nonstat('..'+os.path.sep+'Example13-transiTM-local'+os.path.sep+'inputT13.in','.')
+thermal = demoapp.thermal_nonstat()
+thermal.initialize('..'+os.path.sep+'Example13-transiTM-local'+os.path.sep+'inputT13.in','.')
+
 PyroUtil.runAppServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport, nshost=cfg.nshost, nsport=cfg.nsport, appName='thermal', hkey=cfg.hkey, app=thermal)

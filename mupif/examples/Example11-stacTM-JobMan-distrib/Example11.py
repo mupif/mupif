@@ -22,8 +22,9 @@ class Demo11(Workflow.Workflow):
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Demo11, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo11, self).__init__(targetTime=targetTime)
 
+    def initialize(self):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server
@@ -49,7 +50,7 @@ class Demo11(Workflow.Workflow):
             self.appsTunnel = PyroUtil.connectApplicationsViaClient(PyroUtil.SSHContext(userName = mCfg.serverUserName, sshClient=mCfg.sshClient, options=mCfg.options, sshHost=PyroUtil.getNSConnectionInfo(ns, mCfg.jobManName)[0]), self.mechanicalSolver, self.thermalSolver)
         except Exception as e:
             log.exception(e)
-        else:
+        else:#No exception
             if ((self.thermalSolver is not None) and (self.mechanicalSolver is not None)):
                 thermalSolverSignature=self.thermalSolver.getApplicationSignature()
                 log.info("Working thermal solver on server " + thermalSolverSignature)
@@ -64,8 +65,6 @@ class Demo11(Workflow.Workflow):
                 PyroUtil.uploadPyroFile("inputM.in", mf, mCfg.hkey)
             else:
                 log.debug("Connection to server failed, exiting")
-
-
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
 
@@ -109,8 +108,8 @@ class Demo11(Workflow.Workflow):
         return PQ.PhysicalQuantity(1.0, 's')
 
     def terminate(self):
-        
         #self.thermalAppRec.terminateAll()
+        self.thermalSolver.printMetadata()
         self.thermalSolver.terminate()
         self.thermalJobMan.terminate()
         self.mechanicalSolver.terminate()
@@ -127,6 +126,7 @@ class Demo11(Workflow.Workflow):
     
 if __name__=='__main__':
     demo = Demo11(targetTime=PQ.PhysicalQuantity(1.,'s'))
+    demo.initialize()
     demo.solve()
     log.info("Test OK")
 

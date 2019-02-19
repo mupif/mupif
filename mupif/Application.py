@@ -42,7 +42,7 @@ log = logging.getLogger()
 MDTemplate = {  'Model.Model_ID' : MValType(0,(str,int) ),
                 'Model.Model_name' : MValType(1,(str,) ),
                 'Model.Model_description' : MValType(1,(str,) ),
-                'Model.Model_time_lapse' : MValType(0,(PQ.PhysicalQuantity,) ),
+                'Model.Model_time_lapse' : MValType(0,(str,) ),
                 'Model.Model_publication' : MValType(0,(str,) ),
                 'Model.Solver_name' : MValType(0,(str,) ),
                 'Model.Solver_version_date' : MValType(0,(str,) ),
@@ -59,7 +59,7 @@ MDTemplate = {  'Model.Model_ID' : MValType(0,(str,int) ),
                 'Model.Estimated_execution cost' : MValType(0,(float,) ),#EUR
                 'Model.Estimated_personnel cost' : MValType(0,(float,) ),#working day
                 'Model.Required_expertise' : MValType(0,(str,) ),
-                'Model.Estimated_computational_time' : MValType(0,(PQ.PhysicalQuantity,) ),
+                'Model.Estimated_computational_time' : MValType(0,(str,) ),
                 'Model.Inputs_and_relation_to_Data' : MValType(0,(list,) ),
                 'Model.Outputs_and_relation_to_Data' : MValType(0,(list,) )
              }
@@ -103,7 +103,7 @@ class Application(MupifObject.MupifObject):
         :param named_arguments kwargs: Arbitrary further parameters 
         """
         self.metadata.update(metaData)
-        self.printMetadata()
+        #self.printMetadata()
 
         # define futher app metadata 
         self.setMetadata('Model.ExecutionID', executionID)

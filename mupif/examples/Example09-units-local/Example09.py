@@ -8,23 +8,21 @@ import logging
 log = logging.getLogger()
 
 import mupif.Physics.PhysicalQuantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class application1(Application.Application):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, file):
-        super(application1,self).__init__(self,file)
+    def __init__(self):
+        super(application1,self).__init__()
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Velocity):
             return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time, 0)
         else:
             raise APIError.APIError ('Unknown property ID')
-
             
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
+        time = tstep.getTime().inUnitsOf('s').getValue()
         self.value=1.0*time
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1,'s')
@@ -35,12 +33,19 @@ timestepnumber=0
 targetTime = 1.0 # 10 steps is enough
 
 
-app1 = application1(None)
+app1 = application1()
+
+app1Metadata = {'Model.Model_ID' : 'Model ID-1234',
+                'Model.Model_name' : 'Simple application storing calling time',
+                'Model.Model_description' : 'Stores calling time'
+               }
+
+app1.initialize(metaData=app1Metadata)
 
 while (abs(time -targetTime) > 1.e-6):
 
     #determine critical time step
-    dt = app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
+    dt = app1.getCriticalTimeStep().inUnitsOf('s').getValue()
     #update time
     time = time+dt
     if (time > targetTime):
@@ -49,7 +54,7 @@ while (abs(time -targetTime) > 1.e-6):
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+    istep = TimeStep.TimeStep(time, dt, targetTime, 's', timestepnumber)
     
     #solve problem 1
     app1.solveStep(istep)

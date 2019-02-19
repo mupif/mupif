@@ -14,10 +14,10 @@ status = 0
 
 class Demo13(Workflow.Workflow):
     def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,'s')):
-        super(Demo13, self).__init__(file='', workdir='', targetTime=targetTime)
+        super(Demo13, self).__init__(targetTime=targetTime)
         
-        self.thermal = demoapp.thermal_nonstat('inputT13.in','.')
-        self.mechanical = demoapp.mechanical('inputM13.in', '.')
+        self.thermal = demoapp.thermal_nonstat()
+        self.mechanical = demoapp.mechanical()
         self.matPlotFig = None
         
         if (status): # experimental section by bp
@@ -30,30 +30,11 @@ class Demo13(Workflow.Workflow):
         self.updateStatus('Initialized')
         if (status):
             time.sleep(10)
-        self.setMetadata('Workflow.Model_ID','Thermo-mech-1')
-        self.setMetadata('Workflow.Model_name','Thermo-mechanical workflow')
-        self.setMetadata('Workflow.Model_description','Stationary heat conduction with linear thermoelasticity using finite elements on a rectangular domain')
-        self.setMetadata('Workflow.Model_time_lapse','seconds')
-        self.setMetadata('Workflow.Model_publication','Felippa: Introduction to finite element methods, 2004')
-        self.setMetadata('Workflow.Solver_name','Thermo-mechanical solver')
-        self.setMetadata('Workflow.Solver_version_date','1.0, Dec 31 2018')
-        self.setMetadata('Workflow.Solver_license','None')
-        self.setMetadata('Workflow.Solver_creator','Borek Patzak')
-        self.setMetadata('Workflow.Solver_language','Python')
-        self.setMetadata('Workflow.Solver_time_step','seconds')
-        self.setMetadata('Workflow.Model_boundary_conditions','Dirichlet, Neumann')
-        self.setMetadata('Workflow.Workflow_model_reference',[1,2])
-        self.setMetadata('Workflow.Accuracy',0.75)
-        self.setMetadata('Workflow.Sensitivity','Medium')
-        self.setMetadata('Workflow.Complexity','Low')
-        self.setMetadata('Workflow.Robustness','High')
-        self.setMetadata('Workflow.Estimated_execution cost','0.01€')
-        self.setMetadata('Workflow.Estimated_personnel cost','0.01€')
-        self.setMetadata('Workflow.Required_expertise','User')
-        self.setMetadata('Workflow.Estimated_computational_time','Seconds')
-        self.setMetadata('Workflow.Inputs_and_relation_to_Data',['Boundary temperature',1,'Scalar','','Ambient temperature on edges with heat convection'])
-        self.setMetadata('Model.Outputs_and_relation_to_Data',[['Displacement field',2,'Vector','Resulting displacement field'], ['Stress field',3,'Vector','Resulting stress field'],['Strain field',4,'Vector','Resulting strain field']])
-
+            
+    def initialize(self):
+        self.thermal.initialize('inputT13.in','.')
+        self.mechanical.initialize('inputM13.in','.')
+        
     def solveStep(self, istep, stageID=0, runInBackground=False):
         try:
             self.updateStatus('Running', 0)
@@ -97,6 +78,7 @@ class Demo13(Workflow.Workflow):
     
 if __name__=='__main__':
     demo = Demo13(targetTime=PQ.PhysicalQuantity(3.0,'s'))
+    demo.initialize()
     demo.setMetadata('Execution.Execution_ID','ThermoMech-01')
     demo.setMetadata('Execution.Use_Case_ID','IDThermoMech')
     demo.setMetadata('Execution.Execution_status','Running')
