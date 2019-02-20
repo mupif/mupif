@@ -52,7 +52,7 @@ import XStFieldID
 
 
 
-class xstream(Application.Application):
+class xstream(Model.Model):
   
     """
     X-Stream application interface class

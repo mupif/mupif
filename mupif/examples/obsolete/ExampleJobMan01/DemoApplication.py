@@ -1,5 +1,6 @@
 from builtins import range
 from mupif import Application
+from mupif import Model
 from mupif import TimeStep
 from mupif import APIError
 from mupif import PropertyID
@@ -13,7 +14,7 @@ from mupif import PyroUtil
 from mupif import Property
 from mupif import IntegrationRule
 
-class DemoApplication (Application.Application):
+class DemoApplication (Model.Model):
     """
     Simple application that computes min and max values of the field
     """

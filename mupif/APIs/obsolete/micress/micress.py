@@ -50,7 +50,7 @@ import MICFieldID
 
 VtkReader2.pyvtk_monkeypatch()
 
-class micress(Application.Application):
+class micress(Model.Model):
 
     """
       MICRESS application interface class

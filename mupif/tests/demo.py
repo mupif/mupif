@@ -62,7 +62,7 @@ def meshgen_grid2d(origin, size, nx, ny, tria=False,debug=False):
     mesh.setup (vertexlist, celllist);
     return mesh;
     
-class AppGridAvg(Application.Application):
+class AppGridAvg(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
@@ -112,7 +112,7 @@ class AppGridAvg(Application.Application):
         return "Demo app. 1.0"
 
 
-class AppMinMax(Application.Application):
+class AppMinMax(Model.Model):
     """
     Simple application that computes min and max values of the field
     """
@@ -143,7 +143,7 @@ class AppMinMax(Application.Application):
             raise APIError.APIError ('Unknown property ID')
     
 
-class AppIntegrateField(Application.Application):
+class AppIntegrateField(Model.Model):
     """
     Simple application that computes integral value of field over 
     its domain and area/volume of the domain
@@ -178,7 +178,7 @@ class AppIntegrateField(Application.Application):
             raise APIError.APIError ('Unknown property ID')
 
 
-class AppCurrTime(Application.Application):
+class AppCurrTime(Model.Model):
     """
     Simple application that generates a property (concentration or velocity) with a value equal to actual time
     """
@@ -198,7 +198,7 @@ class AppCurrTime(Application.Application):
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(0.1, 's')
 
-class AppPropAvg(Application.Application):
+class AppPropAvg(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """

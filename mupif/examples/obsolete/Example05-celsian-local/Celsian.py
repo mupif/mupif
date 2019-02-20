@@ -7,7 +7,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 temperatureUnits = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
 
-class Celsian(Application.Application):
+class Celsian(Model.Model):
 
     def __init__ (self, file):
         super(Celsian, self).__init__(file)

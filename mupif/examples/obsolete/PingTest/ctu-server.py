@@ -5,12 +5,13 @@ import socket
 
 import conf
 from mupif import Application
+from mupif import Model
 from mupif import PyroUtil
 
 #nameserver app name
 appname='ctu-server'
 
-class local(Application.Application):
+class local(Model.Model):
     """
     Mupif interface to Local dummy task
 

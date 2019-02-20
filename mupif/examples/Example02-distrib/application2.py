@@ -8,7 +8,7 @@ log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
 @Pyro4.expose
-class application2(Application.Application):
+class application2(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """

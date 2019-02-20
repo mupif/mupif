@@ -9,7 +9,7 @@ log = logging.getLogger()
 
 import mupif.Physics.PhysicalQuantities as PQ
 
-class application1(Application.Application):
+class application1(Model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """

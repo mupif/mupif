@@ -7,7 +7,7 @@ import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
-class application1(Application.Application):
+class application1(Model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
@@ -28,7 +28,7 @@ class application1(Application.Application):
         return tstep.getTime()
 
 
-class application3(Application.Application):
+class application3(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property using an external code
     """

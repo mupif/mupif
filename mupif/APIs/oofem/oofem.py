@@ -50,7 +50,7 @@ fieldTypeMap={
 
 
 
-class OOFEM(Application.Application):
+class OOFEM(Model.Model):
     """
     Implementation of OOFEM MuPIF API.
     OOFEM is an object oriented FE solver, see www.oofem.org for details.

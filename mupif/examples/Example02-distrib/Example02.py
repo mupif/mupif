@@ -19,7 +19,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 
-class application1(Application.Application):
+class application1(Model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """

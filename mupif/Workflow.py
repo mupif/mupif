@@ -26,6 +26,7 @@ import os
 import Pyro4
 import time
 from . import Application
+from . import Model
 from . import PyroUtil
 from . import APIError
 from . import MetadataKeys
@@ -39,7 +40,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 
 @Pyro4.expose
-class Workflow(Application.Application):
+class Workflow(Model.Model):
     """
     An abstract class representing a workflow and its interface (API).
 

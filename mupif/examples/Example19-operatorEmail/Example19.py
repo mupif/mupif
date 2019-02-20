@@ -14,7 +14,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 # {"Operator-results": 3.14}
 #
 
-class emailAPI(Application.Application):
+class emailAPI(Model.Model):
     """
     Simple application API that involves operator interaction
     """

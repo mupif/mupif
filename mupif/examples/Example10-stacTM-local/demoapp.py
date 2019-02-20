@@ -20,7 +20,7 @@ def getline (f):
             return line
 
 @Pyro4.expose
-class thermal(Application.Application):
+class thermal(Model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self):
@@ -775,7 +775,7 @@ class thermal_nonstat(thermal):
 
 
 @Pyro4.expose
-class mechanical(Application.Application):
+class mechanical(Model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self):
@@ -1194,7 +1194,7 @@ class mechanical(Application.Application):
         return "Mechanical-demo-solver, ver 1.0"
     
 @Pyro4.expose
-class EulerBernoulli(Application.Application):
+class EulerBernoulli(Model.Model):
     """Calculates maximum deflection of cantilever beam with a uniform vertical distributed load. Uses Euler-Bernoulli beam neglecting shear deformation."""
     
     def __init__(self, b, h, L, E, f):

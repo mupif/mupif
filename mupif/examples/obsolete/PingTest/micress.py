@@ -4,6 +4,7 @@ import os
 import socket
 
 from mupif import Application
+from mupif import Model
 from mupif import PyroUtil
 
 # import basic definitions -> need to be customized
@@ -11,7 +12,7 @@ import conf
 #set application name (used also as an index to apps dictionary defined in conf.py)
 appname='micress'
 
-class micress(Application.Application):
+class micress(Model.Model):
     """
     Mupif interface to micress (microstructure evolution simulation tool) 
 

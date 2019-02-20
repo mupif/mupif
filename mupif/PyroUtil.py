@@ -29,6 +29,7 @@ import subprocess
 import time
 from . import RemoteAppRecord
 from . import Application
+from . import Model
 from . import JobManager
 from . import Util
 from . import APIError
@@ -282,7 +283,7 @@ def connectApp(ns, name, hkey, sshContext=None):
             raise
 
     app = _connectApp(ns, name, hkey)
-    return Application.RemoteApplication (app, appTunnel=tunnel)
+    return Model.RemoteModel (app, appTunnel=tunnel)
 
 def getNSAppName(jobname, appname):
     """
@@ -556,7 +557,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=Non
     :param sshContext sshContext: describing optional ssh tunnel connection detail
 
     :returns: Application instance
-    :rtype: Application.RemoteApplication
+    :rtype: Model.RemoteModel
     :raises Exception: if allocation of job fails
     
     """
@@ -602,7 +603,7 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=Non
     app = _connectApp(ns, retRec[1], hkey)
     if app==None:
         appTunnel.terminate()
-    return Application.RemoteApplication(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
+    return Model.RemoteModel(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
 
 
 def allocateNextApplication (ns, jobMan, natPort, sshContext=None):
@@ -615,7 +616,7 @@ def allocateNextApplication (ns, jobMan, natPort, sshContext=None):
     :param sshContext describing optional ssh tunnel connection detail 
 
     :returns: Application instance
-    :rtype: Application.RemoteApplication 
+    :rtype: Model.RemoteModel
     :raises Exception: if allocation of job fails
     """
     return allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext)
