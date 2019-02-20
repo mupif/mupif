@@ -4,7 +4,6 @@ sys.path.append('../../..')
 import os
 
 import conf
-from mupif import Application
 from mupif import Model
 from mupif import APIError
 from mupif import PyroUtil

@@ -4,7 +4,6 @@ import os
 import socket
 
 import conf
-from mupif import Application
 from mupif import Model
 from mupif import PyroUtil
 

@@ -1,5 +1,4 @@
 from builtins import range
-from mupif import Application
 from mupif import Model
 from mupif import TimeStep
 from mupif import APIError

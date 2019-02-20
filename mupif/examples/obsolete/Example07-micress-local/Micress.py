@@ -2,7 +2,6 @@ import sys
 sys.path.append('../../..')
 sys.path.append('.')
 from mupif import VtkReader2
-from mupif import Application
 from mupif import Model
 from mupif import FieldID
 import pyvtk

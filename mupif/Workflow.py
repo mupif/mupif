@@ -25,7 +25,6 @@ from builtins import object
 import os
 import Pyro4
 import time
-from . import Application
 from . import Model
 from . import PyroUtil
 from . import APIError

@@ -28,7 +28,6 @@ import getpass
 import subprocess
 import time
 from . import RemoteAppRecord
-from . import Application
 from . import Model
 from . import JobManager
 from . import Util
@@ -451,8 +450,8 @@ def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
 
 
     :param SSHContext fromContext: Remote application
-    :param Application fromApplication: Application object from which we want to create a tunnel
-    :param Application toApplication: Application object to which we want to create a tunnel
+    :param Model.Model fromApplication: Application object from which we want to create a tunnel
+    :param Model.Model toApplication: Application object to which we want to create a tunnel
 
     :return: Instance of sshTunnel class
     :rtype: sshTunnel

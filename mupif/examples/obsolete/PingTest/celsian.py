@@ -3,7 +3,6 @@ sys.path.append('../../..')
 import os
 import socket
 
-from mupif import Application
 from mupif import Model
 from mupif import PyroUtil
 
