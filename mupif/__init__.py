@@ -34,6 +34,7 @@ from .mValType import MValType
 from .valueType import ValueType
 
 from . import APIError
+from . import Model
 from . import Application
 from . import BBox
 from . import CellGeometryType
@@ -65,7 +66,7 @@ from . import Physics
 
 
 # List all submodules, so they can all be imported: from mupif import *
-__all__ = ['APIError', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field',
+__all__ = ['APIError', 'Model', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'EnsightReader2', 'FieldID', 'Field',
            'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'MValType', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
            'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics']
