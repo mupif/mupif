@@ -108,7 +108,31 @@ def getParentParser():
 
 
 def NoneOrInt(arg):
-        if arg is None:
-            return None
+    """ 
+    Check if None or Int types.
+    :param str,int arg: Parameter
+        
+    :return: argument (converted to int)
+    :rtype: None of int
+    """
+    if arg is None:
+        return None
+    else:
+        return int(arg)
+        
+        
+        
+def flattenDict(initDict):
+    """ 
+    Flatten nested dictionary into a simple dictionary with '.' delimiter. Returns a dictionary. 
+    
+    :return: Dictionary
+    :rtype: dict
+    """
+    ret = {}
+    for key,val in initDict.items():
+        if isinstance(val, dict):
+            ret.update(flattenDict(val, key+'.'))
         else:
-            return int(arg)
+            ret[key] = val
+    return ret

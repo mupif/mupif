@@ -25,7 +25,6 @@ import os
 import Pyro4
 from . import APIError
 from . import MupifObject
-from . import MValType
 from .dataID import PropertyID
 from .dataID import FieldID
 from .dataID import FunctionID
@@ -37,31 +36,83 @@ from . import TimeStep
 import logging
 log = logging.getLogger()
 
-MDTemplate = {'Model.Model_ID': MValType(0, (str, int)),
-              'Model.Model_name': MValType(1, (str,)),
-              'Model.Model_description': MValType(1, (str,)),
-              'Model.Model_time_lapse': MValType(0, (str,)),
-              'Model.Model_publication': MValType(0, (str,)),
-              'Model.Solver_name': MValType(0, (str,)),
-              'Model.Solver_version_date': MValType(0, (str,)),
-              'Model.Solver_license': MValType(0, (str,)),
-              'Model.Solver_creator': MValType(0, (str,)),
-              'Model.Solver_language': MValType(0, (str,)),
-              'Model.Solver_time_step': MValType(0, (str,)),
-              'Model.Model_boundary_conditions': MValType(0, (str,)),
-              'Model.Workflow_model_reference': MValType(0, (str,)),
-              'Model.Accuracy': MValType(0, (float,)),
-              'Model.Sensitivity': MValType(0, (str,)),
-              'Model.Complexity': MValType(0, (str,)),
-              'Model.Robustness': MValType(0, (str,)),
-              'Model.Estimated_execution cost': MValType(0, (float,)),  # EUR
-              'Model.Estimated_personnel cost': MValType(0, (float,)),  # working day
-              'Model.Required_expertise': MValType(0, (str,)),
-              'Model.Estimated_computational_time': MValType(0, (str,)),
-              'Model.Inputs_and_relation_to_Data': MValType(0, (list,)),
-              'Model.Outputs_and_relation_to_Data': MValType(0, (list,))
-              }
-
+#Schema for metadata
+ModelSchema = {
+    'type': 'object',
+    'properties': {
+        'Model.Name': {'type' : 'string'},#Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
+        'Model.ID': {'type' : ['string','integer']},
+        'Model.Description' : {'type': 'string'},
+        'Model.Representation' : {'type': 'string'},#E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
+        'Model.Language' : {'type': 'string'},
+        'Model.License' : {'type': 'string'},
+        'Model.Creator' : {'type': 'string'},
+        'Model.Version_date' : {'type': 'string'},
+        'Model.Documentation' : {'type': 'string'},#Where published/documented
+        'Model.Material' : {'type': 'string'},#What material is simulated
+        'Model.Manuf_process' : {'type': 'string'},#Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
+        'Model.Type' : {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular','Continuum']},
+        'Model.Entity' : {'type': 'array',#List
+            'items' : { 'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']} },
+        'Model.Equation' : {'type': 'array'},#List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
+        'Model.Equation_quantities' : {'type': 'array'}, #e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
+        'Model.Relation_description' : {'type': 'array'}, #Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
+        'Model.Relation_formulation' : {'type': 'array'}, #Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
+        'Model.Solver' : {'type': 'string'},#E.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method. Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+        'Model.Solver_additional_params' : {'type': 'string'}, #Additional parameters of numerical solver, e.g. time integration scheme
+        'Model.Geometry' : {'type': 'string'},#e.g. nanometers, 3D periodic box
+        'Model.Boundary_conditions' : {'type': 'string'},
+        'Model.Accuracy' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Model.Sensitivity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Model.Complexity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Model.Robustness' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Model.Execution_ID' : {'type': 'string'},
+        'Model.Estim_time_step' : {'type': 'number'},#Seconds
+        'Model.Estim_comp_time' : {'type': 'number'},#Seconds
+        'Model.Estim_execution cost' : {'type': 'number'},#EUR
+        'Model.Estim_personnel cost' : {'type': 'number'},#EUR
+        'Model.Required_expertise' : {'type': 'string', 'enum': ['None', 'User', 'Expert']},
+        'Model.Inputs' : {
+            'type': 'array',#List
+            'items' : {
+                'type': 'object',#Object supplies a dictionary
+                'properties': {
+                    'ID' : {'type': ['string','integer']},
+                    'Name' : { 'type': 'string' },
+                    'Description' : {'type': 'string'},
+                    'Units' : {'type': 'string'},
+                    'Origin' : {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
+                    'Experimental_details' : {'type': 'string'},
+                    'Experimental_record' : {'type': 'string'},
+                    'Estimated_std' : {'type': 'number'},
+                    'Type' : {'type': 'string'},#e.g. mupif.Property
+                    'Type_ID' : {'type': 'string'},
+                    'Object_ID' : {'type': 'array'},
+                    'Required' : {'type': 'boolean'}
+                },
+                'required' : ['ID', 'Name', 'Units', 'Origin', 'Type', 'Type_ID', 'Required']
+            }
+        },
+        'Model.Outputs' : {
+            'type': 'array',
+            'items' : {
+                'type': 'object',
+                'properties': {
+                    'ID' : {'type': ['string','integer']},
+                    'Name' : { 'type': 'string' },
+                    'Description' : {'type': 'string'},
+                    'Units' : {'type': 'string'},
+                    'Estimated_std' : {'type': 'number'},
+                    'Type' : {'type': 'string'},#e.g. mupif.Property
+                    'Type_ID' : {'type': 'string'},
+                    'Object_ID' : {'type': 'array'}
+                },
+                'required' : ['ID', 'Name', 'Units', 'Type', 'Type_ID']
+            }
+        }
+    },
+    'required' : ['Model.Name', 'Model.ID', 'Model.Description', 'Model.Representation', 'Model.Language', 'Model.License', 'Model.Creator', 'Model.Version_date', 'Model.Documentation', 'Model.Type', 'Model.Entity', 'Model.Equation', 'Model.Equation_quantities', 'Model.Relation_description', 'Model.Relation_formulation', 'Model.Solver', 'Model.Boundary_conditions', 'Model.Accuracy', 'Model.Sensitivity', 'Model.Complexity', 'Model.Robustness', 'Model.Execution_ID', 'Model.Estim_time_step', 'Model.Estim_comp_time', 'Model.Estim_execution cost', 'Model.Estim_personnel cost', 'Model.Required_expertise', 'Model.Inputs', 'Model.Outputs']
+}
 
 @Pyro4.expose
 class Model(MupifObject.MupifObject):
@@ -93,7 +144,7 @@ class Model(MupifObject.MupifObject):
         self.file = ""
         self.workDir = ""
 
-    def initialize(self, file='', workdir='', executionID=None, metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -107,13 +158,10 @@ class Model(MupifObject.MupifObject):
         # self.printMetadata()
 
         # define futher app metadata 
-        self.setMetadata('Model.ExecutionID', executionID)
-        self.setMetadata('Model.Model_name', self.getApplicationSignature())
+        self.setMetadata('Model.Execution_ID', executionID)
+        self.setMetadata('Model.Name', self.getApplicationSignature())
         
         # self.printMetadata()
-        # self.metadata.Model.Model_ID.aa=2000
-        # print(self.metadata['Model']['Model_ID'])
-        # print(self.metadata)
                 
         self.file = file
         if workdir == '':
@@ -121,7 +169,8 @@ class Model(MupifObject.MupifObject):
         else:
             self.workDir = workdir
         
-        self.validateMetadata(MDTemplate)
+        self.validateMetadata(ModelSchema)
+        
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """

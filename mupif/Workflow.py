@@ -35,7 +35,6 @@ import logging
 log = logging.getLogger()
 
 import mupif.Physics.PhysicalQuantities as PQ
-#timeUnits = PQ.PhysicalUnit('s',   1.,    [0, 0, 1, 0, 0, 0, 0, 0, 0])
 
 
 @Pyro4.expose

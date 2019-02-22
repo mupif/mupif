@@ -22,12 +22,10 @@
 #
 
 from builtins import object
-from .mValType import MValType
-from . import mValType
 import Pyro4
 import json
+import jsonschema
 import pprint
-#from dotmap import DotMap
 
 
 
@@ -88,15 +86,20 @@ class MupifObject(object):
         """
         self.metadata[key]=val
         
+    def updateMetadata (self, dictionary):
+        """ 
+        Updates metadata's dictionary with a given dictionary
+        :param dict dictionary: Dictionary of metadata
+        """
+        self.metadata.update(dictionary)
+
 
     def validateMetadata(self, template):
         """
-        TODO
+        Validates metadata's dictionary with a given dictionary
+        :param dict template: Schema for json template
         """
-        #metadataFlat = mValType.flattenDict(self.metadata)
-        #templateFlat = mValType.flattenDict(template)
-        mValType.compare(template, self.metadata, self)
-        
+        jsonschema.validate(self.metadata, template)
         
     def __str__(self):
         """

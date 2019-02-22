@@ -28,12 +28,12 @@ from . import Model
 @Pyro4.expose
 class Application(Model.Model):
     """
-    Fully derived from Model.Model
+    Fully derived from Model.Model. Only kept for backward compatibility.
     """
 
 
 @Pyro4.expose
 class RemoteApplication (Model.RemoteModel):
     """
-    Fully derived from Model.RemoteModel
+    Fully derived from Model.RemoteModel. Only kept for backward compatibility.
     """
