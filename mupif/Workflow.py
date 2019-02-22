@@ -36,6 +36,73 @@ log = logging.getLogger()
 
 import mupif.Physics.PhysicalQuantities as PQ
 
+WorkflowSchema = {
+    'type': 'object',
+    'properties': {
+        'Workflow.Name': {'type' : 'string'},#Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
+        'Workflow.ID': {'type' : ['string','integer']},
+        'Workflow.Description' : {'type': 'string'},
+        'Workflow.Model_refs_ID' : {'type': 'array'},#References to models' IDs
+        'Model.Language' : {'type': 'string'},
+        'Model.License' : {'type': 'string'},
+        'Model.Creator' : {'type': 'string'},
+        'Workflow.Version_date' : {'type': 'string'},
+        'Workflow.Documentation' : {'type': 'string'},#Where published/documented
+        'Workflow.Material' : {'type': 'string'},#What material is simulated
+        'Workflow.Manuf_process' : {'type': 'string'},#Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
+        'Workflow.Boundary_conditions' : {'type': 'string'},
+        'Workflow.Accuracy' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Workflow.Sensitivity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Workflow.Complexity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Workflow.Robustness' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Workflow.Execution_ID' : {'type': 'string'},
+        'Workflow.Estim_time_step' : {'type': 'number'},#Seconds
+        'Workflow.Estim_comp_time' : {'type': 'number'},#Seconds
+        'Workflow.Estim_execution cost' : {'type': 'number'},#EUR
+        'Workflow.Estim_personnel cost' : {'type': 'number'},#EUR
+        'Workflow.Required_expertise' : {'type': 'string', 'enum': ['None', 'User', 'Expert']},
+        'Workflow.Inputs' : {
+            'type': 'array',#List
+            'items' : {
+                'type': 'object',#Object supplies a dictionary
+                'properties': {
+                    'ID' : {'type': ['string','integer']},
+                    'Name' : { 'type': 'string' },
+                    'Description' : {'type': 'string'},
+                    'Units' : {'type': 'string'},
+                    'Origin' : {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
+                    'Experimental_details' : {'type': 'string'},
+                    'Experimental_record' : {'type': 'string'},
+                    'Estimated_std' : {'type': 'number'},
+                    'Type' : {'type': 'string'},#e.g. mupif.Property
+                    'Type_ID' : {'type': 'string'},
+                    'Object_ID' : {'type': 'array'},
+                    'Required' : {'type': 'boolean'}
+                },
+                'required' : ['ID', 'Name', 'Units', 'Origin', 'Type', 'Type_ID', 'Required']
+            }
+        },
+        'Workflow.Outputs' : {
+            'type': 'array',
+            'items' : {
+                'type': 'object',
+                'properties': {
+                    'ID' : {'type': ['string','integer']},
+                    'Name' : { 'type': 'string' },
+                    'Description' : {'type': 'string'},
+                    'Units' : {'type': 'string'},
+                    'Estimated_std' : {'type': 'number'},
+                    'Type' : {'type': 'string'},#e.g. mupif.Property
+                    'Type_ID' : {'type': 'string'},
+                    'Object_ID' : {'type': 'array'}
+                },
+                'required' : ['ID', 'Name', 'Units', 'Type', 'Type_ID']
+            }
+        }
+    },
+    'required' : ['Workflow.Name', 'Workflow.ID', 'Workflow.Description', 'Workflow.Model_refs_ID', 'Workflow.Language', 'Workflow.License', 'Workflow.Creator', 'Workflow.Version_date', 'Workflow.Documentation', 'Workflow.Boundary_conditions', 'Workflow.Accuracy', 'Workflow.Sensitivity', 'Workflow.Complexity', 'Workflow.Robustness', 'Workflow.Execution_ID', 'Workflow.Estim_time_step', 'Workflow.Estim_comp_time', 'Workflow.Estim_execution cost', 'Workflow.Estim_personnel cost', 'Workflow.Required_expertise', 'Workflow.Inputs', 'Workflow.Outputs']
+}
+
 
 @Pyro4.expose
 class Workflow(Model.Model):
@@ -72,7 +139,7 @@ class Workflow(Model.Model):
         self.setMetadata('Workflow.Username', username)
         self.setMetadata('Workflow.Hostname', hostname)
         
-    def initialize(self, file='', workdir='', executionID = None, metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -82,8 +149,19 @@ class Workflow(Model.Model):
         :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param named_arguments kwargs: Arbitrary further parameters 
         """
-        super(Workflow, self).initialize(file, workdir, executionID, metaData, **kwargs)
+        self.metadata.update(metaData)
+        # define futher app metadata 
+        self.setMetadata('Workflow.Execution_ID', executionID)
+        self.setMetadata('Workflow.Name', self.getApplicationSignature())
         
+        self.file = file
+        if workdir == '':
+            self.workDir = os.getcwd()
+        else:
+            self.workDir = workdir
+        
+        self.validateMetadata(WorkflowSchema)
+       
 
     def solve(self, runInBackground=False):
         """ 

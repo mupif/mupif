@@ -29,7 +29,7 @@ class Demo16(Workflow.Workflow):
         """
         super(Demo16, self).__init__(targetTime=targetTime)
     
-    def initialize(self):    
+    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):    
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         #connect to JobManager running on (remote) server
@@ -49,6 +49,34 @@ class Demo16(Workflow.Workflow):
         log.info("Working thermal server " + thermalSignature)
         mechanicalSignature=self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
+        
+        
+        metaData = {
+            'Workflow.Name' : 'Thermo-mechanical non-stationary problem',
+            'Workflow.ID' : 'Thermo-mechanical-1',
+            'Workflow.Description' : 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
+            'Workflow.Model_refs_ID' : ['NonStatThermo-1', 'Mechanical-1'],
+            'Workflow.Language' : 'Python',
+            'Workflow.License' : 'LGPL',
+            'Workflow.Creator' : 'Borek Patzak',
+            'Workflow.Version_date' : '1.0.0, Feb 2019',
+            'Workflow.Documentation' : 'Felippa: Introduction to finite element methods, 2004',
+            'Workflow.Boundary_conditions' : 'Derived from underlying problems',
+            'Workflow.Accuracy' : 'Medium',
+            'Workflow.Sensitivity' : 'Low',
+            'Workflow.Complexity' : 'Low',
+            'Workflow.Robustness' : 'High',
+            'Workflow.Estim_time_step' : 1,
+            'Workflow.Estim_comp_time' : 1.e-3,
+            'Workflow.Estim_execution cost' : 0.01,
+            'Workflow.Estim_personnel cost' : 0.01,
+            'Workflow.Required_expertise' : 'None',
+            'Workflow.Inputs' : [],
+            'Workflow.Outputs' : [{'ID' : 'N/A', 'Name' : 'Displacement field', 'Description' : 'Displacement field on 2D domain', 'Units' : 'm', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Displacement'}]
+        }
+            
+        super().initialize(file, workdir, executionID, metaData, **kwargs)
+        
         
     def solveStep(self, istep, stageID=0, runInBackground=False):
         log.info("Solving thermal problem")
@@ -80,7 +108,7 @@ class Demo16(Workflow.Workflow):
         super(Demo16, self).terminate()
     
     def getApplicationSignature(self):
-        return "Demo16 workflow 1.0"
+        return "Demo16 workflow 1.0 - Thermo-mechanical non-stationary problem"
 
     def getAPIVersion(self):
         return "1.0"

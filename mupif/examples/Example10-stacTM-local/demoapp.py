@@ -845,8 +845,8 @@ class mechanical(Model.Model):
         'Model.Estim_personnel cost' : 0.01,
         'Model.Required_expertise' : 'None',
         'Model.Inputs' : [{'ID' : 'N/A', 'Name' : 'Temperature field', 'Description' : 'Temperature field', 'Units' : 'C', 'Origin' : 'Simulated' , 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Temperature', 'Required' : True}],
-        'Model.Outputs' : [{'ID' : 'N/A', 'Name' : 'Displacement field', 'Description' : 'Displacement field on 2D domain', 'Units' : 'm', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Displacement'}],
-        }
+        'Model.Outputs' : [{'ID' : 'N/A', 'Name' : 'Displacement field', 'Description' : 'Displacement field on 2D domain', 'Units' : 'm', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Displacement'}]
+    }
 
         super().initialize(file,workdir,executionID,metaData,**kwargs)
 

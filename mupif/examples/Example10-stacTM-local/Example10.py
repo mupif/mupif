@@ -8,7 +8,6 @@ import logging
 log = logging.getLogger()
 
 
-
 if True:
     app = demoapp.thermal()
     app.initialize('inputT10.in','.')
