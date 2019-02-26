@@ -40,39 +40,39 @@ log = logging.getLogger()
 ModelSchema = {
     'type': 'object',
     'properties': {
-        'Model.Name': {'type' : 'string'},#Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
-        'Model.ID': {'type' : ['string','integer']},
-        'Model.Description' : {'type': 'string'},
-        'Model.Representation' : {'type': 'string'},#E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
-        'Model.Language' : {'type': 'string'},
-        'Model.License' : {'type': 'string'},
-        'Model.Creator' : {'type': 'string'},
-        'Model.Version_date' : {'type': 'string'},
-        'Model.Documentation' : {'type': 'string'},#Where published/documented
-        'Model.Material' : {'type': 'string'},#What material is simulated
-        'Model.Manuf_process' : {'type': 'string'},#Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
-        'Model.Type' : {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular','Continuum']},
-        'Model.Entity' : {'type': 'array',#List
+        'Name': {'type' : 'string'},#Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
+        'ID': {'type' : ['string','integer']},
+        'Description' : {'type': 'string'},
+        'Representation' : {'type': 'string'},#E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
+        'Language' : {'type': 'string'},
+        'License' : {'type': 'string'},
+        'Creator' : {'type': 'string'},
+        'Version_date' : {'type': 'string'},
+        'Documentation' : {'type': 'string'},#Where published/documented
+        'Material' : {'type': 'string'},#What material is simulated
+        'Manuf_process' : {'type': 'string'},#Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
+        'Type' : {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular','Continuum']},
+        'Entity' : {'type': 'array',#List
             'items' : { 'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']} },
-        'Model.Equation' : {'type': 'array'},#List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
-        'Model.Equation_quantities' : {'type': 'array'}, #e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
-        'Model.Relation_description' : {'type': 'array'}, #Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
-        'Model.Relation_formulation' : {'type': 'array'}, #Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
-        'Model.Solver' : {'type': 'string'},#E.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method. Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-        'Model.Solver_additional_params' : {'type': 'string'}, #Additional parameters of numerical solver, e.g. time integration scheme
-        'Model.Geometry' : {'type': 'string'},#e.g. nanometers, 3D periodic box
-        'Model.Boundary_conditions' : {'type': 'string'},
-        'Model.Accuracy' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Model.Sensitivity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Model.Complexity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Model.Robustness' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Model.Execution_ID' : {'type': 'string'},
-        'Model.Estim_time_step' : {'type': 'number'},#Seconds
-        'Model.Estim_comp_time' : {'type': 'number'},#Seconds
-        'Model.Estim_execution cost' : {'type': 'number'},#EUR
-        'Model.Estim_personnel cost' : {'type': 'number'},#EUR
-        'Model.Required_expertise' : {'type': 'string', 'enum': ['None', 'User', 'Expert']},
-        'Model.Inputs' : {
+        'Equation' : {'type': 'array'},#List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
+        'Equation_quantities' : {'type': 'array'}, #e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
+        'Relation_description' : {'type': 'array'}, #Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
+        'Relation_formulation' : {'type': 'array'}, #Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
+        'Solver' : {'type': 'string'},#E.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method. Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+        'Solver_additional_params' : {'type': 'string'}, #Additional parameters of numerical solver, e.g. time integration scheme
+        'Geometry' : {'type': 'string'},#e.g. nanometers, 3D periodic box
+        'Boundary_conditions' : {'type': 'string'},
+        'Accuracy' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Sensitivity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Complexity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Robustness' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Execution_ID' : {'type': 'string'},
+        'Estim_time_step' : {'type': 'number'},#Seconds
+        'Estim_comp_time' : {'type': 'number'},#Seconds
+        'Estim_execution cost' : {'type': 'number'},#EUR
+        'Estim_personnel cost' : {'type': 'number'},#EUR
+        'Required_expertise' : {'type': 'string', 'enum': ['None', 'User', 'Expert']},
+        'Inputs' : {
             'type': 'array',#List
             'items' : {
                 'type': 'object',#Object supplies a dictionary
@@ -93,7 +93,7 @@ ModelSchema = {
                 'required' : ['ID', 'Name', 'Units', 'Origin', 'Type', 'Type_ID', 'Required']
             }
         },
-        'Model.Outputs' : {
+        'Outputs' : {
             'type': 'array',
             'items' : {
                 'type': 'object',
@@ -111,7 +111,7 @@ ModelSchema = {
             }
         }
     },
-    'required' : ['Model.Name', 'Model.ID', 'Model.Description', 'Model.Representation', 'Model.Language', 'Model.License', 'Model.Creator', 'Model.Version_date', 'Model.Documentation', 'Model.Type', 'Model.Entity', 'Model.Equation', 'Model.Equation_quantities', 'Model.Relation_description', 'Model.Relation_formulation', 'Model.Solver', 'Model.Boundary_conditions', 'Model.Accuracy', 'Model.Sensitivity', 'Model.Complexity', 'Model.Robustness', 'Model.Execution_ID', 'Model.Estim_time_step', 'Model.Estim_comp_time', 'Model.Estim_execution cost', 'Model.Estim_personnel cost', 'Model.Required_expertise', 'Model.Inputs', 'Model.Outputs']
+    'required' : ['Name', 'ID', 'Description', 'Representation', 'Language', 'License', 'Creator', 'Version_date', 'Documentation', 'Type', 'Entity', 'Equation', 'Equation_quantities', 'Relation_description', 'Relation_formulation', 'Solver', 'Boundary_conditions', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness', 'Execution_ID', 'Estim_time_step', 'Estim_comp_time', 'Estim_execution cost', 'Estim_personnel cost', 'Required_expertise', 'Inputs', 'Outputs']
 }
 
 @Pyro4.expose
@@ -128,7 +128,7 @@ class Model(MupifObject.MupifObject):
 
     .. automethod:: __init__
     """
-    def __init__(self):
+    def __init__(self, metaData={}):
         """
         Constructor. Initializes the application.
         """
@@ -140,9 +140,12 @@ class Model(MupifObject.MupifObject):
         self.pyroNS = None
         self.pyroURI = None
         self.appName = None
-
+        
         self.file = ""
         self.workDir = ""
+        
+        self.metadata.update(metaData)
+        
 
     def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
         """
@@ -158,8 +161,8 @@ class Model(MupifObject.MupifObject):
         # self.printMetadata()
 
         # define futher app metadata 
-        self.setMetadata('Model.Execution_ID', executionID)
-        self.setMetadata('Model.Name', self.getApplicationSignature())
+        self.setMetadata('Execution_ID', executionID)
+        self.setMetadata('Name', self.getApplicationSignature())
         
         # self.printMetadata()
                 
