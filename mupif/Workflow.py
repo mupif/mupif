@@ -56,9 +56,6 @@ class Workflow(Model.Model):
         """
         Constructor. Initializes the workflow
 
-        :param str file: Name of file
-        :param str workdir: Optional parameter for working directory
-        :param str executionID: Optional workflow execution ID (typically set by scheduler)
         :param PhysicalQuantity targetTime: target simulation time
         """
         super(Workflow, self).__init__()
@@ -83,7 +80,7 @@ class Workflow(Model.Model):
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
         :param str executionID: Optional application execution ID (typically set by workflow)
-        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param named_arguments kwargs: Arbitrary further parameters 
         """
         self.metadata.update(metaData)

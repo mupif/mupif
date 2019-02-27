@@ -109,7 +109,6 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         else:
             self.unit = PhysicalQuantities._findUnit(units)
 
-
     @classmethod
     def loadFromLocalFile(cls, fileName):
         """
@@ -174,7 +173,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         """
         return self.fieldID.name
 
-    def getFieldType (self):
+    def getFieldType(self):
         """
         Returns receiver field type (values specified as vertex or cell values)
 
@@ -196,8 +195,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         """
         Evaluates the receiver at given spatial position(s).
 
-        :param position: 1D/2D/3D position vectors
-        :type position: tuple, a list of tuples
+        :param positions: 1D/2D/3D position vectors
+        :type positions: tuple, a list of tuples
         :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
         :return: field value(s)
         :rtype: Physics.PhysicalQuantity with given value or tuple of values
@@ -223,7 +222,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
-        cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([ c-eps for c in position], [c+eps for c in position]))
+        cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([c-eps for c in position], [c+eps for c in position]))
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:
@@ -249,13 +248,13 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 log.error('Field::evaluate - no source cell found for position %s' % str(position))
                 for icell in cells:
                     log.debug(icell.number)
-                    log.debug(icell.containsPoint(position) )
+                    log.debug(icell.containsPoint(position))
                     log.debug(icell.glob2loc(position))
 
             else:  # if (self.fieldType == FieldType.FT_vertexBased):
                 # in case of cell based fields do compute average of cell values containing point
                 # this typically happens when point is on the shared edge or vertex
-                count=0
+                count = 0
                 for icell in cells:
                     if icell.containsPoint(position):
                         if debug:
@@ -263,7 +262,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
                         try:
                             tmp = self.value[icell.number]
-                            if count==0:
+                            if count == 0:
                                 answer = list(tmp)
                             else:
                                 for i in answer:
@@ -404,7 +403,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :param str name: human-readable name of the field
         :param pyvtk.LookupTable lookupTable: color lookup table
         :return: Instance of pyvtk
-        :rtype: pyvtk
+        :rtype: pyvtk.VtkData
         """
         import pyvtk
 
@@ -506,10 +505,10 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         
         mesh = self.getMesh()
         numVertices = mesh.getNumberOfVertices()
-        
-        vertexPoints = np.zeros((numVertices, 2))
-        values = np.zeros(numVertices)
-            
+
+        indX = 0
+        indY = 0
+        elev = 0
         if plane == 'xy':
             indX = 0
             indY = 1
@@ -648,7 +647,6 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         .. note:: This method has not been tested yet. The format is subject to future changes.
         """
         import h5py
-        import hashlib
         hdf = h5py.File(fileName, 'a', libver='latest')
         if group not in hdf:
             gg = hdf.create_group(group)
@@ -707,7 +705,6 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         .. note:: This method has not been tested yet.
         """
         import h5py
-        import hashlib
         hdf = h5py.File(fileName, 'r', libver='latest')
         grp = hdf[group]
         # load mesh and field data from HDF5
@@ -833,14 +830,14 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             arr = vtk.vtkDoubleArray()
             arr.SetNumberOfComponents(f.getRecordSize())
             arr.SetName(f.getFieldIDName())
-            assert f.getFieldType() in (FieldType.FT_vertexBased,FieldType.FT_cellBased)  # other future types not handled
+            assert f.getFieldType() in (FieldType.FT_vertexBased, FieldType.FT_cellBased)  # other future types not handled
             if f.getFieldType() == FieldType.FT_vertexBased:
                 nn = mesh.getNumberOfVertices()
             else:
                 nn = mesh.getNumberOfCells()
             arr.SetNumberOfValues(nn)
             for i in range(nn):
-                arr.SetTuple(i, f._giveValue(i).getValue())
+                arr.SetTuple(i, f.giveValue(i).getValue())
             if f.getFieldType() == FieldType.FT_vertexBased:
                 vtkgrid.GetPointData().AddArray(arr)
             else:

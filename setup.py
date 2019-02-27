@@ -67,7 +67,10 @@ setup(name='mupif',
       # Tell what to install (these files must be already in a sdist archive file) - package_data useful only for bdist, not for pip. Extra added files are in MANIFEST.in
       # package_data={'': [ 'README', '*.sh', '*.c', '*.in', 'tools/*.py', 'examples/Ex*/*.py', 'examples/Pi*/*.py', 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
       # 'scipy' fails due to missing compiler for Lapack etc.
-      install_requires=['numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'Pyro4==4.54', 'jsonpickle', 'jsonschema'],
+      install_requires=[
+          'numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'Pyro4==4.54', 'jsonpickle',
+          'jsonschema', 'vtk'
+      ],
       include_package_data=True,
       url='http://www.mupif.org/',
       entry_points={

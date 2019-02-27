@@ -250,7 +250,7 @@ def _connectApp(ns, name, hkey):
         log.info("Connecting to application %s with %s"%(name, app2))
         sig = app2.getApplicationSignature()
         log.debug("Connected to " + sig + " with the application " + name)
-    except Pyro4.errors.CommunicationError as e:
+    except Pyro4.core.errors.CommunicationError as e:
         log.error("Communication error, perhaps a wrong key hkey=%s?" % hkey)
         raise
     except Exception as e:
@@ -258,6 +258,7 @@ def _connectApp(ns, name, hkey):
         raise
 
     return app2
+
 
 def connectApp(ns, name, hkey, sshContext=None):
     """
@@ -272,17 +273,18 @@ def connectApp(ns, name, hkey, sshContext=None):
     """
     tunnel = None
     if sshContext:
+        (hostname, port, natHost, natport) = getNSConnectionInfo(ns, name)
         try:
-            (hostname, port, natHost, natport) = getNSConnectionInfo(ns, name)
             tunnel = sshTunnel(remoteHost=hostname, userName=sshContext.userName, localPort=natport, remotePort=port,
                                sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
         except Exception:
             log.exception('Creating ssh tunnel failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s options %s sshHost %s' %
-                          (jobManHostname, sshContext.userName, jobManNatport, jobManPort, sshContext.sshClient, sshContext.options, sshContext.sshHost))
+                          (hostname, sshContext.userName, natport, port, sshContext.sshClient, sshContext.options, sshContext.sshHost))
             raise
 
     app = _connectApp(ns, name, hkey)
     return Model.RemoteModel (app, appTunnel=tunnel)
+
 
 def getNSAppName(jobname, appname):
     """
@@ -294,6 +296,7 @@ def getNSAppName(jobname, appname):
     :rtype: str
     """
     return 'Mupif'+'.'+jobname+'.'+appname
+
 
 def runDaemon(host, port, hkey, nathost=None, natport=None):
     """
@@ -308,7 +311,7 @@ def runDaemon(host, port, hkey, nathost=None, natport=None):
     :rtype Pyro4.Daemon
     """
     
-    if isinstance (port, (tuple, list)):
+    if isinstance(port, (tuple, list)):
         ports = port
     else:
         ports = (port,)
@@ -320,18 +323,16 @@ def runDaemon(host, port, hkey, nathost=None, natport=None):
             log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             return daemon
         except socket.error as e:
-            log.debug('Socket port %s:%s seems to be already in use' % (host,iport))
+            log.debug('Socket port %s:%s seems to be already in use' % (host, iport))
             daemon = None
-            #raise e
+            # raise e
         except Exception:
             log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             daemon = None
-            #raise
+            # raise
     
-    raise APIError ('Can not run Pyro4 daemon on configured ports')
+    raise APIError.APIError('Can not run Pyro4 daemon on configured ports')
 
-
-    return daemon
 
 def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None, metadata=None):
     """
@@ -365,12 +366,12 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
         externalDaemon = True
 
     ns = connectNameServer(nshost, nsport, hkey)
-    #register agent; register exposed class 
-    #ExposedApp = Pyro4.expose(app)172.30.0.1
-    #Check if application name already exists on a nameServer
+    # register agent; register exposed class
+    # ExposedApp = Pyro4.expose(app)172.30.0.1
+    # Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
-    except Pyro4.errors.NamingError:
+    except Pyro4.core.errors.NamingError:
         pass
     else:
         log.warning('Application name \'%s\' is already registered on name server, overwriting.' % appName)
@@ -429,12 +430,13 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     :param int nsport: Nameserver port
     :param str appName: Name of job manager to be registered at nameserver
     :param str hkey: A password string
-    :param instance app: Application instance
+    :param jobman: Jobmanager
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
     runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
-#def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
+
+# def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
 def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
     """
     Create a reverse ssh tunnel so one server application can connect to another one.
@@ -457,14 +459,17 @@ def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
     :rtype: sshTunnel
     """
     uri = toApplication.getURI()
-    natPort = getNATfromUri( uri )
+    natPort = getNATfromUri(uri)
     uri = fromApplication.getURI()
-    fromNatPort = natPort #getNATfromUri( uri )
+    fromNatPort = natPort  # getNATfromUri( uri )
     
-    tunnel = sshTunnel(remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort, sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
+    tunnel = sshTunnel(
+        remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort,
+        sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
     return tunnel
 
-def getNATfromUri (uri):
+
+def getNATfromUri(uri):
     """
     Return NAT port from URI, e.g. return 5555 from string PYRO:obj_b178eed8e1994135adf9864725f1d50f@127.0.0.1:5555
 
@@ -475,7 +480,8 @@ def getNATfromUri (uri):
     """
     return int(re.search('(\d+)$', str(uri)).group(0))
 
-def getIPfromUri (uri):
+
+def getIPfromUri(uri):
     """
     Returns IP address of the server hosting given URI, e.g. return 127.0.0.1 from string 
     PYRO:obj_b178eed8e1994135adf9864725f1d50f@127.0.0.1:5555
@@ -488,8 +494,9 @@ def getIPfromUri (uri):
     if match:
         return match.group(1)
     else:
-        log.error("getIPfromUri: uri format mismatch (%s)"%(uri))
+        log.error("getIPfromUri: uri format mismatch (%s)" % uri)
         return None
+
 
 def getObjectFromURI(uri, hkey):
     """
@@ -504,14 +511,16 @@ def getObjectFromURI(uri, hkey):
     ret._pyroHmacKey = hkey.encode(encoding='UTF-8')
     return ret
 
-def getUserInfo ():
+
+def getUserInfo():
     """
     :return: tuple containing (username, hostname)
     :rtype: tuple of strings
     """
     username = getpass.getuser()
     hostname = socket.gethostname()
-    return (username, hostname)
+    return username, hostname
+
 
 def connectJobManager (ns, jobManName, hkey, sshContext=None):
     """
@@ -528,8 +537,8 @@ def connectJobManager (ns, jobManName, hkey, sshContext=None):
 
     (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
     log.info('Located Job Manager %s at: %s %s %s %s' % (jobManName, jobManHostname, jobManPort, jobManNatHost, jobManNatport))
-    #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
-    #create tunnel to JobManager running on (remote) server
+    # (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    # create tunnel to JobManager running on (remote) server
     tunnelJobMan = None
     if sshContext:
         try:
@@ -541,7 +550,7 @@ def connectJobManager (ns, jobManName, hkey, sshContext=None):
 
     # locate remote jobManager on (remote) server
     jobMan = _connectApp(ns, jobManName, hkey)
-    #return (jobMan, tunnelJobMan)
+    # return (jobMan, tunnelJobMan)
     return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
@@ -550,7 +559,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
     Request new application instance to be spawned by  given jobManager.
     
     :param Pyro4.naming.Nameserver ns: running name server
-    :param jobManager jobManager: jobmanager to use
+    :param jobManager jobMan: jobmanager to use
     :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param str hkey: A password string
     :param sshContext sshContext: describing optional ssh tunnel connection detail
@@ -560,9 +569,9 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
     :raises Exception: if allocation of job fails
     """
 
-    #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
+    # (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     log.debug('Trying to connect to JobManager')
-    #(jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
+    # (jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
 
     #if jobMan is None:
     #   e = OSError("Can not connect to JobManager")
@@ -577,14 +586,14 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
     #   raise
 
     try:
-        (username,hostname)=getUserInfo()
+        (username, hostname) = getUserInfo()
         retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
-        log.info('Allocated job, returned record from jobManager:' +  str(retRec))
+        log.info('Allocated job, returned record from jobManager:' + str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
         raise
 
-    #create tunnel to application's daemon running on (remote) server
+    # create tunnel to application's daemon running on (remote) server
     appTunnel = None
     if sshContext:
         try:
@@ -596,7 +605,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
     else:
         log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
 
-    #time.sleep(1)
+    # time.sleep(1)
     # connect to (remote) application, requests remote proxy
     app = _connectApp(ns, retRec[1], hkey)
     if app==None:
@@ -609,7 +618,7 @@ def allocateNextApplication (ns, jobMan, natPort, sshContext=None):
     Request new application instance to be spawned by  given jobManager
 
     :param Pyro4.naming.Nameserver ns: running name server
-    :param jobManager jobmanager to use 
+    :param jobMan: jobmanager to use
     :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param sshContext describing optional ssh tunnel connection detail 
 
@@ -617,15 +626,18 @@ def allocateNextApplication (ns, jobMan, natPort, sshContext=None):
     :rtype: Model.RemoteModel
     :raises Exception: if allocation of job fails
     """
-    return allocateApplicationWithJobManager (ns, jobMan, natPort, sshContext)
+    return allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext)
+
 
 from . import PyroFile
+
+
 def downloadPyroFile (newLocalFileName, pyroFile, compressFlag=False):
     """
     Allows to download remote file (pyro ile handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
-    :param PyroFile pyroFile: representation of existing remote server's file
+    :param PyroFile.PyroFile pyroFile: representation of existing remote server's file
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
     file = PyroFile.PyroFile(newLocalFileName, 'wb')
