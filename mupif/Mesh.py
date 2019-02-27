@@ -65,7 +65,7 @@ class MeshIterator(object):
             self.mesh = mesh
         else:
             print("Unsupported iterator type")
-            abort(0)
+            sys.exit(0)
 
     def __iter__(self):
         """

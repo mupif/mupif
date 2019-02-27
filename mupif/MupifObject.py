@@ -28,7 +28,6 @@ import jsonschema
 import pprint
 
 
-
 @Pyro4.expose
 class MupifObject(object):
     """
@@ -49,7 +48,6 @@ class MupifObject(object):
         if jsonFileName:
             with open(jsonFileName) as f:
                 self.metadata = json.load(f)
-        
 
     def getMetadata(self, key):
         """ 
@@ -77,7 +75,7 @@ class MupifObject(object):
         """
         pprint.pprint(self.metadata, width=300)
     
-    def setMetadata (self, key, val):
+    def setMetadata(self, key, val):
         """ 
         Sets metadata associated to given key
         :param key: unique metadataID 
@@ -86,13 +84,12 @@ class MupifObject(object):
         """
         self.metadata[key]=val
         
-    def updateMetadata (self, dictionary):
+    def updateMetadata(self, dictionary):
         """ 
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
         """
         self.metadata.update(dictionary)
-
 
     def validateMetadata(self, template):
         """
@@ -119,5 +116,3 @@ class MupifObject(object):
     def toJSONFile(self, filename, indent=4):
         with open(filename,"w") as f:
             json.dump(self.metadata,f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
-    
-        
