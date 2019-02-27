@@ -73,7 +73,6 @@ class SimpleJobManager(JobManager.JobManager):
         self.daemon = daemon
         self.ns = ns
         self.jobCounter = 0
-        # TODO Vit or Borek: check it - changed from daemon.locationString, which doesnot exist.
         self.jobPort = daemon.locationStr
         self.lock = threading.Lock()
 
@@ -348,13 +347,12 @@ class SimpleJobManager2 (JobManager.JobManager):
             status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX], self.activeJobs[key][SJM2_PORT_INDX]))
         return status
 
-    def uploadFile(self, jobID, filename, pyroFile):
+    def uploadFile(self, jobID, filename, pyroFile, hkey):
         """
         See :func:`JobManager.uploadFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
-        # TODO hkey missing in following function
-        PyroUtil.uploadPyroFile(targetFileName, pyroFile)
+        PyroUtil.uploadPyroFile(targetFileName, pyroFile, hkey)
 
     def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):
         """

@@ -38,7 +38,6 @@ log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
-WorkflowSchema['properties']['Model_refs_ID'] = {'type': 'array'}
 WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Representation', 'Language', 'License', 'Creator', 'Version_date', 'Documentation', 'Model_refs_ID', 'Boundary_conditions', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness', 'Execution_ID', 'Estim_time_step', 'Estim_comp_time', 'Estim_execution cost', 'Estim_personnel cost', 'Required_expertise', 'Inputs', 'Outputs']
 
 
@@ -99,7 +98,6 @@ class Workflow(Model.Model):
             self.workDir = workdir
         
         self.validateMetadata(WorkflowSchema)
-        self.printMetadata()
 
     def solve(self, runInBackground=False):
         """ 

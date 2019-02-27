@@ -125,13 +125,13 @@ class JobManager(object):
     def getNSName(self):
         return self.applicationName
 
-    def uploadFile(self, jobID, filename, pyroFile):
+    def uploadFile(self, jobID, filename, pyroFile, hkey):
         """
         Uploads the given file to application server, files are uploaded to dedicated jobID directory
         :param str jobID: jobID
         :param str filename: target file name
         :param PyroFile pyroFile: source pyroFile
-
+        :param str hkey: A password string
         """
 
     def getPyroFile(self, jobID, filename, buffSize=1024):

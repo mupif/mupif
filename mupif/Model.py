@@ -36,83 +36,91 @@ from . import TimeStep
 import logging
 log = logging.getLogger()
 
-#Schema for metadata
+# Schema for metadata
 ModelSchema = {
     'type': 'object',
     'properties': {
-        'Name': {'type' : 'string'},#Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
-        'ID': {'type' : ['string','integer']},
-        'Description' : {'type': 'string'},
-        'Representation' : {'type': 'string'},#E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
-        'Language' : {'type': 'string'},
-        'License' : {'type': 'string'},
-        'Creator' : {'type': 'string'},
-        'Version_date' : {'type': 'string'},
-        'Documentation' : {'type': 'string'},#Where published/documented
-        'Material' : {'type': 'string'},#What material is simulated
-        'Manuf_process' : {'type': 'string'},#Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
-        'Type' : {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular','Continuum']},
-        'Entity' : {'type': 'array',#List
-            'items' : { 'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']} },
-        'Equation' : {'type': 'array'},#List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
-        'Equation_quantities' : {'type': 'array'}, #e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
-        'Relation_description' : {'type': 'array'}, #Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
-        'Relation_formulation' : {'type': 'array'}, #Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
-        'Solver' : {'type': 'string'},#E.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method. Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-        'Solver_additional_params' : {'type': 'string'}, #Additional parameters of numerical solver, e.g. time integration scheme
-        'Geometry' : {'type': 'string'},#e.g. nanometers, 3D periodic box
-        'Boundary_conditions' : {'type': 'string'},
-        'Accuracy' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Sensitivity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Complexity' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Robustness' : {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Execution_ID' : {'type': 'string'},
-        'Estim_time_step' : {'type': 'number'},#Seconds
-        'Estim_comp_time' : {'type': 'number'},#Seconds
-        'Estim_execution cost' : {'type': 'number'},#EUR
-        'Estim_personnel cost' : {'type': 'number'},#EUR
-        'Required_expertise' : {'type': 'string', 'enum': ['None', 'User', 'Expert']},
-        'Inputs' : {
-            'type': 'array',#List
-            'items' : {
-                'type': 'object',#Object supplies a dictionary
+        'Name': {'type': 'string'},  # Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
+        'ID': {'type': ['string', 'integer']},
+        'Description': {'type': 'string'},
+        'Representation': {'type': 'string'},  # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
+        'Model_refs_ID': {'type': 'array'},
+        'Language': {'type': 'string'},
+        'License': {'type': 'string'},
+        'Creator': {'type': 'string'},
+        'Version_date': {'type': 'string'},
+        'Documentation': {'type': 'string'},  # Where published/documented
+        'Material': {'type': 'string'},  # What material is simulated
+        'Manuf_process' : {'type': 'string'},  # Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
+        'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum']},
+        'Entity': {'type': 'array',  # List
+                   'items': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']}},
+        'Equation': {'type': 'array'},  # List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
+        'Equation_quantities': {'type': 'array'},  # e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
+        'Relation_description': {'type': 'array'},  # Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
+        'Relation_formulation': {'type': 'array'},  # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
+        'Solver': {'type': 'string'},  # E.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method. Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+        'Solver_additional_params': {'type': 'string'},  # Additional parameters of numerical solver, e.g. time integration scheme
+        'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
+        'Boundary_conditions': {'type': 'string'},
+        'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+        'Execution_ID': {'type': 'string'},
+        'Estim_time_step': {'type': 'number'},  # Seconds
+        'Estim_comp_time': {'type': 'number'},  # Seconds
+        'Estim_execution cost': {'type': 'number'},  # EUR
+        'Estim_personnel cost': {'type': 'number'},  # EUR
+        'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
+        'Inputs': {
+            'type': 'array',  # List
+            'items': {
+                'type': 'object',  # Object supplies a dictionary
                 'properties': {
-                    'ID' : {'type': ['string','integer']},
-                    'Name' : { 'type': 'string' },
-                    'Description' : {'type': 'string'},
-                    'Units' : {'type': 'string'},
-                    'Origin' : {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
-                    'Experimental_details' : {'type': 'string'},
-                    'Experimental_record' : {'type': 'string'},
-                    'Estimated_std' : {'type': 'number'},
-                    'Type' : {'type': 'string'},#e.g. mupif.Property
-                    'Type_ID' : {'type': 'string'},
-                    'Object_ID' : {'type': 'array'},
-                    'Required' : {'type': 'boolean'}
+                    'ID': {'type': ['string', 'integer']},
+                    'Name': {'type': 'string'},
+                    'Description': {'type': 'string'},
+                    'Units': {'type': 'string'},
+                    'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
+                    'Experimental_details': {'type': 'string'},
+                    'Experimental_record': {'type': 'string'},
+                    'Estimated_std': {'type': 'number'},
+                    'Type': {'type': 'string'},  # e.g. mupif.Property
+                    'Type_ID': {'type': 'string'},
+                    'Object_ID': {'type': 'array'},
+                    'Required': {'type': 'boolean'}
                 },
-                'required' : ['ID', 'Name', 'Units', 'Origin', 'Type', 'Type_ID', 'Required']
+                'required': ['ID', 'Name', 'Units', 'Origin', 'Type', 'Type_ID', 'Required']
             }
         },
-        'Outputs' : {
+        'Outputs': {
             'type': 'array',
-            'items' : {
+            'items': {
                 'type': 'object',
                 'properties': {
-                    'ID' : {'type': ['string','integer']},
-                    'Name' : { 'type': 'string' },
-                    'Description' : {'type': 'string'},
-                    'Units' : {'type': 'string'},
-                    'Estimated_std' : {'type': 'number'},
-                    'Type' : {'type': 'string'},#e.g. mupif.Property
-                    'Type_ID' : {'type': 'string'},
-                    'Object_ID' : {'type': 'array'}
+                    'ID': {'type': ['string', 'integer']},
+                    'Name': { 'type': 'string'},
+                    'Description': {'type': 'string'},
+                    'Units': {'type': 'string'},
+                    'Estimated_std': {'type': 'number'},
+                    'Type': {'type': 'string'},  # e.g. mupif.Property
+                    'Type_ID': {'type': 'string'},
+                    'Object_ID': {'type': 'array'}
                 },
-                'required' : ['ID', 'Name', 'Units', 'Type', 'Type_ID']
+                'required': ['ID', 'Name', 'Units', 'Type', 'Type_ID']
             }
         }
     },
-    'required' : ['Name', 'ID', 'Description', 'Representation', 'Language', 'License', 'Creator', 'Version_date', 'Documentation', 'Type', 'Entity', 'Equation', 'Equation_quantities', 'Relation_description', 'Relation_formulation', 'Solver', 'Boundary_conditions', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness', 'Execution_ID', 'Estim_time_step', 'Estim_comp_time', 'Estim_execution cost', 'Estim_personnel cost', 'Required_expertise', 'Inputs', 'Outputs']
+    'required': [
+        'Name', 'ID', 'Description', 'Representation', 'Language', 'License', 'Creator', 'Version_date',
+        'Documentation', 'Type', 'Entity', 'Equation', 'Equation_quantities', 'Relation_description',
+        'Relation_formulation', 'Solver', 'Boundary_conditions', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness',
+        'Execution_ID', 'Estim_time_step', 'Estim_comp_time', 'Estim_execution cost', 'Estim_personnel cost',
+        'Required_expertise', 'Inputs', 'Outputs'
+    ]
 }
+
 
 @Pyro4.expose
 class Model(MupifObject.MupifObject):
@@ -145,7 +153,6 @@ class Model(MupifObject.MupifObject):
         self.workDir = ""
         
         self.metadata.update(metaData)
-        
 
     def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
         """
@@ -173,7 +180,6 @@ class Model(MupifObject.MupifObject):
             self.workDir = workdir
         
         self.validateMetadata(ModelSchema)
-        
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """

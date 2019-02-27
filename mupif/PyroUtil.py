@@ -545,7 +545,7 @@ def connectJobManager (ns, jobManName, hkey, sshContext=None):
     return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=None):
+def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None):
     """
     Request new application instance to be spawned by  given jobManager.
     
@@ -558,7 +558,6 @@ def allocateApplicationWithJobManager (ns, jobMan, natPort, hkey, sshContext=Non
     :returns: Application instance
     :rtype: Model.RemoteModel
     :raises Exception: if allocation of job fails
-    
     """
 
     #(jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
@@ -654,7 +653,7 @@ def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024, compressFlag=False
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
-    :param PyroFile pyroFile: represenation of remote file, this file will be created
+    :param PyroFile.PyroFile pyroFile: represenation of remote file, this file will be created
     :param str hkey: A password string
     :param int size: optional chunk size. The data are read and written in byte chunks of this size
     :param bool compressFlag: will activate compression during data transfer (zlib)
@@ -673,8 +672,9 @@ def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024, compressFlag=False
     file.close()
     pyroFile.close()
 
-def uploadPyroFileOnServer (clientFileName, pyroFile, size = 1024, compressFlag=False):
+
+def uploadPyroFileOnServer (clientFileName, pyroFile, hkey, size = 1024, compressFlag=False):
     """
     See :func:'downloadPyroFile'
     """
-    uploadPyroFile (clientFileName, pyroFile, size, compressFlag)
+    uploadPyroFile(clientFileName, pyroFile, hkey, size, compressFlag)
