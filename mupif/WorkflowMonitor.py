@@ -44,7 +44,7 @@ import Pyro4
 class WorkflowMonitor(MupifObject.MupifObject):
     """
     An class implementing workflow monitor; a server keeping track of individual workflow executions and their status.
-    it internally maintains workflows dict, where keys are workflow execution IDs, 
+    It internally maintains workflows dict, where keys are workflow execution IDs, 
     and values are dicts containing metadata.
 
     .. automethod:: __init__

@@ -24,7 +24,7 @@
 from builtins import object
 import os
 import Pyro4
-import time
+import time as timeTime
 from . import Model
 from . import PyroUtil
 from . import APIError
@@ -52,13 +52,14 @@ class Workflow(Model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's')):
+    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}):
         """
         Constructor. Initializes the workflow
 
         :param PhysicalQuantity targetTime: target simulation time
+        :param dict metaData: Optionally pass metadata.
         """
-        super(Workflow, self).__init__()
+        super(Workflow, self).__init__(metaData=metaData)
 
         # print (targetTime)
         if PQ.isPhysicalQuantity(targetTime):
@@ -66,14 +67,10 @@ class Workflow(Model.Model):
         else:
             raise TypeError('targetTime is not PhysicalQuantity')
 
-        self.workflowMonitor = None  # no monitor by default
-
-        # define workflow metadata
-        (username, hostname) = PyroUtil.getUserInfo()
-        self.setMetadata('Username', username)
-        self.setMetadata('Hostname', hostname)
+        self.workflowMonitor = None  # No monitor by default
         
-    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
+        
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -86,7 +83,7 @@ class Workflow(Model.Model):
         self.metadata.update(metaData)
         # define futher app metadata 
         self.setMetadata('Execution_ID', executionID)
-        self.setMetadata('Name', self.getApplicationSignature())
+        #self.setMetadata('Name', self.getApplicationSignature())
         
         self.file = file
         if workdir == '':
@@ -106,9 +103,12 @@ class Workflow(Model.Model):
         :param bool runInBackground: optional argument, default False. If True, the solution will run in background (in separate thread or remotely).
 
         """
+        self.setMetadata('Status', 'Running')
+        self.setMetadata('Progress', 0.)
+
         time = PQ.PhysicalQuantity(0., 's')
         timeStepNumber = 0
-
+        
         while abs(time.inUnitsOf('s').getValue()-self.targetTime.inUnitsOf('s').getValue()) > 1.e-6:
             dt = self.getCriticalTimeStep()
             time = time+dt
@@ -119,8 +119,13 @@ class Workflow(Model.Model):
         
             log.debug("Step %g: t=%g dt=%g"%(timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 
+            #Estimate progress
+            self.setMetadata('Progress', 100*time.inUnitsOf('s').getValue()/self.targetTime.inUnitsOf('s').getValue())
+            
             self.solveStep(istep)
             self.finishStep(istep)
+        self.setMetadata('Status', 'Finished')
+        self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
         self.terminate()
 
     def getAPIVersion(self):
@@ -135,11 +140,11 @@ class Workflow(Model.Model):
         :return: Returns the application identification
         :rtype: str
         """
-        return "Workflow"
+        return 'Workflow'
     
     def updateStatus(self, status, progress=0):
         """
-        Updates the workflow status. The status is subnitted to workflow monitor. The self.workflowMonitor
+        Updates the workflow status. The status is submitted to workflow monitor. The self.workflowMonitor
         should be (proxy) to workflowManager
         :param str status: string describing the workflow status (initialized, running, failed, finished)
         :param int progress: integer number indicating execution progress (in percent)
@@ -153,7 +158,7 @@ class Workflow(Model.Model):
         #     return # do not raise, silently continue without updating status
 
         if self.workflowMonitor:
-            date = time.strftime("%d %b %Y %H:%M:%S", time.gmtime())
+            date = timeTime.strftime("%d %b %Y %H:%M:%S", timeTime.gmtime())
             # metadata = {WorkflowMonitor.WorkflowMonitorKeys.Status: status,
             # WorkflowMonitor.WorkflowMonitorKeys.Progress: progress,
             # WorkflowMonitor.WorkflowMonitorKeys.Date: date}
@@ -162,6 +167,7 @@ class Workflow(Model.Model):
                         'WorkflowMonitor.Date': date}
             
             try:
+                #TODO - ComponentID should be removed
                 self.workflowMonitor.updateMetadata(self.getMetadata('WorkflowMonitor.ComponentID'), metadata)
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required

@@ -61,7 +61,6 @@ time  = 0
 timestepnumber=0
 targetTime = 1.0
 
-
 app1 = application1()
 app2 = application2()
 

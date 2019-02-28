@@ -29,7 +29,7 @@ class thermal(Model.Model):
         self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
         self.tria=False
         
-    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='11', metaData={}, **kwargs):
         metaData = {
         'Name' : 'Stationary thermal problem',
         'ID' : 'Thermo-1',
@@ -61,10 +61,7 @@ class thermal(Model.Model):
         'Inputs' : [],
         'Outputs' : [{'ID' : 'N/A', 'Name' : 'Temperature field', 'Description' : 'Temperature field', 'Units' : 'C', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Temperature'}],
         }
-        #self.updateMetadata(metaData)
-        #self.printMetadata()
-        
-        super().initialize(file,workdir,executionID,metaData,**kwargs)
+        super(thermal, self).initialize(file,workdir,executionID,metaData,**kwargs)
 
     def readInput(self, tria=False):
         self.tria = tria
@@ -243,6 +240,9 @@ class thermal(Model.Model):
         self.Field = field
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
+        self.setMetadata('Status', 'Running')
+        self.setMetadata('Progress', 0.)
+        
         self.readInput()
         mesh = self.mesh
         self.volume = 0.0;
@@ -371,7 +371,7 @@ class thermal(Model.Model):
 
         log.info("Done")
         log.info("Time consumed %f s" % (timeTime.time()-start))
-
+        self.setMetadata('Progress', 100.)
 
     def compute_B(self, elem, lc):
         # computes gradients of shape functions of given element
@@ -532,7 +532,7 @@ class thermal_nonstat(thermal):
         self.Tau=0.5
         self.init=True
 
-    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         metaData = {
         'Name' : 'Non-stationary thermal problem',
         'ID' : 'NonStatThermo-1',
@@ -564,7 +564,7 @@ class thermal_nonstat(thermal):
         'Inputs' : [],
         'Outputs' : [{'ID' : 'N/A', 'Name' : 'Temperature field', 'Description' : 'Temperature field', 'Units' : 'C', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Temperature'}],
         }
-        super().initialize(file,workdir,executionID,metaData,**kwargs)
+        super(thermal, self).initialize(file,workdir,executionID,metaData,**kwargs)
 
         
     def getApplicationSignature(self):
@@ -797,6 +797,7 @@ class thermal_nonstat(thermal):
         self.r = np.dot(self.kup.transpose(),self.T[:self.neq])+np.dot(self.kpp,self.T[self.neq:self.neq+self.pneq])
         #print (self.r)
 
+        self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
         log.info("Done")
         log.info("Time consumed %f s" % (timeTime.time()-start))
 
@@ -815,7 +816,7 @@ class mechanical(Model.Model):
         self.alpha = 12.e-6
         self.thick = 1.0
         
-    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         metaData = {
         'Name' : 'Plane stress linear elastic',
         'ID' : 'Mechanical-1',

@@ -16,9 +16,14 @@ if True:
     #print(app.printMetadata())
     f = app.getField(FieldID.FID_Temperature, app.getAssemblyTime(tstep))
     f.field2VTKData().tofile('thermal10')
-    f.field2Image2D(title='Thermal', fileName='thermal.png')
+    #f.field2Image2D(title='Thermal', fileName='thermal.png')
     time.sleep(1)
     valueT=f.evaluate((4.1, 0.9, 0.0))
+    app.terminate()
+    app.printMetadata()
+    #app.toJSON()
+    #app.toJSONFile('aa.json')
+    
     #print (valueT)
 
 if True:
@@ -33,6 +38,8 @@ if True:
     f.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
     time.sleep(1)
     valueM=f.evaluate((4.1, 0.9, 0.0))
+    app2.terminate()
+    app2.printMetadata()
     #print (valueM)
 
 if ( (abs(valueT.getValue()[0]-5.1996464044328956) <= 1.e-8) and

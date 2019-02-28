@@ -67,13 +67,22 @@ class MupifObject(object):
         """
         return key in self.metadata
     
-    def printMetadata(self):
+    def printMetadata(self, nonEmpty=False):
         """ 
         Print all metadata
+        :param bool nonEmpty: Optionally print only non-empty values 
+        
         :return: None
         :rtype: None
         """
-        pprint.pprint(self.metadata, width=300)
+        print('ClassName:\'%s\', AppName:\'%s\':' % (self.__class__.__name__, self.getMetadata('Name')) )
+        if nonEmpty:
+            d = {}
+            for k, v in self.metadata.items():
+                if v != '':
+                   d[k]=v
+        pprint.pprint(d if nonEmpty else self.metadata, indent=4, width=300)
+        
     
     def setMetadata(self, key, val):
         """ 
@@ -111,7 +120,7 @@ class MupifObject(object):
         JSON serialization method
         :return: string
         """
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
+        return json.dumps(self.metadata, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
     
     def toJSONFile(self, filename, indent=4):
         with open(filename,"w") as f:

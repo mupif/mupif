@@ -29,7 +29,7 @@ class Demo16(Workflow.Workflow):
         """
         super(Demo16, self).__init__(targetTime=targetTime)
     
-    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):    
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):    
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         #connect to JobManager running on (remote) server
@@ -50,7 +50,6 @@ class Demo16(Workflow.Workflow):
         mechanicalSignature=self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
         
-        
         metaData = {
             'Name' : 'Thermo-mechanical non-stationary problem',
             'ID' : 'Thermo-mechanical-1',
@@ -62,7 +61,7 @@ class Demo16(Workflow.Workflow):
             'Creator' : 'Borek Patzak',
             'Version_date' : '1.0.0, Feb 2019',
             'Documentation' : 'Felippa: Introduction to finite element methods, 2004',
-            'Boundary_conditions' : 'Derived from underlying problems',
+            'Boundary_conditions' : 'Dirichlet, Neumann, Cauchy',
             'Accuracy' : 'Medium',
             'Sensitivity' : 'Low',
             'Complexity' : 'Low',
@@ -78,8 +77,8 @@ class Demo16(Workflow.Workflow):
             
         super().initialize(file, workdir, executionID, metaData, **kwargs)
         
-        
     def solveStep(self, istep, stageID=0, runInBackground=False):
+        
         log.info("Solving thermal problem")
         log.info(self.thermal.getApplicationSignature())
         
@@ -102,10 +101,12 @@ class Demo16(Workflow.Workflow):
         return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
-        #self.thermalAppRec.terminateAll()
+        self.thermal.printMetadata()
+        self.mechanical.printMetadata()
         self.thermal.terminate()
         self.thermalJobMan.terminate()
         self.mechanical.terminate()
+        self.printMetadata()
         super(Demo16, self).terminate()
     
     def getApplicationSignature(self):
@@ -119,7 +120,4 @@ if __name__=='__main__':
     demo.initialize()
     demo.solve()
     log.info("Test OK")
-
-
-
 

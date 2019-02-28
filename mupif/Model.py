@@ -32,6 +32,8 @@ from . import Property
 from . import Field
 from . import Function
 from . import TimeStep
+from . import PyroUtil
+import time
 
 import logging
 log = logging.getLogger()
@@ -40,8 +42,9 @@ log = logging.getLogger()
 ModelSchema = {
     'type': 'object',
     'properties': {
-        'Name': {'type': 'string'},  # Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL
+        'Name': {'type': 'string'},  # Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL, obtained automatically from getApplicationSignature()
         'ID': {'type': ['string', 'integer']},
+        'Use_case_ID': {'type': ['string', 'integer']},
         'Description': {'type': 'string'},
         'Representation': {'type': 'string'},  # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
         'Model_refs_ID': {'type': 'array'},
@@ -67,12 +70,17 @@ ModelSchema = {
         'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
         'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
         'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Execution_ID': {'type': 'string'},
+        'Execution_ID': {'type': ['string', 'integer']},
         'Estim_time_step': {'type': 'number'},  # Seconds
         'Estim_comp_time': {'type': 'number'},  # Seconds
         'Estim_execution cost': {'type': 'number'},  # EUR
         'Estim_personnel cost': {'type': 'number'},  # EUR
         'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
+        'Username': {'type': 'string'},#automatically set in Model and Workflow
+        'Status' : {'type': 'string', 'enum': ['Initialized', 'Running', 'Finished','Failed']},
+        'Progress' : {'type': 'number'}, #Progress in %
+        'Date_time_start' : {'type': 'string'},#automatically set in Workflow
+        'Date_time_end' : {'type': 'string'},#automatically set in Workflow
         'Inputs': {
             'type': 'array',  # List
             'items': {
@@ -152,9 +160,15 @@ class Model(MupifObject.MupifObject):
         self.file = ""
         self.workDir = ""
         
+        (username, hostname) = PyroUtil.getUserInfo()
+        self.setMetadata('Username', username)
+        self.setMetadata('Hostname', hostname)
+        self.setMetadata('Status', 'Initialized')
+        self.setMetadata('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+        
         self.metadata.update(metaData)
 
-    def initialize(self, file='', workdir='', executionID='None', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -169,7 +183,8 @@ class Model(MupifObject.MupifObject):
 
         # define futher app metadata 
         self.setMetadata('Execution_ID', executionID)
-        self.setMetadata('Name', self.getApplicationSignature())
+        #self.setMetadata('Name', self.getApplicationSignature())
+        self.setMetadata('Status', 'Initialized')
         
         # self.printMetadata()
                 
@@ -256,6 +271,7 @@ class Model(MupifObject.MupifObject):
         try:
             field = self.getField(fieldID, time, objectID=objectID)
         except:
+            self.setMetadata('Status', 'Failed')
             raise APIError.APIError('Error: can not obtain field')
         if hasattr(field, '_PyroURI'):
             return field._PyroURI
@@ -336,6 +352,9 @@ class Model(MupifObject.MupifObject):
         :param bool runInBackground: optional argument, defualt False. If True, the solution will run in background (in separate thread or remotely).
 
         """
+        self.setMetadata('Status', 'Running')
+        self.setMetadata('Progress', 0.)
+        
     def wait(self):
         """
         Wait until solve is completed when executed in background.
@@ -412,6 +431,7 @@ class Model(MupifObject.MupifObject):
                 log.debug("Removing application %s from a nameServer %s" % (appName, nameServer))
             except Exception as e:
                 log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer))
+                self.setMetadata('Status', 'Failed')
                 raise
 
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
@@ -419,6 +439,9 @@ class Model(MupifObject.MupifObject):
         """
         Terminates the application. Shutdowns daemons if created internally.
         """
+        self.setMetadata('Status', 'Finished')
+        self.setMetadata('Date_time_end', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+        
         # Remove application from nameServer
         # print("Removing")
         if self.pyroNS is not None:
@@ -482,6 +505,7 @@ class RemoteModel (object):
                 self._jobID=None
             except Exception as e:
                 print(e)
+                self.setMetadata('Status', 'Failed')
             finally:
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID=None
