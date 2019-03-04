@@ -7,61 +7,70 @@ import numpy as np
 import time as timeTime
 import os
 import logging
+import mupif.Physics.PhysicalQuantities as PQ
+
 log = logging.getLogger('demoapp')
 
-import mupif.Physics.PhysicalQuantities as PQ
 
 def getline (f):
     while True:
         line=f.readline()
         if line == '':
             raise APIError.APIError ('Error: EOF reached in input file')
-        elif line[0]!='#':
+        elif line[0] != '#':
             return line
+
 
 @Pyro4.expose
 class thermal(Model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
-    def __init__(self):
-        super(thermal, self).__init__()
-        self.morphologyType=None
-        self.conductivity=Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
-        self.tria=False
+    def __init__(self, metaData={}):
+        if len(metaData) == 0:
+            metaData = {
+                'Name': 'Stationary thermal problem',
+                'ID': 'Thermo-1',
+                'Description': 'Stationary heat conduction using finite elements on rectangular domain',
+                'Geometry': '2D rectangle',
+                'Boundary_conditions': 'Dirichlet, Neumann',
+                'Input_types': [],
+                'Output_types': [{'ID': 'N/A', 'Name': 'Temperature field', 'Description': 'Temperature field',
+                                  'Units': 'C', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Temperature'}],
+                'Solver': {
+                    'Software': 'own',
+                    'Type': 'Finite elements',
+                    'Accuracy': 'Medium',
+                    'Sensitivity': 'Low',
+                    'Complexity': 'Low',
+                    'Robustness': 'High',
+                    'Estim_time_step': 1,
+                    'Estim_comp_time': 1.e-3,
+                    'Estim_execution_cost': 0.01,
+                    'Estim_personnel_cost': 0.01,
+                    'Required_expertise': 'None',
+                    'Language': 'Python',
+                    'License': 'LGPL',
+                    'Creator': 'Borek Patzak',
+                    'Version_date': '1.0.0, Feb 2019',
+                    'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+                },
+                'Physics': {
+                    'Type': 'Continuum',
+                    'Entity': ['Finite volume'],
+                    'Equation': ['Heat balance'],
+                    'Equation_quantities': ['Heat flow'],
+                    'Relation_description': ['Fick\'s first law'],
+                    'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
+                    'Representation': 'Finite volumes'
+                }
+            }
+        super(thermal, self).__init__(metaData)
+        self.morphologyType = None
+        self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
+        self.tria = False
         
     def initialize(self, file='', workdir='', executionID='11', metaData={}, **kwargs):
-        metaData = {
-        'Name' : 'Stationary thermal problem',
-        'ID' : 'Thermo-1',
-        'Description' : 'Stationary heat conduction using finite elements on rectangular domain',
-        'Representation' : 'Finite volumes',
-        'Language' : 'Python',
-        'License' : 'LGPL',
-        'Creator' : 'Borek Patzak',
-        'Version_date' : '1.0.0, Feb 2019',
-        'Documentation' : 'Felippa: Introduction to finite element methods, 2004',
-        'Type' : 'Continuum',
-        'Entity' : ['Finite volume'],
-        'Equation' :['Heat balance'],
-        'Equation_quantities' : ['Heat flow'],
-        'Relation_description' : ['Fick\'s first law'],
-        'Relation_formulation' : ['Flow induced by thermal gradient on isotropic material'],
-        'Solver' : 'Finite elements',
-        'Geometry' : '2D rectangle',
-        'Boundary_conditions' : 'Dirichlet, Neumann',
-        'Accuracy' : 'Medium',
-        'Sensitivity' : 'Low',
-        'Complexity' : 'Low',
-        'Robustness' : 'High',
-        'Estim_time_step' : 1,
-        'Estim_comp_time' : 1.e-3,
-        'Estim_execution cost' : 0.01,
-        'Estim_personnel cost' : 0.01,
-        'Required_expertise' : 'None',
-        'Inputs' : [],
-        'Outputs' : [{'ID' : 'N/A', 'Name' : 'Temperature field', 'Description' : 'Temperature field', 'Units' : 'C', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Temperature'}],
-        }
-        super(thermal, self).initialize(file,workdir,executionID,metaData,**kwargs)
+        super(thermal, self).initialize(file, workdir, executionID, metaData, **kwargs)
 
     def readInput(self, tria=False):
         self.tria = tria
@@ -526,47 +535,54 @@ class thermal(Model.Model):
 class thermal_nonstat(thermal):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""    
     def __init__(self):
-        super(thermal_nonstat, self).__init__()
+        metaData = {
+            'Name': 'Non-stationary thermal problem',
+            'ID': 'NonStatThermo-1',
+            'Description': 'Non-stationary heat conduction using finite elements on a rectangular domain',
+            'Representation': 'Finite volumes',
+            'Geometry': '2D rectangle',
+            'Boundary_conditions': 'Dirichlet, Neumann',
+            'Input_types': [],
+            'Output_types': [
+                {'ID': 'N/A', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C',
+                 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Temperature'}],
+            'Solver': {
+                'Software': 'own',
+                'Type': 'Finite elements',
+                'Accuracy': 'Medium',
+                'Sensitivity': 'Low',
+                'Complexity': 'Low',
+                'Robustness': 'High',
+                'Estim_time_step': 1,
+                'Estim_comp_time': 1.e-3,
+                'Estim_execution_cost': 0.01,
+                'Estim_personnel_cost': 0.01,
+                'Required_expertise': 'None',
+                'Language': 'Python',
+                'License': 'LGPL',
+                'Creator': 'Borek Patzak',
+                'Version_date': '1.0.0, Feb 2019',
+                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+            },
+            'Physics': {
+                'Type': 'Continuum',
+                'Entity': ['Finite volume'],
+                'Equation': ['Heat balance'],
+                'Equation_quantities': ['Heat flow'],
+                'Relation_description': ['Fick\'s first law'],
+                'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
+                'Representation': 'Finite volumes'
+            }
+        }
+        super(thermal_nonstat, self).__init__(metaData)
         self.capacity = 1.0
         self.density = 1.0
-        self.Tau=0.5
-        self.init=True
+        self.Tau = 0.5
+        self.init = True
 
     def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
-        metaData = {
-        'Name' : 'Non-stationary thermal problem',
-        'ID' : 'NonStatThermo-1',
-        'Description' : 'Non-sStationary heat conduction using finite elements on a rectangular domain',
-        'Representation' : 'Finite volumes',
-        'Language' : 'Python',
-        'License' : 'LGPL',
-        'Creator' : 'Borek Patzak',
-        'Version_date' : '1.0.0, Feb 2019',
-        'Documentation' : 'Felippa: Introduction to finite element methods, 2004',
-        'Type' : 'Continuum',
-        'Entity' : ['Finite volume'],
-        'Equation' :['Heat balance'],
-        'Equation_quantities' : ['Heat flow'],
-        'Relation_description' : ['Fick\'s first law'],
-        'Relation_formulation' : ['Flow induced by thermal gradient on isotropic material'],
-        'Solver' : 'Finite elements',
-        'Geometry' : '2D rectangle',
-        'Boundary_conditions' : 'Dirichlet, Neumann',
-        'Accuracy' : 'Medium',
-        'Sensitivity' : 'Low',
-        'Complexity' : 'Low',
-        'Robustness' : 'High',
-        'Estim_time_step' : 1,
-        'Estim_comp_time' : 1.e-3,
-        'Estim_execution cost' : 0.01,
-        'Estim_personnel cost' : 0.01,
-        'Required_expertise' : 'None',
-        'Inputs' : [],
-        'Outputs' : [{'ID' : 'N/A', 'Name' : 'Temperature field', 'Description' : 'Temperature field', 'Units' : 'C', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Temperature'}],
-        }
-        super(thermal, self).initialize(file,workdir,executionID,metaData,**kwargs)
+        super(thermal, self).initialize(file, workdir, executionID, metaData, **kwargs)
 
-        
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"
 
@@ -808,51 +824,61 @@ class mechanical(Model.Model):
 
     def __init__(self):
         super(mechanical, self).__init__()
-        self.E = 30.0e+9 #ceramics
-        self.nu = 0.25   #ceramics
-        self.fx = [0.,0.,0.,0.]    #load in x
-        self.fy = [0.,0.,0.,0.]    #load in y
+        self.E = 30.0e+9  # ceramics
+        self.nu = 0.25  # ceramics
+        self.fx = [0., 0., 0., 0.]  # load in x
+        self.fy = [0., 0., 0., 0.]  # load in y
         self.temperatureField = None
         self.alpha = 12.e-6
         self.thick = 1.0
         
     def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         metaData = {
-        'Name' : 'Plane stress linear elastic',
-        'ID' : 'Mechanical-1',
-        'Description' : 'Plane stress problem with linear elastic thermo-elastic material',
-        'Representation' : 'Finite volumes',
-        'Language' : 'Python',
-        'License' : 'LGPL',
-        'Creator' : 'Borek Patzak',
-        'Version_date' : '1.0.0, Feb 2019',
-        'Documentation' : 'Felippa: Introduction to finite element methods, 2004',
-        'Type' : 'Continuum',
-        'Entity' : ['Finite volume'],
-        'Equation' :['Equilibrium'],
-        'Equation_quantities' : ['Displacement'],
-        'Relation_description' : ['Hooke\'s law'],
-        'Relation_formulation' : ['Stress strain'],
-        'Solver' : 'Finite elements',
-        'Geometry' : '2D rectangle',
-        'Boundary_conditions' : 'Dirichlet',
-        'Accuracy' : 'Medium',
-        'Sensitivity' : 'Low',
-        'Complexity' : 'Low',
-        'Robustness' : 'High',
-        'Estim_time_step' : 1,
-        'Estim_comp_time' : 1.e-3,
-        'Estim_execution cost' : 0.01,
-        'Estim_personnel cost' : 0.01,
-        'Required_expertise' : 'None',
-        'Inputs' : [{'ID' : 'N/A', 'Name' : 'Temperature field', 'Description' : 'Temperature field', 'Units' : 'C', 'Origin' : 'Simulated' , 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Temperature', 'Required' : True}],
-        'Outputs' : [{'ID' : 'N/A', 'Name' : 'Displacement field', 'Description' : 'Displacement field on 2D domain', 'Units' : 'm', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Displacement'}]
+            'Name': 'Plane stress linear elastic',
+            'ID': 'Mechanical-1',
+            'Description': 'Plane stress problem with linear elastic thermo-elastic material',
+            'Geometry': '2D rectangle',
+            'Boundary_conditions': 'Dirichlet',
+            'Input_types': [
+                {'ID': 'N/A', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C',
+                 'Origin': 'Simulated', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Required': True}],
+            'Output_types': [
+                {'ID': 'N/A', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain',
+                 'Units': 'm', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Displacement'}],
+            'Solver': {
+                'Software': 'own',
+                'Type': 'Finite elements',
+                'Accuracy': 'Medium',
+                'Sensitivity': 'Low',
+                'Complexity': 'Low',
+                'Robustness': 'High',
+                'Estim_time_step': 1,
+                'Estim_comp_time': 1.e-3,
+                'Estim_execution_cost': 0.01,
+                'Estim_personnel_cost': 0.01,
+                'Required_expertise': 'None',
+                'Language': 'Python',
+                'License': 'LGPL',
+                'Creator': 'Borek Patzak',
+                'Version_date': '1.0.0, Feb 2019',
+                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+            },
+            'Physics': {
+                'Type': 'Continuum',
+                'Entity': ['Finite volume'],
+                'Equation': ['Equilibrium'],
+                'Equation_quantities': ['Displacement'],
+                'Relation_description': ['Hooke\'s law'],
+                'Relation_formulation': ['Stress strain'],
+                'Representation': 'Finite volumes'
+            }
     }
 
-        super().initialize(file,workdir,executionID,metaData,**kwargs)
+        super().initialize(file, workdir, executionID, metaData, **kwargs)
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0, 's');
+        return PQ.PhysicalQuantity(1.0, 's')
+
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
 

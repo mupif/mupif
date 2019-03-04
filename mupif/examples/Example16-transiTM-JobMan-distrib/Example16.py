@@ -3,10 +3,10 @@ import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
-#Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
 mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
 from Config import config
-cfg=config(mode)
+cfg = config(mode)
 import logging
 log = logging.getLogger()
 
@@ -16,13 +16,13 @@ log.info('Timer started')
 import mupif.Physics.PhysicalQuantities as PQ
 
 
-#localize JobManager running on (remote) server and create a tunnel to it
-#allocate the thermal server
-#solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
+# localize JobManager running on (remote) server and create a tunnel to it
+# allocate the thermal server
+# solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
 
 class Demo16(Workflow.Workflow):
    
-    def __init__ (self, targetTime=PQ.PhysicalQuantity(0.,'s')):
+    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -30,9 +30,9 @@ class Demo16(Workflow.Workflow):
         super(Demo16, self).__init__(targetTime=targetTime)
     
     def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):    
-        #locate nameserver
+        # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
-        #connect to JobManager running on (remote) server
+        # connect to JobManager running on (remote) server
         self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         self.thermal = None
         self.mechanical = None
@@ -51,32 +51,35 @@ class Demo16(Workflow.Workflow):
         log.info("Working mechanical server " + mechanicalSignature)
         
         metaData = {
-            'Name' : 'Thermo-mechanical non-stationary problem',
-            'ID' : 'Thermo-mechanical-1',
-            'Description' : 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Representation' : '2D Domain',
-            'Model_refs_ID' : ['NonStatThermo-1', 'Mechanical-1'],
-            'Language' : 'Python',
-            'License' : 'LGPL',
-            'Creator' : 'Borek Patzak',
-            'Version_date' : '1.0.0, Feb 2019',
-            'Documentation' : 'Felippa: Introduction to finite element methods, 2004',
-            'Boundary_conditions' : 'Dirichlet, Neumann, Cauchy',
-            'Accuracy' : 'Medium',
-            'Sensitivity' : 'Low',
-            'Complexity' : 'Low',
-            'Robustness' : 'High',
-            'Estim_time_step' : 1,
-            'Estim_comp_time' : 1.e-3,
-            'Estim_execution cost' : 0.01,
-            'Estim_personnel cost' : 0.01,
-            'Required_expertise' : 'None',
-            'Inputs' : [],
-            'Outputs' : [{'ID' : 'N/A', 'Name' : 'Displacement field', 'Description' : 'Displacement field on 2D domain', 'Units' : 'm', 'Type': 'Field', 'Type_ID':'mupif.FieldID.FID_Displacement'}]
+            'Name': 'Thermo-mechanical non-stationary problem',
+            'ID': 'Thermo-mechanical-1',
+            'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
+            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            'Boundary_conditions': 'Dirichlet, Neumann, Cauchy',
+            'Input_types': [],
+            'Output_types': [
+                {'ID': 'N/A', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain',
+                 'Units': 'm', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Displacement'}],
+            'Solver': {
+                'Accuracy': 'Medium',
+                'Sensitivity': 'Low',
+                'Complexity': 'Low',
+                'Robustness': 'High',
+                'Estim_time_step': 1,
+                'Estim_comp_time': 1.e-3,
+                'Estim_execution_cost': 0.01,
+                'Estim_personnel_cost': 0.01,
+                'Required_expertise': 'None',
+                'Language': 'Python',
+                'License': 'LGPL',
+                'Creator': 'Borek Patzak',
+                'Version_date': '1.0.0, Feb 2019',
+                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+            }
         }
-            
+
         super().initialize(file, workdir, executionID, metaData, **kwargs)
-        
+
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
         log.info("Solving thermal problem")
@@ -114,6 +117,7 @@ class Demo16(Workflow.Workflow):
 
     def getAPIVersion(self):
         return "1.0"
+
 
 if __name__=='__main__':
     demo = Demo16(targetTime=PQ.PhysicalQuantity(10.,'s'))

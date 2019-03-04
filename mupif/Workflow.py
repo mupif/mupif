@@ -38,7 +38,13 @@ log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
 
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
-WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Representation', 'Language', 'License', 'Creator', 'Version_date', 'Documentation', 'Model_refs_ID', 'Boundary_conditions', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness', 'Execution_ID', 'Estim_time_step', 'Estim_comp_time', 'Estim_execution cost', 'Estim_personnel cost', 'Required_expertise', 'Inputs', 'Outputs']
+del WorkflowSchema['properties']['Solver']
+del WorkflowSchema['properties']['Physics']
+WorkflowSchema['Model_refs_ID'] = {'type': 'array'},
+WorkflowSchema['required'] = [
+    'Name', 'ID', 'Description', 'Boundary_conditions', 'Input_types', 'Output_types', 'Execution', 'Solver',
+    'Model_refs_ID'
+]
 
 
 @Pyro4.expose
@@ -68,8 +74,7 @@ class Workflow(Model.Model):
             raise TypeError('targetTime is not PhysicalQuantity')
 
         self.workflowMonitor = None  # No monitor by default
-        
-        
+
     def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
@@ -82,8 +87,8 @@ class Workflow(Model.Model):
         """
         self.metadata.update(metaData)
         # define futher app metadata 
-        self.setMetadata('Execution_ID', executionID)
-        #self.setMetadata('Name', self.getApplicationSignature())
+        self.setMetadata('Execution.Execution_ID', executionID)
+        # self.setMetadata('Name', self.getApplicationSignature())
         
         self.file = file
         if workdir == '':
@@ -113,13 +118,13 @@ class Workflow(Model.Model):
             dt = self.getCriticalTimeStep()
             time = time+dt
             if time > self.targetTime:
-                         time = self.targetTime
+                time = self.targetTime
             timeStepNumber = timeStepNumber+1
             istep = TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
         
             log.debug("Step %g: t=%g dt=%g"%(timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 
-            #Estimate progress
+            # Estimate progress
             self.setMetadata('Progress', 100*time.inUnitsOf('s').getValue()/self.targetTime.inUnitsOf('s').getValue())
             
             self.solveStep(istep)

@@ -42,46 +42,76 @@ log = logging.getLogger()
 ModelSchema = {
     'type': 'object',
     'properties': {
-        'Name': {'type': 'string'},  # Name of the tool/workflow (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE TOOL, obtained automatically from getApplicationSignature()
+        'Name': {'type': 'string'},  # e.g. Non-stationary thermal problem
         'ID': {'type': ['string', 'integer']},
         'Use_case_ID': {'type': ['string', 'integer']},
         'Description': {'type': 'string'},
-        'Representation': {'type': 'string'},  # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
-        'Model_refs_ID': {'type': 'array'},
-        'Language': {'type': 'string'},
-        'License': {'type': 'string'},
-        'Creator': {'type': 'string'},
-        'Version_date': {'type': 'string'},
-        'Documentation': {'type': 'string'},  # Where published/documented
         'Material': {'type': 'string'},  # What material is simulated
-        'Manuf_process' : {'type': 'string'},  # Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
-        'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum']},
-        'Entity': {'type': 'array',  # List
-                   'items': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']}},
-        'Equation': {'type': 'array'},  # List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
-        'Equation_quantities': {'type': 'array'},  # e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
-        'Relation_description': {'type': 'array'},  # Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
-        'Relation_formulation': {'type': 'array'},  # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
-        'Solver': {'type': 'string'},  # E.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method. Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-        'Solver_additional_params': {'type': 'string'},  # Additional parameters of numerical solver, e.g. time integration scheme
+        'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
         'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
         'Boundary_conditions': {'type': 'string'},
-        'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-        'Execution_ID': {'type': ['string', 'integer']},
-        'Estim_time_step': {'type': 'number'},  # Seconds
-        'Estim_comp_time': {'type': 'number'},  # Seconds
-        'Estim_execution cost': {'type': 'number'},  # EUR
-        'Estim_personnel cost': {'type': 'number'},  # EUR
-        'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
-        'Username': {'type': 'string'},#automatically set in Model and Workflow
-        'Status' : {'type': 'string', 'enum': ['Initialized', 'Running', 'Finished','Failed']},
-        'Progress' : {'type': 'number'}, #Progress in %
-        'Date_time_start' : {'type': 'string'},#automatically set in Workflow
-        'Date_time_end' : {'type': 'string'},#automatically set in Workflow
-        'Inputs': {
+        'Physics': {
+            'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum']},
+            'Entity': {'type': 'array',  # List
+                       'items': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']}},
+            'Equation': {'type': 'array'},
+            # List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
+            'Equation_quantities': {'type': 'array'},
+            # e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
+            'Relation_description': {'type': 'array'},
+            # Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
+            'Relation_formulation': {'type': 'array'},
+            # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
+            'Representation': {'type': 'string'},
+            # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
+
+        },
+        'Solver': {
+            'properties': {
+                'Software': {'type': 'string'},
+                # Software: Name of the software (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE
+                # TOOL, obtained automatically from getApplicationSignature()
+                'Language': {'type': 'string'},
+                'License': {'type': 'string'},
+                'Creator': {'type': 'string'},
+                'Version_date': {'type': 'string'},
+                'Type': {'type': 'string'},
+                # Type e.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method.
+                # Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+                'Solver_additional_params': {'type': 'string'},
+                # Additional parameters of numerical solver, e.g. time integration scheme
+                'Documentation': {'type': 'string'},  # Where published/documented
+                'Estim_time_step': {'type': 'number'},  # Seconds
+                'Estim_comp_time': {'type': 'number'},  # Seconds
+                'Estim_execution_cost': {'type': 'number'},  # EUR
+                'Estim_personnel_cost': {'type': 'number'},  # EUR
+                'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
+                'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+                'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+                'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+
+            },
+            'required': [
+                'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
+                'Estim_time_step', 'Estim_comp_time', 'Estim_execution_cost', 'Estim_personnel_cost',
+                'Required_expertise', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness'
+            ]
+        },
+        'Execution': {
+            'properties': {
+                'Execution_ID': {'type': ['string', 'integer']},
+                'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
+                'Progress': {'type': 'number'},  # Progress in %
+                'Date_time_start': {'type': 'string'},  # automatically set in Workflow
+                'Date_time_end': {'type': 'string'},  # automatically set in Workflow
+                'Username': {'type': 'string'},  # automatically set in Model and Workflow
+                'Hostname': {'type': 'string'},  # automatically set in Model and Workflow
+
+            },
+            'required': ['Execution_ID']
+        },
+        'Input_types': {
             'type': 'array',  # List
             'items': {
                 'type': 'object',  # Object supplies a dictionary
@@ -90,42 +120,38 @@ ModelSchema = {
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
-                    'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
-                    'Experimental_details': {'type': 'string'},
-                    'Experimental_record': {'type': 'string'},
-                    'Estimated_std': {'type': 'number'},
+                    # 'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
+                    # 'Experimental_details': {'type': 'string'},
+                    # 'Experimental_record': {'type': 'string'},
+                    # 'Estimated_std': {'type': 'number'},
                     'Type': {'type': 'string'},  # e.g. mupif.Property
-                    'Type_ID': {'type': 'string'},
-                    'Object_ID': {'type': 'array'},
+                    'Type_ID': {'type': 'string'},  # e.g. PID_..., FID_...
+                    'Object_ID': {'type': 'array'},  # optional parameter for additional info
                     'Required': {'type': 'boolean'}
                 },
-                'required': ['ID', 'Name', 'Units', 'Origin', 'Type', 'Type_ID', 'Required']
+                'required': ['ID', 'Name', 'Units', 'Type', 'Type_ID', 'Required']
             }
         },
-        'Outputs': {
+        'Output_types': {
             'type': 'array',
             'items': {
                 'type': 'object',
                 'properties': {
                     'ID': {'type': ['string', 'integer']},
-                    'Name': { 'type': 'string'},
+                    'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
-                    'Estimated_std': {'type': 'number'},
                     'Type': {'type': 'string'},  # e.g. mupif.Property
-                    'Type_ID': {'type': 'string'},
-                    'Object_ID': {'type': 'array'}
+                    'Type_ID': {'type': 'string'},  # e.g. PID_..., FID_...
+                    'Object_ID': {'type': 'array'}  # optional parameter for additional info
                 },
                 'required': ['ID', 'Name', 'Units', 'Type', 'Type_ID']
             }
         }
     },
     'required': [
-        'Name', 'ID', 'Description', 'Representation', 'Language', 'License', 'Creator', 'Version_date',
-        'Documentation', 'Type', 'Entity', 'Equation', 'Equation_quantities', 'Relation_description',
-        'Relation_formulation', 'Solver', 'Boundary_conditions', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness',
-        'Execution_ID', 'Estim_time_step', 'Estim_comp_time', 'Estim_execution cost', 'Estim_personnel cost',
-        'Required_expertise', 'Inputs', 'Outputs'
+        'Name', 'ID', 'Description', 'Boundary_conditions', 'Input_types', 'Output_types', 'Execution', 'Solver',
+        'Physics'
     ]
 }
 
@@ -147,6 +173,8 @@ class Model(MupifObject.MupifObject):
     def __init__(self, metaData={}):
         """
         Constructor. Initializes the application.
+
+        :param dict metaData: Optionally pass metadata.
         """
         super(Model, self).__init__()
 
@@ -165,7 +193,10 @@ class Model(MupifObject.MupifObject):
         self.setMetadata('Hostname', hostname)
         self.setMetadata('Status', 'Initialized')
         self.setMetadata('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-        
+
+        self.setMetadata('Execution', {})
+        self.setMetadata('Solver', {})
+
         self.metadata.update(metaData)
 
     def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
@@ -175,15 +206,15 @@ class Model(MupifObject.MupifObject):
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
         :param str executionID: Optional application execution ID (typically set by workflow)
-        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param named_arguments kwargs: Arbitrary further parameters 
         """
         self.metadata.update(metaData)
         # self.printMetadata()
 
         # define futher app metadata 
-        self.setMetadata('Execution_ID', executionID)
-        #self.setMetadata('Name', self.getApplicationSignature())
+        self.setMetadata('Execution.Execution_ID', executionID)
+        # self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         
         # self.printMetadata()

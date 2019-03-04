@@ -70,28 +70,43 @@ class MupifObject(object):
     def printMetadata(self, nonEmpty=False):
         """ 
         Print all metadata
-        :param bool nonEmpty: Optionally print only non-empty values 
-        
+        :param bool nonEmpty: Optionally print only non-empty values
         :return: None
         :rtype: None
         """
-        print('ClassName:\'%s\', AppName:\'%s\':' % (self.__class__.__name__, self.getMetadata('Name')) )
+        print('ClassName:\'%s\', AppName:\'%s\':' % (self.__class__.__name__, self.getMetadata('Name')))
         if nonEmpty:
             d = {}
             for k, v in self.metadata.items():
                 if v != '':
-                   d[k]=v
+                    d[k] = v
         pprint.pprint(d if nonEmpty else self.metadata, indent=4, width=300)
-        
-    
+
     def setMetadata(self, key, val):
         """ 
         Sets metadata associated to given key
-        :param key: unique metadataID 
+        :param str key: unique metadataID
         :param val: any type
-        
         """
-        self.metadata[key]=val
+        keys = key.split('.')
+        elem = self.metadata
+        i = 0
+        for keyword in keys:
+            if i == len(keys)-1:
+                last = True
+            else:
+                last = False
+
+            if not last:
+                if keyword in elem:
+                    elem = elem[keyword]
+                else:
+                    elem[keyword] = {}
+                    elem = elem[keyword]
+            else:
+                elem[keyword] = val
+            i += 1
+        # self.metadata[key] = val
         
     def updateMetadata(self, dictionary):
         """ 
@@ -123,5 +138,5 @@ class MupifObject(object):
         return json.dumps(self.metadata, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
     
     def toJSONFile(self, filename, indent=4):
-        with open(filename,"w") as f:
-            json.dump(self.metadata,f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
+        with open(filename, "w") as f:
+            json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
