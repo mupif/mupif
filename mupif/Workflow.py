@@ -21,21 +21,16 @@
 # Boston, MA  02110-1301  USA
 #
 
-from builtins import object
 import os
 import Pyro4
 import time as timeTime
 from . import Model
-from . import PyroUtil
-from . import APIError
-from . import MetadataKeys
 from . import TimeStep
-from . import WorkflowMonitor
 import copy
 import logging
-log = logging.getLogger()
-
 import mupif.Physics.PhysicalQuantities as PQ
+
+log = logging.getLogger()
 
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema['properties']['Solver']
@@ -75,7 +70,7 @@ class Workflow(Model.Model):
 
         self.workflowMonitor = None  # No monitor by default
 
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='', metaData={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -83,7 +78,8 @@ class Workflow(Model.Model):
         :param str workdir: Optional parameter for working directory
         :param str executionID: Optional application execution ID (typically set by workflow)
         :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
-        :param named_arguments kwargs: Arbitrary further parameters 
+        :param bool validateMetaData: Defines if the metadata validation will be called
+        :param named_arguments kwargs: Arbitrary further parameters
         """
         self.metadata.update(metaData)
         # define futher app metadata 
@@ -95,8 +91,9 @@ class Workflow(Model.Model):
             self.workDir = os.getcwd()
         else:
             self.workDir = workdir
-        
-        self.validateMetadata(WorkflowSchema)
+
+        if validateMetaData:
+            self.validateMetadata(WorkflowSchema)
 
     def solve(self, runInBackground=False):
         """ 
@@ -172,7 +169,7 @@ class Workflow(Model.Model):
                         'WorkflowMonitor.Date': date}
             
             try:
-                #TODO - ComponentID should be removed
+                # TODO - ComponentID should be removed
                 self.workflowMonitor.updateMetadata(self.getMetadata('WorkflowMonitor.ComponentID'), metadata)
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required

@@ -74,10 +74,10 @@ class thermal(Model.Model):
 
     def readInput(self, tria=False):
         self.tria = tria
-        dirichletModelEdges=[]
-        convectionModelEdges=[]
+        dirichletModelEdges = []
+        convectionModelEdges = []
+        lines = []
         try:
-            lines = []
             for line in open(self.workDir+os.path.sep+self.file, 'r'):
                 if not line.startswith('#'):
                     lines.append(line)
@@ -872,7 +872,7 @@ class mechanical(Model.Model):
                 'Relation_formulation': ['Stress strain'],
                 'Representation': 'Finite volumes'
             }
-    }
+        }
 
         super().initialize(file, workdir, executionID, metaData, **kwargs)
 

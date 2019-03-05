@@ -159,14 +159,14 @@ class PhysicalQuantity(object):
             if isPhysicalUnit(args[1]):
                 self.unit = args[1]
             else:
-                self.unit = _findUnit(args[1])
+                self.unit = findUnit(args[1])
         else:
             s = args[0].strip()
             match = PhysicalQuantity._number.match(s)
             if match is None:
                 raise TypeError('No number found')
             self.value = float(match.group(0))
-            self.unit = _findUnit(s[len(match.group(0)):])
+            self.unit = findUnit(s[len(match.group(0)):])
 
     _number = re.compile('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?')
 
@@ -314,7 +314,7 @@ class PhysicalQuantity(object):
 
         :raise TypeError: if the unit string is not a know unit or a unit incompatible with the current one
         """
-        unit = _findUnit(unit)
+        unit = findUnit(unit)
         self.value = _convertValue(self.value, self.unit, unit)
         self.unit = unit
 
@@ -337,7 +337,7 @@ class PhysicalQuantity(object):
         :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = list(map(_findUnit, units))
+        units = list(map(findUnit, units))
         if len(units) == 1:
             unit = units[0]
             value = _convertValue(self.value, self.unit, unit)
@@ -392,7 +392,7 @@ class PhysicalQuantity(object):
         :returns: C{True} if the specified unit is compatible with the one of the quantity
         :rtype: C{bool}
         """
-        unit = _findUnit(unit)
+        unit = findUnit(unit)
         return self.unit.isCompatible(unit)
 
     def getValue(self):
@@ -672,7 +672,7 @@ def getDimensionlessUnit():
 
 # Helper functions
 
-def _findUnit(unit):
+def findUnit(unit):
     if isinstance(unit, basestring):
         name = unit.strip()
         unit = eval(name, _unit_table)
@@ -917,7 +917,7 @@ _addUnit('deg', 'pi*rad/180', 'degrees')
 _help.append('Temperature units:')
 # Temperature units -- can't use the 'eval' trick that _addUnit provides
 # for degC and degF because you can't add units
-kelvin = _findUnit ('K')
+kelvin = findUnit ('K')
 _addUnit('degR', '(5./9.)*K', 'degrees Rankine')
 _addUnit('degC', PhysicalUnit(None, 1.0, kelvin.powers, 273.15), 'degrees Celcius')
 _addUnit('degF', PhysicalUnit(None, 5./9., kelvin.powers, 459.67), 'degree Fahrenheit')

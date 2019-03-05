@@ -47,39 +47,44 @@ ModelSchema = {
         'Use_case_ID': {'type': ['string', 'integer']},
         'Description': {'type': 'string'},
         'Material': {'type': 'string'},  # What material is simulated
-        'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
+        # Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
+        'Manuf_process': {'type': 'string'},
         'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
         'Boundary_conditions': {'type': 'string'},
         'Physics': {
             'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum']},
             'Entity': {'type': 'array',  # List
                        'items': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']}},
+            # List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA
+            # Generic Physics ENTITY. attribute.
             'Equation': {'type': 'array'},
-            # List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA Generic Physics ENTITY. attribute.
+            # e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics
+            # PHYSICS EQUATIONS attributes.
             'Equation_quantities': {'type': 'array'},
-            # e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics PHYSICS EQUATIONS attributes.
-            'Relation_description': {'type': 'array'},
             # Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
+            'Relation_description': {'type': 'array'},
+            # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to
+            # MODA MATERIAL RELATIONS.
             'Relation_formulation': {'type': 'array'},
-            # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to MODA MATERIAL RELATIONS.
+            # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element
+            # type.
             'Representation': {'type': 'string'},
-            # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type.
 
         },
         'Solver': {
             'properties': {
-                'Software': {'type': 'string'},
                 # Software: Name of the software (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE
                 # TOOL, obtained automatically from getApplicationSignature()
+                'Software': {'type': 'string'},
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
-                'Type': {'type': 'string'},
                 # Type e.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method.
                 # Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Solver_additional_params': {'type': 'string'},
+                'Type': {'type': 'string'},
                 # Additional parameters of numerical solver, e.g. time integration scheme
+                'Solver_additional_params': {'type': 'string'},
                 'Documentation': {'type': 'string'},  # Where published/documented
                 'Estim_time_step': {'type': 'number'},  # Seconds
                 'Estim_comp_time': {'type': 'number'},  # Seconds
@@ -199,7 +204,7 @@ class Model(MupifObject.MupifObject):
 
         self.metadata.update(metaData)
 
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='', metaData={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -207,7 +212,8 @@ class Model(MupifObject.MupifObject):
         :param str workdir: Optional parameter for working directory
         :param str executionID: Optional application execution ID (typically set by workflow)
         :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
-        :param named_arguments kwargs: Arbitrary further parameters 
+        :param bool validateMetaData: Defines if the metadata validation will be called
+        :param named_arguments kwargs: Arbitrary further parameters
         """
         self.metadata.update(metaData)
         # self.printMetadata()
@@ -224,8 +230,9 @@ class Model(MupifObject.MupifObject):
             self.workDir = os.getcwd()
         else:
             self.workDir = workdir
-        
-        self.validateMetadata(ModelSchema)
+
+        if validateMetaData:
+            self.validateMetadata(ModelSchema)
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """

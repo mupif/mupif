@@ -45,9 +45,9 @@ class Demo16(Workflow.Workflow):
        
         self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
        
-        thermalSignature=self.thermal.getApplicationSignature()
+        thermalSignature = self.thermal.getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)
-        mechanicalSignature=self.mechanical.getApplicationSignature()
+        mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
         
         metaData = {
@@ -89,12 +89,12 @@ class Demo16(Workflow.Workflow):
         
         self.thermal.solveStep(istep)
         f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
-        data = f.field2VTKData().tofile('T_%s'%str(istep.getNumber()))
+        data = f.field2VTKData().tofile('T_%s' % str(istep.getNumber()))
 
         self.mechanical.setField(f)
         sol = self.mechanical.solveStep(istep) 
         f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
-        data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
+        data = f.field2VTKData().tofile('M_%s' % str(istep.getNumber()))
 
         self.thermal.finishStep(istep)
         self.mechanical.finishStep(istep)
@@ -120,7 +120,7 @@ class Demo16(Workflow.Workflow):
 
 
 if __name__=='__main__':
-    demo = Demo16(targetTime=PQ.PhysicalQuantity(10.,'s'))
+    demo = Demo16(targetTime=PQ.PhysicalQuantity(10., 's'))
     demo.initialize()
     demo.solve()
     log.info("Test OK")

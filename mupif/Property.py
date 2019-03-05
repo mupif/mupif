@@ -38,7 +38,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             if PhysicalQuantities.isPhysicalUnit(units):
                 self.unit = units
             else:
-                self.unit = PhysicalQuantities._findUnit(units)
+                self.unit = PhysicalQuantities.findUnit(units)
 
         def getValue(self, time=None, **kwargs):
             """
@@ -186,9 +186,9 @@ class ConstantProperty(Property):
 
             :param C{str} unit: a unit
 
-            :raise TypeError: if the unit string is not a know unit or a unit incompatible with the current one
+            :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
             """
-            unit = PhysicalQuantities._findUnit(unit)
+            unit = PhysicalQuantities.findUnit(unit)
             self.value = self._convertValue(self.value, self.unit, unit)
             self.unit = unit
 
@@ -237,8 +237,8 @@ class ConstantProperty(Property):
             :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
             :raises TypeError: if any of the specified units are not compatible with the original unit
             """
-            units = list(map(PhysicalQuantities._findUnit, units))
-            # unit = PhysicalQuantities._findUnit(units[0])
+            units = list(map(PhysicalQuantities.findUnit, units))
+            # unit = PhysicalQuantities.findUnit(units[0])
             unit = units[0]
             value = self._convertValue(self.value, self.unit, unit)
             return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)

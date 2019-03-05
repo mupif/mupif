@@ -107,7 +107,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         if PhysicalQuantities.isPhysicalUnit(units):
             self.unit = units
         else:
-            self.unit = PhysicalQuantities._findUnit(units)
+            self.unit = PhysicalQuantities.findUnit(units)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):

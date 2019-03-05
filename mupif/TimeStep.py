@@ -52,7 +52,7 @@ class TimeStep(object):
             if PQ.isPhysicalUnit(units):
                 units_temp = units
             else:
-                units_temp = PQ._findUnit(units)
+                units_temp = PQ.findUnit(units)
                 
             self.time = PQ.PhysicalQuantity(t, units_temp)
             self.dt = PQ.PhysicalQuantity(dt, units_temp)
