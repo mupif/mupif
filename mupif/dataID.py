@@ -9,16 +9,16 @@ DataSchema = {
     'type': 'object',
     'properties': {
         'Name': {'type': 'string'},  # e.g. 'Density of inclusion'
-        'ID': {'type': ['string', 'integer']}, # Unique ID
-        'Description': {'type': 'string'}, #Further description
-        'Units': {'type': 'string'}, #Automatically generated from MuPIF, e.g. 'kg'
-        'Type': {'type': 'string'}, #Automatically generated from MuPIF, e.g. PID_Temperature
+        'ID': {'type': ['string', 'integer']},  # Unique ID
+        'Description': {'type': 'string'},  # Further description
+        'Units': {'type': 'string'},  # Automatically generated from MuPIF, e.g. 'kg'
+        'Type': {'type': 'string'},  # Automatically generated from MuPIF, e.g. PID_Temperature
         'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
-        'Execution_Task_ID' : {'type': 'string'}, # If Simulated, give reference to Task_ID
-        'Execution_Use_case_ID': {'type': ['string', 'integer']}, #If Simulated, give reference to Use_case_ID
+        'Execution_Task_ID': {'type': 'string'},  # If Simulated, give reference to Task_ID
+        'Execution_Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
         'Experimental_details': {'type': 'string'},
-        'Experimental_record': {'type': 'string'}, # If applies, link to corresponding experimental record
-        'Estimated_std': {'type': 'number'}, # Percent of standard deviation
+        'Experimental_record': {'type': 'string'},  # If applies, link to corresponding experimental record
+        'Estimated_std': {'type': 'number'},  # Percent of standard deviation
         },
     'required': [
         'Units', 'Type'  

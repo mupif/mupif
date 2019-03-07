@@ -30,7 +30,7 @@ class TimeStep(object):
         :type dt: PQ.PhysicalQuantity
         :param targetTime: target simulation time (time at the end of simulation, not of a single TimeStep)
         :type targetTime: PQ.PhysicalQuantity. targetTime is not related to particular time step rather to the material model (load duration, relaxation spectra etc.)
-        :param PQ.PhysicalUnit units: optional units for t, dt, targetTime if given as float values
+        :param PQ.PhysicalUnit or str units: optional units for t, dt, targetTime if given as float values
         :param int n: Optional, solution time step number, default = 1
         """
         self.number = n  # solution step number, dimensionless

@@ -42,38 +42,49 @@ log = logging.getLogger()
 ModelSchema = {
     'type': 'object',
     'properties': {
-        'Name': {'type': 'string'},  # e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
+        # Name: e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
+        'Name': {'type': 'string'},
         'ID': {'type': ['string', 'integer']},
         'Description': {'type': 'string'},
         'Material': {'type': 'string'},  # What material is simulated
-        'Manuf_process': {'type': 'string'}, # Manufacturing process or in-service conditions
+        'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions
         'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
         'Boundary_conditions': {'type': 'string'},
-        'Physics': { #Corresponds to MODA Generic Physics
+        'Physics': {  # Corresponds to MODA Generic Physics
             'type': 'object',
             'properties': {
-                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum', 'Other']}, #MODA model type
-                'Entity': {'type': 'string',
-                        'enum': ['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']},
-                'Entity_description': {'type': 'string'},# E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type
-                'Equation': {'type': 'array'}, # List of equations' description such as Equation of motion, heat balance, mass conservation. MODA PHYSICS EQUATIONS
-                'Equation_quantities': {'type': 'array'},# e.g. Force, mass, potential, energy, stress, heat, temperature.
-                'Relation_description': {'type': 'array'}, # Describes equilibrium of forces on an infinitesimal element, etc.
-                'Relation_formulation': {'type': 'array'}, # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. MODA MATERIAL RELATIONS
+                # Type: MODA model type
+                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum', 'Other']},
+                'Entity': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']},
+                # Entity_description: E.g. Atoms are treated as spherical entities in space with the radius and mass
+                # determined by the element type
+                'Entity_description': {'type': 'string'},
+                # Equation: List of equations' description such as Equation of motion, heat balance, mass conservation.
+                # MODA PHYSICS EQUATIONS
+                'Equation': {'type': 'array'},
+                # Equation_quantities: e.g. Force, mass, potential, energy, stress, heat, temperature.
+                'Equation_quantities': {'type': 'array'},
+                # Relation_description: Describes equilibrium of forces on an infinitesimal element, etc.
+                'Relation_description': {'type': 'array'},
+                # Relation_formulation: Constitutive equation (material relation), e.g. force field, stress-strain,
+                # flow-gradient. MODA MATERIAL RELATIONS
+                'Relation_formulation': {'type': 'array'},
             },
-            'required': [
-                'Type', 'Entity'
-            ]
+            'required': ['Type', 'Entity']
         },
         'Solver': {
             'properties': {
-                'Software': {'type': 'string'},#Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                'Software': {'type': 'string'},
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
-                'Type': {'type': 'string'}, # Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Solver_additional_params': {'type': 'string'},# Additional parameters of numerical solver, e.g. time integration scheme
+                # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to
+                # MODA Solver Specification NUMERICAL SOLVER attribute.
+                'Type': {'type': 'string'},
+                # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                'Solver_additional_params': {'type': 'string'},
                 'Documentation': {'type': 'string'},  # Where published/documented
                 'Estim_time_step': {'type': 'number'},  # Seconds
                 'Estim_comp_time': {'type': 'number'},  # Seconds
@@ -95,16 +106,15 @@ ModelSchema = {
             'properties': {
                 'ID': {'type': ['string', 'integer']},
                 'Use_case_ID': {'type': ['string', 'integer']},
-                'Task_ID' : {'type': 'string'},
+                'Task_ID': {'type': 'string'},
                 'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
-                'Progress': {'type': 'number'}, # Progress in %
-                'Date_time_start': {'type': 'string'}, # automatically set in Workflow
+                'Progress': {'type': 'number'},  # Progress in %
+                'Date_time_start': {'type': 'string'},  # automatically set in Workflow
                 'Date_time_end': {'type': 'string'},  # automatically set in Workflow
                 'Username': {'type': 'string'},  # automatically set in Model and Workflow
                 'Hostname': {'Physics''type': 'string'},  # automatically set in Model and Workflow
-
             },
-            'required': ['Execution_ID']
+            'required': ['ID']
         },
         'Input_types': {
             'type': 'array',  # List
@@ -204,7 +214,7 @@ class Model(MupifObject.MupifObject):
         # self.printMetadata()
 
         # define futher app metadata 
-        self.setMetadata('Execution.Execution_ID', executionID)
+        self.setMetadata('Execution.ID', executionID)
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         
