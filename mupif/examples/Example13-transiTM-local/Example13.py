@@ -79,7 +79,7 @@ class Demo13(Workflow.Workflow):
 if __name__=='__main__':
     demo = Demo13(targetTime=PQ.PhysicalQuantity(3.0,'s'))
     demo.initialize()
-    demo.setMetadata('Execution.Execution_ID','ThermoMech-01')
+    demo.setMetadata('Execution.ID','ThermoMech-01')
     demo.setMetadata('Execution.Use_Case_ID','IDThermoMech')
     demo.setMetadata('Execution.Execution_status','Running')
     demo.setMetadata('Execution.Execution_start_date',str(datetime.datetime.now()))

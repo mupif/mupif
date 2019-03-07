@@ -43,6 +43,10 @@ class Function(object):
             :param FunctionID funcID: function ID, e.g. FuncID_ProbabilityDistribution
             :param int objectID: Optional ID of associated subdomain, default 0
             """
+            self.setMetadata('Units', '' )
+            self.setMetadata('Type', '%s' % (self.funcID) )
+            
+            
         def evaluate(self, d):
             """
             Evaluates the function for given parameters packed as a dictionary.

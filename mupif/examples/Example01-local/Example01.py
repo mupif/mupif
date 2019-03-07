@@ -41,6 +41,7 @@ class application2(Model.Model):
             return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError ('Unknown property ID')
+
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
@@ -64,24 +65,33 @@ targetTime = 1.0
 app1 = application1()
 app2 = application2()
 
-app1Metadata = {'Model.Model_ID' : 'Model ID-1234',
-                'Model.Model_name' : 'Simple application cummulating calling time',
-                'Model.Model_description' : 'Cummulates calling time',
-                'Model.Model_time_lapse' : '0.01 s',
-                'Model.Inputs_and_relation_to_Data' : [{'Input_name':'Time', 'Input_description':'Time of the task', 'Input_type': 'PhysicalQuantity', 'Input_object_type':'mupif.PQ.PhysicalQuantity', 'Input_object_id': None, 'Input_optional':True,'Input_units':'s'}],
-                'Model.Outputs_and_relation_to_Data' : [{'Output_name':'Concentration', 'Output_description':'Concentration', 'Output_type': 'ConstantProperty', 'Output_object_type':'mupif.PropertyID.PID_Concentration', 'Output_object_id': None, 'Output_optional':True,'Output_units':'kg/m**3'}]
+app1Metadata = {'Name' : 'Simple application cummulating calling time',
+                'ID' : 'N/A',
+                'Description' : 'Cummulates calling time',
+                'Boundary_conditions' : 'None',
+                'Physics' : { 'Type': 'Other', 'Entity' : 'Other' },
+                'Solver' : { 'Software': 'Python script', 'Language' : 'Python3', 'License' : 'LGPL', 'Creator' : 'Borek', 'Version_date' : '02/2019', 'Type' : 'Summator', 'Documentation' : 'Nowhere',                'Estim_time_step' : 1 , 'Estim_comp_time' : 0.01, 'Estim_execution_cost' : 0.01, 'Estim_personnel_cost' : 0.01,
+                'Required_expertise' : 'None', 'Accuracy' : 'High', 'Sensitivity' : 'High', 'Complexity' : 'Low', 'Robustness' : 'High' },
+                'Input_types': [
+                {'ID': 'N/A', 'Name': 'Concentration', 'Description': 'Concentration alias time', 'Units': 's',
+                 'Origin': 'Simulated', 'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Concentration', 'Required': True}],
+            'Output_types': [
+                {'ID': 'N/A', 'Name': 'Concentration', 'Description': 'Concentration alias time', 'Units': 's',
+                 'Origin': 'Simulated', 'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Concentration', 'Required': True}]
                }
 
 app1.initialize(metaData=app1Metadata)
 app1.printMetadata()
 
+
+
 app1.toJSONFile('aa.json')
 aa = MupifObject.MupifObject('aa.json')
-aa.printMetadata()
+#aa.printMetadata()
 
 #TODO - update app2
 app2.initialize(metaData=app1Metadata)
-app2.printMetadata()
+#app2.printMetadata()
 
 
 
@@ -114,7 +124,6 @@ while (abs(time -targetTime) > 1.e-6):
         atime = app2.getAssemblyTime(istep)
         log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (atime.getValue(), c.getValue(atime), prop.getValue(atime)))
         
-        
     except APIError.APIError as e:
         log.error("mupif.APIError occurred:",e)
         log.error("Test FAILED")
@@ -127,5 +136,7 @@ else:
     sys.exit(1)
 
 # terminate
+c.printMetadata()
+c.validateMetadata(dataID.DataSchema)
 app1.terminate();
 app2.terminate();

@@ -74,7 +74,7 @@ class MupifObject(object):
         :return: None
         :rtype: None
         """
-        print('ClassName:\'%s\', AppName:\'%s\':' % (self.__class__.__name__, self.getMetadata('Name')))
+        print('ClassName:\'%s\'' % (self.__class__.__name__))
         if nonEmpty:
             d = {}
             for k, v in self.metadata.items():

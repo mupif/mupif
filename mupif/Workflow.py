@@ -35,11 +35,9 @@ log = logging.getLogger()
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema['properties']['Solver']
 del WorkflowSchema['properties']['Physics']
-WorkflowSchema['Model_refs_ID'] = {'type': 'array'},
+WorkflowSchema['properties']['Model_refs_ID'] = {'type': 'array'},#List of references to contained models
 WorkflowSchema['required'] = [
-    'Name', 'ID', 'Description', 'Boundary_conditions', 'Input_types', 'Output_types', 'Execution', 'Solver',
-    'Model_refs_ID'
-]
+    'Name', 'ID', 'Description', 'Boundary_conditions', 'Model_refs_ID', 'Execution', 'Input_types', 'Output_types']
 
 
 @Pyro4.expose
@@ -83,7 +81,7 @@ class Workflow(Model.Model):
         """
         self.metadata.update(metaData)
         # define futher app metadata 
-        self.setMetadata('Execution.Execution_ID', executionID)
+        self.setMetadata('Execution.ID', executionID)
         # self.setMetadata('Name', self.getApplicationSignature())
         
         self.file = file

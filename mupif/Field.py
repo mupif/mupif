@@ -108,6 +108,9 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             self.unit = units
         else:
             self.unit = PhysicalQuantities.findUnit(units)
+            
+        self.setMetadata('Units', self.unit.name() )
+        self.setMetadata('Type', '%s' % (self.fieldID) )
 
     @classmethod
     def loadFromLocalFile(cls, fileName):

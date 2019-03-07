@@ -42,49 +42,38 @@ log = logging.getLogger()
 ModelSchema = {
     'type': 'object',
     'properties': {
-        'Name': {'type': 'string'},  # e.g. Non-stationary thermal problem
+        'Name': {'type': 'string'},  # e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
         'ID': {'type': ['string', 'integer']},
-        'Use_case_ID': {'type': ['string', 'integer']},
         'Description': {'type': 'string'},
         'Material': {'type': 'string'},  # What material is simulated
-        # Manufacturing process or in-service conditions, e.g. Temperature, strain, shear
-        'Manuf_process': {'type': 'string'},
+        'Manuf_process': {'type': 'string'}, # Manufacturing process or in-service conditions
         'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
         'Boundary_conditions': {'type': 'string'},
-        'Physics': {
-            'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum']},
-            'Entity': {'type': 'array',  # List
-                       'items': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume']}},
-            # List of equations such as Equation of motion, heat balance, mass conservation. Corresponds to MODA
-            # Generic Physics ENTITY. attribute.
-            'Equation': {'type': 'array'},
-            # e.g. Force, mass, potential, energy, stress, heat, temperature. tCorresponds to MODA Generic Physics
-            # PHYSICS EQUATIONS attributes.
-            'Equation_quantities': {'type': 'array'},
-            # Describes equilibrium of forces on an infinitesimal element, etc. Corresponds to MODA MATERIAL RELATIONS.
-            'Relation_description': {'type': 'array'},
-            # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. Corresponds to
-            # MODA MATERIAL RELATIONS.
-            'Relation_formulation': {'type': 'array'},
-            # E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element
-            # type.
-            'Representation': {'type': 'string'},
-
+        'Physics': { #Corresponds to MODA Generic Physics
+            'type': 'object',
+            'properties': {
+                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum', 'Other']}, #MODA model type
+                'Entity': {'type': 'string',
+                        'enum': ['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']},
+                'Entity_description': {'type': 'string'},# E.g. Atoms are treated as spherical entities in space with the radius and mass determined by the element type
+                'Equation': {'type': 'array'}, # List of equations' description such as Equation of motion, heat balance, mass conservation. MODA PHYSICS EQUATIONS
+                'Equation_quantities': {'type': 'array'},# e.g. Force, mass, potential, energy, stress, heat, temperature.
+                'Relation_description': {'type': 'array'}, # Describes equilibrium of forces on an infinitesimal element, etc.
+                'Relation_formulation': {'type': 'array'}, # Constitutive equation (material relation), e.g. force field, stress-strain, flow-gradient. MODA MATERIAL RELATIONS
+            },
+            'required': [
+                'Type', 'Entity'
+            ]
         },
         'Solver': {
             'properties': {
-                # Software: Name of the software (e.g.openFOAM). Corresponds to MODA Solver Specification: SOFTWARE
-                # TOOL, obtained automatically from getApplicationSignature()
-                'Software': {'type': 'string'},
+                'Software': {'type': 'string'},#Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
-                # Type e.g. finite difference method for Ordinary Differential Equations (ODEs), Finite element method.
-                # Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Type': {'type': 'string'},
-                # Additional parameters of numerical solver, e.g. time integration scheme
-                'Solver_additional_params': {'type': 'string'},
+                'Type': {'type': 'string'}, # Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+                'Solver_additional_params': {'type': 'string'},# Additional parameters of numerical solver, e.g. time integration scheme
                 'Documentation': {'type': 'string'},  # Where published/documented
                 'Estim_time_step': {'type': 'number'},  # Seconds
                 'Estim_comp_time': {'type': 'number'},  # Seconds
@@ -95,7 +84,6 @@ ModelSchema = {
                 'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
                 'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
                 'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-
             },
             'required': [
                 'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
@@ -105,13 +93,15 @@ ModelSchema = {
         },
         'Execution': {
             'properties': {
-                'Execution_ID': {'type': ['string', 'integer']},
+                'ID': {'type': ['string', 'integer']},
+                'Use_case_ID': {'type': ['string', 'integer']},
+                'Task_ID' : {'type': 'string'},
                 'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
-                'Progress': {'type': 'number'},  # Progress in %
-                'Date_time_start': {'type': 'string'},  # automatically set in Workflow
+                'Progress': {'type': 'number'}, # Progress in %
+                'Date_time_start': {'type': 'string'}, # automatically set in Workflow
                 'Date_time_end': {'type': 'string'},  # automatically set in Workflow
                 'Username': {'type': 'string'},  # automatically set in Model and Workflow
-                'Hostname': {'type': 'string'},  # automatically set in Model and Workflow
+                'Hostname': {'Physics''type': 'string'},  # automatically set in Model and Workflow
 
             },
             'required': ['Execution_ID']
@@ -125,10 +115,6 @@ ModelSchema = {
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
-                    # 'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
-                    # 'Experimental_details': {'type': 'string'},
-                    # 'Experimental_record': {'type': 'string'},
-                    # 'Estimated_std': {'type': 'number'},
                     'Type': {'type': 'string'},  # e.g. mupif.Property
                     'Type_ID': {'type': 'string'},  # e.g. PID_..., FID_...
                     'Object_ID': {'type': 'array'},  # optional parameter for additional info
@@ -155,8 +141,7 @@ ModelSchema = {
         }
     },
     'required': [
-        'Name', 'ID', 'Description', 'Boundary_conditions', 'Input_types', 'Output_types', 'Execution', 'Solver',
-        'Physics'
+        'Name', 'ID', 'Description', 'Boundary_conditions', 'Physics', 'Solver', 'Execution', 'Input_types', 'Output_types'  
     ]
 }
 
@@ -220,7 +205,7 @@ class Model(MupifObject.MupifObject):
 
         # define futher app metadata 
         self.setMetadata('Execution.Execution_ID', executionID)
-        # self.setMetadata('Name', self.getApplicationSignature())
+        self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         
         # self.printMetadata()
@@ -500,6 +485,17 @@ class Model(MupifObject.MupifObject):
         """
         return self.pyroURI
 
+    def printMetadata(self, nonEmpty=False):
+        """ 
+        Print all metadata
+        :param bool nonEmpty: Optionally print only non-empty values
+        :return: None
+        :rtype: None
+        """
+        print('AppName:\'%s\':' % self.getMetadata('Name'))
+        super(Model, self).printMetadata(nonEmpty)
+    
+
 
 @Pyro4.expose
 class RemoteModel (object):
@@ -526,7 +522,7 @@ class RemoteModel (object):
 
     def getJobID(self):
         return self._jobID
-
+    
     @Pyro4.oneway # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
