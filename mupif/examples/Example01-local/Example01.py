@@ -13,11 +13,12 @@ class application1(Model.Model):
     def __init__(self):
         # calls constructor from Application module
         super(application1, self).__init__()
-        return
+        self.value = 0.
 
     def getProperty(self, propID, time, objectID=0):
         if propID == PropertyID.PID_Concentration:
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
+            return Property.ConstantProperty((self.value,), PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3',
+                                             time)
         else:
             raise APIError.APIError('Unknown property ID')
 
@@ -40,11 +41,13 @@ class application2(Model.Model):
         super(application2, self).__init__()
         self.value = 0.0
         self.count = 0.0
-        self.contrib = 0.0
+        self.contrib = Property.ConstantProperty((0.,), PropertyID.PID_CumulativeConcentration,
+                                                 ValueType.Scalar, 'kg/m**3', PQ.PhysicalQuantity(0., 's'))
 
     def getProperty(self, propID, time, objectID=0):
         if propID == PropertyID.PID_CumulativeConcentration:
-            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time)
+            return Property.ConstantProperty((self.value/self.count,), PropertyID.PID_CumulativeConcentration,
+                                             ValueType.Scalar, 'kg/m**3', time)
         else:
             raise APIError.APIError('Unknown property ID')
 
@@ -57,13 +60,13 @@ class application2(Model.Model):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(self.getAssemblyTime(tstep))
+        self.value = self.value+self.contrib.inUnitsOf('kg/m**3').getValue(self.getAssemblyTime(tstep))[0]
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
 
-    def getAssemblyTime (self, tstep):
+    def getAssemblyTime(self, tstep):
         return tstep.getTime()
 
 
@@ -121,7 +124,7 @@ app2.initialize(metaData=app1Metadata)
 # app2.printMetadata()
 
 
-while abs(time -targetTime) > 1.e-6:
+while abs(time - targetTime) > 1.e-6:
 
     # determine critical time step
     dt = min(app1.getCriticalTimeStep().inUnitsOf('s').getValue(),
@@ -140,28 +143,29 @@ while abs(time -targetTime) > 1.e-6:
         app1.solveStep(istep)
         # handshake the data
         c = app1.getProperty(PropertyID.PID_Concentration, app2.getAssemblyTime(istep))
-        app2.setProperty (c)
+        app2.setProperty(c)
         # solve second sub-problem 
         app2.solveStep(istep)
         # get the averaged concentration
         prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, app2.getAssemblyTime(istep))
         # print (istep.getTime(), c, prop)
         atime = app2.getAssemblyTime(istep)
-        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (atime.getValue(), c.getValue(atime), prop.getValue(atime)))
+        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (
+            atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
         
     except APIError.APIError as e:
-        log.error("mupif.APIError occurred:",e)
+        log.error("mupif.APIError occurred:", e)
         log.error("Test FAILED")
         raise
 
-if abs(prop.getValue(istep.getTime())-0.55) <= 1.e-4:
+if abs(prop.getValue(istep.getTime())[0]-0.55) <= 1.e-4:
     log.info("Test OK")
 else:
     log.error("Test FAILED")
     sys.exit(1)
 
 # terminate
-c.printMetadata()
-c.validateMetadata(dataID.DataSchema)
+# c.printMetadata()
+# c.validateMetadata(dataID.DataSchema)
 app1.terminate()
 app2.terminate()

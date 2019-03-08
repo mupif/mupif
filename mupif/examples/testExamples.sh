@@ -212,23 +212,6 @@ pushd Example16-transiTM-JobMan-distrib
 popd
 fi
 
-willRunTest '18'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example18-transiTM-JobMan-distrib
-        echo $PWD
-	$COMMAND thermalServer.py &
-	PID1=$!
-	$COMMAND mechanicalServer.py &
-	PID2=$!
-	sleep 2 #wait for servers to start
-	$COMMAND Example18.py
-	ret=$?
-	(( retval=$retval || $ret ))
-	AppendLog $ret `pwd`
-	kill -9 $PID1
-	kill -9 $PID2
-popd
-fi
-
 
 
 echo "*** Global return status $retval."

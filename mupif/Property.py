@@ -40,15 +40,14 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             else:
                 self.unit = PhysicalQuantities.findUnit(units)
                 
-            self.setMetadata('Units', self.unit.name() )
-            self.setMetadata('Type', '%s' % (self.propID) )
+            self.setMetadata('Units', self.unit.name())
+            self.setMetadata('Type', '%s' % self.propID)
 
         def getValue(self, time=None, **kwargs):
             """
             Returns the value of property in a tuple.
             :param Physics.PhysicalQuantity time: Time of property evaluation
-            :param \**kwargs: Arbitrary keyword arguments,see documentation
-                of derived classes.
+            :param \**kwargs: Arbitrary keyword arguments, see documentation of derived classes.
 
             :return: Property value as an array
             :rtype: tuple
