@@ -29,6 +29,9 @@ class Function(object):
         """
         Represents a function.
 
+        Usage of class Function for data transfers between codes as with Field or Property is deprecated.
+        It is not supposed for data transfers any more, thus becomes an auxiliary class.
+
         Function is an object defined by mathematical expression. Function can depend on spatial position and time.
         Derived classes should implement evaluate service by providing a corresponding expression.
         
@@ -43,10 +46,7 @@ class Function(object):
             :param FunctionID funcID: function ID, e.g. FuncID_ProbabilityDistribution
             :param int objectID: Optional ID of associated subdomain, default 0
             """
-            self.setMetadata('Units', '' )
-            self.setMetadata('Type', '%s' % (self.funcID) )
-            
-            
+
         def evaluate(self, d):
             """
             Evaluates the function for given parameters packed as a dictionary.

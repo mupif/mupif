@@ -43,7 +43,8 @@ try:
    import cPickle as pickle  # faster serialization if available
 except:
    import pickle
-# import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute lookup thread.lock failed
+# import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute
+# lookup thread.lock failed
 
 # debug flag
 debug = 0
@@ -109,8 +110,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         else:
             self.unit = PhysicalQuantities.findUnit(units)
             
-        self.setMetadata('Units', self.unit.name() )
-        self.setMetadata('Type', '%s' % (self.fieldID) )
+        self.setMetadata('Units', self.unit.name())
+        self.setMetadata('Type', '%s' % self.fieldID)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
@@ -269,7 +270,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                                 answer = list(tmp)
                             else:
                                 for i in answer:
-                                   answer = [x+y for x in answer for y in tmp]
+                                    answer = [x+y for x in answer for y in tmp]
                             count += 1
 
                         except IndexError:
@@ -417,7 +418,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             lookupTable = None
         if lookupTable is None:
             lookupTable=pyvtk.LookupTable([(0, .231, .298, 1.0), (.4, .865, .865, 1.0), (.8, .706, .016, 1.0)], name='coolwarm')
-            # Scalars use different name than 'coolwarm'. Then Paraview uses its own color mapping instead of taking 'coolwarm' from *.vtk file. This prevents setting Paraview's color mapping.
+            # Scalars use different name than 'coolwarm'. Then Paraview uses its own color mapping instead of taking
+            # 'coolwarm' from *.vtk file. This prevents setting Paraview's color mapping.
             scalarsKw = dict(name=name, lookup_table='default')
         else:
             scalarsKw = dict(name=name, lookup_table=lookupTable.name)
@@ -440,7 +442,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             elif self.getValueType() == ValueType.Tensor:
                 return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
             
-    def getMartixForTensor(self,values):
+    def getMartixForTensor(self, values):
         """
         Reshape values to a list with 3x3 arrays. Usable for VTK export.
 
@@ -658,9 +660,12 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         # raise IOError('Path "%s" is already used in "%s".'%(path,fileName))
 
         def lowestUnused(trsf, predicate, start=1):
-            """Find the lowest unused index, where *predicate* is used to test for existence, and *trsf* transforms integer (starting at *start* and incremented until unused value is found) to whatever predicate accepts as argument. Lowest transformed value is returned."""
+            """
+            Find the lowest unused index, where *predicate* is used to test for existence, and *trsf* transforms
+            integer (starting at *start* and incremented until unused value is found) to whatever predicate accepts
+            as argument. Lowest transformed value is returned.
+            """
             import itertools
-            import sys
             for i in itertools.count(start=start):
                 t = trsf(i)
                 if not predicate(t):

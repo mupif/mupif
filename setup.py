@@ -75,7 +75,7 @@ setup(
     # 'scipy' fails due to missing compiler for Lapack etc.
     install_requires=[
         'numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'Pyro4==4.74', 'jsonpickle',
-        'jsonschema', 'vtk'
+        'jsonschema', 'vtk', 'matplotlib'
     ],
     include_package_data=True,
     url='http://www.mupif.org/',
