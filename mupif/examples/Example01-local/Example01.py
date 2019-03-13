@@ -16,9 +16,8 @@ class application1(Model.Model):
         self.value = 0.
 
     def getProperty(self, propID, time, objectID=0):
-        if propID == PropertyID.PID_Concentration:
-            return Property.ConstantProperty((self.value,), PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3',
-                                             time)
+        if propID == PropertyID.PID_Time_step:
+            return Property.ConstantProperty((self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time)
         else:
             raise APIError.APIError('Unknown property ID')
 
@@ -41,18 +40,16 @@ class application2(Model.Model):
         super(application2, self).__init__()
         self.value = 0.0
         self.count = 0.0
-        self.contrib = Property.ConstantProperty((0.,), PropertyID.PID_CumulativeConcentration,
-                                                 ValueType.Scalar, 'kg/m**3', PQ.PhysicalQuantity(0., 's'))
+        self.contrib = Property.ConstantProperty((0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
     def getProperty(self, propID, time, objectID=0):
-        if propID == PropertyID.PID_CumulativeConcentration:
-            return Property.ConstantProperty((self.value/self.count,), PropertyID.PID_CumulativeConcentration,
-                                             ValueType.Scalar, 'kg/m**3', time)
+        if propID == PropertyID.PID_Time:
+            return Property.ConstantProperty((self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time)
         else:
             raise APIError.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
-        if property.getPropertyID() == PropertyID.PID_Concentration:
+        if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
@@ -60,7 +57,7 @@ class application2(Model.Model):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value = self.value+self.contrib.inUnitsOf('kg/m**3').getValue(self.getAssemblyTime(tstep))[0]
+        self.value = self.value+self.contrib.inUnitsOf('s').getValue(self.getAssemblyTime(tstep))[0]
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
@@ -78,10 +75,9 @@ app1 = application1()
 app2 = application2()
 
 app1Metadata = {
-    'Name': 'Simple application cummulating calling time',
+    'Name': 'Simple application storing time steps',
     'ID': 'N/A',
-    'Description': 'Cummulates calling time',
-    'Boundary_conditions': 'None',
+    'Description': 'Cummulates time steps',
     'Physics': {
         'Type': 'Other',
         'Entity': 'Other'
@@ -94,22 +90,55 @@ app1Metadata = {
         'Version_date': '02/2019',
         'Type': 'Summator',
         'Documentation': 'Nowhere',
-        'Estim_time_step': 1,
-        'Estim_comp_time': 0.01,
-        'Estim_execution_cost': 0.01,
-        'Estim_personnel_cost': 0.01,
+        'Estim_time_step_s': 1,
+        'Estim_comp_time_s': 0.01,
+        'Estim_execution_cost_EUR': 0.01,
+        'Estim_personnel_cost_EUR': 0.01,
         'Required_expertise': 'None',
         'Accuracy': 'High',
         'Sensitivity': 'High',
         'Complexity': 'Low',
         'Robustness': 'High'
     },
-    'Input_types': [
-        {'ID': 'N/A', 'Name': 'Concentration', 'Description': 'Concentration alias time', 'Units': 's',
-         'Origin': 'Simulated', 'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Concentration', 'Required': True}],
-    'Output_types': [
-        {'ID': 'N/A', 'Name': 'Concentration', 'Description': 'Concentration alias time', 'Units': 's',
-         'Origin': 'Simulated', 'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Concentration', 'Required': True}]
+    'Inputs': [
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
+         'Origin': 'Simulated', 'Required': True}],
+    'Outputs': [
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
+         'Origin': 'Simulated'}]
+}
+
+app2Metadata = {
+    'Name': 'Simple application cummulating time steps',
+    'ID': 'N/A',
+    'Description': 'Cummulates time steps',
+    'Physics': {
+        'Type': 'Other',
+        'Entity': 'Other'
+    },
+    'Solver': {
+        'Software': 'Python script',
+        'Language': 'Python3',
+        'License': 'LGPL',
+        'Creator': 'Borek',
+        'Version_date': '02/2019',
+        'Type': 'Summator',
+        'Documentation': 'Nowhere',
+        'Estim_time_step_s': 1,
+        'Estim_comp_time_s': 0.01,
+        'Estim_execution_cost_EUR': 0.01,
+        'Estim_personnel_cost_EUR': 0.01,
+        'Required_expertise': 'None',
+        'Accuracy': 'High',
+        'Sensitivity': 'High',
+        'Complexity': 'Low',
+        'Robustness': 'High'
+    },
+    'Inputs': [
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
+         'Origin': 'Simulated', 'Required': True}],
+    'Outputs': [
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time', 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
 }
 
 app1.initialize(metaData=app1Metadata)
@@ -120,7 +149,7 @@ aa = MupifObject.MupifObject('aa.json')
 # aa.printMetadata()
 
 # TODO - update app2
-app2.initialize(metaData=app1Metadata)
+app2.initialize(metaData=app2Metadata)
 # app2.printMetadata()
 
 
@@ -142,15 +171,15 @@ while abs(time - targetTime) > 1.e-6:
         # solve problem 1
         app1.solveStep(istep)
         # handshake the data
-        c = app1.getProperty(PropertyID.PID_Concentration, app2.getAssemblyTime(istep))
+        c = app1.getProperty(PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
         app2.setProperty(c)
         # solve second sub-problem 
         app2.solveStep(istep)
         # get the averaged concentration
-        prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, app2.getAssemblyTime(istep))
+        prop = app2.getProperty(PropertyID.PID_Time, app2.getAssemblyTime(istep))
         # print (istep.getTime(), c, prop)
         atime = app2.getAssemblyTime(istep)
-        log.debug("Time: %5.2f concentration %5.2f, running average %5.2f" % (
+        log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
             atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
         
     except APIError.APIError as e:
@@ -158,7 +187,7 @@ while abs(time - targetTime) > 1.e-6:
         log.error("Test FAILED")
         raise
 
-if abs(prop.getValue(istep.getTime())[0]-0.55) <= 1.e-4:
+if abs(prop.getValue(istep.getTime())[0]-5.5) <= 1.e-4:
     log.info("Test OK")
 else:
     log.error("Test FAILED")

@@ -37,7 +37,7 @@ del WorkflowSchema['properties']['Solver']
 del WorkflowSchema['properties']['Physics']
 WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models
 WorkflowSchema['required'] = [
-    'Name', 'ID', 'Description', 'Boundary_conditions', 'Model_refs_ID', 'Execution', 'Input_types', 'Output_types']
+    'Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
 
 
 @Pyro4.expose
@@ -79,7 +79,7 @@ class Workflow(Model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-        self.metadata.update(metaData)
+        self.updateMetadata(metaData)
         # define futher app metadata 
         self.setMetadata('Execution.ID', executionID)
         # self.setMetadata('Name', self.getApplicationSignature())
@@ -167,7 +167,6 @@ class Workflow(Model.Model):
                         'WorkflowMonitor.Date': date}
             
             try:
-                # TODO - ComponentID should be removed
                 self.workflowMonitor.updateMetadata(self.getMetadata('WorkflowMonitor.ComponentID'), metadata)
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required

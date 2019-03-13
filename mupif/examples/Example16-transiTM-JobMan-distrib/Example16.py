@@ -64,18 +64,18 @@ class Demo16(Workflow.Workflow):
                 'Version_date': '1.0.0, Feb 2019',
                 'Type': '',
                 'Documentation': 'Felippa: Introduction to finite element methods, 2004',
-                'Estim_time_step': 1,
-                'Estim_comp_time': 1.e-3,
-                'Estim_execution_cost': 0.01,
-                'Estim_personnel_cost': 0.01,
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 1.e-3,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
                 'Required_expertise': 'None',
                 'Accuracy': 'Medium',
                 'Sensitivity': 'Low',
                 'Complexity': 'Low',
                 'Robustness': 'High',
             },
-            'Input_types': [],
-            'Output_types': [
+            'Inputs': [],
+            'Outputs': [
                 {'ID': 'N/A', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain',
                  'Units': 'm', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Displacement'}
             ]
@@ -107,12 +107,12 @@ class Demo16(Workflow.Workflow):
         return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
-        self.thermal.printMetadata()
-        self.mechanical.printMetadata()
+        #self.thermal.printMetadata()
+        #self.mechanical.printMetadata()
         self.thermal.terminate()
         self.thermalJobMan.terminate()
         self.mechanical.terminate()
-        self.printMetadata()
+        #self.printMetadata()
         super(Demo16, self).terminate()
     
     def getApplicationSignature(self):

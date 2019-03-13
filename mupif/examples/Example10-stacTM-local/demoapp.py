@@ -26,16 +26,14 @@ class thermal(Model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self, metaData={}):
-        super(thermal, self).__init__(metaData)
-        
-        metaData = {
+        metaData1 = {
             'Name': 'Stationary thermal problem',
             'ID': 'Thermo-1',
             'Description': 'Stationary heat conduction using finite elements on rectangular domain',
             'Geometry': '2D rectangle',
             'Solver': {
-                'Software': 'own',
-                'Language': 'Python',
+                'Software': 'mupif FEM',
+                'Language': 'Python 3',
                 'License': 'LGPL',
                 'Creator': 'Borek Patzak',
                 'Version_date': '1.0.0, Feb 2019',
@@ -61,9 +59,11 @@ class thermal(Model.Model):
                 'Representation': 'Finite volumes'
             },
             'Inputs': [],
-            'Outpus': [{'Type': 'mupif.Field', 'ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C'}]
+            'Outputs': [{'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C'}]
         }
-        self.metadata.update(metaData)
+        
+        super(thermal, self).__init__(metaData1)
+        self.updateMetadata(metaData)
         
         self.morphologyType = None
         self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
@@ -534,26 +534,24 @@ class thermal(Model.Model):
 @Pyro4.expose
 class thermal_nonstat(thermal):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""    
-    def __init__(self):
-        metaData = {
+    def __init__(self, metaData={}):
+        metaData2 = {
             'Name': 'Non-stationary thermal problem',
             'ID': 'NonStatThermo-1',
             'Description': 'Non-stationary heat conduction using finite elements on a rectangular domain',
-            'Representation': 'Finite volumes',
             'Geometry': '2D rectangle',
-            'Boundary_conditions': 'Dirichlet, Neumann',
             'Solver': {
-                'Software': 'own',
-                'Language': 'Python',
+                'Software': 'mupif FEM',
+                'Language': 'Python 3',
                 'License': 'LGPL',
                 'Creator': 'Borek Patzak',
                 'Version_date': '1.0.0, Feb 2019',
                 'Type': 'Finite elements',
                 'Documentation': 'Felippa: Introduction to finite element methods, 2004',
-                'Estim_time_step': 1,
-                'Estim_comp_time': 1.e-3,
-                'Estim_execution_cost': 0.01,
-                'Estim_personnel_cost': 0.01,
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 1.e-3,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
                 'Required_expertise': 'None',
                 'Accuracy': 'Medium',
                 'Sensitivity': 'Low',
@@ -569,12 +567,15 @@ class thermal_nonstat(thermal):
                 'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
                 'Representation': 'Finite volumes'
             },
-            'Input_types': [],
-            'Output_types': [
-                {'ID': 'N/A', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C',
-                 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Temperature'}]
+            'Inputs': [],
+            'Outputs': [{'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C'}]
         }
-        super(thermal_nonstat, self).__init__(metaData)
+        super(thermal, self).__init__(metaData2) #from Model.py
+        self.updateMetadata(metaData)
+        
+        self.morphologyType = None
+        self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
+        self.tria = False
         self.capacity = 1.0
         self.density = 1.0
         self.Tau = 0.5
@@ -822,23 +823,30 @@ class thermal_nonstat(thermal):
 class mechanical(Model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
-    def __init__(self):
-        super(mechanical, self).__init__()
-        self.E = 30.0e+9  # ceramics
-        self.nu = 0.25  # ceramics
-        self.fx = [0., 0., 0., 0.]  # load in x
-        self.fy = [0., 0., 0., 0.]  # load in y
-        self.temperatureField = None
-        self.alpha = 12.e-6
-        self.thick = 1.0
-        
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
-        metaData = {
+    def __init__(self, metaData={}):
+        metaData3 = {
             'Name': 'Plane stress linear elastic',
             'ID': 'Mechanical-1',
             'Description': 'Plane stress problem with linear elastic thermo-elastic material',
             'Geometry': '2D rectangle',
-            'Boundary_conditions': 'Dirichlet',
+            'Solver': {
+                'Software': 'mupif FEM',
+                'Language': 'Python',
+                'License': 'LGPL',
+                'Creator': 'Borek Patzak',
+                'Version_date': '1.0.0, Feb 2019',
+                'Type': 'Finite elements',
+                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 1.e-3,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'Medium',
+                'Sensitivity': 'Low',
+                'Complexity': 'Low',
+                'Robustness': 'High',
+            },
             'Physics': {
                 'Type': 'Continuum',
                 'Entity': 'Finite volume',
@@ -847,33 +855,27 @@ class mechanical(Model.Model):
                 'Relation_description': ['Hooke\'s law'],
                 'Relation_formulation': ['Stress strain'],
             },
-            'Solver': {
-                'Software': 'own',
-                'Language': 'Python',
-                'License': 'LGPL',
-                'Creator': 'Borek Patzak',
-                'Version_date': '1.0.0, Feb 2019',
-                'Type': 'Finite elements',
-                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
-                'Estim_time_step': 1,
-                'Estim_comp_time': 1.e-3,
-                'Estim_execution_cost': 0.01,
-                'Estim_personnel_cost': 0.01,
-                'Required_expertise': 'None',
-                'Accuracy': 'Medium',
-                'Sensitivity': 'Low',
-                'Complexity': 'Low',
-                'Robustness': 'High',
-            },
-            'Input_types': [
-                {'ID': 'N/A', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C',
-                 'Origin': 'Simulated', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Required': True}],
-            'Output_types': [
-                {'ID': 'N/A', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain',
-                 'Units': 'm', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Displacement'}]
+
+            'Inputs': [ {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C', 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [{'Type': 'mupif.Field',  'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
 
+        super(mechanical, self).__init__(metaData3)
+        self.updateMetadata(metaData)
+        self.E = 30.0e+9  # ceramics
+        self.nu = 0.25  # ceramics
+        self.fx = [0., 0., 0., 0.]  # load in x
+        self.fy = [0., 0., 0., 0.]  # load in y
+        self.temperatureField = None
+        self.alpha = 12.e-6
+        self.thick = 1.0
+        
+        
+        
+        
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         super().initialize(file, workdir, executionID, metaData, **kwargs)
+       
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')

@@ -40,8 +40,11 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             else:
                 self.unit = PhysicalQuantities.findUnit(units)
                 
+            self.setMetadata('Type', 'mupif.Property.Property')
+            self.setMetadata('Type_ID', str(self.propID))
             self.setMetadata('Units', self.unit.name())
-            self.setMetadata('Type', '%s' % self.propID)
+            self.setMetadata('ValueType', str(self.valueType))
+            
 
         def getValue(self, time=None, **kwargs):
             """

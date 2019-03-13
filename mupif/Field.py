@@ -36,6 +36,7 @@ from numpy import array, arange, random, zeros
 import numpy
 import copy
 import Pyro4
+from enum import IntEnum
 import logging
 log = logging.getLogger()
 
@@ -50,7 +51,7 @@ except:
 debug = 0
 
 
-class FieldType(object):
+class FieldType(IntEnum):
     """
     Represent the supported values of FieldType, i.e. FT_vertexBased or FT_cellBased.
     """
@@ -78,7 +79,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         :param Mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType valueType: Type of field values (scalear, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
+        :param ValueType valueType: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param Physics.PhysicalUnits units: Field value units
         :param Physics.PhysicalQuantity time: Time associated with field values
         :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
@@ -111,7 +112,10 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             self.unit = PhysicalQuantities.findUnit(units)
             
         self.setMetadata('Units', self.unit.name())
-        self.setMetadata('Type', '%s' % self.fieldID)
+        self.setMetadata('Type', 'mupif.Field.Field')
+        self.setMetadata('Type_ID', str(self.fieldID))
+        self.setMetadata('FieldType', str(fieldType))
+        self.setMetadata('ValueType', str(self.valueType))
 
     @classmethod
     def loadFromLocalFile(cls, fileName):

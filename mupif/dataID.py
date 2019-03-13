@@ -8,11 +8,13 @@ from enum import IntEnum
 DataSchema = {
     'type': 'object',
     'properties': {
+        'Type': {'type': 'string'},  # Automatically generated from MuPIF, e.g. mupif.Field.Field
+        'Type_ID': {'type': 'string'},  # Automatically generated from MuPIF, e.g. FieldID.FID_Temperature
         'Name': {'type': 'string'},  # e.g. 'Density of inclusion'
         'ID': {'type': ['string', 'integer']},  # Unique ID
         'Description': {'type': 'string'},  # Further description
         'Units': {'type': 'string'},  # Automatically generated from MuPIF, e.g. 'kg'
-        'Type': {'type': 'string'},  # Automatically generated from MuPIF, e.g. PID_Temperature
+        'ValueType': {'type': 'string'}, # Automatically generated
         'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
         'Execution_Task_ID': {'type': 'string'},  # If Simulated, give reference to Task_ID
         'Execution_Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
@@ -21,7 +23,7 @@ DataSchema = {
         'Estimated_std': {'type': 'number'},  # Percent of standard deviation
         },
     'required': [
-        'Units', 'Type'  
+        'Type', 'Type_ID', 'Units', 'ValueType'  
     ]
 }
 

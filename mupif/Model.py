@@ -38,7 +38,7 @@ import time
 import logging
 log = logging.getLogger()
 
-# Schema for metadata
+# Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
     'type': 'object',
     'properties': {
@@ -93,7 +93,7 @@ ModelSchema = {
             },
             'required': [
                 'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
-                'Estim_time_step', 'Estim_comp_time', 'Estim_execution_cost', 'Estim_personnel_cost',
+                'Estim_time_step_s', 'Estim_comp_time_s', 'Estim_execution_cost_EUR', 'Estim_personnel_cost_EUR',
                 'Required_expertise', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness'
             ]
         },
@@ -116,15 +116,15 @@ ModelSchema = {
             'items': {
                 'type': 'object',  # Object supplies a dictionary
                 'properties': {
-                    'Type': {'type': 'string'},  # e.g. mupif.Property
-                    'ID': {'type': 'string'}, # e.g. mupif.PropertyID.PID_Concentration
+                    'Type': {'type': 'string'},  # e.g. mupif.Property.Property
+                    'Type_ID': {'type': 'string'}, # e.g. PID_Concentration
                     'ID_info': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
                     'Required': {'type': 'boolean'}
                 },
-                'required': ['Type','ID', 'Name', 'Units', 'Required']
+                'required': ['Type','Type_ID', 'Name', 'Units', 'Required']
             }
         },
         'Outputs': {
@@ -133,13 +133,13 @@ ModelSchema = {
                 'type': 'object',
                 'properties': {
                     'Type': {'type': 'string'},  # e.g. mupif.Field
-                    'ID': {'type': 'string'},  # e.g. mupif.FieldID.FID_Temperature
+                    'Type_ID': {'type': 'string'},  # e.g. mupif.FieldID.FID_Temperature
                     'ID_info': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
                 },
-                'required': ['Type', 'ID', 'ID_info', 'Name', 'Units']
+                'required': ['Type', 'Type_ID', 'Name', 'Units']
             }
         }
     },
@@ -221,6 +221,7 @@ class Model(MupifObject.MupifObject):
 
         if validateMetaData:
             self.validateMetadata(ModelSchema)
+            log.info('Metadata successfully validated')
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon = False):
         """
