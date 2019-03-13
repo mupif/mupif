@@ -49,7 +49,6 @@ ModelSchema = {
         'Material': {'type': 'string'},  # What material is simulated
         'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions
         'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
-        'Boundary_conditions': {'type': 'string'},
         'Physics': {  # Corresponds to MODA Generic Physics
             'type': 'object',
             'properties': {
@@ -74,22 +73,18 @@ ModelSchema = {
         },
         'Solver': {
             'properties': {
-                # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
-                'Software': {'type': 'string'},
+                'Software': {'type': 'string'},# Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
-                # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to
-                # MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Type': {'type': 'string'},
-                # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
-                'Solver_additional_params': {'type': 'string'},
-                'Documentation': {'type': 'string'},  # Where published/documented
-                'Estim_time_step': {'type': 'number'},  # Seconds
-                'Estim_comp_time': {'type': 'number'},  # Seconds
-                'Estim_execution_cost': {'type': 'number'},  # EUR
-                'Estim_personnel_cost': {'type': 'number'},  # EUR
+                'Type': {'type': 'string'},  # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+                'Solver_additional_params': {'type': 'string'}, # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                'Documentation': {'type': 'string'}, # Where published/documented
+                'Estim_time_step_s': {'type': 'number'},  # Seconds
+                'Estim_comp_time_s': {'type': 'number'},  # Seconds
+                'Estim_execution_cost_EUR': {'type': 'number'},  # EUR
+                'Estim_personnel_cost_EUR': {'type': 'number'},  # EUR
                 'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
                 'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
                 'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
@@ -116,42 +111,40 @@ ModelSchema = {
             },
             'required': ['ID']
         },
-        'Input_types': {
+        'Inputs': {
             'type': 'array',  # List
             'items': {
                 'type': 'object',  # Object supplies a dictionary
                 'properties': {
-                    'ID': {'type': ['string', 'integer']},
+                    'Type': {'type': 'string'},  # e.g. mupif.Property
+                    'ID': {'type': 'string'}, # e.g. mupif.PropertyID.PID_Concentration
+                    'ID_info': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
-                    'Type': {'type': 'string'},  # e.g. mupif.Property
-                    'Type_ID': {'type': 'string'},  # e.g. PID_..., FID_...
-                    'Object_ID': {'type': 'array'},  # optional parameter for additional info
                     'Required': {'type': 'boolean'}
                 },
-                'required': ['ID', 'Name', 'Units', 'Type', 'Type_ID', 'Required']
+                'required': ['Type','ID', 'Name', 'Units', 'Required']
             }
         },
-        'Output_types': {
+        'Outputs': {
             'type': 'array',
             'items': {
                 'type': 'object',
                 'properties': {
-                    'ID': {'type': ['string', 'integer']},
+                    'Type': {'type': 'string'},  # e.g. mupif.Field
+                    'ID': {'type': 'string'},  # e.g. mupif.FieldID.FID_Temperature
+                    'ID_info': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
-                    'Type': {'type': 'string'},  # e.g. mupif.Property
-                    'Type_ID': {'type': 'string'},  # e.g. PID_..., FID_...
-                    'Object_ID': {'type': 'array'}  # optional parameter for additional info
                 },
-                'required': ['ID', 'Name', 'Units', 'Type', 'Type_ID']
+                'required': ['Type', 'ID', 'ID_info', 'Name', 'Units']
             }
         }
     },
     'required': [
-        'Name', 'ID', 'Description', 'Boundary_conditions', 'Physics', 'Solver', 'Execution', 'Input_types', 'Output_types'  
+        'Name', 'ID', 'Description', 'Physics', 'Solver', 'Execution', 'Inputs', 'Outputs'  
     ]
 }
 
@@ -502,10 +495,10 @@ class Model(MupifObject.MupifObject):
         :return: None
         :rtype: None
         """
-        print('AppName:\'%s\':' % self.getMetadata('Name'))
+        if self.hasMetadata('Name'):
+            print('AppName:\'%s\':' % self.getMetadata('Name'))
         super(Model, self).printMetadata(nonEmpty)
     
-
 
 @Pyro4.expose
 class RemoteModel (object):

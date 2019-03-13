@@ -9,7 +9,24 @@ log = logging.getLogger()
 
 
 if True:
+    
+    mD = {'Solver' : {'Software': 'BlaBla'}}
+    mD1 = {'Solver.Licence' : 'AAAAAAA'}
+    
+    
     app = demoapp.thermal()
+       
+    app.setMetadata('Solver.Licence', 'BBBBAAAAAAA')
+    #app.metadata.update(mD)
+    
+    app.printMetadata()
+    exit(0)
+    
+    app.metadata.update(mD1)
+
+    
+
+    
     app.initialize('inputT10.in','.')
     tstep = TimeStep.TimeStep(1.,1.,10,'s')
     sol = app.solveStep(tstep)
@@ -25,6 +42,8 @@ if True:
     #app.toJSONFile('aa.json')
     
     #print (valueT)
+
+
 
 if True:
     app2 = demoapp.mechanical()

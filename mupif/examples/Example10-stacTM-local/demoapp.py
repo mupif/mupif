@@ -26,45 +26,45 @@ class thermal(Model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self, metaData={}):
-        if len(metaData) == 0:
-            metaData = {
-                'Name': 'Stationary thermal problem',
-                'ID': 'Thermo-1',
-                'Description': 'Stationary heat conduction using finite elements on rectangular domain',
-                'Geometry': '2D rectangle',
-                'Boundary_conditions': 'Dirichlet, Neumann',
-                'Solver': {
-                    'Software': 'own',
-                    'Language': 'Python',
-                    'License': 'LGPL',
-                    'Creator': 'Borek Patzak',
-                    'Version_date': '1.0.0, Feb 2019',
-                    'Type': 'Finite elements',
-                    'Documentation': 'Felippa: Introduction to finite element methods, 2004',
-                    'Estim_time_step': 1,
-                    'Estim_comp_time': 1.e-3,
-                    'Estim_execution_cost': 0.01,
-                    'Estim_personnel_cost': 0.01,
-                    'Required_expertise': 'None',
-                    'Accuracy': 'Medium',
-                    'Sensitivity': 'Low',
-                    'Complexity': 'Low',
-                    'Robustness': 'High'
-                },
-                'Physics': {
-                    'Type': 'Continuum',
-                    'Entity': 'Finite volume',
-                    'Equation': ['Heat balance'],
-                    'Equation_quantities': ['Heat flow'],
-                    'Relation_description': ['Fick\'s first law'],
-                    'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
-                    'Representation': 'Finite volumes'
-                },
-                'Input_types': [],
-                'Output_types': [{'ID': 'N/A', 'Name': 'Temperature field', 'Description': 'Temperature field',
-                                  'Units': 'C', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Temperature'}]
-            }
         super(thermal, self).__init__(metaData)
+        
+        metaData = {
+            'Name': 'Stationary thermal problem',
+            'ID': 'Thermo-1',
+            'Description': 'Stationary heat conduction using finite elements on rectangular domain',
+            'Geometry': '2D rectangle',
+            'Solver': {
+                'Software': 'own',
+                'Language': 'Python',
+                'License': 'LGPL',
+                'Creator': 'Borek Patzak',
+                'Version_date': '1.0.0, Feb 2019',
+                'Type': 'Finite elements',
+                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 1.e-3,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'Medium',
+                'Sensitivity': 'Low',
+                'Complexity': 'Low',
+                'Robustness': 'High'
+            },
+            'Physics': {
+                'Type': 'Continuum',
+                'Entity': 'Finite volume',
+                'Equation': ['Heat balance'],
+                'Equation_quantities': ['Heat flow'],
+                'Relation_description': ['Fick\'s first law'],
+                'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
+                'Representation': 'Finite volumes'
+            },
+            'Inputs': [],
+            'Outpus': [{'Type': 'mupif.Field', 'ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field', 'Description': 'Temperature field', 'Units': 'C'}]
+        }
+        self.metadata.update(metaData)
+        
         self.morphologyType = None
         self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
         self.tria = False
