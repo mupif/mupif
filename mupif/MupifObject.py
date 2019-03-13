@@ -74,7 +74,7 @@ class MupifObject(object):
         :return: None
         :rtype: None
         """
-        print('ClassName:\'%s\'' % (self.__class__.__name__))
+        print('ClassName:\'%s\'' % self.__class__.__name__)
         if nonEmpty:
             d = {}
             for k, v in self.metadata.items():
@@ -91,8 +91,9 @@ class MupifObject(object):
         keys = key.split('.')
         elem = self.metadata
         i = 0
+        i_last = len(keys)-1
         for keyword in keys:
-            if i == len(keys)-1:
+            if i == i_last:
                 last = True
             else:
                 last = False
@@ -106,14 +107,28 @@ class MupifObject(object):
             else:
                 elem[keyword] = val
             i += 1
-        # self.metadata[key] = val
+
+    def _iterInDictOfMetadataForUpdate(self, dictionary, base_key):
+        for key, value in dictionary.items():
+            if base_key != "":
+                new_key = "%s.%s" % (base_key, key)
+            else:
+                new_key = "%s" % key
+
+            if isinstance(value, dict):
+                self._iterInDictOfMetadataForUpdate(value, new_key)
+            else:
+                self.setMetadata(new_key, value)
         
     def updateMetadata(self, dictionary):
         """ 
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
         """
-        self.metadata.update(dictionary)
+        if isinstance(dictionary, dict):
+            self._iterInDictOfMetadataForUpdate(dictionary, "")
+
+        # self.metadata.update(dictionary)
 
     def validateMetadata(self, template):
         """

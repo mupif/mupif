@@ -10,14 +10,14 @@ log = logging.getLogger()
 
 if True:
     
-    mD = {'Solver' : {'Software': 'BlaBla'}}
-    mD1 = {'Solver.Licence' : 'AAAAAAA'}
-    
-    
+    mD = {'Solver': {'Software': 'BlaBla'}}
+    mD1 = {'Solver.Licence': 'AAAAAAA'}
+
     app = demoapp.thermal()
        
-    app.setMetadata('Solver.Licence', 'BBBBAAAAAAA')
-    #app.metadata.update(mD)
+    # app.setMetadata('Solver.Licence', 'BBBBAAAAAAA')
+    # app.metadata.update(mD)
+    app.updateMetadata(mD)
     
     app.printMetadata()
     exit(0)
