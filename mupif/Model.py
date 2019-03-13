@@ -99,9 +99,9 @@ ModelSchema = {
         },
         'Execution': {
             'properties': {
-                'ID': {'type': ['string', 'integer']},
-                'Use_case_ID': {'type': ['string', 'integer']},
-                'Task_ID': {'type': 'string'},
+                'ID': {'type': ['string', 'integer']}, #Optional application execution ID (typically set by workflow)
+                'Use_case_ID': {'type': ['string', 'integer']}, #user case ID (e.g. thermo-mechanical simulation coded as 1_1)
+                'Task_ID': {'type': 'string'}, #user task ID (e.g. variant of user case ID such as model with higher accuracy)
                 'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
                 'Progress': {'type': 'number'},  # Progress in %
                 'Date_time_start': {'type': 'string'},  # automatically set in Workflow
@@ -192,13 +192,13 @@ class Model(MupifObject.MupifObject):
 
         self.metadata.update(metaData)
 
-    def initialize(self, file='', workdir='', executionID='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
-        :param str executionID: Optional application execution ID (typically set by workflow)
+        :param str executionID: 
         :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
@@ -207,7 +207,7 @@ class Model(MupifObject.MupifObject):
         # self.printMetadata()
 
         # define futher app metadata 
-        self.setMetadata('Execution.ID', executionID)
+        #self.setMetadata('Execution.ID', executionID)
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         

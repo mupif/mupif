@@ -36,9 +36,7 @@ WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema['properties']['Solver']
 del WorkflowSchema['properties']['Physics']
 WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models
-WorkflowSchema['required'] = [
-    'Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
-
+WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
 
 @Pyro4.expose
 class Workflow(Model.Model):
@@ -68,21 +66,18 @@ class Workflow(Model.Model):
 
         self.workflowMonitor = None  # No monitor by default
 
-    def initialize(self, file='', workdir='', executionID='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
-        :param str executionID: Optional application execution ID (typically set by workflow)
-        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
         self.updateMetadata(metaData)
         # define futher app metadata 
-        self.setMetadata('Execution.ID', executionID)
-        # self.setMetadata('Name', self.getApplicationSignature())
         
         self.file = file
         if workdir == '':

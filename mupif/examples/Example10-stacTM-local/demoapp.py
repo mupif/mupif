@@ -69,7 +69,7 @@ class thermal(Model.Model):
         self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
         self.tria = False
         
-    def initialize(self, file='', workdir='', executionID='11', metaData={}, **kwargs):
+    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
         super(thermal, self).initialize(file, workdir, executionID, metaData, **kwargs)
 
     def readInput(self, tria=False):

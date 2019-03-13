@@ -50,22 +50,54 @@ class MupifObject(object):
                 self.metadata = json.load(f)
 
     def getMetadata(self, key):
+        #TODO - fix for nested dictionary
         """ 
         Returns metadata associated to given key
         :param key: unique metadataID 
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
-        return self.metadata[key]
+        keys = key.split('.')
+        elem = self.metadata
+        i = 0
+        i_last = len(keys)-1
+        for keyword in keys:
+            if i == i_last:
+                last = True
+            else:
+                last = False
+
+            if not last:
+                if keyword in elem:
+                    elem = elem[keyword]
+            else:
+                return elem[keyword]
+            i += 1
     
     def hasMetadata(self, key):
+        #TODO - fix for lists
         """ 
         Returns true if key defined
         :param key: unique metadataID 
         :return: true if key defined, false otherwise
         :rtype: bool
         """
-        return key in self.metadata
+        keys = key.split('.')
+        elem = self.metadata
+        i = 0
+        i_last = len(keys)-1
+        for keyword in keys:
+            if i == i_last:
+                last = True
+            else:
+                last = False
+
+            if not last:
+                if keyword in elem:
+                    elem = elem[keyword]
+            else:
+                return (keyword in elem)
+            i += 1
     
     def printMetadata(self, nonEmpty=False):
         """ 

@@ -24,12 +24,12 @@ class Demo16(Workflow.Workflow):
    
     def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
-        Initializes the workflow. As the workflow is non-stationary, we allocate individual 
+        Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
         super(Demo16, self).__init__(targetTime=targetTime)
     
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):    
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):    
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         # connect to JobManager running on (remote) server
@@ -50,11 +50,10 @@ class Demo16(Workflow.Workflow):
         mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
         
-        metaData = {
+        metaData1 = {
             'Name': 'Thermo-mechanical non-stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Boundary_conditions': 'Dirichlet, Neumann, Cauchy',
             'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
             'Solver': {
                 'Software': 'Python script',
@@ -75,13 +74,16 @@ class Demo16(Workflow.Workflow):
                 'Robustness': 'High',
             },
             'Inputs': [],
-            'Outputs': [
-                {'ID': 'N/A', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain',
-                 'Units': 'm', 'Type': 'Field', 'Type_ID': 'mupif.FieldID.FID_Displacement'}
-            ]
+            'Outputs': [{'Type': 'mupif.Field',  'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
 
-        super().initialize(file, workdir, executionID, metaData, **kwargs)
+        self.metadata.update(metaData1)
+        #To be sure update only required passed metadata in models
+        metaDataToModels = { 'Execution' : {'ID': metaData['Execution']['ID'], 'Use_case_ID': metaData['Execution']['Use_case_ID'], 'Task_ID': metaData['Execution']['Task_ID']} }
+        self.thermal.updateMetadata(metaDataToModels)
+        self.mechanical.updateMetadata(metaDataToModels)
+        #self.mechanical.printMetadata()
+        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
@@ -121,10 +123,13 @@ class Demo16(Workflow.Workflow):
     def getAPIVersion(self):
         return "1.0"
 
-
 if __name__=='__main__':
     demo = Demo16(targetTime=PQ.PhysicalQuantity(10., 's'))
-    demo.initialize()
+    metaData1 = { 'Execution' : {'ID': '1', 'Use_case_ID': '1_1', 'Task_ID' : '1' }}
+    demo.initialize(metaData = metaData1)
+    #demo.printMetadata()
+    #print(demo.hasMetadata('Execution.ID'))
+    #exit(0)
     demo.solve()
     log.info("Test OK")
 

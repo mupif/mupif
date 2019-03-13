@@ -10,4 +10,4 @@ class serverConfig(config):
         super(serverConfig, self).__init__(mode)
 
         self.applicationClass = demoapp.thermal_nonstat
-        self.applicationInitialFile = '..'+os.path.sep+'..'+os.path.sep+'Example13-transiTM-local'+os.path.sep+'inputT13.in'
+        self.applicationInitialFile = '..'+os.path.sep+'..'+os.path.sep+'Example10-stacTM-local'+os.path.sep+'inputT10.in'
