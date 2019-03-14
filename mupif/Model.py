@@ -198,7 +198,6 @@ class Model(MupifObject.MupifObject):
         
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
-        :param str executionID: 
         :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
@@ -207,7 +206,7 @@ class Model(MupifObject.MupifObject):
         # self.printMetadata()
 
         # define futher app metadata 
-        #self.setMetadata('Execution.ID', executionID)
+        # self.setMetadata('Execution.ID', self.getMetadata(''))
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         

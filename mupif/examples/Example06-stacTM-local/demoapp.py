@@ -12,11 +12,11 @@ import mupif.Physics.PhysicalQuantities as PQ
 log = logging.getLogger('demoapp')
 
 
-def getline (f):
+def getline(f):
     while True:
-        line=f.readline()
+        line = f.readline()
         if line == '':
-            raise APIError.APIError ('Error: EOF reached in input file')
+            raise APIError.APIError('Error: EOF reached in input file')
         elif line[0] != '#':
             return line
 
@@ -69,8 +69,8 @@ class thermal(Model.Model):
         self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
         self.tria = False
         
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
-        super(thermal, self).initialize(file, workdir, executionID, metaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, **kwargs):
+        super(thermal, self).initialize(file=file, workdir=workdir, metaData=metaData, **kwargs)
 
     def readInput(self, tria=False):
         self.tria = tria
@@ -124,8 +124,8 @@ class thermal(Model.Model):
         #self.yl = 0.3
         #self.nx = 10 # number of elements in x direction
         #self.ny = 10 # number of elements in y direction 
-        self.dx = self.xl/self.nx;
-        self.dy = self.yl/self.ny;
+        self.dx = self.xl/self.nx
+        self.dy = self.yl/self.ny
         self.mesh = meshgen.meshgen((0.,0.), (self.xl, self.yl), self.nx, self.ny, tria) 
 
 #
@@ -184,8 +184,8 @@ class thermal(Model.Model):
                         self.convectionBC.append((i, 3, h, value))
         
         self.loc=np.zeros(self.mesh.getNumberOfVertices(), dtype=np.int32)
-        self.neq = 0;#number of unknowns
-        self.pneq = 0;#number of prescribed equations (Dirichlet b.c.)
+        self.neq = 0#number of unknowns
+        self.pneq = 0#number of prescribed equations (Dirichlet b.c.)
         #print (self.mesh.getNumberOfVertices())
         for i in range(self.mesh.getNumberOfVertices()):
             #print(i)
@@ -216,7 +216,7 @@ class thermal(Model.Model):
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values);
+            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values)
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
             for e in self.mesh.cells():
@@ -225,7 +225,7 @@ class thermal(Model.Model):
                 else:
                     values.append((0,))
             #print (values)
-            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased);
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased)
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -254,8 +254,8 @@ class thermal(Model.Model):
         
         self.readInput()
         mesh = self.mesh
-        self.volume = 0.0;
-        self.integral = 0.0;
+        self.volume = 0.0
+        self.integral = 0.0
 
         numNodes = mesh.getNumberOfVertices()
         numElements= mesh.getNumberOfCells()
@@ -325,7 +325,7 @@ class thermal(Model.Model):
             Te = i[3]
             #print ("h:%f Te:%f" % (h, Te))
 
-            n1 = elem.getVertices()[side];
+            n1 = elem.getVertices()[side]
             #print n1
             if (side == 3):
                 n2 = elem.getVertices()[0]
@@ -581,8 +581,8 @@ class thermal_nonstat(thermal):
         self.Tau = 0.5
         self.init = True
 
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
-        super(thermal, self).initialize(file, workdir, executionID, metaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, **kwargs):
+        super(thermal, self).initialize(file=file, workdir=workdir, metaData=metaData, **kwargs)
 
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"
@@ -638,8 +638,8 @@ class thermal_nonstat(thermal):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.readInput(tria=True)
         mesh = self.mesh
-        self.volume = 0.0;
-        self.integral = 0.0;
+        self.volume = 0.0
+        self.integral = 0.0
         dt = tstep.getTimeIncrement().inUnitsOf('s').getValue()
 
         if tstep.getNumber()==0:#assign mesh only for 0th time step
@@ -714,7 +714,7 @@ class thermal_nonstat(thermal):
                 Te = i[3]
                 #print ("h:%f Te:%f" % (h, Te))
 
-                n1 = elem.getVertices()[side];
+                n1 = elem.getVertices()[side]
                 n2 = elem.getVertices()[0 if side+1==elem.getNumberOfVertices() else side+1]
 
                 length = math.sqrt((n2.coords[0]-n1.coords[0])*(n2.coords[0]-n1.coords[0]) +
@@ -757,7 +757,7 @@ class thermal_nonstat(thermal):
         #end self.init
 
         # update solution Tp = T
-        # update rhs bp = b;
+        # update rhs bp = b
         self.Tp = np.copy(self.T)
         self.bp = np.copy(self.b)
 
@@ -778,7 +778,7 @@ class thermal_nonstat(thermal):
             Te = i[3]
             #print ("h:%f Te:%f" % (h, Te))
 
-            n1 = elem.getVertices()[side];
+            n1 = elem.getVertices()[side]
             #print n1
             n2 = elem.getVertices()[0 if side+1==elem.getNumberOfVertices() else side+1]
 
@@ -869,13 +869,9 @@ class mechanical(Model.Model):
         self.temperatureField = None
         self.alpha = 12.e-6
         self.thick = 1.0
-        
-        
-        
-        
-    def initialize(self, file='', workdir='', executionID='', metaData={}, **kwargs):
-        super().initialize(file, workdir, executionID, metaData, **kwargs)
-       
+
+    def initialize(self, file='', workdir='', metaData={}, **kwargs):
+        super().initialize(file=file, workdir=workdir, metaData=metaData, **kwargs)
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
@@ -1231,7 +1227,7 @@ class mechanical(Model.Model):
 
     def compute_D (self, E,nu):
         D = np.zeros((3,3)) 
-        ee    = E / ( 1. - nu * nu );
+        ee = E / ( 1. - nu * nu );
         G = E / ( 2.0 * ( 1. + nu ) );
 
         D[0,0] = ee;
@@ -1244,7 +1240,8 @@ class mechanical(Model.Model):
 
     def getApplicationSignature(self):
         return "Mechanical-demo-solver, ver 1.0"
-    
+
+
 @Pyro4.expose
 class EulerBernoulli(Model.Model):
     """Calculates maximum deflection of cantilever beam with a uniform vertical distributed load. Uses Euler-Bernoulli beam neglecting shear deformation."""
@@ -1262,5 +1259,5 @@ class EulerBernoulli(Model.Model):
         self.deflection = self.f*self.L**4/8./self.E/I
         
     def getField(self, fieldID, time, objectID=0):
-        if (fieldID == FieldID.FID_Displacement):
+        if fieldID == FieldID.FID_Displacement:
             return self.deflection
