@@ -1,7 +1,7 @@
 # Thermal server for nonstationary problem
 import os
 import sys
-sys.path.extend(['..', '../../..', '../Example10-stacTM-local'])
+sys.path.extend(['..', '../../..', '../Example07-stacTM-local'])
 from mupif import *
 import demoapp
 import argparse

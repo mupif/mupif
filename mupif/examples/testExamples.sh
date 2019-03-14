@@ -107,101 +107,66 @@ pushd Example04-field-local
 popd
 fi
 
-willRunTest '6'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example06-jobMan-distrib
+willRunTest '5'; test=$?; if [ "$test" == 1  ] ; then
+pushd Example05-jobMan-distrib
         echo $PWD
         $PYTHON server.py &
         PID1=$!
         sleep 1
+        $COMMAND Example05.py
+        ret=$?
+        (( retval=$retval || $ret ))
+        AppendLog $ret `pwd`
+        kill -9 $PID1
+popd
+fi
+
+willRunTest '6'; test=$?; if [ "$test" == 1  ] ; then
+pushd Example06-units-local
+        echo $PWD
         $COMMAND Example06.py
         ret=$?
         (( retval=$retval || $ret ))
         AppendLog $ret `pwd`
+popd
+fi
+
+willRunTest '7'; test=$?; if [ "$test" == 1  ] ; then
+pushd Example07-stacTM-local
+        echo $PWD
+        $COMMAND Example07.py
+        ret=$?
+        (( retval=$retval || $ret ))
+        AppendLog $ret `pwd`
+popd
+fi
+
+willRunTest '8'; test=$?; if [ "$test" == 1  ] ; then
+pushd Example08-stacTM-JobMan-distrib
+        echo $PWD
+        $COMMAND thermalServer.py &
+        PID1=$!
+        $COMMAND mechanicalServer.py &
+        PID2=$!
+        sleep 2 #wait for servers to start
+        $COMMAND Example08.py
+        ret=$?
+        (( retval=$retval || $ret ))
+        AppendLog $ret `pwd`
         kill -9 $PID1
+        kill -9 $PID2
 popd
 fi
 
 willRunTest '9'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example09-units-local
+pushd Example09-transiTM-JobMan-distrib
         echo $PWD
+        $COMMAND thermalServer.py &
+        PID1=$!
+        $COMMAND mechanicalServer.py &
+        PID2=$!
+        sleep 2 #wait for servers to start
         $COMMAND Example09.py
-        ret=$?
-        (( retval=$retval || $ret ))
-        AppendLog $ret `pwd`
-popd
-fi
-
-willRunTest '10'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example10-stacTM-local
-        echo $PWD
-        $COMMAND Example10.py
-        ret=$?
-        (( retval=$retval || $ret ))
-        AppendLog $ret `pwd`
-popd
-fi
-
-willRunTest '11'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example11-stacTM-JobMan-distrib
-        echo $PWD
-        $COMMAND thermalServer.py &
-        PID1=$!
-        $COMMAND mechanicalServer.py &
-        PID2=$!
-        sleep 2 #wait for servers to start
-        $COMMAND Example11.py
-        ret=$?
-        (( retval=$retval || $ret ))
-        AppendLog $ret `pwd`
-        kill -9 $PID1
-        kill -9 $PID2
-popd
-fi
-
-willRunTest '12'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example12-stacTmultiscale-local
-    $COMMAND Example12.py
-    ret=$?
-    (( retval=$retval || $ret ))
-    AppendLog $ret `pwd`
-popd
-fi
-
-willRunTest '13'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example13-transiTM-local
-    $COMMAND Example13.py
-    ret=$?
-    (( retval=$retval || $ret ))
-    AppendLog $ret `pwd`
-popd
-fi
-
-willRunTest '14'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example14-transiTM-distrib
-        echo $PWD
-        $COMMAND thermalServer.py &
-        PID1=$!
-        $COMMAND mechanicalServer.py &
-        PID2=$!
-        sleep 2 #wait for servers to start
-        $COMMAND Example14.py
-        ret=$?
-        (( retval=$retval || $ret ))
-        AppendLog $ret `pwd`
-        kill -9 $PID1
-        kill -9 $PID2
-popd
-fi
-
-willRunTest '16'; test=$?; if [ "$test" == 1  ] ; then
-pushd Example16-transiTM-JobMan-distrib
-        echo $PWD
-        $COMMAND thermalServer.py &
-        PID1=$!
-        $COMMAND mechanicalServer.py &
-        PID2=$!
-        sleep 2 #wait for servers to start
-        $COMMAND Example16.py
         ret=$?
         (( retval=$retval || $ret ))
         AppendLog $ret `pwd`

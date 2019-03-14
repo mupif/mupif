@@ -38,6 +38,7 @@ del WorkflowSchema['properties']['Physics']
 WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models
 WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
 
+
 @Pyro4.expose
 class Workflow(Model.Model):
     """

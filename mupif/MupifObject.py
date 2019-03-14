@@ -26,6 +26,7 @@ import Pyro4
 import json
 import jsonschema
 import pprint
+import copy
 
 
 @Pyro4.expose
@@ -50,40 +51,47 @@ class MupifObject(object):
                 self.metadata = json.load(f)
 
     def getMetadata(self, key):
-        #TODO - fix for nested dictionary
-        """ 
+        """
         Returns metadata associated to given key
-        :param key: unique metadataID 
+        :param key: unique metadataID
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
-        keys = key.split('.')
-        elem = self.metadata
-        i = 0
-        i_last = len(keys)-1
-        for keyword in keys:
-            if i == i_last:
-                last = True
-            else:
-                last = False
+        if self.hasMetadata(key):
+            keys = key.split('.')
+            elem = self.getAllMetadata()
+            i = 0
+            i_last = len(keys)-1
+            for keyword in keys:
+                if i == i_last:
+                    last = True
+                else:
+                    last = False
 
-            if not last:
-                if keyword in elem:
-                    elem = elem[keyword]
-            else:
-                return elem[keyword]
-            i += 1
+                if not last:
+                    if keyword in elem:
+                        elem = elem[keyword]
+                else:
+                    return elem[keyword]
+                i += 1
+        else:
+            raise TypeError("Searched key %s does not exist." % key)
+
+    def getAllMetadata(self):
+        """
+        :rtype: dict
+        """
+        return copy.deepcopy(self.metadata)
     
     def hasMetadata(self, key):
-        #TODO - fix for lists
-        """ 
+        """
         Returns true if key defined
-        :param key: unique metadataID 
+        :param key: unique metadataID
         :return: true if key defined, false otherwise
         :rtype: bool
         """
         keys = key.split('.')
-        elem = self.metadata
+        elem = self.getAllMetadata()
         i = 0
         i_last = len(keys)-1
         for keyword in keys:
@@ -96,8 +104,10 @@ class MupifObject(object):
                 if keyword in elem:
                     elem = elem[keyword]
             else:
-                return (keyword in elem)
+                return keyword in elem
             i += 1
+
+        return False
     
     def printMetadata(self, nonEmpty=False):
         """ 
@@ -109,10 +119,10 @@ class MupifObject(object):
         print('ClassName:\'%s\'' % self.__class__.__name__)
         if nonEmpty:
             d = {}
-            for k, v in self.metadata.items():
+            for k, v in self.getAllMetadata().items():
                 if v != '':
                     d[k] = v
-        pprint.pprint(d if nonEmpty else self.metadata, indent=4, width=300)
+        pprint.pprint(d if nonEmpty else self.getAllMetadata(), indent=4, width=300)
 
     def setMetadata(self, key, val):
         """ 

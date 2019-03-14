@@ -19,7 +19,7 @@ log.info('Timer started')
 
 class Demo06(Workflow.Workflow):
    
-    def __init__ (self, targetTime=PQ.PhysicalQuantity('1 s')):
+    def __init__(self, targetTime=PQ.PhysicalQuantity('1 s')):
         super(Demo06, self).__init__(targetTime=targetTime)
         
         # locate nameserver
@@ -42,9 +42,9 @@ class Demo06(Workflow.Workflow):
             log.info("Working application 1 on server " + appsig)
 
     def initialize(self):
-        MD = { 'Model.Model_description' : 'Computes the average of time' }
+        MD = {'Model.Model_description': 'Computes the average of time'}
         super().initialize(metaData=MD)
-        MD = { 'Model.Model_description' : 'Computes the average of time' }
+        MD = {'Model.Model_description': 'Computes the average of time'}
         self.app1.initialize(metaData=MD)
     
     def solveStep(self, istep, stageID=0, runInBackground=False):

@@ -10,9 +10,9 @@ class application1(Model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self):
+    def __init__(self, metaData={}):
         # calls constructor from Application module
-        super(application1, self).__init__()
+        super(application1, self).__init__(metaData=metaData)
         self.value = 0.
 
     def getProperty(self, propID, time, objectID=0):
@@ -36,8 +36,8 @@ class application2(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self):
-        super(application2, self).__init__()
+    def __init__(self, metaData={}):
+        super(application2, self).__init__(metaData=metaData)
         self.value = 0.0
         self.count = 0.0
         self.contrib = Property.ConstantProperty((0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
@@ -70,9 +70,6 @@ class application2(Model.Model):
 time = 0
 timestepnumber = 0
 targetTime = 1.0
-
-app1 = application1()
-app2 = application2()
 
 app1Metadata = {
     'Name': 'Simple application storing time steps',
@@ -137,7 +134,7 @@ app2Metadata = {
         'Complexity': 'Low',
         'Robustness': 'High'
     },
-     'Execution': {
+    'Execution': {
         'ID': 'N/A'
     },
     'Inputs': [
@@ -147,17 +144,21 @@ app2Metadata = {
         {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time', 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
 }
 
-app1.initialize(metaData=app1Metadata)
-app1.printMetadata()
+app1 = application1(metaData=app1Metadata)
+app2 = application2(metaData=app2Metadata)
+
+app1.initialize()
+# app1.printMetadata()
 
 app1.toJSONFile('aa.json')
 aa = MupifObject.MupifObject('aa.json')
 # aa.printMetadata()
 
 # TODO - update app2
-app2.initialize(metaData=app2Metadata)
-# app2.printMetadata()
+app2.initialize()
 
+prop = None
+istep = None
 
 while abs(time - targetTime) > 1.e-6:
 
@@ -193,7 +194,7 @@ while abs(time - targetTime) > 1.e-6:
         log.error("Test FAILED")
         raise
 
-if abs(prop.getValue(istep.getTime())[0]-5.5) <= 1.e-4:
+if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())[0]-5.5) <= 1.e-4:
     log.info("Test OK")
 else:
     log.error("Test FAILED")

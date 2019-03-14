@@ -3,7 +3,7 @@ import sys
 sys.path.extend(['..', '../../..'])
 from mupif import *
 import jsonpickle
-import time #for sleep
+import time  # for sleep
 import logging
 log = logging.getLogger()
 import mupif.Physics.PhysicalQuantities as PQ
@@ -13,6 +13,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 # in the subject line, message body: json encoded dictionary with 'Operator-results' key, e.g.
 # {"Operator-results": 3.14}
 #
+
 
 class emailAPI(Model.Model):
     """
@@ -26,48 +27,49 @@ class emailAPI(Model.Model):
                                                               To='operator@gmail.com',
                                                               smtpHost='smtp.something.com',
                                                               imapHost='imap.gmail.com',
-                                                              imapUser='appAPI' )
+                                                              imapUser='appAPI')
         self.inputs = {}
         self.outputs = {}
         self.key = 'Operator-results'
+
     def setProperty(self, property, objectID=0):
         # remember the mapped value
         self.inputs[str(property.propID)] = property
         self.inputs[self.key] = 0.0
 
     def getProperty(self, propID, time, objectID=0):
-        if (self.outputs):
-            #unpack & process outputs (expected json encoded data)
-            if (propID == PropertyID.PID_Demo_Value):
+        if self.outputs:
+            # unpack & process outputs (expected json encoded data)
+            if propID == PropertyID.PID_Demo_Value:
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
-                    log.info('Found key %s with value %f' %(self.key,value))
+                    log.info('Found key %s with value %f' %(self.key, value))
                     return Property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
             
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        #send email to operator, pack json encoded inputs in the message
-        #note workflow and job IDs will be available in upcoming MuPIF version
+        # send email to operator, pack json encoded inputs in the message
+        # note workflow and job IDs will be available in upcoming MuPIF version
         self.operator.contactOperator("CS", "J01", jsonpickle.encode(self.inputs))
         responseReceived = False
         # check for response and repeat until received
         while not responseReceived:
-            #check response and receive the data
+            # check response and receive the data
             responseReceived, operatorOutput = self.operator.checkOperatorResponse("CS", "J01")
-            #print(responseReceived, operatorOutput.splitlines()[0])
+            # print(responseReceived, operatorOutput.splitlines()[0])
             if responseReceived:
                 try:
-                    self.outputs = jsonpickle.decode(operatorOutput.splitlines()[0]) #pick up only dictionary to new line
+                    self.outputs = jsonpickle.decode(operatorOutput.splitlines()[0])  # pick up only dictionary to new line
                 except Exception as e:
                     log.error(e)
                 log.info("Received response from operator %s" % self.outputs)
             else:
-                time.sleep(60) #wait
+                time.sleep(60)  # wait
             
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0,'s')
+        return PQ.PhysicalQuantity(1.0, 's')
 
 
 #################################################
@@ -92,4 +94,4 @@ try:
 except Exception as e:
     log.error(e)
 finally:
-    app.terminate();
+    app.terminate()
