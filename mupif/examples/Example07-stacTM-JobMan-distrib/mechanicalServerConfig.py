@@ -1,6 +1,6 @@
 import os,sys
 #Import example-wide configuration
-sys.path.extend(['..', '../Example07-stacTM-local'])
+sys.path.extend(['..', '../Example06-stacTM-local'])
 from Config import config
 import demoapp
 

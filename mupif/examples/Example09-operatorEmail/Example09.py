@@ -43,7 +43,7 @@ class emailAPI(Model.Model):
             if propID == PropertyID.PID_Demo_Value:
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
-                    log.info('Found key %s with value %f' %(self.key, value))
+                    log.info('Found key %s with value %f' % (self.key, value))
                     return Property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0)
                 else:
                     log.error('Not found key %s in email' % self.key)
