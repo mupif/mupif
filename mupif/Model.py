@@ -486,6 +486,8 @@ class Model(MupifObject.MupifObject):
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
             self.pyroDaemon=None
+        else:
+            log.info("Terminating model") 
 
     def getURI(self):
         """

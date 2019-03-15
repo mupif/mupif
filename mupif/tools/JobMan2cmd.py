@@ -94,33 +94,35 @@ def main():
     # app = DemoApplication.DemoApplication()
     log.info('Initializing application with initial file %s and workdir %s' % (conf.applicationInitialFile, workDir))
     app = conf.applicationClass()
-    app.initialize(file=conf.applicationInitialFile, workdir=workDir)
+    try:
+        app.initialize(file=conf.applicationInitialFile, workdir=workDir)
 
-    # register agent
-    uri = daemon.register(app)
-    metadata={PyroUtil.NS_METADATA_appserver,
-              '%s:%s' % (PyroUtil.NS_METADATA_host, conf.server),
-              '%s:%s' % (PyroUtil.NS_METADATA_port, daemonPort),
-              '%s:%s' % (PyroUtil.NS_METADATA_nathost, conf.serverNathost),
-              '%s:%s' % (PyroUtil.NS_METADATA_natport, natPort)}
-    ns.register(jobID, uri, metadata=metadata)
-    app.registerPyro(daemon, ns, uri,jobID)
-    # app.setWorkingDirectory(workDir)
-    log.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
-    log.info('JobMan2cmd: setting workdir as %s', workDir)
-    log.info('Signature is %s' % app.getApplicationSignature() )
+        # register agent
+        uri = daemon.register(app)
+        metadata={PyroUtil.NS_METADATA_appserver,
+                '%s:%s' % (PyroUtil.NS_METADATA_host, conf.server),
+                '%s:%s' % (PyroUtil.NS_METADATA_port, daemonPort),
+                '%s:%s' % (PyroUtil.NS_METADATA_nathost, conf.serverNathost),
+                '%s:%s' % (PyroUtil.NS_METADATA_natport, natPort)}
+        ns.register(jobID, uri, metadata=metadata)
+        app.registerPyro(daemon, ns, uri,jobID)
+        # app.setWorkingDirectory(workDir)
+        log.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
+        log.info('JobMan2cmd: setting workdir as %s', workDir)
+        log.info('Signature is %s' % app.getApplicationSignature() )
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('localhost', jobManCommPort))
-    # needs something w/ buffer interface, which is bytes (and not str)
-    # if future.utils.PY3:
-    s.sendall(bytes(uri.asString(), 'utf-8'))
-    # else:
-    # s.sendall(uri.asString())
-    s.close()
-
-    daemon.requestLoop()
-
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('localhost', jobManCommPort))
+        # needs something w/ buffer interface, which is bytes (and not str)
+        # if future.utils.PY3:
+        s.sendall(bytes(uri.asString(), 'utf-8'))
+        # else:
+        # s.sendall(uri.asString())
+        s.close()
+        daemon.requestLoop()
+    except Exception as e:
+        log.exception(e)
+        app.terminate()
 
 if __name__ == '__main__':
     main()

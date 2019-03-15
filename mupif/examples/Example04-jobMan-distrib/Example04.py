@@ -85,17 +85,22 @@ class Demo06(Workflow.Workflow):
 
 if __name__ == '__main__':
     targetTime = PQ.PhysicalQuantity('1 s')
-    demo = Demo06(targetTime)
-    demo.solve()
-    kpi = demo.getProperty(PropertyID.PID_KPI01, targetTime)
-    demo.terminate()
-    if kpi.getValue(targetTime) == 1000:
-        log.info("Test OK")
-        kpi = 0
-        sys.exit(0)
-    else:
-        log.info("Test FAILED")
-        kpi = 0
-        sys.exit(1)
-
+    try:
+        demo = Demo06(targetTime)
+        
+        demo.solve()
+        kpi = demo.getProperty(PropertyID.PID_KPI01, targetTime)
+        demo.terminate()
+        if kpi.getValue(targetTime) == 1000:
+            log.info("Test OK")
+            kpi = 0
+            sys.exit(0)
+        else:
+            log.info("Test FAILED")
+            kpi = 0
+            sys.exit(1)
+    except Exception as e:
+        log.exception(e)
+        if demo is not None:
+            demo.terminate()
 
