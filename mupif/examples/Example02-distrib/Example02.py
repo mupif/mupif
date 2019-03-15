@@ -28,8 +28,17 @@ class application1(Model.Model):
         self.value = 0.
 
     def getProperty(self, propID, time, objectID=0):
+        md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
         if propID == PropertyID.PID_Time_step:
-            return Property.ConstantProperty((self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time)
+            return Property.ConstantProperty(
+                (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
         else:
             raise APIError.APIError('Unknown property ID')
 

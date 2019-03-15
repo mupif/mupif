@@ -21,9 +21,17 @@ class application2(Model.Model):
             (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
     def getProperty(self, propID, time, objectID=0):
+        md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
         if propID == PropertyID.PID_Time:
             return Property.ConstantProperty(
-                (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time)
+                (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, metaData=md)
         else:
             raise APIError.APIError('Unknown property ID')
 

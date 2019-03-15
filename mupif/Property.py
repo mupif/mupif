@@ -45,8 +45,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             self.setMetadata('Units', self.unit.name())
             self.setMetadata('ValueType', str(self.valueType))
             
-            self.updateMetaData(metaData)
-            
+            self.updateMetadata(metaData)
 
         def getValue(self, time=None, **kwargs):
             """
@@ -104,7 +103,7 @@ class ConstantProperty(Property):
 
         .. automethod:: __init__
         """
-        def __init__(self, value, propID, valueType, units, time=None, objectID=0):
+        def __init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
             """
             Initializes the property.
 
@@ -122,6 +121,8 @@ class ConstantProperty(Property):
                 self.time = time
             else:
                 raise TypeError("PhysicalValue expected for time")
+
+            self.updateMetadata(metaData)
 
         def __str__(self):
             return str(self.value) + '{' + self.unit.name() + ',' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
