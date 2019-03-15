@@ -117,7 +117,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         self.setMetadata('FieldType', str(fieldType))
         self.setMetadata('ValueType', str(self.valueType))
         
-        self.updateMetaData(metaData)
+        self.updateMetadata(metaData)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):

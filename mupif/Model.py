@@ -209,6 +209,10 @@ class Model(MupifObject.MupifObject):
         # define futher app metadata
         if not self.hasMetadata('Execution.ID'):
             self.setMetadata('Execution.ID', 'None')
+        if not self.hasMetadata('Execution.Use_case_ID'):
+            self.setMetadata('Execution.Use_case_ID', 'None')
+        if not self.hasMetadata('Execution.Task_ID'):
+            self.setMetadata('Execution.Task_ID', 'None')
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         
