@@ -209,6 +209,10 @@ class thermal(Model.Model):
         
         
     def getField(self, fieldID, time, objectID=0):
+        metaDataToData = {'Execution': {'ID': self.metaData['Execution']['ID'],
+                                        'Use_case_ID': self.metaData['Execution']['Use_case_ID'], 
+                                        'Task_ID': self.metaData['Execution']['Task_ID']}}
+        
         if (fieldID == FieldID.FID_Temperature):
             values=[]
             for i in range (self.mesh.getNumberOfVertices()):
@@ -216,7 +220,7 @@ class thermal(Model.Model):
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values)
+            return Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, 'C', time, values, metaData=metaDataToData)
         elif (fieldID == FieldID.FID_Material_number):
             values=[]
             for e in self.mesh.cells():
@@ -225,7 +229,7 @@ class thermal(Model.Model):
                 else:
                     values.append((0,))
             #print (values)
-            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased)
+            return Field.Field(self.mesh, FieldID.FID_Material_number, ValueType.Scalar, PQ.getDimensionlessUnit(), time, values,fieldType=Field.FieldType.FT_cellBased, metaData=metaDataToData)
         else:
             raise APIError.APIError ('Unknown field ID')
 
@@ -504,6 +508,10 @@ class thermal(Model.Model):
             raise APIError.APIError ('Unknown property ID')
 
     def getProperty(self, propID, time, objectID=0):
+        metaDataToData = {'Execution': {'ID': self.metaData['Execution']['ID'],
+                                        'Use_case_ID': self.metaData['Execution']['Use_case_ID'], 
+                                        'Task_ID': self.metaData['Execution']['Task_ID']}}
+        
         if (propID == PropertyID.PID_effective_conductivity):
             #average reactions from solution - use nodes on edge 4 (coordinate x==0.)
             sumQ = 0.
@@ -517,7 +525,7 @@ class thermal(Model.Model):
                         sumQ -= self.r[ipneq-self.neq]
             self.effConductivity = sumQ / self.yl * self.xl / (self.dirichletBCs[(self.ny+1)*(self.nx+1)-1] - self.dirichletBCs[0]   )
             #print (sumQ, self.effConductivity, self.dirichletBCs[(self.ny+1)*(self.nx+1)-1], self.dirichletBCs[0])
-            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0)
+            return Property.ConstantProperty(self.effConductivity, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K', time, 0, metaData=metaDataToData)
         else:
             raise APIError.APIError ('Unknown property ID')
 

@@ -18,7 +18,7 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
 
         .. automethod:: __init__
         """
-        def __init__(self, propID, valueType, units, objectID=0):
+        def __init__(self, propID, valueType, units, objectID=0, metaData={}):
             """
             Initializes the property.
 
@@ -44,6 +44,8 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
             self.setMetadata('Type_ID', str(self.propID))
             self.setMetadata('Units', self.unit.name())
             self.setMetadata('ValueType', str(self.valueType))
+            
+            self.updateMetaData(metaData)
             
 
         def getValue(self, time=None, **kwargs):

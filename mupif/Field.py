@@ -73,7 +73,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased, objectID=0):
+    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased, objectID=0, metaData={}):
         """
         Initializes the field instance.
 
@@ -116,6 +116,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         self.setMetadata('Type_ID', str(self.fieldID))
         self.setMetadata('FieldType', str(fieldType))
         self.setMetadata('ValueType', str(self.valueType))
+        
+        self.updateMetaData(metaData)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
