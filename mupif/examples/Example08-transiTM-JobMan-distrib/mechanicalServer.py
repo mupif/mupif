@@ -1,15 +1,16 @@
 # Mechanical server for nonstationary problem
 import os
 import sys
+import logging
+import argparse
 sys.path.extend(['..', '../../..', '../Example06-stacTM-local'])
 from mupif import *
 import demoapp
-import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
 mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
 from Config import config
-cfg=config(mode)
-import logging
+
+cfg = config(mode)
 log = logging.getLogger()
 Util.changeRootLogger('mechanical.log')
 

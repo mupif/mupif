@@ -170,8 +170,6 @@ class MupifObject(object):
         if isinstance(dictionary, dict):
             self._iterInDictOfMetadataForUpdate(dictionary, "")
 
-        # self.metadata.update(dictionary)
-
     def validateMetadata(self, template):
         """
         Validates metadata's dictionary with a given dictionary

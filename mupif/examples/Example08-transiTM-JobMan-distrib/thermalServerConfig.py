@@ -1,12 +1,14 @@
-#Configuration file for JobMan2cmd
-import os,sys
+# Configuration file for JobMan2cmd
+import os
+import sys
 sys.path.extend(['..', '../Example06-stacTM-local'])
 from Config import config
 import demoapp
 
+
 class serverConfig(config):
-    def __init__(self,mode):
-        #inherit necessary variables: nshost, nsport, hkey, server, serverNathost  
+    def __init__(self, mode):
+        # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
         super(serverConfig, self).__init__(mode)
 
         self.applicationClass = demoapp.thermal_nonstat

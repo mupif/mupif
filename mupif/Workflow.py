@@ -78,7 +78,7 @@ class Workflow(Model.Model):
         :param named_arguments kwargs: Arbitrary further parameters
         """
         self.updateMetadata(metaData)
-        # define futher app metadata 
+        # define futher app metadata
         
         self.file = file
         if workdir == '':

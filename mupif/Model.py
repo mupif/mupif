@@ -190,7 +190,7 @@ class Model(MupifObject.MupifObject):
         self.setMetadata('Execution', {})
         self.setMetadata('Solver', {})
 
-        self.metadata.update(metaData)
+        self.updateMetadata(metaData)
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         """
@@ -202,11 +202,13 @@ class Model(MupifObject.MupifObject):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-        self.metadata.update(metaData)
+
+        self.updateMetadata(metaData)
         # self.printMetadata()
 
-        # define futher app metadata 
-        # self.setMetadata('Execution.ID', self.getMetadata(''))
+        # define futher app metadata
+        if not self.hasMetadata('Execution.ID'):
+            self.setMetadata('Execution.ID', 'None')
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
         

@@ -11,7 +11,7 @@ log = logging.getLogger()
 if True:
     app = demoapp.thermal()
     # app.printMetadata()
-    app.initialize('inputT10.in', '.', metaData={'Execution': {'ID': ''}})
+    app.initialize('inputT10.in', '.', metaData={'Execution': {'ID': '1'}})
     tstep = TimeStep.TimeStep(1., 1., 10, 's')
     sol = app.solveStep(tstep)
     f = app.getField(FieldID.FID_Temperature, app.getAssemblyTime(tstep))
@@ -29,7 +29,7 @@ if True:
 
 if True:
     app2 = demoapp.mechanical()
-    app2.initialize('inputM10.in', '.', metaData={'Execution': {'ID': ''}})
+    app2.initialize('inputM10.in', '.', metaData={'Execution': {'ID': '1'}})
     print(app2.getApplicationSignature())
 
     app2.setField(f)

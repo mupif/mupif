@@ -29,7 +29,7 @@ class Demo16(Workflow.Workflow):
         """
         super(Demo16, self).__init__(targetTime=targetTime)
     
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):    
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         # connect to JobManager running on (remote) server
@@ -77,12 +77,13 @@ class Demo16(Workflow.Workflow):
             'Outputs': [{'Type': 'mupif.Field',  'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
 
-        self.metadata.update(metaData1)
-        #To be sure update only required passed metadata in models
-        metaDataToModels = { 'Execution' : {'ID': metaData['Execution']['ID'], 'Use_case_ID': metaData['Execution']['Use_case_ID'], 'Task_ID': metaData['Execution']['Task_ID']} }
+        self.updateMetadata(metaData1)
+        # To be sure update only required passed metadata in models
+        metaDataToModels = {'Execution': {'ID': metaData['Execution']['ID'], 'Use_case_ID': metaData['Execution']['Use_case_ID'], 'Task_ID': metaData['Execution']['Task_ID']}}
         self.thermal.updateMetadata(metaDataToModels)
         self.mechanical.updateMetadata(metaDataToModels)
-        #self.mechanical.printMetadata()
+        self.thermal.printMetadata()
+        self.mechanical.printMetadata()
         super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
@@ -90,7 +91,7 @@ class Demo16(Workflow.Workflow):
         log.info("Solving thermal problem")
         log.info(self.thermal.getApplicationSignature())
         
-        log.debug("Step: %g %g %g"%(istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
+        log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
         
         self.thermal.solveStep(istep)
         f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
@@ -106,15 +107,15 @@ class Demo16(Workflow.Workflow):
 
     def getCriticalTimeStep(self):
         # determine critical time step
-        return min (self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
+        return min(self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
-        #self.thermal.printMetadata()
-        #self.mechanical.printMetadata()
+        # self.thermal.printMetadata()
+        # self.mechanical.printMetadata()
         self.thermal.terminate()
         self.thermalJobMan.terminate()
         self.mechanical.terminate()
-        #self.printMetadata()
+        # self.printMetadata()
         super(Demo16, self).terminate()
     
     def getApplicationSignature(self):
@@ -123,13 +124,14 @@ class Demo16(Workflow.Workflow):
     def getAPIVersion(self):
         return "1.0"
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     demo = Demo16(targetTime=PQ.PhysicalQuantity(10., 's'))
-    metaData1 = { 'Execution' : {'ID': '1', 'Use_case_ID': '1_1', 'Task_ID' : '1' }}
-    demo.initialize(metaData = metaData1)
-    #demo.printMetadata()
-    #print(demo.hasMetadata('Execution.ID'))
-    #exit(0)
+    metaData1 = {'Execution': {'ID': '1', 'Use_case_ID': '1_1', 'Task_ID': '1'}}
+    demo.initialize(metaData=metaData1)
+    # demo.printMetadata()
+    # print(demo.hasMetadata('Execution.ID'))
+    # exit(0)
     demo.solve()
     log.info("Test OK")
 
