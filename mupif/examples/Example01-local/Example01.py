@@ -40,7 +40,8 @@ class application2(Model.Model):
         super(application2, self).__init__(metaData=metaData)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = Property.ConstantProperty((0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+        self.contrib = Property.ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
     def getProperty(self, propID, time, objectID=0):
         if propID == PropertyID.PID_Time:
@@ -182,7 +183,7 @@ while abs(time - targetTime) > 1.e-6:
         app2.setProperty(c)
         # solve second sub-problem 
         app2.solveStep(istep)
-        # get the averaged concentration
+
         prop = app2.getProperty(PropertyID.PID_Time, app2.getAssemblyTime(istep))
         # print (istep.getTime(), c, prop)
         atime = app2.getAssemblyTime(istep)

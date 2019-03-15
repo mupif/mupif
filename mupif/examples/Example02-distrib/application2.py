@@ -1,11 +1,11 @@
 import sys
-sys.path.extend(['..', '../../..'])
-
-from mupif import *
 import Pyro4
 import logging
-log = logging.getLogger()
+sys.path.extend(['..', '../../..'])
+from mupif import *
 import mupif.Physics.PhysicalQuantities as PQ
+
+log = logging.getLogger()
 
 
 @Pyro4.expose
@@ -13,31 +13,30 @@ class application2(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self):
-        super(application2, self).__init__()
+    def __init__(self, metaData={}):
+        super(application2, self).__init__(metaData=metaData)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = None
-        self.setMetadata('Model.Model_description', 'Cummulate time')
+        self.contrib = Property.ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
     def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_CumulativeConcentration):
-            log.debug('Getting property from this application2')
-            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
+        if propID == PropertyID.PID_Time:
+            return Property.ConstantProperty(
+                (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise APIError.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
-        if property.getPropertyID() == PropertyID.PID_Concentration:
+        if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
             raise APIError.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        log.debug("Solving step: %d %f%s %f%s" % (tstep.getNumber(), tstep.getTime().getValue(), tstep.getTime().getUnitName(), tstep.getTimeIncrement().getValue(), tstep.getTime().getUnitName() ) )
         # here we actually accumulate the value using value of mapped property
-        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(tstep.getTime())
+        self.value = self.value+self.contrib.inUnitsOf('s').getValue(tstep.getTime())[0]
         self.count = self.count+1
 
     def getCriticalTimeStep(self):

@@ -283,7 +283,7 @@ def connectApp(ns, name, hkey, sshContext=None):
             raise
 
     app = _connectApp(ns, name, hkey)
-    return Model.RemoteModel (app, appTunnel=tunnel)
+    return Model.RemoteModel(app, appTunnel=tunnel)
 
 
 def getNSAppName(jobname, appname):
