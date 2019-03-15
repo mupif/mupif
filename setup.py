@@ -74,7 +74,7 @@ setup(
     # 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
     # 'scipy' fails due to missing compiler for Lapack etc.
     install_requires=[
-        'numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'Pyro4==4.74', 'jsonpickle',
+        'numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'Pyro4==4.75', 'jsonpickle',
         'jsonschema', 'vtk', 'matplotlib'
     ],
     include_package_data=True,

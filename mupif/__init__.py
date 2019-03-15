@@ -24,8 +24,8 @@
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 # Major.Minor.Patch
-__version__ = '2.1.0'
-__author__ = 'Borek Patzak and Vit Smilauer'
+__version__ = '2.2.0'
+__author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
 from .dataID import FieldID
 from .dataID import PropertyID
