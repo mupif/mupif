@@ -1,4 +1,4 @@
-This Example06 is derived from Example02 and uses JobManager on a server to allocate one remote application.
+This Example04 is derived from Example02 and uses JobManager on a server to allocate one remote application.
 
 The standard mode -m0 uses the following configuration:
 JobManager on port 44382
@@ -6,5 +6,5 @@ Allocated application on port 9095 (server) with NAT 6000 (local). This needs on
 
 The mode -m2 or -m3 uses the same configuration as -m0, except that allocated application uses only port 9095 with no NAT and no ssh tunnel. 
 
-Run nameserver.py, server.py and Example06.py in three terminals.
+Run nameserver.py, server.py and Example04.py in three terminals.
 

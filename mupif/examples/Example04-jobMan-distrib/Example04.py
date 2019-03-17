@@ -28,6 +28,10 @@ class Demo06(Workflow.Workflow):
         self.jobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         log.info('Connected to JobManager')
         self.app1 = None
+        self.contrib = Property.ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+        self.retprop = Property.ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
         try:
             self.app1 = PyroUtil.allocateApplicationWithJobManager(
@@ -38,20 +42,21 @@ class Demo06(Workflow.Workflow):
         except Exception as e:
             log.exception(e)
 
-            appsig=self.app1.getApplicationSignature()
+            appsig = self.app1.getApplicationSignature()
             log.info("Working application 1 on server " + appsig)
 
-    def initialize(self):
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
         MD = {'Model.Model_description': 'Computes the average of time'}
-        super().initialize(metaData=MD)
-        MD = {'Model.Model_description': 'Computes the average of time'}
-        self.app1.initialize(metaData=MD)
-    
+        self.updateMetadata(MD)
+        app1.updateMetadata(MD)
+        super().initialize(metaData=metaData, validateMetaData=validateMetaData)
+        self.app1.initialize(validateMetaData=validateMetaData)
+
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = Property.ConstantProperty(1000, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3')
-        self.app1.setProperty (val)
+        val = Property.ConstantProperty((1000,), PropertyID.PID_Time_step, ValueType.Scalar, 's')
+        self.app1.setProperty(val)
         self.app1.solveStep(istep)
-        self.retprop = self.app1.getProperty(PropertyID.PID_CumulativeConcentration, istep.getTime())
+        self.retprop = self.app1.getProperty(PropertyID.PID_Time, istep.getTime())
         log.info("Sucessfully received " + str(self.retprop.getValue(istep.getTime())))
         
     def terminate(self):    
@@ -61,17 +66,17 @@ class Demo06(Workflow.Workflow):
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
     def getProperty(self, propID, time, objectID=0):
-        if propID == PropertyID.PID_KPI01:
-            return Property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_KPI01, ValueType.Scalar, 'kg/m**3', time)
+        if propID == PropertyID.PID_Time:
+            return Property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_Time, ValueType.Scalar, 's', time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise APIError.APIError('Unknown property ID')
         
     def setProperty(self, property, objectID=0):
-        if property.getPropertyID() == PropertyID.PID_Concentration:
+        if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise APIError.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
@@ -85,22 +90,17 @@ class Demo06(Workflow.Workflow):
 
 if __name__ == '__main__':
     targetTime = PQ.PhysicalQuantity('1 s')
-    try:
-        demo = Demo06(targetTime)
-        
-        demo.solve()
-        kpi = demo.getProperty(PropertyID.PID_KPI01, targetTime)
-        demo.terminate()
-        if kpi.getValue(targetTime) == 1000:
-            log.info("Test OK")
-            kpi = 0
-            sys.exit(0)
-        else:
-            log.info("Test FAILED")
-            kpi = 0
-            sys.exit(1)
-    except Exception as e:
-        log.exception(e)
-        if demo is not None:
-            demo.terminate()
 
+    demo = Demo06(targetTime)
+
+    demo.solve()
+    kpi = demo.getProperty(PropertyID.PID_Time, targetTime)
+    demo.terminate()
+    if kpi.getValue(targetTime) == 1000:
+        log.info("Test OK")
+        kpi = 0
+        sys.exit(0)
+    else:
+        log.info("Test FAILED")
+        kpi = 0
+        sys.exit(1)

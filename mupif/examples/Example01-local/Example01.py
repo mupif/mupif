@@ -120,11 +120,11 @@ app1Metadata = {
         'ID': 'N/A'
      },
     'Inputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
-         'Origin': 'Simulated', 'Required': True}],
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+         'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
     'Outputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
-         'Origin': 'Simulated'}]
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+         'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
 }
 
 app2Metadata = {
@@ -157,10 +157,11 @@ app2Metadata = {
         'ID': 'N/A'
     },
     'Inputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
-         'Origin': 'Simulated', 'Required': True}],
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+         'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
     'Outputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time', 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
+        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
+         'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
 }
 
 app1 = application1(metaData=app1Metadata)
@@ -173,7 +174,6 @@ app1.toJSONFile('aa.json')
 aa = MupifObject.MupifObject('aa.json')
 # aa.printMetadata()
 
-# TODO - update app2
 app2.initialize()
 
 prop = None
