@@ -42,6 +42,48 @@ class application1(Model.Model):
         else:
             raise APIError.APIError('Unknown property ID')
 
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        MD = {
+            'Name': 'Simple application storing time steps',
+            'ID': 'N/A',
+            'Description': 'Cummulates time steps',
+            'Physics': {
+                'Type': 'Other',
+                'Entity': 'Other'
+            },
+            'Solver': {
+                'Software': 'Python script',
+                'Language': 'Python3',
+                'License': 'LGPL',
+                'Creator': 'Borek',
+                'Version_date': '02/2019',
+                'Type': 'Summator',
+                'Documentation': 'Nowhere',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 0.01,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'High',
+                'Sensitivity': 'High',
+                'Complexity': 'Low',
+                'Robustness': 'High'
+            },
+            'Execution': {
+                'ID': 'N/A'
+            },
+            'Inputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's',
+                 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's',
+                 'Origin': 'Simulated'}]
+        }
+        self.updateMetadata(MD)
+        super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()
         self.value = 1.0*time
@@ -65,81 +107,8 @@ if mode == 1:  # just print out how to set up a SSH tunnel
 # locate nameserver
 ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
-app1Metadata = {
-    'Name': 'Simple application storing time steps',
-    'ID': 'N/A',
-    'Description': 'Cummulates time steps',
-    'Physics': {
-        'Type': 'Other',
-        'Entity': 'Other'
-    },
-    'Solver': {
-        'Software': 'Python script',
-        'Language': 'Python3',
-        'License': 'LGPL',
-        'Creator': 'Borek',
-        'Version_date': '02/2019',
-        'Type': 'Summator',
-        'Documentation': 'Nowhere',
-        'Estim_time_step_s': 1,
-        'Estim_comp_time_s': 0.01,
-        'Estim_execution_cost_EUR': 0.01,
-        'Estim_personnel_cost_EUR': 0.01,
-        'Required_expertise': 'None',
-        'Accuracy': 'High',
-        'Sensitivity': 'High',
-        'Complexity': 'Low',
-        'Robustness': 'High'
-    },
-    'Execution': {
-        'ID': 'N/A'
-     },
-    'Inputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
-         'Origin': 'Simulated', 'Required': True}],
-    'Outputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
-         'Origin': 'Simulated'}]
-}
-
-app2Metadata = {
-    'Name': 'Simple application cummulating time steps',
-    'ID': 'N/A',
-    'Description': 'Cummulates time steps',
-    'Physics': {
-        'Type': 'Other',
-        'Entity': 'Other'
-    },
-    'Solver': {
-        'Software': 'Python script',
-        'Language': 'Python3',
-        'License': 'LGPL',
-        'Creator': 'Borek',
-        'Version_date': '02/2019',
-        'Type': 'Summator',
-        'Documentation': 'Nowhere',
-        'Estim_time_step_s': 1,
-        'Estim_comp_time_s': 0.01,
-        'Estim_execution_cost_EUR': 0.01,
-        'Estim_personnel_cost_EUR': 0.01,
-        'Required_expertise': 'None',
-        'Accuracy': 'High',
-        'Sensitivity': 'High',
-        'Complexity': 'Low',
-        'Robustness': 'High'
-    },
-    'Execution': {
-        'ID': 'N/A'
-    },
-    'Inputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step', 'Description': 'Time step', 'Units': 's',
-         'Origin': 'Simulated', 'Required': True}],
-    'Outputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time', 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
-}
-
 # application1 is local, create its instance
-app1 = application1(metaData=app1Metadata)
+app1 = application1()
 # locate (remote) application2, request remote proxy
 app2 = PyroUtil.connectApp(ns, cfg.appName, cfg.hkey, sshContext)
 
@@ -152,7 +121,7 @@ except Exception as e:
     sys.exit(1)
 
 app1.initialize()
-app2.initialize(metaData=app2Metadata)
+app2.initialize()
 
 prop = None
 istep = None

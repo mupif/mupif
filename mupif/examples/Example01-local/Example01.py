@@ -15,6 +15,46 @@ class application1(Model.Model):
         super(application1, self).__init__(metaData=metaData)
         self.value = 0.
 
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        MD = {
+            'Name': 'Simple application storing time steps',
+            'ID': 'N/A',
+            'Description': 'Cummulates time steps',
+            'Physics': {
+                'Type': 'Other',
+                'Entity': 'Other'
+            },
+            'Solver': {
+                'Software': 'Python script',
+                'Language': 'Python3',
+                'License': 'LGPL',
+                'Creator': 'Borek',
+                'Version_date': '02/2019',
+                'Type': 'Summator',
+                'Documentation': 'Nowhere',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 0.01,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'High',
+                'Sensitivity': 'High',
+                'Complexity': 'Low',
+                'Robustness': 'High'
+            },
+            'Execution': {
+                'ID': 'N/A'
+            },
+            'Inputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
+        }
+        self.updateMetadata(MD)
+        super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+
     def getProperty(self, propID, time, objectID=0):
         md = {
             'Execution': {
@@ -51,6 +91,46 @@ class application2(Model.Model):
         self.count = 0.0
         self.contrib = Property.ConstantProperty(
             (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        MD = {
+            'Name': 'Simple application cummulating time steps',
+            'ID': 'N/A',
+            'Description': 'Cummulates time steps',
+            'Physics': {
+                'Type': 'Other',
+                'Entity': 'Other'
+            },
+            'Solver': {
+                'Software': 'Python script',
+                'Language': 'Python3',
+                'License': 'LGPL',
+                'Creator': 'Borek',
+                'Version_date': '02/2019',
+                'Type': 'Summator',
+                'Documentation': 'Nowhere',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 0.01,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'High',
+                'Sensitivity': 'High',
+                'Complexity': 'Low',
+                'Robustness': 'High'
+            },
+            'Execution': {
+                'ID': 'N/A'
+            },
+            'Inputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
+        }
+        self.updateMetadata(MD)
+        super(application2, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def getProperty(self, propID, time, objectID=0):
         md = {
@@ -90,82 +170,8 @@ time = 0
 timestepnumber = 0
 targetTime = 1.0
 
-app1Metadata = {
-    'Name': 'Simple application storing time steps',
-    'ID': 'N/A',
-    'Description': 'Cummulates time steps',
-    'Physics': {
-        'Type': 'Other',
-        'Entity': 'Other'
-    },
-    'Solver': {
-        'Software': 'Python script',
-        'Language': 'Python3',
-        'License': 'LGPL',
-        'Creator': 'Borek',
-        'Version_date': '02/2019',
-        'Type': 'Summator',
-        'Documentation': 'Nowhere',
-        'Estim_time_step_s': 1,
-        'Estim_comp_time_s': 0.01,
-        'Estim_execution_cost_EUR': 0.01,
-        'Estim_personnel_cost_EUR': 0.01,
-        'Required_expertise': 'None',
-        'Accuracy': 'High',
-        'Sensitivity': 'High',
-        'Complexity': 'Low',
-        'Robustness': 'High'
-    },
-    'Execution': {
-        'ID': 'N/A'
-     },
-    'Inputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
-         'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
-    'Outputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
-         'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
-}
-
-app2Metadata = {
-    'Name': 'Simple application cummulating time steps',
-    'ID': 'N/A',
-    'Description': 'Cummulates time steps',
-    'Physics': {
-        'Type': 'Other',
-        'Entity': 'Other'
-    },
-    'Solver': {
-        'Software': 'Python script',
-        'Language': 'Python3',
-        'License': 'LGPL',
-        'Creator': 'Borek',
-        'Version_date': '02/2019',
-        'Type': 'Summator',
-        'Documentation': 'Nowhere',
-        'Estim_time_step_s': 1,
-        'Estim_comp_time_s': 0.01,
-        'Estim_execution_cost_EUR': 0.01,
-        'Estim_personnel_cost_EUR': 0.01,
-        'Required_expertise': 'None',
-        'Accuracy': 'High',
-        'Sensitivity': 'High',
-        'Complexity': 'Low',
-        'Robustness': 'High'
-    },
-    'Execution': {
-        'ID': 'N/A'
-    },
-    'Inputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
-         'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
-    'Outputs': [
-        {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
-         'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
-}
-
-app1 = application1(metaData=app1Metadata)
-app2 = application2(metaData=app2Metadata)
+app1 = application1()
+app2 = application2()
 
 app1.initialize()
 # app1.printMetadata()
