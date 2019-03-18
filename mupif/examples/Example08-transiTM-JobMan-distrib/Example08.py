@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import os
 sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
@@ -28,23 +29,25 @@ class Demo16(Workflow.Workflow):
         applications and store them within a class.
         """
         super(Demo16, self).__init__(targetTime=targetTime)
+
+        self.thermal = None
+        self.mechanical = None
     
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         # connect to JobManager running on (remote) server
         self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
-        self.thermal = None
-        self.mechanical = None
         
         try:
             self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
             log.info('Created thermal job')
         except Exception as e:
             log.exception(e)
+            self.terminate()
        
         self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
-       
+
         thermalSignature = self.thermal.getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)
         mechanicalSignature = self.mechanical.getApplicationSignature()
@@ -60,13 +63,30 @@ class Demo16(Workflow.Workflow):
         }
 
         self.updateMetadata(metaData1)
+        super(Demo16, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+
         # To be sure update only required passed metadata in models
-        metaDataToModels = {'Execution': {'ID': metaData['Execution']['ID'], 'Use_case_ID': metaData['Execution']['Use_case_ID'], 'Task_ID': metaData['Execution']['Task_ID']}}
-        self.thermal.updateMetadata(metaDataToModels)
-        self.mechanical.updateMetadata(metaDataToModels)
-        self.thermal.printMetadata()
-        self.mechanical.printMetadata()
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        passingMD = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
+        self.thermal.initialize(
+            file='..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in',
+            workdir='.',
+            metaData=passingMD
+        )
+        self.mechanical.initialize(
+            file='..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM10.in',
+            workdir='.',
+            metaData=passingMD
+        )
+
+        # self.thermal.printMetadata()
+        # self.mechanical.printMetadata()
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
@@ -92,11 +112,12 @@ class Demo16(Workflow.Workflow):
         return min(self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
-        # self.thermal.printMetadata()
-        # self.mechanical.printMetadata()
-        self.thermal.terminate()
-        self.thermalJobMan.terminate()
-        self.mechanical.terminate()
+        if self.thermal is not None:
+            self.thermal.terminate()
+        if self.thermalJobMan is not None:
+            self.thermalJobMan.terminate()
+        if self.mechanical is not None:
+            self.mechanical.terminate()
         # self.printMetadata()
         super(Demo16, self).terminate()
     
@@ -109,8 +130,14 @@ class Demo16(Workflow.Workflow):
 
 if __name__ == '__main__':
     demo = Demo16(targetTime=PQ.PhysicalQuantity(10., 's'))
-    metaData1 = {'Execution': {'ID': '1', 'Use_case_ID': '1_1', 'Task_ID': '1'}}
-    demo.initialize(metaData=metaData1)
+    workflowMD = {
+        'Execution': {
+            'ID': '1',
+            'Use_case_ID': '1_1',
+            'Task_ID': '1'
+        }
+    }
+    demo.initialize(metaData=workflowMD)
     # demo.printMetadata()
     # print(demo.hasMetadata('Execution.ID'))
     # exit(0)

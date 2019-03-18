@@ -69,8 +69,9 @@ class thermal(Model.Model):
         self.conductivity = Property.ConstantProperty(1, PropertyID.PID_effective_conductivity, ValueType.Scalar, 'W/m/K')
         self.tria = False
         
-    def initialize(self, file='', workdir='', metaData={}, **kwargs):
-        super(thermal, self).initialize(file=file, workdir=workdir, metaData=metaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        super(thermal, self).initialize(
+            file=file, workdir=workdir, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
     def readInput(self, tria=False):
         self.tria = tria
@@ -601,8 +602,9 @@ class thermal_nonstat(thermal):
         self.Tau = 0.5
         self.init = True
 
-    def initialize(self, file='', workdir='', metaData={}, **kwargs):
-        super(thermal, self).initialize(file=file, workdir=workdir, metaData=metaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        super(thermal, self).initialize(
+            file=file, workdir=workdir, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"

@@ -97,7 +97,7 @@ def main():
             'Initializing application with initial file %s and workdir %s' % (conf.applicationInitialFile, workDir))
         app = conf.applicationClass()
         try:
-            app.initialize(file=conf.applicationInitialFile, workdir=workDir)
+            # app.initialize(file=conf.applicationInitialFile, workdir=workDir)
 
             # register agent
             uri = daemon.register(app)
@@ -110,7 +110,7 @@ def main():
             app.registerPyro(daemon, ns, uri, jobID)
             # app.setWorkingDirectory(workDir)
             log.info('JobMan2cmd: ns registered %s with uri %s', jobID, uri)
-            log.info('JobMan2cmd: setting workdir as %s', workDir)
+            # log.info('JobMan2cmd: setting workdir as %s', workDir)
             log.info('Signature is %s' % app.getApplicationSignature())
 
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

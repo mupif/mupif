@@ -207,12 +207,12 @@ class Model(MupifObject.MupifObject):
         # self.printMetadata()
 
         # define futher app metadata
-        if not self.hasMetadata('Execution.ID'):
-            self.setMetadata('Execution.ID', 'N/A')
-        if not self.hasMetadata('Execution.Use_case_ID'):
-            self.setMetadata('Execution.Use_case_ID', 'N/A')
-        if not self.hasMetadata('Execution.Task_ID'):
-            self.setMetadata('Execution.Task_ID', 'N/A')
+        # if not self.hasMetadata('Execution.ID'):
+        #     self.setMetadata('Execution.ID', 'N/A')
+        # if not self.hasMetadata('Execution.Use_case_ID'):
+        #     self.setMetadata('Execution.Use_case_ID', 'N/A')
+        # if not self.hasMetadata('Execution.Task_ID'):
+        #     self.setMetadata('Execution.Task_ID', 'N/A')
 
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')
@@ -548,13 +548,13 @@ class RemoteModel (object):
             try:
                 log.info("RemoteApplication: Terminating jobManager job %s on %s" % (str(self._jobID), self._jobMan.getNSName()))
                 self._jobMan.terminateJob(self._jobID)
-                self._jobID=None
+                self._jobID = None
             except Exception as e:
                 print(e)
                 self.setMetadata('Status', 'Failed')
             finally:
                 self._jobMan.terminateJob(self._jobID)
-                self._jobID=None
+                self._jobID = None
 
         # close tunnel as the last step so an application is still reachable
         if self._appTunnel:
