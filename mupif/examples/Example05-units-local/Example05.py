@@ -45,9 +45,6 @@ class application1(Model.Model):
                 'Complexity': 'Low',
                 'Robustness': 'High'
             },
-            'Execution': {
-                'ID': 'N/A'
-            },
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Simulation time',
@@ -74,16 +71,17 @@ time = 0
 timestepnumber = 0
 targetTime = 1.0  # 10 steps is enough
 
-
 app1 = application1()
 
-app1Metadata = {
-    'Model.Model_ID': 'Model ID-1234',
-    'Model.Model_name': 'Simple application storing calling time',
-    'Model.Model_description': 'Stores calling time'
+executionMetadata = {
+    'Execution': {
+        'ID': '1',
+        'Use_case_ID': '1_1',
+        'Task_ID': '1'
+    }
 }
 
-app1.initialize(metaData=app1Metadata)
+app1.initialize(metaData=executionMetadata)
 
 value = 0.
 while abs(time - targetTime) > 1.e-6:

@@ -47,9 +47,6 @@ class application2(Model.Model):
                 'Complexity': 'Low',
                 'Robustness': 'High'
             },
-            'Execution': {
-                'ID': 'N/A'
-            },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',

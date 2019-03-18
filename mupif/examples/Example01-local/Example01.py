@@ -42,9 +42,6 @@ class application1(Model.Model):
                 'Complexity': 'Low',
                 'Robustness': 'High'
             },
-            'Execution': {
-                'ID': 'N/A'
-            },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
@@ -119,9 +116,6 @@ class application2(Model.Model):
                 'Complexity': 'Low',
                 'Robustness': 'High'
             },
-            'Execution': {
-                'ID': 'N/A'
-            },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
@@ -173,14 +167,22 @@ targetTime = 1.0
 app1 = application1()
 app2 = application2()
 
-app1.initialize()
+executionMetadata = {
+    'Execution': {
+        'ID': '1',
+        'Use_case_ID': '1_1',
+        'Task_ID': '1'
+    }
+}
+
+app1.initialize(metaData=executionMetadata)
 # app1.printMetadata()
 
 app1.toJSONFile('aa.json')
 aa = MupifObject.MupifObject('aa.json')
 # aa.printMetadata()
 
-app2.initialize()
+app2.initialize(metaData=executionMetadata)
 
 prop = None
 istep = None

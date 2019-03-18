@@ -45,14 +45,12 @@ class Demo06(Workflow.Workflow):
             appsig = self.app1.getApplicationSignature()
             log.info("Working application 1 on server " + appsig)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        app1Metadata = {
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        workflowMD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
             'Description': 'Cummulates time steps',
-            'Execution': {
-                'ID': 'N/A'
-            },
+            'Model_refs_ID': ['SimulationTimer-1'],
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
@@ -61,8 +59,19 @@ class Demo06(Workflow.Workflow):
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        super().initialize(metaData=metaData, validateMetaData=validateMetaData)
-        self.app1.initialize(validateMetaData=app1Metadata)
+
+        self.updateMetadata(workflowMD)
+        super().initialize(metaData=metaData)
+
+        passingMD = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
+        self.app1.initialize(metaData=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         val = Property.ConstantProperty((1000,), PropertyID.PID_Time_step, ValueType.Scalar, 's')
@@ -105,10 +114,20 @@ if __name__ == '__main__':
 
     demo = Demo06(targetTime)
 
+    executionMetadata = {
+        'Execution': {
+            'ID': '1',
+            'Use_case_ID': '1_1',
+            'Task_ID': '1'
+        }
+    }
+
+    demo.initialize(metaData=executionMetadata)
+
     demo.solve()
     kpi = demo.getProperty(PropertyID.PID_Time, targetTime)
     demo.terminate()
-    if kpi.getValue(targetTime)[0] == 1000:
+    if kpi.getValue(targetTime)[0] == 1000.:
         log.info("Test OK")
         kpi = 0
         sys.exit(0)
