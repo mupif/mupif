@@ -15,16 +15,16 @@ import time as timeT
 import mupif.Physics.PhysicalQuantities as PQ
 
 
-class Demo11(Workflow.Workflow):
+class Example07(Workflow.Workflow):
    
     def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Demo11, self).__init__(targetTime=targetTime)
+        super(Example07, self).__init__(targetTime=targetTime)
 
-    def initialize(self):
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         #locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         #connect to JobManager running on (remote) server
@@ -66,40 +66,47 @@ class Demo11(Workflow.Workflow):
             else:
                 log.debug("Connection to server failed, exiting")
 
+        metaData1 = {
+            'Name': 'Thermo-mechanical non-stationary problem',
+            'ID': 'Thermo-mechanical-1',
+            'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
+            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            'Inputs': [],
+            'Outputs': [{'Type': 'mupif.Field',  'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
+        }
+
+        self.updateMetadata(metaData1)
+        # To be sure update only required passed metadata in models
+        metaDataToModels = {'Execution': {'ID': metaData['Execution']['ID'], 'Use_case_ID': metaData['Execution']['Use_case_ID'], 'Task_ID': metaData['Execution']['Task_ID']}}
+        self.thermalSolver.updateMetadata(metaDataToModels)
+        self.mechanicalSolver.updateMetadata(metaDataToModels)
+        self.thermalSolver.printMetadata()
+        self.mechanicalSolver.printMetadata()
+        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+
+                
     def solveStep(self, istep, stageID=0, runInBackground=False):
 
         start = timeT.time()
         log.info('Timer started')
         log.info("Solving thermal problem")
         log.info(self.thermalSolver.getApplicationSignature())
-        #self.thermalSolver._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
+        
         self.thermalSolver.solveStep(istep)
-        #Get field's uri from thermal application and send it to mechanical application.
-        #This prevents copying data to Demo11's computer,
-        #mechanical solver will use direct access to thermal field.
         log.info("Thermal problem solved")
         uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri) )
-        #field = Pyro4.Proxy(uri)
-        #field._pyroHmacKey = cfg.hkey.encode(encoding='UTF-8')
         field = PyroUtil.getObjectFromURI(uri,cfg.hkey)
         self.mechanicalSolver.setField(field)
-
-        #Original version copied data to Demo11's computer and then to thermal solver.
-        #This can be time/memory consuming for large data
-        #temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
-        #self.mechanicalSolver.setField(temperatureField)
-
         log.info("Solving mechanical problem")
         self.mechanicalSolver.solveStep(istep)
         log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTargetTime())) )
         displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTime())
+
         # save results as vtk
         temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
         temperatureField.field2VTKData().tofile('temperatureField')
         displacementField.field2VTKData().tofile('displacementField')
-
-        #terminate
         log.info("Time consumed %f s" % (timeT.time()-start))
 
 
@@ -108,25 +115,22 @@ class Demo11(Workflow.Workflow):
         return PQ.PhysicalQuantity(1.0, 's')
 
     def terminate(self):
-        #self.thermalAppRec.terminateAll()
-        self.thermalSolver.printMetadata()
         self.thermalSolver.terminate()
-        self.thermalJobMan.terminate()
         self.mechanicalSolver.terminate()
-        self.mechanicalJobMan.terminate()
         self.appsTunnel.terminate()
-        super(Demo11, self).terminate()
+        super(Example07, self).terminate()
 
     def getApplicationSignature(self):
-        return "Demo11 workflow 1.0"
+        return "Example07 workflow 1.0"
 
     def getAPIVersion(self):
         return "1.0"
 
     
 if __name__=='__main__':
-    demo = Demo11(targetTime=PQ.PhysicalQuantity(1.,'s'))
-    demo.initialize()
+    demo = Example07(targetTime=PQ.PhysicalQuantity(1.,'s'))
+    metaData1 = {'Execution': {'ID': '1', 'Use_case_ID': '1_1', 'Task_ID': '1'}}
+    demo.initialize(metaData=metaData1)
     demo.solve()
     log.info("Test OK")
 
