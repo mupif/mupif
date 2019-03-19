@@ -68,7 +68,7 @@ class emailAPI(Model.Model):
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
         }
         self.updateMetadata(MD)
-        super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super(emailAPI, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
         
     def setProperty(self, property, objectID=0):
