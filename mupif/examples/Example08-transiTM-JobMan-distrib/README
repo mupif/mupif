@@ -1,4 +1,4 @@
-This example illustrates two applications running on a network over VPN and this example is based on Example13.py. NameServer runs on mech.fsv.cvut.cz. JobManager for thermalServer runs on mech.fsv.cvut.cz. MechanicalServer and scenario script runs on a local computer. No ssh tunnels are created for JobManager and for a thermalServer, communication runs on a VPN network. In such particular case, serverNathost=server, serverNatport=serverPort. VPN can access ports on remote server directly.
+This example illustrates two applications running on a network over VPN and this example is based on Example06.py. NameServer runs on mech.fsv.cvut.cz. JobManager for thermalServer runs on mech.fsv.cvut.cz. MechanicalServer and scenario script runs on a local computer. No ssh tunnels are created for JobManager and for a thermalServer, communication runs on a VPN network. In such particular case, serverNathost=server, serverNatport=serverPort. VPN can access ports on remote server directly.
 
 Prerequisites:
 Correct configuration in Config.py.

@@ -17,10 +17,10 @@ start = timeT.time()
 log.info('Timer started')
 
 
-class Demo06(Workflow.Workflow):
+class Example04(Workflow.Workflow):
    
     def __init__(self, targetTime=PQ.PhysicalQuantity('1 s')):
-        super(Demo06, self).__init__(targetTime=targetTime)
+        super(Example04, self).__init__(targetTime=targetTime)
         
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -83,7 +83,7 @@ class Demo06(Workflow.Workflow):
     def terminate(self):    
         self.app1.terminate()
         self.jobMan.terminate()
-        super(Demo06, self).terminate()
+        super(Example04, self).terminate()
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
     def getProperty(self, propID, time, objectID=0):
@@ -103,7 +103,7 @@ class Demo06(Workflow.Workflow):
         return PQ.PhysicalQuantity(1.0, 's')
 
     def getApplicationSignature(self):
-        return "Demo06 workflow 1.0"
+        return "Example04 workflow 1.0"
 
     def getAPIVersion(self):
         return "1.0"
@@ -112,7 +112,7 @@ class Demo06(Workflow.Workflow):
 if __name__ == '__main__':
     targetTime = PQ.PhysicalQuantity('1 s')
 
-    demo = Demo06(targetTime)
+    demo = Example04(targetTime)
 
     executionMetadata = {
         'Execution': {

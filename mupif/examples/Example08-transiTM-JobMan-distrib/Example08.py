@@ -21,14 +21,14 @@ import mupif.Physics.PhysicalQuantities as PQ
 # allocate the thermal server
 # solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
 
-class Demo16(Workflow.Workflow):
+class Example08(Workflow.Workflow):
    
     def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Demo16, self).__init__(targetTime=targetTime)
+        super(Example08, self).__init__(targetTime=targetTime)
 
         self.thermal = None
         self.mechanical = None
@@ -63,7 +63,7 @@ class Demo16(Workflow.Workflow):
         }
 
         self.updateMetadata(metaData1)
-        super(Demo16, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super(Example08, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -119,17 +119,17 @@ class Demo16(Workflow.Workflow):
         if self.mechanical is not None:
             self.mechanical.terminate()
         # self.printMetadata()
-        super(Demo16, self).terminate()
+        super(Example08, self).terminate()
     
     def getApplicationSignature(self):
-        return "Demo16 workflow 1.0 - Thermo-mechanical non-stationary problem"
+        return "Example08 workflow 1.0 - Thermo-mechanical non-stationary problem"
 
     def getAPIVersion(self):
         return "1.0"
 
 
 if __name__ == '__main__':
-    demo = Demo16(targetTime=PQ.PhysicalQuantity(10., 's'))
+    demo = Example08(targetTime=PQ.PhysicalQuantity(10., 's'))
     workflowMD = {
         'Execution': {
             'ID': '1',

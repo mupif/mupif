@@ -10,6 +10,6 @@ pyvtk python module is required. To install pyvtk, we recommend to use pip, a to
 $ pip install pyvtk
 
 To run the example:
-$ python Example04.py 
+$ python Example03.py 
 
 
