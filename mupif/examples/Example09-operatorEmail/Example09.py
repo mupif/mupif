@@ -32,19 +32,65 @@ class emailAPI(Model.Model):
         self.outputs = {}
         self.key = 'Operator-results'
 
+
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        MD = {
+            'Name': 'Email operator application',
+            'ID': 'N/A',
+            'Description': 'Sending email with input and receiving email with results',
+            'Physics': {
+                'Type': 'Other',
+                'Entity': 'Other'
+            },
+            'Solver': {
+                'Software': 'Unknown',
+                'Language': 'Unknown',
+                'License': 'Unknown',
+                'Creator': 'Unknown',
+                'Version_date': '02/2019',
+                'Type': 'Summator',
+                'Documentation': 'Nowhere',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 0.01,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'Unknown',
+                'Sensitivity': 'Unknown',
+                'Complexity': 'Unknown',
+                'Robustness': 'Unknown'
+            },
+            'Inputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Demo_Value', 'Name': 'Demo value',
+                 'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
+        }
+        self.updateMetadata(MD)
+        super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+
+        
     def setProperty(self, property, objectID=0):
         # remember the mapped value
         self.inputs[str(property.propID)] = property
         self.inputs[self.key] = 0.0
 
     def getProperty(self, propID, time, objectID=0):
+        md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
         if self.outputs:
             # unpack & process outputs (expected json encoded data)
             if propID == PropertyID.PID_Demo_Value:
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' % (self.key, value))
-                    return Property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0)
+                    return Property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0, metaData=md)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -78,6 +124,15 @@ class emailAPI(Model.Model):
 # create instance of application API
 app = emailAPI(None)
 try:
+    executionMetadata = {
+        'Execution': {
+            'ID': '1',
+            'Use_case_ID': '1_1',
+            'Task_ID': '1'
+        }
+    }
+    
+    app.initialize(metaData=executionMetadata)
 
     # CumulativeConcentration property on input
     p = Property.ConstantProperty(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3')
