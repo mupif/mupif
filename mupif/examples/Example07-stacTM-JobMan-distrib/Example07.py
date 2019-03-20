@@ -17,12 +17,12 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 class Example07(Workflow.Workflow):
    
-    def __init__(self, targetTime=PQ.PhysicalQuantity('0 s')):
+    def __init__(self, targetTime=PQ.PhysicalQuantity('0 s'), metaData={}):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Example07, self).__init__(targetTime=targetTime)
+        super(Example07, self).__init__(targetTime=targetTime, metaData=metaData)
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         #locate nameserver
