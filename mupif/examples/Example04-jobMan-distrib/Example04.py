@@ -19,8 +19,23 @@ log.info('Timer started')
 
 class Example04(Workflow.Workflow):
    
-    def __init__(self, targetTime=PQ.PhysicalQuantity('1 s')):
-        super(Example04, self).__init__(targetTime=targetTime)
+    def __init__(self, targetTime=PQ.PhysicalQuantity('1 s'), metaData={}):
+        workflowMD = {
+            'Name': 'Simple application cummulating time steps',
+            'ID': 'N/A',
+            'Description': 'Cummulates time steps',
+            'Model_refs_ID': ['SimulationTimer-1'],
+            'Inputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's',
+                 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
+        }
+
+        super(Example04, self).__init__(targetTime=targetTime, metaData=workflowMD)
+        self.updateMetadata(metaData)
         
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -46,21 +61,6 @@ class Example04(Workflow.Workflow):
             log.info("Working application 1 on server " + appsig)
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        workflowMD = {
-            'Name': 'Simple application cummulating time steps',
-            'ID': 'N/A',
-            'Description': 'Cummulates time steps',
-            'Model_refs_ID': ['SimulationTimer-1'],
-            'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True}],
-            'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
-        }
-
-        self.updateMetadata(workflowMD)
         super().initialize(metaData=metaData)
 
         passingMD = {
@@ -70,7 +70,6 @@ class Example04(Workflow.Workflow):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
-
         self.app1.initialize(metaData=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):

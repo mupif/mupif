@@ -24,25 +24,6 @@ class application1(Model.Model):
     Simple application that generates a property with a value equal to actual time
     """
     def __init__(self, metaData={}):
-        super(application1, self).__init__(metaData=metaData)
-        self.value = 0.
-
-    def getProperty(self, propID, time, objectID=0):
-        md = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        if propID == PropertyID.PID_Time_step:
-            return Property.ConstantProperty(
-                (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
-        else:
-            raise APIError.APIError('Unknown property ID')
-
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -78,7 +59,26 @@ class application1(Model.Model):
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated'}]
         }
-        self.updateMetadata(MD)
+        super(application1, self).__init__(metaData=MD)
+        self.updateMetadata(metaData)
+        self.value = 0.
+
+    def getProperty(self, propID, time, objectID=0):
+        md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
+        if propID == PropertyID.PID_Time_step:
+            return Property.ConstantProperty(
+                (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
+        else:
+            raise APIError.APIError('Unknown property ID')
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):

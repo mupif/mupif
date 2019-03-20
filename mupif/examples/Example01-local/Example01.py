@@ -11,11 +11,6 @@ class application1(Model.Model):
     Simple application that generates a property with a value equal to actual time
     """
     def __init__(self, metaData={}):
-        # calls constructor from Application module
-        super(application1, self).__init__(metaData=metaData)
-        self.value = 0.
-
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -49,7 +44,12 @@ class application1(Model.Model):
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        self.updateMetadata(MD)
+        # calls constructor from Application module
+        super(application1, self).__init__(metaData=MD)
+        self.updateMetadata(metaData)
+        self.value = 0.
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def getProperty(self, propID, time, objectID=0):
@@ -83,13 +83,6 @@ class application2(Model.Model):
     Simple application that computes an arithmetical average of mapped property
     """
     def __init__(self, metaData={}):
-        super(application2, self).__init__(metaData=metaData)
-        self.value = 0.0
-        self.count = 0.0
-        self.contrib = Property.ConstantProperty(
-            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
-
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
@@ -123,7 +116,14 @@ class application2(Model.Model):
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        self.updateMetadata(MD)
+        super(application2, self).__init__(metaData=MD)
+        self.updateMetadata(metaData)
+        self.value = 0.0
+        self.count = 0.0
+        self.contrib = Property.ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(application2, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def getProperty(self, propID, time, objectID=0):

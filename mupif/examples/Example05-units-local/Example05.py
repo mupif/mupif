@@ -14,11 +14,7 @@ class application1(Model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self):
-        super(application1, self).__init__()
-        self.value = 0.
-
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+    def __init__(self, metaData={}):
         MD = {
             'Name': 'Simple application returning simulation time',
             'ID': 'N/A',
@@ -50,7 +46,11 @@ class application1(Model.Model):
                 {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Simulation time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        self.updateMetadata(MD)
+        super(application1, self).__init__(metaData=MD)
+        self.updateMetadata(metaData)
+        self.value = 0.
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
     def getProperty(self, propID, time, objectID=0):
