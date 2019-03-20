@@ -23,12 +23,12 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 class Example08(Workflow.Workflow):
    
-    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's')):
+    def __init__(self, metaData={}, targetTime=PQ.PhysicalQuantity(0., 's')):
         """
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Example08, self).__init__(targetTime=targetTime)
+        super(Example08, self).__init__(targetTime=targetTime, metaData=metaData)
 
         self.thermal = None
         self.mechanical = None

@@ -7,13 +7,21 @@ import time
 import logging
 log = logging.getLogger()
 
+md = {
+    'Execution': {
+        'ID': '1',
+        'Use_case_ID': '1_1',
+        'Task_ID': '1'
+    }
+}
 
 if True:
     app = demoapp.thermal()
     # app.printMetadata()
-    app.initialize('inputT10.in', '.', metaData={'Execution': {'ID': '1'}})
+
+    app.initialize('inputT10.in', '.', metaData=md)
     tstep = TimeStep.TimeStep(1., 1., 10, 's')
-    sol = app.solveStep(tstep)
+    sol_t = app.solveStep(tstep)
     f = app.getField(FieldID.FID_Temperature, app.getAssemblyTime(tstep))
     # f.printMetadata()
     f.field2VTKData().tofile('thermal10')
@@ -29,11 +37,11 @@ if True:
 
 if True:
     app2 = demoapp.mechanical()
-    app2.initialize('inputM10.in', '.', metaData={'Execution': {'ID': '1'}})
+    app2.initialize('inputM10.in', '.', metaData=md)
     print(app2.getApplicationSignature())
 
     app2.setField(f)
-    sol = app2.solveStep(tstep) 
+    sol_m = app2.solveStep(tstep)
     f = app2.getField(FieldID.FID_Displacement, tstep.getTargetTime())
     f.field2VTKData().tofile('mechanical10')
     f.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
