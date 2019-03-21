@@ -32,6 +32,7 @@ class Example08(Workflow.Workflow):
 
         self.thermal = None
         self.mechanical = None
+        self.thermalJobMan = None
     
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver

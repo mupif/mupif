@@ -86,10 +86,10 @@ ModelSchema = {
                 'Estim_execution_cost_EUR': {'type': 'number'},  # EUR
                 'Estim_personnel_cost_EUR': {'type': 'number'},  # EUR
                 'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
-                'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-                'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-                'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
-                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High']},
+                'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
+                'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
+                'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
+                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
             },
             'required': [
                 'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
