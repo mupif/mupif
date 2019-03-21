@@ -1277,6 +1277,7 @@ class EulerBernoulli(Model.Model):
     """Calculates maximum deflection of cantilever beam with a uniform vertical distributed load. Uses Euler-Bernoulli beam neglecting shear deformation."""
     
     def __init__(self, b, h, L, E, f):
+        super(EulerBernoulli, self).__init__()
         self.b = b
         self.h = h
         self.L = L

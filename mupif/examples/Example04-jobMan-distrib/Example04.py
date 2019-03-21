@@ -20,7 +20,7 @@ log.info('Timer started')
 class Example04(Workflow.Workflow):
    
     def __init__(self, targetTime=PQ.PhysicalQuantity('1 s'), metaData={}):
-        workflowMD = {
+        MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
             'Description': 'Cummulates time steps',
@@ -34,7 +34,7 @@ class Example04(Workflow.Workflow):
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
 
-        super(Example04, self).__init__(targetTime=targetTime, metaData=workflowMD)
+        super(Example04, self).__init__(targetTime=targetTime, metaData=MD)
         self.updateMetadata(metaData)
         
         # locate nameserver
