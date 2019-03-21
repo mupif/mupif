@@ -40,7 +40,11 @@ class Example08(Workflow.Workflow):
         self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         
         try:
-            self.thermal = PyroUtil.allocateApplicationWithJobManager( ns, self.thermalJobMan, cfg.jobNatPorts[0], cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost) )
+            self.thermal = PyroUtil.allocateApplicationWithJobManager(
+                ns, self.thermalJobMan,
+                cfg.jobNatPorts[0],
+                cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+            )
             log.info('Created thermal job')
         except Exception as e:
             log.exception(e)

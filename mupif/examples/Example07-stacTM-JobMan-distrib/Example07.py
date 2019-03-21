@@ -1,4 +1,5 @@
 import sys
+import os
 sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
@@ -33,6 +34,12 @@ class Example07(Workflow.Workflow):
         }
         super(Example07, self).__init__(targetTime=targetTime, metaData=MD)
         self.updateMetadata(metaData)
+
+        self.thermalJobMan = None
+        self.mechanicalJobMan = None
+        self.thermalSolver = None
+        self.mechanicalSolver = None
+        self.appsTunnel = None
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
 
@@ -140,8 +147,16 @@ class Example07(Workflow.Workflow):
 
                 self.thermalSolver.updateMetadata(passingMD)
                 self.mechanicalSolver.updateMetadata(passingMD)
-                self.thermalSolver.initialize(file="input.in")
-                self.mechanicalSolver.initialize(file="input.in")
+                self.thermalSolver.initialize(
+                    file="./input.in",
+                    workdir=cfg.jobManWorkDir+os.path.sep+self.thermalSolver.getJobID(),
+                    metaData=passingMD
+                )
+                self.mechanicalSolver.initialize(
+                    file="./input.in",
+                    workdir=mCfg.jobManWorkDir+os.path.sep+self.mechanicalSolver.getJobID(),
+                    metaData=passingMD
+                )
 
             else:
                 log.debug("Connection to server failed, exiting")
@@ -200,5 +215,3 @@ if __name__ == '__main__':
     demo.initialize(metaData=md)
     demo.solve()
     log.info("Test OK")
-
-
