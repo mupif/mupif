@@ -13,13 +13,12 @@ class Example06(Workflow.Workflow):
 
     def __init__(self, targetTime=PQ.PhysicalQuantity('0 s'), metaData={}):
         """
-        Initializes the workflow. As the workflow is non-stationary, we allocate individual
-        applications and store them within a class.
+        Initializes the workflow.
         """
         MD = {
-            'Name': 'Thermo-mechanical non-stationary problem',
+            'Name': 'Thermo-mechanical stationary problem',
             'ID': 'Thermo-mechanical-1',
-            'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
+            'Description': 'stationary thermo-mechanical problem using finite elements on rectangular domain',
             'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
             'Inputs': [],
             'Outputs': [
