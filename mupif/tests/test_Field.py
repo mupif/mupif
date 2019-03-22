@@ -14,7 +14,6 @@ except ImportError:
     vtkAvailable=False
 
 
-
 class Field_TestCase(unittest.TestCase):
     def setUp(self):
         
@@ -47,7 +46,7 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(l, self.mesh.getNumberOfCells())
 
 
-        #register assertEqual operation for PhysicalQuantities
+        # register assertEqual operation for PhysicalQuantities
         self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
         
     def tearDown(self):
@@ -55,20 +54,18 @@ class Field_TestCase(unittest.TestCase):
         self.f1 = None
         self.f2 = None
         self.f3 = None
-        self.f4=None
-        self.f5=None
-        self.f6=None
+        self.f4 = None
+        self.f5 = None
+        self.f6 = None
         self.mesh = None
-        self.mesh3=None
-        self.mesh5=None
-
+        self.mesh3 = None
+        self.mesh5 = None
 
     # unit tests support
-    def assertPhysicalQuantitiesEqual (self, first, second, msg=None):
+    def assertPhysicalQuantitiesEqual(self, first, second, msg=None):
         if not first.__cmp__(second):
             raise self.failureException(msg)
-    
-    
+
     def test_getRecordSize(self):
         self.assertEqual(self.f1.getRecordSize(), 1, 'error in getRecordSize for f1')
         self.assertEqual(self.f2.getRecordSize(), 3, 'error in getRecordSize for f2')

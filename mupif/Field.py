@@ -340,7 +340,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         :param int componentID: An identifier of a component: vertexID or cellID
         :return: The value
-        :rtype:
+        :rtype: tuple
         """
         return self.value[componentID]    
 
@@ -825,7 +825,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         Save all fields passed as argument into VTK3 Unstructured Grid file (``*.vtu``).
 
         All *fields* must be defined on the same mesh object; exception will be raised if this is not the case.
-        
+
+        :param list of Field fields:
         :param fileName: output file name
         :param bool ascii: write numbers are ASCII in the XML-based VTU file (rather than base64-encoded binary in XML)
         :param bool compress: apply compression to the data
@@ -851,7 +852,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 nn = mesh.getNumberOfCells()
             arr.SetNumberOfValues(nn)
             for i in range(nn):
-                arr.SetTuple(i, f.giveValue(i).getValue())
+                arr.SetTuple(i, f.giveValue(i))
             if f.getFieldType() == FieldType.FT_vertexBased:
                 vtkgrid.GetPointData().AddArray(arr)
             else:
