@@ -28,7 +28,20 @@ class Example08(Workflow.Workflow):
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
         """
-        super(Example08, self).__init__(targetTime=targetTime, metaData=metaData)
+
+        MD = {
+            'Name': 'Thermo-mechanical non-stationary problem',
+            'ID': 'Thermo-mechanical-1',
+            'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
+            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            'Inputs': [],
+            'Outputs': [
+                {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
+                 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
+        }
+
+        super(Example08, self).__init__(targetTime=targetTime, metaData=MD)
+        self.updateMetadata(metaData)
 
         self.thermal = None
         self.mechanical = None
@@ -57,17 +70,7 @@ class Example08(Workflow.Workflow):
         log.info("Working thermal server " + thermalSignature)
         mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
-        
-        metaData1 = {
-            'Name': 'Thermo-mechanical non-stationary problem',
-            'ID': 'Thermo-mechanical-1',
-            'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
-            'Inputs': [],
-            'Outputs': [{'Type': 'mupif.Field',  'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field', 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
-        }
 
-        self.updateMetadata(metaData1)
         super(Example08, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
         # To be sure update only required passed metadata in models

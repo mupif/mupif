@@ -656,7 +656,6 @@ class thermal_nonstat(thermal):
             A_e = np.add(A_e, C)
         return A_e
 
-
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.readInput(tria=True)
         mesh = self.mesh
@@ -1013,7 +1012,6 @@ class mechanical(Model.Model):
                     self.loc[i,j]=self.neq;
                     self.neq=self.neq+1
         #print "loc:", self.loc
-        
 
     def getField(self, fieldID, time, objectID=0):
         md = {

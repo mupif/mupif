@@ -75,9 +75,6 @@ class Example07(Workflow.Workflow):
             self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
             self.mechanicalJobMan = PyroUtil.connectJobManager(ns, mCfg.jobManName, cfg.hkey)
 
-        self.thermalSolver = None
-        self.mechanicalSolver = None
-
         # allocate the application instances
         try:
             self.thermalSolver = PyroUtil.allocateApplicationWithJobManager(
