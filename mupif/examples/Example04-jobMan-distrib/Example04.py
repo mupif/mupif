@@ -26,11 +26,11 @@ class Example04(Workflow.Workflow):
             'Description': 'Cummulates time steps',
             'Model_refs_ID': ['SimulationTimer-1'],
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
 

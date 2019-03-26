@@ -38,10 +38,10 @@ class application1(Model.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
         }
         # calls constructor from Application module
@@ -110,10 +110,10 @@ class application2(Model.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Cummulative time',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
         super(application2, self).__init__(metaData=MD)

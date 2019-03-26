@@ -43,7 +43,7 @@ class application1(Model.Model):
             },
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time', 'Name': 'Simulation time',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Simulation time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
         super(application1, self).__init__(metaData=MD)

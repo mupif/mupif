@@ -38,6 +38,11 @@ import time
 import logging
 log = logging.getLogger()
 
+prefix = "mupif."
+type_ids = []
+type_ids.extend(prefix+s for s in list(map(str, PropertyID)))
+type_ids.extend(prefix+s for s in list(map(str, FieldID)))
+
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
     'type': 'object',
@@ -73,14 +78,14 @@ ModelSchema = {
         },
         'Solver': {
             'properties': {
-                'Software': {'type': 'string'},# Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                'Software': {'type': 'string'},  # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
                 'Type': {'type': 'string'},  # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Solver_additional_params': {'type': 'string'}, # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
-                'Documentation': {'type': 'string'}, # Where published/documented
+                'Solver_additional_params': {'type': 'string'},  # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                'Documentation': {'type': 'string'},  # Where published/documented
                 'Estim_time_step_s': {'type': 'number'},  # Seconds
                 'Estim_comp_time_s': {'type': 'number'},  # Seconds
                 'Estim_execution_cost_EUR': {'type': 'number'},  # EUR
@@ -99,9 +104,9 @@ ModelSchema = {
         },
         'Execution': {
             'properties': {
-                'ID': {'type': ['string', 'integer']}, #Optional application execution ID (typically set by workflow)
-                'Use_case_ID': {'type': ['string', 'integer']}, #user case ID (e.g. thermo-mechanical simulation coded as 1_1)
-                'Task_ID': {'type': 'string'}, #user task ID (e.g. variant of user case ID such as model with higher accuracy)
+                'ID': {'type': ['string', 'integer']},  # Optional application execution ID (typically set by workflow)
+                'Use_case_ID': {'type': ['string', 'integer']},  # user case ID (e.g. thermo-mechanical simulation coded as 1_1)
+                'Task_ID': {'type': 'string'},  # user task ID (e.g. variant of user case ID such as model with higher accuracy)
                 'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
                 'Progress': {'type': 'number'},  # Progress in %
                 'Date_time_start': {'type': 'string'},  # automatically set in Workflow
@@ -116,15 +121,15 @@ ModelSchema = {
             'items': {
                 'type': 'object',  # Object supplies a dictionary
                 'properties': {
-                    'Type': {'type': 'string'},  # e.g. mupif.Property.Property
-                    'Type_ID': {'type': 'string'}, # e.g. PID_Concentration
+                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
+                    'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. PID_Concentration
                     'ID_info': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
                     'Required': {'type': 'boolean'}
                 },
-                'required': ['Type','Type_ID', 'Name', 'Units', 'Required']
+                'required': ['Type', 'Type_ID', 'Name', 'Units', 'Required']
             }
         },
         'Outputs': {
@@ -132,8 +137,8 @@ ModelSchema = {
             'items': {
                 'type': 'object',
                 'properties': {
-                    'Type': {'type': 'string'},  # e.g. mupif.Field
-                    'Type_ID': {'type': 'string'},  # e.g. mupif.FieldID.FID_Temperature
+                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
+                    'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. mupif.FieldID.FID_Temperature
                     'ID_info': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
@@ -205,14 +210,6 @@ class Model(MupifObject.MupifObject):
 
         self.updateMetadata(metaData)
         # self.printMetadata()
-
-        # define futher app metadata
-        # if not self.hasMetadata('Execution.ID'):
-        #     self.setMetadata('Execution.ID', 'N/A')
-        # if not self.hasMetadata('Execution.Use_case_ID'):
-        #     self.setMetadata('Execution.Use_case_ID', 'N/A')
-        # if not self.hasMetadata('Execution.Task_ID'):
-        #     self.setMetadata('Execution.Task_ID', 'N/A')
 
         self.setMetadata('Name', self.getApplicationSignature())
         self.setMetadata('Status', 'Initialized')

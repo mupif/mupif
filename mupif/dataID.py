@@ -1,6 +1,7 @@
 """
-Module defining PropertyID as enumeration, e.g. concentration, velocity.
+Module defining PropertyID and FieldID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
+FunctionID is deprecated and will be removed
 """
 from enum import IntEnum
 

@@ -51,11 +51,11 @@ class application1(Model.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated'}]
         }
