@@ -72,6 +72,7 @@ class thermal(Model.Model):
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(thermal, self).initialize(
             file=file, workdir=workdir, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
+        self.setMetadata('Solver.Estim_comp_time_s', 1.e-2)
 
     def readInput(self, tria=False):
         self.tria = tria
