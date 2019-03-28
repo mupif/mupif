@@ -3,7 +3,7 @@ sys.path.append('../../..')
 import os
 import socket
 
-from mupif import Application
+from mupif import Model
 from mupif import PyroUtil
 
 
@@ -12,7 +12,7 @@ import conf
 #nameserver app name
 appname='celsian'
 
-class celsian(Application.Application):
+class celsian(Model.Model):
     """
     Mupif interface to Celsian Computational Fluid Dynamics (CFD) tool
 

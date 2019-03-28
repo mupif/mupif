@@ -1,41 +1,95 @@
-from mupif import *
+import sys
 import Pyro4
 import logging
-log = logging.getLogger()
+sys.path.extend(['..', '../../..'])
+from mupif import *
 import mupif.Physics.PhysicalQuantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+log = logging.getLogger()
+
 
 @Pyro4.expose
-class application2(Application.Application):
+class application2(Model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, file=None, workdir=None):
-        super(application2, self).__init__(file, workdir)
+    def __init__(self, metaData={}):
+        MD = {
+            'Name': 'Simple application cummulating time steps',
+            'ID': 'N/A',
+            'Description': 'Cummulates time steps',
+            'Physics': {
+                'Type': 'Other',
+                'Entity': 'Other'
+            },
+            'Solver': {
+                'Software': 'Python script',
+                'Language': 'Python3',
+                'License': 'LGPL',
+                'Creator': 'Borek',
+                'Version_date': '02/2019',
+                'Type': 'Summator',
+                'Documentation': 'Nowhere',
+                'Estim_time_step_s': 1,
+                'Estim_comp_time_s': 0.01,
+                'Estim_execution_cost_EUR': 0.01,
+                'Estim_personnel_cost_EUR': 0.01,
+                'Required_expertise': 'None',
+                'Accuracy': 'High',
+                'Sensitivity': 'High',
+                'Complexity': 'Low',
+                'Robustness': 'High'
+            },
+            'Inputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                 'Description': 'Time step', 'Units': 's',
+                 'Origin': 'Simulated', 'Required': True}],
+            'Outputs': [
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
+        }
+        super(application2, self).__init__(metaData=MD)
+        self.updateMetadata(metaData)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = None
+        self.contrib = Property.ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+        super(application2, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+
     def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_CumulativeConcentration):
-            log.debug('Getting property from this application2')
-            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
+        md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
+        if propID == PropertyID.PID_Time:
+            return Property.ConstantProperty(
+                (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, metaData=md)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise APIError.APIError('Unknown property ID')
+
     def setProperty(self, property, objectID=0):
-        if (property.getPropertyID() == PropertyID.PID_Concentration):
+        if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise APIError.APIError('Unknown property ID')
+
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        log.debug("Solving step: %d %f%s %f%s" % (tstep.getNumber(), tstep.getTime().getValue(), tstep.getTime().getUnitName(), tstep.getTimeIncrement().getValue(), tstep.getTime().getUnitName() ) )
         # here we actually accumulate the value using value of mapped property
-        self.value=self.value+self.contrib.inUnitsOf('kg/m**3').getValue(tstep.getTime())
+        self.value = self.value+self.contrib.inUnitsOf('s').getValue(tstep.getTime())[0]
         self.count = self.count+1
+
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
-    def getAssemblyTime(self,tstep):
+
+    def getAssemblyTime(self, tstep):
         return tstep.getTime()
+
     def getApplicationSignature(self):
         return "Application2"

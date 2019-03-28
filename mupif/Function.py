@@ -23,10 +23,14 @@
 from builtins import object
 import Pyro4
 
+
 @Pyro4.expose
 class Function(object):
         """
         Represents a function.
+
+        Usage of class Function for data transfers between codes as with Field or Property is deprecated.
+        It is not supposed for data transfers any more, thus becomes an auxiliary class.
 
         Function is an object defined by mathematical expression. Function can depend on spatial position and time.
         Derived classes should implement evaluate service by providing a corresponding expression.
@@ -42,7 +46,8 @@ class Function(object):
             :param FunctionID funcID: function ID, e.g. FuncID_ProbabilityDistribution
             :param int objectID: Optional ID of associated subdomain, default 0
             """
-        def evaluate (self, d):
+
+        def evaluate(self, d):
             """
             Evaluates the function for given parameters packed as a dictionary.
             
@@ -56,7 +61,7 @@ class Function(object):
             :return: Function value evaluated at given position and time
             :rtype: int, float, tuple
             """
-        def getID (self):
+        def getID(self):
             """
             Obtain function's ID.
             

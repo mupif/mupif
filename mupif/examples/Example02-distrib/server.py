@@ -7,18 +7,19 @@
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
 
 import sys
-sys.path.extend(['..','../../..'])
-from mupif import *
-import Pyro4
+import argparse
 import logging
+sys.path.extend(['..', '../../..'])
+from mupif import *
 log = logging.getLogger()
 Util.changeRootLogger('server.log')
 
-import argparse
-#Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
+# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
 mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+
 from Config import config
-cfg=config(mode)
+
+cfg = config(mode)
 
 import application2
 app2 = application2.application2()

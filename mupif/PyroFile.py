@@ -24,13 +24,14 @@
 import zlib
 import Pyro4
 
+
 @Pyro4.expose
 class PyroFile (object):
     """
     Helper Pyro class providing an access to local file. It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.
     """
 
-    def __init__ (self, filename, mode, buffsize=1024, compressFlag=False):
+    def __init__(self, filename, mode, buffsize=1024, compressFlag=False):
         """
         Constructor. Opens the corresponding file handle.
 
@@ -46,7 +47,7 @@ class PyroFile (object):
         self.compressor = None
         self.decompressor = None
 
-    def getChunk (self):
+    def getChunk(self):
         """
         Reads and returns next buffsize bytes from open (should be opened in read mode).
         The returned chunk may contain less bytes if not enouch data can be read, or can be empty if end-of-file is reached.
@@ -54,7 +55,7 @@ class PyroFile (object):
         :rtype: str
         """
         data = self.myfile.read(self.buffsize)
-        if (data and self.compressFlag):
+        if data and self.compressFlag:
             if not self.compressor:
                 self.compressor = zlib.compressobj()
             data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
@@ -66,38 +67,38 @@ class PyroFile (object):
         in case of compressed stream the termination sequence is returned (see zlib flush(Z_FINAL))
         :rtype: str
         """
-        if (self.compressFlag):
+        if self.compressFlag:
             return self.compressor.flush(zlib.Z_FINISH)
         else:
             return ""
 
-    def setChunk (self, buffer):
+    def setChunk(self, buffer):
         """
         Writes the given chunk of data into the file, which should be opened in write mode.
 
         :param str buffer: data chunk to append
         """
-        if (self.compressFlag):
+        if self.compressFlag:
             if not self.decompressor:
                 self.decompressor = zlib.decompressobj()
             self.myfile.write(self.decompressor.decompress(buffer))
         else:
             self.myfile.write(buffer)
 
-    def setBuffSize (self, buffSize):
+    def setBuffSize(self, buffSize):
         """
         Allows to set the receiver buffer size.
         :param int buffSize: new buffer size
         """
         self.buffsize = buffSize
 
-    def setCompressionFlag (self):
+    def setCompressionFlag(self):
         """
         Sets the compressionFlag to True
         """
         self.compressFlag = True
 
-    def close (self):
+    def close(self):
         """
         Closes the associated file handle.
         """

@@ -6,7 +6,7 @@ It evaluates field position at specific point from micress/sim.vtk file.
 
 To run the example:
 -------------------
-> python Example07.py
+> python Example06.py
 
 
 If you have this error when you run the example:

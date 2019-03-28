@@ -2,7 +2,7 @@ import sys
 sys.path.extend(['../../..'])
 from mupif import *
 
-class DemoApplication (Application.Application):
+class DemoApplication (Model.Model):
     """
     Simple application
     """

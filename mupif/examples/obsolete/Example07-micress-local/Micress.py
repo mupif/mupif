@@ -2,7 +2,7 @@ import sys
 sys.path.append('../../..')
 sys.path.append('.')
 from mupif import VtkReader2
-from mupif import Application
+from mupif import Model
 from mupif import FieldID
 import pyvtk
 import logging
@@ -14,7 +14,7 @@ timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 VtkReader2.pyvtk_monkeypatch()
 
 
-class Micress(Application.Application):
+class Micress(Model.Model):
 
     def __init__ (self, file):
         super(Micress, self).__init__(file)

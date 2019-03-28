@@ -24,6 +24,10 @@
 from builtins import object
 import Pyro4
 import json
+import jsonschema
+import pprint
+import copy
+
 
 @Pyro4.expose
 class MupifObject(object):
@@ -35,48 +39,159 @@ class MupifObject(object):
 
     .. automethod:: __init__
     """
-    def __init__ (self):
+    def __init__(self, jsonFileName=''):
         """
         Constructor. Initializes the object
+        :param str jsonFileName: Optionally instantiate from JSON file
         """
         self.metadata = {}
+        
+        if jsonFileName:
+            with open(jsonFileName) as f:
+                self.metadata = json.load(f)
 
-    def getMetadata (self, key):
-        """ 
+    def getMetadata(self, key):
+        """
         Returns metadata associated to given key
-        :param key: unique metadataID 
+        :param key: unique metadataID
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
-        return self.metadata[key];
+        if self.hasMetadata(key):
+            keys = key.split('.')
+            elem = self.getAllMetadata()
+            i = 0
+            i_last = len(keys)-1
+            for keyword in keys:
+                if i == i_last:
+                    last = True
+                else:
+                    last = False
+
+                if not last:
+                    if keyword in elem:
+                        elem = elem[keyword]
+                else:
+                    return elem[keyword]
+                i += 1
+        else:
+            raise TypeError("Searched key %s does not exist." % key)
+
+    def getAllMetadata(self):
+        """
+        :rtype: dict
+        """
+        return copy.deepcopy(self.metadata)
     
-    def hasMetadata (self, key):
-        """ 
+    def hasMetadata(self, key):
+        """
         Returns true if key defined
-        :param key: unique metadataID 
+        :param key: unique metadataID
         :return: true if key defined, false otherwise
         :rtype: bool
         """
-        return (key in self.metadata)
+        keys = key.split('.')
+        elem = self.getAllMetadata()
+        i = 0
+        i_last = len(keys)-1
+        for keyword in keys:
+            if i == i_last:
+                last = True
+            else:
+                last = False
+
+            if not last:
+                if keyword in elem:
+                    elem = elem[keyword]
+            else:
+                return keyword in elem
+            i += 1
+
+        return False
     
-    def setMetadata (self, key, val):
+    def printMetadata(self, nonEmpty=False):
+        """ 
+        Print all metadata
+        :param bool nonEmpty: Optionally print only non-empty values
+        :return: None
+        :rtype: None
+        """
+        print('ClassName:\'%s\'' % self.__class__.__name__)
+        if nonEmpty:
+            d = {}
+            for k, v in self.getAllMetadata().items():
+                if v != '':
+                    d[k] = v
+        pprint.pprint(d if nonEmpty else self.getAllMetadata(), indent=4, width=300)
+
+    def setMetadata(self, key, val):
         """ 
         Sets metadata associated to given key
-        :param key: unique metadataID 
+        :param str key: unique metadataID
         :param val: any type
         """
-        self.metadata[key] = val
+        keys = key.split('.')
+        elem = self.metadata
+        i = 0
+        i_last = len(keys)-1
+        for keyword in keys:
+            if i == i_last:
+                last = True
+            else:
+                last = False
+
+            if not last:
+                if keyword in elem:
+                    elem = elem[keyword]
+                else:
+                    elem[keyword] = {}
+                    elem = elem[keyword]
+            else:
+                elem[keyword] = val
+            i += 1
+
+    def _iterInDictOfMetadataForUpdate(self, dictionary, base_key):
+        for key, value in dictionary.items():
+            if base_key != "":
+                new_key = "%s.%s" % (base_key, key)
+            else:
+                new_key = "%s" % key
+
+            if isinstance(value, dict):
+                self._iterInDictOfMetadataForUpdate(value, new_key)
+            else:
+                self.setMetadata(new_key, value)
+        
+    def updateMetadata(self, dictionary):
+        """ 
+        Updates metadata's dictionary with a given dictionary
+        :param dict dictionary: Dictionary of metadata
+        """
+        if isinstance(dictionary, dict):
+            self._iterInDictOfMetadataForUpdate(dictionary, "")
+
+    def validateMetadata(self, template):
+        """
+        Validates metadata's dictionary with a given dictionary
+        :param dict template: Schema for json template
+        """
+        jsonschema.validate(self.metadata, template)
         
     def __str__(self):
         """
         Returns printable string representation of an object.
-        :retrun: string
+        :return: string
         """
         return str(self.__dict__)
 
-    def toJSON(self):
+    def toJSON(self, indent=4):
         """
+        By default, the JSON encoder only understands native Python data types (str, int, float, bool, list, tuple, and dict). Other classes need 
         JSON serialization method
         :return: string
         """
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True)
+        return json.dumps(self.metadata, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
+    
+    def toJSONFile(self, filename, indent=4):
+        with open(filename, "w") as f:
+            json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)

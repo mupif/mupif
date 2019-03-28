@@ -32,15 +32,17 @@ import numpy
 import Pyro4
 from . import CellGeometryType
 try:
-   import cPickle as pickle #faster serialization if available
+   import cPickle as pickle  # faster serialization if available
 except:
    import pickle
 
-#enum to distinguish iterartors provided by domain
-VERTICES=0; CELLS=1
+# enum to distinguish iterartors provided by domain
+VERTICES = 0
+CELLS = 1
 
-#debug flag
+# debug flag
 debug = 0
+
 
 @Pyro4.expose
 class MeshIterator(object):
@@ -58,12 +60,12 @@ class MeshIterator(object):
         :param Mesh mesh: Given mesh
         :param str type: Type of mesh, e.g. VERTICES or CELLS
         """
-        if ((type == VERTICES) or (type == CELLS)):
+        if type == VERTICES or type == CELLS:
             self.type = type
             self.mesh = mesh
         else:
-            print ("Unsupported iterator type")
-            abort(0)
+            print("Unsupported iterator type")
+            sys.exit(0)
 
     def __iter__(self):
         """
@@ -92,16 +94,17 @@ class MeshIterator(object):
                 self.i += 1
                 return item
             else:
-                 raise StopIteration()
+                raise StopIteration()
     # in py3k, this would lead to infinite recursion since 2to3 renames to __next__ already
-    if sys.version_info[0]==2:
-        def next (self):
+    if sys.version_info[0] == 2:
+        def next(self):
             """
             Python 2.x compatibility, see :func:`MeshIterator.__next__`
             """
-            return self.__next__()   #Python 2.x compatibility
+            return self.__next__()  # Python 2.x compatibility
 
-@Pyro4.expose         
+
+@Pyro4.expose
 class Mesh(object):
     """
     Abstract representation of a computational domain.
@@ -116,7 +119,7 @@ class Mesh(object):
         self.mapping = None
 
     @classmethod
-    def loadFromLocalFile(cls,fileName):
+    def loadFromLocalFile(cls, fileName):
         """
         Alternative constructor which loads an instance from a Pickle module.
 
@@ -125,7 +128,7 @@ class Mesh(object):
         :return: Returns Mesh instance
         :rtype: Mesh
         """
-        return pickle.load(open(fileName,'rb'))
+        return pickle.load(open(fileName, 'rb'))
 
     def copy(self):
         """
@@ -143,7 +146,7 @@ class Mesh(object):
         :return: Number of Vertices
         :rtype: int
         """
-        return 0;
+        return 0
 
     def getNumberOfCells(self):
         """
@@ -152,7 +155,7 @@ class Mesh(object):
         :return: The number of Cells
         :rtype: int
         """
-        return 0;
+        return 0
 
     def getVertex(self, i):
         """
@@ -172,10 +175,10 @@ class Mesh(object):
 
         .. note:: This method has not been tested yet.
         """
-        nv=self.getNumberOfVertices()
-        ret=numpy.empty((nv,3),dtype=numpy.float)
-        for i in range(0,nv):
-            ret[i]=numpy.array(self.getVertex(i).getCoordinates())
+        nv = self.getNumberOfVertices()
+        ret = numpy.empty((nv, 3), dtype=numpy.float)
+        for i in range(0, nv):
+            ret[i] = numpy.array(self.getVertex(i).getCoordinates())
         return ret
 
     def getCell(self, i):
@@ -197,39 +200,45 @@ class Mesh(object):
         .. note:: This method has not been tested yet.
         """
         # determine the maximum number of vertices
-        mnv=0
-        nc=self.getNumberOfCells()
-        for i in range(nc): mnv=max(mnv,self.getCell(i).getNumberOfVertices())
-        tt,cc=numpy.empty(shape=(nc,),dtype=numpy.int),numpy.full(shape=(nc,mnv),fill_value=-1,dtype=numpy.int)
+        mnv = 0
+        nc = self.getNumberOfCells()
         for i in range(nc):
-            c=self.getCell(i)
-            tt[i]=c.getGeometryType()
-            vv=numpy.array([v.getNumber() for v in c.getVertices()],dtype=numpy.int)
-            cc[i,:len(vv)]=vv # excess elements in the row stay at -1
-        return tt,cc
+            mnv = max(mnv, self.getCell(i).getNumberOfVertices())
+        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int)
+        for i in range(nc):
+            c = self.getCell(i)
+            tt[i] = c.getGeometryType()
+            vv = numpy.array([v.getNumber() for v in c.getVertices()], dtype=numpy.int)
+            cc[i, :len(vv)] = vv  # excess elements in the row stay at -1
+        return tt, cc
 
     def internalArraysDigest(self):
-        '''Internal function returning hash digest of all internal data, for the purposes of identity test.'''
+        """Internal function returning hash digest of all internal data, for the purposes of identity test."""
         def numpyHash(*args):
             'Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to find an identical mesh which was already stored.'
             import hashlib
             return ''.join([hashlib.sha1(arr.view(numpy.uint8)).hexdigest() for arr in args])
-        mvc,(mct,mci)=self.getVertices(),self.getCells()
-        return 'mesh_'+numpyHash(mvc,mct,mci)
+        mvc, (mct, mci) = self.getVertices(), self.getCells()
+        return 'mesh_'+numpyHash(mvc, mct, mci)
 
-    def asHdf5Object(self,parentgroup,newgroup):
-        '''Return the instance as HDF5 object. Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.'''
-        mhash=self.internalArraysDigest()
+    def asHdf5Object(self, parentgroup, newgroup):
+        """
+        Return the instance as HDF5 object.
+        Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
+        """
+        mhash = self.internalArraysDigest()
         # try to find this mesh in the hdf5 group and return that one, instead of creating a new one
         if parentgroup:
-            for name,group in parentgroup.items():
-                if 'mhash' in group.attrs and group.attrs['mhash']==mhash: return parentgroup[name]
-        gg=parentgroup.create_group(name=newgroup)
-        mvc,(mct,mci)=self.getVertices(),self.getCells()
-        for name,data in ('vertex_coords',mvc),('cell_types',mct),('cell_vertices',mci): gg[name]=data
-        gg.attrs['mhash']=mhash
-        gg.attrs['__class__']=self.__class__.__name__
-        gg.attrs['__module__']=self.__class__.__module__
+            for name, group in parentgroup.items():
+                if 'mhash' in group.attrs and group.attrs['mhash'] == mhash:
+                    return parentgroup[name]
+        gg = parentgroup.create_group(name=newgroup)
+        mvc, (mct, mci) = self.getVertices(), self.getCells()
+        for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
+            gg[name] = data
+        gg.attrs['mhash'] = mhash
+        gg.attrs['__class__'] = self.__class__.__name__
+        gg.attrs['__module__'] = self.__class__.__module__
         return gg
 
     @staticmethod
@@ -244,52 +253,52 @@ class Mesh(object):
         import importlib
         from mupif.Vertex import Vertex
         from mupif.Cell import Cell
-        klass=getattr(importlib.import_module(h5obj.attrs['__module__']),h5obj.attrs['__class__'])
-        ret=klass()
-        mvc,mct,mci=h5obj['vertex_coords'],h5obj['cell_types'],h5obj['cell_vertices']
+        klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
+        ret = klass()
+        mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
         # construct vertices
-        vertices=[Vertex(number=vi,label=None,coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
-        cells=[Cell.getClassForCellGeometryType(mct[ci])(mesh=ret,number=ci,label=None,
+        vertices = [Vertex(number=vi, label=None, coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
+        cells = [Cell.getClassForCellGeometryType(mct[ci])(mesh=ret, number=ci, label=None,
             # vertices=tuple(mci[ci])
             vertices=[vertices[i] for i in mci[ci]]
             ) for ci in range(mct.shape[0])]
-        ret.setup(vertexList=vertices,cellList=cells)
+        ret.setup(vertexList=vertices, cellList=cells)
         return ret
 
     def asVtkUnstructuredGrid(self):
-        '''
+        """
         Return object as a vtk.vtkUnstructuredMesh instance.
 
         .. note:: This method uses the compiled vtk module (which is a wrapper atop the c++ VTK library) -- in contrast to :obj:`UnstructuredMesh.getVTKRepresentation`, which uses the pyvtk module (python-only implementation of VTK i/o supporting only VTK File Format version 2).
-        '''
+        """
         import vtk
         # vertices
-        pts=vtk.vtkPoints()
-        for ip in range(self.getNumberOfVertices()): pts.InsertNextPoint(self.getVertex(ip).getCoordinates())
+        pts = vtk.vtkPoints()
+        for ip in range(self.getNumberOfVertices()):
+            pts.InsertNextPoint(self.getVertex(ip).getCoordinates())
         # cells
-        cells,cellTypes=vtk.vtkCellArray(),[]
+        cells, cellTypes = vtk.vtkCellArray(), []
         for ic in range(self.getNumberOfCells()):
-            c=self.getCell(ic)
-            cgt=c.getGeometryType()
-            cellGeomTypeMap={
-                CellGeometryType.CGT_TRIANGLE_1: (vtk.vtkTriangle,vtk.VTK_TRIANGLE),
-                CellGeometryType.CGT_QUAD:       (vtk.vtkQuad,vtk.VTK_QUAD),
-                CellGeometryType.CGT_TETRA:      (vtk.vtkTetra,vtk.VTK_TETRA),
-                CellGeometryType.CGT_HEXAHEDRON: (vtk.vtkHexahedron,vtk.VTK_HEXAHEDRON),
-                CellGeometryType.CGT_TRIANGLE_2: (vtk.vtkQuadraticTriangle,vtk.VTK_QUADRATIC_TRIANGLE)
+            c = self.getCell(ic)
+            cgt = c.getGeometryType()
+            cellGeomTypeMap = {
+                CellGeometryType.CGT_TRIANGLE_1: (vtk.vtkTriangle, vtk.VTK_TRIANGLE),
+                CellGeometryType.CGT_QUAD:       (vtk.vtkQuad, vtk.VTK_QUAD),
+                CellGeometryType.CGT_TETRA:      (vtk.vtkTetra, vtk.VTK_TETRA),
+                CellGeometryType.CGT_HEXAHEDRON: (vtk.vtkHexahedron, vtk.VTK_HEXAHEDRON),
+                CellGeometryType.CGT_TRIANGLE_2: (vtk.vtkQuadraticTriangle, vtk.VTK_QUADRATIC_TRIANGLE)
             }
-            c2klass,c2type=cellGeomTypeMap[cgt] # instantiate the VTK cell with the correct type
-            c2=c2klass()
-            verts=c.getVertices() # those should be all instances of Vertex...? Hopefully so.
-            for i,v in enumerate(verts): c2.GetPointIds().SetId(i,v.getNumber())
+            c2klass, c2type = cellGeomTypeMap[cgt]  # instantiate the VTK cell with the correct type
+            c2 = c2klass()
+            verts = c.getVertices()  # those should be all instances of Vertex...? Hopefully so.
+            for i, v in enumerate(verts):
+                c2.GetPointIds().SetId(i, v.getNumber())
             cells.InsertNextCell(c2)
             cellTypes.append(c2type)
-        ret=vtk.vtkUnstructuredGrid()
+        ret = vtk.vtkUnstructuredGrid()
         ret.SetPoints(pts)
-        ret.SetCells(cellTypes,cells)
+        ret.SetCells(cellTypes, cells)
         return ret
-
-        
 
     def getMapping(self):
         """
@@ -346,7 +355,8 @@ class Mesh(object):
         :param str fileName: File name
         :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
         """
-        pickle.dump(self, open(fileName,'wb'), protocol)
+        pickle.dump(self, open(fileName, 'wb'), protocol)
+
 
 @Pyro4.expose
 class UnstructuredMesh(Mesh):
@@ -373,14 +383,14 @@ class UnstructuredMesh(Mesh):
         """
         Mesh.__init__(self)
         self.vertexList = []
-        self.cellList    = []
+        self.cellList = []
         self.vertexOctree = None
-        self.cellOctree   = None
-        #label2local_number maps
-        self.vertexDict   = None
-        self.cellDict     = None
+        self.cellOctree = None
+        # label2local_number maps
+        self.vertexDict = None
+        self.cellDict = None
 
-    def setup (self, vertexList, cellList):
+    def setup(self, vertexList, cellList):
         """
         Initializes the receicer according to given vertex and cell lists.
 
@@ -395,25 +405,25 @@ class UnstructuredMesh(Mesh):
         See :func:`Mesh.copy`
         """
         vertexList = []
-        cellList   = []
+        cellList = []
         for i in self.vertices():
             vertexList.append(copy.deepcopy(i))
         for i in self.cells():
             cellList.append(i.copy())
         ans = UnstructuredMesh()
-        ans.setup(vertexList,cellList)
+        ans.setup(vertexList, cellList)
         return ans
 
     def __getstate__(self):
-        '''Customized method returning dictionary for pickling.
+        """Customized method returning dictionary for pickling.
 
         We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on c++ fastOctant, which the other side does not necessarily support.
 
         Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with ``vertexOctree`` and ``cellOctree`` set to ``None``.
-        '''
+        """
         # shallow copy of __dict__
-        d2=self.__dict__.copy()
-        d2['vertexOctree']=d2['cellOctree']=None
+        d2 = self.__dict__.copy()
+        d2['vertexOctree'] = d2['cellOctree'] = None
         return d2
 
     def getNumberOfVertices(self):
@@ -452,35 +462,37 @@ class UnstructuredMesh(Mesh):
 
             # XXX: remove this
             if 0:
-                init=True
-                minc=[]
-                maxc=[]
+                init = True
+                minc = []
+                maxc = []
                 for vertex in self.vertices():
                     if init:
                         for i in range(len(vertex.coords)):
-                            minc[i]=maxc[i]=vertex.coords[i]
+                            minc[i] = maxc[i] = vertex.coords[i]
                     else:
                         for i in range(len(vertex.coords)):
-                            minc[i]=min(minc[i], vertex.coords[i])
-                            maxc[i]=max(maxc[i], vertex.coords[i])
+                            minc[i] = min(minc[i], vertex.coords[i])
+                            maxc[i] = max(maxc[i], vertex.coords[i])
             else:
-                vvv=self.vertices()
-                c0=vvv.__iter__().__next__().getCoordinates() # use the first bbox as base
-                bb=BBox.BBox(c0,c0) # ope-pointed bbox
-                for vert in vvv: bb.merge(vert.getCoordinates()) # extend it with all other cells
-                minc,maxc=bb.coords_ll,bb.coords_ur
+                vvv = self.vertices()
+                c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
+                bb = BBox.BBox(c0, c0)  # ope-pointed bbox
+                for vert in vvv:
+                    bb.merge(vert.getCoordinates())  # extend it with all other cells
+                minc, maxc = bb.coords_ll, bb.coords_ur
 
-            #setup vertex localizer
-            size = max ( y-x for x,y in zip (minc,maxc))
-            mask = [(y-x)>0.0 for x,y in zip (minc,maxc)]
+            # setup vertex localizer
+            size = max(y-x for x, y in zip(minc, maxc))
+            mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
             self.vertexOctree = Octree.Octree(minc, size, mask) 
             if debug: 
-                t0=time.clock()
-                print ("Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n")
+                t0 = time.clock()
+                print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
             # add mesh vertices into octree
             for vertex in self.vertices():
                 self.vertexOctree.insert(vertex)
-            if debug: print ("done in ", time.clock() - t0, "[s]")
+            if debug:
+                print("done in ", time.clock() - t0, "[s]")
 
             return self.vertexOctree
 
@@ -491,45 +503,50 @@ class UnstructuredMesh(Mesh):
         :return: Returns the cell localizer.
         :rtype: Octree
         """
-        if debug: t0=time.clock()
+        if debug:
+            t0 = time.clock()
         if self.cellOctree: 
             return self.cellOctree
         else:
             # loop over cell bboxes to get bounding box first
-            if debug: print('Start at: ',time.clock()-t0)
+            if debug:
+                print('Start at: ', time.clock()-t0)
 
-            ## XXX: remove this
+            # XXX: remove this
             if 0:
-                init=True
-                minc=[]
-                maxc=[]
+                init = True
+                minc = []
+                maxc = []
                 for cell in self.cells():
-                    #print "cell bbox:", cell.giveBBox()
+                    # print "cell bbox:", cell.giveBBox()
                     if init:
                         minc = [c for c in cell.getBBox().coords_ll]
                         maxc = [c for c in cell.getBBox().coords_ur]
-                        init=False
+                        init = False
                     else:
                         for i in range(len(cell.getBBox().coords_ll)):
-                            minc[i]=min(minc[i], cell.getBBox().coords_ll[i])
-                            maxc[i]=max(maxc[i], cell.getBBox().coords_ur[i])
+                            minc[i] = min(minc[i], cell.getBBox().coords_ll[i])
+                            maxc[i] = max(maxc[i], cell.getBBox().coords_ur[i])
             else:
-                ccc=self.cells()
-                bb=ccc.__iter__().__next__().getBBox() # use the first bbox as base
-                for cell in ccc: bb.merge(cell.getBBox()) # extend it with all other cells
-                minc,maxc=bb.coords_ll,bb.coords_ur
-            if debug: print('Cell bbox: ',time.clock()-t0)
+                ccc = self.cells()
+                bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
+                for cell in ccc:
+                    bb.merge(cell.getBBox())  # extend it with all other cells
+                minc, maxc = bb.coords_ll, bb.coords_ur
+            if debug:
+                print('Cell bbox: ', time.clock()-t0)
 
-        #setup vertex localizer
-        size = max ( y-x for x,y in zip (minc,maxc))
-        mask = [(y-x)>0.0 for x,y in zip (minc,maxc)]
+        # setup vertex localizer
+        size = max(y-x for x, y in zip(minc, maxc))
+        mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
         self.cellOctree = Octree.Octree(minc, size, mask) 
-        if debug: print('Octree ctor: ',time.clock()-t0)
-        if debug: 
-            print ("Mesh: setting up vertex octree ...\nminc=", minc,"size:", size, "mask:",mask,"\n")
+        if debug:
+            print('Octree ctor: ',time.clock()-t0)
+            print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
         for cell in self.cells():
             self.cellOctree.insert(cell)
-        if debug: print ("done in ", time.clock() - t0, "[s]")
+        if debug:
+            print("done in ", time.clock() - t0, "[s]")
         return self.cellOctree
 
     def __buildVertexLabelMap__(self):
@@ -541,7 +558,8 @@ class UnstructuredMesh(Mesh):
         for v in range(len(self.vertexList)):
             if self.vertexList[v].label in self.vertexDict:
                 if debug:
-                    print ("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",  self.vertexList[v].label)
+                    print("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",
+                          self.vertexList[v].label)
             else:
                 self.vertexDict[self.vertexList[v].label]=v
 
@@ -554,28 +572,26 @@ class UnstructuredMesh(Mesh):
         for v in range(len(self.cellList)):
             if self.cellList[v].label in self.cellDict:
                 if debug:
-                    print ("UnstructuredMesh::buildCellLabelMap: multiple entry detected, cell label ",  self.cellList[v].label)
+                    print("UnstructuredMesh::buildCellLabelMap: multiple entry detected, cell label ",
+                          self.cellList[v].label)
             else:
-                self.cellDict[self.cellList[v].label]=v
-
+                self.cellDict[self.cellList[v].label] = v
 
     def vertexLabel2Number(self, label):
         """
         See :func:`Mesh.vertexLabel2Number`
         """
-        if (not self.vertexDict):
+        if not self.vertexDict:
             self.__buildVertexLabelMap__()
         return self.vertexDict[label]
-
 
     def cellLabel2Number(self, label):
         """
         See :func:`Mesh.cellLabel2Number`
         """
-        if (not self.cellDict):
+        if not self.cellDict:
             self.__buildCellLabelMap__()
         return self.cellDict[label]
-
 
     def merge (self, mesh):
         """
@@ -585,24 +601,25 @@ class UnstructuredMesh(Mesh):
 
         :param Mesh mesh: Source mesh for merging
         """
-        #build vertex2local reciver map first
-        if (not self.vertexDict):
+        # build vertex2local reciver map first
+        if not self.vertexDict:
             self.__buildVertexLabelMap__()
         #
-        #merge vertexLists
+        # merge vertexLists
         #
-        if debug: print ("UnstructuredMesh::merge: merged vertices with label:")
+        if debug:
+            print("UnstructuredMesh::merge: merged vertices with label:")
         for v in mesh.vertices():
             if v.label in self.vertexDict:
                 if debug:
-                    print (v.label)
+                    print(v.label)
             else:
-                indx=len(self.vertexList)
-                self.vertexList[indx:]=[copy.deepcopy(v)]
-                self.vertexDict[v.label]=indx
+                indx = len(self.vertexList)
+                self.vertexList[indx:] = [copy.deepcopy(v)]
+                self.vertexDict[v.label] = indx
 
         # renumber vertexDict verices 
-        number=0
+        number = 0
         for v in self.vertexList:
             v.number = number
             number = number+1
@@ -610,27 +627,28 @@ class UnstructuredMesh(Mesh):
         # now merge cell lists
         #
 
-        if (not self.cellDict):
+        if not self.cellDict:
             self.__buildCellLabelMap__()
 
-        if debug: print ("UnstructuredMesh::merge: merged cells with label:")
+        if debug:
+            print("UnstructuredMesh::merge: merged cells with label:")
         for c in mesh.cells():
             if c.label in self.cellDict:
                 if debug:
-                    print (c.label)
+                    print(c.label)
             else:
                 # update c vertex list according to new numbering
-                updatedVertices=[]
+                updatedVertices = []
                 for v in c.getVertices():
                     updatedVertices.append(self.vertexDict[v.label])
-                ccopy=c.copy()
-                ccopy.vertices=tuple(updatedVertices)
-                ccopy.mesh=self
-                indx=len(self.cellList)
-                self.cellList[indx:]=[ccopy]
-                self.cellDict[ccopy.label]=indx
-        print ()
-        #last step: invalidate receiver 
+                ccopy = c.copy()
+                ccopy.vertices = tuple(updatedVertices)
+                ccopy.mesh = self
+                indx = len(self.cellList)
+                self.cellList[indx:] = [ccopy]
+                self.cellDict[ccopy.label] = indx
+        print()
+        # last step: invalidate receiver
         self.vertexOctree = None
         self.cellOctree = None
 
@@ -649,27 +667,27 @@ class UnstructuredMesh(Mesh):
         quads = []
         triangles = []
 
-        #loop over receiver vertices and create list of vertex coordinates 
+        # oop over receiver vertices and create list of vertex coordinates
         for v in range(len(self.vertexList)):
             vertices.append(self.vertexList[v].coords)
-        #loop over receiver cells 
+        # loop over receiver cells
         for c in range(len(self.cellList)):
             cell = self.cellList[c]
             cgt = cell.getGeometryType()
-            if (cgt == CellGeometryType.CGT_TRIANGLE_1):
+            if cgt == CellGeometryType.CGT_TRIANGLE_1:
                 triangles.append(cell.vertices)
-            elif (cgt == CellGeometryType.CGT_QUAD):
+            elif cgt == CellGeometryType.CGT_QUAD:
                 quads.append(cell.vertices)
-            elif (cgt == CellGeometryType.CGT_TETRA):
+            elif cgt == CellGeometryType.CGT_TETRA:
                 tetrahedrons.append(cell.vertices)
-            elif (cgt == CellGeometryType.CGT_HEXAHEDRON):
+            elif cgt == CellGeometryType.CGT_HEXAHEDRON:
                 hexahedrons.append(cell.vertices)
-            elif (cgt == CellGeometryType.CGT_TRIANGLE_2):
-               # no direct support in pyvtk. map it to linear tringles
-               triangles.append((cell.vertices[0], cell.vertices[3], cell.vertices[5]))
-               triangles.append((cell.vertices[1], cell.vertices[4], cell.vertices[3]))
-               triangles.append((cell.vertices[2], cell.vertices[5], cell.vertices[4]))
-               triangles.append((cell.vertices[3], cell.vertices[4], cell.vertices[5]))
+            elif cgt == CellGeometryType.CGT_TRIANGLE_2:
+                # no direct support in pyvtk. map it to linear tringles
+                triangles.append((cell.vertices[0], cell.vertices[3], cell.vertices[5]))
+                triangles.append((cell.vertices[1], cell.vertices[4], cell.vertices[3]))
+                triangles.append((cell.vertices[2], cell.vertices[5], cell.vertices[4]))
+                triangles.append((cell.vertices[3], cell.vertices[4], cell.vertices[5]))
             else:
                 msg = "Unsupported cell geometry type encountered: "+str(cgt)
                 raise APIError.APIError (msg) 
@@ -679,27 +697,27 @@ class UnstructuredMesh(Mesh):
 
     @staticmethod
     def makeFromVtkUnstructuredGrid(ugrid):
-        '''Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are mapped between VTK and mupif (supported: vtkTriangle, vtkQuadraticTriangle, vtkQuad, vtkTetra, vtkHexahedron).
+        """Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are mapped between VTK and mupif (supported: vtkTriangle, vtkQuadraticTriangle, vtkQuad, vtkTetra, vtkHexahedron).
 
         :param ugrid: instance of vtk.vtkUnstructuredGrid
         :return: new instance of :obj:`UnstructuredMesh`
-        '''
+        """
         import vtk
         from . import Cell, Vertex
-        ret=UnstructuredMesh()
-        np,nc=ugrid.GetNumberOfPoints(),ugrid.GetNumberOfCells()
+        ret = UnstructuredMesh()
+        np, nc = ugrid.GetNumberOfPoints(), ugrid.GetNumberOfCells()
         # vertices
-        mupifVertices=[Vertex.Vertex(number=ip,label=ip,coords=ugrid.GetPoint(ip)) for ip in range(np)]
+        mupifVertices = [Vertex.Vertex(number=ip, label=ip, coords=ugrid.GetPoint(ip)) for ip in range(np)]
         # cells
-        mupifCells=[]
+        mupifCells = []
         for ic in range(nc):
-            c=ugrid.GetCell(ic)
-            pts=[c.GetPointId(i) for i in range(c.GetNumberOfPoints())]
+            c = ugrid.GetCell(ic)
+            pts = [c.GetPointId(i) for i in range(c.GetNumberOfPoints())]
             # map VTK type to our type?
             # or don't care and used cell types array to reconstruct cells
             # assuming that cell types were stored correctly and numbering did not change meanwhile
             # plus add safety check for the required number of points per cell
-            cellGeomTypeMap={
+            cellGeomTypeMap = {
                 vtk.VTK_TRIANGLE:           CellGeometryType.CGT_TRIANGLE_1,
                 vtk.VTK_QUADRATIC_TRIANGLE: CellGeometryType.CGT_TRIANGLE_2,
                 vtk.VTK_TETRA:              CellGeometryType.CGT_TETRA,
@@ -710,39 +728,43 @@ class UnstructuredMesh(Mesh):
             # if the lookup fails, KeyError propagates to the caller, which is what we want
             cgt=cellGeomTypeMap[c.GetCellType()]
             # create new cell and append to mupifCells
-            mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret,number=ic,label=None,vertices=[mupifVertices[i] for i in pts]))
-        ret.setup(vertexList=mupifVertices,cellList=mupifCells)
+            mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]))
+        ret.setup(vertexList=mupifVertices, cellList=mupifCells)
         return ret
 
     @staticmethod
     def makeFromPyvtkUnstructuredGrid(ugr):
-        '''Create a new instance of :obj:`UnstructuredMesh` based on pyvtk.UnstructuredGrid object. Cell types are mapped between pyvtk and mupif (supported: triangle, tetra, quad, hexahedron).
+        """Create a new instance of :obj:`UnstructuredMesh` based on pyvtk.UnstructuredGrid object. Cell types are mapped between pyvtk and mupif (supported: triangle, tetra, quad, hexahedron).
 
         :param ugr: instance of pyvtk.UnstructuredGrid
         :return: new instance of :obj:`UnstructuredMesh`
-        '''
+        """
         import pyvtk
         from . import Cell, Vertex
-        ret=UnstructuredMesh()
-        vertices=[]
-        cells=[]
-        vertices=[Vertex.Vertex(number=ip,label=ip,coords=ugr.points[ip]) for ip in range(len(ugr.points))]
-        for cellName in ['vertex','poly_vertex','line','poly_line','triangle','triangle_strip','polygon','pixel','quad','tetra','voxel','hexahedron','wedge','pyramid']:
-            if not hasattr(ugr,cellName): continue
-            val=getattr(ugr,cellName)
-            if val==[] or (len(val)==1 and val[0]==[]): continue  # no cells of this type
+        ret = UnstructuredMesh()
+        vertices = []
+        cells = []
+        vertices = [Vertex.Vertex(number=ip, label=ip, coords=ugr.points[ip]) for ip in range(len(ugr.points))]
+        for cellName in ['vertex', 'poly_vertex', 'line', 'poly_line', 'triangle', 'triangle_strip', 'polygon', 'pixel',
+                         'quad', 'tetra', 'voxel', 'hexahedron', 'wedge', 'pyramid']:
+            if not hasattr(ugr, cellName):
+                continue
+            val = getattr(ugr, cellName)
+            if val == [] or (len(val) == 1 and val[0] == []):
+                continue  # no cells of this type
             # print(cellName,val)
-            cellGeomNameMap={
-                'triangle':  CellGeometryType.CGT_TRIANGLE_1,
-                'tetra':     CellGeometryType.CGT_TETRA,
-                'quad':      CellGeometryType.CGT_QUAD,
-                'hexahedron':CellGeometryType.CGT_HEXAHEDRON,
+            cellGeomNameMap = {
+                'triangle':   CellGeometryType.CGT_TRIANGLE_1,
+                'tetra':      CellGeometryType.CGT_TETRA,
+                'quad':       CellGeometryType.CGT_QUAD,
+                'hexahedron': CellGeometryType.CGT_HEXAHEDRON,
             }
             try:
-                cgt=cellGeomNameMap[cellName]
-            except KeyError: raise NotImplementedError("pyvtk cell type '%s' is not handled by the mupif import routine."%cellName)
-            cells.append([Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret,number=len(cells),label=None,vertices=[vertices[i] for iv in val[i]]) for i in range(len(val))])
-        ret.setup(vertexList=vertices,cellList=cells)
+                cgt = cellGeomNameMap[cellName]
+            except KeyError:
+                raise NotImplementedError("pyvtk cell type '%s' is not handled by the mupif import routine." % cellName)
+            cells.append([Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=len(cells), label=None, vertices=[vertices[i] for iv in val[i]]) for i in range(len(val))])
+        ret.setup(vertexList=vertices, cellList=cells)
         return ret
 
             

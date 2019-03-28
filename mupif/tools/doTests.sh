@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ### Example01 ####
 cd ../examples/Example01; 
 python Example01.py

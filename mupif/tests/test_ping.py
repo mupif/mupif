@@ -8,7 +8,7 @@ import Pyro4
 
 from mupif import PyroUtil
 
-class AnyApp(mupif.Application.Application):
+class AnyApp(mupif.Model.Model):
     def __init__(self,f): super(AnyApp,self).__init__(f)
     def getApplicationSignature(self): return self.__class__.__name__+"@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 class LocalApp(AnyApp): pass

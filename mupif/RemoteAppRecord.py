@@ -1,4 +1,6 @@
 from builtins import range, object
+
+
 class RemoteAppRecord (object):
     """
     Class keeping internal data on remote application. The data contain:
@@ -8,7 +10,7 @@ class RemoteAppRecord (object):
     * jobID: jobID of application
     .. automethod:: __init__
     """
-    def __init__ (self, app, appTunnel, jobMan, jobManTunnel, jobID):
+    def __init__(self, app, appTunnel, jobMan, jobManTunnel, jobID):
         """
         Constructor. Initializes the receiver
         :param Application app: application instance
@@ -53,11 +55,10 @@ class RemoteAppRecord (object):
         """
         return self.app[num].getURI()
 
-
-    def getJobManager (self):
+    def getJobManager(self):
         return self.jobMan
 
-    def getJobID (self, num=0):
+    def getJobID(self, num=0):
         return self.jobID[num]
 
     def terminateAll(self):
@@ -68,9 +69,10 @@ class RemoteAppRecord (object):
         for i in range(0, len(self.app)):
             if self.app is not None:
                 self.terminateApp(i)
-                if self.jobMan: self.jobMan.terminateJob(self.jobID[i])
+                if self.jobMan:
+                    self.jobMan.terminateJob(self.jobID[i])
         if self.jobManTunnel:
-            if self.jobManTunnel!='manual':
+            if self.jobManTunnel != 'manual':
                 self.jobManTunnel.terminate()
 
     def terminateApp(self, num):
@@ -78,7 +80,8 @@ class RemoteAppRecord (object):
         Terminates app[num] and its ssh tunnel. Job manager and its tunnel remains untouched.
         :param int num: number of application
         """
-        if self.app[num]: self.app[num].terminate()
+        if self.app[num]:
+            self.app[num].terminate()
         if self.appTunnel[num]:
-            if self.appTunnel[num]!='manual':
+            if self.appTunnel[num] != 'manual':
                 self.appTunnel[num].terminate()

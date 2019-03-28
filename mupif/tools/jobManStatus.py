@@ -87,8 +87,8 @@ def main():
     hkey = 'mupif-secret-key'
     jobmanname = None
     debug = False
-    #nshost=None
-    ssh = False#ssh flag (set to True if ssh tunnel need to be established)
+    # nshost = None
+    ssh = False  # ssh flag (set to True if ssh tunnel need to be established)
     log = logging.getLogger()
 
     try:

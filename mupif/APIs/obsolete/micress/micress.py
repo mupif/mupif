@@ -50,7 +50,7 @@ import MICFieldID
 
 VtkReader2.pyvtk_monkeypatch()
 
-class micress(Application.Application):
+class micress(Model.Model):
 
     """
       MICRESS application interface class
@@ -272,9 +272,9 @@ class micress(Application.Application):
         elif (propID == MICPropertyID.PID_ComponentNames):
           return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_PhaseNames):
-          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)          
+          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
-          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)        
+          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == PropertyID.PID_Concentration):
           idx = 0
           while ( idx < len(self.t) ):
@@ -284,7 +284,7 @@ class micress(Application.Application):
           if ( idx == len(self.t) ):
             raise APIError.APIError('No time matching entry in log file')
             return 0
-          return Property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)            
+          return Property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)
         elif (propID == MICPropertyID.PID_NativeBaseFileName):
           baseFilename = self.resultFiles + "_loc_" + str(self.locIndex)
           return Property.ConstantProperty(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
@@ -338,11 +338,11 @@ class micress(Application.Application):
           :note: This implementation of the interface supports only MICRESS
                  results written in the VTK format.
           
-          :param Mupif.FieldID fieldID: ID of requested field, e.g. FID_Phase
+          :param mupif.FieldID fieldID: ID of requested field, e.g. FID_Phase
           :param PQ.PhysicalQuantity time: simulation time
           
           :return: result field in Mupif field format 
-          :rtype: Mupif.Field 
+          :rtype: mupif.Field
         
         """
                 

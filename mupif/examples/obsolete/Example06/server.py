@@ -20,7 +20,7 @@ noSSH=False
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
 @Pyro4.expose
-class PingServerApplication(Application.Application):
+class PingServerApplication(Model.Model):
     """
     Simple application that computes an aritmetical average of a mapped property
     """
