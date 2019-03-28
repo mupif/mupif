@@ -35,21 +35,21 @@ from . import APIError
 import logging
 log = logging.getLogger()
 
-Pyro4.config.SERIALIZER="pickle"
+Pyro4.config.SERIALIZER = "pickle"
 # some versions of Pyro don't have this attribute... (strange, is documented)
-if hasattr(Pyro4.config,'PICKLE_PROTOCOL_VERSION'):
-    Pyro4.config.PICKLE_PROTOCOL_VERSION=2 # use lower version for interoperability between python 2 and 3
+if hasattr(Pyro4.config, 'PICKLE_PROTOCOL_VERSION'):
+    Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # use lower version for interoperability between python 2 and 3
 Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-#Pyro4.config.THREADPOOL_SIZE=100
+# Pyro4.config.THREADPOOL_SIZE=100
 Pyro4.config.SERVERTYPE="multiplex"
 
-#pyro4 nameserver metadata
-NS_METADATA_jobmanager="type:jobmanager"
-NS_METADATA_appserver="type:appserver"
-NS_METADATA_host='host'
-NS_METADATA_port='port'
-NS_METADATA_nathost='nathost'
-NS_METADATA_natport='natport'
+# pyro4 nameserver metadata
+NS_METADATA_jobmanager = "type:jobmanager"
+NS_METADATA_appserver = "type:appserver"
+NS_METADATA_host = 'host'
+NS_METADATA_port = 'port'
+NS_METADATA_nathost = 'nathost'
+NS_METADATA_natport = 'natport'
 
 
 class SSHContext(object):
@@ -85,13 +85,13 @@ class sshTunnel(object):
         :raises Exception: if creation of a tunnel failed
         """
 
-        if sshHost =='':
+        if sshHost == '':
             sshHost = remoteHost
-        if userName =='':
+        if userName == '':
             userName = os.getenv('USER')
                 
         direction = 'L'
-        if Reverse == True:
+        if Reverse is True:
             direction = 'R'
 
         #use direct system command. Paramiko or sshtunnel do not work.
