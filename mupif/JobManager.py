@@ -156,6 +156,16 @@ class JobManager(object):
         :param string appName:
         :param bool externalDaemon: Optional parameter when damon was allocated externally.
         """
+
+    def getJobWorkDir(self, jobID):
+        """
+        Returns working directory of a job with given ID.
+
+        :param str jobID:
+        :return: job working directory
+        :rtype: str
+        """
+        return self.jobManWorkDir + os.path.sep + jobID
         
 
 class RemoteJobManager (object):

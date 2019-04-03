@@ -146,12 +146,12 @@ class Example07(Workflow.Workflow):
                 self.mechanicalSolver.updateMetadata(passingMD)
                 self.thermalSolver.initialize(
                     file="./input.in",
-                    workdir=cfg.jobManWorkDir+os.path.sep+self.thermalSolver.getJobID(),
+                    workdir=self.thermalJobMan.getJobWorkDir(self.thermalSolver.getJobID()),
                     metaData=passingMD
                 )
                 self.mechanicalSolver.initialize(
                     file="./input.in",
-                    workdir=mCfg.jobManWorkDir+os.path.sep+self.mechanicalSolver.getJobID(),
+                    workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
                     metaData=passingMD
                 )
 

@@ -82,9 +82,12 @@ class Example08(Workflow.Workflow):
             }
         }
 
+        pf = self.thermalJobMan.getPyroFile(self.thermal.getJobID(), "inputT.in", 'wb')
+        PyroUtil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf, cfg.hkey)
+
         self.thermal.initialize(
-            file='..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in',
-            workdir='.',
+            file='inputT.in',
+            workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
             metaData=passingMD
         )
         self.mechanical.initialize(

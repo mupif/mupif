@@ -220,7 +220,7 @@ class SimpleJobManager2 (JobManager.JobManager):
             log.info('SimpleJobManager2: port to be assigned %d' % jobPort)
 
             try:
-                targetWorkDir = self.jobManWorkDir+os.path.sep+jobID
+                targetWorkDir = self.getJobWorkDir(jobID)
                 log.info('SimpleJobManager2: Checking target workdir %s', targetWorkDir)
                 if not os.path.exists(targetWorkDir):
                     os.makedirs(targetWorkDir)
@@ -358,7 +358,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         """
         See :func:`JobManager.getPyroFile`
         """
-        targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
+        targetFileName = self.getJobWorkDir(jobID)+os.path.sep+filename
         log.info('SimpleJobManager2:getPyroFile ' + targetFileName)
         pfile = PyroFile.PyroFile(targetFileName, mode, buffSize)
         self.daemon.register(pfile)
