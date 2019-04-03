@@ -11,7 +11,7 @@ log = logging.getLogger()
 
 class Example06(Workflow.Workflow):
 
-    def __init__(self, targetTime=PQ.PhysicalQuantity('0 s'), metaData={}):
+    def __init__(self, metaData={}):
         """
         Initializes the workflow.
         """
@@ -28,14 +28,14 @@ class Example06(Workflow.Workflow):
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}
             ]
         }
-        super(Example06, self).__init__(targetTime=targetTime, metaData=MD)
+        super(Example06, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
 
         self.thermalSolver = demoapp.thermal()
         self.mechanicalSolver = demoapp.mechanical()
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(Example06, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
+        super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -84,8 +84,8 @@ md = {
     }
 }
 
-demo = Example06(targetTime=PQ.PhysicalQuantity('1 s'))
-demo.initialize(metaData=md)
+demo = Example06()
+demo.initialize(targetTime=PQ.PhysicalQuantity('1 s'), metaData=md)
 
 tstep = TimeStep.TimeStep(
     PQ.PhysicalQuantity('1 s'),

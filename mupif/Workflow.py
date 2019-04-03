@@ -50,35 +50,35 @@ class Workflow(Model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}):
+    def __init__(self, metaData={}):
         """
         Constructor. Initializes the workflow
 
-        :param PhysicalQuantity targetTime: target simulation time
         :param dict metaData: Optionally pass metadata.
         """
         super(Workflow, self).__init__(metaData=metaData)
+
+        self.workflowMonitor = None  # No monitor by default
+        self.targetTime = None
+
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
+        """
+        Initializes application, i.e. all functions after constructor and before run.
+        
+        :param str file: Name of file
+        :param str workdir: Optional parameter for working directory
+        :param PhysicalQuantity targetTime: target simulation time
+        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() )
+        :param bool validateMetaData: Defines if the metadata validation will be called
+        :param named_arguments kwargs: Arbitrary further parameters
+        """
+        self.updateMetadata(metaData)
 
         # print (targetTime)
         if PQ.isPhysicalQuantity(targetTime):
             self.targetTime = targetTime
         else:
             raise TypeError('targetTime is not PhysicalQuantity')
-
-        self.workflowMonitor = None  # No monitor by default
-
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        """
-        Initializes application, i.e. all functions after constructor and before run.
-        
-        :param str file: Name of file
-        :param str workdir: Optional parameter for working directory
-        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() )
-        :param bool validateMetaData: Defines if the metadata validation will be called
-        :param named_arguments kwargs: Arbitrary further parameters
-        """
-        self.updateMetadata(metaData)
-        # define futher app metadata
         
         self.file = file
         if workdir == '':

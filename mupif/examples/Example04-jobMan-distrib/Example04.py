@@ -19,7 +19,7 @@ log.info('Timer started')
 
 class Example04(Workflow.Workflow):
    
-    def __init__(self, targetTime=PQ.PhysicalQuantity('1 s'), metaData={}):
+    def __init__(self, metaData={}):
         MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
@@ -34,7 +34,7 @@ class Example04(Workflow.Workflow):
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
 
-        super(Example04, self).__init__(targetTime=targetTime, metaData=MD)
+        super(Example04, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
         
         # locate nameserver
@@ -60,8 +60,8 @@ class Example04(Workflow.Workflow):
             appsig = self.app1.getApplicationSignature()
             log.info("Working application 1 on server " + appsig)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super().initialize(metaData=metaData)
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('1 s'), metaData={}, validateMetaData=True, **kwargs):
+        super().initialize(targetTime=targetTime, metaData=metaData)
 
         passingMD = {
             'Execution': {
@@ -111,7 +111,7 @@ class Example04(Workflow.Workflow):
 if __name__ == '__main__':
     targetTime = PQ.PhysicalQuantity('1 s')
 
-    demo = Example04(targetTime)
+    demo = Example04()
 
     executionMetadata = {
         'Execution': {
@@ -121,7 +121,7 @@ if __name__ == '__main__':
         }
     }
 
-    demo.initialize(metaData=executionMetadata)
+    demo.initialize(targetTime=targetTime, metaData=executionMetadata)
 
     demo.solve()
     kpi = demo.getProperty(PropertyID.PID_Time, targetTime)

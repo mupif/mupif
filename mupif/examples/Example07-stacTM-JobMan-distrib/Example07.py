@@ -17,7 +17,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 class Example07(Workflow.Workflow):
    
-    def __init__(self, targetTime=PQ.PhysicalQuantity('0 s'), metaData={}):
+    def __init__(self, metaData={}):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -32,7 +32,7 @@ class Example07(Workflow.Workflow):
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
-        super(Example07, self).__init__(targetTime=targetTime, metaData=MD)
+        super(Example07, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
 
         self.thermalJobMan = None
@@ -41,9 +41,9 @@ class Example07(Workflow.Workflow):
         self.mechanicalSolver = None
         self.appsTunnel = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
 
-        super(Example07, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super(Example07, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
@@ -201,7 +201,7 @@ class Example07(Workflow.Workflow):
 
     
 if __name__ == '__main__':
-    demo = Example07(targetTime=PQ.PhysicalQuantity(1., 's'))
+    demo = Example07()
     md = {
         'Execution': {
             'ID': '1',
@@ -209,6 +209,6 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(metaData=md)
+    demo.initialize(targetTime=PQ.PhysicalQuantity(1., 's'), metaData=md)
     demo.solve()
     log.info("Test OK")
