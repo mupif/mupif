@@ -119,20 +119,3 @@ def NoneOrInt(arg):
         return None
     else:
         return int(arg)
-        
-        
-        
-def flattenDict(initDict):
-    """ 
-    Flatten nested dictionary into a simple dictionary with '.' delimiter. Returns a dictionary. 
-    
-    :return: Dictionary
-    :rtype: dict
-    """
-    ret = {}
-    for key,val in initDict.items():
-        if isinstance(val, dict):
-            ret.update(flattenDict(val, key+'.'))
-        else:
-            ret[key] = val
-    return ret

@@ -1,6 +1,6 @@
 from builtins import str
-import getopt, sys
-import re
+import getopt
+import sys
 sys.path.append('../..')
 from mupif import *
 import logging
@@ -36,44 +36,45 @@ def main():
         sys.exit(2)
     
     for o, a in opts:
-        if o in ("-k"):
+        if o in ("-k",):
             hkey = a
-        elif o in ("-n"):
+        elif o in ("-n",):
             nshost = a
-        elif o in ("-r"):
+        elif o in ("-r",):
             nsport = int(a)
-        elif o in ("-d"):
+        elif o in ("-d",):
             debug = True
     
         else:
             assert False, "unhandled option"
     
-    if nshost == None or nsport == None:
+    if nshost is None or nsport is None:
         usage()
         sys.exit(2)
     
     print("hkey:"+hkey)
     print("Nameserver:"+nshost+":"+str(nsport))
     
-    #locate nameserver
+    # locate nameserver
     try:
         ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
 
-        print ("=======JOB Managers=========")
+        print("=======JOB Managers=========")
         a = ns.list(metadata_any={PyroUtil.NS_METADATA_jobmanager}, return_metadata=True)
-        for k,v in a.items():
-            print ('{:30}:{}'.format(k,v))
+        for k, v in a.items():
+            print('{:30}:{}'.format(k, v))
         
-        print ("=======Applications=========")
+        print("=======Applications=========")
         a = ns.list(metadata_any={PyroUtil.NS_METADATA_appserver, 'appserver'}, return_metadata=True)
-        for k,v in a.items():
-            print ('{:30}:{}'.format(k,v))
+        for k, v in a.items():
+            print('{:30}:{}'.format(k, v))
     
     except Exception as e:
         print("\nConnection to nameserfer failed\n")
         log.exception(e)
     else:
-        print ("\nConnection to nameserver is OK\n")
-        
+        print("\nConnection to nameserver is OK\n")
+
+
 if __name__ == '__main__':
     main()
