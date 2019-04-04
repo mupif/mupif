@@ -63,7 +63,8 @@ class Example08(Workflow.Workflow):
         except Exception as e:
             log.exception(e)
             self.terminate()
-       
+
+        # Connecting directly to mechanical instance, not using jobManager
         self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
 
         thermalSignature = self.thermal.getApplicationSignature()
