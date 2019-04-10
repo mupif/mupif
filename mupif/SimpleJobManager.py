@@ -284,7 +284,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         See :func:`JobManager.terminateJob`
         """
         self.lock.acquire()
-        # unregister the applictaion from ns
+        # unregister the application from ns
         self.ns.remove(jobID)
         # terminate the process
         if jobID in self.activeJobs:

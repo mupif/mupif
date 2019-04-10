@@ -2,7 +2,7 @@ from builtins import str
 import getopt
 import sys
 import re
-sys.path.append('..')
+sys.path.append('../..')
 from mupif import *
 import logging
 log = logging.getLogger()

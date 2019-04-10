@@ -106,11 +106,12 @@ mf = demo.getField(FieldID.FID_Displacement, tstep.getTime())
 # mf.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
 # time.sleep(1)
 m_val = mf.evaluate((4.1, 0.9, 0.0))
+print(t_val.getValue()[0], m_val.getValue()[1])
 
 demo.terminate()
 
-if ((abs(t_val.getValue()[0]-5.1996464044328956) <= 1.e-8) and
-        (abs(m_val.getValue()[1]-(-1.2033973431029044e-05)) <= 1.e-8)):
+if ((abs(t_val.getValue()[0]-4.4994119521216644) <= 1.e-8) and
+        (abs(m_val.getValue()[1]-(-4.170695218292803e-06)) <= 1.e-8)):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

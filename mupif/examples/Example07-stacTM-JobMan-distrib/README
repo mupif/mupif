@@ -1,4 +1,4 @@
-This example ilustrates stationary thermo-mechanical task. Thermal and mechanical servers can run on different computers, Example07.py steers them both.
+This example ilustrates stationary thermo-mechanical task. Thermal and mechanical servers can run on different computers, Example07.py steers them both. Both servers use jobmanagers.
 
 1. Start the server for thermal problem thermalServer.py, optionally with parameter -mX where X is 0 by default. A JobManager Mupif.JobManager@ThermalSolverDemo is started and allocates the thermal application.
 

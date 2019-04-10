@@ -172,7 +172,7 @@ class Model(MupifObject.MupifObject):
         """
         Constructor. Initializes the application.
 
-        :param dict metaData: Optionally pass metadata.
+        :param dict metaData: Optionally pass metadata for merging.
         """
         super(Model, self).__init__()
 

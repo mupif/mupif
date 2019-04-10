@@ -86,6 +86,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :type values: list of tuples representing individual values
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
+        :param dict metaData: Optionally pass metadata for merging
         """
         
         super(Field, self).__init__()
