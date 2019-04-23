@@ -224,7 +224,7 @@ class Model(MupifObject.MupifObject):
 
         if validateMetaData:
             self.validateMetadata(ModelSchema)
-            log.info('Metadata successfully validated')
+            # log.info('Metadata successfully validated')
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
         """

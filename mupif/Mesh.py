@@ -58,7 +58,7 @@ class MeshIterator(object):
         Constructor.
 
         :param Mesh mesh: Given mesh
-        :param str type: Type of mesh, e.g. VERTICES or CELLS
+        :param int type: Type of mesh, e.g. VERTICES or CELLS
         """
         if type == VERTICES or type == CELLS:
             self.type = type
@@ -137,7 +137,8 @@ class Mesh(object):
         :return: A copy of the receiver
         :rtype: Copy of the receiver, e.g. Mesh
 
-        .. Note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh duplication in every cell!
+        .. Note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh
+        duplication in every cell!
         """
     def getNumberOfVertices(self):
         """
@@ -192,7 +193,9 @@ class Mesh(object):
 
     def getCells(self):
         """
-        Return all cells as 2x numpy.array; each i-th row contains vertex indices for i-th cell. Does in 2 passes, first to determine maximum number of vertices per cell (to shape the field accordingly). For cells with less vertices than the maximum, excess ones are assigned the invalid value of -1.
+        Return all cells as 2x numpy.array; each i-th row contains vertex indices for i-th cell. Does in 2 passes,
+        first to determine maximum number of vertices per cell (to shape the field accordingly). For cells with less
+        vertices than the maximum, excess ones are assigned the invalid value of -1.
 
         :return: (cell_types,cell_vertices)
         :rtype: (numpy.array,numpy.array)
@@ -215,7 +218,8 @@ class Mesh(object):
     def internalArraysDigest(self):
         """Internal function returning hash digest of all internal data, for the purposes of identity test."""
         def numpyHash(*args):
-            'Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to find an identical mesh which was already stored.'
+            """Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to
+            find an identical mesh which was already stored."""
             import hashlib
             return ''.join([hashlib.sha1(arr.view(numpy.uint8)).hexdigest() for arr in args])
         mvc, (mct, mci) = self.getVertices(), self.getCells()
@@ -258,10 +262,15 @@ class Mesh(object):
         mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
         # construct vertices
         vertices = [Vertex(number=vi, label=None, coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
-        cells = [Cell.getClassForCellGeometryType(mct[ci])(mesh=ret, number=ci, label=None,
-            # vertices=tuple(mci[ci])
-            vertices=[vertices[i] for i in mci[ci]]
-            ) for ci in range(mct.shape[0])]
+        cells = [
+            Cell.getClassForCellGeometryType(mct[ci])(
+                mesh=ret,
+                number=ci,
+                label=None,
+                # vertices=tuple(mci[ci])
+                vertices=[vertices[i] for i in mci[ci]]
+            ) for ci in range(mct.shape[0])
+        ]
         ret.setup(vertexList=vertices, cellList=cells)
         return ret
 
@@ -269,7 +278,9 @@ class Mesh(object):
         """
         Return object as a vtk.vtkUnstructuredMesh instance.
 
-        .. note:: This method uses the compiled vtk module (which is a wrapper atop the c++ VTK library) -- in contrast to :obj:`UnstructuredMesh.getVTKRepresentation`, which uses the pyvtk module (python-only implementation of VTK i/o supporting only VTK File Format version 2).
+        .. note:: This method uses the compiled vtk module (which is a wrapper atop the c++ VTK library) -- in contrast
+        to :obj:`UnstructuredMesh.getVTKRepresentation`, which uses the pyvtk module (python-only implementation of
+        VTK i/o supporting only VTK File Format version 2).
         """
         import vtk
         # vertices
@@ -394,11 +405,22 @@ class UnstructuredMesh(Mesh):
         """
         Initializes the receicer according to given vertex and cell lists.
 
-        :param tuple vertexList: A tuple of vertices
-        :param tuple cellList: A tuple of cells
+        :param list vertexList: A tuple of vertices
+        :param list cellList: A tuple of cells
         """
-        self.vertexList = vertexList
-        self.cellList = cellList
+        if isinstance(vertexList, list):
+            self.vertexList = vertexList
+        elif isinstance(vertexList, tuple):  # temporary fix for compatibility
+            self.vertexList = list(vertexList)
+        else:
+            raise TypeError("Incompatible type of given vertexList.")
+
+        if isinstance(cellList, list):
+            self.cellList = cellList
+        elif isinstance(cellList, tuple):  # temporary fix for compatibility
+            self.cellList = list(cellList)
+        else:
+            raise TypeError("Incompatible type of given cellList.")
 
     def copy(self):
         """
@@ -417,9 +439,11 @@ class UnstructuredMesh(Mesh):
     def __getstate__(self):
         """Customized method returning dictionary for pickling.
 
-        We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on c++ fastOctant, which the other side does not necessarily support.
+        We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on
+        c++ fastOctant, which the other side does not necessarily support.
 
-        Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with ``vertexOctree`` and ``cellOctree`` set to ``None``.
+        Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with
+        ``vertexOctree`` and ``cellOctree`` set to ``None``.
         """
         # shallow copy of __dict__
         d2 = self.__dict__.copy()
@@ -458,33 +482,17 @@ class UnstructuredMesh(Mesh):
         if self.vertexOctree: 
             return self.vertexOctree
         else:
-            # loop over vertices to get bounding box first
-
-            # XXX: remove this
-            if 0:
-                init = True
-                minc = []
-                maxc = []
-                for vertex in self.vertices():
-                    if init:
-                        for i in range(len(vertex.coords)):
-                            minc[i] = maxc[i] = vertex.coords[i]
-                    else:
-                        for i in range(len(vertex.coords)):
-                            minc[i] = min(minc[i], vertex.coords[i])
-                            maxc[i] = max(maxc[i], vertex.coords[i])
-            else:
-                vvv = self.vertices()
-                c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
-                bb = BBox.BBox(c0, c0)  # ope-pointed bbox
-                for vert in vvv:
-                    bb.merge(vert.getCoordinates())  # extend it with all other cells
-                minc, maxc = bb.coords_ll, bb.coords_ur
+            vvv = self.vertices()
+            c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
+            bb = BBox.BBox(c0, c0)  # ope-pointed bbox
+            for vert in vvv:
+                bb.merge(vert.getCoordinates())  # extend it with all other cells
+            minc, maxc = bb.coords_ll, bb.coords_ur
 
             # setup vertex localizer
             size = max(y-x for x, y in zip(minc, maxc))
             mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-            self.vertexOctree = Octree.Octree(minc, size, mask) 
+            self.vertexOctree = Octree.Octree(minc, size, tuple(mask))
             if debug: 
                 t0 = time.clock()
                 print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
@@ -508,40 +516,24 @@ class UnstructuredMesh(Mesh):
         if self.cellOctree: 
             return self.cellOctree
         else:
-            # loop over cell bboxes to get bounding box first
             if debug:
                 print('Start at: ', time.clock()-t0)
 
-            # XXX: remove this
-            if 0:
-                init = True
-                minc = []
-                maxc = []
-                for cell in self.cells():
-                    # print "cell bbox:", cell.giveBBox()
-                    if init:
-                        minc = [c for c in cell.getBBox().coords_ll]
-                        maxc = [c for c in cell.getBBox().coords_ur]
-                        init = False
-                    else:
-                        for i in range(len(cell.getBBox().coords_ll)):
-                            minc[i] = min(minc[i], cell.getBBox().coords_ll[i])
-                            maxc[i] = max(maxc[i], cell.getBBox().coords_ur[i])
-            else:
-                ccc = self.cells()
-                bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
-                for cell in ccc:
-                    bb.merge(cell.getBBox())  # extend it with all other cells
-                minc, maxc = bb.coords_ll, bb.coords_ur
+            ccc = self.cells()
+            bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
+            for cell in ccc:
+                bb.merge(cell.getBBox())  # extend it with all other cells
+            minc, maxc = bb.coords_ll, bb.coords_ur
+
             if debug:
                 print('Cell bbox: ', time.clock()-t0)
 
         # setup vertex localizer
         size = max(y-x for x, y in zip(minc, maxc))
         mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-        self.cellOctree = Octree.Octree(minc, size, mask) 
+        self.cellOctree = Octree.Octree(minc, size, tuple(mask))
         if debug:
-            print('Octree ctor: ',time.clock()-t0)
+            print('Octree ctor: ', time.clock()-t0)
             print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
         for cell in self.cells():
             self.cellOctree.insert(cell)
@@ -561,7 +553,7 @@ class UnstructuredMesh(Mesh):
                     print("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",
                           self.vertexList[v].label)
             else:
-                self.vertexDict[self.vertexList[v].label]=v
+                self.vertexDict[self.vertexList[v].label] = v
 
     def __buildCellLabelMap__(self):
         """
@@ -593,11 +585,13 @@ class UnstructuredMesh(Mesh):
             self.__buildCellLabelMap__()
         return self.cellDict[label]
 
-    def merge (self, mesh):
+    def merge(self, mesh):
         """
-        Merges receiver with a given mesh. This is based on merging mesh entities (vertices, cells) based on their labels, as they refer to global IDs of each entity, that should be unique.
+        Merges receiver with a given mesh. This is based on merging mesh entities (vertices, cells) based on their
+        labels, as they refer to global IDs of each entity, that should be unique.
 
-        The procedure used here is based on creating a dictionary for every componenet from both meshes, where the key is component label so that the entities with the same ID could be easily identified.
+        The procedure used here is based on creating a dictionary for every componenet from both meshes, where the key
+        is component label so that the entities with the same ID could be easily identified.
 
         :param Mesh mesh: Source mesh for merging
         """
@@ -652,7 +646,7 @@ class UnstructuredMesh(Mesh):
         self.vertexOctree = None
         self.cellOctree = None
 
-    def getVTKRepresentation (self):
+    def getVTKRepresentation(self):
         """
         Get VTK representatnion of the mesh.
 
@@ -663,7 +657,7 @@ class UnstructuredMesh(Mesh):
 
         vertices = []
         hexahedrons = []
-        tetrahedrons= []
+        tetrahedrons = []
         quads = []
         triangles = []
 
@@ -690,14 +684,15 @@ class UnstructuredMesh(Mesh):
                 triangles.append((cell.vertices[3], cell.vertices[4], cell.vertices[5]))
             else:
                 msg = "Unsupported cell geometry type encountered: "+str(cgt)
-                raise APIError.APIError (msg) 
+                raise APIError.APIError(msg)
 
-        return pyvtk.UnstructuredGrid(vertices, hexahedron=hexahedrons, tetra=tetrahedrons, quad=quads, triangle=triangles)
-
+        return pyvtk.UnstructuredGrid(
+            vertices, hexahedron=hexahedrons, tetra=tetrahedrons, quad=quads, triangle=triangles)
 
     @staticmethod
     def makeFromVtkUnstructuredGrid(ugrid):
-        """Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are mapped between VTK and mupif (supported: vtkTriangle, vtkQuadraticTriangle, vtkQuad, vtkTetra, vtkHexahedron).
+        """Create a new instance of :obj:`UnstructuredMesh` based on VTK's unstructured grid object. Cell types are
+        mapped between VTK and mupif (supported: vtkTriangle, vtkQuadraticTriangle, vtkQuad, vtkTetra, vtkHexahedron).
 
         :param ugrid: instance of vtk.vtkUnstructuredGrid
         :return: new instance of :obj:`UnstructuredMesh`
@@ -726,23 +721,26 @@ class UnstructuredMesh(Mesh):
             }
             # find mupif class of the cell
             # if the lookup fails, KeyError propagates to the caller, which is what we want
-            cgt=cellGeomTypeMap[c.GetCellType()]
+            cgt = cellGeomTypeMap[c.GetCellType()]
             # create new cell and append to mupifCells
-            mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]))
+            mupifCells.append(
+                Cell.Cell.getClassForCellGeometryType(cgt)(
+                    mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
+                )
+            )
         ret.setup(vertexList=mupifVertices, cellList=mupifCells)
         return ret
 
     @staticmethod
     def makeFromPyvtkUnstructuredGrid(ugr):
-        """Create a new instance of :obj:`UnstructuredMesh` based on pyvtk.UnstructuredGrid object. Cell types are mapped between pyvtk and mupif (supported: triangle, tetra, quad, hexahedron).
+        """Create a new instance of :obj:`UnstructuredMesh` based on pyvtk.UnstructuredGrid object. Cell types are
+        mapped between pyvtk and mupif (supported: triangle, tetra, quad, hexahedron).
 
         :param ugr: instance of pyvtk.UnstructuredGrid
         :return: new instance of :obj:`UnstructuredMesh`
         """
-        import pyvtk
         from . import Cell, Vertex
         ret = UnstructuredMesh()
-        vertices = []
         cells = []
         vertices = [Vertex.Vertex(number=ip, label=ip, coords=ugr.points[ip]) for ip in range(len(ugr.points))]
         for cellName in ['vertex', 'poly_vertex', 'line', 'poly_line', 'triangle', 'triangle_strip', 'polygon', 'pixel',
@@ -763,13 +761,13 @@ class UnstructuredMesh(Mesh):
                 cgt = cellGeomNameMap[cellName]
             except KeyError:
                 raise NotImplementedError("pyvtk cell type '%s' is not handled by the mupif import routine." % cellName)
-            cells.append([Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=len(cells), label=None, vertices=[vertices[i] for iv in val[i]]) for i in range(len(val))])
+            cells.append([
+                Cell.Cell.getClassForCellGeometryType(cgt)(
+                    mesh=ret,
+                    number=len(cells),
+                    label=None,
+                    vertices=[vertices[i] for iv in val[i]]
+                ) for i in range(len(val))
+            ])
         ret.setup(vertexList=vertices, cellList=cells)
         return ret
-
-            
-            
-
-
-
-

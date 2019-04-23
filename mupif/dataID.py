@@ -15,7 +15,7 @@ DataSchema = {
         'ID': {'type': ['string', 'integer']},  # Unique ID
         'Description': {'type': 'string'},  # Further description
         'Units': {'type': 'string'},  # Automatically generated from MuPIF, e.g. 'kg'
-        'ValueType': {'type': 'string'}, # Automatically generated
+        'ValueType': {'type': 'string'},  # Automatically generated
         'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
         'Execution_Task_ID': {'type': 'string'},  # If Simulated, give reference to Task_ID
         'Execution_Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
@@ -117,18 +117,18 @@ class PropertyID(IntEnum):
     PID_ShearOutOfPlaneStiffness = 52
     PID_LocalBendingStiffness = 53
     # Digimat Properties
-    PID_MatrixYoung                 = 8000
-    PID_MatrixPoisson               = 8001
-    PID_InclusionYoung              = 8002
-    PID_InclusionPoisson            = 8003
-    PID_InclusionVolumeFraction     = 8004
-    PID_InclusionAspectRatio        = 8005
-    PID_CompositeAxialYoung         = 9000
-    PID_CompositeInPlaneYoung       = 9001
-    PID_CompositeInPlaneShear       = 9002
-    PID_CompositeTransverseShear    = 9003
-    PID_CompositeInPlanePoisson     = 9004
-    PID_CompositeTransversePoisson  = 9005
+    PID_MatrixYoung = 8000
+    PID_MatrixPoisson = 8001
+    PID_InclusionYoung = 8002
+    PID_InclusionPoisson = 8003
+    PID_InclusionVolumeFraction = 8004
+    PID_InclusionAspectRatio = 8005
+    PID_CompositeAxialYoung = 9000
+    PID_CompositeInPlaneYoung = 9001
+    PID_CompositeInPlaneShear = 9002
+    PID_CompositeTransverseShear = 9003
+    PID_CompositeInPlanePoisson = 9004
+    PID_CompositeTransversePoisson = 9005
     # CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
     PID_Direction = 1001
@@ -260,7 +260,7 @@ class PropertyID(IntEnum):
     PID_KPI01 = 9996
 
     # ESI VPS properties
-    PID_ESI_VPS_TEND      = 90001
+    PID_ESI_VPS_TEND = 90001
     PID_ESI_VPS_PLY1_E0t1 = 90002
     PID_ESI_VPS_PLY1_E0t2 = 90003
     PID_ESI_VPS_PLY1_E0t3 = 90004
@@ -271,13 +271,13 @@ class PropertyID(IntEnum):
     PID_ESI_VPS_PLY1_NU23 = 90009
     PID_ESI_VPS_PLY1_NU13 = 90010
     PID_ESI_VPS_PLY1_E0c1 = 90011
-    PID_ESI_VPS_PLY1_RHO  = 90012
-    PID_ESI_VPS_hPLY      = 90013
-    PID_ESI_VPS_PLY1_XT   = 90014
-    PID_ESI_VPS_PLY1_XC   = 90015
-    PID_ESI_VPS_PLY1_YT   = 90016
-    PID_ESI_VPS_PLY1_YC   = 90017
-    PID_ESI_VPS_PLY1_S12  = 90018
+    PID_ESI_VPS_PLY1_RHO = 90012
+    PID_ESI_VPS_hPLY = 90013
+    PID_ESI_VPS_PLY1_XT = 90014
+    PID_ESI_VPS_PLY1_XC = 90015
+    PID_ESI_VPS_PLY1_YT = 90016
+    PID_ESI_VPS_PLY1_YC = 90017
+    PID_ESI_VPS_PLY1_S12 = 90018
 
     PID_ESI_VPS_FIRST_FAILURE_VAL = 91000
     PID_ESI_VPS_FIRST_FAILURE_MOM = 91001
@@ -299,16 +299,16 @@ class PropertyID(IntEnum):
 
     # University of Trieste properties
     PID_SMILE_MOLECULAR_STRUCTURE = 92000
-    PID_MOLECULAR_WEIGHT          = 92001
-    PID_POLYDISPERSITY_INDEX      = 92002
-    PID_CROSSLINKER_TYPE          = 92003
-    PID_FILLER_DESIGNATION        = 92004
+    PID_MOLECULAR_WEIGHT = 92001
+    PID_POLYDISPERSITY_INDEX = 92002
+    PID_CROSSLINKER_TYPE = 92003
+    PID_FILLER_DESIGNATION = 92004
     PID_SMILE_MODIFIER_MOLECULAR_STRUCTURE = 92005
-    PID_SMILE_FILLER_MOLECULAR_STRUCTURE   = 92006
-    PID_CROSSLINKONG_DENSITY      = 92007
-    PID_FILLER_CONCENTRATION      = 92008
-    PID_DENSITY_OF_FUNCTIONALIZATION       = 92009
-    PID_TEMPERATURE               = 92010
-    PID_PRESSURE                  = 92011
-    PID_DENSITY                   = 92100
-    PID_TRANSITION_TEMPERATURE    = 92101
+    PID_SMILE_FILLER_MOLECULAR_STRUCTURE = 92006
+    PID_CROSSLINKONG_DENSITY = 92007
+    PID_FILLER_CONCENTRATION = 92008
+    PID_DENSITY_OF_FUNCTIONALIZATION = 92009
+    PID_TEMPERATURE = 92010
+    PID_PRESSURE = 92011
+    PID_DENSITY = 92100
+    PID_TRANSITION_TEMPERATURE = 92101
