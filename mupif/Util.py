@@ -21,7 +21,6 @@
 # Boston, MA  02110-1301  USA
 #
 import logging
-import os
 import argparse
 
 debug = False
@@ -36,8 +35,8 @@ def setupLogger(fileName, level=logging.DEBUG):
     :param object level: logging level. Allowed values are CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
     :rtype: logger instance
     """
-    l = logging.getLogger()
-    # l = logging.getLogger(loggerName)
+    lg = logging.getLogger()
+    # lg = logging.getLogger(loggerName)
     formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
     formatTime = '%Y-%m-%d %H:%M:%S'
     formatter = logging.Formatter(formatLog, formatTime)
@@ -46,11 +45,11 @@ def setupLogger(fileName, level=logging.DEBUG):
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(formatter)
 
-    l.setLevel(level)
-    l.addHandler(fileHandler)
-    l.addHandler(streamHandler)
+    lg.setLevel(level)
+    lg.addHandler(fileHandler)
+    lg.addHandler(streamHandler)
     
-    return l
+    return lg
 
 
 def changeRootLogger(newLoggerName):
@@ -76,7 +75,6 @@ def quadratic_real(a, b, c):
     :rtype: tuple
     """ 
     import math
-    import cmath
     if math.fabs(a) <= 1.e-10:
         if math.fabs(b) <= 1.e-10:
             return ()
@@ -88,7 +86,7 @@ def quadratic_real(a, b, c):
         r = t**2 - b 
         if r >= 0:  # real roots
             y1 = math.sqrt(r) 
-        else: # complex roots 
+        else:  # complex roots
             return ()
         y2 = -y1 
         return (y1 - t, y2 - t)
@@ -103,7 +101,8 @@ def getParentParser():
     :rtype: argparse object
     """
     parentParser = argparse.ArgumentParser(add_help=False)
-    parentParser.add_argument('-m', required=False, type=int, default=0, dest="mode", help='Network mode 0-local (default), 1-ssh, 2-VPN')
+    parentParser.add_argument('-m', required=False, type=int, default=0, dest="mode",
+                              help='Network mode 0-local (default), 1-ssh, 2-VPN')
     return parentParser
 
 

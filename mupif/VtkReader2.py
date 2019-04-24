@@ -8,6 +8,10 @@ from . import Field
 from . import FieldID
 from . import ValueType
 
+from pyvtk.Scalars import Scalars
+from pyvtk.PolyData import PolyData
+from pyvtk import common
+
 # debug flag
 debug = 0
 
@@ -104,6 +108,7 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
             numScalars = numScalars+1
     print("numScalars : ",  numScalars)
 
+    indice = None
     count = 0
     for i in range(0, numScalars):
         Name = Data.point_data.data[i].name
@@ -145,10 +150,6 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
 # # split(' ') vs. split() based on some switch like pyvtk.permissive=True.
 # #
 # #
-
-from pyvtk.Scalars import Scalars
-from pyvtk.PolyData import PolyData
-from pyvtk import common
 
 
 def patched_scalars_fromfile(f, n, sl):
