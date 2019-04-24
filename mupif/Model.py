@@ -78,13 +78,17 @@ ModelSchema = {
         },
         'Solver': {
             'properties': {
-                'Software': {'type': 'string'},  # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                'Software': {'type': 'string'},
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
-                'Type': {'type': 'string'},  # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Solver_additional_params': {'type': 'string'},  # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs)
+                # Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+                'Type': {'type': 'string'},
+                # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                'Solver_additional_params': {'type': 'string'},
                 'Documentation': {'type': 'string'},  # Where published/documented
                 'Estim_time_step_s': {'type': 'number'},  # Seconds
                 'Estim_comp_time_s': {'type': 'number'},  # Seconds
@@ -105,8 +109,10 @@ ModelSchema = {
         'Execution': {
             'properties': {
                 'ID': {'type': ['string', 'integer']},  # Optional application execution ID (typically set by workflow)
-                'Use_case_ID': {'type': ['string', 'integer']},  # user case ID (e.g. thermo-mechanical simulation coded as 1_1)
-                'Task_ID': {'type': 'string'},  # user task ID (e.g. variant of user case ID such as model with higher accuracy)
+                # Use_case_ID: user case ID (e.g. thermo-mechanical simulation coded as 1_1)
+                'Use_case_ID': {'type': ['string', 'integer']},
+                # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
+                'Task_ID': {'type': 'string'},
                 'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
                 'Progress': {'type': 'number'},  # Progress in %
                 'Date_time_start': {'type': 'string'},  # automatically set in Workflow
@@ -123,7 +129,7 @@ ModelSchema = {
                 'properties': {
                     'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. PID_Concentration
-                    'ID_info': {'type': 'array'},  # optional parameter for additional info
+                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
@@ -139,7 +145,7 @@ ModelSchema = {
                 'properties': {
                     'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. mupif.FieldID.FID_Temperature
-                    'ID_info': {'type': 'array'},  # optional parameter for additional info
+                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
@@ -356,7 +362,7 @@ class Model(MupifObject.MupifObject):
         :param Function.Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
-    def getMesh (self, tstep):
+    def getMesh(self, tstep):
         """
         Returns the computational mesh for given solution step.
 
@@ -464,7 +470,7 @@ class Model(MupifObject.MupifObject):
                 self.setMetadata('Status', 'Failed')
                 raise
 
-    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Shutdowns daemons if created internally.
@@ -483,7 +489,7 @@ class Model(MupifObject.MupifObject):
             # log.info(self.pyroDaemon)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
-            self.pyroDaemon=None
+            self.pyroDaemon = None
         else:
             log.info("Terminating model") 
 
@@ -510,12 +516,15 @@ class Model(MupifObject.MupifObject):
 class RemoteModel (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
-    However, when application is allocated using JobManager or ssh tunnel, the proper termination of the tunnel or job manager task is required.
+    However, when application is allocated using JobManager or ssh tunnel, the proper termination of the tunnel or
+    job manager task is required.
     
-    This class is a decorator around pyro proxy object represeting application storing the reference to job manager and related jobID or/and ssh tunnel.
+    This class is a decorator around pyro proxy object represeting application storing the reference to job manager and
+    related jobID or/and ssh tunnel.
 
-    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy) and the termination of job and tunnel has to be done from local computer, which has the neccesary communication link established 
-    (ssh tunnel in particular, when port translation takes place)
+    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy)
+    and the termination of job and tunnel has to be done from local computer, which has the neccesary
+    communication link established (ssh tunnel in particular, when port translation takes place)
     """
     def __init__(self, decoratee, jobMan=None, jobID=None, appTunnel=None):
         self._decoratee = decoratee
@@ -532,7 +541,7 @@ class RemoteModel (object):
     def getJobID(self):
         return self._jobID
     
-    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Terminates the allocated job at jobManager
@@ -543,7 +552,8 @@ class RemoteModel (object):
         
         if self._jobMan and self._jobID:
             try:
-                log.info("RemoteApplication: Terminating jobManager job %s on %s" % (str(self._jobID), self._jobMan.getNSName()))
+                log.info("RemoteApplication: Terminating jobManager job %s on %s" % (
+                    str(self._jobID), self._jobMan.getNSName()))
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID = None
             except Exception as e:
