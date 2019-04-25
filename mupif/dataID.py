@@ -148,6 +148,7 @@ class PropertyID(IntEnum):
     PID_Bond_label = 1015
     PID_Bond_type = 1016
     # PID_Velocity = 1017 Duplicate
+    PID_Dimension = 1017
     PID_Acceleration = 1018
     PID_Radius = 1019
     PID_Size = 1020
@@ -312,3 +313,10 @@ class PropertyID(IntEnum):
     PID_PRESSURE = 92011
     PID_DENSITY = 92100
     PID_TRANSITION_TEMPERATURE = 92101
+
+    # Demo properties
+    PID_dirichletBC = 97000
+    PID_conventionExternalTemperature = 97001
+    PID_conventionCoefficient = 97002
+
+
