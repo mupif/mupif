@@ -45,11 +45,11 @@ type_ids.extend(prefix+s for s in list(map(str, FieldID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
-    'type': 'object',
+    'type': 'object', # Object supplies a dictionary
     'properties': {
         # Name: e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
-        'Name': {'type': 'string'},
-        'ID': {'type': ['string', 'integer']},
+        'Name': {'type': 'string'}, # Name of the model (or workflow), e.g. 'stationary thermal model', 'steel buckling workflow'
+        'ID': {'type': ['string', 'integer']}, # Unique ID of model (workflow), e.g. 'Lammps', 'CalculiX', 'MFEM', 'Buckling workflow 1'
         'Description': {'type': 'string'},
         'Material': {'type': 'string'},  # What material is simulated
         'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions
