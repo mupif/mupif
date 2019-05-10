@@ -87,9 +87,9 @@ class ParticleSet (MupifObject.MupifObject):
         @param kwargs: optional keyword arguments to define additional particle attributes, values should be arrays with attribute values for each particle
         """
         self.size = size
-        self.xc = xcoords
-        self.yc = ycoords
-        self.zc = zcoords
+        self.xc = list(xcoords)
+        self.yc = list(ycoords)
+        self.zc = list(zcoords)
         assert ((len(self.xc) == self.size) and (len(self.yc) == self.size) and (len(self.zc) == self.size)), "Size mismatch in ParticleSet.__init__"
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -99,7 +99,10 @@ class ParticleSet (MupifObject.MupifObject):
         """
         Returns representation of i-th particle in the set
         """
-        return Particle(self, i)
+        if i < self.size:
+            return Particle(self, i)
+        else:
+            raise IndexError("Particle index out of range")
 
     def getParticlePositions(self):
         """
