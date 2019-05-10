@@ -19,7 +19,7 @@ class Example06(Workflow.Workflow):
             'Name': 'Thermo-mechanical stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            'Model_refs_ID': [{'Name': 'NonStatThermo-1', 'ID':'ss', 'Version_date': 'dd'}, {'Name':'Mechanical-1', 'ID':'ss', 'Version_date': 'dd'}],
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field',

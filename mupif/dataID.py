@@ -17,12 +17,18 @@ DataSchema = {
         'Units': {'type': 'string'},  # Automatically generated from MuPIF, e.g. 'kg'
         'ValueType': {'type': 'string'},  # Automatically generated
         'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
-        'Execution_Task_ID': {'type': 'string'},  # If Simulated, give reference to Task_ID
-        'Execution_Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
         'Experimental_details': {'type': 'string'},
         'Experimental_record': {'type': 'string'},  # If applies, link to corresponding experimental record
         'Estimated_std': {'type': 'number'},  # Percent of standard deviation
-        },
+        'Execution': {
+            'properties': {
+                'ID': {'type': ['string', 'integer']},  # Optional execution ID
+                'Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
+                'Task_ID': {'type': 'string'}  # If Simulated, give reference to Task_ID
+            },
+            'required': []
+        }
+    },
     'required': [
         'Type', 'Type_ID', 'Units', 'ValueType'
     ]

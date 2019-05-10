@@ -35,8 +35,23 @@ log = logging.getLogger()
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema['properties']['Solver']
 del WorkflowSchema['properties']['Physics']
-WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models
+#WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models (workflows). This is just not enough to keep track of difference model's versions. Therefore, Model_refs_ID must contain a triplet Name, ID, Version_date to know what models (solvers) were exactly used.
+WorkflowSchema['properties'].update({
+    'Model_refs_ID': {
+        'type': 'array', # List of contained models/workflows
+        #'items': {
+            #'type': 'object',  # Object supplies a dictionary
+            #'properties': {
+                #'Name': {'type': 'string'},
+                #'ID': {'type': ['string', 'integer']},
+                #'Version_date': {'type': 'string'},
+            #},
+            ##'required': ['Name', 'ID', 'Version_date']
+        #}
+    }
+})
 WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
+
 
 
 @Pyro4.expose
