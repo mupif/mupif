@@ -5,6 +5,7 @@ from mupif import Particle
 class ParticleSet_TestCase(unittest.TestCase):
     def setUp(self):
         self.ps = Particle.ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), id=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta"))
+        self.ps1 = Particle.ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), id=(10,11,12,13,14), rvesize = 4, inclusionsize=0.5, colour=("red", "green", "gray", "black", "magenta"))
 
     def tearDown(self):
         self.ps=None
@@ -24,6 +25,12 @@ class ParticleSet_TestCase(unittest.TestCase):
         self.assertEqual(self.ps.getParticleAttribute('id'), (10,11,12,13,14), "getParticleAttribute failed")
         self.assertEqual(self.ps.getParticleAttribute('colour'), ("red", "green", "gray", "black", "magenta"), "getParticleAttribute failed")
         self.assertRaises(KeyError, self.ps.getParticleAttribute, 'hue')
+    def test_getRveSize(self):
+        self.assertEqual(self.ps.getRveSize(), 0, "getRVESize failed")
+        self.assertEqual(self.ps1.getRveSize(), 4, "getRVESize failed")
+    def test_getInclusionSize(self):
+        self.assertEqual(self.ps.getInclusionSize(), 0, "getInclusionSize failed")
+        self.assertEqual(self.ps1.getInclusionSize(), 0.5, "getInclusionSize failed")
     
 class Particle_TestCase(unittest.TestCase):
     def setUp(self):
