@@ -28,6 +28,7 @@ from . import MupifObject
 from .dataID import PropertyID
 from .dataID import FieldID
 from .dataID import FunctionID
+from .dataID import ParticleSetID
 from . import Property
 from . import Field
 from . import Function
@@ -42,6 +43,7 @@ prefix = "mupif."
 type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, PropertyID)))
 type_ids.extend(prefix+s for s in list(map(str, FieldID)))
+type_ids.extend(prefix+s for s in list(map(str, ParticleSetID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
@@ -127,7 +129,7 @@ ModelSchema = {
             'items': {
                 'type': 'object',  # Object supplies a dictionary
                 'properties': {
-                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
+                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field', 'mupif.ParticleSet']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. PID_Concentration
                     'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
@@ -143,7 +145,7 @@ ModelSchema = {
             'items': {
                 'type': 'object',
                 'properties': {
-                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
+                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field', 'mupif.ParticleSet']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. mupif.FieldID.FID_Temperature
                     'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},

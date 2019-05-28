@@ -30,6 +30,7 @@ __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 from .dataID import FieldID
 from .dataID import PropertyID
 from .dataID import FunctionID
+from .dataID import ParticleSetID
 from .valueType import ValueType
 
 from . import APIError
@@ -68,8 +69,7 @@ from . import Physics
 __all__ = ['APIError', 'Model', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'dataID', 'EnsightReader2', 'FieldID', 'Field',
            'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
-           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics']
-
+           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics', 'Particle', 'ParticleSetID']
 from . import Util
 import logging
 import os

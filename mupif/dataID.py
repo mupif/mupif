@@ -55,6 +55,12 @@ class FieldID(IntEnum):
     FID_ESI_VPS_Displacement = 10001
 
 
+class ParticleSetID(IntEnum):
+    """
+    This class represents supported values of ParticleSetID, an unique ID identifier for ParticleSet type.
+    """
+    PSID_ParticlePositions = 1
+
 class FunctionID(IntEnum):
     """
     This classenumeration represent the supported values of FunctionID, e.g. FuncID_ProbabilityDistribution

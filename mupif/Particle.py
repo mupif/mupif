@@ -77,7 +77,7 @@ class ParticleSet (MupifObject.MupifObject):
     Class representing a collection of Particles. The set stores particle data (positions) and attributes efficiently in the form of vectors.
     ParticleSet keeps position vector for each particle and optional attributes (user defined) identified by key for each particle.
     """
-    def __init__(self, size, xcoords, ycoords, zcoords, rvesize=0, inclusionsize=0, **kwargs):
+    def __init__(self, id, size, xcoords, ycoords, zcoords, rvesize=0, inclusionsize=0, **kwargs):
         """
         Constructor.
         @param int size: number of particles in the set
@@ -86,6 +86,7 @@ class ParticleSet (MupifObject.MupifObject):
         @param list zcoords: array of particle x coordinates
         @param kwargs: optional keyword arguments to define additional particle attributes, if type of values should be arrays with attribute values for each particle
         """
+        self.id = id
         self.size = size
         self.xc = list(xcoords)
         self.yc = list(ycoords)
@@ -105,6 +106,9 @@ class ParticleSet (MupifObject.MupifObject):
             return Particle(self, i)
         else:
             raise IndexError("Particle index out of range")
+
+    def getID (self):
+        return self.id
 
     def getParticlePositions(self):
         """
