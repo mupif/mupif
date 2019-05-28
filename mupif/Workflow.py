@@ -35,23 +35,23 @@ log = logging.getLogger()
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema['properties']['Solver']
 del WorkflowSchema['properties']['Physics']
-#WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models (workflows). This is just not enough to keep track of difference model's versions. Therefore, Model_refs_ID must contain a triplet Name, ID, Version_date to know what models (solvers) were exactly used.
 WorkflowSchema['properties'].update({
-    'Model_refs_ID': {
-        'type': 'array', # List of contained models/workflows
-        #'items': {
-            #'type': 'object',  # Object supplies a dictionary
-            #'properties': {
-                #'Name': {'type': 'string'},
-                #'ID': {'type': ['string', 'integer']},
-                #'Version_date': {'type': 'string'},
-            #},
-            ##'required': ['Name', 'ID', 'Version_date']
-        #}
+    'Model_refs_ID': {  # This i automatically generated according to self._models List.
+        'type': 'array',  # List of contained models/workflows
+        'items': {
+            'type': 'object',  # Object supplies a dictionary
+            'properties': {
+                'Name': {'type': 'string'},
+                'ID': {'type': ['string', 'integer']},
+                'Version_date': {'type': 'string'},
+                'Type': {'type': 'string', 'enum': ['Model', 'Workflow']},
+                'Model_refs_ID': {'type': 'array'}  # Object supplies a dictionary
+            },
+            'required': ['Name', 'ID', 'Version_date', 'Type']
+        }
     }
 })
 WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
-
 
 
 @Pyro4.expose
@@ -75,6 +75,7 @@ class Workflow(Model.Model):
 
         self.workflowMonitor = None  # No monitor by default
         self.targetTime = None
+        self._models = []  # type: list[Model.Model, Workflow]
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         """
@@ -87,6 +88,7 @@ class Workflow(Model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
+        self.generateMetadataModelRefsID()
         self.updateMetadata(metaData)
 
         # print (targetTime)
@@ -128,7 +130,7 @@ class Workflow(Model.Model):
             timeStepNumber = timeStepNumber+1
             istep = TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
         
-            log.debug("Step %g: t=%g dt=%g"%(timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
+            log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 
             # Estimate progress
             self.setMetadata('Progress', 100*time.inUnitsOf('s').getValue()/self.targetTime.inUnitsOf('s').getValue())
@@ -186,3 +188,34 @@ class Workflow(Model.Model):
             except Exception as e:
                 log.exception("Connection to workflow monitor broken")
                 raise e
+
+    def addModelToListOfModels(self, model):
+        self._models.append(model)
+
+    def getListOfModels(self):
+        return self._models[:]
+
+    def generateMetadataModelRefsID(self):
+        model_refs_id = []
+        for model in self.getListOfModels():
+            # Temporary fix due to compatibility
+            if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
+                if model.hasMetadata('Solver.Version_date'):
+                    model.setMetadata('Version_date', model.getMetadata('Solver.Version_date'))
+
+            md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
+            md_id = model.getMetadata('ID') if model.hasMetadata('ID') else ''
+            md_ver = model.getMetadata('Version_date') if model.hasMetadata('Version_date') else ''
+            md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
+
+            m_r_id = {
+                'Name': md_name,
+                'ID': md_id,
+                'Version_date': md_ver,
+                'Type': 'Workflow' if isinstance(model, Workflow) else 'Model'
+            }
+            if isinstance(model, Workflow):
+                m_r_id.update({'Model_refs_ID': model.getMetadata('Model_refs_ID')})
+            model_refs_id.append(m_r_id)
+
+        self.setMetadata('Model_refs_ID', model_refs_id)

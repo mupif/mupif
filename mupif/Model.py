@@ -45,12 +45,14 @@ type_ids.extend(prefix+s for s in list(map(str, FieldID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
-    'type': 'object', # Object supplies a dictionary
+    'type': 'object',  # Object supplies a dictionary
     'properties': {
         # Name: e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
         'Name': {'type': 'string'}, # Name of the model (or workflow), e.g. 'stationary thermal model', 'steel buckling workflow'
-        'ID': {'type': ['string', 'integer']}, # Unique ID of model (workflow), e.g. 'Lammps', 'CalculiX', 'MFEM', 'Buckling workflow 1'
+        # ID: Unique ID of model (workflow), e.g. 'Lammps', 'CalculiX', 'MFEM', 'Buckling workflow 1'
+        'ID': {'type': ['string', 'integer']},
         'Description': {'type': 'string'},
+        'Version_date': {'type': 'string'},
         'Material': {'type': 'string'},  # What material is simulated
         'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions
         'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
@@ -129,7 +131,7 @@ ModelSchema = {
                 'properties': {
                     'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. PID_Concentration
-                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info
+                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info, int or str
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
@@ -145,7 +147,7 @@ ModelSchema = {
                 'properties': {
                     'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. mupif.FieldID.FID_Temperature
-                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info
+                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info, int or str
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
@@ -155,7 +157,7 @@ ModelSchema = {
         }
     },
     'required': [
-        'Name', 'ID', 'Description', 'Physics', 'Solver', 'Execution', 'Inputs', 'Outputs'  
+        'Name', 'ID', 'Description', 'Physics', 'Solver', 'Execution', 'Inputs', 'Outputs'  # , 'Version_date'
     ]
 }
 

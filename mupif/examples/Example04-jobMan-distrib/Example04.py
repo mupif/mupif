@@ -60,6 +60,8 @@ class Example04(Workflow.Workflow):
             appsig = self.app1.getApplicationSignature()
             log.info("Working application 1 on server " + appsig)
 
+        self.addModelToListOfModels(self.app1)
+
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('1 s'), metaData={}, validateMetaData=True, **kwargs):
         super().initialize(targetTime=targetTime, metaData=metaData)
 
