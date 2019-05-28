@@ -63,7 +63,7 @@ from . import MupifObject
 from . import Workflow
 from . import MetadataKeys
 from . import Physics
-
+from . import Particle
 
 # List all submodules, so they can all be imported: from mupif import *
 __all__ = ['APIError', 'Model', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'dataID', 'EnsightReader2', 'FieldID', 'Field',
