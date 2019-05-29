@@ -33,25 +33,25 @@ import mupif.Physics.PhysicalQuantities as PQ
 log = logging.getLogger()
 
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
-del WorkflowSchema['properties']['Solver']
-del WorkflowSchema['properties']['Physics']
-WorkflowSchema['properties'].update({
-    'Model_refs_ID': {  # This i automatically generated according to self._models List.
-        'type': 'array',  # List of contained models/workflows
-        'items': {
-            'type': 'object',  # Object supplies a dictionary
-            'properties': {
-                'Name': {'type': 'string'},
-                'ID': {'type': ['string', 'integer']},
-                'Version_date': {'type': 'string'},
-                'Type': {'type': 'string', 'enum': ['Model', 'Workflow']},
-                'Model_refs_ID': {'type': 'array'}  # Object supplies a dictionary
+del WorkflowSchema["properties"]["Solver"]
+del WorkflowSchema["properties"]["Physics"]
+WorkflowSchema["properties"].update({
+    "Model_refs_ID": {  # This i automatically generated according to self._models List.
+        "type": "array",  # List of contained models/workflows
+        "items": {
+            "type": "object",  # Object supplies a dictionary
+            "properties": {
+                "Name": {"type": "string"},
+                "ID": {"type": ["string", "integer"]},
+                "Version_date": {"type": "string"},
+                "Type": {"type": "string", "enum": ["Model", "Workflow"]},
+                "Model_refs_ID": {"type": "array"}  # Object supplies a dictionary
             },
-            'required': ['Name', 'ID', 'Version_date', 'Type']
+            "required": ["Name", "ID", "Version_date", "Type"]
         }
     }
 })
-WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
+WorkflowSchema["required"] = ["Name", "ID", "Description", "Model_refs_ID", "Execution", "Inputs", "Outputs"]
 
 
 @Pyro4.expose

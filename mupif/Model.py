@@ -45,119 +45,119 @@ type_ids.extend(prefix+s for s in list(map(str, FieldID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
-    'type': 'object',  # Object supplies a dictionary
-    'properties': {
+    "type": "object",  # Object supplies a dictionary
+    "properties": {
         # Name: e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
-        'Name': {'type': 'string'}, # Name of the model (or workflow), e.g. 'stationary thermal model', 'steel buckling workflow'
-        # ID: Unique ID of model (workflow), e.g. 'Lammps', 'CalculiX', 'MFEM', 'Buckling workflow 1'
-        'ID': {'type': ['string', 'integer']},
-        'Description': {'type': 'string'},
-        'Version_date': {'type': 'string'},
-        'Material': {'type': 'string'},  # What material is simulated
-        'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions
-        'Geometry': {'type': 'string'},  # e.g. nanometers, 3D periodic box
-        'Physics': {  # Corresponds to MODA Generic Physics
-            'type': 'object',
-            'properties': {
+        "Name": {"type": "string"}, # Name of the model (or workflow), e.g. "stationary thermal model", "steel buckling workflow"
+        # ID: Unique ID of model (workflow), e.g. "Lammps", "CalculiX", "MFEM", "Buckling workflow 1"
+        "ID": {"type": ["string", "integer"]},
+        "Description": {"type": "string"},
+        "Version_date": {"type": "string"},
+        "Material": {"type": "string"},  # What material is simulated
+        "Manuf_process": {"type": "string"},  # Manufacturing process or in-service conditions
+        "Geometry": {"type": "string"},  # e.g. nanometers, 3D periodic box
+        "Physics": {  # Corresponds to MODA Generic Physics
+            "type": "object",
+            "properties": {
                 # Type: MODA model type
-                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum', 'Other']},
-                'Entity': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']},
+                "Type": {"type": "string", "enum": ["Electronic", "Atomistic", "Molecular", "Continuum", "Other"]},
+                "Entity": {"type": "string", "enum": ["Atom", "Electron", "Grains", "Finite volume", "Other"]},
                 # Entity_description: E.g. Atoms are treated as spherical entities in space with the radius and mass
                 # determined by the element type
-                'Entity_description': {'type': 'string'},
-                # Equation: List of equations' description such as Equation of motion, heat balance, mass conservation.
+                "Entity_description": {"type": "string"},
+                # Equation: List of equations" description such as Equation of motion, heat balance, mass conservation.
                 # MODA PHYSICS EQUATIONS
-                'Equation': {'type': 'array'},
+                "Equation": {"type": "array"},
                 # Equation_quantities: e.g. Force, mass, potential, energy, stress, heat, temperature.
-                'Equation_quantities': {'type': 'array'},
+                "Equation_quantities": {"type": "array"},
                 # Relation_description: Describes equilibrium of forces on an infinitesimal element, etc.
-                'Relation_description': {'type': 'array'},
+                "Relation_description": {"type": "array"},
                 # Relation_formulation: Constitutive equation (material relation), e.g. force field, stress-strain,
                 # flow-gradient. MODA MATERIAL RELATIONS
-                'Relation_formulation': {'type': 'array'},
+                "Relation_formulation": {"type": "array"}
             },
-            'required': ['Type', 'Entity']
+            "required": ["Type", "Entity"]
         },
-        'Solver': {
-            'properties': {
+        "Solver": {
+            "properties": {
                 # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
-                'Software': {'type': 'string'},
-                'Language': {'type': 'string'},
-                'License': {'type': 'string'},
-                'Creator': {'type': 'string'},
-                'Version_date': {'type': 'string'},
+                "Software": {"type": "string"},
+                "Language": {"type": "string"},
+                "License": {"type": "string"},
+                "Creator": {"type": "string"},
+                "Version_date": {"type": "string"},
                 # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs)
                 # Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Type': {'type': 'string'},
+                "Type": {"type": "string"},
                 # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
-                'Solver_additional_params': {'type': 'string'},
-                'Documentation': {'type': 'string'},  # Where published/documented
-                'Estim_time_step_s': {'type': 'number'},  # Seconds
-                'Estim_comp_time_s': {'type': 'number'},  # Seconds
-                'Estim_execution_cost_EUR': {'type': 'number'},  # EUR
-                'Estim_personnel_cost_EUR': {'type': 'number'},  # EUR
-                'Required_expertise': {'type': 'string', 'enum': ['None', 'User', 'Expert']},
-                'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
-                'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
-                'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
-                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
+                "Solver_additional_params": {"type": "string"},
+                "Documentation": {"type": "string"},  # Where published/documented
+                "Estim_time_step_s": {"type": "number"},  # Seconds
+                "Estim_comp_time_s": {"type": "number"},  # Seconds
+                "Estim_execution_cost_EUR": {"type": "number"},  # EUR
+                "Estim_personnel_cost_EUR": {"type": "number"},  # EUR
+                "Required_expertise": {"type": "string", "enum": ["None", "User", "Expert"]},
+                "Accuracy": {"type": "string", "enum": ["Low", "Medium", "High", "Unknown"]},
+                "Sensitivity": {"type": "string", "enum": ["Low", "Medium", "High", "Unknown"]},
+                "Complexity": {"type": "string", "enum": ["Low", "Medium", "High", "Unknown"]},
+                "Robustness": {"type": "string", "enum": ["Low", "Medium", "High", "Unknown"]}
             },
-            'required': [
-                'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
-                'Estim_time_step_s', 'Estim_comp_time_s', 'Estim_execution_cost_EUR', 'Estim_personnel_cost_EUR',
-                'Required_expertise', 'Accuracy', 'Sensitivity', 'Complexity', 'Robustness'
+            "required": [
+                "Software", "Language", "License", "Creator", "Version_date", "Type", "Documentation",
+                "Estim_time_step_s", "Estim_comp_time_s", "Estim_execution_cost_EUR", "Estim_personnel_cost_EUR",
+                "Required_expertise", "Accuracy", "Sensitivity", "Complexity", "Robustness"
             ]
         },
-        'Execution': {
-            'properties': {
-                'ID': {'type': ['string', 'integer']},  # Optional application execution ID (typically set by workflow)
+        "Execution": {
+            "properties": {
+                "ID": {"type": ["string", "integer"]},  # Optional application execution ID (typically set by workflow)
                 # Use_case_ID: user case ID (e.g. thermo-mechanical simulation coded as 1_1)
-                'Use_case_ID': {'type': ['string', 'integer']},
+                "Use_case_ID": {"type": ["string", "integer"]},
                 # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
-                'Task_ID': {'type': 'string'},
-                'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
-                'Progress': {'type': 'number'},  # Progress in %
-                'Date_time_start': {'type': 'string'},  # automatically set in Workflow
-                'Date_time_end': {'type': 'string'},  # automatically set in Workflow
-                'Username': {'type': 'string'},  # automatically set in Model and Workflow
-                'Hostname': {'Physics''type': 'string'},  # automatically set in Model and Workflow
+                "Task_ID": {"type": "string"},
+                "Status": {"type": "string", "enum": ["Instantiated", "Initialized", "Running", "Finished", "Failed"]},
+                "Progress": {"type": "number"},  # Progress in %
+                "Date_time_start": {"type": "string"},  # automatically set in Workflow
+                "Date_time_end": {"type": "string"},  # automatically set in Workflow
+                "Username": {"type": "string"},  # automatically set in Model and Workflow
+                "Hostname": {"Physics""type": "string"}  # automatically set in Model and Workflow
             },
-            'required': ['ID']
+            "required": ["ID"]
         },
-        'Inputs': {
-            'type': 'array',  # List
-            'items': {
-                'type': 'object',  # Object supplies a dictionary
-                'properties': {
-                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
-                    'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. PID_Concentration
-                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info, int or str
-                    'Name': {'type': 'string'},
-                    'Description': {'type': 'string'},
-                    'Units': {'type': 'string'},
-                    'Required': {'type': 'boolean'}
+        "Inputs": {
+            "type": "array",  # List
+            "items": {
+                "type": "object",  # Object supplies a dictionary
+                "properties": {
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field"]},
+                    "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
+                    "Obj_ID": {"type": "array"},  # optional parameter for additional info, int or str
+                    "Name": {"type": "string"},
+                    "Description": {"type": "string"},
+                    "Units": {"type": "string"},
+                    "Required": {"type": "boolean"}
                 },
-                'required': ['Type', 'Type_ID', 'Name', 'Units', 'Required']
+                "required": ["Type", "Type_ID", "Name", "Units", "Required"]
             }
         },
-        'Outputs': {
-            'type': 'array',
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
-                    'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. mupif.FieldID.FID_Temperature
-                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info, int or str
-                    'Name': {'type': 'string'},
-                    'Description': {'type': 'string'},
-                    'Units': {'type': 'string'},
+        "Outputs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field"]},
+                    "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.FieldID.FID_Temperature
+                    "Obj_ID": {"type": "array"},  # optional parameter for additional info, int or str
+                    "Name": {"type": "string"},
+                    "Description": {"type": "string"},
+                    "Units": {"type": "string"}
                 },
-                'required': ['Type', 'Type_ID', 'Name', 'Units']
+                "required": ["Type", "Type_ID", "Name", "Units"]
             }
         }
     },
-    'required': [
-        'Name', 'ID', 'Description', 'Physics', 'Solver', 'Execution', 'Inputs', 'Outputs'  # , 'Version_date'
+    "required": [
+        "Name", "ID", "Description", "Physics", "Solver", "Execution", "Inputs", "Outputs"  # , "Version_date"
     ]
 }
 
