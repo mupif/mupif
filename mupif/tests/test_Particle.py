@@ -1,10 +1,11 @@
 import unittest,sys
 sys.path.append('../..')
-from mupif import Particle
+from mupif import *
 
 class ParticleSet_TestCase(unittest.TestCase):
     def setUp(self):
-        self.ps = Particle.ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), id=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta"))
+        self.ps = Particle.ParticleSet (ParticleSetID.PSID_ParticlePositions, 5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), code=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta"))
+        self.ps1 = Particle.ParticleSet (ParticleSetID.PSID_ParticlePositions, 5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), code=(10,11,12,13,14), rvesize = 4, inclusionsize=0.5, colour=("red", "green", "gray", "black", "magenta"))
 
     def tearDown(self):
         self.ps=None
@@ -18,16 +19,22 @@ class ParticleSet_TestCase(unittest.TestCase):
         self.assertEqual(self.ps.getParticlePositions(), ([0,1,2,3,4], [1,2,3,4,5], [2,3,4,5,6]), "getParticlePositions failed")
     
     def test_getParticleAttributes(self):
-        self.assertEqual(self.ps.getParticleAttributes(), {'id':(10,11,12,13,14), 'colour':("red", "green", "gray", "black", "magenta")}, "getParticleAttributes failed")
+        self.assertEqual(self.ps.getParticleAttributes(), {'code':(10,11,12,13,14), 'colour':("red", "green", "gray", "black", "magenta")}, "getParticleAttributes failed")
     
     def test_getParticleAttribute(self):
-        self.assertEqual(self.ps.getParticleAttribute('id'), (10,11,12,13,14), "getParticleAttribute failed")
+        self.assertEqual(self.ps.getParticleAttribute('code'), (10,11,12,13,14), "getParticleAttribute failed")
         self.assertEqual(self.ps.getParticleAttribute('colour'), ("red", "green", "gray", "black", "magenta"), "getParticleAttribute failed")
         self.assertRaises(KeyError, self.ps.getParticleAttribute, 'hue')
+    def test_getRveSize(self):
+        self.assertEqual(self.ps.getRveSize(), 0, "getRVESize failed")
+        self.assertEqual(self.ps1.getRveSize(), 4, "getRVESize failed")
+    def test_getInclusionSize(self):
+        self.assertEqual(self.ps.getInclusionSize(), 0, "getInclusionSize failed")
+        self.assertEqual(self.ps1.getInclusionSize(), 0.5, "getInclusionSize failed")
     
 class Particle_TestCase(unittest.TestCase):
     def setUp(self):
-        self.ps = Particle.ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), id=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta"))
+        self.ps = Particle.ParticleSet (ParticleSetID.PSID_ParticlePositions, 5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), code=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta"))
 
     def tearDown(self):
         self.ps=None
@@ -41,10 +48,10 @@ class Particle_TestCase(unittest.TestCase):
         self.assertEqual(self.ps.getParticle(0).getPosition(),(10,9,8), 'error in setPosition')
     
     def test_getAttributes(self):
-        self.assertEqual(self.ps.getParticle(0).getAttributes(), {'id':10, 'colour':"red"}, "error in getAttributes")
+        self.assertEqual(self.ps.getParticle(0).getAttributes(), {'code':10, 'colour':"red"}, "error in getAttributes")
     
     def test_getAtttribute(self):
-        self.assertEqual(self.ps.getParticle(0).getAttribute('id'), 10,  "error in getAttribute")
+        self.assertEqual(self.ps.getParticle(0).getAttribute('code'), 10,  "error in getAttribute")
         self.assertEqual(self.ps.getParticle(1).getAttribute('colour'), "green", "error in getAttribute")
         self.assertRaises(KeyError, self.ps.getParticle(2).getAttribute, 'hue')
 

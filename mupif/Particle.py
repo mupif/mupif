@@ -77,21 +77,24 @@ class ParticleSet (MupifObject.MupifObject):
     Class representing a collection of Particles. The set stores particle data (positions) and attributes efficiently in the form of vectors.
     ParticleSet keeps position vector for each particle and optional attributes (user defined) identified by key for each particle.
     """
-    def __init__(self, size, xcoords, ycoords, zcoords, **kwargs):
+    def __init__(self, id, size, xcoords, ycoords, zcoords, rvesize=0, inclusionsize=0, **kwargs):
         """
         Constructor.
         @param int size: number of particles in the set
         @param list xcoords: array of particle x coordinates
         @param list ycoords: array of particle x coordinates
         @param list zcoords: array of particle x coordinates
-        @param kwargs: optional keyword arguments to define additional particle attributes, values should be arrays with attribute values for each particle
+        @param kwargs: optional keyword arguments to define additional particle attributes, if type of values should be arrays with attribute values for each particle
         """
+        self.id = id
         self.size = size
         self.xc = list(xcoords)
         self.yc = list(ycoords)
         self.zc = list(zcoords)
+        self.rvesize = rvesize
+        self.inclusionsize = inclusionsize
         assert ((len(self.xc) == self.size) and (len(self.yc) == self.size) and (len(self.zc) == self.size)), "Size mismatch in ParticleSet.__init__"
-        self.attributes = {}
+        self.attributes = {} #attributes per particle
         self.attributes.update(kwargs)
 
 
@@ -103,6 +106,9 @@ class ParticleSet (MupifObject.MupifObject):
             return Particle(self, i)
         else:
             raise IndexError("Particle index out of range")
+
+    def getID (self):
+        return self.id
 
     def getParticlePositions(self):
         """
@@ -122,6 +128,17 @@ class ParticleSet (MupifObject.MupifObject):
             return self.attributes[key]
         else:
             raise KeyError ("No such attribute available")
+
+    def getRveSize(self):
+        """
+        Returns RVE size of particle set
+        """
+        return self.rvesize
+    def getInclusionSize(self):
+        """
+        Returns inclusion size of particle set
+        """
+        return self.inclusionsize
     
 if __name__ == "__main__":
     ps = ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), alpha=(10,11,12,13,14))
