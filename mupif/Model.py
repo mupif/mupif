@@ -48,7 +48,8 @@ ModelSchema = {
     "type": "object",  # Object supplies a dictionary
     "properties": {
         # Name: e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
-        "Name": {"type": "string"}, # Name of the model (or workflow), e.g. "stationary thermal model", "steel buckling workflow"
+        # Name of the model (or workflow), e.g. "stationary thermal model", "steel buckling workflow"
+        "Name": {"type": "string"},
         # ID: Unique ID of model (workflow), e.g. "Lammps", "CalculiX", "MFEM", "Buckling workflow 1"
         "ID": {"type": ["string", "integer"]},
         "Description": {"type": "string"},
@@ -120,7 +121,7 @@ ModelSchema = {
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
                 "Date_time_end": {"type": "string"},  # automatically set in Workflow
                 "Username": {"type": "string"},  # automatically set in Model and Workflow
-                "Hostname": {"Physics""type": "string"}  # automatically set in Model and Workflow
+                "Hostname": {"type": "string"}  # automatically set in Model and Workflow
             },
             "required": ["ID"]
         },
@@ -535,7 +536,7 @@ class RemoteModel (object):
         self._appTunnel = appTunnel
         
     def __getattr__(self, name):
-        """ 
+        """
         Catch all attribute access and pass it to self._decoratee, see python data model, __getattr__ method
         """
         return getattr(self._decoratee, name)

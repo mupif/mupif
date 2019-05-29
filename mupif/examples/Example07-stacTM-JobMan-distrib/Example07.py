@@ -26,7 +26,8 @@ class Example07(Workflow.Workflow):
             'Name': 'Thermo-mechanical non-stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            # 'Model_refs_ID' are generated automatically
+            'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
@@ -42,9 +43,6 @@ class Example07(Workflow.Workflow):
         self.appsTunnel = None
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
-
-        super(Example07, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
-
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         # connect to JobManager running on (remote) server
@@ -119,6 +117,11 @@ class Example07(Workflow.Workflow):
         except Exception as e:
             log.exception(e)
         else:  # No exception
+            self.addModelToListOfModels(self.thermalSolver)
+            self.addModelToListOfModels(self.mechanicalSolver)
+
+            super(Example07, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
+                                              validateMetaData=validateMetaData, **kwargs)
             if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
 
                 thermalSolverSignature = self.thermalSolver.getApplicationSignature()
@@ -211,4 +214,6 @@ if __name__ == '__main__':
     }
     demo.initialize(targetTime=PQ.PhysicalQuantity(1., 's'), metaData=md)
     demo.solve()
+    demo.printMetadata()
+    demo.terminate()
     log.info("Test OK")

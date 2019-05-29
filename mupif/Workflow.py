@@ -195,27 +195,34 @@ class Workflow(Model.Model):
     def getListOfModels(self):
         return self._models[:]
 
+    def printListOfModels(self):
+        print()
+        print("List of child models:")
+        print([m.__class__.__name__ for m in self.getListOfModels()])
+        print()
+
     def generateMetadataModelRefsID(self):
         model_refs_id = []
         for model in self.getListOfModels():
-            # Temporary fix due to compatibility
-            if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
-                if model.hasMetadata('Solver.Version_date'):
-                    model.setMetadata('Version_date', model.getMetadata('Solver.Version_date'))
+            if isinstance(model, (Model.Model, Workflow, Model.RemoteModel)):
+                # Temporary fix due to compatibility
+                if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
+                    if model.hasMetadata('Solver.Version_date'):
+                        model.setMetadata('Version_date', model.getMetadata('Solver.Version_date'))
 
-            md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
-            md_id = model.getMetadata('ID') if model.hasMetadata('ID') else ''
-            md_ver = model.getMetadata('Version_date') if model.hasMetadata('Version_date') else ''
-            md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
+                md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
+                md_id = model.getMetadata('ID') if model.hasMetadata('ID') else ''
+                md_ver = model.getMetadata('Version_date') if model.hasMetadata('Version_date') else ''
+                md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
 
-            m_r_id = {
-                'Name': md_name,
-                'ID': md_id,
-                'Version_date': md_ver,
-                'Type': 'Workflow' if isinstance(model, Workflow) else 'Model'
-            }
-            if isinstance(model, Workflow):
-                m_r_id.update({'Model_refs_ID': model.getMetadata('Model_refs_ID')})
-            model_refs_id.append(m_r_id)
+                m_r_id = {
+                    'Name': md_name,
+                    'ID': md_id,
+                    'Version_date': md_ver,
+                    'Type': 'Workflow' if isinstance(model, Workflow) else 'Model'
+                }
+                if isinstance(model, Workflow):
+                    m_r_id.update({'Model_refs_ID': model.getMetadata('Model_refs_ID')})
+                model_refs_id.append(m_r_id)
 
         self.setMetadata('Model_refs_ID', model_refs_id)
