@@ -36,8 +36,8 @@ class Example06(Workflow.Workflow):
         self.thermalSolver = models.thermal()
         self.mechanicalSolver = models.mechanical()
 
-        self.addModelToListOfModels(self.thermalSolver)
-        self.addModelToListOfModels(self.mechanicalSolver)
+        self.registerModel(self.thermalSolver, 'thermal')
+        self.registerModel(self.mechanicalSolver, 'mechanical')
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
         super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,

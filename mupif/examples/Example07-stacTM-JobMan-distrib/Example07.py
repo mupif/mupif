@@ -117,8 +117,8 @@ class Example07(Workflow.Workflow):
         except Exception as e:
             log.exception(e)
         else:  # No exception
-            self.addModelToListOfModels(self.thermalSolver)
-            self.addModelToListOfModels(self.mechanicalSolver)
+            self.registerModel(self.thermalSolver, 'thermal')
+            self.registerModel(self.mechanicalSolver, 'mechanical')
 
             super(Example07, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
                                               validateMetaData=validateMetaData, **kwargs)
@@ -215,5 +215,6 @@ if __name__ == '__main__':
     demo.initialize(targetTime=PQ.PhysicalQuantity(1., 's'), metaData=md)
     demo.solve()
     demo.printMetadata()
+    demo.printListOfModels()
     demo.terminate()
     log.info("Test OK")

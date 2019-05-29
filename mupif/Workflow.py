@@ -75,7 +75,7 @@ class Workflow(Model.Model):
 
         self.workflowMonitor = None  # No monitor by default
         self.targetTime = None
-        self._models = []  # type: list[Model.Model, Workflow]
+        self._models = {}
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         """
@@ -184,16 +184,44 @@ class Workflow(Model.Model):
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required
 
-                log.debug(self.getMetadata('WorkflowMonitor.ComponentID')+": Updated status to " + status + ", progress=" + str(progress))
+                log.debug(
+                    self.getMetadata('WorkflowMonitor.ComponentID') + ": Updated status to " + status + ", progress=" +
+                    str(progress)
+                )
             except Exception as e:
                 log.exception("Connection to workflow monitor broken")
                 raise e
 
-    def addModelToListOfModels(self, model):
-        self._models.append(model)
+    def registerModel(self, model, label):
+        """
+        :param Model.Model or Model.RemoteModel or Workflow model:
+        :param str label:
+        """
+        if isinstance(model, (Workflow, Model.Model, Model.RemoteModel)):
+            if label not in self.getListOfModelLabels():
+                self._models.update({label: model})
+            else:
+                raise KeyError("Given model label already exists.")
+        else:
+            raise TypeError("Parameter model should be instance of Workflow, Model or RemoteModel.")
+
+    def getDictOfModels(self):
+        """
+        :rtype: dict[Model.Model, Model.RemoteModel, Workflow]
+        """
+        return self._models.copy()
 
     def getListOfModels(self):
-        return self._models[:]
+        """
+        :rtype: list[Model.Model, Model.RemoteModel, Workflow]
+        """
+        return iter(self.getDictOfModels().values())
+
+    def getListOfModelLabels(self):
+        """
+        :rtype: list of str
+        """
+        return iter(self.getDictOfModels().keys())
 
     def printListOfModels(self):
         print()
@@ -203,7 +231,7 @@ class Workflow(Model.Model):
 
     def generateMetadataModelRefsID(self):
         model_refs_id = []
-        for model in self.getListOfModels():
+        for key_name, model in self.getDictOfModels().items():
             if isinstance(model, (Model.Model, Workflow, Model.RemoteModel)):
                 # Temporary fix due to compatibility
                 if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
@@ -213,9 +241,9 @@ class Workflow(Model.Model):
                 md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
                 md_id = model.getMetadata('ID') if model.hasMetadata('ID') else ''
                 md_ver = model.getMetadata('Version_date') if model.hasMetadata('Version_date') else ''
-                md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
 
                 m_r_id = {
+                    'Label': str(key_name),
                     'Name': md_name,
                     'ID': md_id,
                     'Version_date': md_ver,

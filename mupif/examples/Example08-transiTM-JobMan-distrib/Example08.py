@@ -73,8 +73,8 @@ class Example08(Workflow.Workflow):
         mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
 
-        self.addModelToListOfModels(self.thermal)
-        self.addModelToListOfModels(self.mechanical)
+        self.registerModel(self.thermal, 'thermal')
+        self.registerModel(self.mechanical, 'mechanical')
 
         super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
