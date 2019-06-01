@@ -74,7 +74,7 @@ ModelSchema = {
                 'Relation_description': {'type': 'array'},
                 # Relation_formulation: Constitutive equation (material relation), e.g. force field, stress-strain,
                 # flow-gradient. MODA MATERIAL RELATIONS
-                'Relation_formulation': {'type': 'array'},
+                'Relation_formulation': {'type': 'array'}
             },
             'required': ['Type', 'Entity']
         },
@@ -100,7 +100,7 @@ ModelSchema = {
                 'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
                 'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
                 'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
-                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
+                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']}
             },
             'required': [
                 'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
@@ -120,7 +120,7 @@ ModelSchema = {
                 'Date_time_start': {'type': 'string'},  # automatically set in Workflow
                 'Date_time_end': {'type': 'string'},  # automatically set in Workflow
                 'Username': {'type': 'string'},  # automatically set in Model and Workflow
-                'Hostname': {'Physics''type': 'string'},  # automatically set in Model and Workflow
+                'Hostname': {'type': 'string'}  # automatically set in Model and Workflow
             },
             'required': ['ID']
         },
@@ -150,7 +150,7 @@ ModelSchema = {
                     'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
-                    'Units': {'type': 'string'},
+                    'Units': {'type': 'string'}
                 },
                 'required': ['Type', 'Type_ID', 'Name', 'Units']
             }
