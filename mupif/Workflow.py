@@ -41,10 +41,11 @@ WorkflowSchema["properties"].update({
         "items": {
             "type": "object",  # Object supplies a dictionary
             "properties": {
-                "Name": {"type": "string"},
-                "ID": {"type": ["string", "integer"]},
-                "Version_date": {"type": "string"},
-                "Type": {"type": "string", "enum": ["Model", "Workflow"]},
+                "Label": {"type": "string"},  # Explicit label, given to the model/workflow by its parent workflow.
+                "Name": {"type": "string"},  # Obtained automatically from Model metadata.
+                "ID": {"type": ["string", "integer"]},  # Obtained automatically from Model metadata.
+                "Version_date": {"type": "string"},  # Obtained automatically from Model metadata.
+                "Type": {"type": "string", "enum": ["Model", "Workflow"]},  # Filled automatically.
                 "Model_refs_ID": {"type": "array"}  # Object supplies a dictionary
             },
             "required": ["Name", "ID", "Version_date", "Type"]
@@ -192,12 +193,18 @@ class Workflow(Model.Model):
                 log.exception("Connection to workflow monitor broken")
                 raise e
 
-    def registerModel(self, model, label):
+    def registerModel(self, model, label=None):
         """
         :param Model.Model or Model.RemoteModel or Workflow model:
-        :param str label:
+        :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
         """
         if isinstance(model, (Workflow, Model.Model, Model.RemoteModel)):
+            if label is None:
+                i = 0
+                while label in self.getListOfModelLabels() or i == 0:
+                    i += 1
+                    label = "label_%d" % i
+
             if label not in self.getListOfModelLabels():
                 self._models.update({label: model})
             else:
