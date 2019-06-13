@@ -41,7 +41,7 @@ class thermal(mupif.Model.Model):
                     {
                         'Name': 'edge temperature',
                         'Type': 'mupif.Property',
-                        'required': False,
+                        'Required': False,
                         'Type_ID': 'mupif.PropertyID.PID_Temperature',
                         'Obj_ID': [
                             'Cauchy top',
@@ -60,7 +60,7 @@ class thermal(mupif.Model.Model):
                         'Name': 'temperature',
                         'Type_ID': 'mupif.FieldID.FID_Temperature',
                         'Type': 'mupif.Field',
-                        'required': False
+                        'Required': False
                     }
                 ],
                 'Solver': {
@@ -650,7 +650,7 @@ class thermal_nonstat(thermal):
                 {
                     'Name': 'edge temperature',
                     'Type': 'mupif.Property',
-                    'required': False,
+                    'Required': False,
                     'Type_ID': 'mupif.PropertyID.PID_Temperature',
                     'Obj_ID': [
                         'Cauchy top',
@@ -669,7 +669,7 @@ class thermal_nonstat(thermal):
                     'Name': 'temperature',
                     'Type_ID': 'mupif.FieldID.FID_Temperature',
                     'Type': 'mupif.Field',
-                    'required': False
+                    'Required': False
                 }
             ],
             'Solver': {
@@ -966,7 +966,7 @@ class mechanical(mupif.Model.Model):
                     'Name': 'temperature',
                     'Type_ID': 'mupif.FieldID.FID_Temperature',
                     'Type': 'mupif.Field',
-                    'required': True
+                    'Required': True
                 }
             ],
             'Outputs': [
@@ -974,7 +974,7 @@ class mechanical(mupif.Model.Model):
                     'Name': 'displacement',
                     'Type_ID': 'mupif.FieldID.FID_Displacement',
                     'Type': 'mupif.Field',
-                    'required': False
+                    'Required': False
                 }
             ],
             'Solver': {
