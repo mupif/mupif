@@ -7,76 +7,70 @@ import logging
 log = logging.getLogger()
 import time as timeT
 import mupif.Physics.PhysicalQuantities as PQ
-
-
-
 import smtplib, ssl
-
-port = 587  # For starttls
-smtp_server = "smtp.gmail.com"
-sender_email = "mupifmonitor@gmail.com"
-password = input("Type your password and press enter:")
-admin_email = sender_email
-nshost = '172.30.0.1'
-nsport = 9090
-hkey = 'mupif-secret-key'
-
-file = open('jobmanName_email.txt','r')
-jobManName2Email = eval(file.read())
-file.close()
+import json
 
 
+json_file = open('config.json', 'r')
+json_str = json_file.read()
+config_dict = json.loads(json_str)[0]
 
-def sendEmail(jobManName, receiver_email):
-	message = """\
-	Subject: Jobmanager check
-
-	The jobmanager""" +jobManName + """is down, please restart it.
-
-	Kind regards,
-	Mupif team"""
-
-	context = ssl.create_default_context()
-	with smtplib.SMTP(smtp_server, port) as server:
-	    server.ehlo()  # Can be omitted
-	    server.starttls(context=context)
-	    server.ehlo()  # Can be omitted
-	    server.login(sender_email, password)
-	    server.sendmail(sender_email, receiver_email, message)
+port = int(config_dict["port"])
+smtp_server = config_dict["smtp_server"]
+sender_email = config_dict["sender_email"]
+password = config_dict["password"]
+nshost = config_dict["nshost"]
+nsport = int(config_dict["nsport"])
+hkey = config_dict["hkey"]
 
 
-try:
-        ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
-except Exception as e:
-        log.exception(e)
-        log.debug("Exception when connecting to nameserver occurs, sending email")
-        sendEmail("nameserver", admin_email)	
-            
+json_file = open('jobMan2Email.json', 'r')
+json_str = json_file.read()
+jobManName2Email = json.loads(json_str)[0]
+
+ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
+
+
+jobManagerError = "JobManager is down, please restart it"
+jobError = "JobManager is running, but it is not possible to allocate a job"
+
+def sendEmail(sender_email, receiver_email, jobManName, error_cause):
+        message = """\
+Subject: Error of %s
+
+%s
+
+Kind regards,
+Mupif team"""%(jobManName,error_cause)
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP(smtp_server, port) as server:
+                server.ehlo()  # Can be omitted
+                server.starttls(context=context)
+                server.ehlo()  # Can be omitted
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message)
+
+
 
 for key in jobManName2Email:
-    email = jobManName2Email.get(key)
-    log.info('\n-------------------------------------------------------------------------------------------------------------------------------')            
-    try:
-        jobMan = PyroUtil.connectJobManager(ns, key,hkey)
+        jobManName = key
+        receiver_email = jobManName2Email.get(jobManName)
+        log.info('\n-------------------------------------------------------------------------------------------------------------------------------')
         try:
-            solver = PyroUtil.allocateApplicationWithJobManager( ns, jobMan, None, hkey)
-            log.info('Job Created')            
+                (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = PyroUtil.getNSConnectionInfo(ns, jobManName)
         except Exception as e:
-            log.exception(e)
-            log.debug("Exception occurs, sending email")
-            sendEmail(key, email)	
-        else:
-            if (solver is not None):
-                solverSignature = solver.getApplicationSignature()
-                log.info("Working solver on server " + solverSignature)
-            else:
-                log.debug("Connection to server failed, sending email")
-                sendEmail(key, email)
-        
-    except Exception as e:
-        log.exception(e)
-        log.debug("Exception occurs, sending email")
-        sendEmail(key, email)
-            
-
-        
+                log.debug("Exception occurs, sending email")
+                sendEmail(sender_email, receiver_email, jobManName, "%s\nJobManHostName:%s"%("Jobmanager is not registered at nameserver",jobManName) )
+                continue
+        try:
+                jobMan = PyroUtil.connectJobManager(ns, jobManName, hkey)
+                try:
+                        solver = PyroUtil.allocateApplicationWithJobManager( ns, jobMan, None, hkey)
+                except Exception as e:
+                        log.debug("Exception occurs, sending email")
+                        sendEmail(sender_email, receiver_email, jobManName, "%s\nJobManHostName:%s, jobManPort: %s"%(jobError,jobManHostname,jobManPort))	              
+        except Exception as e:
+                log.exception(e)
+                log.debug("Exception occurs, sending email")
+                sendEmail(sender_email, receiver_email, jobManName, "%s\nJobManHostName:%s, jobManPort: %s"%(jobManagerError,jobManName,jobManPort))
