@@ -54,6 +54,15 @@ class FieldID(IntEnum):
     FID_DomainNumber = 12
     FID_ESI_VPS_Displacement = 10001
 
+    # GY field IDs
+    FID_Mises_Stress = 2000000
+    FID_MaxPrincipal_Stress = 2000001
+    FID_MidPrincipal_Stress = 2000002
+    FID_MinPrincipal_Stress = 2000003
+    
+    FID_MaxPrincipal_Strain = 2000004
+    FID_MidPrincipal_Strain = 2000005
+    FID_MinPrincipal_Strain = 2000006
 
 class ParticleSetID(IntEnum):
     """
@@ -135,12 +144,20 @@ class PropertyID(IntEnum):
     PID_InclusionPoisson = 8003
     PID_InclusionVolumeFraction = 8004
     PID_InclusionAspectRatio = 8005
+    PID_MatrixOgdenModulus          = 8006
+    PID_MatrixOgdenExponent         = 8007
+    PID_InclusionSizeNormalized     = 8012
+    
     PID_CompositeAxialYoung = 9000
     PID_CompositeInPlaneYoung = 9001
     PID_CompositeInPlaneShear = 9002
     PID_CompositeTransverseShear = 9003
     PID_CompositeInPlanePoisson = 9004
     PID_CompositeTransversePoisson = 9005
+    PID_CompositeStrain11Tensor     = 9006
+    PID_CompositeStrain22Tensor     = 9007
+    PID_CompositeStress11Tensor     = 9008
+
     # CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
     PID_Direction = 1001
@@ -330,5 +347,11 @@ class PropertyID(IntEnum):
     PID_dirichletBC = 97000
     PID_conventionExternalTemperature = 97001
     PID_conventionCoefficient = 97002
-
-
+    # GY property IDs
+    PID_Footprint = 1000000
+    PID_Braking_Force = 1000001
+    PID_Stiffness = 1000002
+    PID_Hyper1 = 1000003
+    PID_maxDisplacement = 1000004
+    PID_maxMisesStress = 1000005
+    PID_maxPrincipalStress = 1000006
