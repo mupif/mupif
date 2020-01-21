@@ -728,7 +728,10 @@ class UnstructuredMesh(Mesh):
             # if the lookup fails, KeyError propagates to the caller, which is what we want
             cgt=cellGeomTypeMap[c.GetCellType()]
             # create new cell and append to mupifCells
-            mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]))
+            mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=ic, label=None, vertices=pts))
+            #mupifCells.append(Cell.Cell.getClassForCellGeometryType(cgt)(mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]))
+
+
         ret.setup(vertexList=mupifVertices, cellList=mupifCells)
         return ret
 
