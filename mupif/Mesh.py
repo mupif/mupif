@@ -725,7 +725,8 @@ class UnstructuredMesh(Mesh):
             # create new cell and append to mupifCells
             mupifCells.append(
                 Cell.Cell.getClassForCellGeometryType(cgt)(
-                    mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
+                    #mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
+                    mesh=ret, number=ic, label=None, vertices=pts
                 )
             )
         ret.setup(vertexList=mupifVertices, cellList=mupifCells)
