@@ -5,6 +5,7 @@ sys.path.append('../..')
 
 import mupif, mupif.Application
 import Pyro4
+import Pyro4.naming
 
 from mupif import PyroUtil
 

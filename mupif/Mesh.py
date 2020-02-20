@@ -137,8 +137,7 @@ class Mesh(object):
         :return: A copy of the receiver
         :rtype: Copy of the receiver, e.g. Mesh
 
-        .. Note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh
-        duplication in every cell!
+        .. note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh duplication in every cell!
         """
     def getNumberOfVertices(self):
         """
@@ -276,11 +275,12 @@ class Mesh(object):
 
     def asVtkUnstructuredGrid(self):
         """
-        Return object as a vtk.vtkUnstructuredMesh instance.
-
-        .. note:: This method uses the compiled vtk module (which is a wrapper atop the c++ VTK library) -- in contrast
-        to :obj:`UnstructuredMesh.getVTKRepresentation`, which uses the pyvtk module (python-only implementation of
-        VTK i/o supporting only VTK File Format version 2).
+        Return an object as a vtk.vtkUnstructuredMesh instance.
+        
+        :return: vtk
+        :rtype: vtk.vtkUnstructuredGrid()
+        
+        .. note:: This method uses the compiled vtk module (which is a wrapper atop the c++ VTK library) -- in contrast         to :obj:`UnstructuredMesh.getVTKRepresentation`, which uses the pyvtk module (python-only implementation of VTK i/o supporting only VTK File Format version 2).
         """
         import vtk
         # vertices

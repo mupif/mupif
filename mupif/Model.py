@@ -60,7 +60,7 @@ ModelSchema = {
             'type': 'object',
             'properties': {
                 # Type: MODA model type
-                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum', 'Other']},
+                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Mesoscopic', 'Continuum', 'Other']},
                 'Entity': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']},
                 # Entity_description: E.g. Atoms are treated as spherical entities in space with the radius and mass
                 # determined by the element type

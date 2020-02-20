@@ -47,6 +47,7 @@ class Example06(Workflow.Workflow):
 
         self.thermalSolver.initialize('inputT10.in', '.', metaData=passingMD)
         self.mechanicalSolver.initialize('inputM10.in', '.', metaData=passingMD)
+        #self.mechanicalSolver.printMetadata(nonEmpty=False)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.thermalSolver.solveStep(istep, stageID, runInBackground)

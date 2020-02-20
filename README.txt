@@ -16,19 +16,20 @@ Getting Started
 ===============
 
 MuPIF is distributed as a module with the following directory tree structure:
-    MuPIF_TOP_DIR - contains source code and other files of the MuPIF package
-       +--mupif - contains source code of the MuPIF package
-       |    +--doc - documentation (reference manual and User guide)
-       |    +--examples - examples and tests
-       |    +--Physics - module for units
-       |    +--tools - various supportive tools
-       |    +--tests - tests for nosetests module 
-       |    +--*.py - MuPIF classes
-       |    +--__init__.py - description of MuPIF module
-       +--LICENSE.txt - LGPL license conditions
-       +--MANIFEST.in - support for setuptools
-       +--README.txt - general description
-       +--setup.py - support for setuptools, Pypi upload etc.
+
+| MuPIF_TOP_DIR - contains source code and other files of the MuPIF package
+| ├── mupif - contains source code of the MuPIF package
+| │    ├── doc - documentation (reference manual and User guide)
+| │    ├── examples - examples and tests
+| │    ├── Physics - module for units
+| │    ├── tools - various supportive tools
+| │    ├── tests - tests for nosetests module 
+| │    ├── \*.py - MuPIF classes
+| │    └── __init__.py - description for mupif module
+| ├── LICENSE.txt - LGPL license conditions
+| ├── MANIFEST.in - support for setuptools
+| ├── README.txt - general description
+| └──setup.py - support for setuptools, Pypi upload etc.
 
 
 
@@ -82,6 +83,7 @@ Authors
 
 Bořek Patzák
 Vít Šmilauer
+Stanislav Šulc
 Václav Šmilauer
 Martin Horák
 Guillaume Pacquaut

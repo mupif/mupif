@@ -647,14 +647,14 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
 
 def allocateNextApplication(ns, jobMan, natPort, sshContext=None):
     """
-    Request new application instance to be spawned by  given jobManager
-
+    Request a new application instance to be spawned by given jobManager
+    
     :param Pyro4.naming.Nameserver ns: running name server
     :param jobMan: jobmanager to use
     :param int natPort: nat port on a local computer for ssh tunnel for the application
-    :param sshContext describing optional ssh tunnel connection detail 
-
-    :returns: Application instance
+    :param sshContext: describing optional ssh tunnel connection detail
+    
+    :return: Application instance
     :rtype: Model.RemoteModel
     :raises Exception: if allocation of job fails
     """
