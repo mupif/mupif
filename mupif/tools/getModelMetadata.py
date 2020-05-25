@@ -93,6 +93,7 @@ def main():
 
                 app = PyroUtil.connectApp(ns, jobID, hkey)
                 metadata = app.getAllMetadata()
+                print (json.dumps(metadata))
             
                 jobMan.terminateJob(jobID)
                         
