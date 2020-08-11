@@ -667,7 +667,7 @@ def getDimensionlessUnit():
     """
     return dimensionless unit
     """
-    return PhysicalUnit('',   0.0,    [0, 0, 0, 0, 0, 0, 0, 0, 0])
+    return PhysicalUnit('',   1.0,    [0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 # Helper functions
