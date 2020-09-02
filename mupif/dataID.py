@@ -361,3 +361,4 @@ class PropertyID(IntEnum):
     PID_maxDisplacement = 1000004
     PID_maxMisesStress = 1000005
     PID_maxPrincipalStress = 1000006
+    PID_Hyper2 = 1000007
