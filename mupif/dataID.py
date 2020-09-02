@@ -52,6 +52,7 @@ class FieldID(IntEnum):
     FID_BucklingShape = 10
     FID_FibreOrientation = 11
     FID_DomainNumber = 12
+    FID_Permeability = 13
     FID_ESI_VPS_Displacement = 10001
 
     # GY field IDs
@@ -157,6 +158,10 @@ class PropertyID(IntEnum):
     PID_CompositeStrain11Tensor     = 9006
     PID_CompositeStrain22Tensor     = 9007
     PID_CompositeStress11Tensor     = 9008
+    PID_MatrixDensity = 8008
+    PID_CompositeDensity = 9009
+    PID_InclusionDensity = 8009
+
 
     # CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
@@ -279,6 +284,7 @@ class PropertyID(IntEnum):
     PID_Magnitude = 1116
     PID_Number_of_physics_states = 1117
     PID_Cohesive_group = 1118
+    PID_FillingTime = 1119
     # End of CUBA keywords
     
     PID_Demo_Min = 9990
