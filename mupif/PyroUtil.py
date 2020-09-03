@@ -235,16 +235,17 @@ def getNSConnectionInfo(ns, name):
     return (host, port, nathost, natport)
             
 
-def _connectApp(ns, name, hkey):
+def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
     """
     Connects to a remote application.
 
     :param Pyro4.naming.Nameserver ns: Instance of a nameServer
     :param str name: Name of the application to be connected to
     :param str hkey: A password string
+    :param connectionTestTimeOut timeout for connection test
     :return: Application
     :rtype: Instance of an application
-    :raises Exception: When cannot find registered server or Cannot connect to application
+    :raises Exception: When cannot find registered server or Cannot connect to application or Timeout passes
     """
     try:
         uri = ns.lookup(name)
@@ -258,7 +259,13 @@ def _connectApp(ns, name, hkey):
 
     try:
         log.info("Connecting to application %s with %s"%(name, app2))
+        # By default, Pyro waits an indefinite amount of time for the call to return. 
+        # When testing connection to an remote object via _connectApp, the object getSignature method is called.
+        # For testing connection, the connection timeout is set for this call. after this, the timeout is reset to default.
+        # When timeout is passed, Pyro4.errors.CommunicationError is thrown.
+        app2._pyroTimeout = connectionTestTimeOut
         sig = app2.getApplicationSignature()
+        app2._pyroTimeout = None
         log.debug("Connected to " + sig + " with the application " + name)
     except Pyro4.core.errors.CommunicationError as e:
         log.error("Communication error, perhaps a wrong key hkey=%s?" % hkey)
