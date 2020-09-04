@@ -261,8 +261,10 @@ def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
         log.info("Connecting to application %s with %s"%(name, app2))
         # By default, Pyro waits an indefinite amount of time for the call to return. 
         # When testing connection to an remote object via _connectApp, the object getSignature method is called.
-        # For testing connection, the connection timeout is set for this call. after this, the timeout is reset to default.
+        # The connection timeout is set for this call. after this, the timeout is reset to default.
         # When timeout is passed, Pyro4.errors.CommunicationError is thrown.
+        # This is essential to detect the case when, for example, object has been registered at namesever, 
+        # but is not operational at the moment.
         app2._pyroTimeout = connectionTestTimeOut
         sig = app2.getApplicationSignature()
         app2._pyroTimeout = None
@@ -277,7 +279,7 @@ def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
     return app2
 
 
-def connectApp(ns, name, hkey, sshContext=None):
+def connectApp(ns, name, hkey, sshContext=None, connectionTestTimeOut = 10.):
     """
     Connects to a remote application, creates the ssh tunnel if necessary
 
@@ -304,7 +306,7 @@ def connectApp(ns, name, hkey, sshContext=None):
             )
             raise
 
-    app = _connectApp(ns, name, hkey)
+    app = _connectApp(ns, name, hkey, connectionTestTimeOut)
     return Model.RemoteModel(app, appTunnel=tunnel)
 
 
