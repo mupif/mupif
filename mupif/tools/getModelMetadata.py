@@ -88,16 +88,14 @@ def main():
                     hostname=match.group(1)
             if (hostname):
 
-                jobMan = PyroUtil.connectApp(ns, jobmanname, hkey=hkey)
-                (errCode, jobID, jobPort) = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=None)
+                jobMan = PyroUtil.connectJobManager(ns, jobmanname, hkey=hkey)
 
-                app = PyroUtil.connectApp(ns, jobID, hkey)
+                app = PyroUtil.allocateApplicationWithJobManager(ns, jobMan, None, hkey)
                 metadata = app.getAllMetadata()
                 print (json.dumps(metadata))
             
-                jobMan.terminateJob(jobID)
-                        
-                print("Terminating " + str(jobID))
+                app.terminate()
+
                 print("Time consumed %f s" % (timeTime.time()-start))
 
     except Exception as e:
