@@ -70,7 +70,7 @@ from . import ConstantField
 __all__ = ['APIError', 'Model', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'dataID', 'EnsightReader2', 'FieldID', 'Field',
            'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
-           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics', 'Particle', 'ParticleSetID'. 'ConstantField']
+           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics', 'Particle', 'ParticleSetID', 'ConstantField']
 from . import Util
 import logging
 import os
