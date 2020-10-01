@@ -332,6 +332,8 @@ class PropertyID(IntEnum):
     PID_ESI_VPS_THNOD_2 = 90022
     PID_ESI_VPS_SECFO_1 = 90023
     PID_ESI_VPS_SECFO_2 = 90024
+    
+    PID_BOUNDARY_CONFIGURATION = 95000
 
     # University of Trieste properties
     PID_SMILE_MOLECULAR_STRUCTURE = 92000
@@ -348,6 +350,7 @@ class PropertyID(IntEnum):
     PID_PRESSURE = 92011
     PID_DENSITY = 92100
     PID_TRANSITION_TEMPERATURE = 92101
+    
 
     # Demo properties
     PID_dirichletBC = 97000
