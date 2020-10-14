@@ -670,15 +670,17 @@ def allocateNextApplication(ns, jobMan, natPort, sshContext=None):
     return allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext)
 
 
-def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=False):
+def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
     """
-    Allows to download remote file (pyro ile handle) to a local file.
+    Allows to download remote file (pyro file handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
     :param PyroFile.PyroFile pyroFile: representation of existing remote server's file
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    file = PyroFile.PyroFile(newLocalFileName, 'wb')
+    # make sure if pyroFile is proxy to set hmac key
+    pyroFile._pyroHmacKey = hkey.encode(encoding='utf-8')
+    file = PyroFile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
     if compressFlag:
         pyroFile.setCompressionFlag()
         file.setCompressionFlag()
@@ -691,14 +693,14 @@ def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=False):
     file.close()
 
 
-def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=False):
+def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=True):
     """
     See :func:'downloadPyroFileFromServer'
     """
     downloadPyroFile(newLocalFileName, pyroFile, compressFlag)
 
 
-def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024, compressFlag=False):
+def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=True):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
@@ -708,22 +710,27 @@ def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024, compressFlag=False
     :param int size: optional chunk size. The data are read and written in byte chunks of this size
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    file = PyroFile.PyroFile(clientFileName, 'rb', buffsize=size)
+    # make sure if pyroFile is proxy to set hmac key
+    pyroFile._pyroHmacKey = hkey.encode(encoding='utf-8')
+    file = PyroFile.PyroFile(clientFileName, 'rb', buffsize=size, compressFlag=compressFlag)
+    log.info("Uploading %s", clientFileName)
     if compressFlag:
         file.setCompressionFlag()
         pyroFile.setCompressionFlag()
+        log.info("Setting compression flag on")
     data = file.getChunk()
     while data:
-        pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8')
+        #pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8')
         pyroFile.setChunk(data)  # this is where the data are sent over net via Pyro
         data = file.getChunk()
     getTermChunk = file.getTerminalChunk()
-    pyroFile.setChunk(getTermChunk.encode(encoding='utf-8'))
+    pyroFile.setChunk(getTermChunk)
+    log.info("File transfer finished")
     file.close()
     pyroFile.close()
 
 
-def uploadPyroFileOnServer(clientFileName, pyroFile, hkey, size=1024, compressFlag=False):
+def uploadPyroFileOnServer(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=True):
     """
     See :func:'downloadPyroFile'
     """
