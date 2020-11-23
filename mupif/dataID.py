@@ -15,16 +15,22 @@ DataSchema = {
         'ID': {'type': ['string', 'integer']},  # Unique ID
         'Description': {'type': 'string'},  # Further description
         'Units': {'type': 'string'},  # Automatically generated from MuPIF, e.g. 'kg'
-        'ValueType': {'type': 'string'}, # Automatically generated
+        'ValueType': {'type': 'string'},  # Automatically generated
         'Origin': {'type': 'string', 'enum': ['Experiment', 'User_input', 'Simulated']},
-        'Execution_Task_ID': {'type': 'string'},  # If Simulated, give reference to Task_ID
-        'Execution_Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
         'Experimental_details': {'type': 'string'},
         'Experimental_record': {'type': 'string'},  # If applies, link to corresponding experimental record
         'Estimated_std': {'type': 'number'},  # Percent of standard deviation
-        },
+        'Execution': {
+            'properties': {
+                'ID': {'type': ['string', 'integer']},  # Optional execution ID
+                'Use_case_ID': {'type': ['string', 'integer']},  # If Simulated, give reference to Use_case_ID
+                'Task_ID': {'type': 'string'}  # If Simulated, give reference to Task_ID
+            },
+            'required': []
+        }
+    },
     'required': [
-        'Type', 'Type_ID', 'Units', 'ValueType'  
+        'Type', 'Type_ID', 'Units', 'ValueType'
     ]
 }
 
@@ -46,8 +52,24 @@ class FieldID(IntEnum):
     FID_BucklingShape = 10
     FID_FibreOrientation = 11
     FID_DomainNumber = 12
+    FID_Permeability = 13
     FID_ESI_VPS_Displacement = 10001
 
+    # GY field IDs
+    FID_Mises_Stress = 2000000
+    FID_MaxPrincipal_Stress = 2000001
+    FID_MidPrincipal_Stress = 2000002
+    FID_MinPrincipal_Stress = 2000003
+    
+    FID_MaxPrincipal_Strain = 2000004
+    FID_MidPrincipal_Strain = 2000005
+    FID_MinPrincipal_Strain = 2000006
+
+class ParticleSetID(IntEnum):
+    """
+    This class represents supported values of ParticleSetID, an unique ID identifier for ParticleSet type.
+    """
+    PSID_ParticlePositions = 1
 
 class FunctionID(IntEnum):
     """
@@ -116,19 +138,33 @@ class PropertyID(IntEnum):
     PID_ShearInPlaneStiffness = 51
     PID_ShearOutOfPlaneStiffness = 52
     PID_LocalBendingStiffness = 53
+    PID_CriticalForce  = 54
+    PID_CriticalMoment = 55
     # Digimat Properties
-    PID_MatrixYoung                 = 8000
-    PID_MatrixPoisson               = 8001
-    PID_InclusionYoung              = 8002
-    PID_InclusionPoisson            = 8003
-    PID_InclusionVolumeFraction     = 8004
-    PID_InclusionAspectRatio        = 8005
-    PID_CompositeAxialYoung         = 9000
-    PID_CompositeInPlaneYoung       = 9001
-    PID_CompositeInPlaneShear       = 9002
-    PID_CompositeTransverseShear    = 9003
-    PID_CompositeInPlanePoisson     = 9004
-    PID_CompositeTransversePoisson  = 9005
+    PID_MatrixYoung = 8000
+    PID_MatrixPoisson = 8001
+    PID_InclusionYoung = 8002
+    PID_InclusionPoisson = 8003
+    PID_InclusionVolumeFraction = 8004
+    PID_InclusionAspectRatio = 8005
+    PID_MatrixOgdenModulus          = 8006
+    PID_MatrixOgdenExponent         = 8007
+    PID_InclusionSizeNormalized     = 8012
+    
+    PID_CompositeAxialYoung = 9000
+    PID_CompositeInPlaneYoung = 9001
+    PID_CompositeInPlaneShear = 9002
+    PID_CompositeTransverseShear = 9003
+    PID_CompositeInPlanePoisson = 9004
+    PID_CompositeTransversePoisson = 9005
+    PID_CompositeStrain11Tensor     = 9006
+    PID_CompositeStrain22Tensor     = 9007
+    PID_CompositeStress11Tensor     = 9008
+    PID_MatrixDensity = 8008
+    PID_CompositeDensity = 9009
+    PID_InclusionDensity = 8009
+
+
     # CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
     PID_Direction = 1001
@@ -148,6 +184,7 @@ class PropertyID(IntEnum):
     PID_Bond_label = 1015
     PID_Bond_type = 1016
     # PID_Velocity = 1017 Duplicate
+    PID_Dimension = 1017
     PID_Acceleration = 1018
     PID_Radius = 1019
     PID_Size = 1020
@@ -249,6 +286,7 @@ class PropertyID(IntEnum):
     PID_Magnitude = 1116
     PID_Number_of_physics_states = 1117
     PID_Cohesive_group = 1118
+    PID_FillingTime = 1119
     # End of CUBA keywords
     
     PID_Demo_Min = 9990
@@ -260,8 +298,7 @@ class PropertyID(IntEnum):
     PID_KPI01 = 9996
 
     # ESI VPS properties
-    PID_ESI_VPS_TEND      = 90001
-    
+    PID_ESI_VPS_TEND = 90001
     PID_ESI_VPS_PLY1_E0t1 = 90002
     PID_ESI_VPS_PLY1_E0t2 = 90003
     PID_ESI_VPS_PLY1_E0t3 = 90004
@@ -272,16 +309,13 @@ class PropertyID(IntEnum):
     PID_ESI_VPS_PLY1_NU23 = 90009
     PID_ESI_VPS_PLY1_NU13 = 90010
     PID_ESI_VPS_PLY1_E0c1 = 90011
-    
-    PID_ESI_VPS_PLY1_RHO  = 90012
-    
-    PID_ESI_VPS_hPLY      = 90013
-    
-    PID_ESI_VPS_PLY1_XT   = 90014
-    PID_ESI_VPS_PLY1_XC   = 90015
-    PID_ESI_VPS_PLY1_YT   = 90016
-    PID_ESI_VPS_PLY1_YC   = 90017
-    PID_ESI_VPS_PLY1_S12  = 90018
+    PID_ESI_VPS_PLY1_RHO = 90012
+    PID_ESI_VPS_hPLY = 90013
+    PID_ESI_VPS_PLY1_XT = 90014
+    PID_ESI_VPS_PLY1_XC = 90015
+    PID_ESI_VPS_PLY1_YT = 90016
+    PID_ESI_VPS_PLY1_YC = 90017
+    PID_ESI_VPS_PLY1_S12 = 90018
 
     PID_ESI_VPS_FIRST_FAILURE_VAL = 91000
     PID_ESI_VPS_FIRST_FAILURE_MOM = 91001
@@ -300,19 +334,42 @@ class PropertyID(IntEnum):
     PID_ESI_VPS_THNOD_2 = 90022
     PID_ESI_VPS_SECFO_1 = 90023
     PID_ESI_VPS_SECFO_2 = 90024
+    
+    PID_BoundaryConfiguration = 95000
 
     # University of Trieste properties
     PID_SMILE_MOLECULAR_STRUCTURE = 92000
-    PID_MOLECULAR_WEIGHT          = 92001
-    PID_POLYDISPERSITY_INDEX      = 92002
-    PID_CROSSLINKER_TYPE          = 92003
-    PID_FILLER_DESIGNATION        = 92004
+    PID_MOLECULAR_WEIGHT = 92001
+    PID_POLYDISPERSITY_INDEX = 92002
+    PID_CROSSLINKER_TYPE = 92003
+    PID_FILLER_DESIGNATION = 92004
     PID_SMILE_MODIFIER_MOLECULAR_STRUCTURE = 92005
-    PID_SMILE_FILLER_MOLECULAR_STRUCTURE   = 92006
-    PID_CROSSLINKONG_DENSITY      = 92007
-    PID_FILLER_CONCENTRATION      = 92008
-    PID_DENSITY_OF_FUNCTIONALIZATION       = 92009
-    PID_TEMPERATURE               = 92010
-    PID_PRESSURE                  = 92011
-    PID_DENSITY                   = 92100
-    PID_TRANSITION_TEMPERATURE    = 92101
+    PID_SMILE_FILLER_MOLECULAR_STRUCTURE = 92006
+    PID_CROSSLINKONG_DENSITY = 92007
+    PID_FILLER_CONCENTRATION = 92008
+    PID_DENSITY_OF_FUNCTIONALIZATION = 92009
+    PID_TEMPERATURE = 92010
+    PID_PRESSURE = 92011
+    PID_DENSITY = 92100
+    PID_TRANSITION_TEMPERATURE = 92101
+    # GY user-case property IDs
+    PID_HyperelasticPotential = 92200
+    PID_ForceCurve = 92201
+    PID_DisplacementCurve= 92202
+    PID_CorneringAngle= 92203
+    PID_CorneringStiffness= 92204
+    
+
+    # Demo properties
+    PID_dirichletBC = 97000
+    PID_conventionExternalTemperature = 97001
+    PID_conventionCoefficient = 97002
+    # GY property IDs
+    PID_Footprint = 1000000
+    PID_Braking_Force = 1000001
+    PID_Stiffness = 1000002
+    PID_Hyper1 = 1000003
+    PID_maxDisplacement = 1000004
+    PID_maxMisesStress = 1000005
+    PID_maxPrincipalStress = 1000006
+    PID_Hyper2 = 1000007

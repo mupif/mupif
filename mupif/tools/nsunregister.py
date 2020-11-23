@@ -1,6 +1,6 @@
 from builtins import str
-import getopt, sys
-import re
+import getopt
+import sys
 sys.path.append('../..')
 from mupif import *
 import logging
@@ -41,30 +41,30 @@ def main():
         sys.exit(2)
     
     for o, a in opts:
-        if o in ("-k"):
+        if o in ("-k",):
             hkey = a
-        elif o in ("-n"):
+        elif o in ("-n",):
             nshost = a
-        elif o in ("-r"):
+        elif o in ("-r",):
             nsport = int(a)
-        elif o in ("-d"):
+        elif o in ("-d",):
             debug = True
-        elif o in ("-all"):
+        elif o in ("-all",):
             removeAll = True
-        elif o in ("-i"):
+        elif o in ("-i",):
             itemName = a    
     
         else:
             assert False, "unhandled option"
     
-    if nshost == None or nsport == None:
+    if nshost is None or nsport is None:
         usage()
         sys.exit(2)
     
     print("hkey:"+hkey)
     print("Nameserver:"+nshost+":"+str(nsport))
     
-    #locate nameserver
+    # locate nameserver
     try:
         ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
         a = ns.list(return_metadata=True)
@@ -72,13 +72,12 @@ def main():
     except:
         # Exception as e:
         print("\nConnection to nameserver failed\n")
-        #log.exception(e)
+        # log.exception(e)
     else:
-        print ("\nConnection to nameserver is OK\n")   
-        
-        
+        print("\nConnection to nameserver is OK\n")
+
     if removeAll:
-        for k,v in a.items():
+        for k, v in a.items():
             ns.remove(k)
     
     if itemName:
@@ -89,7 +88,6 @@ def main():
             for key, value in a.iteritems():
                 print(key, value)
             
-   
-        
+
 if __name__ == '__main__':
     main()

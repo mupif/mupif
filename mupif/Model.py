@@ -28,6 +28,7 @@ from . import MupifObject
 from .dataID import PropertyID
 from .dataID import FieldID
 from .dataID import FunctionID
+from .dataID import ParticleSetID
 from . import Property
 from . import Field
 from . import Function
@@ -42,14 +43,15 @@ prefix = "mupif."
 type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, PropertyID)))
 type_ids.extend(prefix+s for s in list(map(str, FieldID)))
+type_ids.extend(prefix+s for s in list(map(str, ParticleSetID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
-    'type': 'object',
+    'type': 'object', # Object supplies a dictionary
     'properties': {
         # Name: e.g. Non-stationary thermal problem, obtained automatically from getApplicationSignature()
-        'Name': {'type': 'string'},
-        'ID': {'type': ['string', 'integer']},
+        'Name': {'type': 'string'}, # Name of the model (or workflow), e.g. 'stationary thermal model', 'steel buckling workflow'
+        'ID': {'type': ['string', 'integer']}, # Unique ID of model (workflow), e.g. 'Lammps', 'CalculiX', 'MFEM', 'Buckling workflow 1'
         'Description': {'type': 'string'},
         'Material': {'type': 'string'},  # What material is simulated
         'Manuf_process': {'type': 'string'},  # Manufacturing process or in-service conditions
@@ -58,7 +60,7 @@ ModelSchema = {
             'type': 'object',
             'properties': {
                 # Type: MODA model type
-                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Continuum', 'Other']},
+                'Type': {'type': 'string', 'enum': ['Electronic', 'Atomistic', 'Molecular', 'Mesoscopic', 'Continuum', 'Other']},
                 'Entity': {'type': 'string', 'enum': ['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']},
                 # Entity_description: E.g. Atoms are treated as spherical entities in space with the radius and mass
                 # determined by the element type
@@ -72,19 +74,23 @@ ModelSchema = {
                 'Relation_description': {'type': 'array'},
                 # Relation_formulation: Constitutive equation (material relation), e.g. force field, stress-strain,
                 # flow-gradient. MODA MATERIAL RELATIONS
-                'Relation_formulation': {'type': 'array'},
+                'Relation_formulation': {'type': 'array'}
             },
             'required': ['Type', 'Entity']
         },
         'Solver': {
             'properties': {
-                'Software': {'type': 'string'},  # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                # Software: Name of the software (e.g.openFOAM). Corresponds to MODA SOFTWARE TOOL
+                'Software': {'type': 'string'},
                 'Language': {'type': 'string'},
                 'License': {'type': 'string'},
                 'Creator': {'type': 'string'},
                 'Version_date': {'type': 'string'},
-                'Type': {'type': 'string'},  # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs) Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
-                'Solver_additional_params': {'type': 'string'},  # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                # Type: Type e.g. finite difference method for Ordinary Differential Equations (ODEs)
+                # Corresponds to MODA Solver Specification NUMERICAL SOLVER attribute.
+                'Type': {'type': 'string'},
+                # Solver_additional_params: Additional parameters of numerical solver, e.g. time integration scheme
+                'Solver_additional_params': {'type': 'string'},
                 'Documentation': {'type': 'string'},  # Where published/documented
                 'Estim_time_step_s': {'type': 'number'},  # Seconds
                 'Estim_comp_time_s': {'type': 'number'},  # Seconds
@@ -94,7 +100,7 @@ ModelSchema = {
                 'Accuracy': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
                 'Sensitivity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
                 'Complexity': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
-                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']},
+                'Robustness': {'type': 'string', 'enum': ['Low', 'Medium', 'High', 'Unknown']}
             },
             'required': [
                 'Software', 'Language', 'License', 'Creator', 'Version_date', 'Type', 'Documentation',
@@ -105,14 +111,16 @@ ModelSchema = {
         'Execution': {
             'properties': {
                 'ID': {'type': ['string', 'integer']},  # Optional application execution ID (typically set by workflow)
-                'Use_case_ID': {'type': ['string', 'integer']},  # user case ID (e.g. thermo-mechanical simulation coded as 1_1)
-                'Task_ID': {'type': 'string'},  # user task ID (e.g. variant of user case ID such as model with higher accuracy)
+                # Use_case_ID: user case ID (e.g. thermo-mechanical simulation coded as 1_1)
+                'Use_case_ID': {'type': ['string', 'integer']},
+                # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
+                'Task_ID': {'type': 'string'},
                 'Status': {'type': 'string', 'enum': ['Instantiated', 'Initialized', 'Running', 'Finished', 'Failed']},
                 'Progress': {'type': 'number'},  # Progress in %
                 'Date_time_start': {'type': 'string'},  # automatically set in Workflow
                 'Date_time_end': {'type': 'string'},  # automatically set in Workflow
                 'Username': {'type': 'string'},  # automatically set in Model and Workflow
-                'Hostname': {'Physics''type': 'string'},  # automatically set in Model and Workflow
+                'Hostname': {'type': 'string'}  # automatically set in Model and Workflow
             },
             'required': ['ID']
         },
@@ -121,9 +129,9 @@ ModelSchema = {
             'items': {
                 'type': 'object',  # Object supplies a dictionary
                 'properties': {
-                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
+                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field', 'mupif.ParticleSet']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. PID_Concentration
-                    'ID_info': {'type': 'array'},  # optional parameter for additional info
+                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
                     'Units': {'type': 'string'},
@@ -137,12 +145,12 @@ ModelSchema = {
             'items': {
                 'type': 'object',
                 'properties': {
-                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field']},
+                    'Type': {'type': 'string', 'enum': ['mupif.Property', 'mupif.Field', 'mupif.ParticleSet']},
                     'Type_ID': {'type': 'string', 'enum': type_ids},  # e.g. mupif.FieldID.FID_Temperature
-                    'ID_info': {'type': 'array'},  # optional parameter for additional info
+                    'Obj_ID': {'type': 'array'},  # optional parameter for additional info
                     'Name': {'type': 'string'},
                     'Description': {'type': 'string'},
-                    'Units': {'type': 'string'},
+                    'Units': {'type': 'string'}
                 },
                 'required': ['Type', 'Type_ID', 'Name', 'Units']
             }
@@ -172,7 +180,7 @@ class Model(MupifObject.MupifObject):
         """
         Constructor. Initializes the application.
 
-        :param dict metaData: Optionally pass metadata.
+        :param dict metaData: Optionally pass metadata for merging.
         """
         super(Model, self).__init__()
 
@@ -224,7 +232,7 @@ class Model(MupifObject.MupifObject):
 
         if validateMetaData:
             self.validateMetadata(ModelSchema)
-            log.info('Metadata successfully validated')
+            # log.info('Metadata successfully validated')
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
         """
@@ -356,7 +364,7 @@ class Model(MupifObject.MupifObject):
         :param Function.Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
-    def getMesh (self, tstep):
+    def getMesh(self, tstep):
         """
         Returns the computational mesh for given solution step.
 
@@ -464,7 +472,7 @@ class Model(MupifObject.MupifObject):
                 self.setMetadata('Status', 'Failed')
                 raise
 
-    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Shutdowns daemons if created internally.
@@ -483,7 +491,7 @@ class Model(MupifObject.MupifObject):
             # log.info(self.pyroDaemon)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
-            self.pyroDaemon=None
+            self.pyroDaemon = None
         else:
             log.info("Terminating model") 
 
@@ -510,12 +518,15 @@ class Model(MupifObject.MupifObject):
 class RemoteModel (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
-    However, when application is allocated using JobManager or ssh tunnel, the proper termination of the tunnel or job manager task is required.
+    However, when application is allocated using JobManager or ssh tunnel, the proper termination of the tunnel or
+    job manager task is required.
     
-    This class is a decorator around pyro proxy object represeting application storing the reference to job manager and related jobID or/and ssh tunnel.
+    This class is a decorator around pyro proxy object represeting application storing the reference to job manager and
+    related jobID or/and ssh tunnel.
 
-    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy) and the termination of job and tunnel has to be done from local computer, which has the neccesary communication link established 
-    (ssh tunnel in particular, when port translation takes place)
+    These extermal attributes could not be injected into Application instance, as it is remote instance (using proxy)
+    and the termination of job and tunnel has to be done from local computer, which has the neccesary
+    communication link established (ssh tunnel in particular, when port translation takes place)
     """
     def __init__(self, decoratee, jobMan=None, jobID=None, appTunnel=None):
         self._decoratee = decoratee
@@ -532,7 +543,7 @@ class RemoteModel (object):
     def getJobID(self):
         return self._jobID
     
-    @Pyro4.oneway # in case call returns much later than daemon.shutdown
+    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Terminates the allocated job at jobManager
@@ -543,7 +554,8 @@ class RemoteModel (object):
         
         if self._jobMan and self._jobID:
             try:
-                log.info("RemoteApplication: Terminating jobManager job %s on %s" % (str(self._jobID), self._jobMan.getNSName()))
+                log.info("RemoteApplication: Terminating jobManager job %s on %s" % (
+                    str(self._jobID), self._jobMan.getNSName()))
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID = None
             except Exception as e:

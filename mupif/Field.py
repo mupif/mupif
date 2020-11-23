@@ -86,6 +86,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :type values: list of tuples representing individual values
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
+        :param dict metaData: Optionally pass metadata for merging
         """
         
         super(Field, self).__init__()
@@ -598,7 +599,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         if ylabel:
             plt.ylabel(ylabel)
         if vertex == 1:
-            plt.scatter(vertexPointsArr[:,0], vertexPointsArr[:,1], marker='o', c='b', s=5, zorder=10)
+            plt.scatter(vertexPointsArr[:, 0], vertexPointsArr[:, 1], marker='o', c='b', s=5, zorder=10)
 
         # plt.axis('equal')
         # plt.gca().set_aspect('equal', adjustable='box-forced')
@@ -784,7 +785,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             return Field.makeFromVTK3(fileName, time=time, units=unit, forceVersion2=True)
         ugr = data.structure
         if not isinstance(ugr, pyvtk.UnstructuredGrid):
-            raise NotImplementedError("grid type %s is not handled by mupif (only UnstructuredGrid is)." % ugr.__class__.__name__)
+            raise NotImplementedError(
+                "grid type %s is not handled by mupif (only UnstructuredGrid is)." % ugr.__class__.__name__)
         mesh = Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
         # get cell and point data
         pd, cd = data.point_data.data, data.cell_data.data
@@ -836,7 +838,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             raise ValueError('At least one field must be passed.')
         # check if all fields are defined on the same mesh
         if len(set([f.mesh for f in fields])) != 1:
-            raise RuntimeError('Not all fields are sharing the same Mesh object (and could not be saved to a single .vtu file')
+            raise RuntimeError(
+                'Not all fields are sharing the same Mesh object (and could not be saved to a single .vtu file')
         # convert mesh to VTK UnstructuredGrid
         mesh = fields[0].getMesh()
         vtkgrid = mesh.asVtkUnstructuredGrid()
@@ -899,7 +902,8 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         rr.Update()
         ugrid = rr.GetOutput()
         if not isinstance(ugrid, vtk.vtkUnstructuredGrid):
-            raise RuntimeError("vtkDataObject read from '%s' must be a vtkUnstructuredGrid (not a %s)" % (fileName, ugrid.__class__.__name__))
+            raise RuntimeError("vtkDataObject read from '%s' must be a vtkUnstructuredGrid (not a %s)" % (
+                fileName, ugrid.__class__.__name__))
         # import sys
         # sys.stderr.write(str((ugrid,ugrid.__class__,vtk.vtkUnstructuredGrid)))
         # make mesh -- implemented separately

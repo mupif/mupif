@@ -3,13 +3,14 @@
 # It is strongly advised to remove built and dist directories before new build
 
 #include README.txt
-include mupif/doc/refManual/MuPIFReferencemanual.pdf
-include mupif/doc/userManual/MuPIF-userman.pdf *.pdf
+include mupif/doc/refManual/MuPIFReferencemanual*.pdf
+include mupif/doc/userManual/MuPIF-userman*.pdf
 #recursive-include mupif/doc/userManual *.pdf
 #prune *.pyc - should be kept in distro
 include mupif/examples/testExamples.sh
 
 recursive-include mupif/examples *.py README *.in *.c
+recursive-include mupif/tests README
 prune mupif/examples/Example05/paraview
 recursive-include mupif/examples/Example05/paraview MMPTestCase_v1.geo fld_TEMPERATURE.escl
 
@@ -17,6 +18,7 @@ recursive-include mupif/APIs *.py README *.in
 recursive-include mupif/examples/ssh *
 
 prune mupif/examples/obsolete
+prune mupif/examples/mongo
 #prune mupif/examples/ssh - need for local tests
 prune mupif/examples/Workshop-2017
 

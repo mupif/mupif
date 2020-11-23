@@ -23,7 +23,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 
 class Example08(Workflow.Workflow):
    
-    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}):
+    def __init__(self, metaData={}):
         """
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -40,14 +40,14 @@ class Example08(Workflow.Workflow):
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
 
-        super(Example08, self).__init__(targetTime=targetTime, metaData=MD)
+        super(Example08, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
 
         self.thermal = None
         self.mechanical = None
         self.thermalJobMan = None
     
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver
         ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         # connect to JobManager running on (remote) server
@@ -63,7 +63,8 @@ class Example08(Workflow.Workflow):
         except Exception as e:
             log.exception(e)
             self.terminate()
-       
+
+        # Connecting directly to mechanical instance, not using jobManager
         self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
 
         thermalSignature = self.thermal.getApplicationSignature()
@@ -71,7 +72,7 @@ class Example08(Workflow.Workflow):
         mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
 
-        super(Example08, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -82,9 +83,12 @@ class Example08(Workflow.Workflow):
             }
         }
 
+        pf = self.thermalJobMan.getPyroFile(self.thermal.getJobID(), "inputT.in", 'wb')
+        PyroUtil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf, cfg.hkey)
+
         self.thermal.initialize(
-            file='..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in',
-            workdir='.',
+            file='inputT.in',
+            workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
             metaData=passingMD
         )
         self.mechanical.initialize(
@@ -137,7 +141,7 @@ class Example08(Workflow.Workflow):
 
 
 if __name__ == '__main__':
-    demo = Example08(targetTime=PQ.PhysicalQuantity(10., 's'))
+    demo = Example08()
     workflowMD = {
         'Execution': {
             'ID': '1',
@@ -145,7 +149,7 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(metaData=workflowMD)
+    demo.initialize(targetTime=PQ.PhysicalQuantity(10., 's'), metaData=workflowMD)
     # demo.printMetadata()
     # print(demo.hasMetadata('Execution.ID'))
     # exit(0)

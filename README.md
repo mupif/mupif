@@ -16,14 +16,13 @@ MuPIF requires the python interpreter, version 3.2 or newer. It has been tested 
 
 ## Installation
 
-There are two options for MuPIF installation. 
+There are two options for MuPIF installation:
 * The first, recommended one, relies on Python Package Index (run as pip3 or pip) 
-  * For system wide installation (needs admin privilegies): `pip3 install mupif`
-  * Fou user space installation: `pip3 install mupif --user`
+* For a system wide installation (needs admin privilegies): `pip3 install mupif`
+* For a user space installation: `pip3 install mupif --user`
 
-The second option relies on the most advanced version on github
-*git clone https://github.com/mupif/mupif.git mupif.git*
-
+The second option relies on the most advanced version on github:
+* ```git clone https://github.com/mupif/mupif.git mupif.git```*
 
 ## License
 MuPIF has been developped at Czech Technical University by Borek Patzak and coworkers and is available under GNU Library or Lesser General Public License version 3.0 (LGPLv3).

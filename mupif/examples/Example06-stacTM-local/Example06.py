@@ -11,7 +11,7 @@ log = logging.getLogger()
 
 class Example06(Workflow.Workflow):
 
-    def __init__(self, targetTime=PQ.PhysicalQuantity('0 s'), metaData={}):
+    def __init__(self, metaData={}):
         """
         Initializes the workflow.
         """
@@ -19,7 +19,7 @@ class Example06(Workflow.Workflow):
             'Name': 'Thermo-mechanical stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            'Model_refs_ID': [{'Name': 'NonStatThermo-1', 'ID':'ss', 'Version_date': 'dd'}, {'Name':'Mechanical-1', 'ID':'ss', 'Version_date': 'dd'}],
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field',
@@ -28,14 +28,14 @@ class Example06(Workflow.Workflow):
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}
             ]
         }
-        super(Example06, self).__init__(targetTime=targetTime, metaData=MD)
+        super(Example06, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
 
         self.thermalSolver = demoapp.thermal()
         self.mechanicalSolver = demoapp.mechanical()
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(Example06, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
+        super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -47,6 +47,7 @@ class Example06(Workflow.Workflow):
 
         self.thermalSolver.initialize('inputT10.in', '.', metaData=passingMD)
         self.mechanicalSolver.initialize('inputM10.in', '.', metaData=passingMD)
+        #self.mechanicalSolver.printMetadata(nonEmpty=False)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.thermalSolver.solveStep(istep, stageID, runInBackground)
@@ -84,8 +85,8 @@ md = {
     }
 }
 
-demo = Example06(targetTime=PQ.PhysicalQuantity('1 s'))
-demo.initialize(metaData=md)
+demo = Example06()
+demo.initialize(targetTime=PQ.PhysicalQuantity('1 s'), metaData=md)
 
 tstep = TimeStep.TimeStep(
     PQ.PhysicalQuantity('1 s'),
@@ -106,11 +107,12 @@ mf = demo.getField(FieldID.FID_Displacement, tstep.getTime())
 # mf.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
 # time.sleep(1)
 m_val = mf.evaluate((4.1, 0.9, 0.0))
+print(t_val.getValue()[0], m_val.getValue()[1])
 
 demo.terminate()
 
-if ((abs(t_val.getValue()[0]-5.1996464044328956) <= 1.e-8) and
-        (abs(m_val.getValue()[1]-(-1.2033973431029044e-05)) <= 1.e-8)):
+if ((abs(t_val.getValue()[0]-4.4994119521216644) <= 1.e-8) and
+        (abs(m_val.getValue()[1]-(-4.170695218292803e-06)) <= 1.e-8)):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

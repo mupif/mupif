@@ -35,8 +35,23 @@ log = logging.getLogger()
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema['properties']['Solver']
 del WorkflowSchema['properties']['Physics']
-WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models
+#WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models (workflows). This is just not enough to keep track of difference model's versions. Therefore, Model_refs_ID must contain a triplet Name, ID, Version_date to know what models (solvers) were exactly used.
+WorkflowSchema['properties'].update({
+    'Model_refs_ID': {
+        'type': 'array', # List of contained models/workflows
+        #'items': {
+            #'type': 'object',  # Object supplies a dictionary
+            #'properties': {
+                #'Name': {'type': 'string'},
+                #'ID': {'type': ['string', 'integer']},
+                #'Version_date': {'type': 'string'},
+            #},
+            ##'required': ['Name', 'ID', 'Version_date']
+        #}
+    }
+})
 WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
+
 
 
 @Pyro4.expose
@@ -50,35 +65,35 @@ class Workflow(Model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}):
+    def __init__(self, metaData={}):
         """
         Constructor. Initializes the workflow
 
-        :param PhysicalQuantity targetTime: target simulation time
         :param dict metaData: Optionally pass metadata.
         """
         super(Workflow, self).__init__(metaData=metaData)
+
+        self.workflowMonitor = None  # No monitor by default
+        self.targetTime = None
+
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
+        """
+        Initializes application, i.e. all functions after constructor and before run.
+        
+        :param str file: Name of file
+        :param str workdir: Optional parameter for working directory
+        :param PhysicalQuantity targetTime: target simulation time
+        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() )
+        :param bool validateMetaData: Defines if the metadata validation will be called
+        :param named_arguments kwargs: Arbitrary further parameters
+        """
+        self.updateMetadata(metaData)
 
         # print (targetTime)
         if PQ.isPhysicalQuantity(targetTime):
             self.targetTime = targetTime
         else:
             raise TypeError('targetTime is not PhysicalQuantity')
-
-        self.workflowMonitor = None  # No monitor by default
-
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        """
-        Initializes application, i.e. all functions after constructor and before run.
-        
-        :param str file: Name of file
-        :param str workdir: Optional parameter for working directory
-        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() )
-        :param bool validateMetaData: Defines if the metadata validation will be called
-        :param named_arguments kwargs: Arbitrary further parameters
-        """
-        self.updateMetadata(metaData)
-        # define futher app metadata
         
         self.file = file
         if workdir == '':

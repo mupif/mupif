@@ -30,7 +30,6 @@ def main():
     jobID = None
     natPort = None
     configName = None
-    mupif = None
     moduleDir = None
     configMode = 0
     workDir = ''

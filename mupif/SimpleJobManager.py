@@ -118,7 +118,7 @@ class SimpleJobManager(JobManager.JobManager):
                 log.error('Unable to start thread')
                 self.lock.release()
                 raise
-                return JobManager.JOBMAN_ERR, None
+                # return JobManager.JOBMAN_ERR, None
 
             log.info('SimpleJobManager:allocateJob: successfully allocated ' + jobID)
             self.lock.release()
@@ -184,10 +184,9 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.jobMan2CmdPath = jobMan2CmdPath
         self.freePorts = list(range(portRange[0], portRange[1]+1))
         if maxJobs > len(self.freePorts):
-            log.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d' % (self.freePorts.size()))
+            log.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d' % len(self.freePorts))
             self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
-        jobID = ""
 
         # Create a TCP/IP socket to get uri from daemon registering an application
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -206,7 +205,8 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.lock.acquire()
         log.info('SimpleJobManager2: allocateJob...')
         if len(self.activeJobs) >= self.maxJobs:
-            log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs))
+            log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (
+                len(self.activeJobs), self.maxJobs))
             self.lock.release()
             raise JobManager.JobManNoResourcesException("SimpleJobManager: no more resources")
             # return (JOBMAN_NO_RESOURCES,None)
@@ -220,7 +220,7 @@ class SimpleJobManager2 (JobManager.JobManager):
             log.info('SimpleJobManager2: port to be assigned %d' % jobPort)
 
             try:
-                targetWorkDir = self.jobManWorkDir+os.path.sep+jobID
+                targetWorkDir = self.getJobWorkDir(jobID)
                 log.info('SimpleJobManager2: Checking target workdir %s', targetWorkDir)
                 if not os.path.exists(targetWorkDir):
                     os.makedirs(targetWorkDir)
@@ -228,10 +228,12 @@ class SimpleJobManager2 (JobManager.JobManager):
             except Exception as e:
                 log.exception(e)
                 raise
-                return JOBMAN_ERR, None
+                # return JOBMAN_ERR, None
 
             try:
-                args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d', str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c', str(self.configFile), '-m', str(self.serverConfigMode)]
+                args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d',
+                        str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c',
+                        str(self.configFile), '-m', str(self.serverConfigMode)]
                 if self.jobMan2CmdPath[-3:] == '.py':
                     # use the same python interpreter as running this code, prepend to the arguments
                     args.insert(0, sys.executable)
@@ -243,7 +245,7 @@ class SimpleJobManager2 (JobManager.JobManager):
             except Exception as e:
                 log.exception(e)
                 raise
-                return JOBMAN_ERR, None
+                # return JOBMAN_ERR, None
             
             try:
                 # try to get uri from Property.psubprocess
@@ -271,7 +273,7 @@ class SimpleJobManager2 (JobManager.JobManager):
                 log.error('Unable to start thread')
                 self.lock.release()
                 raise
-                return JobManager.JOBMAN_ERR, None
+                # return JobManager.JOBMAN_ERR, None
 
             log.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
@@ -284,7 +286,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         See :func:`JobManager.terminateJob`
         """
         self.lock.acquire()
-        # unregister the applictaion from ns
+        # unregister the application from ns
         self.ns.remove(jobID)
         # terminate the process
         if jobID in self.activeJobs:
@@ -293,7 +295,8 @@ class SimpleJobManager2 (JobManager.JobManager):
                 # free the assigned port
                 self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
                 # delete entry in the list of active jobs
-                log.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d' % (jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
+                log.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d' % (
+                    jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
                 del self.activeJobs[jobID]
             except KeyError:
                 log.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?' % jobID)
@@ -344,7 +347,8 @@ class SimpleJobManager2 (JobManager.JobManager):
         status = []
         tnow = timeTime.time()
         for key in self.activeJobs:
-            status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX], self.activeJobs[key][SJM2_PORT_INDX]))
+            status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX],
+                           self.activeJobs[key][SJM2_PORT_INDX]))
         return status
 
     def uploadFile(self, jobID, filename, pyroFile, hkey):
@@ -358,7 +362,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         """
         See :func:`JobManager.getPyroFile`
         """
-        targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
+        targetFileName = self.getJobWorkDir(jobID)+os.path.sep+filename
         log.info('SimpleJobManager2:getPyroFile ' + targetFileName)
         pfile = PyroFile.PyroFile(targetFileName, mode, buffSize)
         self.daemon.register(pfile)

@@ -15,12 +15,12 @@ import mupif.Physics.PhysicalQuantities as PQ
 #
 
 
-class emailAPI(Model.Model):
+class EmailAPI(Model.Model):
     """
     Simple application API that involves operator interaction
     """
     def __init__(self, file):
-        super(emailAPI, self).__init__(file)
+        super(EmailAPI, self).__init__(file)
         # note: "From" should correspond to destination e-mail
         # where the response is received (Operator can reply to the message)
         self.operator = operatorUtil.OperatorEMailInteraction(From='appAPI@gmail.com',
@@ -31,8 +31,6 @@ class emailAPI(Model.Model):
         self.inputs = {}
         self.outputs = {}
         self.key = 'Operator-results'
-
-
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         MD = {
@@ -62,15 +60,14 @@ class emailAPI(Model.Model):
                 'Robustness': 'Unknown'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True}],
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'PropertyID.PID_Demo_Value', 'Name': 'Demo value',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Demo_Value', 'Name': 'Demo value',
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
         }
         self.updateMetadata(MD)
-        super(emailAPI, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super(EmailAPI, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
-        
     def setProperty(self, property, objectID=0):
         # remember the mapped value
         self.inputs[str(property.propID)] = property
@@ -119,10 +116,10 @@ class emailAPI(Model.Model):
 
 
 #################################################
-#demo code
+# demo code
 #################################################
 # create instance of application API
-app = emailAPI(None)
+app = EmailAPI(None)
 try:
     executionMetadata = {
         'Execution': {

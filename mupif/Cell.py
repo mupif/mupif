@@ -24,13 +24,14 @@ from builtins import range, object
 
 from . import BBox
 from . import Util
-from . import APIError
 import math
 from . import Mesh
 from . import CellGeometryType
 import numpy as np
 import Pyro4
 
+import numpy
+import numpy.linalg
 
 # debug flag
 debug = 0
@@ -368,6 +369,8 @@ class Triangle_2d_quad(Cell):
         res = np.zeros(2)
         # setup initial guess
         lcoords_guess = [0.0, 0.0]
+
+        error = 0.  # formal initial value
 
         # apply Newton-Raphson to solve the problem
         for nite in range(10):
@@ -851,7 +854,11 @@ class Tetrahedron_3d_lin(Cell):
         l3 = lc[2]
         l4 = 1. - l1 - l2 - l3
 
-        return (l1*c1[0]+l2*c2[0]+l3*c3[0]+l4*c4[0], l1*c1[1]+l2*c2[1]+l3*c3[1]+l4*c4[1], l1*c1[2]+l2*c2[2]+l3*c3[2]+l4*c4[2])
+        return (
+            l1*c1[0]+l2*c2[0]+l3*c3[0]+l4*c4[0],
+            l1*c1[1]+l2*c2[1]+l3*c3[1]+l4*c4[1],
+            l1*c1[2]+l2*c2[2]+l3*c3[2]+l4*c4[2]
+        )
 
     def interpolate(self, point, vertexValues):
         """
@@ -900,10 +907,6 @@ class Tetrahedron_3d_lin(Cell):
                  ( c2[0] - c1[0] ) * ( c4[1] - c1[1] ) * ( c3[2] - c1[2] ) +
                  ( c2[0] - c1[0] ) * ( c3[1] - c1[1] ) * ( c4[2] - c1[2] ) -
                  ( c3[0] - c1[0] ) * ( c2[1] - c1[1] ) * ( c4[2] - c1[2] ) )
-
-
-import numpy
-import numpy.linalg
 
 
 @Pyro4.expose
@@ -1058,10 +1061,10 @@ class Brick_3d_lin(Cell):
         y = 0
         z = 0
         for i in range(8):
-                v = self.mesh.getVertex(self.vertices[i])
-                x = x+n[i]*v.coords[0]
-                y = y+n[i]*v.coords[1]
-                z = z+n[i]*v.coords[2]
+            v = self.mesh.getVertex(self.vertices[i])
+            x = x+n[i]*v.coords[0]
+            y = y+n[i]*v.coords[1]
+            z = z+n[i]*v.coords[2]
         return x, y, z
 
     def interpolate(self, point, vertexValues):

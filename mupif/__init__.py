@@ -24,12 +24,13 @@
 This is a MuPIF module (Multi-Physics Integration Framework)
 """
 # Major.Minor.Patch
-__version__ = '2.2.0'
+__version__ = '2.3.0'
 __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
 from .dataID import FieldID
 from .dataID import PropertyID
 from .dataID import FunctionID
+from .dataID import ParticleSetID
 from .valueType import ValueType
 
 from . import APIError
@@ -62,14 +63,14 @@ from . import MupifObject
 from . import Workflow
 from . import MetadataKeys
 from . import Physics
-
+from . import Particle
+from . import ConstantField
 
 # List all submodules, so they can all be imported: from mupif import *
 __all__ = ['APIError', 'Model', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'dataID', 'EnsightReader2', 'FieldID', 'Field',
            'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree',
            'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
-           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics']
-
+           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics', 'Particle', 'ParticleSetID', 'ConstantField']
 from . import Util
 import logging
 import os

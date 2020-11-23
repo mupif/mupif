@@ -1,5 +1,6 @@
-import os,sys
-sys.path.extend(['..','../../..'])
+import os
+import sys
+sys.path.extend(['..', '../../..'])
 from mupif import *
 Util.changeRootLogger('mechanical.log')
 import argparse
@@ -32,4 +33,3 @@ PyroUtil.runJobManagerServer(
     jobman=jobMan,
     daemon=daemon
 )
-

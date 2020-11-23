@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-import socketserver, subprocess, sys
+import socketserver
+import subprocess
+import sys
 from threading import Thread
 import getopt
-HOST = ''   # Symbolic name, meaning all available interfaces
-PORT = 2000 # override using -r portnum 
+HOST = ''    # Symbolic name, meaning all available interfaces
+PORT = 2000  # override using -r portnum
 
 
 def usage():
@@ -14,9 +16,8 @@ def usage():
     print() 
 
 
-
 class SingleTCPHandler(socketserver.BaseRequestHandler):
-    "One instance per connection.  Override handle(self) to customize action."
+    """One instance per connection.  Override handle(self) to customize action."""
     def handle(self):
         # self.request is the client connection
         print("Connection from: ", self.client_address)
@@ -28,6 +29,7 @@ class SingleTCPHandler(socketserver.BaseRequestHandler):
         self.request.send('OK'.encode('utf-8'))
         self.request.close()
 
+
 class SimpleServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     # Ctrl-C will cleanly kill all spawned threads
     daemon_threads = True
@@ -36,6 +38,7 @@ class SimpleServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
     def __init__(self, server_address, RequestHandlerClass):
         socketserver.TCPServer.__init__(self, server_address, RequestHandlerClass)
+
 
 if __name__ == "__main__":
 
@@ -48,15 +51,14 @@ if __name__ == "__main__":
         sys.exit(2)
 
     for o, a in opts:
-        if o in ("-r"):
+        if o in ("-r",):
             PORT = int(a)
     
         else:
             usage()
             sys.exit(2)
-            
 
-    print ("Simple server listening on port "+str(PORT)+"\n")
+    print("Simple server listening on port "+str(PORT)+"\n")
     server = SimpleServer((HOST, PORT), SingleTCPHandler)
     # terminate with Ctrl-C
     try:
