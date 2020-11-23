@@ -46,120 +46,13 @@ SJM2_URI_INDX = 3  # Pyro4 uri
 SJM2_PORT_INDX = 4  # port
 
 
-@Pyro4.expose
-class SimpleJobManager(JobManager.JobManager):
-    """
-    Simple job manager using Pyro thread pool based server.
-    Requires Pyro servertype=thread pool based (SERVERTYPE config item). This is the default value.
-    For the thread pool server the amount of worker threads to be spawned is configured using THREADPOOL_SIZE config item (default value set to 16).
-
-    However, dee to GIL (Global Interpreter Lock of python the actual level of achievable concurency is low. The threads created from a single python context are executed sequentially. This implementation is suitable only for servers with a low workload.
-
-    .. automethod:: __init__
-    """
-    def __init__(self, daemon, ns, appAPIClass, appName, jobManWorkDir, maxJobs=1):
-        """Constructor.
-
-        :param Pyro4.Daemon daemon: running daemon for SimpleJobManager
-        :param Pyro4.naming.Nameserver ns: running name server
-        :param Application appAPIClass: application class
-        :param str appName: application name
-        :param str jobManWorkDir: see :func:`JobManager.__init__`
-        :param int maxJobs: see :func:`JobManager.__init__`
-        """
-        super(SimpleJobManager, self).__init__(appName, jobManWorkDir, maxJobs)
-        # remember application API class to create new app instances later
-        self.appAPIClass = appAPIClass
-        self.daemon = daemon
-        self.ns = ns
-        self.jobCounter = 0
-        self.jobPort = daemon.locationStr
-        self.lock = threading.Lock()
-
-        # pyro daemon running in thread pool based setting to allow for concurrent connections
-        # self.pyroDaemon = Pyro4.Daemon(host=server, port=port, nathost=nathost, natport=natport)
-        # self.pyroDaemon.requestLoop()
-        # self.ns = connectNameServer(nshost, nsport, hkey)
-        log.debug('SimpleJobManager: initialization done')
-
-    def allocateJob(self, user, natPort):
-        """
-        Allocates a new job.
-
-        See :func:`JobManager.allocateJob`
-
-        :except: unable to start a thread, no more resources
-        """
-        self.lock.acquire()
-        log.debug('SimpleJobManager:allocateJob...')
-        if len(self.activeJobs) >= self.maxJobs:
-            log.error('SimpleJobManager: no more resources')
-            self.lock.release()
-            raise JobManager.JobManNoResourcesException("SimpleJobManager: no more resources")
-            # return (JOBMAN_NO_RESOURCES,None)
-        else:
-            # update job counter
-            self.jobCounter = self.jobCounter+1
-            jobID = str(self.jobCounter)+"@"+self.applicationName
-            log.debug('SimpleJobManager: trying to allocate '+jobID)
-            # run the new application instance in a new thread
-            try:
-                app = self.appAPIClass()
-                start = timeTime.time()
-                self.activeJobs[jobID] = (app, start, user)
-                # register agent; exposing all its methods
-                # ExposedApp = Pyro4.expose(app)
-                # uri = self.daemon.register(ExposedApp) #
-                uri = self.daemon.register(app)
-                self.ns.register(jobID, uri)
-                log.info('NameServer %s registered uri %s' % (jobID, uri))
-
-            except:
-                log.error('Unable to start thread')
-                self.lock.release()
-                raise
-                # return JobManager.JOBMAN_ERR, None
-
-            log.info('SimpleJobManager:allocateJob: successfully allocated ' + jobID)
-            self.lock.release()
-            return JobManager.JOBMAN_OK, jobID, self.jobPort
-
-    def terminateJob(self, jobID):
-        """
-        Terminates the given job, frees the associated recources.
-
-        See :func:`JobMSimpleJobManageranager.terminateJob`
-        """
-        self.lock.acquire()
-        self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
-        del self.activeJobs[jobID]
-        log.debug('SimpleJobManager:terminateJob: job terminated ' + jobID)
-        self.lock.release()
-
-    def getApplicationSignature(self):
-        """
-        :return: application name
-        :rtype: str
-        """
-        return "Mupif.JobManager.SimpleJobManager"
-
-    def getStatus(self):
-        """
-        Returns a list of tuples for all running jobIDs
-        :return: a list of tuples (jobID, running time, user)
-        :rtype: a list of (str, float, str)
-        """
-        status = []
-        tnow = timeTime.time()
-        for key in self.activeJobs:
-            status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX]))
-        return status
-
 
 @Pyro4.expose
 class SimpleJobManager2 (JobManager.JobManager):
     """
-    Simple job manager 2. This implementation avoids the problem of GIL lock by running applicaton server under new process with its own daemon.
+    Simple job manager 2. 
+    This implementation avoids the problem of GIL lock by running applicaton 
+    server under new process with its own daemon.
     """
     def __init__(self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
         """
