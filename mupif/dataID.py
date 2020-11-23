@@ -354,7 +354,7 @@ class PropertyID(IntEnum):
     PID_TRANSITION_TEMPERATURE = 92101
     # GY user-case property IDs
     PID_HyperelasticPotential = 92200
-    PID_ForceCurve`= 92201
+    PID_ForceCurve = 92201
     PID_DisplacementCurve= 92202
     PID_CorneringAngle= 92203
     PID_CorneringStiffness= 92204
