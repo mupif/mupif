@@ -86,12 +86,22 @@ class JobManager(object):
         self.activeJobs = {}  # dictionary of active jobs
         self.jobManWorkDir = jobManWorkDir
 
-    def allocateJob(self, user, natPort):
+    def preAllocate (self, requirements=None): 
+        """
+            Allows to pre-allocate(reserve) the resource. 
+            Returns ticket id (as promise) to finally allocate resource. 
+            The requirements is an optional job-man specific dictionary with 
+            additional parameters (such as number of cpus, etc). 
+            The returned ticket is valid only for fixed time period), then should expire.
+        """
+        return False
+    def allocateJob(self, user, natPort, ticket=None):
         """
         Allocates a new job.
 
         :param str user: user name
         :param int natPort: NAT port used in ssh tunnel
+        :ticket optional ticket for preallocated resource.
 
         :return: tuple (error code, None). errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES). JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23). JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple

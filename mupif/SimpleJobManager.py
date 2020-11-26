@@ -29,10 +29,13 @@ import time as timeTime
 import Pyro4
 import logging
 import sys
+import time
+import uuid 
 from . import JobManager
 from . import PyroUtil
 from . import PyroFile
 import os
+import atexit
 log = logging.getLogger()
 
 # SimpleJobManager
@@ -44,6 +47,7 @@ SJM_USER_INDX = 2
 SJM2_PROC_INDX = 0  # object of subprocess.Popen
 SJM2_URI_INDX = 3  # Pyro4 uri
 SJM2_PORT_INDX = 4  # port
+SJM2_TICKET_EXPIRE_TIMEOUT = 10 # ticket timeout
 
 
 
@@ -69,6 +73,8 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.appAPIClass = appAPIClass
         self.daemon = daemon
         self.ns = ns
+
+        self.tickets = [] # list of tickets issued when pre-allocating resources; tickets generated using uuid 
         self.jobCounter = 0
         self.jobMancmdCommPort = jobMancmdCommPort
         self.serverConfigPath = serverConfigPath
@@ -86,24 +92,69 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.s.bind(('localhost', self.jobMancmdCommPort))
         self.s.listen(1)
 
+        #atexit.register(self.terminate)
+
         log.debug('SimpleJobManager2: initialization done for application name %s' % self.applicationName)
 
-    def allocateJob(self, user, natPort):
+    def __checkTicket (self, ticket):
+        """ Returns true, if ticket is valid, false otherwise"""
+        currentTime = time.time()
+        if (ticket in self.tickets):
+            if (currentTime-ticket.time) < SJM2_TICKET_EXPIRE_TIMEOUT:
+                return True
+        return False
+
+    def __getNumberOfActiveTickets(self):
+        """
+            Returns the number of active pre-allocation tickets. 
+        """
+        currentTime = time.time()
+        for i in range(len(self.tickets) - 1, -1, -1):
+            # check if ticket expired
+            if (currentTime-self.tickets[i].time) > SJM2_TICKET_EXPIRE_TIMEOUT: 
+                # remove it
+                del(self.tickets[i])
+        return len(self.tickets)
+
+    def preAllocate (self, requirements=None): 
+        """
+            Allows to pre-allocate(reserve) the resource. 
+            Returns ticket id (as promise) to finally allocate resource. 
+            The requirements is an optional job-man specific dictionary with 
+            additional parameters (such as number of cpus, etc). 
+            The returned ticket is valid only for fixed time period (suggest 10[s]), then should expire.
+            Thread safe
+        """
+        self.lock.acquire()
+        prealocatedJobs = self.__getNumberOfActiveTickets()
+        if (len(self.activeJobs) + prealocatedJobs) >= self.maxJobs:
+            self.lock.release()
+            return None
+        else:
+            ticket = uuid.uuid1()
+            self.tickets.append(ticket)
+            self.lock.release()
+            return ticket
+
+
+    def allocateJob(self, user, natPort, ticket=None): 
         """
         Allocates a new job.
 
-        See :func:`JobManager.allocateJob`
+        See :func:`JobManager.allocateJob
+        Modified to accept optional ticket for preallocated resource.
+        Thread safe
         :except: unable to start a thread, no more resources
+
         """
         self.lock.acquire()
         log.info('SimpleJobManager2: allocateJob...')
-        if len(self.activeJobs) >= self.maxJobs:
-            log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (
-                len(self.activeJobs), self.maxJobs))
-            self.lock.release()
-            raise JobManager.JobManNoResourcesException("SimpleJobManager: no more resources")
-            # return (JOBMAN_NO_RESOURCES,None)
-        else:
+        # allocate job if valid ticket given or available resource exist
+        ntickets = self.__getNumberOfActiveTickets()
+        validTicket = ticket and self.__checkTicket(ticket)
+        if (validTicket) or ((len(self.activeJobs)+ntickets) < self.maxJobs):
+            if (validTicket):
+                self.tickets.remove(ticket) #remove ticket
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
@@ -171,6 +222,13 @@ class SimpleJobManager2 (JobManager.JobManager):
             log.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
             return JobManager.JOBMAN_OK, jobID, jobPort
+        
+        else:
+            log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs))
+            self.lock.release()
+            raise JobManager.JobManNoResourcesException("SimpleJobManager: no more resources")
+            # return (JOBMAN_NO_RESOURCES,None)
+
 
     def terminateJob(self, jobID):
         """
@@ -185,6 +243,10 @@ class SimpleJobManager2 (JobManager.JobManager):
         if jobID in self.activeJobs:
             try:
                 self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
+                try:
+                    self.activeJobs[jobID][SJM2_PROC_INDX].wait(2)
+                except subprocess.TimeoutExpired:
+                    log.debug("SimpleJobManager2:terminateJob: jobID %s terminate wait timeout reached"%jobID)
                 # free the assigned port
                 self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
                 # delete entry in the list of active jobs
@@ -199,7 +261,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         """
         Terminates all registered jobs, frees the associated recources.
         """
-        for key in self.activeJobs:
+        for key in self.activeJobs.copy():
             try:
                 self.terminateJob(key)
             except Exception as e:
@@ -211,6 +273,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         Terminates job manager itself.
         """
         try:
+            self.terminateAllJobs()
             self.ns.remove(self.applicationName)
             log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
         except Exception as e:
@@ -226,6 +289,8 @@ class SimpleJobManager2 (JobManager.JobManager):
             except:
                 pass
             self.daemon = None
+        self.s.close()
+
 
     def getApplicationSignature(self):
         """
