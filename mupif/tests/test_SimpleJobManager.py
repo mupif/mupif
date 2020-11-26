@@ -1,5 +1,4 @@
 import sys
-sys.path.append('.')
 sys.path.append('../..')
 
 import unittest
@@ -7,9 +6,10 @@ import Pyro4
 import Pyro4.naming
 import time
 import mupif
+import mupif.tests.testApp as testApp
 import multiprocessing
 import subprocess
-import testApp
+
 
 Pyro4.config.SERIALIZER = "serpent"
 Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
