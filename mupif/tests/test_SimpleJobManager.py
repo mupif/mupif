@@ -31,7 +31,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.ns = mupif.PyroUtil.connectNameServer(nshost='127.0.0.1', nsport=9092, hkey=None)
 
         cls.jobMan = mupif.SimpleJobManager.SimpleJobManager2(daemon=None, ns=cls.ns, appAPIClass=testApp, appName="app", 
-            portRange=(9000, 9030), jobManWorkDir=".", serverConfigPath="/home/bp/devel/mupif.git/mupif/tests", 
+            portRange=(9000, 9030), jobManWorkDir=".", serverConfigPath="mupif/tests", 
             serverConfigFile="serverConfig", serverConfigMode=0, 
             jobMan2CmdPath="mupif/tools/JobMan2cmd.py", maxJobs=2, jobMancmdCommPort=10000)
         # test jobManager
