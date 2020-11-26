@@ -33,7 +33,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.jobMan = mupif.SimpleJobManager.SimpleJobManager2(daemon=None, ns=cls.ns, appAPIClass=testApp, appName="app", 
             portRange=(9000, 9030), jobManWorkDir=".", serverConfigPath="/home/bp/devel/mupif.git/mupif/tests", 
             serverConfigFile="serverConfig", serverConfigMode=0, 
-            jobMan2CmdPath="/home/bp/devel/mupif.git/mupif/tools/JobMan2cmd.py", maxJobs=2, jobMancmdCommPort=10000)
+            jobMan2CmdPath="mupif/tools/JobMan2cmd.py", maxJobs=2, jobMancmdCommPort=10000)
         # test jobManager
         cls.jobMan.getApplicationSignature()
 
