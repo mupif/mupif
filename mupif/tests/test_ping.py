@@ -1,18 +1,26 @@
 import unittest
 import sys, multiprocessing, time
 import unittest,sys
+import socket
 sys.path.append('../..')
 
 import mupif, mupif.Application
 import Pyro4
 import Pyro4.naming
+Pyro4.config.SERIALIZER = "serpent"
+Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
+Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
+Pyro4.config.SERVERTYPE = "multiplex"
 
 from mupif import PyroUtil
-
+@Pyro4.expose
 class AnyApp(mupif.Model.Model):
     def __init__(self,f): super(AnyApp,self).__init__(f)
     def getApplicationSignature(self): return self.__class__.__name__+"@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
-class LocalApp(AnyApp): pass
+@Pyro4.expose
+class LocalApp(AnyApp): 
+    def getApplicationSignature(self): 
+        return "Hello from LocalApp"
 
 #class CelsianApp(AnyApp): pass
 #class MicressApp(AnyApp): pass
@@ -43,32 +51,35 @@ class TestLocalApp(unittest.TestCase):
         time.sleep(2) # some time for nameserver to start
 
         # setup apps
-        self.apps=LocalApp("/dev/null"), # CelsianApp("/dev/null"),MicressApp("/dev/null"),MmpraytracerApp("/dev/null")
+        self.apps=(LocalApp("/dev/null"),) # CelsianApp("/dev/null"),MicressApp("/dev/null"),MmpraytracerApp("/dev/null")
         for i,app in enumerate(self.apps):
             # start "remote" servers (locally)
             print('Starting',app)
-            PyroUtil.runAppServer(server='localhost',port=3000+i,nathost='localhost',natport=4000+i,nshost=nshost,nsport=nsport,nsname=PyroUtil.getNSAppName(self.jobname,app.__class__.__name__),hkey=self.hkey,app=app)
+            PyroUtil.runAppServer(server='localhost',port=3000+i,nathost=None,natport=None,nshost=nshost,nsport=nsport,appName=PyroUtil.getNSAppName(self.jobname,app.__class__.__name__),hkey=self.hkey,app=app)
             # start ssh forwarder, between localhost and the remote server (those will be really run on remote machine externally accessible through ssh)
             # sshtunnel.SSHTunnelForwarder(ssh_address_or_host=('localhost',2000+i),ssh_username='testuser-%d'%(2000+i),ssh_password=self.sshpwd,local_bind_address=('127.0.0.1',4000+i),remote_bind_address=('127.0.0.1',3000+i))
+        print("Started all apps")
 
     def tearDown(self):
         # terminate self.nsloop
         self.nsloop.terminate()
         self.nsloop.join()
 
-    def testConnect(self):
+    def test_testConnect(self):
         'Test connection through nameserver'
-        ns=PyroUtil.connectNameServer('localhost',5000,'mmp-secret-key')
+        ns=PyroUtil.connectNameServer('localhost',5000, self.hkey)
         print('Connected to nameserver')
         for i,app in enumerate(self.apps):
             # what is localport??
             #tunnel=PyroUtil.sshTunnel(remoteHost='localhost',userName='testuser-%d'%(2000+i),localPort=2000+i,remotePort=4000+i,sshClient='ssh',options='-oStrictHostKeyChecking=no',sshHost='')
             #print('Tunnel established')
-            a=PyroUtil.connectApp(ns,PyroUtil.getNSAppName(self.jobname,app.__class__.__name__))
+            a=PyroUtil.connectApp(ns,PyroUtil.getNSAppName(self.jobname,app.__class__.__name__), self.hkey)
             print('Connected to App through Pyro')
-            self.assert_(a)
+            self.assertTrue(a)
             appsig=a.getApplicationSignature()
             print(appsig)
-            tunnel.terminate()
+            #tunnel.terminate()
+            a.terminate()
+            time.sleep(2) # some time for nameserver to start
 
 if __name__=='__main__': unittest.main()

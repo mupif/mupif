@@ -36,7 +36,7 @@ class TestSaveLoad(unittest.TestCase):
         p=pickle.dumps(f)
         f2=pickle.loads(p)
         t22b=f.evaluate((2.,2.,0.))
-        self.assert_(not id(f)==id(f2))
+        self.assertTrue(not id(f)==id(f2))
         self.assertEqual(t22a,t22b)
     def testFieldHdf5SaveLoad(self):
         import mupif.Field
@@ -103,13 +103,13 @@ class TestSaveLoad(unittest.TestCase):
         m.giveVertexLocalizer()
         m.giveCellLocalizer()
         # check localizers are there (break encapsulation, sorry)
-        self.assert_(m.vertexOctree is not None)
-        self.assert_(m.cellOctree is not None)
+        self.assertTrue(m.vertexOctree is not None)
+        self.assertTrue(m.cellOctree is not None)
         p=pickle.dumps(m)
         # but that they were not pickled
         m2=pickle.loads(p)
-        self.assert_(m2.vertexOctree is None)
-        self.assert_(m2.cellOctree is None)
+        self.assertTrue(m2.vertexOctree is None)
+        self.assertTrue(m2.cellOctree is None)
         
         
 
