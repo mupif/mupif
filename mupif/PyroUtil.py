@@ -26,6 +26,7 @@ import Pyro4
 import socket
 import getpass
 import subprocess
+import threading
 import time
 from . import Model
 from . import JobManager
@@ -343,7 +344,8 @@ def runDaemon(host, port, hkey, nathost=None, natport=None):
     for iport in ports:
         try:
             daemon = Pyro4.Daemon(host=host, port=int(iport), nathost=nathost, natport=Util.NoneOrInt(natport))
-            daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
+            if (hkey):
+                daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
             log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             return daemon
         except socket.error as e:
@@ -420,7 +422,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
         'Running runAppServer: server:%s, port:%s, nathost:%s, natport:%s, nameServer:%s, nameServerPort:%s, '
         'applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri)
     )
-    daemon.requestLoop()
+    threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
 
 
 def runAppServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None):
