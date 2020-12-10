@@ -138,6 +138,8 @@ class PropertyID(IntEnum):
     PID_ShearInPlaneStiffness = 51
     PID_ShearOutOfPlaneStiffness = 52
     PID_LocalBendingStiffness = 53
+    PID_CriticalForce  = 54
+    PID_CriticalMoment = 55
     # Digimat Properties
     PID_MatrixYoung = 8000
     PID_MatrixPoisson = 8001
@@ -350,6 +352,12 @@ class PropertyID(IntEnum):
     PID_PRESSURE = 92011
     PID_DENSITY = 92100
     PID_TRANSITION_TEMPERATURE = 92101
+    # GY user-case property IDs
+    PID_HyperelasticPotential = 92200
+    PID_ForceCurve = 92201
+    PID_DisplacementCurve= 92202
+    PID_CorneringAngle= 92203
+    PID_CorneringStiffness= 92204
     
 
     # Demo properties
