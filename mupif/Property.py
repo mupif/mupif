@@ -146,7 +146,7 @@ class ConstantProperty(Property):
         :rtype: tuple
         """
         try:
-            if self.time is None or self.time == time:
+            if ((self.time is None) or (time is None) or (self.time == time)):
                 for key, value in kwargs.items():
                     if key == 'unit':
                         # print(key,value)
