@@ -33,25 +33,26 @@ import mupif.Physics.PhysicalQuantities as PQ
 log = logging.getLogger()
 
 WorkflowSchema = copy.deepcopy(Model.ModelSchema)
-del WorkflowSchema['properties']['Solver']
-del WorkflowSchema['properties']['Physics']
-#WorkflowSchema['properties'].update({'Model_refs_ID': {'type': 'array'}}),  # List of references to contained models (workflows). This is just not enough to keep track of difference model's versions. Therefore, Model_refs_ID must contain a triplet Name, ID, Version_date to know what models (solvers) were exactly used.
-WorkflowSchema['properties'].update({
-    'Model_refs_ID': {
-        'type': 'array', # List of contained models/workflows
-        #'items': {
-            #'type': 'object',  # Object supplies a dictionary
-            #'properties': {
-                #'Name': {'type': 'string'},
-                #'ID': {'type': ['string', 'integer']},
-                #'Version_date': {'type': 'string'},
-            #},
-            ##'required': ['Name', 'ID', 'Version_date']
-        #}
+del WorkflowSchema["properties"]["Solver"]
+del WorkflowSchema["properties"]["Physics"]
+WorkflowSchema["properties"].update({
+    "Model_refs_ID": {  # This i automatically generated according to self._models List.
+        "type": "array",  # List of contained models/workflows
+        "items": {
+            "type": "object",  # Object supplies a dictionary
+            "properties": {
+                "Label": {"type": "string"},  # Explicit label, given to the model/workflow by its parent workflow.
+                "Name": {"type": "string"},  # Obtained automatically from Model metadata.
+                "ID": {"type": ["string", "integer"]},  # Obtained automatically from Model metadata.
+                "Version_date": {"type": "string"},  # Obtained automatically from Model metadata.
+                "Type": {"type": "string", "enum": ["Model", "Workflow"]},  # Filled automatically.
+                "Model_refs_ID": {"type": "array"}  # Object supplies a dictionary
+            },
+            "required": ["Name", "ID", "Version_date", "Type"]
+        }
     }
 })
-WorkflowSchema['required'] = ['Name', 'ID', 'Description', 'Model_refs_ID', 'Execution', 'Inputs', 'Outputs']
-
+WorkflowSchema["required"] = ["Name", "ID", "Description", "Model_refs_ID", "Execution", "Inputs", "Outputs"]
 
 
 @Pyro4.expose
@@ -75,6 +76,7 @@ class Workflow(Model.Model):
 
         self.workflowMonitor = None  # No monitor by default
         self.targetTime = None
+        self._models = {}
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         """
@@ -87,6 +89,7 @@ class Workflow(Model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
+        self.generateMetadataModelRefsID()
         self.updateMetadata(metaData)
 
         # print (targetTime)
@@ -128,7 +131,7 @@ class Workflow(Model.Model):
             timeStepNumber = timeStepNumber+1
             istep = TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
         
-            log.debug("Step %g: t=%g dt=%g"%(timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
+            log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 
             # Estimate progress
             self.setMetadata('Progress', 100*time.inUnitsOf('s').getValue()/self.targetTime.inUnitsOf('s').getValue())
@@ -182,7 +185,79 @@ class Workflow(Model.Model):
                 # could not use nameserver metadata capability, as this requires workflow to be registered
                 # thus Pyro daemon is required
 
-                log.debug(self.getMetadata('WorkflowMonitor.ComponentID')+": Updated status to " + status + ", progress=" + str(progress))
+                log.debug(
+                    self.getMetadata('WorkflowMonitor.ComponentID') + ": Updated status to " + status + ", progress=" +
+                    str(progress)
+                )
             except Exception as e:
                 log.exception("Connection to workflow monitor broken")
                 raise e
+
+    def registerModel(self, model, label=None):
+        """
+        :param Model.Model or Model.RemoteModel or Workflow model:
+        :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
+        """
+        if isinstance(model, (Workflow, Model.Model, Model.RemoteModel)):
+            if label is None:
+                i = 0
+                while label in self.getListOfModelLabels() or i == 0:
+                    i += 1
+                    label = "label_%d" % i
+
+            if label not in self.getListOfModelLabels():
+                self._models.update({label: model})
+            else:
+                raise KeyError("Given model label already exists.")
+        else:
+            raise TypeError("Parameter model should be instance of Workflow, Model or RemoteModel.")
+
+    def getDictOfModels(self):
+        """
+        :rtype: dict[Model.Model, Model.RemoteModel, Workflow]
+        """
+        return self._models.copy()
+
+    def getListOfModels(self):
+        """
+        :rtype: list[Model.Model, Model.RemoteModel, Workflow]
+        """
+        return iter(self.getDictOfModels().values())
+
+    def getListOfModelLabels(self):
+        """
+        :rtype: list of str
+        """
+        return iter(self.getDictOfModels().keys())
+
+    def printListOfModels(self):
+        print()
+        print("List of child models:")
+        print([m.__class__.__name__ for m in self.getListOfModels()])
+        print()
+
+    def generateMetadataModelRefsID(self):
+        model_refs_id = []
+        for key_name, model in self.getDictOfModels().items():
+            if isinstance(model, (Model.Model, Workflow, Model.RemoteModel)):
+                # Temporary fix due to compatibility
+                if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
+                    if model.hasMetadata('Solver.Version_date'):
+                        model.setMetadata('Version_date', model.getMetadata('Solver.Version_date'))
+
+                md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
+                md_id = model.getMetadata('ID') if model.hasMetadata('ID') else ''
+                md_ver = model.getMetadata('Version_date') if model.hasMetadata('Version_date') else ''
+
+                m_r_id = {
+                    'Label': str(key_name),
+                    'Name': md_name,
+                    'ID': md_id,
+                    'Version_date': md_ver,
+                    'Type': 'Workflow' if isinstance(model, Workflow) else 'Model'
+                }
+                if isinstance(model, Workflow):
+                    m_r_id.update({'Model_refs_ID': model.getMetadata('Model_refs_ID')})
+                model_refs_id.append(m_r_id)
+
+        self.setMetadata('Model_refs_ID', model_refs_id)

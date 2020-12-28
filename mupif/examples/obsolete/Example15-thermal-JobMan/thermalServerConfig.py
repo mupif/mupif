@@ -1,6 +1,5 @@
 import os,sys
 #Import example-wide configuration
-#path to demoapp.py
 sys.path.extend(['..', '../Example10-stacTM-local'])
 from Config import config
 import demoapp

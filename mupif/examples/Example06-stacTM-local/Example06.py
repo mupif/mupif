@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../../..')
-import demoapp
+sys.path.append('..')
+import models
 from mupif import *
 import mupif.Physics.PhysicalQuantities as PQ
 import time
@@ -19,7 +20,8 @@ class Example06(Workflow.Workflow):
             'Name': 'Thermo-mechanical stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Model_refs_ID': [{'Name': 'NonStatThermo-1', 'ID':'ss', 'Version_date': 'dd'}, {'Name':'Mechanical-1', 'ID':'ss', 'Version_date': 'dd'}],
+            # 'Model_refs_ID' are generated automatically
+            'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field',
@@ -31,11 +33,15 @@ class Example06(Workflow.Workflow):
         super(Example06, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
 
-        self.thermalSolver = demoapp.thermal()
-        self.mechanicalSolver = demoapp.mechanical()
+        self.thermalSolver = models.thermal()
+        self.mechanicalSolver = models.mechanical()
+
+        self.registerModel(self.thermalSolver, 'thermal')
+        self.registerModel(self.mechanicalSolver, 'mechanical')
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
-        super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
+        super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
+                                          validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -109,6 +115,7 @@ mf = demo.getField(FieldID.FID_Displacement, tstep.getTime())
 m_val = mf.evaluate((4.1, 0.9, 0.0))
 print(t_val.getValue()[0], m_val.getValue()[1])
 
+demo.printMetadata()
 demo.terminate()
 
 if ((abs(t_val.getValue()[0]-4.4994119521216644) <= 1.e-8) and

@@ -18,6 +18,7 @@ class application2(Model.Model):
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
             'Description': 'Cummulates time steps',
+            'Version_date': '02/2019',
             'Physics': {
                 'Type': 'Other',
                 'Entity': 'Other'

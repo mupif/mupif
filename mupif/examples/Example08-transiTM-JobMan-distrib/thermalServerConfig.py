@@ -1,9 +1,9 @@
 # Configuration file for JobMan2cmd
 import os
 import sys
-sys.path.extend(['..', '../Example06-stacTM-local'])
+sys.path.append('..')
 from Config import config
-import demoapp
+import models
 
 
 class serverConfig(config):
@@ -11,5 +11,5 @@ class serverConfig(config):
         # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
         super(serverConfig, self).__init__(mode)
 
-        self.applicationClass = demoapp.thermal_nonstat
+        self.applicationClass = models.thermal_nonstat
         self.applicationInitialFile = '..'+os.path.sep+'..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in'

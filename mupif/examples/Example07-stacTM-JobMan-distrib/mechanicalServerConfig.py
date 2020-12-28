@@ -3,7 +3,7 @@ import sys
 # Import example-wide configuration
 sys.path.extend(['..', '../Example06-stacTM-local'])
 from Config import config
-import demoapp
+import models
 
 
 class serverConfig(config):
@@ -18,7 +18,7 @@ class serverConfig(config):
         self.portsForJobs = (9250, 9300)
         self.jobNatPorts = [None] if self.jobNatPorts[0] is None else list(range(6230, 6300))
         
-        self.applicationClass = demoapp.mechanical
+        self.applicationClass = models.mechanical
         self.applicationInitialFile = 'input.in'  # dummy file
         self.jobManName = 'Mupif.JobManager@MechanicalSolverDemo'  # Name of job manager
         self.jobManWorkDir = os.path.abspath(os.path.join(os.getcwd(), 'mechanicalWorkDir'))

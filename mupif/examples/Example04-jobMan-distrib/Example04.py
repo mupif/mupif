@@ -25,6 +25,7 @@ class Example04(Workflow.Workflow):
             'ID': 'N/A',
             'Description': 'Cummulates time steps',
             'Model_refs_ID': ['SimulationTimer-1'],
+            'Version_date': '1.0.0, Feb 2019',
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
@@ -59,6 +60,8 @@ class Example04(Workflow.Workflow):
 
             appsig = self.app1.getApplicationSignature()
             log.info("Working application 1 on server " + appsig)
+
+        self.registerModel(self.app1, 'app1')
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('1 s'), metaData={}, validateMetaData=True, **kwargs):
         super().initialize(targetTime=targetTime, metaData=metaData)

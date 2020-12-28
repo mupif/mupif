@@ -1,9 +1,9 @@
 import os
 import sys
 # Import example-wide configuration
-sys.path.extend(['..', '../Example06-stacTM-local'])
+sys.path.append('..')
 from Config import config
-import demoapp
+import models
 
 
 class serverConfig(config):
@@ -11,7 +11,7 @@ class serverConfig(config):
         # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
         super(serverConfig, self).__init__(mode)
 
-        self.applicationClass = demoapp.thermal
+        self.applicationClass = models.thermal
         self.applicationInitialFile = 'input.in'  # dummy file
         self.jobManName = 'Mupif.JobManager@ThermalSolverDemo'  # Name of job manager
         self.jobManWorkDir = os.path.abspath(os.path.join(os.getcwd(), 'thermalWorkDir'))

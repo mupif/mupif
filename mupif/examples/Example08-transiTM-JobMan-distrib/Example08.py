@@ -33,7 +33,8 @@ class Example08(Workflow.Workflow):
             'Name': 'Thermo-mechanical non-stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            'Model_refs_ID': ['NonStatThermo-1', 'Mechanical-1'],
+            # 'Model_refs_ID' are generated automatically
+            'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
@@ -71,6 +72,9 @@ class Example08(Workflow.Workflow):
         log.info("Working thermal server " + thermalSignature)
         mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
+
+        self.registerModel(self.thermal, 'thermal')
+        self.registerModel(self.mechanical, 'mechanical')
 
         super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
@@ -154,5 +158,7 @@ if __name__ == '__main__':
     # print(demo.hasMetadata('Execution.ID'))
     # exit(0)
     demo.solve()
+    demo.printMetadata()
+    demo.terminate()
     log.info("Test OK")
 
