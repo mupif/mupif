@@ -27,7 +27,7 @@ This is a MuPIF module (Multi-Physics Integration Framework)
 __version__ = '2.3.0'
 __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
-_branch = 'dev2'
+_branch = 'dev'
 
 from .dataID import FieldID
 from .dataID import PropertyID

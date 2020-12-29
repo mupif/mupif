@@ -36,7 +36,7 @@ WorkflowSchema = copy.deepcopy(Model.ModelSchema)
 del WorkflowSchema["properties"]["Solver"]
 del WorkflowSchema["properties"]["Physics"]
 WorkflowSchema["properties"].update({
-    "Model_refs_ID": {  # This i automatically generated according to self._models List.
+    "Dependencies": {  # This i automatically generated according to self._models List.
         "type": "array",  # List of contained models/workflows
         "items": {
             "type": "object",  # Object supplies a dictionary
@@ -46,13 +46,13 @@ WorkflowSchema["properties"].update({
                 "ID": {"type": ["string", "integer"]},  # Obtained automatically from Model metadata.
                 "Version_date": {"type": "string"},  # Obtained automatically from Model metadata.
                 "Type": {"type": "string", "enum": ["Model", "Workflow"]},  # Filled automatically.
-                "Model_refs_ID": {"type": "array"}  # Object supplies a dictionary
+                "Dependencies": {"type": "array"}  # Object supplies a dictionary
             },
             "required": ["Name", "ID", "Version_date", "Type"]
         }
     }
 })
-WorkflowSchema["required"] = ["Name", "ID", "Description", "Model_refs_ID", "Execution", "Inputs", "Outputs"]
+WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs"]
 
 
 @Pyro4.expose
@@ -237,7 +237,7 @@ class Workflow(Model.Model):
         print()
 
     def generateMetadataModelRefsID(self):
-        model_refs_id = []
+        dependencies = []
         for key_name, model in self.getDictOfModels().items():
             if isinstance(model, (Model.Model, Workflow, Model.RemoteModel)):
                 # Temporary fix due to compatibility
@@ -257,7 +257,7 @@ class Workflow(Model.Model):
                     'Type': 'Workflow' if isinstance(model, Workflow) else 'Model'
                 }
                 if isinstance(model, Workflow):
-                    m_r_id.update({'Model_refs_ID': model.getMetadata('Model_refs_ID')})
-                model_refs_id.append(m_r_id)
+                    m_r_id.update({'Dependencies': model.getMetadata('Dependencies')})
+                dependencies.append(m_r_id)
 
-        self.setMetadata('Model_refs_ID', model_refs_id)
+        self.setMetadata('Dependencies', dependencies)

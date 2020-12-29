@@ -26,7 +26,7 @@ class Example07(Workflow.Workflow):
             'Name': 'Thermo-mechanical non-stationary problem',
             'ID': 'Thermo-mechanical-1',
             'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            # 'Model_refs_ID' are generated automatically
+            # 'Dependencies' are generated automatically
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [

@@ -24,7 +24,7 @@ class Example04(Workflow.Workflow):
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
             'Description': 'Cummulates time steps',
-            'Model_refs_ID': ['SimulationTimer-1'],
+            'Dependencies': ['SimulationTimer-1'],
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
