@@ -43,6 +43,8 @@ import re, string
 from functools import reduce
 import Pyro4
 import collections
+from mupif import dumpable
+import functools
 
 
 def cmp(a, b):
@@ -51,7 +53,7 @@ def cmp(a, b):
 
 # Class definitions
 @Pyro4.expose
-class PhysicalQuantity(object):
+class PhysicalQuantity(dumpable.Dumpable):
 
     """
     Physical quantity with units
@@ -138,6 +140,8 @@ class PhysicalQuantity(object):
     value = float(str(F).split()[0])
     print value
     """
+
+    dumpAttrs=['value','unit']
 
     def __init__(self, *args):
         """
@@ -426,7 +430,8 @@ class PhysicalQuantity(object):
 
 
 @Pyro4.expose
-class PhysicalUnit(object):
+@functools.total_ordering
+class PhysicalUnit(dumpable.Dumpable):
 
     """
     Physical unit
@@ -435,7 +440,9 @@ class PhysicalUnit(object):
     factor, and the exponentials of each of the SI base units that enter into
     it. Units can be multiplied, divided, and raised to integer powers.
     """
-    
+ 
+    dumpAttrs=['names','factor','offset','powers']
+
     def __init__(self, names, factor, powers, offset=0):
         """
         :param names: a dictionary mapping each name component to its
@@ -465,6 +472,11 @@ class PhysicalUnit(object):
 
     __str__ = __repr__
 
+    #
+    # no longer used in Python3
+    # use functools.total_ordering decorator and __lt__ and __eq__ instead
+    # https://stackoverflow.com/a/8277028/761090
+    #
     def __cmp__(self, other):
         if isPhysicalUnit(other):
             if self.powers != other.powers:
@@ -472,6 +484,11 @@ class PhysicalUnit(object):
             return cmp(self.factor, other.factor)
         else:
             return -1
+
+    def __eq__(self,other):
+        return self.powers==other.powers and self.factor==other.factor and self.offset==other.offset and self.names==other.names
+    def __lt__(self,other):
+        return self.powers<other.powers or self.factor<other.factor or self.offset<other.offset and self.names<other.names
 
     def __mul__(self, other):
         if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):

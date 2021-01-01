@@ -25,6 +25,7 @@ from builtins import str, zip, range, object
 from . import APIError
 from . import Octree
 from . import BBox
+from . import dumpable
 import copy
 import time
 import sys
@@ -53,6 +54,7 @@ class MeshIterator(object):
     .. automethod:: __iter__
     .. automethod:: __next__
     """
+
     def __init__(self, mesh, type):
         """
         Constructor.
@@ -105,7 +107,7 @@ class MeshIterator(object):
 
 
 @Pyro4.expose
-class Mesh(object):
+class Mesh(dumpable.Dumpable):
     """
     Abstract representation of a computational domain.
     Mesh contains computational cells and vertices.
@@ -115,6 +117,9 @@ class Mesh(object):
 
     .. automethod:: __init__
     """
+
+    dumpAttrs=[]
+
     def __init__(self):
         self.mapping = None
 
@@ -387,6 +392,8 @@ class UnstructuredMesh(Mesh):
     .. automethod:: __buildVertexLabelMap__
     .. automethod:: __buildCellLabelMap__
     """
+
+    dumpAttrs=['vertexList','cellList']
 
     def __init__(self):
         """

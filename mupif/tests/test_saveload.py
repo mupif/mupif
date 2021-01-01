@@ -8,6 +8,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 tstep = TimeStep.TimeStep(0., 1., 1., timeUnits)
 
+
 # check for python-vtk before running related tests
 try:
     import vtk
@@ -27,7 +28,19 @@ class TestSaveLoad(unittest.TestCase):
         if not first.__cmp__(second):
             raise self.failureException(msg)
 
-        
+    def testFieldDictDump(self):
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        t22a=f.evaluate((2.0,2.0,0.)) # temperature at (2,2)
+        dic=f.to_dict()
+        if 0:
+            import pprint
+            pprint.pprint(dict([(k,v) if len(str(v))<1000 else (k,'<too long to show>') for k,v in dic.items()]))
+        f2=mupif.MupifObject.MupifObject.from_dict(dic)
+        t22b=f.evaluate((2.,2.,0.))
+        self.assert_(not id(f)==id(f2))
+        self.assertEqual(t22a,t22b)
+        self.assertEqual(f.unit,f2.unit)
+
     def testFieldSaveLoad(self):
         # get field from the app
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
