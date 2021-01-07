@@ -44,7 +44,9 @@ class NumberDict(dict):
     and subtraction with other NumberDict instances, and multiplication
     and division by scalars.
     """
-    
+
+    __dumpable_primitive__=1
+
     def __getitem__(self, item):
         try:
             return dict.__getitem__(self, item)

@@ -100,10 +100,10 @@ def main():
         tunnelJobMan.terminate()
     else:
         # connect to jobmanager
-        jobMan = PyroUtil.connectApp(ns, jobmanname, hkey)
+        jobMan = PyroUtil.connectJobManager(ns, jobmanname, hkey)
     
     try:
-        (errCode, jobID, jobPort) = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=6001)
+        (errCode, jobID, jobPort) = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=None)
         print("Application " + str(jobID) + " successfully allocted")
         if tunnel:
             tunnelApp = PyroUtil.sshTunnel(

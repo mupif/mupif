@@ -27,10 +27,10 @@ import json
 import jsonschema
 import pprint
 import copy
-
+from . import dumpable
 
 @Pyro4.expose
-class MupifObject(object):
+class MupifObject(dumpable.Dumpable):
     """
     An abstract class representing a base Mupif object.
 
@@ -39,6 +39,8 @@ class MupifObject(object):
 
     .. automethod:: __init__
     """
+    dumpAttrs=['metadata']
+
     def __init__(self, jsonFileName=''):
         """
         Constructor. Initializes the object
@@ -195,3 +197,6 @@ class MupifObject(object):
     def toJSONFile(self, filename, indent=4):
         with open(filename, "w") as f:
             json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
+
+
+
