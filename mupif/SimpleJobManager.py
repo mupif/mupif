@@ -36,7 +36,18 @@ from . import PyroUtil
 from . import PyroFile
 import os
 import atexit
-log = logging.getLogger()
+
+log=logging.getLogger(__name__)
+
+try:
+    import colorlog
+    log.propagate=False
+    handler=colorlog.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s',datefmt='%Y-%m-%d %H:%M:%S'))
+    log.addHandler(handler)
+except ImportError: pass
+
 
 # SimpleJobManager
 SJM_APP_INDX = 0

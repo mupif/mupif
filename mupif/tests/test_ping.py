@@ -6,7 +6,10 @@ sys.path.append('../..')
 
 import mupif, mupif.Application
 import Pyro4
-import Pyro4.naming
+
+if mupif.pyroVer==4: from Pyro4.naming import startNSloop
+else: from Pyro5.nameserver import start_ns_loop as startNSloop
+
 Pyro4.config.SERIALIZER = "serpent"
 Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
@@ -46,7 +49,7 @@ class TestLocalApp(unittest.TestCase):
 
         # setup nameserver
 
-        self.nsloop=multiprocessing.Process(target=Pyro4.naming.startNSloop,kwargs=dict(host=nshost,port=nsport,hmac=self.hkey))
+        self.nsloop=multiprocessing.Process(target=startNSloop,kwargs=dict(host=nshost,port=nsport,hmac=self.hkey))
         self.nsloop.start()
         time.sleep(2) # some time for nameserver to start
 

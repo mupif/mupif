@@ -118,7 +118,7 @@ class Mesh(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
-    dumpAttrs=[]
+    dumpAttrs=[('mapping',None,None)]
 
     def __init__(self):
         self.mapping = None
@@ -393,7 +393,7 @@ class UnstructuredMesh(Mesh):
     .. automethod:: __buildCellLabelMap__
     """
 
-    dumpAttrs=['vertexList','cellList']
+    dumpAttrs=['vertexList','cellList',('cellOctree',None),('vertexOctree',None),('vertexDict',None),('cellDict',None)]
 
     def __init__(self):
         """

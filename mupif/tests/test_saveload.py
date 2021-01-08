@@ -26,31 +26,45 @@ class TestSaveLoad(unittest.TestCase):
     # unit tests support
     def assertPhysicalQuantitiesEqual (self, first, second, msg=None):
         if not first.__cmp__(second):
-            raise self.failureException(msg)
+            raise self.failureException('%s != %s: %s'%(first,second,msg))
 
     def testFieldDictDump(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        t22a=f.evaluate((2.0,2.0,0.)) # temperature at (2,2)
+        t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         dic=f.to_dict()
-        if 0:
+        if 1:
             import pprint
             pprint.pprint(dict([(k,v) if len(str(v))<1000 else (k,'<too long to show>') for k,v in dic.items()]))
         f2=mupif.MupifObject.MupifObject.from_dict(dic)
-        t22b=f.evaluate((2.,2.,0.))
+        t22b=f2.evaluate((2.,2.,0.)).getValue()[0]
         self.assert_(not id(f)==id(f2))
-        self.assertEqual(t22a,t22b)
+        self.assertAlmostEqual(t22a,t22b)
         self.assertEqual(f.unit,f2.unit)
 
-    def testFieldSaveLoad(self):
+    def _disabled__testFieldSerpent(self):
+        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
+        import serpent
+        dump=serpent.dumps(f)
+        if 1:
+            import pprint
+            pprint.pprint(dict([(k,v) if len(str(v))<1000 else (k,'<too long to show>') for k,v in dump.items()]))
+        f2=serpent.loads(dump)
+        t22b=f2.evaluate((2.,2.,0.)).getValue()[0]
+        self.assert_(not id(f)==id(f2))
+        self.assertAlmostEqual(t22a,t22b)
+        self.assertEqual(f.unit,f2.unit)
+
+    def testFieldPickle(self):
         # get field from the app
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        t22a=f.evaluate((2.0,2.0,0.)) # temperature at (2,2)
+        t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         import pickle
         p=pickle.dumps(f)
         f2=pickle.loads(p)
-        t22b=f.evaluate((2.,2.,0.))
+        t22b=f2.evaluate((2.,2.,0.)).getValue()[0]
         self.assertTrue(not id(f)==id(f2))
-        self.assertEqual(t22a,t22b)
+        self.assertAlmostEqual(t22a,t22b)
     def testFieldHdf5SaveLoad(self):
         import mupif.Field
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())

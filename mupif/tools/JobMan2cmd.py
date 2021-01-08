@@ -10,6 +10,7 @@ import importlib
 from mupif import Util
 
 
+
 def usage(log):
     log.info("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile -m configMode")
 
@@ -17,6 +18,7 @@ def usage(log):
 def main():
     log = Util.setupLogger(fileName='JobMan2cmd.log', level=logging.DEBUG)
     log.info("JobMan2cmd: " + str(sys.argv[1:]))
+
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:s:i:c:m:", ['port=', 'job=', 'natport='])
