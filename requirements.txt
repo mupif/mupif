@@ -1,0 +1,11 @@
+numpy
+scipy
+pyvtk
+nose
+rednose
+Pyro4==4.75
+jsonpickle
+jsonschema
+pyvtk
+vtk
+matplotlib==3.0.3

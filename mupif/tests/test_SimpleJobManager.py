@@ -2,13 +2,16 @@ import sys
 sys.path.append('../..')
 
 import unittest
-import Pyro4
-import Pyro4.naming
 import time
 import mupif
 import mupif.tests.testApp as testApp
 import multiprocessing
 import subprocess
+
+import Pyro4
+if mupif.pyroVer==4: from Pyro4.naming import startNSloop
+else: from Pyro5.nameserver import start_ns_loop as startNSloop
+
 
 
 Pyro4.config.SERIALIZER = "serpent"
@@ -21,7 +24,7 @@ Pyro4.config.SERVERTYPE = "multiplex"
 class SimpleJobManager_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.nsloop=multiprocessing.Process(target=Pyro4.naming.startNSloop,kwargs=dict(host='127.0.0.1',port=9092,hmac=None))
+        cls.nsloop=multiprocessing.Process(target=startNSloop,kwargs=dict(host='127.0.0.1',port=9092))
         cls.nsloop.start()
         #cls.nsproc=subprocess.Popen(['pyro4-ns', '-p', '9092', '-n', '127.0.0.1'], 
         #    stdout=sys.stdin, stderr=sys.stderr)
@@ -31,9 +34,9 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.ns = mupif.PyroUtil.connectNameServer(nshost='127.0.0.1', nsport=9092, hkey=None)
 
         cls.jobMan = mupif.SimpleJobManager.SimpleJobManager2(daemon=None, ns=cls.ns, appAPIClass=testApp, appName="app", 
-            portRange=(9000, 9030), jobManWorkDir=".", serverConfigPath="mupif/tests", 
+            portRange=(9000, 9030), jobManWorkDir=".", serverConfigPath=mupif.__path__[0]+"/tests", 
             serverConfigFile="serverConfig", serverConfigMode=0, 
-            jobMan2CmdPath="mupif/tools/JobMan2cmd.py", maxJobs=2, jobMancmdCommPort=10000)
+            jobMan2CmdPath=mupif.__path__[0]+"/tools/JobMan2cmd.py", maxJobs=2, jobMancmdCommPort=10000)
         # test jobManager
         cls.jobMan.getApplicationSignature()
 
