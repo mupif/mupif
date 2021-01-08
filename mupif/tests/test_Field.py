@@ -16,6 +16,9 @@ except ImportError:
 
 class Field_TestCase(unittest.TestCase):
     def setUp(self):
+
+        self.tmpdir=tempfile.TemporaryDirectory()
+        self.tmp=self.tmpdir.name
         
         self.mesh = Mesh.UnstructuredMesh()
         self.mesh.setup([Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(2.,0.,0.)), Vertex.Vertex(2,2,(0.,5.,0.)), Vertex.Vertex(3,3,(4.,2.,0.))], [Cell.Triangle_2d_lin(self.mesh,1,1,(0,1,2)),Cell.Triangle_2d_lin(self.mesh,2,2,(1,2,3))])
@@ -50,6 +53,8 @@ class Field_TestCase(unittest.TestCase):
         self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
         
     def tearDown(self):
+
+        self.tmpdir.cleanup()
         
         self.f1 = None
         self.f2 = None
@@ -149,9 +154,10 @@ class Field_TestCase(unittest.TestCase):
        self.assertTrue(isinstance(self.res,pyvtk.VtkData),'error in getVTKRepresentation')       
         
     def test_dumpToLocalFile(self):
-        with tempfile.NamedTemporaryFile(suffix='.dump') as tmp:
-            self.f1.dumpToLocalFile(tmp.name)
-            self.res=self.f1.loadFromLocalFile(tmp.name)
+        with tempfile.TemporaryDirectory() as tmp:
+            f=tmp+'/aa.dump'
+            self.f1.dumpToLocalFile(f)
+            self.res=self.f1.loadFromLocalFile(f)
         self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in dumpToLocalFile(getRecordSize for res)')
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in dumpToLocalFile(getValueType for res)')    
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in dumpToLocalFile(getFieldID for res)')
@@ -177,9 +183,10 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getVertexValue(3),self.f4.getVertexValue(3),'error in dumpToLocalFile(getVertexValue for res)')
         
     def test_toHdf5(self):
-        with tempfile.NamedTemporaryFile(suffix='.hdf5') as tmp:
-            self.f1.toHdf5(tmp.name)
-            self.res=self.f1.makeFromHdf5(tmp.name)[0]
+        f=self.tmp+'/aa.hdf5'
+        self.f1.toHdf5(f)
+        self.res=self.f1.makeFromHdf5(f)[0]
+
         self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toHdf5(getRecordSize for res)')
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toHdf5(getValueType for res)')    
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toHdf5(getFieldID for res)')
@@ -191,9 +198,10 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in toHdf5(getUnits for res)')
         
     def test_toVTK2(self):
-        with tempfile.NamedTemporaryFile(suffix='.vtk') as tmp:
-            self.f1.toVTK2(tmp.name)
-            self.res=self.f1.makeFromVTK2(tmp.name, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
+        f=self.tmp+'/aa.vtk'
+        self.f1.toVTK2(f)
+        self.res=self.f1.makeFromVTK2(f, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
+
         print(self.res)
         self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toVTK2(getRecordSize for res)')
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toVTK2(getValueType for res)')    
@@ -210,9 +218,9 @@ class Field_TestCase(unittest.TestCase):
        
     @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
     def test_toVTK3(self):
-        with tempfile.NamedTemporaryFile(suffix='.vtu') as tmp:
-            self.f1.toVTK3(tmp.name)
-            self.res=self.f1.makeFromVTK3(tmp.name,self.f1.getUnits(),time=self.f1.getTime())[0]
+        f=self.tmp+'/aa.vtu'
+        self.f1.toVTK3(f)
+        self.res=self.f1.makeFromVTK3(f,self.f1.getUnits(),time=self.f1.getTime())[0]
         self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toVTK3(getRecordSize for res)')
         self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toVTK3(getValueType for res)')    
         self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toVTK3(getFieldID for res)')

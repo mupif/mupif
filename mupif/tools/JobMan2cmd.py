@@ -1,14 +1,12 @@
 from builtins import str
 import sys
-sys.path.extend(['../..', '../../..'])
+sys.path.extend(['..','../..', '../../..'])
 
 import socket
 import getopt
 import sys
 import logging
 import importlib
-from mupif import Util
-
 
 
 def usage(log):
@@ -16,6 +14,7 @@ def usage(log):
 
 
 def main():
+    from mupif import Util
     log = Util.setupLogger(fileName='JobMan2cmd.log', level=logging.DEBUG)
     log.info("JobMan2cmd: " + str(sys.argv[1:]))
 

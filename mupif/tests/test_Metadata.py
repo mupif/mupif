@@ -97,10 +97,10 @@ class Metadata_TestCase(unittest.TestCase):
     def test_Init(self):
         try:
             self.tm1.initialize()
-        except jsonschema.exceptions.ValidationError:
-            pass
+        except jsonschema.exceptions.ValidationError: pass
+        #except fastjsonschema.JsonSchemaException: pass
         except Exception as e:
-            self.fail('Unexpected exception raised:', e)
+            self.fail('Unexpected exception raised: %s'%e)
         else:
             self.fail('Exception not raised')
 
@@ -145,7 +145,7 @@ class Metadata_TestCase(unittest.TestCase):
         try:            
             self.tm2.initialize(metaData = executionMetadata)
         except Exception as e:
-            self.fail('Unexpected exception raised:', e)
+            self.fail('Unexpected exception raised: %s'%e)
         propeucid = self.tm2.getProperty(PropertyID.PID_Time_step, TimeStep.TimeStep(1., 1., 10, 's')).getMetadata('Execution.Use_case_ID')
         if propeucid == self.tm2.getMetadata('Execution.Use_case_ID'):
             pass

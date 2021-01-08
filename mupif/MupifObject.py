@@ -178,6 +178,7 @@ class MupifObject(dumpable.Dumpable):
         :param dict template: Schema for json template
         """
         jsonschema.validate(self.metadata, template)
+        # fastjsonschema.validate(template, self.metadata) # inverse order
         
     def __str__(self):
         """

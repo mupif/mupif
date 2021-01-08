@@ -3,6 +3,7 @@ sys.path.append('../..')
 
 from mupif import *
 import mupif
+import tempfile
 from mupif.tests import demo
 import mupif.Physics.PhysicalQuantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
@@ -22,6 +23,13 @@ class TestSaveLoad(unittest.TestCase):
         self.app1=demo.AppGridAvg(None)
         #register assertEqual operation for PhysicalQuantities
         self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
+
+        self.tmpdir=tempfile.TemporaryDirectory()
+        self.tmp=self.tmpdir.name
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
 
     # unit tests support
     def assertPhysicalQuantitiesEqual (self, first, second, msg=None):
@@ -68,15 +76,9 @@ class TestSaveLoad(unittest.TestCase):
     def testFieldHdf5SaveLoad(self):
         import mupif.Field
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        if 1: # when testing locally, set to 0 so that the dump file can be inspected
-            import tempfile
-            with tempfile.NamedTemporaryFile() as tmp:
-                f.toHdf5(tmp.name)
-                ff2=mupif.Field.Field.makeFromHdf5(tmp.name)
-        else:
-            name='/tmp/mupif-field-test.hdf5'
-            f.toHdf5(name)
-            ff2=mupif.Field.Field.makeFromHdf5(name)
+        v=self.tmp+'/aa2.h5'
+        f.toHdf5(v)
+        ff2=mupif.Field.Field.makeFromHdf5(v)
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
@@ -84,16 +86,9 @@ class TestSaveLoad(unittest.TestCase):
     @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
     def testFieldVtk3SaveLoad(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        if 1:
-            import tempfile
-            with tempfile.NamedTemporaryFile() as tmp:
-                f.toVTK3(tmp.name)
-                ff2=mupif.Field.Field.makeFromVTK3(tmp.name, f.getUnits())
-        else:
-            name='/tmp/mupif-field-test.vtu'
-            f.toVTK3(name,ascii=True,compress=False)
-            ff2=mupif.Field.Field.makeFromVTK3(name)
-            # ff2[0].toVTK3(name+'.b.',ascii=True,compress=False)
+        v=self.tmp+'/aa.vtu'
+        f.toVTK3(v)
+        ff2=mupif.Field.Field.makeFromVTK3(v, f.getUnits())
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         # just compare coordinates of the first point
@@ -103,15 +98,9 @@ class TestSaveLoad(unittest.TestCase):
         ## self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
     def _testFieldVtk2SaveLoad(self,format):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        if 1:
-            import tempfile
-            with tempfile.NamedTemporaryFile(suffix='.vtk') as tmp:
-                f.toVTK2(tmp.name,format=format)
-                ff2=mupif.Field.Field.makeFromVTK2(tmp.name, f.getUnits())
-        else:
-            name='/tmp/mupif-field-test.'+format+'.vtk'
-            f.toVTK2(name,format=format)
-            ff2=mupif.Field.Field.makeFromVTK2(name)
+        v=self.tmp+'/aa.vtk'
+        f.toVTK2(v,format=format)
+        ff2=mupif.Field.Field.makeFromVTK2(v, f.getUnits())
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         # just compare coordinates of the first point

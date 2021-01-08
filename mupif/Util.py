@@ -35,8 +35,8 @@ def setupLogger(fileName, level=logging.DEBUG):
     :rtype: logger instance
     """
     lg = logging.getLogger('mupif')
-    if lg.hasHandlers(): return lg
     lg.setLevel(level)
+    if lg.hasHandlers(): return lg
     # lg = logging.getLogger(loggerName)
     formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s'
     formatTime = '%Y-%m-%d %H:%M:%S'
@@ -55,6 +55,7 @@ def setupLogger(fileName, level=logging.DEBUG):
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(formatter)
 
+    
     lg.addHandler(streamHandler)
     
     return lg
