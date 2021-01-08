@@ -69,7 +69,7 @@ class SimpleJobManager2 (JobManager.JobManager):
     This implementation avoids the problem of GIL lock by running applicaton 
     server under new process with its own daemon.
     """
-    def __init__(self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000):
+    def __init__(self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000, overrideNsPort=0):
         """
         Constructor.
 
@@ -92,6 +92,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         self.configFile = serverConfigFile
         self.serverConfigMode = serverConfigMode
         self.jobMan2CmdPath = jobMan2CmdPath
+        self.overrideNsPort = overrideNsPort
         self.freePorts = list(range(portRange[0], portRange[1]+1))
         if maxJobs > len(self.freePorts):
             log.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d' % len(self.freePorts))
@@ -189,6 +190,7 @@ class SimpleJobManager2 (JobManager.JobManager):
                 args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d',
                         str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c',
                         str(self.configFile), '-m', str(self.serverConfigMode)]
+                if self.overrideNsPort>0: args+=['--override-nsport',str(self.overrideNsPort)]
                 if self.jobMan2CmdPath[-3:] == '.py':
                     # use the same python interpreter as running this code, prepend to the arguments
                     args.insert(0, sys.executable)

@@ -12,7 +12,7 @@ from mupif import Util
 
 
 def usage(log):
-    log.info("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile -m configMode")
+    log.info("Usage: JobMan2cmd -p portnumber -j jobid -n natport -d workdir -f inputfile -s socket -i moduleDir -c ServerConfigFile -m configMode --override-nsport nsport")
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
 
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:s:i:c:m:", ['port=', 'job=', 'natport='])
+        opts, args = getopt.getopt(sys.argv[1:], "p:j:n:d:f:s:i:c:m:", ['port=', 'job=', 'natport=', 'override-nsport='])
     except getopt.GetoptError as err:
         # print help information and exit:
         log.exception(err)
@@ -36,6 +36,7 @@ def main():
     configMode = 0
     workDir = ''
     jobManCommPort = 0  # TODO check if this default value is OK
+    overrideNsPort=0
 
     for o, a in opts:
         if o in ("-p", "--port"):
@@ -55,7 +56,9 @@ def main():
         elif o in ("-c", "--config"):
             configName = a
         elif o in ("-m", "--mode"):
-            configMode = int(a)    
+            configMode = int(a)
+        elif o in ('--override-nsport'):
+            overrideNsPort=int(a)
         else:
             log.error("unhandled option")
 
@@ -70,6 +73,9 @@ def main():
         moduleImport = importlib.import_module(configName)
         print(moduleImport)
         conf = moduleImport.serverConfig(configMode)
+        if overrideNsPort>0:
+            log.info('Overriding config-specified nameserver port %d with --override-nsport=%d'%(conf.nsport,overrideNsPort))
+            conf.nsport=overrideNsPort
         # conf = moduleImport.variables(configMode)
         # import PyroUtil module from mupif
         # mupif = importlib.import_module('mupif')

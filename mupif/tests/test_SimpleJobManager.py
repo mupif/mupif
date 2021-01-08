@@ -19,24 +19,64 @@ Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
 Pyro4.config.SERVERTYPE = "multiplex"
 
+import mupif.Util
+log=mupif.Util.setupLogger(None)
+
 # start nameserver on localhost, port 9092
+
+# find free port so that previously hung test does not block us
+def availablePort(p0,p1,host='127.0.0.1'):
+    import socket
+    s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    for p in range(p0,p1+1):
+        try:
+            s.bind((host,p))
+            s.close()
+            return p
+        except: pass
+    raise RuntimeError('No free port at %s:%d…%d'%(host,p0,p1))
+
+def waitPort(hostPort,timeout=10,dt=.5):
+    import socket,time
+    s=socket.socket()
+    t0=time.time()
+    s.settimeout(dt)
+    while True:
+        try:
+            s.connect(hostPort)
+            return
+        except OSError:
+            if time.time()-t0>timeout: raise RuntimeError('Timeout %g s connecting to %s:%d'%(timeout,*hostPort))
+            time.sleep(dt)
 
 class SimpleJobManager_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.nsloop=multiprocessing.Process(target=startNSloop,kwargs=dict(host='127.0.0.1',port=9092))
+        nsPort=availablePort(9062,9099)
+        cls.nsloop=multiprocessing.Process(target=startNSloop,kwargs=dict(host='127.0.0.1',port=nsPort))
         cls.nsloop.start()
         #cls.nsproc=subprocess.Popen(['pyro4-ns', '-p', '9092', '-n', '127.0.0.1'], 
         #    stdout=sys.stdin, stderr=sys.stderr)
         print ("nameserver started")
+        waitPort(('127.0.0.1',nsPort))
         #print (cls.nsproc, cls.nsproc.pid)
-        time.sleep(1)
-        cls.ns = mupif.PyroUtil.connectNameServer(nshost='127.0.0.1', nsport=9092, hkey=None)
-
-        cls.jobMan = mupif.SimpleJobManager.SimpleJobManager2(daemon=None, ns=cls.ns, appAPIClass=testApp, appName="app", 
-            portRange=(9000, 9030), jobManWorkDir=".", serverConfigPath=mupif.__path__[0]+"/tests", 
-            serverConfigFile="serverConfig", serverConfigMode=0, 
-            jobMan2CmdPath=mupif.__path__[0]+"/tools/JobMan2cmd.py", maxJobs=2, jobMancmdCommPort=10000)
+        cls.ns = mupif.PyroUtil.connectNameServer(nshost='127.0.0.1', nsport=nsPort, hkey=None)
+        # print('here')
+        cls.jobMan = mupif.SimpleJobManager.SimpleJobManager2(
+            daemon=None,
+            ns=cls.ns,
+            appAPIClass=testApp,
+            appName="app", 
+            portRange=(9000, 9030),
+            jobManWorkDir=".",
+            serverConfigPath=mupif.__path__[0]+"/tests", 
+            serverConfigFile="serverConfig",
+            serverConfigMode=0, 
+            jobMan2CmdPath=mupif.__path__[0]+"/tools/JobMan2cmd.py",
+            maxJobs=2,
+            jobMancmdCommPort=availablePort(10000,10100),
+            overrideNsPort=nsPort
+        )
         # test jobManager
         cls.jobMan.getApplicationSignature()
 
