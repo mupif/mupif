@@ -47,10 +47,13 @@ def setupLogger(fileName, level=logging.DEBUG):
         fileHandler.setFormatter(formatter)
         lg.addHandler(fileHandler)
 
-    if 1:
+    try:
         import colorlog
         streamHandler=colorlog.StreamHandler()
         streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s',datefmt='%Y-%m-%d %H:%M:%S'))
+    except ImportError:
+        streamHandler = logging.StreamHandler()
+        streamHandler.setFormatter(formatter)
 
     lg.addHandler(streamHandler)
     
