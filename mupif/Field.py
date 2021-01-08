@@ -707,6 +707,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
                 fieldGrp['cell_values'] = val
             else:
                 raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+        hdf.close() # necessary for windows
 
     @staticmethod
     def makeFromHdf5(fileName, group='component1/part1'):
@@ -733,9 +734,9 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         ret = []
         for f in fieldObjs:
             if 'vertex_values' in f:
-                fieldType, values = FieldType.FT_vertexBased, f['vertex_values']
+                fieldType, values = FieldType.FT_vertexBased, numpy.array(f['vertex_values'])
             elif 'cell_values' in f:
-                fieldType, values = FieldType.FT_cellBased, f['cell_values']
+                fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
             else:
                 ValueError("HDF5/mupif format error: unable to determine field type.")
             fieldID, valueType, units, time = FieldID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['units'].tostring(), f.attrs['time'].tostring()
@@ -750,6 +751,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
            
             meshIndex = meshObjs.index(f['mesh'])  # find which mesh object this field refers to
             ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, units=units, time=time, valueType=valueType, values=values, fieldType=fieldType))
+        hdf.close() # necessary for windows
         return ret
 
     def toVTK2(self, fileName, format='ascii'):
