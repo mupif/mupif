@@ -33,8 +33,7 @@ from . import JobManager
 from . import Util
 from . import APIError
 from . import PyroFile
-import logging
-log = logging.getLogger()
+log = Util.setupLogger(fileName=None)
 
 Pyro4.config.SERIALIZER = "pickle"
 # some versions of Pyro don't have this attribute... (strange, is documented)

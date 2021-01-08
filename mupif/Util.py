@@ -25,7 +25,6 @@ import argparse
 
 debug = False
 
-
 def setupLogger(fileName, level=logging.DEBUG):
     """
     Set up a logger which prints messages on the screen and simultaneously saves them to a file.
@@ -35,18 +34,24 @@ def setupLogger(fileName, level=logging.DEBUG):
     :param object level: logging level. Allowed values are CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
     :rtype: logger instance
     """
-    lg = logging.getLogger()
+    lg = logging.getLogger('mupif')
+    if lg.hasHandlers(): return lg
+    lg.setLevel(level)
     # lg = logging.getLogger(loggerName)
-    formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s \n'
+    formatLog = '%(asctime)s %(levelname)s:%(filename)s:%(lineno)d %(message)s'
     formatTime = '%Y-%m-%d %H:%M:%S'
     formatter = logging.Formatter(formatLog, formatTime)
-    fileHandler = logging.FileHandler(fileName, mode='w')
-    fileHandler.setFormatter(formatter)
-    streamHandler = logging.StreamHandler()
-    streamHandler.setFormatter(formatter)
 
-    lg.setLevel(level)
-    lg.addHandler(fileHandler)
+    if fileName is not None:
+        fileHandler = logging.FileHandler(fileName, mode='w')
+        fileHandler.setFormatter(formatter)
+        lg.addHandler(fileHandler)
+
+    if 1:
+        import colorlog
+        streamHandler=colorlog.StreamHandler()
+        streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s',datefmt='%Y-%m-%d %H:%M:%S'))
+
     lg.addHandler(streamHandler)
     
     return lg
