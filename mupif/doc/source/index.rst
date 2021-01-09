@@ -20,6 +20,7 @@ Welcome to MuPIF's documentation!
    userman.rst
    acknowledgement.rst
    changelog.rst
+   dev.rst
 
    api/api.rst
 

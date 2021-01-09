@@ -69,6 +69,11 @@ latex_documents=[('index','mupif.tex','MuPIF Documentation',
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
+html_theme_options=dict(
+    github_banner=True,
+    github_user='mupif',
+    github_repo='mupif'
+)
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
