@@ -1,3 +1,7 @@
+User manual
+###############
+
+
 Platform installation
 ========================
 
