@@ -81,7 +81,7 @@ def main():
     print("JobManager:"+jobmanname+"@"+hostname+":"+str(port))
 
     # locate nameserver
-    ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
+    ns = pyroutil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
     jobManUri = ns.lookup(jobmanname)
     print("Jobmanager uri:"+str(jobManUri))
     
@@ -94,21 +94,21 @@ def main():
     # create tunnel to JobManager running on (remote) server
     try:
         if tunnel:
-            tunnelJobMan = PyroUtil.sshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
+            tunnelJobMan = pyroutil.sshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     except Exception as e:
         log.exception(e)
         tunnelJobMan.terminate()
     else:
         # connect to jobmanager
-        jobMan = PyroUtil.connectJobManager(ns, jobmanname, hkey)
+        jobMan = pyroutil.connectJobManager(ns, jobmanname, hkey)
     
     try:
-        (errCode, jobID, jobPort) = jobMan.allocateJob(PyroUtil.getUserInfo(), natPort=None)
+        (errCode, jobID, jobPort) = jobMan.allocateJob(pyroutil.getUserInfo(), natPort=None)
         print("Application " + str(jobID) + " successfully allocted")
         if tunnel:
-            tunnelApp = PyroUtil.sshTunnel(
+            tunnelApp = pyroutil.sshTunnel(
                 remoteHost=hostname, userName=username, localPort=6001, remotePort=jobPort, sshClient='ssh')
-        app = PyroUtil.connectApp(ns, jobID, hkey)
+        app = pyroutil.connectApp(ns, jobID, hkey)
         
         jobMan.terminateJob(jobID)
         if tunnelJobMan:

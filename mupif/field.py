@@ -22,15 +22,15 @@
 #
 from builtins import range
 from builtins import object
-from . import Cell
-from . import FieldID
+from . import cell
 from . import ValueType
-from . import BBox
-from . import APIError
-from . import MupifObject
-from . import Mesh
-from .Physics import PhysicalQuantities 
-from .Physics.PhysicalQuantities import PhysicalQuantity
+from . import bbox
+from . import apierror
+from . import mupifobject
+from . import FieldID
+import mupif.mesh
+from .physics import physicalquantities 
+from .physics.physicalquantities import PhysicalQuantity
 
 from numpy import array, arange, random, zeros
 import numpy
@@ -60,7 +60,7 @@ class FieldType(IntEnum):
 
 
 @Pyro4.expose
-class Field(MupifObject.MupifObject, PhysicalQuantity):
+class Field(mupifobject.MupifObject, PhysicalQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -79,7 +79,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         """
         Initializes the field instance.
 
-        :param Mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
+        :param mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param Physics.PhysicalUnits units: Field value units
@@ -109,13 +109,13 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         else:
             self.value = values
 
-        if PhysicalQuantities.isPhysicalUnit(units):
+        if physicalquantities.isPhysicalUnit(units):
             self.unit = units
         else:
-            self.unit = PhysicalQuantities.findUnit(units)
+            self.unit = physicalquantities.findUnit(units)
             
         self.setMetadata('Units', self.unit.name())
-        self.setMetadata('Type', 'mupif.Field.Field')
+        self.setMetadata('Type', 'mupif.field.Field')
         self.setMetadata('Type_ID', str(self.fieldID))
         self.setMetadata('FieldType', str(fieldType))
         self.setMetadata('ValueType', str(self.valueType))
@@ -155,7 +155,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         Obtain mesh.
 
         :return: Returns a mesh of underlying discretization
-        :rtype: Mesh.Mesh
+        :rtype: mesh.Mesh
         """
         return self.mesh
 
@@ -235,7 +235,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
-        cells = self.mesh.giveCellLocalizer().giveItemsInBBox(BBox.BBox([c-eps for c in position], [c+eps for c in position]))
+        cells = self.mesh.giveCellLocalizer().giveItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:
@@ -515,7 +515,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
             # raise
         
         if self.fieldType != FieldType.FT_vertexBased:
-            raise APIError.APIError('Only FieldType.FT_vertexBased is now supported')
+            raise apierror.APIError('Only FieldType.FT_vertexBased is now supported')
         
         mesh = self.getMesh()
         numVertices = mesh.getNumberOfVertices()
@@ -729,7 +729,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         meshObjs = [obj for name, obj in grp.items() if name.startswith('mesh_')]
         fieldObjs = [obj for name, obj in grp.items() if name.startswith('field_')]
         # construct all meshes as mupif objects
-        meshes = [Mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        meshes = [mupif.mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
         # construct all fields as mupif objects
         ret = []
         for f in fieldObjs:
@@ -778,7 +778,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         
         """
         import pyvtk
-        from .dataID import FieldID
+        from .dataid import FieldID
         if not fileName.endswith('.vtk'):
             log.warning('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
         ret = []
@@ -791,7 +791,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         if not isinstance(ugr, pyvtk.UnstructuredGrid):
             raise NotImplementedError(
                 "grid type %s is not handled by mupif (only UnstructuredGrid is)." % ugr.__class__.__name__)
-        mesh = Mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
+        mesh = mupif.mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
         # get cell and point data
         pd, cd = data.point_data.data, data.cell_data.data
         for dd, fieldType in (pd, FieldType.FT_vertexBased), (cd, FieldType.FT_cellBased):
@@ -896,7 +896,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         :rtype: [Field,Field,...]
         """
         import vtk
-        from .dataID import FieldID
+        from .dataid import FieldID
         # rr=vtk.vtkXMLUnstructuredGridReader()
         if forceVersion2 or fileName.endswith('.vtk'):
             rr = vtk.vtkGenericDataObjectReader()
@@ -911,7 +911,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         # import sys
         # sys.stderr.write(str((ugrid,ugrid.__class__,vtk.vtkUnstructuredGrid)))
         # make mesh -- implemented separately
-        mesh = Mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
+        mesh = mupif.mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
         # fields which will be returned
         ret = []
         # get cell and point data
@@ -945,7 +945,7 @@ class Field(MupifObject.MupifObject, PhysicalQuantity):
         this operation should be avoided. Better to modify the field values.
         """
         raise TypeError('Not supported')
-
+ 
     def inUnitsOf(self, *units):
         """
         Should return a new instance. As deep copy is expensive,

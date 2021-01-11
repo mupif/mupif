@@ -5,9 +5,9 @@ from mupif import *
 import Pyro4
 import logging
 log = logging.getLogger()
-Util.changeRootLogger('server.log')
+util.changeRootLogger('server.log')
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #if you wish to run no SSH tunnels, set to True
@@ -20,7 +20,7 @@ noSSH=False
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
 @Pyro4.expose
-class PingServerApplication(Model.Model):
+class PingServerApplication(model.Model):
     """
     Simple application that computes an aritmetical average of a mapped property
     """
@@ -32,15 +32,15 @@ class PingServerApplication(Model.Model):
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
             log.debug('Getting property from PingServerApplication')
-            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
+            return property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
         self.value=self.value+self.contrib.getValue(tstep.getTime())
@@ -59,6 +59,6 @@ if noSSH: #set NATport=port and local IP
     cfg.server = cfg.serverNathost
     cfg.serverNatport = cfg.serverPort
 
-PyroUtil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, 
+pyroutil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, 
                       cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, 
                       app=app2)

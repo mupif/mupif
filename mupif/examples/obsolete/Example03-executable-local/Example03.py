@@ -5,9 +5,9 @@ from mupif import *
 import os
 import logging
 log = logging.getLogger()
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
-class application1(Model.Model):
+class application1(model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
@@ -16,9 +16,9 @@ class application1(Model.Model):
         return
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
+            return property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()
         self.value=1.0*time
@@ -28,7 +28,7 @@ class application1(Model.Model):
         return tstep.getTime()
 
 
-class application3(Model.Model):
+class application3(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property using an external code
     """
@@ -43,15 +43,15 @@ class application3(Model.Model):
             f = open('app3.out', 'r')
             answer = float(f.readline())
             f.close()
-            return Property.ConstantProperty(answer, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
+            return property.ConstantProperty(answer, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time, 0)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
             self.concentration=property
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         if (tstep.getNumber() == 1):
             f=open('app3.in', 'w')
@@ -68,7 +68,7 @@ class application3(Model.Model):
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
 
-class Demo03(Workflow.Workflow):
+class Demo03(workflow.Workflow):
     def __init__ (self, targetTime=PQ.PhysicalQuantity('0 s')):
         super(Demo03, self).__init__(targetTime=targetTime)
         
@@ -76,11 +76,11 @@ class Demo03(Workflow.Workflow):
         self.app3 = application3()
         
     def initialize(self):
-        MD = { 'Model.Model_description' : 'Workflow with two applications computing average' }
+        MD = { 'model.Model_description' : 'Workflow with two applications computing average' }
         super(Demo03, self).initialize(metaData=MD)
-        MD = { 'Model.Model_description' : 'App1 stores actual time' }
+        MD = { 'model.Model_description' : 'App1 stores actual time' }
         self.app1.initialize(metaData=MD)
-        MD = { 'Model.Model_description' : 'App3 computes the average' }
+        MD = { 'model.Model_description' : 'App3 computes the average' }
         self.app3.initialize(metaData=MD)
 
     def solveStep (self, istep, stageID=0, runInBackground=False):
@@ -118,12 +118,12 @@ class Demo03(Workflow.Workflow):
              # remember the mapped value
              self.userDT = PQ.PhysicalQuantity(property.getValue()[0], property.getUnits())
          else:
-             raise APIError.APIError ('Unknown property ID')
+             raise apierror.APIError ('Unknown property ID')
     def getProperty(self, propID, time, objectID=0):
          if (propID == PropertyID.PID_KPI01):
              return self.app3.getProperty (PropertyID.PID_CumulativeConcentration, time)
          else:
-             raise APIError.APIError ('Unknown property ID')
+             raise apierror.APIError ('Unknown property ID')
         
 if __name__=='__main__':
     # instanciate workflow
@@ -131,7 +131,7 @@ if __name__=='__main__':
     demo = Demo03(targetTime)
     demo.initialize()
     # pass some parameters using set ops
-    demo.setProperty(Property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, 's'))
+    demo.setProperty(property.ConstantProperty((0.2,), PropertyID.PID_UserTimeStep, ValueType.Scalar, 's'))
     #execute workflow
     demo.solve()
     #get resulting KPI for workflow

@@ -4,7 +4,7 @@ import os
 import socket
 
 from mupif import Model
-from mupif import PyroUtil
+from mupif import pyroutil
 
 
 # import basic definitions -> need to be customized
@@ -12,7 +12,7 @@ import conf
 #nameserver app name
 appname='celsian'
 
-class celsian(Model.Model):
+class celsian(model.Model):
     """
     Mupif interface to Celsian Computational Fluid Dynamics (CFD) tool
 
@@ -28,11 +28,11 @@ class celsian(Model.Model):
 app = celsian("/dev/null")
 # run the application server
 appRecord = conf.apps['celsian']
-PyroUtil.runAppServer(server=appRecord.serverName, 
+pyroutil.runAppServer(server=appRecord.serverName, 
                       port=appRecord.remotePort, 
                       nathost=conf.nathost, natport=appRecord.natPort, 
                       nshost=conf.nshost, nsport=conf.nsport, 
-                      appName=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
+                      appName=pyroutil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
 
 
 

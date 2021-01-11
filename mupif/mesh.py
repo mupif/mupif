@@ -22,16 +22,16 @@
 #
 from builtins import str, zip, range, object
 
-from . import APIError
-from . import Octree
-from . import BBox
+from . import apierror
+from . import octree
+from . import bbox
 from . import dumpable
 import copy
 import time
 import sys
 import numpy
 import Pyro4
-from . import CellGeometryType
+from . import cellgeometrytype
 try:
    import cPickle as pickle  # faster serialization if available
 except:
@@ -259,8 +259,8 @@ class Mesh(dumpable.Dumpable):
         """
         # instantiate the right Mesh subclass
         import importlib
-        from mupif.Vertex import Vertex
-        from mupif.Cell import Cell
+        from mupif.vertex import Vertex
+        from mupif.cell import Cell
         klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
         ret = klass()
         mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
@@ -298,11 +298,11 @@ class Mesh(dumpable.Dumpable):
             c = self.getCell(ic)
             cgt = c.getGeometryType()
             cellGeomTypeMap = {
-                CellGeometryType.CGT_TRIANGLE_1: (vtk.vtkTriangle, vtk.VTK_TRIANGLE),
-                CellGeometryType.CGT_QUAD:       (vtk.vtkQuad, vtk.VTK_QUAD),
-                CellGeometryType.CGT_TETRA:      (vtk.vtkTetra, vtk.VTK_TETRA),
-                CellGeometryType.CGT_HEXAHEDRON: (vtk.vtkHexahedron, vtk.VTK_HEXAHEDRON),
-                CellGeometryType.CGT_TRIANGLE_2: (vtk.vtkQuadraticTriangle, vtk.VTK_QUADRATIC_TRIANGLE)
+                cellgeometrytype.CGT_TRIANGLE_1: (vtk.vtkTriangle, vtk.VTK_TRIANGLE),
+                cellgeometrytype.CGT_QUAD:       (vtk.vtkQuad, vtk.VTK_QUAD),
+                cellgeometrytype.CGT_TETRA:      (vtk.vtkTetra, vtk.VTK_TETRA),
+                cellgeometrytype.CGT_HEXAHEDRON: (vtk.vtkHexahedron, vtk.VTK_HEXAHEDRON),
+                cellgeometrytype.CGT_TRIANGLE_2: (vtk.vtkQuadraticTriangle, vtk.VTK_QUADRATIC_TRIANGLE)
             }
             c2klass, c2type = cellGeomTypeMap[cgt]  # instantiate the VTK cell with the correct type
             c2 = c2klass()
@@ -431,7 +431,7 @@ class UnstructuredMesh(Mesh):
 
     def copy(self):
         """
-        See :func:`Mesh.copy`
+        See :func:`mesh.copy`
         """
         vertexList = []
         cellList = []
@@ -491,7 +491,7 @@ class UnstructuredMesh(Mesh):
         else:
             vvv = self.vertices()
             c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
-            bb = BBox.BBox(c0, c0)  # ope-pointed bbox
+            bb = bbox.BBox(c0, c0)  # ope-pointed bbox
             for vert in vvv:
                 bb.merge(vert.getCoordinates())  # extend it with all other cells
             minc, maxc = bb.coords_ll, bb.coords_ur
@@ -499,7 +499,7 @@ class UnstructuredMesh(Mesh):
             # setup vertex localizer
             size = max(y-x for x, y in zip(minc, maxc))
             mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-            self.vertexOctree = Octree.Octree(minc, size, tuple(mask))
+            self.vertexOctree = octree.Octree(minc, size, tuple(mask))
             if debug: 
                 t0 = time.clock()
                 print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
@@ -538,7 +538,7 @@ class UnstructuredMesh(Mesh):
         # setup vertex localizer
         size = max(y-x for x, y in zip(minc, maxc))
         mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-        self.cellOctree = Octree.Octree(minc, size, tuple(mask))
+        self.cellOctree = octree.Octree(minc, size, tuple(mask))
         if debug:
             print('Octree ctor: ', time.clock()-t0)
             print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
@@ -675,15 +675,15 @@ class UnstructuredMesh(Mesh):
         for c in range(len(self.cellList)):
             cell = self.cellList[c]
             cgt = cell.getGeometryType()
-            if cgt == CellGeometryType.CGT_TRIANGLE_1:
+            if cgt == cellgeometrytype.CGT_TRIANGLE_1:
                 triangles.append(cell.vertices)
-            elif cgt == CellGeometryType.CGT_QUAD:
+            elif cgt == cellgeometrytype.CGT_QUAD:
                 quads.append(cell.vertices)
-            elif cgt == CellGeometryType.CGT_TETRA:
+            elif cgt == cellgeometrytype.CGT_TETRA:
                 tetrahedrons.append(cell.vertices)
-            elif cgt == CellGeometryType.CGT_HEXAHEDRON:
+            elif cgt == cellgeometrytype.CGT_HEXAHEDRON:
                 hexahedrons.append(cell.vertices)
-            elif cgt == CellGeometryType.CGT_TRIANGLE_2:
+            elif cgt == cellgeometrytype.CGT_TRIANGLE_2:
                 # no direct support in pyvtk. map it to linear tringles
                 triangles.append((cell.vertices[0], cell.vertices[3], cell.vertices[5]))
                 triangles.append((cell.vertices[1], cell.vertices[4], cell.vertices[3]))
@@ -691,7 +691,7 @@ class UnstructuredMesh(Mesh):
                 triangles.append((cell.vertices[3], cell.vertices[4], cell.vertices[5]))
             else:
                 msg = "Unsupported cell geometry type encountered: "+str(cgt)
-                raise APIError.APIError(msg)
+                raise apierror.APIError(msg)
 
         return pyvtk.UnstructuredGrid(
             vertices, hexahedron=hexahedrons, tetra=tetrahedrons, quad=quads, triangle=triangles)
@@ -705,11 +705,11 @@ class UnstructuredMesh(Mesh):
         :return: new instance of :obj:`UnstructuredMesh`
         """
         import vtk
-        from . import Cell, Vertex
+        from . import cell, vertex
         ret = UnstructuredMesh()
         np, nc = ugrid.GetNumberOfPoints(), ugrid.GetNumberOfCells()
         # vertices
-        mupifVertices = [Vertex.Vertex(number=ip, label=ip, coords=ugrid.GetPoint(ip)) for ip in range(np)]
+        mupifVertices = [vertex.Vertex(number=ip, label=ip, coords=ugrid.GetPoint(ip)) for ip in range(np)]
         # cells
         mupifCells = []
         for ic in range(nc):
@@ -720,18 +720,18 @@ class UnstructuredMesh(Mesh):
             # assuming that cell types were stored correctly and numbering did not change meanwhile
             # plus add safety check for the required number of points per cell
             cellGeomTypeMap = {
-                vtk.VTK_TRIANGLE:           CellGeometryType.CGT_TRIANGLE_1,
-                vtk.VTK_QUADRATIC_TRIANGLE: CellGeometryType.CGT_TRIANGLE_2,
-                vtk.VTK_TETRA:              CellGeometryType.CGT_TETRA,
-                vtk.VTK_QUAD:               CellGeometryType.CGT_QUAD,
-                vtk.VTK_HEXAHEDRON:         CellGeometryType.CGT_HEXAHEDRON,
+                vtk.VTK_TRIANGLE:           cellgeometrytype.CGT_TRIANGLE_1,
+                vtk.VTK_QUADRATIC_TRIANGLE: cellgeometrytype.CGT_TRIANGLE_2,
+                vtk.VTK_TETRA:              cellgeometrytype.CGT_TETRA,
+                vtk.VTK_QUAD:               cellgeometrytype.CGT_QUAD,
+                vtk.VTK_HEXAHEDRON:         cellgeometrytype.CGT_HEXAHEDRON,
             }
             # find mupif class of the cell
             # if the lookup fails, KeyError propagates to the caller, which is what we want
             cgt = cellGeomTypeMap[c.GetCellType()]
             # create new cell and append to mupifCells
             mupifCells.append(
-                Cell.Cell.getClassForCellGeometryType(cgt)(
+                cell.Cell.getClassForCellGeometryType(cgt)(
                     #mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
                     mesh=ret, number=ic, label=None, vertices=pts
                 )
@@ -747,10 +747,10 @@ class UnstructuredMesh(Mesh):
         :param ugr: instance of pyvtk.UnstructuredGrid
         :return: new instance of :obj:`UnstructuredMesh`
         """
-        from . import Cell, Vertex
+        from . import cell, vertex
         ret = UnstructuredMesh()
         cells = []
-        vertices = [Vertex.Vertex(number=ip, label=ip, coords=ugr.points[ip]) for ip in range(len(ugr.points))]
+        vertices = [vertex.Vertex(number=ip, label=ip, coords=ugr.points[ip]) for ip in range(len(ugr.points))]
         for cellName in ['vertex', 'poly_vertex', 'line', 'poly_line', 'triangle', 'triangle_strip', 'polygon', 'pixel',
                          'quad', 'tetra', 'voxel', 'hexahedron', 'wedge', 'pyramid']:
             if not hasattr(ugr, cellName):
@@ -760,17 +760,17 @@ class UnstructuredMesh(Mesh):
                 continue  # no cells of this type
             # print(cellName,val)
             cellGeomNameMap = {
-                'triangle':   CellGeometryType.CGT_TRIANGLE_1,
-                'tetra':      CellGeometryType.CGT_TETRA,
-                'quad':       CellGeometryType.CGT_QUAD,
-                'hexahedron': CellGeometryType.CGT_HEXAHEDRON,
+                'triangle':   cellgeometrytype.CGT_TRIANGLE_1,
+                'tetra':      cellgeometrytype.CGT_TETRA,
+                'quad':       cellgeometrytype.CGT_QUAD,
+                'hexahedron': cellgeometrytype.CGT_HEXAHEDRON,
             }
             try:
                 cgt = cellGeomNameMap[cellName]
             except KeyError:
                 raise NotImplementedError("pyvtk cell type '%s' is not handled by the mupif import routine." % cellName)
             cells.append([
-                Cell.Cell.getClassForCellGeometryType(cgt)(
+                cell.Cell.getClassForCellGeometryType(cgt)(
                     mesh=ret,
                     number=len(cells),
                     label=None,

@@ -9,7 +9,7 @@ from enum import IntEnum
 DataSchema = {
     "type": "object",
     "properties": {
-        "Type": {"type": "string"},  # Automatically generated from MuPIF, e.g. mupif.Field.Field
+        "Type": {"type": "string"},  # Automatically generated from MuPIF, e.g. mupif.field.Field
         "Type_ID": {"type": "string"},  # Automatically generated from MuPIF, e.g. FieldID.FID_Temperature
         "Name": {"type": "string"},  # e.g. "Density of inclusion"
         "ID": {"type": ["string", "integer"]},  # Unique ID

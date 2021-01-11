@@ -57,15 +57,15 @@ def main():
     
     # locate nameserver
     try:
-        ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
+        ns = pyroutil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
 
         print("=======JOB Managers=========")
-        a = ns.list(metadata_any={PyroUtil.NS_METADATA_jobmanager}, return_metadata=True)
+        a = ns.list(metadata_any={pyroutil.NS_METADATA_jobmanager}, return_metadata=True)
         for k, v in a.items():
             print('{:30}:{}'.format(k, v))
         
         print("=======Applications=========")
-        a = ns.list(metadata_any={PyroUtil.NS_METADATA_appserver, 'appserver'}, return_metadata=True)
+        a = ns.list(metadata_any={pyroutil.NS_METADATA_appserver, 'appserver'}, return_metadata=True)
         for k, v in a.items():
             print('{:30}:{}'.format(k, v))
     

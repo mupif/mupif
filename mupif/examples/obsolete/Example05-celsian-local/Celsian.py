@@ -3,11 +3,11 @@ import sys
 sys.path.append('../../..')
 from mupif import *
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 temperatureUnits = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
 
-class Celsian(Model.Model):
+class Celsian(model.Model):
 
     def __init__ (self, file):
         super(Celsian, self).__init__(file)
@@ -17,9 +17,9 @@ class Celsian(Model.Model):
         parts=[1, 2]
         partRec=[]
         if (self.mesh == None):
-            self.mesh = EnsightReader2.readEnsightGeo('paraview/MMPTestCase_v1.geo', parts, partRec)
+            self.mesh = ensightreader2.readEnsightGeo('paraview/MMPTestCase_v1.geo', parts, partRec)
 
-        f = EnsightReader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh, temperatureUnits, time)
+        f = ensightreader2.readEnsightField('paraview/fld_TEMPERATURE.escl', parts, partRec, 1, FieldID.FID_Temperature, self.mesh, temperatureUnits, time)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):

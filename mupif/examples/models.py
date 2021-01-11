@@ -7,7 +7,7 @@ import numpy as np
 import time as timeTime
 import os
 import logging
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger('ex01_models')
 
@@ -19,13 +19,13 @@ def getline(f):
     while True:
         line = f.readline()
         if line == '':
-            raise mupif.APIError.APIError('Error: EOF reached in input file')
+            raise mupif.apierror.APIError('Error: EOF reached in input file')
         elif line[0] != '#':
             return line
 
 
 @Pyro4.expose
-class thermal(mupif.Model.Model):
+class thermal(mupif.model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self, metaData={}):
@@ -94,7 +94,7 @@ class thermal(mupif.Model.Model):
         super(thermal, self).__init__(metaData)
         self.mesh = None
         self.morphologyType = None
-        self.conductivity = mupif.Property.ConstantProperty(
+        self.conductivity = mupif.property.ConstantProperty(
             (1.,),
             mupif.PropertyID.PID_effective_conductivity,
             mupif.ValueType.Scalar,
@@ -181,7 +181,7 @@ class thermal(mupif.Model.Model):
                 self.scaleInclusion = float(rec[1])
 
     def prepareTask(self):
-        self.mesh = mupif.Mesh.UnstructuredMesh()
+        self.mesh = mupif.mesh.UnstructuredMesh()
         # generate a simple mesh here, either triangles or rectangles
         # self.xl = 0.5 # domain (0..xl)(0..yl)
         # self.yl = 0.3
@@ -278,7 +278,7 @@ class thermal(mupif.Model.Model):
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return mupif.Field.Field(
+            return mupif.field.Field(
                 self.mesh, mupif.FieldID.FID_Temperature,
                 mupif.ValueType.Scalar,
                 'C',
@@ -293,17 +293,17 @@ class thermal(mupif.Model.Model):
                 else:
                     values.append((0,))
             # print (values)
-            return mupif.Field.Field(
+            return mupif.field.Field(
                 self.mesh,
                 mupif.FieldID.FID_Material_number,
                 mupif.ValueType.Scalar,
                 PQ.getDimensionlessUnit(),
                 time,
                 values,
-                fieldType=mupif.Field.FieldType.FT_cellBased
+                fieldType=mupif.field.FieldType.FT_cellBased
             )
         else:
-            raise mupif.APIError.APIError('Unknown field ID')
+            raise mupif.apierror.APIError('Unknown field ID')
 
     def isInclusion(self, e):
         vertices = e.getVertices()
@@ -456,7 +456,7 @@ class thermal(mupif.Model.Model):
         dNdksi = None
         B = np.zeros((2, 2))
 
-        if isinstance(elem, mupif.Cell.Quad_2d_lin):
+        if isinstance(elem, mupif.cell.Quad_2d_lin):
             c1 = vertices[0].coords
             c2 = vertices[1].coords
             c3 = vertices[2].coords
@@ -491,7 +491,7 @@ class thermal(mupif.Model.Model):
             dNdksi[1, 2] = -0.25 * (1. - ksi)
             dNdksi[1, 3] = -0.25 * (1. + ksi)
 
-        elif isinstance(elem, mupif.Cell.Triangle_2d_lin):
+        elif isinstance(elem, mupif.cell.Triangle_2d_lin):
             c1 = vertices[0].coords
             c2 = vertices[1].coords
             c3 = vertices[2].coords
@@ -520,7 +520,7 @@ class thermal(mupif.Model.Model):
         numVert = e.getNumberOfVertices()
         A_e = np.zeros((numVert, numVert))
         # b_e = np.zeros((numVert, 1))
-        rule = mupif.IntegrationRule.GaussIntegrationRule()
+        rule = mupif.integrationrule.GaussIntegrationRule()
 
         ngp = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
         pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
@@ -573,7 +573,7 @@ class thermal(mupif.Model.Model):
                         sumQ -= self.r[ipneq - self.neq]
             eff_conductivity = sumQ / self.yl * self.xl / (
                         self.dirichletBCs[(self.ny + 1) * (self.nx + 1) - 1] - self.dirichletBCs[0])
-            return mupif.Property.ConstantProperty(
+            return mupif.property.ConstantProperty(
                 eff_conductivity,
                 mupif.PropertyID.PID_effective_conductivity,
                 mupif.ValueType.Scalar,
@@ -582,7 +582,7 @@ class thermal(mupif.Model.Model):
                 0
             )
         else:
-            raise mupif.APIError.APIError('Unknown property ID')
+            raise mupif.apierror.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if property.getPropertyID() == mupif.PropertyID.PID_effective_conductivity:
@@ -621,7 +621,7 @@ class thermal(mupif.Model.Model):
                         self.dirichletModelEdges.append((edge_index, property.getValue()[0]))
 
         else:
-            raise mupif.APIError.APIError('Unknown property ID')
+            raise mupif.apierror.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(100.0, 's')
@@ -734,7 +734,7 @@ class thermal_nonstat(thermal):
         # compute element capacity matrix
         numVert = e.getNumberOfVertices()
         A_e = np.zeros((numVert, numVert))
-        rule = mupif.IntegrationRule.GaussIntegrationRule()
+        rule = mupif.integrationrule.GaussIntegrationRule()
 
         ngp = rule.getRequiredNumberOfPoints(e.getGeometryType(), 2)
         pnts = rule.getIntegrationPoints(e.getGeometryType(), ngp)
@@ -950,7 +950,7 @@ class thermal_nonstat(thermal):
 
 
 @Pyro4.expose
-class mechanical(mupif.Model.Model):
+class mechanical(mupif.model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self):
@@ -1093,7 +1093,7 @@ class mechanical(mupif.Model.Model):
 
     def prepareTask(self):
 
-        # self.mesh = mupif.Mesh.UnstructuredMesh()
+        # self.mesh = mupif.mesh.UnstructuredMesh()
         # generate a simple mesh here
         # self.xl = 0.5 # domain (0..xl)(0..yl)
         # self.yl = 0.3
@@ -1169,7 +1169,7 @@ class mechanical(mupif.Model.Model):
                     else:
                         values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
 
-            return mupif.Field.Field(
+            return mupif.field.Field(
                 self.mesh,
                 mupif.FieldID.FID_Displacement,
                 mupif.ValueType.Vector,
@@ -1178,7 +1178,7 @@ class mechanical(mupif.Model.Model):
                 values
             )
         else:
-            raise mupif.APIError.APIError('Unknown field ID')
+            raise mupif.apierror.APIError('Unknown field ID')
 
     def setField(self, field, fieldID=0):
         if field.getFieldID() == mupif.FieldID.FID_Temperature:
@@ -1190,7 +1190,7 @@ class mechanical(mupif.Model.Model):
         mesh = self.mesh
         if tstep and tstep.getNumber() == 0:  # assign mesh only for 0th time step
             return
-        rule = mupif.IntegrationRule.GaussIntegrationRule()
+        rule = mupif.integrationrule.GaussIntegrationRule()
         self.volume = 0.0
         self.integral = 0.0
 

@@ -5,12 +5,12 @@ import socket
 
 import conf
 from mupif import Model
-from mupif import PyroUtil
+from mupif import pyroutil
 
 #nameserver app name
 appname='ctu-server'
 
-class local(Model.Model):
+class local(model.Model):
     """
     Mupif interface to Local dummy task
 
@@ -24,11 +24,11 @@ class local(Model.Model):
 app = local("/dev/null")
 # run the application server
 appRecord = [item for item in conf.apps if item[0] == appname][0]
-PyroUtil.runAppServer(server=appRecord[conf.appIndx_ServerName],
+pyroutil.runAppServer(server=appRecord[conf.appIndx_ServerName],
                       port=appRecord[conf.appIndx_RemotePort], 
                       nathost=conf.nathost, natport=appRecord[conf.appIndx_NATPort], 
                       nshost=conf.nshost, nsport=conf.nsport, 
-                      appName=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
+                      appName=pyroutil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
 
 
 

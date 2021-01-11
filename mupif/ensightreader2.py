@@ -24,12 +24,11 @@ from builtins import range
 
 import re
 
-from . import Mesh
-from . import Vertex
-from . import Cell
-from . import BBox
-from . import Field
-from . import FieldID
+import mupif.mesh
+from . import vertex
+from . import cell
+from . import bbox
+from . import field
 from . import ValueType
 
 debug = 0
@@ -43,7 +42,7 @@ def readEnsightGeo(name, partFilter, partRec):
     :param tuple partFilter: Only parts with id contained in partFiler will be imported
     :param list partRec: A list containing info about individual parts (number of elements). Needed by readEnsightField
     :return: mesh
-    :rtype: Mesh.Mesh
+    :rtype: mesh.Mesh
     """
     vertexMapping = {}
     vertices = []
@@ -56,7 +55,7 @@ def readEnsightGeo(name, partFilter, partRec):
     if debug: 
         print("Importing geometry from %s" % name)
 
-    mesh = Mesh.UnstructuredMesh()
+    mesh = mupif.mesh.UnstructuredMesh()
 
     # process header (6 lines)
     desc1 = f.readline()
@@ -87,7 +86,7 @@ def readEnsightGeo(name, partFilter, partRec):
             z = float(match.group(4))
             # print id, x, y, z
             vertexMapping[id] = vnum  # remember mapping id -> vertex number
-            vertices.append(Vertex.Vertex(vnum, id, (x, y, z)))
+            vertices.append(vertex.Vertex(vnum, id, (x, y, z)))
             # increment vertex counter
             vnum = vnum+1
     # read parts in sequential order
@@ -123,7 +122,7 @@ def readEnsightGeo_Part(f, line, mesh, enum, cells, vertexMapping, partnum, part
 
     :param File f: File object
     :param str line: Current line to process (should contain element type)
-    :param Mesh.Mesh mesh: Mupif mesh object to accommodate new cells
+    :param mesh.Mesh mesh: Mupif mesh object to accommodate new cells
     :param int enum: Accumulated cell number
     :param list cells: List of individual Cells
     :param dict vertexMapping: Map from vertex label (as given in Ensight file) to local number
@@ -158,7 +157,7 @@ def readEnsightGeo_Part(f, line, mesh, enum, cells, vertexMapping, partnum, part
                                int(match.group(6)), int(match.group(7)), int(match.group(8)), int(match.group(9)))
                     # print ("Brick: %d (%d %d %d %d %d %d %d %d)"%(elnum, elnodes[0],elnodes[1],elnodes[2],elnodes[3],elnodes[4],elnodes[5],elnodes[6],elnodes[7]))
                     _vert = [vertexMapping[i] for i in elnodes]
-                    cells.append(Cell.Brick_3d_lin(mesh, enum, enum, tuple(_vert)))
+                    cells.append(cell.Brick_3d_lin(mesh, enum, enum, tuple(_vert)))
                     enum = enum+1
             elif eltype == "quad4":
                 match = re.match('(.{8})(.{8})(.{8})(.{8})(.{8})', elemRec)
@@ -168,7 +167,7 @@ def readEnsightGeo_Part(f, line, mesh, enum, cells, vertexMapping, partnum, part
                     if debug:
                         print("Quad: %d (%d %d %d %d)" % (elnum, elnodes[0], elnodes[1], elnodes[2], elnodes[3]))
                     _vert = [vertexMapping[i] for i in elnodes]
-                    cells.append(Cell.Quad_2d_lin(mesh, enum, enum, tuple(_vert)))
+                    cells.append(cell.Quad_2d_lin(mesh, enum, enum, tuple(_vert)))
                     enum = enum+1
             else:
                 pass
@@ -188,7 +187,7 @@ def readEnsightField(name, parts, partRec, type, fieldID, mesh, units, time):
     :param list partRec: A list containing info about individual parts (number of elements per each element type).
     :param int type: Determines type of field values: type = 1 scalar, type = 3 vector, type = 6 tensor
     :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-    :param Mesh.Mesh mesh: Corresponding mesh
+    :param mesh.Mesh mesh: Corresponding mesh
     :param PhysicalUnit units: field units
     :param PhysicalQuantity time: time
     :return: FieldID for unknowns
@@ -249,7 +248,7 @@ def readEnsightField(name, parts, partRec, type, fieldID, mesh, units, time):
                                vertexVals[i*6+2], vertexVals[i*6+3],
                                vertexVals[i*6+4], vertexVals[i*6+4]))
 
-        field = Field.Field(mesh, fieldID, ftype, units, time, values, Field.FieldType.FT_vertexBased)
+        field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_vertexBased)
         return field
 
     else:
@@ -305,6 +304,6 @@ def readEnsightField(name, parts, partRec, type, fieldID, mesh, units, time):
             else:
                 line = f.readline()
         # so this should be per-cell variable file -> cell based field
-        field = Field.Field(mesh, fieldID, ftype, units, time, values, Field.FieldType.FT_cellBased)
+        field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_cellBased)
         return field
 

@@ -10,7 +10,7 @@ from mupif import APIError
 import logging
 log = logging.getLogger()
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 time  = 0
@@ -31,7 +31,7 @@ while (abs(time -targetTime) > 1.e-6):
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g "%(timestepnumber, time, dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+    istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         #solve problem 1
@@ -40,7 +40,7 @@ while (abs(time -targetTime) > 1.e-6):
         field = app1.getField(FieldID.FID_Temperature, istep.getTime())
         #field.field2Image2D()
 
-    except APIError.APIError as e:
+    except apierror.APIError as e:
         log.error("Following API error occurred:%s",e)
         sys.exit(1)
 # evaluate field at given point

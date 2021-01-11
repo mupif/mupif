@@ -1,11 +1,11 @@
 from builtins import range
 
 
-from . import Mesh
-from . import Vertex
-from . import Cell
-from . import Field
-from . import FieldID
+#from . import mesh
+import mupif.mesh
+from . import vertex
+from . import cell
+from . import field
 from . import ValueType
 
 from pyvtk.Scalars import Scalars
@@ -28,14 +28,14 @@ def readMesh(numNodes,nx,ny,nz,coords):
     :return: Mesh
     :rtype: Mesh
     """
-    mesh = Mesh.UnstructuredMesh()
+    mesh = mupif.mesh.UnstructuredMesh()
     vertices = []
     cells = []
 
     for i in range(0, numNodes):
         (x, y, z) = coords[i]
         # print (x,y,z)
-        vertices.append(Vertex.Vertex(i, i+1, (x, y, z)))
+        vertices.append(vertex.Vertex(i, i+1, (x, y, z)))
 
     print(numNodes)
 
@@ -72,7 +72,7 @@ def readMesh(numNodes,nx,ny,nz,coords):
         # print "n6 :", n6
         # print "n7 :", n7
         # print "n8 :", n8
-        cells.append(Cell.Brick_3d_lin(mesh, e, e+1, (n1, n2, n4, n3, n5, n6, n8, n7)))
+        cells.append(cell.Brick_3d_lin(mesh, e, e+1, (n1, n2, n4, n3, n5, n6, n8, n7)))
 
     mesh.setup(vertices, cells)
     return mesh
@@ -80,7 +80,7 @@ def readMesh(numNodes,nx,ny,nz,coords):
 
 def readField(mesh, Data, fieldID, units, time, name, filename, type):
     """
-    :param Mesh.Mesh mesh: Source mesh
+    :param mesh.Mesh mesh: Source mesh
     :param vtkData Data: vtkData obtained by pyvtk
     :param FieldID fieldID: Field type (displacement, strain, temperature ...)
     :param PhysicalUnit units: field units
@@ -132,7 +132,7 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
             values.append((scalar[i],))
             # print "values : ", values
 
-    field = Field.Field(mesh, fieldID, ftype, units, time, values, Field.FieldType.FT_vertexBased)
+    field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_vertexBased)
     return field
 
 
@@ -142,7 +142,7 @@ def readField(mesh, Data, fieldID, units, time, name, filename, type):
 # # in https://github.com/pearu/pyvtk/wiki/unexpectedEOF
 # #
 # # Monkey-patches are not applied automatically, the user has to call
-# # mupif.VtkReader2.pyvtk_monkeypatch() (can be made the default if useful).
+# # mupif.vtkreader2.pyvtk_monkeypatch() (can be made the default if useful).
 # #
 # # Works for both python 2.x and 3.x (adapted from fghorow-pyvtk-python3-port)
 # #

@@ -5,12 +5,12 @@ import logging
 sys.path.append('../../..')
 
 from mupif import *
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger()
 
 
-class application1(Model.Model):
+class application1(model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
@@ -55,9 +55,9 @@ class application1(Model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if propID == PropertyID.PID_Time:
-            return Property.ConstantProperty((self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, 0)
+            return property.ConstantProperty((self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, 0)
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
             
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()
@@ -96,7 +96,7 @@ while abs(time - targetTime) > 1.e-6:
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g" % (timestepnumber, time, dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+    istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
     
     # solve problem 1
     app1.solveStep(istep)

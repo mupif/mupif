@@ -11,20 +11,20 @@ import types
 class Mesh_TestCase(unittest.TestCase):
     def setUp(self):
         
-        self.mesh1 = Mesh.UnstructuredMesh()
-        self.mesh1.setup([Vertex.Vertex(0,0,(0.,0.)), Vertex.Vertex(1,1,(2.,0.)), Vertex.Vertex(2,2,(0.,5.))], [])
+        self.mesh1 = mesh.UnstructuredMesh()
+        self.mesh1.setup([vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(0.,5.))], [])
         
-        self.mesh2 = Mesh.UnstructuredMesh()
-        self.mesh2.setup([Vertex.Vertex(0,0,(0.,0.,2.)), Vertex.Vertex(1,1,(2.,0.,2.)), Vertex.Vertex(2,2,(0.,5.,2.)),Vertex.Vertex(3,3,(3.,3.,2.))], [Cell.Cell(self.mesh2,1,1,(0,1,2)),(Cell.Cell(self.mesh2,2,2,(1,2,3)))])
+        self.mesh2 = mesh.UnstructuredMesh()
+        self.mesh2.setup([vertex.Vertex(0,0,(0.,0.,2.)), vertex.Vertex(1,1,(2.,0.,2.)), vertex.Vertex(2,2,(0.,5.,2.)),vertex.Vertex(3,3,(3.,3.,2.))], [cell.Cell(self.mesh2,1,1,(0,1,2)),(cell.Cell(self.mesh2,2,2,(1,2,3)))])
         
-        self.mesh3 = Mesh.UnstructuredMesh()
-        self.mesh3.setup([Vertex.Vertex(0,4,(1.,1.)), Vertex.Vertex(1,5,(3.,1.)), Vertex.Vertex(2,6,(3.,5.)), Vertex.Vertex(3,16,(8.,7.))], [Cell.Triangle_2d_lin(self.mesh3,5,22,(0,1,2)),(Cell.Triangle_2d_lin(self.mesh3,2,18,(1,2,3)))])
+        self.mesh3 = mesh.UnstructuredMesh()
+        self.mesh3.setup([vertex.Vertex(0,4,(1.,1.)), vertex.Vertex(1,5,(3.,1.)), vertex.Vertex(2,6,(3.,5.)), vertex.Vertex(3,16,(8.,7.))], [cell.Triangle_2d_lin(self.mesh3,5,22,(0,1,2)),(cell.Triangle_2d_lin(self.mesh3,2,18,(1,2,3)))])
         
-        self.mesh4 = Mesh.UnstructuredMesh()
-        self.mesh4.setup([Vertex.Vertex(0,4,(0.,0.,2.)), Vertex.Vertex(1,8,(2.,0.,2.)), Vertex.Vertex(2,16,(0.,5.,2.)),Vertex.Vertex(3,23,(3.,3.,2.))], [Cell.Cell(self.mesh4,1,16,(0,1,2)),(Cell.Cell(self.mesh4,2,18,(1,2,3)))])
+        self.mesh4 = mesh.UnstructuredMesh()
+        self.mesh4.setup([vertex.Vertex(0,4,(0.,0.,2.)), vertex.Vertex(1,8,(2.,0.,2.)), vertex.Vertex(2,16,(0.,5.,2.)),vertex.Vertex(3,23,(3.,3.,2.))], [cell.Cell(self.mesh4,1,16,(0,1,2)),(cell.Cell(self.mesh4,2,18,(1,2,3)))])
         
-        self.mesh5 = Mesh.UnstructuredMesh()
-        self.mesh5.setup([Vertex.Vertex(0,16,(8.,7.,0.)), Vertex.Vertex(1,5,(3.,1.,0.)), Vertex.Vertex(2,8,(35.,42.,0.)), Vertex.Vertex(3,9,(545.,72.,0.))], [Cell.Triangle_2d_lin(self.mesh5,5,1,(0,1,2)),(Cell.Triangle_2d_lin(self.mesh5,2,2,(1,2,3)))])
+        self.mesh5 = mesh.UnstructuredMesh()
+        self.mesh5.setup([vertex.Vertex(0,16,(8.,7.,0.)), vertex.Vertex(1,5,(3.,1.,0.)), vertex.Vertex(2,8,(35.,42.,0.)), vertex.Vertex(3,9,(545.,72.,0.))], [cell.Triangle_2d_lin(self.mesh5,5,1,(0,1,2)),(cell.Triangle_2d_lin(self.mesh5,2,2,(1,2,3)))])
  
     def tearDown(self):
         
@@ -74,26 +74,26 @@ class Mesh_TestCase(unittest.TestCase):
     def test_getCell(self):
         self.res=self.mesh2.getCell(0)
         self.assertEqual(self.res.getNumberOfVertices(),3,'error in getCell(getNumberOfVertices),mesh2_Cell(0)')
-        self.assertEqual(self.res.getVertices(),Cell.Cell(self.mesh2,1,1,(0,1,2)).getVertices(),'error in getCell(getVertices,mesh2_Cell(0))')
+        self.assertEqual(self.res.getVertices(),cell.Cell(self.mesh2,1,1,(0,1,2)).getVertices(),'error in getCell(getVertices,mesh2_Cell(0))')
 
         self.res=self.mesh4.getCell(1)
         self.assertEqual(self.res.getNumberOfVertices(),3,'error in getCell(getNumberOfVertices),mesh4_Cell(1)')
-        self.assertEqual(self.res.getVertices(),Cell.Cell(self.mesh4,2,2,(1,2,3)).getVertices(),'error in getCell(getVertices),mesh4_Cell(1)')
+        self.assertEqual(self.res.getVertices(),cell.Cell(self.mesh4,2,2,(1,2,3)).getVertices(),'error in getCell(getVertices),mesh4_Cell(1)')
 
         self.res=self.mesh3.getCell(0)
         self.assertEqual(self.res.getNumberOfVertices(),3,'error in getCell(getNumberOfVertices),mesh3_Cell(0)')
-        self.assertEqual(self.res.getVertices(),Cell.Cell(self.mesh3,5,22,(0,1,2)).getVertices(),'error in getCell(getVertices),mesh3_Cell(0)')        
+        self.assertEqual(self.res.getVertices(),cell.Cell(self.mesh3,5,22,(0,1,2)).getVertices(),'error in getCell(getVertices),mesh3_Cell(0)')        
 #Testing giveVertexLocalizer
     def test_giveVertexLocalizer(self):
         self.res=self.mesh2.giveVertexLocalizer()
-        s=self.res.giveItemsInBBox(BBox.BBox((0.,0.,2.),(3.,5.,2.)))
+        s=self.res.giveItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
         self.assertEqual(self.mesh2.getVertex(1) in s,True,'error in giveVertexLocalizer mesh2')
         self.assertEqual(self.mesh2.getVertex(0) in s,True,'error in giveVertexLocalizer mesh2')
         self.assertEqual(self.mesh2.getVertex(2) in s,True,'error in giveVertexLocalizer mesh2')
         self.assertEqual(self.mesh2.getVertex(3) in s,True,'error in giveVertexLocalizer mesh2')
         
         self.res=self.mesh5.giveVertexLocalizer()
-        s=self.res.giveItemsInBBox(BBox.BBox((3.,1.,0.),(545.,72.,0.)))
+        s=self.res.giveItemsInBBox(bbox.BBox((3.,1.,0.),(545.,72.,0.)))
         self.assertEqual(self.mesh5.getVertex(1) in s,True,'error in giveVertexLocalizer mesh5')
         self.assertEqual(self.mesh5.getVertex(0) in s,True,'error in giveVertexLocalizer mesh5')
         self.assertEqual(self.mesh5.getVertex(2) in s,True,'error in giveVertexLocalizer mesh5')
@@ -102,12 +102,12 @@ class Mesh_TestCase(unittest.TestCase):
 #Testing giveVertexLocalizer
     def test_giveCellLocalizer(self):
         self.res=self.mesh2.giveCellLocalizer()
-        s=self.res.giveItemsInBBox(BBox.BBox((0.,0.,2.),(3.,5.,2.)))
+        s=self.res.giveItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
         self.assertEqual(self.mesh2.getCell(1) in s,True,'error in giveCellLocalizer mesh2')
         self.assertEqual(self.mesh2.getCell(0) in s,True,'error in giveCellLocalizer mesh2')
         
         self.res=self.mesh5.giveCellLocalizer()
-        s=self.res.giveItemsInBBox(BBox.BBox((3.,1.,0.),(545.,72.,0.)))
+        s=self.res.giveItemsInBBox(bbox.BBox((3.,1.,0.),(545.,72.,0.)))
         self.assertEqual(self.mesh5.getCell(1) in s,True,'error in giveCellLocalizer mesh5')
         self.assertEqual(self.mesh5.getCell(0) in s,True,'error in giveCellLocalizer mesh5')
 
@@ -134,11 +134,11 @@ class Mesh_TestCase(unittest.TestCase):
     def test_asVtkUnstructuredGrid(self):
         # @todo: not working with mesh1 because points have only two coordinates
         # @todo: not working with mesh4 because cell types are not supported ?
-        self.testMesh = Mesh.UnstructuredMesh()
-        self.testMesh.setup([Vertex.Vertex(0, 0, (0., 0., 0.)), Vertex.Vertex(1, 1, (1., 0., 0.)), Vertex.Vertex(2, 2, (1., 1., 0)),
-                             Vertex.Vertex(3, 3, (0., 1., 0.)), Vertex.Vertex(4, 4, (0., 0., 1.)), Vertex.Vertex(5, 5, (1., 0., 1.)),
-                             Vertex.Vertex(6, 6, (1., 1., 0)),
-                             Vertex.Vertex(7, 7, (0., 1., 1.))], [Cell.Brick_3d_lin(self.testMesh, 1, 1, (0, 1, 2, 3, 4, 5, 6, 7))])
+        self.testMesh = mesh.UnstructuredMesh()
+        self.testMesh.setup([vertex.Vertex(0, 0, (0., 0., 0.)), vertex.Vertex(1, 1, (1., 0., 0.)), vertex.Vertex(2, 2, (1., 1., 0)),
+                             vertex.Vertex(3, 3, (0., 1., 0.)), vertex.Vertex(4, 4, (0., 0., 1.)), vertex.Vertex(5, 5, (1., 0., 1.)),
+                             vertex.Vertex(6, 6, (1., 1., 0)),
+                             vertex.Vertex(7, 7, (0., 1., 1.))], [cell.Brick_3d_lin(self.testMesh, 1, 1, (0, 1, 2, 3, 4, 5, 6, 7))])
         self.testMesh.asVtkUnstructuredGrid()
 
     #Testing getVTKRepresentation

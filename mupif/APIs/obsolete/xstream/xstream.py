@@ -43,7 +43,7 @@ import ast
 from datetime import datetime
 
 from mupif import *
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 import logging
 
 import xstreamConfig as xConf
@@ -52,7 +52,7 @@ import XStFieldID
 
 
 
-class xstream(Model.Model):
+class xstream(model.Model):
   
     """
     X-Stream application interface class
@@ -99,7 +99,7 @@ class xstream(Model.Model):
           #os.chmod(self.executable,stat.S_IEXEC)
         #except Exception as e:
           #self.log.exception(e)
-          #raise APIError.APIError('Cannot copy GTM-X exec to working directory')
+          #raise apierror.APIError('Cannot copy GTM-X exec to working directory')
           #return
         os.chdir(storePath)
         
@@ -169,14 +169,14 @@ class xstream(Model.Model):
         basePath = self.workdir+'/'+xConf.ensightPath+'/'
         if (self.mesh == None):
             Geofile=basePath + self.config['geoFile']
-            self.mesh = EnsightReader2.readEnsightGeo(Geofile, self.parts, self.partRec)    
+            self.mesh = ensightreader2.readEnsightGeo(Geofile, self.parts, self.partRec)    
     
         fileName = basePath + self.config['fieldFile'] + '.escl'
         self.log.info('Reading file '+ fileName )
         # determine units and time
         units = PQ.getDimensionlessUnit()
         
-        f = EnsightReader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh,units,time )
+        f = ensightreader2.readEnsightField(fileName, self.parts, self.partRec, 1, FieldID, self.mesh,units,time )
         return f
 
 
@@ -224,7 +224,7 @@ class xstream(Model.Model):
            self.emissivity_prop = property
            #self.__setUniformBC(property)
         else:
-           raise APIError.APIError ('Unknown property ID')         
+           raise apierror.APIError ('Unknown property ID')         
 
 
     def setField(self, field, objectID=0):
@@ -246,7 +246,7 @@ class xstream(Model.Model):
         elif (field.getFieldID() == XStFieldID.FID_Emissivity):            
             FieldDatasetName = self.workdir + '/' + self.config['Emissivity_dataset']         
         else:
-           raise APIError.APIError ('Unknown field ID')
+           raise apierror.APIError ('Unknown field ID')
 
         f = open(FieldDatasetName,'w')           
         f.write('! field data on boundary in columns: x   y   value' + '\n')
@@ -361,7 +361,7 @@ class xstream(Model.Model):
                if re.search( 'N o r m a l   t e r m i n a t i o n   o f   t h e   p r o g r a m', line):
                   finished_OK=True
         if (finished_OK==False ):
-                raise APIError.APIError('X-stream has not finished properly. ')               
+                raise apierror.APIError('X-stream has not finished properly. ')               
         
         self.restart = True
         self.__changeValueKeyword('READ_FROM_RESTART_FILE','True')
@@ -410,7 +410,7 @@ class xstream(Model.Model):
                  return PQ.PhysicalQuantity(value, "s")
 
         if (found_tstep==False):
-            raise APIError.APIError('The timestep (keyword TIME_STEP) can not be found')
+            raise apierror.APIError('The timestep (keyword TIME_STEP) can not be found')
 
 
     def __changeValueKeyword(self, word, new_value):
@@ -448,7 +448,7 @@ class xstream(Model.Model):
         f.close() 
 
         if ( not found_word ):
-           raise APIError.APIError ('The parameter to change (' + word + ') does not exist')       
+           raise apierror.APIError ('The parameter to change (' + word + ') does not exist')       
 
 
     def __checkInputFilesExist(self):
@@ -470,7 +470,7 @@ class xstream(Model.Model):
                 #self.log.info(case + '      ok')
                 pass
             else:
-                raise APIError.APIError (case + ' does not exist')
+                raise apierror.APIError (case + ' does not exist')
 
 
     def __setUniformBC(self,property):
@@ -505,7 +505,7 @@ class xstream(Model.Model):
            property_to_change = 'RADIATION_INTENSITY'
            new_bc_string = '   ' + property_to_change + ' NEUMANN       UNIFORM ' + str(new_value) + '\n'
         else:
-           raise APIError.APIError ('Unknown property ID')     
+           raise apierror.APIError ('Unknown property ID')     
                           
         # Now look for the property_to_change   
         f_out = open(Casefile,"w")
@@ -532,7 +532,7 @@ class xstream(Model.Model):
         f_out.close()       
 
         if ( not found_property ):
-            raise APIError.APIError('ERROR.' + property_to_change + ' does not exist. Please check the casefile.' + xConf.caseFile)
+            raise apierror.APIError('ERROR.' + property_to_change + ' does not exist. Please check the casefile.' + xConf.caseFile)
 
 
     def __setDatasetBC(self,field):
@@ -566,7 +566,7 @@ class xstream(Model.Model):
         elif (field.getFieldID() == XStFieldID.FID_Emissivity):            
             FieldDatasetName = self.config['Emissivity_dataset']
         else:
-          raise APIError.APIError ('Unknown field ID')
+          raise apierror.APIError ('Unknown field ID')
 
         # Trim the extension of the filename
         DatasetName = os.path.splitext(FieldDatasetName)[0]
@@ -579,14 +579,14 @@ class xstream(Model.Model):
            field_to_change = 'RADIATION_INTENSITY'
            new_bc_string = '   ' + field_to_change + ' NEUMANN       DATASET ' + DatasetName + '\n'
         else:
-           raise APIError.APIError ('Unknown field ID')    
+           raise apierror.APIError ('Unknown field ID')    
  
         # Check if the file exists and has more than five datapoints
         FieldDatasetName = self.workdir + '/' + FieldDatasetName
         if os.path.exists(FieldDatasetName):
             self.log.info(FieldDatasetName + '      ok')
         else:
-            raise APIError.APIError (FieldDatasetName + ' does not exist') 
+            raise apierror.APIError (FieldDatasetName + ' does not exist') 
 
         npoints_dataset = len(open(FieldDatasetName).readlines())
         if (npoints_dataset<=5):
@@ -668,7 +668,7 @@ class xstream(Model.Model):
         f_out.close()  
         
         if ( not found_field ):
-            raise APIError.APIError('ERROR.' + field_to_change + ' does not exist. Please check the casefile.' + self.config['caseFile'])
+            raise apierror.APIError('ERROR.' + field_to_change + ' does not exist. Please check the casefile.' + self.config['caseFile'])
           
 
     def __config(self):
@@ -682,7 +682,7 @@ class xstream(Model.Model):
           try:
             f = open(self.workdir+'/'+self.file,'r')
           except:
-            APIError.APIError ('missing input.in file')
+            apierror.APIError ('missing input.in file')
           else:
             s = f.read()
             self.config = ast.literal_eval(s)

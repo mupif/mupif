@@ -7,7 +7,7 @@ from builtins import str
 import getopt
 import sys
 from mupif import JobManager
-from mupif import PyroUtil
+from mupif import pyroutil
 from mupif import APIError
 
 import logging
@@ -124,20 +124,20 @@ def main():
         sys.exit(2)
 
     # locate nameserver
-    ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
+    ns = pyroutil.connectNameServer(nshost, nsport, hkey)
     # locate remote jobManager application, request remote proxy
     jobManUri = ns.lookup(jobmanname)
     # get local port of jobmanager (from uri)
     jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
-    host = PyroUtil.getIPfromUri(jobManUri)
+    host = pyroutil.getIPfromUri(jobManUri)
     
     # extablish secure ssh tunnel connection
     if ssh:
-        (host, jobmannatport, jobManNatHost, port) = PyroUtil.getNSConnectionInfo(ns, jobmanname)
-        tunnel = PyroUtil.sshTunnel(
+        (host, jobmannatport, jobManNatHost, port) = pyroutil.getNSConnectionInfo(ns, jobmanname)
+        tunnel = pyroutil.sshTunnel(
             remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     
-    jobMan = PyroUtil.connectJobManager(ns, jobmanname, hkey=hkey)
+    jobMan = pyroutil.connectJobManager(ns, jobmanname, hkey=hkey)
   
     curses.wrapper(processor, jobMan)
     

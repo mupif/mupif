@@ -1,5 +1,5 @@
 from builtins import object
-from . import BBox
+from . import bbox
 import Pyro4
 
 
@@ -40,9 +40,9 @@ class Vertex(object):
     def getBBox(self):
         """
         :return: Receiver's bounding-box (containing only one point)
-        :rtype: mupif.BBox.BBox
+        :rtype: mupif.bbox.BBox
         """
-        return BBox.BBox(self.coords, self.coords)
+        return bbox.BBox(self.coords, self.coords)
 
     def __repr__(self):
         """

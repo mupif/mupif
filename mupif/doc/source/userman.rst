@@ -2253,7 +2253,7 @@ which picks up correct configuration. It is explained on
 *Example08-transiTM-JobMan-distrib*. First, the simulation scenario
 connects to the nameserver and subsequently the handle to thermal solver
 allocated by the corresponding job manager is created using
-*PyroUtil.allocateApplicationWithJobManager service.* This service first
+*pyroutil.allocateApplicationWithJobManager service.* This service first
 obtains the remote handle of the job manager for thermal application,
 requests allocation of a new instance of thermal solver, returning an
 instance of RemoteModel decorator, a class which encapsulate all the
@@ -2275,7 +2275,7 @@ between application servers.** The solution is to establish such a
 communication channel transparently via a steering computer, using
 forward and reverse ssh tunnels. The platform provides handy methods to
 establish needed communication patterns (see
-*PyroUtil.connectApplications* method and refer to
+*pyroutil.connectApplications* method and refer to
 *Example07-stacTM-JobMan-distrib* for an example).
 
 As an example, consider the simulation scenario composed of two

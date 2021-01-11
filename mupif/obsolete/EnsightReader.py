@@ -91,20 +91,20 @@ class EnsightReader(object):
         :rtype: Mesh
         """
 
-        mesh = Mesh.UnstructuredMesh()
+        mesh = mesh.UnstructuredMesh()
         vertices=[]
         coords = np.zeros((3), dtype='f')
         for i in range(0, self.getNumberOfVertices()): 
             coords=self.getCoords(i,coords)
         tuple = (coords)
-        vertices.append(Vertex.Vertex(i,i+1, tuple))
+        vertices.append(vertex.Vertex(i,i+1, tuple))
 
         cells = []
         for i in range(0, self.getNumberOfCells()):
             if (self.giveCellType(i) == 12 and self.giveCellType(i) in cellFilter):
-                cells.append(Cell.Brick_3d_lin(mesh, i, i, (int(self.giveVertex(i,0)), int(self.giveVertex(i,1)), int(self.giveVertex(i,2)), int(self.giveVertex(i,3)), int(self.giveVertex(i,4)), int(self.giveVertex(i,5)), int(self.giveVertex(i,6)), int(self.giveVertex(i,7))) )) 
+                cells.append(cell.Brick_3d_lin(mesh, i, i, (int(self.giveVertex(i,0)), int(self.giveVertex(i,1)), int(self.giveVertex(i,2)), int(self.giveVertex(i,3)), int(self.giveVertex(i,4)), int(self.giveVertex(i,5)), int(self.giveVertex(i,6)), int(self.giveVertex(i,7))) )) 
             elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
-                cells.append(Cell.Quad_2d_lin(mesh, i, i,(int(self.giveVertex(i,0)),int(self.giveVertex(i,1)),int(self.giveVertex(i,2)),int(self.giveVertex(i,3))) ))
+                cells.append(cell.Quad_2d_lin(mesh, i, i,(int(self.giveVertex(i,0)),int(self.giveVertex(i,1)),int(self.giveVertex(i,2)),int(self.giveVertex(i,3))) ))
         mesh.setup(vertices, cells)
         return mesh
 
@@ -128,7 +128,7 @@ class EnsightReader(object):
                     alues.append ((self.giveValueAtCell(fieldName, i), ))
                 elif (self.giveCellType(i) == 9 and self.giveCellType(i) in cellFilter):
                     values.append ((self.giveValueAtCell(fieldName, i), ))
-        return Field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values, Field.FieldType.FT_cellBased)
+        return field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, None, None, values, field.FieldType.FT_cellBased)
                     
     def giveValueAtPoint(self, fieldName, componentID):
         """
@@ -232,7 +232,7 @@ class EnsightReader(object):
         :rtype: tuple
         """
         if debug:
-            with Timer.Timer() as t:
+            with timer.Timer() as t:
                 coords=self.points.GetPoint(i)
             print('Request getCoords took %.03f sec.' % t.interval)
         else:

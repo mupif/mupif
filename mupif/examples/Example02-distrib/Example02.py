@@ -11,15 +11,15 @@ log = logging.getLogger()
 
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
 cfg = config(mode)
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1., [0, 0, 1, 0, 0, 0, 0, 0, 0])
 
 
-class application1(Model.Model):
+class application1(model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
@@ -73,10 +73,10 @@ class application1(Model.Model):
         }
 
         if propID == PropertyID.PID_Time_step:
-            return Property.ConstantProperty(
+            return property.ConstantProperty(
                 (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
@@ -98,16 +98,16 @@ targetTime = 1.0
 
 sshContext = None
 if mode == 1:  # just print out how to set up a SSH tunnel
-    sshContext = PyroUtil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
-    # PyroUtil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
+    sshContext = pyroutil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
+    # pyroutil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
 
 # locate nameserver
-ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
+ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
 # application1 is local, create its instance
 app1 = application1()
 # locate (remote) application2, request remote proxy
-app2 = PyroUtil.connectApp(ns, cfg.appName, cfg.hkey, sshContext)
+app2 = pyroutil.connectApp(ns, cfg.appName, cfg.hkey, sshContext)
 
 try:
     appsig = app2.getApplicationSignature()
@@ -143,7 +143,7 @@ while abs(time - targetTime) > 1.e-6:
     timestepnumber = timestepnumber+1
     log.debug("Step: %d %f %f" % (timestepnumber, time, dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+    istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
     try:
         # solve problem 1
@@ -161,7 +161,7 @@ while abs(time - targetTime) > 1.e-6:
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
             atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
 
-    except APIError.APIError as e:
+    except apierror.APIError as e:
         log.error("Following API error occurred: %s" % e)
         break
 

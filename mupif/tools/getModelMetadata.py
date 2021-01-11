@@ -72,7 +72,7 @@ def main():
     
     #locate nameserver
     try:
-        ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
+        ns = pyroutil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
 
         print ("=======JOB Managers=========")
         (uri, mdata) = ns.lookup(jobmanname, return_metadata=True)
@@ -88,9 +88,9 @@ def main():
                     hostname=match.group(1)
             if (hostname):
 
-                jobMan = PyroUtil.connectJobManager(ns, jobmanname, hkey=hkey)
+                jobMan = pyroutil.connectJobManager(ns, jobmanname, hkey=hkey)
 
-                app = PyroUtil.allocateApplicationWithJobManager(ns, jobMan, None, hkey)
+                app = pyroutil.allocateApplicationWithJobManager(ns, jobMan, None, hkey)
                 metadata = app.getAllMetadata()
                 print (json.dumps(metadata))
             

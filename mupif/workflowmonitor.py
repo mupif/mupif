@@ -21,7 +21,7 @@
 # Boston, MA  02110-1301  USA
 #
 import logging
-from . import MupifObject
+from . import mupifobject
 log = logging.getLogger()
 import Pyro4
 
@@ -41,7 +41,7 @@ import Pyro4
 
 
 @Pyro4.expose
-class WorkflowMonitor(MupifObject.MupifObject):
+class WorkflowMonitor(mupifobject.MupifObject):
     """
     An class implementing workflow monitor; a server keeping track of individual workflow executions and their status.
     It internally maintains workflows dict, where keys are workflow execution IDs, 

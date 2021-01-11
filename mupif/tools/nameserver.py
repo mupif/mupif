@@ -11,12 +11,12 @@ import subprocess
 sys.path.append('../examples')
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
 cfg = config(mode)
 import logging
 log = logging.getLogger()
-Util.changeRootLogger('nameserver.log')
+util.changeRootLogger('nameserver.log')
 
 
 def main():

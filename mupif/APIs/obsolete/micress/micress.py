@@ -37,7 +37,7 @@ import pyvtk
 
 from mupif import *
 import logging
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 dummyUnits = PQ.PhysicalUnit('dummy',   1.,    [0,0,0,0,0,0,0,0,0])
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
@@ -48,9 +48,9 @@ import micressConfig as mConf
 import MICPropertyID
 import MICFieldID
 
-VtkReader2.pyvtk_monkeypatch()
+vtkreader2.pyvtk_monkeypatch()
 
-class micress(Model.Model):
+class micress(model.Model):
 
     """
       MICRESS application interface class
@@ -150,14 +150,14 @@ class micress(Model.Model):
           else:
             msg = 'First property to set is the RVE location!'
             log.exception(msg)
-            raise APIError.APIError(msg)
+            raise apierror.APIError(msg)
         elif (property.getPropertyID() == MICPropertyID.PID_zTemperatureGradient):
           if (self.locIndex != -1):
             self.TGrad1[self.locIndex] = property
           else:
             msg = 'First property to set is the RVE location!'
             log.exception(msg)
-            raise APIError.APIError(msg)
+            raise apierror.APIError(msg)
         elif (property.getPropertyID() == MICPropertyID.PID_RVELocation):
           loc = list(property.getValue())
           found = False
@@ -179,7 +179,7 @@ class micress(Model.Model):
         else:
           msg = 'Unknown property ID'
           log.exception(msg)
-          raise APIError.APIError(msg)
+          raise apierror.APIError(msg)
       
      
     def getProperty(self, propID, time, objectID=0):
@@ -207,14 +207,14 @@ class micress(Model.Model):
           if ( self.t is None ):
             self.__parseLogfile()
           if ( len(self.t) == 0 ):
-            raise APIError.APIError('No entries in log file')
+            raise apierror.APIError('No entries in log file')
             return 0
           eps = 1.0E-7
           highestTime = self.t[-1]
           if ( time-eps > highestTime ):
             self.__parseLogfile()
           if ( len(self.t) == 0 ):
-            raise APIError.APIError('No entries in log file')
+            raise apierror.APIError('No entries in log file')
             return 0            
 
         if ( (propID == MICPropertyID.PID_PhaseFractions) or \
@@ -223,7 +223,7 @@ class micress(Model.Model):
           if ( self.tabF is None ):
             self.__parseTabFfile()
           if ( len(self.tabF) == 0 ):
-            raise APIError.APIError('No entries in result table')
+            raise apierror.APIError('No entries in result table')
             return 0
           eps = 1.0E-7
           highestTime = self.tabF[-1][0]
@@ -235,7 +235,7 @@ class micress(Model.Model):
               tabFEntry = entry
               break
           if ( tabFEntry is None ):
-            raise APIError.APIError('No time matching entry in result table')
+            raise apierror.APIError('No time matching entry in result table')
             return 0
 
         if (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
@@ -243,7 +243,7 @@ class micress(Model.Model):
           if ( self.tabK is None ):
             self.__parseTabKfile()
           if ( len(self.tabK) == 0 ):
-            raise APIError.APIError('No entries in result table')
+            raise apierror.APIError('No entries in result table')
             return 0
           eps = 1.0E-7
           highestTime = self.tabK[-1][0]
@@ -260,21 +260,21 @@ class micress(Model.Model):
                 take = not take
               break
           if ( tabKEntry is None ):
-            raise APIError.APIError('No time matching entry in result table')
+            raise apierror.APIError('No time matching entry in result table')
             return 0
             
         if (propID == MICPropertyID.PID_PhaseFractions):
-          return Property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return property.ConstantProperty([x*100 for x in tabFEntry[2:]], MICPropertyID.PID_PhaseFractions, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Dimensions):
-          return Property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, PQ._base_units[0][1], time=None, objectID=0)
+          return property.ConstantProperty(self.dimensions, MICPropertyID.PID_Dimensions, ValueType.Vector, PQ._base_units[0][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_Temperature):
-          return Property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, PQ._base_units[4][1], time=None, objectID=0)
+          return property.ConstantProperty(entry[1], MICPropertyID.PID_Temperature, ValueType.Scalar, PQ._base_units[4][1], time=None, objectID=0)
         elif (propID == MICPropertyID.PID_ComponentNames):
-          return Property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return property.ConstantProperty(self.componentNames, MICPropertyID.PID_ComponentNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_PhaseNames):
-          return Property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return property.ConstantProperty(self.phaseNames, MICPropertyID.PID_PhaseNames, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == MICPropertyID.PID_AvgGrainSizePerPhase):
-          return Property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)
+          return property.ConstantProperty(tabKEntry, MICPropertyID.PID_AvgGrainSizePerPhase, ValueType.Vector, dummyUnits, time=None, objectID=0)
         elif (propID == PropertyID.PID_Concentration):
           idx = 0
           while ( idx < len(self.t) ):
@@ -282,17 +282,17 @@ class micress(Model.Model):
               break
             idx += 1
           if ( idx == len(self.t) ):
-            raise APIError.APIError('No time matching entry in log file')
+            raise apierror.APIError('No time matching entry in log file')
             return 0
-          return Property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)
+          return property.ConstantProperty(self.c[idx], PropertyID.PID_Concentration, ValueType.Vector, MICPropertyID.UNIT_WeightPercent, time=timeWithUnits, objectID=0)
         elif (propID == MICPropertyID.PID_NativeBaseFileName):
           baseFilename = self.resultFiles + "_loc_" + str(self.locIndex)
-          return Property.ConstantProperty(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
+          return property.ConstantProperty(baseFilename, MICPropertyID.PID_NativeBaseFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
         elif (propID == MICPropertyID.PID_NativeFieldFileName):
           vtkFile = self.__getResultsVTKFile(time)
-          return Property.ConstantProperty(vtkFile, MICPropertyID.PID_NativeFieldFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
+          return property.ConstantProperty(vtkFile, MICPropertyID.PID_NativeFieldFileName, ValueType.Scalar, MICPropertyID.UNIT_String, time=timeWithUnits, objectID=0)
         else:
-          raise APIError.APIError('Unknown property ID')
+          raise apierror.APIError('Unknown property ID')
 
 
     def __getResultsVTKFile(self,time):
@@ -322,7 +322,7 @@ class micress(Model.Model):
             if ( entryTime == time ):
                 match = t[i][0] # get index of vtk file
         if ( len(match) == 0 ):
-            raise APIError.APIError('No property available')
+            raise apierror.APIError('No property available')
             return 0
         
         vtkFile = self.resultFiles + "_loc_" + str(self.locIndex) + '_' + match + '.vtk'
@@ -360,12 +360,12 @@ class micress(Model.Model):
         coords= Data.structure.get_points()
         numNodes = Data.point_data.length         
         if (self.mesh == None):
-            self.mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)
+            self.mesh = vtkreader2.readMesh(numNodes,nx,ny,nz,coords)
 
         if ( fieldID == MICFieldID.FID_Phase ):
-          field = VtkReader2.readField(self.mesh, Data, fieldID, "phas", vtkFile, 1)
+          field = vtkreader2.readField(self.mesh, Data, fieldID, "phas", vtkFile, 1)
         else:
-          raise APIError.APIError ('Unknown field ID')
+          raise apierror.APIError ('Unknown field ID')
                 
         return field
       
@@ -390,7 +390,7 @@ class micress(Model.Model):
         mictime = tstep.getTime().getValue()
 
         if ( self.locIndex == -1 ):
-          raise APIError.APIError('No RVE location specified')
+          raise apierror.APIError('No RVE location specified')
                
         # check properties
         if ( self.T0[self.locIndex] is None ):
@@ -405,7 +405,7 @@ class micress(Model.Model):
               self.resultFiles = split[0]
               break
           if ( self.resultFiles == '' ):
-            raise APIError.APIError('No MICRESS driving file template found')     
+            raise apierror.APIError('No MICRESS driving file template found')     
        
         # generate driving file from generic
         f = open(self.workbench + '/' + self.resultFiles + '.template','r')

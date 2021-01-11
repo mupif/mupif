@@ -6,7 +6,7 @@ import jsonpickle
 import time  # for sleep
 import logging
 log = logging.getLogger()
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 #
 # Expected response from operator: E-mail with "CSJ01" (workflow + jobID)
@@ -15,7 +15,7 @@ import mupif.Physics.PhysicalQuantities as PQ
 #
 
 
-class EmailAPI(Model.Model):
+class EmailAPI(model.Model):
     """
     Simple application API that involves operator interaction
     """
@@ -23,7 +23,7 @@ class EmailAPI(Model.Model):
         super(EmailAPI, self).__init__(file)
         # note: "From" should correspond to destination e-mail
         # where the response is received (Operator can reply to the message)
-        self.operator = operatorUtil.OperatorEMailInteraction(From='appAPI@gmail.com',
+        self.operator = operatorutil.OperatorEMailInteraction(From='appAPI@gmail.com',
                                                               To='operator@gmail.com',
                                                               smtpHost='smtp.something.com',
                                                               imapHost='imap.gmail.com',
@@ -87,7 +87,7 @@ class EmailAPI(Model.Model):
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' % (self.key, value))
-                    return Property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0, metaData=md)
+                    return property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0, metaData=md)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -132,11 +132,11 @@ try:
     app.initialize(metaData=executionMetadata)
 
     # CumulativeConcentration property on input
-    p = Property.ConstantProperty(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3')
+    p = property.ConstantProperty(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3')
     # set concentration as input
     app.setProperty(p)
     # solve (involves operator interaction)
-    tstep = TimeStep.TimeStep(0.0, 0.1, 1.0, 's', 1)
+    tstep = timestep.TimeStep(0.0, 0.1, 1.0, 's', 1)
     app.solveStep (tstep)
     # get result of the simulation
     r = app.getProperty(PropertyID.PID_Demo_Value, tstep.getTime())

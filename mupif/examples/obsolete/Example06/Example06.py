@@ -8,12 +8,12 @@ import time as timeTime
 import logging
 log = logging.getLogger()
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #if you wish to run no SSH tunnels, set to None
 #sshContext = None
-sshContext = PyroUtil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
+sshContext = pyroutil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
 
 
 #use numerical IP values only (not names, sometimes they do not work)
@@ -24,11 +24,11 @@ try:
 
     start = timeTime.time()
     #locate nameserver
-    ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
+    ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
     # locate remote PingServer application, request remote proxy
     # tunnel created on the fly and terminated with application
-    serverApp = PyroUtil.connectApp(ns, cfg.appName, hkey=None, sshContext=sshContext)
+    serverApp = pyroutil.connectApp(ns, cfg.appName, hkey=None, sshContext=sshContext)
 
     try:
         appsig=serverApp.getApplicationSignature()
@@ -45,12 +45,12 @@ try:
         time = i
         timestepnumber = i
         # create a time step
-        istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+        istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
         try:
-            serverApp.setProperty (Property.Property(i, PropertyID.PID_Concentration, ValueType.Scalar, i, 'kg/m**3', 0))
+            serverApp.setProperty (property.Property(i, PropertyID.PID_Concentration, ValueType.Scalar, i, 'kg/m**3', 0))
             serverApp.solveStep(istep)
 
-        except APIError.APIError as e:
+        except apierror.APIError as e:
             log.exception("Following API error occurred:" + e)
             break
 

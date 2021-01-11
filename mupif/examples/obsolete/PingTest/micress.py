@@ -4,14 +4,14 @@ import os
 import socket
 
 from mupif import Model
-from mupif import PyroUtil
+from mupif import pyroutil
 
 # import basic definitions -> need to be customized
 import conf
 #set application name (used also as an index to apps dictionary defined in conf.py)
 appname='micress'
 
-class micress(Model.Model):
+class micress(model.Model):
     """
     Mupif interface to micress (microstructure evolution simulation tool) 
 
@@ -28,7 +28,7 @@ class micress(Model.Model):
 app = micress("/dev/null")
 # run the application server
 appRecord = conf.apps['micress']
-PyroUtil.runAppServer(server=appRecord.serverName, port=appRecord.remotePort, 
+pyroutil.runAppServer(server=appRecord.serverName, port=appRecord.remotePort, 
                       nathost=conf.nathost, natport=appRecord.natPort, 
                       nshost=conf.nshost, nsport=conf.nsport, 
-                      appName=PyroUtil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)
+                      appName=pyroutil.getNSAppName(conf.jobname, appname), hkey=conf.hkey, app=app)

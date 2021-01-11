@@ -19,8 +19,8 @@ Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
 Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
 Pyro4.config.SERVERTYPE = "multiplex"
 
-import mupif.Util
-log=mupif.Util.setupLogger(None)
+import mupif.util
+log=mupif.util.setupLogger(None)
 
 # start nameserver on localhost, port 9092
 
@@ -60,9 +60,9 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         print ("nameserver started")
         waitPort(('127.0.0.1',nsPort))
         #print (cls.nsproc, cls.nsproc.pid)
-        cls.ns = mupif.PyroUtil.connectNameServer(nshost='127.0.0.1', nsport=nsPort, hkey=None)
+        cls.ns = mupif.pyroutil.connectNameServer(nshost='127.0.0.1', nsport=nsPort, hkey=None)
         # print('here')
-        cls.jobMan = mupif.SimpleJobManager.SimpleJobManager2(
+        cls.jobMan = mupif.simplejobmanager.SimpleJobManager2(
             daemon=None,
             ns=cls.ns,
             appAPIClass=testApp,
@@ -95,7 +95,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
     def test_allocateJob(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
         (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
-        self.assertTrue(retCode == mupif.JobManager.JOBMAN_OK)
+        self.assertTrue(retCode == mupif.jobmanager.JOBMAN_OK)
     
     def test_getStatus(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
@@ -128,7 +128,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         ticket = self.jobMan.preAllocate(requirements=None)
         (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
         print ("Retcode "+str(retCode))
-        with self.assertRaises(mupif.JobManager.JobManNoResourcesException) as cm:
+        with self.assertRaises(mupif.jobmanager.JobManNoResourcesException) as cm:
             self.jobMan.allocateJob(user="user", natPort=None, ticket=None)    
         (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user", natPort=None, ticket=ticket)
         print("Retcode2 "+str(retCode2))

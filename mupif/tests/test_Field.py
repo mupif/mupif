@@ -1,8 +1,8 @@
 import unittest
 import tempfile
 from mupif import *
-from mupif.Physics.PhysicalQuantities import PhysicalUnit as PU
-import mupif.Physics.PhysicalQuantities as PQ
+from mupif.physics.physicalquantities import PhysicalUnit as PU
+import mupif.physics.physicalquantities as PQ
 import math
 import numpy as np
 
@@ -20,28 +20,28 @@ class Field_TestCase(unittest.TestCase):
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name
         
-        self.mesh = Mesh.UnstructuredMesh()
-        self.mesh.setup([Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(2.,0.,0.)), Vertex.Vertex(2,2,(0.,5.,0.)), Vertex.Vertex(3,3,(4.,2.,0.))], [Cell.Triangle_2d_lin(self.mesh,1,1,(0,1,2)),Cell.Triangle_2d_lin(self.mesh,2,2,(1,2,3))])
+        self.mesh = mesh.UnstructuredMesh()
+        self.mesh.setup([vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(2.,0.,0.)), vertex.Vertex(2,2,(0.,5.,0.)), vertex.Vertex(3,3,(4.,2.,0.))], [cell.Triangle_2d_lin(self.mesh,1,1,(0,1,2)),cell.Triangle_2d_lin(self.mesh,2,2,(1,2,3))])
 
-        self.mesh3 = Mesh.UnstructuredMesh()
-        self.mesh3.setup([Vertex.Vertex(0,16,(5.,6.,0.)), Vertex.Vertex(1,5,(8.,8.,0.)), Vertex.Vertex(2,8,(6.,10.,0.))], [Cell.Triangle_2d_lin(self.mesh3,3,8,(0,1,2))])
+        self.mesh3 = mesh.UnstructuredMesh()
+        self.mesh3.setup([vertex.Vertex(0,16,(5.,6.,0.)), vertex.Vertex(1,5,(8.,8.,0.)), vertex.Vertex(2,8,(6.,10.,0.))], [cell.Triangle_2d_lin(self.mesh3,3,8,(0,1,2))])
         
-        self.mesh4 = Mesh.UnstructuredMesh()
-        self.mesh4.setup([Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(2.,0.,2.)), Vertex.Vertex(2,2,(0.,5.,3.)),Vertex.Vertex(3,3,(3.,3.,2.)),Vertex.Vertex(4,4,(8.,15.,0.))], [Cell.Tetrahedron_3d_lin(self.mesh4,1,1,(0,1,2,3)),Cell.Tetrahedron_3d_lin(self.mesh4,2,2,(1,2,3,4))])
+        self.mesh4 = mesh.UnstructuredMesh()
+        self.mesh4.setup([vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(2.,0.,2.)), vertex.Vertex(2,2,(0.,5.,3.)),vertex.Vertex(3,3,(3.,3.,2.)),vertex.Vertex(4,4,(8.,15.,0.))], [cell.Tetrahedron_3d_lin(self.mesh4,1,1,(0,1,2,3)),cell.Tetrahedron_3d_lin(self.mesh4,2,2,(1,2,3,4))])
         
         
-        self.f1=Field.Field(self.mesh,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13, 's'),[(0,),(12,),(175,),(94,)],1)
-        self.f2=Field.Field(self.mesh,FieldID.FID_Strain,ValueType.Vector,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(128,'s'),[(3,6),(2,8),(2,3)],1)
-        self.f3=Field.Field(self.mesh,FieldID.FID_Stress,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(66,'s'),[(3,6,4),(2,8,5),(2,3,6)],1)
-        self.f4=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(6,),(16,),(36,),(33,),(32,)])
-        self.f5=Field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
-        self.f6=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
-        self.f7=Field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],Field.FieldType.FT_cellBased)
-        self.f8 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
+        self.f1=field.Field(self.mesh,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13, 's'),[(0,),(12,),(175,),(94,)],1)
+        self.f2=field.Field(self.mesh,FieldID.FID_Strain,ValueType.Vector,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(128,'s'),[(3,6),(2,8),(2,3)],1)
+        self.f3=field.Field(self.mesh,FieldID.FID_Stress,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),PQ.PhysicalQuantity(66,'s'),[(3,6,4),(2,8,5),(2,3,6)],1)
+        self.f4=field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(6,),(16,),(36,),(33,),(32,)])
+        self.f5=field.Field(self.mesh3,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(13,'s'),[(3,),(5,),(4,)],1)
+        self.f6=field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(0,),(12,),(39,),(33,),(114,)])
+        self.f7=field.Field(self.mesh4,FieldID.FID_Displacement,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),PQ.PhysicalQuantity(16,'s'),[(2,),(16,)],field.FieldType.FT_cellBased)
+        self.f8 = field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
                               PU({'m': 1}, 1, (1, 0, 0, 0, 0, 0, 0)), PQ.PhysicalQuantity(13, 's'), None, 1)
-        self.f9 = Field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
+        self.f9 = field.Field(self.mesh, FieldID.FID_Displacement, ValueType.Scalar,
                               PU({'m': 1}, 1, (1, 0, 0, 0, 0, 0, 0)), PQ.PhysicalQuantity(13, 's'), None,
-                              Field.FieldType.FT_cellBased)
+                              field.FieldType.FT_cellBased)
 
         l = len(self.f8.value)
         self.assertEqual(l, self.mesh.getNumberOfVertices())
@@ -49,8 +49,8 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(l, self.mesh.getNumberOfCells())
 
 
-        # register assertEqual operation for PhysicalQuantities
-        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
+        # register assertEqual operation for physicalquantities
+        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertphysicalquantitiesEqual)
         
     def tearDown(self):
 
@@ -67,7 +67,7 @@ class Field_TestCase(unittest.TestCase):
         self.mesh5 = None
 
     # unit tests support
-    def assertPhysicalQuantitiesEqual(self, first, second, msg=None):
+    def assertphysicalquantitiesEqual(self, first, second, msg=None):
         if not first.__cmp__(second):
             raise self.failureException(msg)
 
@@ -100,8 +100,8 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getFieldIDName(),'FID_Displacement','error in getFieldIDName for f4')
         
     def test_getFieldType(self):
-        self.assertEqual(self.f1.getFieldType(),Field.FieldType.FT_vertexBased,'error in FieldType for f1')
-        self.assertEqual(self.f7.getFieldType(),Field.FieldType.FT_cellBased,'error in FieldType for f4')
+        self.assertEqual(self.f1.getFieldType(),field.FieldType.FT_vertexBased,'error in FieldType for f1')
+        self.assertEqual(self.f7.getFieldType(),field.FieldType.FT_cellBased,'error in FieldType for f4')
                 
     def test_getTime(self):
         self.assertEqual(self.f1.getTime().getValue(),13, 'error in getTime for f1') 

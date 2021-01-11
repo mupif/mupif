@@ -30,7 +30,7 @@ sys.path.append('../../..')
 from mupif import Property as mProperty
 import MICPropertyID
 
-class Property(mProperty.Property):
+class Property(mproperty.Property):
     """
     Extension of the Mupif's property class
     """     
@@ -52,7 +52,7 @@ class Property(mProperty.Property):
         elif ( self.units == MICPropertyID.UNIT_Meter ):
           return "m"        
         else:
-          raise APIError.APIError('Unit Error: no representive string available')
+          raise apierror.APIError('Unit Error: no representive string available')
         return ""
     
     

@@ -39,7 +39,7 @@ import logging
 log = logging.getLogger()
 log.setLevel("INFO")
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 import clientConfig as cConf
 
@@ -134,7 +134,7 @@ def runTestCase(xst,mic):
       lenY = cConf.lenZ
       origin = (cConf.originY, cConf.originZ, cConf.originX)
     else:
-      raise APIError.APIError('no 2D slice recognized') 
+      raise apierror.APIError('no 2D slice recognized') 
     
     bgMesh = util.generateBackgroundMesh(nbX,nbY,lenX,lenY,origin)
     
@@ -160,7 +160,7 @@ def runTestCase(xst,mic):
     tcStart = timeTime.time() 
     
     # set constant start emissivity (will be modified in homogenization step)
-    propEpsXstream = Property.ConstantProperty(cConf.startEmissivity, 
+    propEpsXstream = property.ConstantProperty(cConf.startEmissivity, 
                                                XStPropertyID.PID_Emissivity,\
                                                ValueType.Scalar, PQ.getDimensionlessUnit(),
                                                time, 0 )   
@@ -182,7 +182,7 @@ def runTestCase(xst,mic):
       time = time + dt
       timeStepNumber = timeStepNumber + 1
       #we have units with Time
-      istep = TimeStep.TimeStep(time, dt, PQ.PhysicalQuantity(cConf.targetTime, time.getUnitName()), None, timeStepNumber)
+      istep = timestep.TimeStep(time, dt, PQ.PhysicalQuantity(cConf.targetTime, time.getUnitName()), None, timeStepNumber)
 
       timing.append(timeStepNumber)
       timing.append(time)
@@ -231,10 +231,10 @@ def runTestCase(xst,mic):
           tcStart = timeTime.time()
           
           # generate Mupif property objects from values
-          propLocation = Property.ConstantProperty( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, 'm')
-          propT = Property.ConstantProperty( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, 'K', time, 0 )
+          propLocation = property.ConstantProperty( p[pos+interface], MICPropertyID.PID_RVELocation, ValueType.Vector, 'm')
+          propT = property.ConstantProperty( temp, MICPropertyID.PID_Temperature, ValueType.Scalar, 'K', time, 0 )
           # z-gradient constant at 0.0 at the moment
-          propzG = Property.ConstantProperty( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, 'K/m', time=None, objectID=0 )
+          propzG = property.ConstantProperty( 0.0, MICPropertyID.PID_zTemperatureGradient, ValueType.Scalar, 'K/m', time=None, objectID=0 )
   
           ## set the properties for micro simulation
           mic[interface].setProperty(propLocation)
@@ -356,7 +356,7 @@ def runTestCase(xst,mic):
       emissivityValues = []
       for val in vEm:
         emissivityValues.append((val,))
-      fieldEmissivity = Field.Field( bgMesh, XStFieldID.FID_Emissivity, \
+      fieldEmissivity = field.Field( bgMesh, XStFieldID.FID_Emissivity, \
                           ValueType.Scalar, 'none', 0.0, emissivityValues )
       #if cConf.debug:
         #print "writing emissivity field"

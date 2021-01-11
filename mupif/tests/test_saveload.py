@@ -5,9 +5,9 @@ from mupif import *
 import mupif
 import tempfile
 from mupif.tests import demo
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-tstep = TimeStep.TimeStep(0., 1., 1., timeUnits)
+tstep = timestep.TimeStep(0., 1., 1., timeUnits)
 
 
 # check for python-vtk before running related tests
@@ -21,8 +21,8 @@ except ImportError:
 class TestSaveLoad(unittest.TestCase):
     def setUp(self):
         self.app1=demo.AppGridAvg(None)
-        #register assertEqual operation for PhysicalQuantities
-        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertPhysicalQuantitiesEqual)
+        #register assertEqual operation for physicalquantities
+        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertphysicalquantitiesEqual)
 
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name
@@ -32,7 +32,7 @@ class TestSaveLoad(unittest.TestCase):
 
 
     # unit tests support
-    def assertPhysicalQuantitiesEqual (self, first, second, msg=None):
+    def assertphysicalquantitiesEqual (self, first, second, msg=None):
         if not first.__cmp__(second):
             raise self.failureException('%s != %s: %s'%(first,second,msg))
 
@@ -43,7 +43,7 @@ class TestSaveLoad(unittest.TestCase):
         if 1:
             import pprint
             pprint.pprint(dict([(k,v) if len(str(v))<1000 else (k,'<too long to show>') for k,v in dic.items()]))
-        f2=mupif.MupifObject.MupifObject.from_dict(dic)
+        f2=mupif.mupifobject.MupifObject.from_dict(dic)
         t22b=f2.evaluate((2.,2.,0.)).getValue()[0]
         self.assert_(not id(f)==id(f2))
         self.assertAlmostEqual(t22a,t22b)
@@ -74,11 +74,10 @@ class TestSaveLoad(unittest.TestCase):
         self.assertTrue(not id(f)==id(f2))
         self.assertAlmostEqual(t22a,t22b)
     def testFieldHdf5SaveLoad(self):
-        import mupif.Field
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         v=self.tmp+'/aa2.h5'
         f.toHdf5(v)
-        ff2=mupif.Field.Field.makeFromHdf5(v)
+        ff2=mupif.field.Field.makeFromHdf5(v)
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
@@ -88,7 +87,7 @@ class TestSaveLoad(unittest.TestCase):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         v=self.tmp+'/aa.vtu'
         f.toVTK3(v)
-        ff2=mupif.Field.Field.makeFromVTK3(v, f.getUnits())
+        ff2=mupif.field.Field.makeFromVTK3(v, f.getUnits())
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         # just compare coordinates of the first point
@@ -100,7 +99,7 @@ class TestSaveLoad(unittest.TestCase):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         v=self.tmp+'/aa.vtk'
         f.toVTK2(v,format=format)
-        ff2=mupif.Field.Field.makeFromVTK2(v, f.getUnits())
+        ff2=mupif.field.Field.makeFromVTK2(v, f.getUnits())
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
         # just compare coordinates of the first point

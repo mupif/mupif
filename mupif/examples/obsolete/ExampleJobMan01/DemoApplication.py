@@ -9,11 +9,11 @@ from mupif import Field
 from mupif import ValueType
 from mupif import Vertex
 from mupif import Cell
-from mupif import PyroUtil
+from mupif import pyroutil
 from mupif import Property
 from mupif import IntegrationRule
 
-class DemoApplication (Model.Model):
+class DemoApplication (model.Model):
     """
     Simple application that computes min and max values of the field
     """
@@ -27,7 +27,7 @@ class DemoApplication (Model.Model):
         if (propID == PropertyID.PID_Demo_Value):
             self.count = property
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         arry = [];
@@ -40,9 +40,9 @@ class DemoApplication (Model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Value):
-            return Property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit())
+            return property.ConstantProperty(self.count, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit())
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
 
     def getApplicationSignature(self):
         return "DemoApplication, ver 1.0"

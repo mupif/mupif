@@ -24,15 +24,15 @@
 import os
 import Pyro4
 import time as timeTime
-from . import Model
-from . import TimeStep
+from . import model
+from . import timestep
 import copy
 import logging
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger()
 
-WorkflowSchema = copy.deepcopy(Model.ModelSchema)
+WorkflowSchema = copy.deepcopy(model.ModelSchema)
 del WorkflowSchema["properties"]["Solver"]
 del WorkflowSchema["properties"]["Physics"]
 WorkflowSchema["properties"].update({
@@ -56,7 +56,7 @@ WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Exec
 
 
 @Pyro4.expose
-class Workflow(Model.Model):
+class Workflow(model.Model):
     """
     An abstract class representing a workflow and its interface (API).
 
@@ -129,7 +129,7 @@ class Workflow(Model.Model):
             if time > self.targetTime:
                 time = self.targetTime
             timeStepNumber = timeStepNumber+1
-            istep = TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
+            istep = timestep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
         
             log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 
@@ -163,7 +163,7 @@ class Workflow(Model.Model):
         :param str status: string describing the workflow status (initialized, running, failed, finished)
         :param int progress: integer number indicating execution progress (in percent)
         """
-        # PyroUtil.connectNameServer(nshost, nsport, hkey)
+        # pyroutil.connectNameServer(nshost, nsport, hkey)
         # try:
         #     uri = ns.lookup(workflowMonitorName)
         #     workflowMonitor = Pyro4.Proxy(uri)
@@ -173,9 +173,9 @@ class Workflow(Model.Model):
 
         if self.workflowMonitor:
             date = timeTime.strftime("%d %b %Y %H:%M:%S", timeTime.gmtime())
-            # metadata = {WorkflowMonitor.WorkflowMonitorKeys.Status: status,
-            # WorkflowMonitor.WorkflowMonitorKeys.Progress: progress,
-            # WorkflowMonitor.WorkflowMonitorKeys.Date: date}
+            # metadata = {workflowmonitor.WorkflowMonitorKeys.Status: status,
+            # workflowmonitor.WorkflowMonitorKeys.Progress: progress,
+            # workflowmonitor.WorkflowMonitorKeys.Date: date}
             metadata = {'WorkflowMonitor.Status': status,
                         'WorkflowMonitor.Progress': progress,
                         'WorkflowMonitor.Date': date}
@@ -195,10 +195,10 @@ class Workflow(Model.Model):
 
     def registerModel(self, model, label=None):
         """
-        :param Model.Model or Model.RemoteModel or Workflow model:
+        :param model.Model or model.RemoteModel or Workflow model:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
         """
-        if isinstance(model, (Workflow, Model.Model, Model.RemoteModel)):
+        if isinstance(model, (Workflow, model.Model, model.RemoteModel)):
             if label is None:
                 i = 0
                 while label in self.getListOfModelLabels() or i == 0:
@@ -214,13 +214,13 @@ class Workflow(Model.Model):
 
     def getDictOfModels(self):
         """
-        :rtype: dict[Model.Model, Model.RemoteModel, Workflow]
+        :rtype: dict[model.Model, model.RemoteModel, Workflow]
         """
         return self._models.copy()
 
     def getListOfModels(self):
         """
-        :rtype: list[Model.Model, Model.RemoteModel, Workflow]
+        :rtype: list[model.Model, model.RemoteModel, Workflow]
         """
         return iter(self.getDictOfModels().values())
 
@@ -239,7 +239,7 @@ class Workflow(Model.Model):
     def generateMetadataModelRefsID(self):
         dependencies = []
         for key_name, model in self.getDictOfModels().items():
-            if isinstance(model, (Model.Model, Workflow, Model.RemoteModel)):
+            if isinstance(model, (model.Model, Workflow, model.RemoteModel)):
                 # Temporary fix due to compatibility
                 if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
                     if model.hasMetadata('Solver.Version_date'):

@@ -40,56 +40,58 @@ else:
     pyroVer=4
 
 
-from .dataID import FieldID
-from .dataID import PropertyID
-from .dataID import FunctionID
-from .dataID import ParticleSetID
-from .valueType import ValueType
+from .dataid import FieldID
+from .dataid import PropertyID
+from .dataid import FunctionID
+from .dataid import ParticleSetID
+from .valuetype import ValueType
 
-from . import APIError
-from . import Model
-from . import Application
-from . import BBox
-from . import CellGeometryType
-from . import Cell
-from . import dataID
-from . import EnsightReader2
-from . import Field
-from . import Function
-from . import IntegrationRule
-from . import JobManager
-from . import SimpleJobManager
-from . import Localizer
-from . import Mesh
-from . import Octree
-from . import operatorUtil
-from . import Property
-from . import PyroUtil
-from . import Timer
-from . import TimeStep
-from . import Util
-from . import Vertex
-from . import VtkReader2
-from . import RemoteAppRecord
-from . import PyroFile
-from . import MupifObject
-from . import Workflow
-from . import MetadataKeys
-from . import Physics
-from . import Particle
-from . import ConstantField
+from . import apierror
+from . import model
+from . import application
+from . import bbox
+from . import cellgeometrytype
+from . import cell
+from . import dataid
+from . import ensightreader2
+from . import field
+from . import function
+from . import integrationrule
+from . import jobmanager
+from . import simplejobmanager
+from . import localizer
+from . import mesh
+from . import octree
+from . import operatorutil
+from . import property
+from . import pyroutil
+from . import timer
+from . import timestep
+from . import util
+from . import vertex
+from . import vtkreader2
+from . import remoteapprecord
+from . import pyrofile
+from . import mupifobject
+from . import workflow
+from . import metadatakeys
+from . import physics
+from . import particle
+from . import constantfield
 
 # List all submodules, so they can all be imported: from mupif import *
-__all__ = ['APIError', 'Model', 'Application', 'BBox', 'CellGeometryType', 'Cell', 'dataID', 'EnsightReader2', 'FieldID', 'Field',
-           'FunctionID', 'Function', 'IntegrationRule', 'JobManager', 'SimpleJobManager', 'Localizer', 'Mesh', 'Octree',
-           'operatorUtil', 'PropertyID', 'Property', 'PyroUtil', 'Timer', 'TimeStep', 'Util', 'ValueType', 'Vertex',
-           'VtkReader2', 'RemoteAppRecord', 'PyroFile', 'MupifObject', 'Workflow', 'MetadataKeys', 'Physics', 'Particle', 'ParticleSetID', 'ConstantField']
-from . import Util
+__all__ = [
+    # submodules
+    'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'ensightreader2', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'vtkreader2', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
+    # objects imported from submodules
+    'FieldID','PropertyID','FunctionID','ParticleSetID','ValueType'
+]
+from . import util
 import logging
 import os
 
 # Create default logger
-Util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
+util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
 
 # # temporarily disabled (does not work on travis, even though future is installed there??)
 # # more helpful error message

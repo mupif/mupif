@@ -28,12 +28,12 @@ import getpass
 import subprocess
 import threading
 import time
-from . import Model
-from . import JobManager
-from . import Util
-from . import APIError
-from . import PyroFile
-log = Util.setupLogger(fileName=None)
+from . import model
+from . import jobmanager
+from . import util
+from . import apierror
+from . import pyrofile
+log = util.setupLogger(fileName=None)
 
 Pyro4.config.SERIALIZER = "pickle"
 # some versions of Pyro don't have this attribute... (strange, is documented)
@@ -307,7 +307,7 @@ def connectApp(ns, name, hkey, sshContext=None, connectionTestTimeOut = 10.):
             raise
 
     app = _connectApp(ns, name, hkey, connectionTestTimeOut)
-    return Model.RemoteModel(app, appTunnel=tunnel)
+    return model.RemoteModel(app, appTunnel=tunnel)
 
 
 def getNSAppName(jobname, appname):
@@ -342,7 +342,7 @@ def runDaemon(host, port, hkey, nathost=None, natport=None):
 
     for iport in ports:
         try:
-            daemon = Pyro4.Daemon(host=host, port=int(iport), nathost=nathost, natport=Util.NoneOrInt(natport))
+            daemon = Pyro4.Daemon(host=host, port=int(iport), nathost=nathost, natport=util.NoneOrInt(natport))
             if (hkey):
                 daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
             log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
@@ -354,7 +354,7 @@ def runDaemon(host, port, hkey, nathost=None, natport=None):
             log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             daemon = None
     
-    raise APIError.APIError('Can not run Pyro4 daemon on configured ports')
+    raise apierror.APIError('Can not run Pyro4 daemon on configured ports')
 
 
 def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None, metadata=None):
@@ -371,14 +371,14 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     :param instance app: Application instance
     :param str hkey: A password string
     :param daemon: Reference to already running daemon, if available. Optional parameter.
-    :param metadata: set of strings that will be the metadata tags associated with the object registration. See PyroUtil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be automatically generated.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be automatically generated.
 
     :raises Exception: if can not run Pyro4 daemon
     """
     externalDaemon = False
     if not daemon:
         try:
-            daemon = Pyro4.Daemon(host=server, port=int(port), nathost=nathost, natport=Util.NoneOrInt(natport))
+            daemon = Pyro4.Daemon(host=server, port=int(port), nathost=nathost, natport=util.NoneOrInt(natport))
             daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
             log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
         except Exception:
@@ -478,8 +478,8 @@ def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
 
 
     :param SSHContext fromContext: Remote application
-    :param Model.Model or Model.RemoteModel fromApplication: Application object from which we want to create a tunnel
-    :param Model.Model or Model.RemoteModel toApplication: Application object to which we want to create a tunnel
+    :param model.Model or model.RemoteModel fromApplication: Application object from which we want to create a tunnel
+    :param model.Model or model.RemoteModel toApplication: Application object to which we want to create a tunnel
 
     :return: Instance of sshTunnel class
     :rtype: sshTunnel
@@ -557,7 +557,7 @@ def connectJobManager(ns, jobManName, hkey, sshContext=None):
     :param sshContext describing optional ssh tunnel connection detail 
 
     :return: (JobManager proxy, jobManager Tunnel)
-    :rtype: JobManager.RemoteJobManager
+    :rtype: jobmanager.RemoteJobManager
     :raises Exception: if creation of a tunnel failed
     """
 
@@ -585,7 +585,7 @@ def connectJobManager(ns, jobManName, hkey, sshContext=None):
     # locate remote jobManager on (remote) server
     jobMan = _connectApp(ns, jobManName, hkey)
     # return (jobMan, tunnelJobMan)
-    return JobManager.RemoteJobManager(jobMan, tunnelJobMan)
+    return jobmanager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
 def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None):
@@ -599,7 +599,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
     :param sshContext sshContext: describing optional ssh tunnel connection detail
 
     :returns: Application instance
-    :rtype: Model.RemoteModel
+    :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
 
@@ -652,7 +652,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
     app = _connectApp(ns, retRec[1], hkey)
     if app is None:
         appTunnel.terminate()
-    return Model.RemoteModel(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
+    return model.RemoteModel(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
 
 
 def allocateNextApplication(ns, jobMan, natPort, sshContext=None):
@@ -665,7 +665,7 @@ def allocateNextApplication(ns, jobMan, natPort, sshContext=None):
     :param sshContext: describing optional ssh tunnel connection detail
     
     :return: Application instance
-    :rtype: Model.RemoteModel
+    :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
     return allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext)
@@ -676,12 +676,12 @@ def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
     Allows to download remote file (pyro file handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
-    :param PyroFile.PyroFile pyroFile: representation of existing remote server's file
+    :param pyrofile.PyroFile pyroFile: representation of existing remote server's file
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
     # make sure if pyroFile is proxy to set hmac key
     pyroFile._pyroHmacKey = hkey.encode(encoding='utf-8')
-    file = PyroFile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
+    file = pyrofile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
     if compressFlag:
         pyroFile.setCompressionFlag()
         file.setCompressionFlag()
@@ -706,14 +706,14 @@ def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
-    :param PyroFile.PyroFile pyroFile: represenation of remote file, this file will be created
+    :param pyrofile.PyroFile pyroFile: represenation of remote file, this file will be created
     :param str hkey: A password string
     :param int size: optional chunk size. The data are read and written in byte chunks of this size
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
     # make sure if pyroFile is proxy to set hmac key
     pyroFile._pyroHmacKey = hkey.encode(encoding='utf-8')
-    file = PyroFile.PyroFile(clientFileName, 'rb', buffsize=size, compressFlag=compressFlag)
+    file = pyrofile.PyroFile(clientFileName, 'rb', buffsize=size, compressFlag=compressFlag)
     log.info("Uploading %s", clientFileName)
     if compressFlag:
         file.setCompressionFlag()

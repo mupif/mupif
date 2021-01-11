@@ -2,8 +2,8 @@ import unittest,sys
 sys.path.append('../..')
 
 from mupif import *
-from mupif.Physics.PhysicalQuantities import PhysicalUnit as PU
-from mupif.Physics.PhysicalQuantities import PhysicalQuantity as PQ
+from mupif.physics.physicalquantities import PhysicalUnit as PU
+from mupif.physics.physicalquantities import PhysicalQuantity as PQ
 import math
 import numpy as np
 
@@ -15,9 +15,9 @@ class Property_TestCase(unittest.TestCase):
         self.t3 = PQ(9,'s')
 
         
-        self.p1=Property.ConstantProperty(16.,PropertyID.PID_Concentration,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
-        self.p2=Property.ConstantProperty(7.,PropertyID.PID_Velocity,ValueType.Vector,PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
-        self.p3=Property.ConstantProperty(9.,PropertyID.PID_ParticleSigma,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
+        self.p1=property.ConstantProperty(16.,PropertyID.PID_Concentration,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
+        self.p2=property.ConstantProperty(7.,PropertyID.PID_Velocity,ValueType.Vector,PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
+        self.p3=property.ConstantProperty(9.,PropertyID.PID_ParticleSigma,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
 
     def tearDown(self):
         
@@ -84,7 +84,7 @@ class Property_TestCase(unittest.TestCase):
     def test_dumpToLocalFile(self):
         self.res=None
         self.p1.dumpToLocalFile('dumpfile')
-        self.res=Property.ConstantProperty.loadFromLocalFile('dumpfile')
+        self.res=property.ConstantProperty.loadFromLocalFile('dumpfile')
         self.assertEqual(self.res.getValue(self.t1),16.,'error in dumpToLocal File_getValue for p1')
         self.assertEqual(self.res.getValueType(),ValueType.Scalar,'wrong in dumpToLocal File_ValueType for p1')
         self.assertEqual(self.res.getTime(),PQ(6,'s'),'wrong dumpToLocal File_getTime for p1')
@@ -94,7 +94,7 @@ class Property_TestCase(unittest.TestCase):
         
         self.res=None
         self.p3.dumpToLocalFile('dumpfile2')
-        self.res=Property.ConstantProperty.loadFromLocalFile('dumpfile2')
+        self.res=property.ConstantProperty.loadFromLocalFile('dumpfile2')
         self.assertEqual(self.res.getValue(self.t3),9.,'error in dumpToLocal File_getValue for p3')
         self.assertEqual(self.res.getValueType(),ValueType.Tensor,'wrong dumpToLocal File_ValueType for p3')
         self.assertEqual(self.res.getTime(),PQ(9,'s'),'wrong dumpToLocal File_getTime for p3')

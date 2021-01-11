@@ -3,14 +3,14 @@ sys.path.append('../../..')
 sys.path.append('..')
 import models
 from mupif import *
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 import time
 import logging
 
 log = logging.getLogger()
 
 
-class Example06(Workflow.Workflow):
+class Example06(workflow.Workflow):
 
     def __init__(self, metaData={}):
         """
@@ -66,7 +66,7 @@ class Example06(Workflow.Workflow):
         elif fieldID == FieldID.FID_Displacement:
             return self.mechanicalSolver.getField(fieldID, time, objectID)
         else:
-            raise APIError.APIError('Unknown field ID')
+            raise apierror.APIError('Unknown field ID')
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')
@@ -94,7 +94,7 @@ md = {
 demo = Example06()
 demo.initialize(targetTime=PQ.PhysicalQuantity('1 s'), metaData=md)
 
-tstep = TimeStep.TimeStep(
+tstep = timestep.TimeStep(
     PQ.PhysicalQuantity('1 s'),
     PQ.PhysicalQuantity('1 s'),
     PQ.PhysicalQuantity('10 s')

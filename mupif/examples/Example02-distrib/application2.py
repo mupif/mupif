@@ -3,13 +3,13 @@ import Pyro4
 import logging
 sys.path.extend(['..', '../../..'])
 from mupif import *
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger()
 
 
 @Pyro4.expose
-class application2(Model.Model):
+class application2(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
@@ -53,7 +53,7 @@ class application2(Model.Model):
         self.updateMetadata(metaData)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = Property.ConstantProperty(
+        self.contrib = property.ConstantProperty(
             (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
@@ -69,17 +69,17 @@ class application2(Model.Model):
         }
 
         if propID == PropertyID.PID_Time:
-            return Property.ConstantProperty(
+            return property.ConstantProperty(
                 (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, metaData=md)
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property

@@ -1,5 +1,5 @@
-# from mupif.Physics import NumberDict
-# import mupif.Physics.NumberDict
+# from mupif.physics import NumberDict
+# import mupif.physics.NumberDict
 
 import serpent,enum
 
