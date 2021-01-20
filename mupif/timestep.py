@@ -1,6 +1,6 @@
 from builtins import object
 import Pyro4
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 
 @Pyro4.expose

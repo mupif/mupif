@@ -8,13 +8,13 @@ import ast
 class Vertex_TestCase(unittest.TestCase):
     def setUp(self):
         
-        self.v21=Vertex.Vertex(1,1,(0.,0.))
-        self.v22=Vertex.Vertex(2,2,(3.,0.))
-        self.v23=Vertex.Vertex(3,3,(1.5,4.))        
+        self.v21=vertex.Vertex(1,1,(0.,0.))
+        self.v22=vertex.Vertex(2,2,(3.,0.))
+        self.v23=vertex.Vertex(3,3,(1.5,4.))        
         
-        self.v31=Vertex.Vertex(1,1,(0.,0.,6.))
-        self.v32=Vertex.Vertex(2,2,(3.,0.,9.))
-        self.v33=Vertex.Vertex(3,3,(1.5,4.,3.)) 
+        self.v31=vertex.Vertex(1,1,(0.,0.,6.))
+        self.v32=vertex.Vertex(2,2,(3.,0.,9.))
+        self.v33=vertex.Vertex(3,3,(1.5,4.,3.)) 
         
     def tearDown(self):
         

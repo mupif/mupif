@@ -39,7 +39,7 @@ except:
 debug = 0
 
 @Pyro4.expose
-class ConstantField(mupif.Field.Field):
+class ConstantField(mupif.field.Field):
     """
     Representation of field with constant value. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. 
@@ -47,11 +47,11 @@ class ConstantField(mupif.Field.Field):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=mupif.Field.FieldType.FT_vertexBased, objectID=0, metaData={}):
+    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=mupif.field.FieldType.FT_vertexBased, objectID=0, metaData={}):
         """
         Initializes the field instance.
 
-        :param Mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
+        :param mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
         :param FieldID fieldID: Field type (displacement, strain, temperature ...)
         :param ValueType valueType: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
         :param Physics.PhysicalUnits units: Field value units
@@ -80,10 +80,10 @@ class ConstantField(mupif.Field.Field):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return mupif.Physics.PhysicalQuantities.PhysicalQuantity(ans, self.unit)
+            return mupif.physics.physicalquantities.PhysicalQuantity(ans, self.unit)
         else:
             # single position passed
-            return mupif.Physics.PhysicalQuantities.PhysicalQuantity(self._evaluate(positions, eps), self.unit)
+            return mupif.physics.physicalquantities.PhysicalQuantity(self._evaluate(positions, eps), self.unit)
 
     def _evaluate(self, position, eps):
         """
@@ -97,7 +97,7 @@ class ConstantField(mupif.Field.Field):
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         if (self.mesh): #if mesh provide, check if inside
-           cells = self.mesh.giveCellLocalizer().giveItemsInBBox(mupif.BBox.BBox([c-eps for c in position], [c+eps for c in position]))
+           cells = self.mesh.giveCellLocalizer().giveItemsInBBox(mupif.bbox.BBox([c-eps for c in position], [c+eps for c in position]))
            # answer=None
            if len(cells):
               return self.value
@@ -137,7 +137,7 @@ class ConstantField(mupif.Field.Field):
         :return: The value
         :rtype: Physics.PhysicalQuantity
         """
-        return mupif.Physics.PhysicalQuantities.PhysicalQuantity(self.value, self.unit)
+        return mupif.physics.physicalquantities.PhysicalQuantity(self.value, self.unit)
     
     def giveValue(self, componentID):
         """
@@ -170,7 +170,7 @@ class ConstantField(mupif.Field.Field):
 
 
 if __name__ == '__main__':
-   cf = ConstantField(None,mupif.dataID.FieldID.FID_Temperature, mupif.ValueType.Scalar, 'degC', 0.0, values=(15.,))
+   cf = ConstantField(None,mupif.dataid.FieldID.FID_Temperature, mupif.ValueType.Scalar, 'degC', 0.0, values=(15.,))
    ans = cf.evaluate((10,0,0))
    print (ans)
    

@@ -4,13 +4,13 @@ from mupif import *
 import mupif
 import demoapp
 import conf as cfg
-Util.changeRootLogger('thermal.log')
+util.changeRootLogger('thermal.log')
 
 #if you wish to run no SSH tunnels, set to True
 noSSH=False
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 if noSSH:
     cfg.server = cfg.serverNathost

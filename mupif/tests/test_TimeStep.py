@@ -4,8 +4,8 @@ sys.path.append('../..')
 import unittest
 from mupif import *
 import math
-from mupif import TimeStep
-import mupif.Physics.PhysicalQuantities as PQ
+from mupif import timestep
+import mupif.physics.physicalquantities as PQ
 
 
 
@@ -19,7 +19,7 @@ class TimeStep_TestCase(unittest.TestCase):
         timestepnumber = 0
 
         try:
-            istep = TimeStep.TimeStep(time, dt, time + dt, None, timestepnumber)
+            istep = timestep.TimeStep(time, dt, time + dt, None, timestepnumber)
         except TypeError:
             pass
         except Exception as e:
@@ -30,7 +30,7 @@ class TimeStep_TestCase(unittest.TestCase):
 
         time = PQ.PhysicalQuantity('0.0 s')
         try:
-            istep = TimeStep.TimeStep(time, dt, targetTime, None, timestepnumber)
+            istep = timestep.TimeStep(time, dt, targetTime, None, timestepnumber)
         except TypeError:
             pass
         except Exception as e:
@@ -41,7 +41,7 @@ class TimeStep_TestCase(unittest.TestCase):
         dt = PQ.PhysicalQuantity('0.5 s')
 
         try:
-            istep = TimeStep.TimeStep(time, dt, targetTime, None, timestepnumber)
+            istep = timestep.TimeStep(time, dt, targetTime, None, timestepnumber)
         except TypeError:
             pass
         except Exception as e:
@@ -56,7 +56,7 @@ class TimeStep_TestCase(unittest.TestCase):
         timestepnumber = 0
 
         # @todo what sould this do?
-        istep = TimeStep.TimeStep(time, dt, time + dt, 'm', timestepnumber)
+        istep = timestep.TimeStep(time, dt, time + dt, 'm', timestepnumber)
 
 
 
@@ -66,7 +66,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        istep = TimeStep.TimeStep(time, dt, time + dt, 's', timestepnumber)
+        istep = timestep.TimeStep(time, dt, time + dt, 's', timestepnumber)
 
         dT = istep.getTimeIncrement()
         self.assertTrue(dT.getValue() == dt)
@@ -79,7 +79,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        istep = TimeStep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+        istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
 
         tT = istep.getTargetTime()
         self.assertTrue(tT.getValue() == 2.0)
@@ -91,7 +91,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 1
 
-        istep = TimeStep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+        istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
 
         self.assertTrue(istep.getNumber() == 1)
 

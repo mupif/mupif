@@ -7,7 +7,7 @@ import time as timeTime
 import logging
 log = logging.getLogger()
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 start = timeTime.time()
@@ -17,7 +17,7 @@ log.info('Timer started')
 noSSH=False
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the thermal server
 solverJobManRec = (cfg.serverPort, cfg.serverNatport, cfg.server, cfg.serverUserName, cfg.jobManName)
@@ -31,7 +31,7 @@ else:
     jobNatport = cfg.jobNatPorts.pop(0)
 
 try:
-    appRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRec, jobNatport, cfg.sshClient, cfg.options, cfg.sshHost )
+    appRec = pyroutil.allocateApplicationWithJobManager( ns, solverJobManRec, jobNatport, cfg.sshClient, cfg.options, cfg.sshHost )
     thermal = appRec.getApplication()
 except Exception as e:
     log.exception(e)
@@ -39,7 +39,7 @@ else:
     if thermal is not None:
         appsig=thermal.getApplicationSignature()
         log.info("Working thermalServer " + appsig)
-        mechanical = PyroUtil.connectApp(ns, 'mechanical')
+        mechanical = pyroutil.connectApp(ns, 'mechanical')
         time  = 0.
         dt = 0.
         timestepnumber = 0
@@ -49,7 +49,7 @@ else:
 
             log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
             # create a time step
-            istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+            istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
             try:
                 thermal.solveStep(istep)
@@ -75,7 +75,7 @@ else:
                     time = targetTime
                 timestepnumber = timestepnumber+1
 
-            except APIError.APIError as e:
+            except apierror.APIError as e:
                 log.error("Following API error occurred:",e)
                 break
         mechanical.terminate();     

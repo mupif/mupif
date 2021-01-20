@@ -17,7 +17,7 @@ def generateBackgroundMesh (nx, ny, lx, ly, origin):
     :param tuple origin: coordinates(double) of lower left corner
     
     :return: mesh with nodes defined on a 2D plane
-    :rtype: Mesh.UnstructuredMesh
+    :rtype: mesh.UnstructuredMesh
     
     """
     
@@ -25,13 +25,13 @@ def generateBackgroundMesh (nx, ny, lx, ly, origin):
     dx = lx/(nx-1)
     dy = ly/(ny-1)
 
-    mesh = Mesh.UnstructuredMesh()
+    mesh = mesh.UnstructuredMesh()
     #generate nodes first
     nodes = []
     num = 0
     for i in range (nx):
         for j in range (ny):
-            vertex = Vertex.Vertex(num, num, coords=(origin[0]+i*dx, origin[1]+j*dy, origin[2]))
+            vertex = vertex.Vertex(num, num, coords=(origin[0]+i*dx, origin[1]+j*dy, origin[2]))
             nodes.append(vertex)
             num += 1
     #generate cells
@@ -41,12 +41,12 @@ def generateBackgroundMesh (nx, ny, lx, ly, origin):
         for j in range(int(ny/2)):
             # index of lower left node
             si = j*(nx*2)+i*2
-            #elem = Cell.Triangle_2d_quad (mesh, num, num, vertices=(si,si+10,si+2,si+5,si+6,si+1))
-            elem = Cell.Triangle_2d_quad (mesh, num, num, vertices=(si,si+(2*ny),si+2,si+ny,si+ny+1,si+1))
+            #elem = cell.Triangle_2d_quad (mesh, num, num, vertices=(si,si+10,si+2,si+5,si+6,si+1))
+            elem = cell.Triangle_2d_quad (mesh, num, num, vertices=(si,si+(2*ny),si+2,si+ny,si+ny+1,si+1))
             cells.append(elem)
             num+=1
-            #elem = Cell.Triangle_2d_quad (mesh, num, num, vertices=(si+10,si+12,si+2,si+11,si+7,si+6))
-            elem = Cell.Triangle_2d_quad (mesh, num, num, vertices=(si+(2*ny),si+(2*ny)+2,si+2,si+(2*ny)+1,si+ny+2,si+ny+1))
+            #elem = cell.Triangle_2d_quad (mesh, num, num, vertices=(si+10,si+12,si+2,si+11,si+7,si+6))
+            elem = cell.Triangle_2d_quad (mesh, num, num, vertices=(si+(2*ny),si+(2*ny)+2,si+2,si+(2*ny)+1,si+ny+2,si+ny+1))
             cells.append(elem)
             num+=1
     mesh.setup(nodes, cells)
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     for i in range(5):
         for j in range(5):
             values.append((1.0*i*j,))
-    f = Field.Field(m, FieldID.FID_Displacement, ValueType.Scalar, 'm', 0.0, values)
+    f = field.Field(m, FieldID.FID_Displacement, ValueType.Scalar, 'm', 0.0, values)
     #check
     v=f.evaluate((0.01,0.01,0))
     print (v)

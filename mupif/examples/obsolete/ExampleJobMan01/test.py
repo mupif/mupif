@@ -14,18 +14,18 @@ logger = logging.getLogger()
 
 start = timeTime.time()
 logger.info('Timer started')
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
+ns = pyroutil.connectNameServer(nshost=cConf.nshost, nsport=cConf.nsport, hkey=cConf.hkey)
 
 #localize JobManager running on (remote) server and create a tunnel to it
 #allocate the first application app1
 solverAppRec = None
 try:
     solverJobManRec = (cConf.serverPort, cConf.serverNatport, cConf.server, cConf.serverUserName, cConf.jobManName)
-    solverAppRec = PyroUtil.allocateApplicationWithJobManager( ns, solverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
+    solverAppRec = pyroutil.allocateApplicationWithJobManager( ns, solverJobManRec, cConf.jobNatPorts.pop(0), cConf.sshClient, cConf.options, cConf.sshHost )
     app = solverAppRec.getApplication()
 
 except Exception as e:
@@ -35,7 +35,7 @@ else:
         solverSignature=app.getApplicationSignature()
         logger.info("Working solver on server " + solverSignature)
 
-        val = Property.ConstantProperty(10, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit(), '0 s', 0)
+        val = property.ConstantProperty(10, PropertyID.PID_Demo_Value, ValueType.Scalar, PQ.getDimensionlessUnit(), '0 s', 0)
         app.setProperty (val)
         tstep=TimeStep(0., 1., 1., timeUnits)
         app.solveStep(tstep)

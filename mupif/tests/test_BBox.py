@@ -9,16 +9,16 @@ import math
 class BBox_TestCase(unittest.TestCase):
     def setUp(self):
         #rectangles
-        self.b21 = BBox.BBox((0.,0.), (3., 3.))
-        self.b22 = BBox.BBox((3.,3.), (8., 6.))
-        self.b23 = BBox.BBox((1.5,1.5), (3.5, 5.))
-        self.b24 = BBox.BBox((13.,2.), (18.,5.))
+        self.b21 = bbox.BBox((0.,0.), (3., 3.))
+        self.b22 = bbox.BBox((3.,3.), (8., 6.))
+        self.b23 = bbox.BBox((1.5,1.5), (3.5, 5.))
+        self.b24 = bbox.BBox((13.,2.), (18.,5.))
         
         #blocks
-        self.b31 = BBox.BBox((0.,0.,0.), (3., 3.,2.))
-        self.b32 = BBox.BBox((3.,3.,2.), (8., 6.,5.))
-        self.b33 = BBox.BBox((1.5,1.5,1.5), (3.5, 5.,4.))
-        self.b34 = BBox.BBox((0.,0.,5.5), (8.,6.,10.))
+        self.b31 = bbox.BBox((0.,0.,0.), (3., 3.,2.))
+        self.b32 = bbox.BBox((3.,3.,2.), (8., 6.,5.))
+        self.b33 = bbox.BBox((1.5,1.5,1.5), (3.5, 5.,4.))
+        self.b34 = bbox.BBox((0.,0.,5.5), (8.,6.,10.))
          
 # Testing containsPoint rectangle b21    
     def test_containsPoint(self):

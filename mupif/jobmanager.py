@@ -147,7 +147,7 @@ class JobManager(object):
     def getPyroFile(self, jobID, filename, buffSize=1024):
         """
         Returns the (remote) PyroFile representation of given file.
-        To create local copy of file represented by PyroFile, use PyroUtil.downloadPyroFile, see :func:`PyroUtil.downloadPyroFile`
+        To create local copy of file represented by PyroFile, use pyroutil.downloadPyroFile, see :func:`pyroutil.downloadPyroFile`
 
         :param str jobID: job identifier (jobID)
         :param str filename: source file name (on remote server). The filename should contain only base filename, not a path, which is determined by jobManager based on jobID.

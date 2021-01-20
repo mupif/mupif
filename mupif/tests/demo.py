@@ -6,7 +6,7 @@ sys.path.append('../..')
 
 import mupif
 from mupif import *
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 temperatureUnit = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
@@ -32,13 +32,13 @@ def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):
     vertexlist = []
     celllist = []
 
-    mesh = Mesh.UnstructuredMesh()
+    mesh = mupif.mesh.UnstructuredMesh()
     # generate vertices
     for ix in range(nx+1):
         for iy in range(ny+1):
             if debug:
                 print("Adding vertex %d: %f %f %f " % (num, ix*dx, iy*dy, 0.0))
-            vertexlist.append(Vertex.Vertex(num, num, coords=(origin[0]+1.0*ix*dx, origin[1]+1.0*iy*dy, 0.0)))
+            vertexlist.append(vertex.Vertex(num, num, coords=(origin[0]+1.0*ix*dx, origin[1]+1.0*iy*dy, 0.0)))
             num = num+1
 
     # generate cells
@@ -49,23 +49,23 @@ def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):
             if not tria:
                 if debug:
                     print("Adding quad %d: %d %d %d %d" % (num, si, si+ny+1, si+ny+2, si+1))
-                celllist.append(Cell.Quad_2d_lin(mesh, num, num, vertices=(si, si+ny+1, si+ny+2, si+1)))
+                celllist.append(cell.Quad_2d_lin(mesh, num, num, vertices=(si, si+ny+1, si+ny+2, si+1)))
                 num = num+1
             else:
                 if debug:
                     print("Adding tria %d: %d %d %d" % (num, si, si+ny+1, si+ny+2))
-                celllist.append(Cell.Triangle_2d_lin(mesh, num, num, vertices=(si, si+ny+1, si+ny+2)))
+                celllist.append(cell.Triangle_2d_lin(mesh, num, num, vertices=(si, si+ny+1, si+ny+2)))
                 num = num+1
                 if debug:
                     print("Adding tria %d: %d %d %d" % (num, si, si+ny+2, si+1))
-                celllist.append(Cell.Triangle_2d_lin(mesh, num, num, vertices=(si, si+ny+2, si+1)))
+                celllist.append(cell.Triangle_2d_lin(mesh, num, num, vertices=(si, si+ny+2, si+1)))
                 num = num+1
                 
     mesh.setup(vertexlist, celllist)
     return mesh
 
 
-class AppGridAvg(Model.Model):
+class AppGridAvg(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
@@ -74,7 +74,7 @@ class AppGridAvg(Model.Model):
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
-        self.mesh = Mesh.UnstructuredMesh()
+        self.mesh = mesh.UnstructuredMesh()
         self.field = None
         # generate a simple mesh here
         self.xl = 10.0 # domain (0..xl)(0..yl)
@@ -99,11 +99,11 @@ class AppGridAvg(Model.Model):
                         dist = math.sqrt((x-self.xl/2.)*(x-self.xl/2.)+(y-self.yl/2.)*(y-self.yl/2.))
                         val = math.cos(coeff*dist) * math.exp(-4.0*dist/self.xl)
                         values.append((val,))
-                self.field=Field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values)
+                self.field=field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values)
                 
             return self.field
         else:
-            raise APIError.APIError ('Unknown field ID')
+            raise apierror.APIError ('Unknown field ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         return
@@ -115,7 +115,7 @@ class AppGridAvg(Model.Model):
         return "Demo app. 1.0"
 
 
-class AppMinMax(Model.Model):
+class AppMinMax(model.Model):
     """
     Simple application that computes min and max values of the field
     """
@@ -139,14 +139,14 @@ class AppMinMax(Model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Min):
-            return Property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
         elif (propID == PropertyID.PID_Demo_Max):
-            return Property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     
 
-class AppIntegrateField(Model.Model):
+class AppIntegrateField(model.Model):
     """
     Simple application that computes integral value of field over 
     its domain and area/volume of the domain
@@ -160,7 +160,7 @@ class AppIntegrateField(Model.Model):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         mesh = self.extField.getMesh()
-        rule = IntegrationRule.GaussIntegrationRule()
+        rule = integrationrule.GaussIntegrationRule()
         self.volume = 0.0;
         self.integral = 0.0;
         for c in mesh.cells():
@@ -175,14 +175,14 @@ class AppIntegrateField(Model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Integral):
-            return Property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
         elif (propID == PropertyID.PID_Demo_Volume):
-            return Property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, propID, PQ.getDimensionlessUnit(),time=time)
+            return property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, propID, PQ.getDimensionlessUnit(),time=time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
 
 
-class AppCurrTime(Model.Model):
+class AppCurrTime(model.Model):
     """
     Simple application that generates a property (concentration or velocity) with a value equal to actual time
     """
@@ -192,11 +192,11 @@ class AppCurrTime(Model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time=time)
+            return property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time=time)
         if (propID == PropertyID.PID_Velocity):
-            return Property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time=time)
+            return property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time=time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf(timeUnits).getValue()
@@ -206,7 +206,7 @@ class AppCurrTime(Model.Model):
         return PQ.PhysicalQuantity(0.1, 's')
 
 
-class AppPropAvg(Model.Model):
+class AppPropAvg(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
@@ -218,16 +218,16 @@ class AppPropAvg(Model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return Property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time=time)
+            return property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time=time)
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if (property.getPropertyID() == PropertyID.PID_Concentration):
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError ('Unknown property ID')
+            raise apierror.APIError ('Unknown property ID')
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
         self.value=self.value+self.contrib.getValue(tstep.getTime())

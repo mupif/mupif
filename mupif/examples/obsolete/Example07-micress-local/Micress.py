@@ -8,13 +8,13 @@ import pyvtk
 import logging
 log = logging.getLogger()
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 ##
-VtkReader2.pyvtk_monkeypatch()
+vtkreader2.pyvtk_monkeypatch()
 
 
-class Micress(Model.Model):
+class Micress(model.Model):
 
     def __init__ (self, file):
         super(Micress, self).__init__(file)
@@ -42,9 +42,9 @@ class Micress(Model.Model):
         log.debug(numNodes)
 
         if (self.mesh == None):
-            self.mesh = VtkReader2.readMesh(numNodes,nx,ny,nz,coords)
+            self.mesh = vtkreader2.readMesh(numNodes,nx,ny,nz,coords)
 
-        f = VtkReader2.readField(self.mesh, Data,FieldID.FID_Concentration, PQ.getDimensionlessUnit(), timeUnits, "conc1", "micress/sim.vtk", 1)
+        f = vtkreader2.readField(self.mesh, Data,FieldID.FID_Concentration, PQ.getDimensionlessUnit(), timeUnits, "conc1", "micress/sim.vtk", 1)
         return f
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):

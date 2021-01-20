@@ -4,20 +4,20 @@ sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
 #Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
-mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
 cfg=config(mode)
 import logging
 log = logging.getLogger()
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Locate thermal server
-thermal = PyroUtil.connectApp(ns, 'thermal', cfg.hkey)
+thermal = pyroutil.connectApp(ns, 'thermal', cfg.hkey)
 #Locate mechanical server
-mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
+mechanical = pyroutil.connectApp(ns, 'mechanical', cfg.hkey)
 
 time  = 0.
 dt = 0.
@@ -28,7 +28,7 @@ while (abs(time - targetTime) > 1.e-6):
 
     log.debug("Step: %g %g %g"%(timestepnumber,time,dt))
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, time+dt, 's', timestepnumber)
+    istep = timestep.TimeStep(time, dt, time+dt, 's', timestepnumber)
 
     try:
         # solve problem 1
@@ -61,7 +61,7 @@ while (abs(time - targetTime) > 1.e-6):
             time = targetTime
         timestepnumber = timestepnumber+1
 
-    except APIError.APIError as e:
+    except apierror.APIError as e:
         log.error("Following API error occurred:",e)
         break
 

@@ -34,8 +34,8 @@ def main(nshost, nsport, hkey):
     
     # locate nameserver
     
-    ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
-    # monitor = PyroUtil.connectApp(ns, 'monitor.MuPIF')
+    ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+    # monitor = pyroutil.connectApp(ns, 'monitor.MuPIF')
 
     monitorUri = ns.lookup('monitor.MuPIF')
     monitor = Pyro4.Proxy(monitorUri)

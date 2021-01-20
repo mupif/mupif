@@ -23,7 +23,7 @@
 import sys
 sys.path.append('../../..')
 from mupif import *
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 import liboofem
 
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
@@ -34,8 +34,8 @@ _EGT=liboofem.Element_Geometry_Type
 _FT=liboofem.FieldType
 # mapping from oofem element type enumeration to corresponding mupif cell class
 elementTypeMap={
-    CellGeometryType.CGT_TRIANGLE_1:    _EGT.EGT_triangle_1,
-    CellGeometryType.CGT_QUAD:          _EGT.EGT_quad_1,
+    cellgeometrytype.CGT_TRIANGLE_1:    _EGT.EGT_triangle_1,
+    cellgeometrytype.CGT_QUAD:          _EGT.EGT_quad_1,
 }
 # mapping from mupif field ID to oofem field type
 fieldTypeMap={
@@ -50,7 +50,7 @@ fieldTypeMap={
 
 
 
-class OOFEM(Model.Model):
+class OOFEM(model.Model):
     """
     Implementation of OOFEM MuPIF API.
     OOFEM is an object oriented FE solver, see www.oofem.org for details.
@@ -105,10 +105,10 @@ class OOFEM(Model.Model):
                 for j in range(len(val)):
                     v.append(val[j])
                 values.append(tuple(v))
-            return Field.Field(self.mesh, fieldID, ValueType.Scalar, None, time, values)
+            return field.Field(self.mesh, fieldID, ValueType.Scalar, None, time, values)
 
         else:
-            raise APIError.APIError ('Can\'t return field for other than current time step')
+            raise apierror.APIError ('Can\'t return field for other than current time step')
 
     def setField(self, field):
         """
@@ -116,8 +116,8 @@ class OOFEM(Model.Model):
 
         :param Field field: Remote field to be registered by the application
         """
-        if not isinstance(field, Field.Field): raise ValueError("field must be a Field.Field.")
-        # convert Field.Field into liboofem.UnstructredGridField first
+        if not isinstance(field, field.Field): raise ValueError("field must be a field.Field.")
+        # convert field.Field into liboofem.UnstructredGridField first
         mesh = field.getMesh()
         target = liboofem.UnstructuredGridField(mesh.getNumberOfVertices(), mesh.getNumberOfCells())
         # convert vertices first
@@ -134,7 +134,7 @@ class OOFEM(Model.Model):
                 vv[i]=v[i].getNumber()
             target.addCell(cell.number, elementTypeMap.get(cell.getGeometryType()), vv)
         # set values
-        if (field.getFieldType() == Field.FieldType.FT_vertexBased):
+        if (field.getFieldType() == field.FieldType.FT_vertexBased):
             for node in mesh.vertices():
                 target.setVertexValue(node.getNumber(), field.getVertexValue(node.getNumber()))
         else:
@@ -164,7 +164,7 @@ class OOFEM(Model.Model):
         :return: Returns representation of requested property
         :rtype: Property
         """
-        raise APIError.APIError ('Unknown propertyID')
+        raise apierror.APIError ('Unknown propertyID')
     def setProperty(self, property, objectID=0):
         """
         Register given property in the application
@@ -172,7 +172,7 @@ class OOFEM(Model.Model):
         :param Property property: Setting property
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
         """
-        raise APIError.APIError ('Unknown propertyID')
+        raise apierror.APIError ('Unknown propertyID')
     def getFunction(self, funcID, objectID=0):
         """
         Returns function identified by its ID
@@ -183,7 +183,7 @@ class OOFEM(Model.Model):
         :return: Returns requested function
         :rtype: Function
         """
-        raise APIError.APIError ('Unknown funcID')
+        raise apierror.APIError ('Unknown funcID')
     def setFunction(self, func, objectID=0):
         """
         Register given function in the application.
@@ -191,7 +191,7 @@ class OOFEM(Model.Model):
         :param Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
-        raise APIError.APIError ('Unknown funcID')
+        raise apierror.APIError ('Unknown funcID')
 
 
     def getMesh (self, tstep):
@@ -203,7 +203,7 @@ class OOFEM(Model.Model):
         :rtype: Mesh
         """
         if (self.mesh == None):
-            self.mesh = Mesh.UnstructuredMesh()
+            self.mesh = mesh.UnstructuredMesh()
             vertexlist = []
             celllist   = []
             ne=self.oofem_mesh.giveNumberOfElements()
@@ -211,7 +211,7 @@ class OOFEM(Model.Model):
             for i in range (1, nd+1):
                 d = self.oofem_mesh.giveDofManager(i)
                 c = d.giveCoordinates()
-                vertexlist.append(Vertex.Vertex(i-1, d.giveLabel(), tuple([c[j] for j in range(len(c))])))
+                vertexlist.append(vertex.Vertex(i-1, d.giveLabel(), tuple([c[j] for j in range(len(c))])))
                 # print "adding vertex", i
             for i in range (1, ne+1):
                 e = self.oofem_mesh.giveElement(i)
@@ -221,13 +221,13 @@ class OOFEM(Model.Model):
                 nodes=tuple([en[n]-1 for n in range(len(en))])
                 # print "element ", i, "nodes:", en, nodes
                 if (egt == liboofem.Element_Geometry_Type.EGT_triangle_1):
-                    celllist.append(Cell.Triangle_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
+                    celllist.append(cell.Triangle_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
                 elif (egt == liboofem.Element_Geometry_Type.EGT_quad_1):
-                    celllist.append(Cell.Quad_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
+                    celllist.append(cell.Quad_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
                 elif (egt == liboofem.Element_Geometry_Type.EGT_tetra_1):
-                    celllist.append(Cell.Tetrahedron_3d_lin(self.mesh, i-1, e.giveLabel(), nodes))
+                    celllist.append(cell.Tetrahedron_3d_lin(self.mesh, i-1, e.giveLabel(), nodes))
                 else:
-                    raise APIError.APIError ('Unknown element GeometryType')
+                    raise apierror.APIError ('Unknown element GeometryType')
                 ##print "adding element ", i
             self.mesh.setup (vertexlist, celllist)
         return self.mesh
@@ -345,7 +345,7 @@ class OOFEM(Model.Model):
         if (fieldID == FieldID.FID_Temperature):
             return liboofem.FieldType.FT_Temperature
         else:
-            raise APIError.APIError ('Unknown fieldID')            
+            raise apierror.APIError ('Unknown fieldID')            
 
 
 if __name__ == "__main__":
@@ -400,7 +400,7 @@ if __name__ == "__main__":
 
         for i in range (10):
             time=i*dt;
-            ts = TimeStep.TimeStep(time, dt)
+            ts = timestep.TimeStep(time, dt)
             ot.solveStep (ts)
             ot.finishStep (ts)
             
@@ -422,7 +422,7 @@ if __name__ == "__main__":
 
     # for i in range (2):
     #     time=i*dt;
-    #     ts = TimeStep.TimeStep(time, 604800.0)
+    #     ts = timestep.TimeStep(time, 604800.0)
     #     o.solveStep (ts)
     #     o.finishStep (ts)
         

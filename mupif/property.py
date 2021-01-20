@@ -1,6 +1,6 @@
-from . import MupifObject
-from mupif.Physics import PhysicalQuantities
-from mupif .Physics.PhysicalQuantities import PhysicalQuantity
+from . import mupifobject
+from mupif.physics import physicalquantities
+from mupif .physics.physicalquantities import PhysicalQuantity
 import Pyro4
 try:
     import cPickle as pickle  # faster serialization if available
@@ -10,7 +10,7 @@ import collections
 
 
 @Pyro4.expose
-class Property(MupifObject.MupifObject, PhysicalQuantity):
+class Property(mupifobject.MupifObject, PhysicalQuantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -28,19 +28,19 @@ class Property(MupifObject.MupifObject, PhysicalQuantity):
         :type units: Physics.PhysicalUnits or string
         :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
         """
-        MupifObject.MupifObject.__init__(self)
+        mupifobject.MupifObject.__init__(self)
 
         self.propID = propID
         # self.units = units
         self.valueType = valueType
         self.objectID = objectID
 
-        if PhysicalQuantities.isPhysicalUnit(units):
+        if physicalquantities.isPhysicalUnit(units):
             self.unit = units
         else:
-            self.unit = PhysicalQuantities.findUnit(units)
+            self.unit = physicalquantities.findUnit(units)
 
-        self.setMetadata('Type', 'mupif.Property.Property')
+        self.setMetadata('Type', 'mupif.property.Property')
         self.setMetadata('Type_ID', str(self.propID))
         self.setMetadata('Units', self.unit.name())
         self.setMetadata('ValueType', str(self.valueType))
@@ -117,7 +117,7 @@ class ConstantProperty(Property):
         """
         Property.__init__(self, propID, valueType, units, objectID)
         self.value = value
-        if PhysicalQuantities.isPhysicalQuantity(time) or time is None:
+        if physicalquantities.isPhysicalQuantity(time) or time is None:
             self.time = time
         else:
             raise TypeError("PhysicalValue expected for time")
@@ -170,7 +170,7 @@ class ConstantProperty(Property):
         """
         Override of PhysicalQuantity._sum method
         """
-        if not PhysicalQuantities.isPhysicalQuantity(other):
+        if not physicalquantities.isPhysicalQuantity(other):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
         new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
@@ -200,7 +200,7 @@ class ConstantProperty(Property):
 
         :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
         """
-        unit = PhysicalQuantities.findUnit(unit)
+        unit = physicalquantities.findUnit(unit)
         self.value = self._convertValue(self.value, self.unit, unit)
         self.unit = unit
 
@@ -249,8 +249,8 @@ class ConstantProperty(Property):
         :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = list(map(PhysicalQuantities.findUnit, units))
-        # unit = PhysicalQuantities.findUnit(units[0])
+        units = list(map(physicalquantities.findUnit, units))
+        # unit = physicalquantities.findUnit(units[0])
         unit = units[0]
         value = self._convertValue(self.value, self.unit, unit)
         return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)

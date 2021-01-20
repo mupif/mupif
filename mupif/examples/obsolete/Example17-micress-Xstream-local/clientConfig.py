@@ -72,7 +72,7 @@ micressJobs = 2
 # debug output settings
 debug = False  # while running the test case itself
 debugComm = False  # while setting up the communication environment (SSH tunnels, job allocation, etc.)
-mupifLogging = False  # screen output for Mupif internal logging (e.g. from PyroUtil )
+mupifLogging = False  # screen output for Mupif internal logging (e.g. from pyroutil )
 
 startTime = 0.0 # simulation's start time in seconds
 targetTime = 2.0 # simulations's target time in seconds

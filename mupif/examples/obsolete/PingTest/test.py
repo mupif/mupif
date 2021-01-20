@@ -6,13 +6,13 @@ import os
 import conf
 from mupif import Model
 from mupif import APIError
-from mupif import PyroUtil
+from mupif import pyroutil
 import time as timeTime
 
 
 start = timeTime.time()
 #locate nameserver
-ns = PyroUtil.connectNameServer(conf.nshost, 9090, conf.hkey)
+ns = pyroutil.connectNameServer(conf.nshost, 9090, conf.hkey)
 
 results=[]
 tunnel= None
@@ -27,14 +27,14 @@ for apprecord in conf.apps:
         sshHost = apprecord[conf.appIndx_SshHost]
     try:
 
-        tunnel = PyroUtil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
+        tunnel = pyroutil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
                                     userName=apprecord[conf.appIndx_UserName],
                                     localPort=apprecord[conf.appIndx_NATPort], remotePort=apprecord[conf.appIndx_RemotePort],
                                     sshClient=apprecord[conf.appIndx_SshClient], options=apprecord[conf.appIndx_Options],
                                     sshHost=sshHost)
 
         # connect to individual applications
-        app = PyroUtil.connectApp(ns, PyroUtil.getNSAppName(conf.jobname, apprecord[conf.appIndx_Name]))
+        app = pyroutil.connectApp(ns, pyroutil.getNSAppName(conf.jobname, apprecord[conf.appIndx_Name]))
         if app:
             appsig=app.getApplicationSignature()
             msg = "Successfully connected to %-30s (%4.2f s)"%(appsig, timeTime.time()-starti)

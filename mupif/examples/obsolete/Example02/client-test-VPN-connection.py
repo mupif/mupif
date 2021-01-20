@@ -10,10 +10,10 @@ from mupif import *
 import mupif
 
 # Test nameserver
-ns = PyroUtil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
+ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
 
 # Test remote application2, request remote proxy
-app2=PyroUtil.connectApp(ns, cfg.appName)
+app2=pyroutil.connectApp(ns, cfg.appName)
 app2.getApplicationSignature()
 
 # Terminate remote application2

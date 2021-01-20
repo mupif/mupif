@@ -57,7 +57,7 @@ def main():
     
     # locate nameserver
     try:
-        ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
+        ns = pyroutil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
     
     except:
         # Exception as e:

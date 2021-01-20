@@ -22,8 +22,8 @@
 #
 from builtins import object
 
-from . import CellGeometryType
-from . import APIError
+from . import cellgeometrytype
+from . import apierror
 
 
 class IntegrationRule(object):
@@ -61,7 +61,7 @@ class GaussIntegrationRule(IntegrationRule):
         """
         See :func:`IntegrationRule.getIntegrationPoints`.
         """
-        if cgt == CellGeometryType.CGT_TRIANGLE_1:
+        if cgt == cellgeometrytype.CGT_TRIANGLE_1:
             if npt == 1:
                 return [((0.333333333333, 0.333333333333), 0.5)]
             elif npt == 3:
@@ -74,8 +74,8 @@ class GaussIntegrationRule(IntegrationRule):
                         ((0.200000000000000, 0.200000000000000),  0.260416666666667),
                         ((0.600000000000000, 0.200000000000000),  0.260416666666667)]
             else:
-                raise APIError.APIError("getIntegrationPoints (CGT_TRIANGLE, %d) not implemented" % npt)
-        elif cgt == CellGeometryType.CGT_QUAD:
+                raise apierror.APIError("getIntegrationPoints (CGT_TRIANGLE, %d) not implemented" % npt)
+        elif cgt == cellgeometrytype.CGT_QUAD:
             if npt == 1:
                 return [((0.0, 0.0), 4.0)]
             elif npt == 4:
@@ -85,15 +85,15 @@ class GaussIntegrationRule(IntegrationRule):
                         (( 0.577350269189626, -0.577350269189626), 1)]
 
             else:
-                raise APIError.APIError("getIntegrationPoints (CGT_QUAD, %d) not implemented" % npt)
+                raise apierror.APIError("getIntegrationPoints (CGT_QUAD, %d) not implemented" % npt)
         else:
-            raise APIError.APIError("getIntegrationPoints: geometry not supported")
+            raise apierror.APIError("getIntegrationPoints: geometry not supported")
 
     def getRequiredNumberOfPoints(self, cgt, order):
         """
         See :func:`IntegrationRule.getRequiredNumberOfPoints`.
         """
-        if cgt == CellGeometryType.CGT_TRIANGLE_1:
+        if cgt == cellgeometrytype.CGT_TRIANGLE_1:
             if order <= 1:
                 return 1
             elif order <= 2:
@@ -102,7 +102,7 @@ class GaussIntegrationRule(IntegrationRule):
                 return 4
             else:
                 return -1
-        elif cgt == CellGeometryType.CGT_QUAD:
+        elif cgt == cellgeometrytype.CGT_QUAD:
             requiredNIP = max((order + 1) / 2, 2)
             if requiredNIP > 4:
                 return -1

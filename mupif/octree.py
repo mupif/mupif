@@ -24,8 +24,8 @@ from builtins import str, range, object
 
 import math
 import itertools
-from . import BBox
-from . import Localizer
+from . import bbox
+from . import localizer
 import Pyro4
 
 debug = 0
@@ -104,7 +104,7 @@ class Octant(object):
     def giveMyBBox(self):
         """ 
         :return: Receiver's BBox
-        :rtype: BBox.BBox
+        :rtype: bbox.BBox
         """
         if self.bbox: return self.bbox
         # create self bbox
@@ -114,7 +114,7 @@ class Octant(object):
                 cc[i] = self.origin[i]+self.size
             else:
                 cc[i] = self.origin[i]
-        self.bbox=BBox.BBox(self.origin, tuple(cc))  # create self bbox
+        self.bbox=bbox.BBox(self.origin, tuple(cc))  # create self bbox
         return self.bbox
 
     def containsBBox(self, _bbox):
@@ -131,7 +131,7 @@ class Octant(object):
         objects distributed to children octants.
 
         :param object item: object to insert
-        :param BBox.BBox itemBBox: Optional parameter determining the BBox of the object
+        :param bbox.BBox itemBBox: Optional parameter determining the BBox of the object
         """
         if itemBBox is None:
             itemBBox = item.getBBox()
@@ -157,7 +157,7 @@ class Octant(object):
         Deletes/removes the given object from receiver
 
         :param object item: object to remove
-        :param BBox.BBox itemBBox: Optional parameter to specify bounding box of the object to be removed
+        :param bbox.BBox itemBBox: Optional parameter to specify bounding box of the object to be removed
         """
         if itemBBox is None:
             itemBBox = item.getBBox()
@@ -174,7 +174,7 @@ class Octant(object):
         Note: an object can be included several times, as can be assigned to several octants.
 
         :param list itemList: list containing the objects matching the criteria
-        :param BBox.BBox bbox: target bounding box
+        :param bbox.BBox bbox: target bounding box
         """ 
         if debug:
             tab = '  '*int(math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0)))
@@ -227,7 +227,7 @@ class Octant(object):
         return depth
 
 
-class Octree(Localizer.Localizer):
+class Octree(localizer.Localizer):
     """
     An octree is used to partition space by recursively subdividing the root cell (square or cube) into octants. Octants can be terminal (containing the data) or can be further subdivided into children octants partitioning the parent. Each terminal octant contains the objects with bounding box within the octant. Octree contains at least one octant, called root octant, with geometry large enough to contain all potential objects. Such a partitiong can significantly speed up spatial serches on objects.
     

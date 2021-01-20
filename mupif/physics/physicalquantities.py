@@ -37,7 +37,7 @@ except NameError:
     basestring = str
 
 # XXX
-from .NumberDict import NumberDict
+from .numberdict import NumberDict
 import numpy
 import re, string
 from functools import reduce
@@ -71,12 +71,12 @@ class PhysicalQuantity(dumpable.Dumpable):
     * sin, cos, tan: applicable only to objects whose unit is
         compatible with 'rad'.
 
-    See the documentation of the PhysicalQuantities module for a list
+    See the documentation of the physicalquantities module for a list
     of the available units.
 
     Here is an example on usage:
 
-    >>> from PhysicalQuantities import PhysicalQuantity as p  # short hand
+    >>> from physicalquantities import PhysicalQuantity as p  # short hand
     >>> distance1 = p('10 m')
     >>> distance2 = p('10 km')
     >>> total = distance1 + distance2
@@ -960,7 +960,7 @@ def description():
 # add the description of the units to the module's doc string:
 __doc__ += '\n' + description()
 
-# Some demonstration code. Run with "python -i PhysicalQuantities.py"
+# Some demonstration code. Run with "python -i physicalquantities.py"
 # to have this available.
 
 if __name__ == '__main__':

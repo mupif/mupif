@@ -31,9 +31,9 @@ import logging
 import sys
 import time
 import uuid 
-from . import JobManager
-from . import PyroUtil
-from . import PyroFile
+from . import jobmanager
+from . import pyroutil
+from . import pyrofile
 import os
 import atexit
 
@@ -63,7 +63,7 @@ SJM2_TICKET_EXPIRE_TIMEOUT = 10 # ticket timeout
 
 
 @Pyro4.expose
-class SimpleJobManager2 (JobManager.JobManager):
+class SimpleJobManager2 (jobmanager.JobManager):
     """
     Simple job manager 2. 
     This implementation avoids the problem of GIL lock by running applicaton 
@@ -234,12 +234,12 @@ class SimpleJobManager2 (JobManager.JobManager):
 
             log.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
-            return JobManager.JOBMAN_OK, jobID, jobPort
+            return jobmanager.JOBMAN_OK, jobID, jobPort
         
         else:
             log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs))
             self.lock.release()
-            raise JobManager.JobManNoResourcesException("SimpleJobManager: no more resources")
+            raise jobmanager.JobManNoResourcesException("SimpleJobManager: no more resources")
             # return (JOBMAN_NO_RESOURCES,None)
 
 
@@ -327,7 +327,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         See :func:`JobManager.uploadFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
-        PyroUtil.uploadPyroFile(targetFileName, pyroFile, hkey)
+        pyroutil.uploadPyroFile(targetFileName, pyroFile, hkey)
 
     def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):
         """
@@ -335,7 +335,7 @@ class SimpleJobManager2 (JobManager.JobManager):
         """
         targetFileName = self.getJobWorkDir(jobID)+os.path.sep+filename
         log.info('SimpleJobManager2:getPyroFile ' + targetFileName)
-        pfile = PyroFile.PyroFile(targetFileName, mode, buffSize)
+        pfile = pyrofile.PyroFile(targetFileName, mode, buffSize)
         self.daemon.register(pfile)
 
         return pfile

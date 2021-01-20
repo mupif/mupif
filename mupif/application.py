@@ -22,18 +22,18 @@
 #
 
 import Pyro4
-from . import Model
+from . import model
 
 
 @Pyro4.expose
-class Application(Model.Model):
+class Application(model.Model):
     """
-    Fully derived from Model.Model. Only kept for backward compatibility.
+    Fully derived from model.Model. Only kept for backward compatibility.
     """
 
 
 @Pyro4.expose
-class RemoteApplication (Model.RemoteModel):
+class RemoteApplication (model.RemoteModel):
     """
-    Fully derived from Model.RemoteModel. Only kept for backward compatibility.
+    Fully derived from model.RemoteModel. Only kept for backward compatibility.
     """

@@ -1,4 +1,4 @@
-import Pyro5
+import Pyro5.serializers, Pyro5.core
 import inspect
 import copyreg
 

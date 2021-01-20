@@ -18,12 +18,12 @@ import demoapp
 import conf_vpn as cfg
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Run a daemon for jobManager on this machine
 daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort)
 #Run job manager on a server
 
-jobMan = SimpleJobManager.SimpleJobManager2(daemon, ns, appAPIClass=None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
+#jobMan = simplejobmanager.SimpleJobManager2(daemon, ns, appAPIClass=None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 
-PyroUtil.runJobManagerServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.server, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, appName=cfg.jobManName, hkey=cfg.hkey, jobman=jobMan, daemon=daemon)
+pyroutil.runJobManagerServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.server, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, appName=cfg.jobManName, hkey=cfg.hkey, jobman=jobMan, daemon=daemon)

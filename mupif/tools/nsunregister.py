@@ -66,7 +66,7 @@ def main():
     
     # locate nameserver
     try:
-        ns = PyroUtil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
+        ns = pyroutil.connectNameServer(nshost=nshost, nsport=nsport, hkey=hkey)
         a = ns.list(return_metadata=True)
         
     except:

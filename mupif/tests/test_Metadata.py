@@ -10,7 +10,7 @@ import jsonschema
 
 
 
-class testModel1(Model.Model):
+class testModel1(model.Model):
     """ Empty model1(with missing required metadata) to test metadata setting"""
 
     def __init__(self, metaData={}):
@@ -29,7 +29,7 @@ class testModel1(Model.Model):
 
 
 
-class testModel2(Model.Model):
+class testModel2(model.Model):
     """ Empty model2 to test metadata setting"""
 
     def __init__(self, metaData={}):
@@ -81,7 +81,7 @@ class testModel2(Model.Model):
         }
 
         if propID == PropertyID.PID_Time_step:
-            return Property.ConstantProperty(time, PropertyID.PID_Time_step, ValueType.Scalar, 's', metaData=md)
+            return property.ConstantProperty(time, PropertyID.PID_Time_step, ValueType.Scalar, 's', metaData=md)
 
     
     
@@ -146,7 +146,7 @@ class Metadata_TestCase(unittest.TestCase):
             self.tm2.initialize(metaData = executionMetadata)
         except Exception as e:
             self.fail('Unexpected exception raised: %s'%e)
-        propeucid = self.tm2.getProperty(PropertyID.PID_Time_step, TimeStep.TimeStep(1., 1., 10, 's')).getMetadata('Execution.Use_case_ID')
+        propeucid = self.tm2.getProperty(PropertyID.PID_Time_step, timestep.TimeStep(1., 1., 10, 's')).getMetadata('Execution.Use_case_ID')
         if propeucid == self.tm2.getMetadata('Execution.Use_case_ID'):
             pass
         else:

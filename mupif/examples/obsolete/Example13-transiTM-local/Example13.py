@@ -5,14 +5,14 @@ from mupif import *
 import demoapp
 import logging
 log = logging.getLogger()
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 #from mupif import WorkflowMonitor
 import time
 import datetime
 status = 0
 
 
-class Demo13(Workflow.Workflow):
+class Demo13(workflow.Workflow):
     def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,'s')):
         super(Demo13, self).__init__(targetTime=targetTime)
         
@@ -24,7 +24,7 @@ class Demo13(Workflow.Workflow):
             from Config import config
             import Pyro4
             cfg=config(3)
-            ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+            ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
             uri = ns.lookup(cfg.monitorName)
             self.workflowMonitor = Pyro4.Proxy(uri)
         self.updateStatus('Initialized')
@@ -55,7 +55,7 @@ class Demo13(Workflow.Workflow):
 
             data = f.field2VTKData().tofile('M_%s'%str(istep.getNumber()))
 
-        except APIError.APIError as e:
+        except apierror.APIError as e:
             log.error("Following API error occurred:"+str(e))
 
     def getCriticalTimeStep(self):

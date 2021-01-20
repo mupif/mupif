@@ -5,7 +5,7 @@ import unittest
 from mupif import *
 from mupif.tests import demo
 
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class TestEx01(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestEx01(unittest.TestCase):
                 time = targetTime
             timestepnumber = timestepnumber+1
             # create a time step
-            istep = TimeStep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+            istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
 
             # solve problem 1
             app1.solveStep(istep)

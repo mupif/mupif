@@ -13,7 +13,7 @@ import logging
 logger = logging.getLogger()
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
+ns = pyroutil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=sConf.hkey)
 
 #Run a daemon for JobManager. It will run even the port has DROP/REJECT status. The connection from a client is then impossible. Daemon registers SimpleJobManager2
 try:

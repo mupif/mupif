@@ -14,8 +14,8 @@ def usage(log):
 
 
 def main():
-    from mupif import Util
-    log = Util.setupLogger(fileName='JobMan2cmd.log', level=logging.DEBUG)
+    from mupif import util
+    log = util.setupLogger(fileName='JobMan2cmd.log', level=logging.DEBUG)
     log.info("JobMan2cmd: " + str(sys.argv[1:]))
 
 
@@ -76,9 +76,9 @@ def main():
             log.info('Overriding config-specified nameserver port %d with --override-nsport=%d'%(conf.nsport,overrideNsPort))
             conf.nsport=overrideNsPort
         # conf = moduleImport.variables(configMode)
-        # import PyroUtil module from mupif
+        # import pyroutil module from mupif
         # mupif = importlib.import_module('mupif')
-        PyroUtil = importlib.import_module('mupif.PyroUtil')
+        pyroutil = importlib.import_module('mupif.pyroutil')
 
         if natPort == 'None' or natPort is None:
             natPort = None
@@ -86,13 +86,13 @@ def main():
             conf.serverNathost = conf.server
 
         # locate nameserver
-        ns = PyroUtil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
+        ns = pyroutil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
 
         # Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
         # if conf.serverNathost==None:
         #     conf.serverNathost = conf.server
 
-        daemon = PyroUtil.runDaemon(host=conf.server, port=int(daemonPort), nathost=conf.serverNathost, natport=natPort,
+        daemon = pyroutil.runDaemon(host=conf.server, port=int(daemonPort), nathost=conf.serverNathost, natport=natPort,
                                     hkey=conf.hkey)
         log.info('Running daemon on hosts %s port %s nathost %s natport %s hkey %s' % (
             conf.server, daemonPort, conf.serverNathost, natPort, conf.hkey))
@@ -107,11 +107,11 @@ def main():
 
             # register agent
             uri = daemon.register(app)
-            metadata = {PyroUtil.NS_METADATA_appserver,
-                        '%s:%s' % (PyroUtil.NS_METADATA_host, conf.server),
-                        '%s:%s' % (PyroUtil.NS_METADATA_port, daemonPort),
-                        '%s:%s' % (PyroUtil.NS_METADATA_nathost, conf.serverNathost),
-                        '%s:%s' % (PyroUtil.NS_METADATA_natport, natPort)}
+            metadata = {pyroutil.NS_METADATA_appserver,
+                        '%s:%s' % (pyroutil.NS_METADATA_host, conf.server),
+                        '%s:%s' % (pyroutil.NS_METADATA_port, daemonPort),
+                        '%s:%s' % (pyroutil.NS_METADATA_nathost, conf.serverNathost),
+                        '%s:%s' % (pyroutil.NS_METADATA_natport, natPort)}
             ns.register(jobID, uri, metadata=metadata)
             app.registerPyro(daemon, ns, uri, jobID)
             # app.setWorkingDirectory(workDir)

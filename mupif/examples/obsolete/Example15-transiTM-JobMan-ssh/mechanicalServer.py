@@ -4,10 +4,10 @@ sys.path.extend(['..','../../..','../Example10'])
 from mupif import *
 import demoapp
 import conf as cfg
-Util.changeRootLogger('mechanical.log')
+util.changeRootLogger('mechanical.log')
 
 #locate nameserver
-ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
 daemon = cfg.Pyro4.Daemon(host=cfg.server2, port=cfg.serverPort2)

@@ -22,11 +22,11 @@
 #
 from builtins import range, object
 
-from . import BBox
-from . import Util
+from . import bbox
+from . import util
 import math
-from . import Mesh
-from . import CellGeometryType
+from . import mesh
+from . import cellgeometrytype
 import numpy as np
 import Pyro4
 
@@ -55,7 +55,7 @@ class Cell(object):
         """
         Initializes the cell.
 
-        :param Mesh.Mesh mesh: The mesh to which a cell belongs to
+        :param mesh.Mesh mesh: The mesh to which a cell belongs to
         :param int number: A local cell number. Local numbering should start from 0 and should be continuous.
         :param int label: A cell label. Arbitrary unique number.
         :param tuple vertices: A cell vertices (local numbers)
@@ -177,7 +177,7 @@ class Cell(object):
             min_coords = [min_coords[i]-relPad*sizes[i] for i in (0, 1, 2)]  # pad on the negative side
             max_coords = [max_coords[i]+relPad*sizes[i] for i in (0, 1, 2)]  # pad on the positive side
 
-        self.bbox = BBox.BBox(tuple(min_coords), tuple(max_coords))
+        self.bbox = bbox.BBox(tuple(min_coords), tuple(max_coords))
         return self.bbox
 
     def getTransformationJacobian(self, coords):
@@ -188,7 +188,7 @@ class Cell(object):
         :return: jacobian
         :rtype: float
         """
-        # raise APIError.APIError("getTransformationJacobian not implemented")
+        # raise apierror.APIError("getTransformationJacobian not implemented")
 
 
 ##############################################################
@@ -228,7 +228,7 @@ class Triangle_2d_lin(Cell):
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return CellGeometryType.CGT_TRIANGLE_1
+        return cellgeometrytype.CGT_TRIANGLE_1
 
     def glob2loc(self, coords):
         """
@@ -354,7 +354,7 @@ class Triangle_2d_quad(Cell):
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return CellGeometryType.CGT_TRIANGLE_2
+        return cellgeometrytype.CGT_TRIANGLE_2
 
     def glob2loc(self, coords):
         """
@@ -575,7 +575,7 @@ class Quad_2d_lin(Cell):
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return CellGeometryType.CGT_QUAD
+        return cellgeometrytype.CGT_QUAD
 
     def _evalN(self, lc):
         """
@@ -620,7 +620,7 @@ class Quad_2d_lin(Cell):
         c = a1 * b3 - a3 * b1 - 4.0 * coords[0] * b3 + 4.0 * coords[1] * a3
 
         # solve quadratic equation
-        ksi = Util.quadratic_real(a, b, c)
+        ksi = util.quadratic_real(a, b, c)
         if debug:
             print ("quadratic_real returned ", ksi, "for a,b,c ", a, b, c)
         if len(ksi) == 0:
@@ -794,7 +794,7 @@ class Tetrahedron_3d_lin(Cell):
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return CellGeometryType.CGT_TETRA
+        return cellgeometrytype.CGT_TETRA
 
     def glob2loc(self, coords):
         """
@@ -934,7 +934,7 @@ class Brick_3d_lin(Cell):
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return CellGeometryType.CGT_HEXAHEDRON
+        return cellgeometrytype.CGT_HEXAHEDRON
 
     def glob2loc(self, coords):
         """

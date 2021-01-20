@@ -6,7 +6,7 @@ import Pyro4
 import logging
 log = logging.getLogger()
 import time as timeT
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 import smtplib, ssl
 import json
 
@@ -28,7 +28,7 @@ json_file = open('jobMan2Email.json', 'r')
 json_str = json_file.read()
 jobManName2Email = json.loads(json_str)[0]
 
-ns = PyroUtil.connectNameServer(nshost, nsport, hkey)
+ns = pyroutil.connectNameServer(nshost, nsport, hkey)
 
 
 jobManagerError = "JobManager is down, please restart it"
@@ -58,15 +58,15 @@ for key in jobManName2Email:
         receiver_email = jobManName2Email.get(jobManName)
         log.info('\n-------------------------------------------------------------------------------------------------------------------------------')
         try:
-                (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = PyroUtil.getNSConnectionInfo(ns, jobManName)
+                (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = pyroutil.getNSConnectionInfo(ns, jobManName)
         except Exception as e:
                 log.debug("Exception occurs, sending email")
                 sendEmail(sender_email, receiver_email, jobManName, "%s\nJobManHostName:%s"%("Jobmanager is not registered at nameserver",jobManName) )
                 continue
         try:
-                jobMan = PyroUtil.connectJobManager(ns, jobManName, hkey)
+                jobMan = pyroutil.connectJobManager(ns, jobManName, hkey)
                 try:
-                        solver = PyroUtil.allocateApplicationWithJobManager( ns, jobMan, None, hkey)
+                        solver = pyroutil.allocateApplicationWithJobManager( ns, jobMan, None, hkey)
                 except Exception as e:
                         log.debug("Exception occurs, sending email")
                         sendEmail(sender_email, receiver_email, jobManName, "%s\nJobManHostName:%s, jobManPort: %s"%(jobError,jobManHostname,jobManPort))	              

@@ -8,16 +8,16 @@ import numpy as np
 
 class Triangle_2d_lin_TestCase(unittest.TestCase):
     def setUp(self):
-        self.mesh = Mesh.UnstructuredMesh()
-        self.mesh.setup((Vertex.Vertex(0,0,(0.,0.)), Vertex.Vertex(1,1,(2.,0.)), Vertex.Vertex(2,2,(0.,5.))), [])
-        self.cell = Cell.Triangle_2d_lin(self.mesh, 0, 1, (0,1,2))
+        self.mesh = mesh.UnstructuredMesh()
+        self.mesh.setup((vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(0.,5.))), [])
+        self.cell = cell.Triangle_2d_lin(self.mesh, 0, 1, (0,1,2))
 
     def tearDown(self):
         self.mesh = None
         self.cell = None
 
     def test_geometryType(self):
-        self.assertEqual(self.cell.getGeometryType(), CellGeometryType.CGT_TRIANGLE_1, 'wrong geometry type')
+        self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_TRIANGLE_1, 'wrong geometry type')
 
     def test_glob2loc(self):
         #test vertices
@@ -81,16 +81,16 @@ class Triangle_2d_lin_TestCase(unittest.TestCase):
 
 class Triangle_2d_quad_TestCase(unittest.TestCase):
     def setUp(self):
-        self.mesh = Mesh.UnstructuredMesh()
-        self.mesh.setup((Vertex.Vertex(0,0,(0.,0.)), Vertex.Vertex(1,1,(2.,0.)), Vertex.Vertex(2,2,(0.,5.)), Vertex.Vertex(3,3,(1.,0.)), Vertex.Vertex(4,4,(1.,2.5)), Vertex.Vertex(5,5,(0.,2.5))), [])
-        self.cell = Cell.Triangle_2d_quad(self.mesh, 0, 1, (0,1,2,3,4,5))
+        self.mesh = mesh.UnstructuredMesh()
+        self.mesh.setup((vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(0.,5.)), vertex.Vertex(3,3,(1.,0.)), vertex.Vertex(4,4,(1.,2.5)), vertex.Vertex(5,5,(0.,2.5))), [])
+        self.cell = cell.Triangle_2d_quad(self.mesh, 0, 1, (0,1,2,3,4,5))
 
     def tearDown(self):
         self.mesh = None
         self.cell = None
 
     def test_geometryType(self):
-        self.assertEqual(self.cell.getGeometryType(), CellGeometryType.CGT_TRIANGLE_2, 'wrong geometry type')
+        self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_TRIANGLE_2, 'wrong geometry type')
 
     def test_glob2loc(self):
         #test vertices
@@ -154,9 +154,9 @@ class Triangle_2d_quad_TestCase(unittest.TestCase):
         
 class Quad_2d_lin_TestCase(unittest.TestCase):
     def setUp(self):
-        self.mesh=Mesh.UnstructuredMesh()
-        self.mesh.setup((Vertex.Vertex(0,0,(0.,0.)), Vertex.Vertex(1,1,(2.,0.)), Vertex.Vertex(2,2,(4.,2.)), Vertex.Vertex(3,3,(0.,5.))), [])
-        self.cell = Cell.Quad_2d_lin(self.mesh, 0, 1, (0,1,2,3))
+        self.mesh=mesh.UnstructuredMesh()
+        self.mesh.setup((vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(4.,2.)), vertex.Vertex(3,3,(0.,5.))), [])
+        self.cell = cell.Quad_2d_lin(self.mesh, 0, 1, (0,1,2,3))
 
     def tearDown(self):
         self.mesh = None
@@ -176,7 +176,7 @@ class Quad_2d_lin_TestCase(unittest.TestCase):
         
         
     def test_geometryType(self):
-        self.assertEqual(self.cell.getGeometryType(), CellGeometryType.CGT_QUAD, 'wrong geometry type')
+        self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_QUAD, 'wrong geometry type')
         
     def test_glob2loc(self):
         #test vertices
@@ -237,13 +237,13 @@ class Quad_2d_lin_TestCase(unittest.TestCase):
         
 class Tetrahedron_3d_lin_TestCase(unittest.TestCase):
     def setUp(self):
-        self.mesh=Mesh.UnstructuredMesh()
-        self.mesh.setup((Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(2.,0.,3.)), Vertex.Vertex(2,2,(4.,2.,1.)), Vertex.Vertex(3,3,(0.,5.,5.))), [])
-        self.cell = Cell.Tetrahedron_3d_lin(self.mesh, 0, 1, (0,1,2,3))
+        self.mesh=mesh.UnstructuredMesh()
+        self.mesh.setup((vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(2.,0.,3.)), vertex.Vertex(2,2,(4.,2.,1.)), vertex.Vertex(3,3,(0.,5.,5.))), [])
+        self.cell = cell.Tetrahedron_3d_lin(self.mesh, 0, 1, (0,1,2,3))
         
-        self.mesh2=Mesh.UnstructuredMesh()
-        self.mesh2.setup((Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(0.,2.,0.)), Vertex.Vertex(2,2,(4.,0.,0.)), Vertex.Vertex(3,3,(0.,0.,6.))), [])
-        self.cell2 = Cell.Tetrahedron_3d_lin(self.mesh2, 0, 1, (0,1,2,3))
+        self.mesh2=mesh.UnstructuredMesh()
+        self.mesh2.setup((vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(0.,2.,0.)), vertex.Vertex(2,2,(4.,0.,0.)), vertex.Vertex(3,3,(0.,0.,6.))), [])
+        self.cell2 = cell.Tetrahedron_3d_lin(self.mesh2, 0, 1, (0,1,2,3))
 
     def tearDown(self):
         self.mesh = None
@@ -254,7 +254,7 @@ class Tetrahedron_3d_lin_TestCase(unittest.TestCase):
         
     def test_copy(self):
         self.r = self.cell.copy()
-        self.assertEqual(self.r.getGeometryType(), CellGeometryType.CGT_TETRA, 'wrong geometry type')
+        self.assertEqual(self.r.getGeometryType(), cellgeometrytype.CGT_TETRA, 'wrong geometry type')
         gc1 = self.r.glob2loc((0.,0.,0.))
         self.assertEqual(gc1,(1.0,0.0,0.0,0.0),'error in glob2loc for vertex 1 (0,0,0)')
         gc2 = self.r.glob2loc((2.,0.,3.))
@@ -267,7 +267,7 @@ class Tetrahedron_3d_lin_TestCase(unittest.TestCase):
         self.assertAlmostEqual(r[0], 8., msg='error in interpolate for vertex (2,0,1)', delta=1.e-5) 
         
     def test_geometryType(self):
-        self.assertEqual(self.cell.getGeometryType(), CellGeometryType.CGT_TETRA, 'wrong geometry type')
+        self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_TETRA, 'wrong geometry type')
         
     def test_glob2loc(self):
         #test vertices
@@ -358,9 +358,9 @@ class Tetrahedron_3d_lin_TestCase(unittest.TestCase):
 
 class Brick_3d_lin_TestCase(unittest.TestCase):
     def setUp(self):
-        self.mesh=Mesh.UnstructuredMesh()
-        self.mesh.setup((Vertex.Vertex(0,0,(0.,0.,0.)), Vertex.Vertex(1,1,(0.,3.,0.)), Vertex.Vertex(2,2,(5.,3.,0.)), Vertex.Vertex(3,3,(5.,0.,0.)), Vertex.Vertex(4,4,(0.,0.,-2.)), Vertex.Vertex(5,5,(0.,3.,-2.)), Vertex.Vertex(6,6,(5.,3.,-2.)),Vertex.Vertex(7,7,(5.,0.,-2.))), [])
-        self.cell = Cell.Brick_3d_lin(self.mesh, 0, 1, (0,1,2,3,4,5,6,7))
+        self.mesh=mesh.UnstructuredMesh()
+        self.mesh.setup((vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(0.,3.,0.)), vertex.Vertex(2,2,(5.,3.,0.)), vertex.Vertex(3,3,(5.,0.,0.)), vertex.Vertex(4,4,(0.,0.,-2.)), vertex.Vertex(5,5,(0.,3.,-2.)), vertex.Vertex(6,6,(5.,3.,-2.)),vertex.Vertex(7,7,(5.,0.,-2.))), [])
+        self.cell = cell.Brick_3d_lin(self.mesh, 0, 1, (0,1,2,3,4,5,6,7))
         
     def tearDown(self):
         self.mesh = None
@@ -368,14 +368,14 @@ class Brick_3d_lin_TestCase(unittest.TestCase):
         
     def test_copy(self):
         c = self.cell.copy()
-        self.assertEqual(c.getGeometryType(), CellGeometryType.CGT_HEXAHEDRON, 'wrong geometry type')
+        self.assertEqual(c.getGeometryType(), cellgeometrytype.CGT_HEXAHEDRON, 'wrong geometry type')
         v = c.getVertices()
         vs= self.cell.getVertices()
         for i in range(8):
             self.assertEqual(v[i].getNumber(),  vs[i].getNumber(), 'wrong label')
         
     def test_getGeometryType(self):
-        self.assertEqual(self.cell.getGeometryType(), CellGeometryType.CGT_HEXAHEDRON, 'wrong geometry type')
+        self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_HEXAHEDRON, 'wrong geometry type')
 
     def test_glob2loc(self):
         #test vertices

@@ -23,17 +23,17 @@
 
 import os
 import Pyro4
-from . import APIError
-from . import MupifObject
-from .dataID import PropertyID
-from .dataID import FieldID
-from .dataID import FunctionID
-from .dataID import ParticleSetID
-from . import Property
-from . import Field
-from . import Function
-from . import TimeStep
-from . import PyroUtil
+from . import apierror
+from . import mupifobject
+from .dataid import PropertyID
+from .dataid import FieldID
+from .dataid import FunctionID
+from .dataid import ParticleSetID
+from . import property
+from . import field
+from . import function
+from . import timestep
+from . import pyroutil
 import time
 
 import logging
@@ -166,7 +166,7 @@ ModelSchema = {
 
 
 @Pyro4.expose
-class Model(MupifObject.MupifObject):
+class Model(mupifobject.MupifObject):
     """
     An abstract class representing an application and its interface (API).
 
@@ -197,7 +197,7 @@ class Model(MupifObject.MupifObject):
         self.file = ""
         self.workDir = ""
         
-        (username, hostname) = PyroUtil.getUserInfo()
+        (username, hostname) = pyroutil.getUserInfo()
         self.setMetadata('Username', username)
         self.setMetadata('Hostname', hostname)
         self.setMetadata('Status', 'Initialized')
@@ -275,14 +275,14 @@ class Model(MupifObject.MupifObject):
         """
         Registers the given (remote) object in application.
 
-        :param Property.Property or Field.Field or Function.Function obj: Remote object to be registered by the application
+        :param property.Property or field.Field or function.Function obj: Remote object to be registered by the application
         :param int objectID: Identifies object with objectID (optional, default 0)
         """
-        if isinstance(obj, Property.Property):
+        if isinstance(obj, property.Property):
             return self.setProperty(obj, objectID)
-        if isinstance(obj, Field.Field):
+        if isinstance(obj, field.Field):
             return self.setField(obj, objectID)
-        if isinstance(obj, Function.Function):
+        if isinstance(obj, function.Function):
             return self.setFunction(obj, objectID)
 
     def getField(self, fieldID, time, objectID=0):
@@ -308,12 +308,12 @@ class Model(MupifObject.MupifObject):
         :rtype: Pyro4.core.URI
         """
         if self.pyroDaemon is None:
-            raise APIError.APIError('Error: getFieldURI requires to register pyroDaemon in application')
+            raise apierror.APIError('Error: getFieldURI requires to register pyroDaemon in application')
         try:
             field = self.getField(fieldID, time, objectID=objectID)
         except:
             self.setMetadata('Status', 'Failed')
-            raise APIError.APIError('Error: can not obtain field')
+            raise apierror.APIError('Error: can not obtain field')
         if hasattr(field, '_PyroURI'):
             return field._PyroURI
         else:
@@ -328,7 +328,7 @@ class Model(MupifObject.MupifObject):
         """
         Registers the given (remote) field in application. 
 
-        :param Field.Field field: Remote field to be registered by the application
+        :param field.Field field: Remote field to be registered by the application
         :param int objectID: Identifies field with objectID (optional, default 0)
         """
     def getProperty(self, propID, time, objectID=0):
@@ -346,7 +346,7 @@ class Model(MupifObject.MupifObject):
         """
         Register given property in the application
 
-        :param Property.Property property: Setting property
+        :param property.Property property: Setting property
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
         """
     def getFunction(self, funcID, time, objectID=0):
@@ -364,14 +364,14 @@ class Model(MupifObject.MupifObject):
         """
         Register given function in the application.
 
-        :param Function.Function func: Function to register
+        :param function.Function func: Function to register
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
         """
     def getMesh(self, tstep):
         """
         Returns the computational mesh for given solution step.
 
-        :param TimeStep.TimeStep tstep: Solution step
+        :param timestep.TimeStep tstep: Solution step
         :return: Returns the representation of mesh
         :rtype: Mesh
         """
@@ -388,7 +388,7 @@ class Model(MupifObject.MupifObject):
         In between the stages the additional data exchange can be performed.
         See also wait and isSolved services.
 
-        :param TimeStep.TimeStep tstep: Solution step
+        :param timestep.TimeStep tstep: Solution step
         :param int stageID: optional argument identifying solution stage (default 0)
         :param bool runInBackground: optional argument, defualt False. If True, the solution will run in background (in separate thread or remotely).
 
@@ -411,7 +411,7 @@ class Model(MupifObject.MupifObject):
         """
         Called after a global convergence within a time step is achieved.
 
-        :param TimeStep.TimeStep tstep: Solution step
+        :param timestep.TimeStep tstep: Solution step
         """
     def getCriticalTimeStep(self):
         """
@@ -425,20 +425,20 @@ class Model(MupifObject.MupifObject):
         Returns the assembly time related to given time step.
         The registered fields (inputs) should be evaluated in this time.
 
-        :param TimeStep.TimeStep tstep: Solution step
+        :param timestep.TimeStep tstep: Solution step
         :return: Assembly time
-        :rtype: Physics.PhysicalQuantity, TimeStep.TimeStep
+        :rtype: Physics.PhysicalQuantity, timestep.TimeStep
         """
     def storeState(self, tstep):
         """
         Store the solution state of an application.
 
-        :param TimeStep.TimeStep tstep: Solution step
+        :param timestep.TimeStep tstep: Solution step
         """
     def restoreState(self, tstep):
         """
         Restore the saved state of an application.
-        :param TimeStep.TimeStep tstep: Solution step
+        :param timestep.TimeStep tstep: Solution step
         """
     def getAPIVersion(self):
         """

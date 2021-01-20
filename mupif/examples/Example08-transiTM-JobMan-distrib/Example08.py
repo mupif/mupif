@@ -5,7 +5,7 @@ sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
 cfg = config(mode)
 import logging
@@ -14,14 +14,14 @@ log = logging.getLogger()
 import time as timeTime
 start = timeTime.time()
 log.info('Timer started')
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 
 # localize JobManager running on (remote) server and create a tunnel to it
 # allocate the thermal server
 # solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
 
-class Example08(Workflow.Workflow):
+class Example08(workflow.Workflow):
    
     def __init__(self, metaData={}):
         """
@@ -50,15 +50,15 @@ class Example08(Workflow.Workflow):
     
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
+        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
         # connect to JobManager running on (remote) server
-        self.thermalJobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
+        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         
         try:
-            self.thermal = PyroUtil.allocateApplicationWithJobManager(
+            self.thermal = pyroutil.allocateApplicationWithJobManager(
                 ns, self.thermalJobMan,
                 cfg.jobNatPorts[0],
-                cfg.hkey, PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+                cfg.hkey, pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
             )
             log.info('Created thermal job')
         except Exception as e:
@@ -66,7 +66,7 @@ class Example08(Workflow.Workflow):
             self.terminate()
 
         # Connecting directly to mechanical instance, not using jobManager
-        self.mechanical = PyroUtil.connectApp(ns, 'mechanical', cfg.hkey)
+        self.mechanical = pyroutil.connectApp(ns, 'mechanical', cfg.hkey)
 
         thermalSignature = self.thermal.getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)
@@ -88,7 +88,7 @@ class Example08(Workflow.Workflow):
         }
 
         pf = self.thermalJobMan.getPyroFile(self.thermal.getJobID(), "inputT.in", 'wb')
-        PyroUtil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf, cfg.hkey)
+        pyroutil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf, cfg.hkey)
 
         self.thermal.initialize(
             file='inputT.in',

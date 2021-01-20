@@ -5,10 +5,10 @@ from mupif import *
 import demoapp
 import logging
 log = logging.getLogger()
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 
-class Demo15l(Workflow.Workflow):
+class Demo15l(workflow.Workflow):
     def __init__ (self, targetTime=PQ.PhysicalQuantity(3.,'s')):
         super(Demo15l, self).__init__(targetTime=targetTime)
         self.thermal = demoapp.thermal()
@@ -25,7 +25,7 @@ class Demo15l(Workflow.Workflow):
             
             data = ft.field2VTKData().tofile('T_local')
             
-        except APIError.APIError as e:
+        except apierror.APIError as e:
             log.error("Following API error occurred:",e)
 
     def getCriticalTimeStep(self):

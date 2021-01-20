@@ -3,10 +3,10 @@ sys.path.extend(['..', '../../..'])
 from mupif import *
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[Util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
 cfg=config(mode)
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 import logging
 log = logging.getLogger()
@@ -17,7 +17,7 @@ start = timeT.time()
 log.info('Timer started')
 
 
-class Example04(Workflow.Workflow):
+class Example04(workflow.Workflow):
    
     def __init__(self, metaData={}):
         MD = {
@@ -39,20 +39,20 @@ class Example04(Workflow.Workflow):
         self.updateMetadata(metaData)
         
         # locate nameserver
-        ns = PyroUtil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
         # connect to JobManager running on (remote) server and create a tunnel to it
-        self.jobMan = PyroUtil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
+        self.jobMan = pyroutil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
         log.info('Connected to JobManager')
         self.app1 = None
-        self.contrib = Property.ConstantProperty(
+        self.contrib = property.ConstantProperty(
             (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
-        self.retprop = Property.ConstantProperty(
+        self.retprop = property.ConstantProperty(
             (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
         try:
-            self.app1 = PyroUtil.allocateApplicationWithJobManager(
+            self.app1 = pyroutil.allocateApplicationWithJobManager(
                 ns, self.jobMan, cfg.jobNatPorts[0], cfg.hkey,
-                PyroUtil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+                pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
             )
             log.info(self.app1)
         except Exception as e:
@@ -76,7 +76,7 @@ class Example04(Workflow.Workflow):
         self.app1.initialize(metaData=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = Property.ConstantProperty((1000,), PropertyID.PID_Time_step, ValueType.Scalar, 's')
+        val = property.ConstantProperty((1000,), PropertyID.PID_Time_step, ValueType.Scalar, 's')
         self.app1.setProperty(val)
         self.app1.solveStep(istep)
         self.retprop = self.app1.getProperty(PropertyID.PID_Time, istep.getTime())
@@ -90,16 +90,16 @@ class Example04(Workflow.Workflow):
 
     def getProperty(self, propID, time, objectID=0):
         if propID == PropertyID.PID_Time:
-            return Property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_Time, ValueType.Scalar, 's', time)
+            return property.ConstantProperty(self.retprop.getValue(time), PropertyID.PID_Time, ValueType.Scalar, 's', time)
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
         
     def setProperty(self, property, objectID=0):
         if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
         return PQ.PhysicalQuantity(1.0, 's')

@@ -3,10 +3,10 @@ sys.path.append('../../..')
 from mupif import *
 import logging
 log = logging.getLogger()
-import mupif.Physics.PhysicalQuantities as PQ
+import mupif.physics.physicalquantities as PQ
 
 
-class application1(Model.Model):
+class application1(model.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
@@ -62,10 +62,10 @@ class application1(Model.Model):
         }
 
         if propID == PropertyID.PID_Time_step:
-            return Property.ConstantProperty(
+            return property.ConstantProperty(
                 (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = self.getAssemblyTime(tstep).inUnitsOf('s').getValue()
@@ -78,7 +78,7 @@ class application1(Model.Model):
         return tstep.getTime()
 
 
-class application2(Model.Model):
+class application2(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
@@ -120,7 +120,7 @@ class application2(Model.Model):
         self.updateMetadata(metaData)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = Property.ConstantProperty(
+        self.contrib = property.ConstantProperty(
             (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
@@ -136,17 +136,17 @@ class application2(Model.Model):
         }
 
         if propID == PropertyID.PID_Time:
-            return Property.ConstantProperty(
+            return property.ConstantProperty(
                 (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, metaData=md)
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if property.getPropertyID() == PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = property
         else:
-            raise APIError.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
@@ -179,7 +179,7 @@ app1.initialize(metaData=executionMetadata)
 # app1.printMetadata()
 
 app1.toJSONFile('aa.json')
-aa = MupifObject.MupifObject('aa.json')
+aa = mupifobject.MupifObject('aa.json')
 # aa.printMetadata()
 
 app2.initialize(metaData=executionMetadata)
@@ -199,7 +199,7 @@ while abs(time - targetTime) > 1.e-6:
         time = targetTime
     timestepnumber = timestepnumber+1
     # create a time step
-    istep = TimeStep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+    istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
 
     try:
         # solve problem 1
@@ -216,7 +216,7 @@ while abs(time - targetTime) > 1.e-6:
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
             atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
         
-    except APIError.APIError as e:
+    except apierror.APIError as e:
         log.error("mupif.APIError occurred:", e)
         log.error("Test FAILED")
         raise
