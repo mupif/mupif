@@ -31,14 +31,10 @@ _branch = 'dev'
 
 import os, sys
 
-if 'MUPIF_PYRO5' in os.environ:
-    from Pyro5.compatibility import Pyro4
-    sys.modules['Pyro4']=Pyro4
-    import mupif.compat
-    pyroVer=5
-else:
-    pyroVer=4
-
+from Pyro5.compatibility import Pyro4
+sys.modules['Pyro4']=Pyro4
+import mupif.compat
+pyroVer=5
 
 from .dataid import FieldID
 from .dataid import PropertyID

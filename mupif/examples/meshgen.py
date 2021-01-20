@@ -1,7 +1,7 @@
 from builtins import range
-from mupif import Mesh
-from mupif import Cell
-from mupif import Vertex
+import mupif.mesh
+from mupif import cell
+from mupif import vertex
 
 # debug flag
 debug = 0
@@ -24,7 +24,7 @@ def meshgen(origin, size, nx, ny, tria=False):
     vertexlist = []
     celllist = []
 
-    mesh = mesh.UnstructuredMesh()
+    mesh = mupif.mesh.UnstructuredMesh()
     # generate vertices
     for ix in range(nx + 1):
         for iy in range(ny + 1):

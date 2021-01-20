@@ -6,7 +6,7 @@
 import os
 import sys
 sys.path.append('../..')
-from mupif import Util
+from mupif import util
 import subprocess
 sys.path.append('../examples')
 import argparse

@@ -193,12 +193,12 @@ class Workflow(model.Model):
                 log.exception("Connection to workflow monitor broken")
                 raise e
 
-    def registerModel(self, model, label=None):
+    def registerModel(self, mmodel, label=None):
         """
         :param model.Model or model.RemoteModel or Workflow model:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
         """
-        if isinstance(model, (Workflow, model.Model, model.RemoteModel)):
+        if isinstance(mmodel, (Workflow, model.Model, model.RemoteModel)):
             if label is None:
                 i = 0
                 while label in self.getListOfModelLabels() or i == 0:
@@ -206,7 +206,7 @@ class Workflow(model.Model):
                     label = "label_%d" % i
 
             if label not in self.getListOfModelLabels():
-                self._models.update({label: model})
+                self._models.update({label: mmodel})
             else:
                 raise KeyError("Given model label already exists.")
         else:
@@ -238,25 +238,25 @@ class Workflow(model.Model):
 
     def generateMetadataModelRefsID(self):
         dependencies = []
-        for key_name, model in self.getDictOfModels().items():
-            if isinstance(model, (model.Model, Workflow, model.RemoteModel)):
+        for key_name, mmodel in self.getDictOfModels().items():
+            if isinstance(mmodel, (model.Model, Workflow, model.RemoteModel)):
                 # Temporary fix due to compatibility
-                if not model.hasMetadata('Version_date') and not isinstance(model, Workflow):
-                    if model.hasMetadata('Solver.Version_date'):
-                        model.setMetadata('Version_date', model.getMetadata('Solver.Version_date'))
+                if not mmodel.hasMetadata('Version_date') and not isinstance(model, Workflow):
+                    if mmodel.hasMetadata('Solver.Version_date'):
+                        mmodel.setMetadata('Version_date', mmodel.getMetadata('Solver.Version_date'))
 
-                md_name = model.getMetadata('Name') if model.hasMetadata('Name') else ''
-                md_id = model.getMetadata('ID') if model.hasMetadata('ID') else ''
-                md_ver = model.getMetadata('Version_date') if model.hasMetadata('Version_date') else ''
+                md_name = mmodel.getMetadata('Name') if mmodel.hasMetadata('Name') else ''
+                md_id = mmodel.getMetadata('ID') if mmodel.hasMetadata('ID') else ''
+                md_ver = mmodel.getMetadata('Version_date') if mmodel.hasMetadata('Version_date') else ''
 
                 m_r_id = {
                     'Label': str(key_name),
                     'Name': md_name,
                     'ID': md_id,
                     'Version_date': md_ver,
-                    'Type': 'Workflow' if isinstance(model, Workflow) else 'Model'
+                    'Type': 'Workflow' if isinstance(mmodel, Workflow) else 'Model'
                 }
-                if isinstance(model, Workflow):
+                if isinstance(mmodel, Workflow):
                     m_r_id.update({'Dependencies': model.getMetadata('Dependencies')})
                 dependencies.append(m_r_id)
 

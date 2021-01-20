@@ -9,6 +9,7 @@ import sys
 import logging
 sys.path.append('../../..')
 from mupif import *
+import mupif
 import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger()
@@ -18,7 +19,7 @@ temperatureUnit = PQ.PhysicalUnit('K', 1., [0, 0, 0, 0, 1, 0, 0, 0, 0])
 def main():
 
     # generate field and corresponding mesh
-    mesh = mesh.UnstructuredMesh()
+    msh = mupif.mesh.UnstructuredMesh()
     vertices = []
     values1 = []
     values2 = []
@@ -32,23 +33,23 @@ def main():
     num = 0
     for i in range(39):
         for j in range(14):
-            cells.append(cell.Quad_2d_lin(mesh, num, num, ((i*15)+j, (i+1)*15+j, (i+1)*15+j+1, ((i*15)+j+1))))
+            cells.append(cell.Quad_2d_lin(msh, num, num, ((i*15)+j, (i+1)*15+j, (i+1)*15+j+1, ((i*15)+j+1))))
             values2.append((num,))
             num += 1
 
-    mesh.setup(vertices, cells)
+    msh.setup(vertices, cells)
 
     # Check saving a mesh
-    mesh.dumpToLocalFile('mesh.dat')
-    mesh.Mesh.loadFromLocalFile('mesh.dat')
+    msh.dumpToLocalFile('mesh.dat')
+    mupif.mesh.Mesh.loadFromLocalFile('mesh.dat')
 
     time = PQ.PhysicalQuantity(1.0, 's')
     # field1 is vertex based, i.e., field values are provided at vertices
-    field1 = field.Field(mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values1)
+    field1 = field.Field(msh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values1)
     # field1.field2Image2D(title='Field', barFormatNum='%.0f')
     # field2 is cell based, i.e., field values are provided for cells
     field2 = field.Field(
-        mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values2, field.FieldType.FT_cellBased)
+        msh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values2, field.FieldType.FT_cellBased)
 
     # evaluate field at given point
     position = (20.1, 7.5, 0.0)
