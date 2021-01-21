@@ -68,11 +68,20 @@ latex_documents=[('index','mupif.tex','MuPIF Documentation',
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'default'
 html_theme_options=dict(
     github_banner=True,
     github_user='mupif',
-    github_repo='mupif'
+    github_repo='mupif',
+    display_github=True
+)
+html_context=dict(
+    github_banner=True,
+    github_user='mupif',
+    github_repo='mupif',
+    display_github=True,
+    github_version='dev',
+    conf_py_path='mupif/doc/source'
 )
 
 # Add any paths that contain custom static files (such as style sheets) here,
