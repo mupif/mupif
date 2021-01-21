@@ -50,15 +50,15 @@ class Example08(workflow.Workflow):
     
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)    
+        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
-        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
+        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName)
         
         try:
             self.thermal = pyroutil.allocateApplicationWithJobManager(
                 ns, self.thermalJobMan,
                 cfg.jobNatPorts[0],
-                cfg.hkey, pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+                pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
             )
             log.info('Created thermal job')
         except Exception as e:
@@ -66,7 +66,7 @@ class Example08(workflow.Workflow):
             self.terminate()
 
         # Connecting directly to mechanical instance, not using jobManager
-        self.mechanical = pyroutil.connectApp(ns, 'mechanical', cfg.hkey)
+        self.mechanical = pyroutil.connectApp(ns, 'mechanical')
 
         thermalSignature = self.thermal.getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)
@@ -88,7 +88,7 @@ class Example08(workflow.Workflow):
         }
 
         pf = self.thermalJobMan.getPyroFile(self.thermal.getJobID(), "inputT.in", 'wb')
-        pyroutil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf, cfg.hkey)
+        pyroutil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf)
 
         self.thermal.initialize(
             file='inputT.in',

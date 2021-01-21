@@ -1,9 +1,9 @@
 from builtins import object
 from . import bbox
-import Pyro4
+import Pyro5
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Vertex(object):
     """
     Represent a vertex. Vertices define the geometry of interpolation cells. Vertex is characterized by its position, number and label. Vertex number is locally assigned number, while label is a unique number referring to source application.

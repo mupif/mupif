@@ -1,7 +1,7 @@
 from . import mupifobject
 from mupif.physics import physicalquantities
 from mupif .physics.physicalquantities import PhysicalQuantity
-import Pyro4
+import Pyro5
 try:
     import cPickle as pickle  # faster serialization if available
 except:
@@ -9,7 +9,7 @@ except:
 import collections
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Property(mupifobject.MupifObject, PhysicalQuantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
@@ -18,6 +18,9 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
 
     .. automethod:: __init__
     """
+
+    dumpAttrs=['propID','valueType','objectID','unit']
+
     def __init__(self, propID, valueType, units, objectID=0, metaData={}):
         """
         Initializes the property.
@@ -94,7 +97,7 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
         return self.unit
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class ConstantProperty(Property):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
@@ -103,6 +106,9 @@ class ConstantProperty(Property):
 
     .. automethod:: __init__
     """
+
+    dumpAttrs=['value','time']
+
     def __init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
         """
         Initializes the property.

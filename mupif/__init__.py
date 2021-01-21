@@ -31,11 +31,6 @@ _branch = 'dev'
 
 import os, sys
 
-from Pyro5.compatibility import Pyro4
-sys.modules['Pyro4']=Pyro4
-import mupif.compat
-pyroVer=5
-
 from .dataid import FieldID
 from .dataid import PropertyID
 from .dataid import FunctionID
@@ -79,6 +74,7 @@ from . import constantfield
 __all__ = [
     # submodules
     'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'ensightreader2', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'vtkreader2', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
+    ##
     # objects imported from submodules
     'FieldID','PropertyID','FunctionID','ParticleSetID','ValueType'
 ]
@@ -87,11 +83,21 @@ import logging
 import os
 
 # Create default logger
-util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
+log=util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
 
-# # temporarily disabled (does not work on travis, even though future is installed there??)
-# # more helpful error message
-# try: import future, builtins
-# except ImportError:
-# 	print("ERROR: mupif requires builtins and future modules; install both via 'pip install future'")
-# 	raise
+
+##
+## register all types deriving (directly or indirectly) from Dumpable to Pyro5
+##
+
+def _registerDumpable(clss):
+    import Pyro5.api
+    for sub in clss.__subclasses__():
+        # log.debug(f'Registering class {sub.__module__}.{sub.__name__}')
+        Pyro5.api.register_class_to_dict(sub,dumpable.Dumpable.to_dict)
+        Pyro5.api.register_dict_to_class((sub.__module__,sub.__name__),dumpable.Dumpable.from_dict_with_name)
+        registerDumpable(sub) # recurse
+
+_registerDumpable(dumpable.Dumpable)
+
+

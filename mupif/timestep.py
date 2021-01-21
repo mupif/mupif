@@ -1,10 +1,10 @@
-from builtins import object
-import Pyro4
+import Pyro5
 import mupif.physics.physicalquantities as PQ
+from . import dumpable
 
 
-@Pyro4.expose
-class TimeStep(object):
+@Pyro5.api.expose
+class TimeStep(dumpable.Dumpable):
     """
     Class representing a time step.
     The folowing attributes are used to characterize a time step:
@@ -19,6 +19,9 @@ class TimeStep(object):
 
     .. automethod:: __init__
     """
+
+    dumpAttrs=['number','time','dt','targetTime']
+
     def __init__(self, t, dt, targetTime, units=None, n=1):
         """
         Initializes time step.

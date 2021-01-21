@@ -17,7 +17,7 @@ ns = pyroutil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=s
 
 #Run a daemon for JobManager. It will run even the port has DROP/REJECT status. The connection from a client is then impossible. Daemon registers SimpleJobManager2
 try:
-    daemon = sConf.cfg.Pyro4.Daemon(host=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport)
+    daemon = sConf.cfg.Pyro5.api.Daemon(host=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport)
 except Exception as e:
     logger.debug('Daemon for JobManager can not start: host:%s, port:%d' % (sConf.server, sConf.jobManPort))
     logger.exception(e)

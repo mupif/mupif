@@ -1,7 +1,7 @@
 import sys
 sys.path.extend(['..','../../..'])
 from mupif import *
-import Pyro4
+import Pyro5
 import argparse
 #Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN 
 mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode

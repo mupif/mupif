@@ -1,7 +1,7 @@
 from builtins import str
 import getopt, sys
 sys.path.extend(['../..', '../examples'])
-import Pyro4
+import Pyro5
 from mupif import *
 # from mupif import WorkflowMonitor
 import logging
@@ -38,7 +38,7 @@ def main(nshost, nsport, hkey):
     # monitor = pyroutil.connectApp(ns, 'monitor.MuPIF')
 
     monitorUri = ns.lookup('monitor.MuPIF')
-    monitor = Pyro4.Proxy(monitorUri)
+    monitor = Pyro5.api.Proxy(monitorUri)
     data = monitor.getAllMetadata()
  
     print('Monitor:'+str(monitorUri))

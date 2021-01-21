@@ -1,10 +1,10 @@
 #Common configuration for examples
 import sys, os, os.path
-import Pyro4
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
-Pyro4.config.SERVERTYPE="multiplex"
+import Pyro5
+Pyro5.config.SERIALIZER="pickle"
+# Pyro5.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+# Pyro5.config.SERIALIZERS_ACCEPTED={'pickle'}
+Pyro5.config.SERVERTYPE="multiplex"
 
 #Absolute path to mupif directory - used in JobMan2cmd
 mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../../.."))

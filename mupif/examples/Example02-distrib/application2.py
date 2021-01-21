@@ -1,5 +1,5 @@
 import sys
-import Pyro4
+import Pyro5
 import logging
 sys.path.extend(['..', '../../..'])
 from mupif import *
@@ -8,7 +8,7 @@ import mupif.physics.physicalquantities as PQ
 log = logging.getLogger()
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class application2(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property

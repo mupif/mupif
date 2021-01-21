@@ -6,42 +6,48 @@
 import os
 import sys
 sys.path.append('../..')
-from mupif import util
+import mupif.pyroutil
+import mupif.util
+import mupif.compat
 import subprocess
 sys.path.append('../examples')
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[mupif.util.getParentParser()]).parse_args().mode
 from Config import config
 cfg = config(mode)
 import logging
 log = logging.getLogger()
-util.changeRootLogger('nameserver.log')
+mupif.util.changeRootLogger('nameserver.log')
 
 
 def main():
     # Initializating variables
     nshost = cfg.nshost
     nsport = cfg.nsport
-    hkey = cfg.hkey
-    log.info("Starting nameserver on nshost %s nsport %s hkey %s" % (nshost, nsport, hkey))
-    os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
-    os.environ['PYRO_PICKLE_PROTOCOL_VERSION'] = '2'
-    os.environ['PYRO_SERIALIZER'] = 'pickle'
+    log.info(f"Starting nameserver on {cfg.nshost}:{cfg.nsport}")
+    # os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
+    # os.environ['PYRO_PICKLE_PROTOCOL_VERSION'] = '2'
+    os.environ['PYRO_SERIALIZER'] = 'serpent'
     os.environ['PYRO_SERVERTYPE'] = 'multiplex'
-    os.environ['PYRO_HMAC_KEY'] = hkey
+    mupif.pyroutil.useTestSSL_env(os.environ)
     
     # Creation of nameserver
-    cmd = 'pyro4-check-config'
+    cmd = 'pyro5-check-config'
     p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output, error = p1.communicate()
     print(output.decode('utf-8') if output else "", error if error else "")
 
-    # Able to kill this process by referrring to pyro4-ns
-    cmd = 'pyro4-ns -n %s -p %d' % (nshost, nsport)
-    p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
-    output, error = p2.communicate()
-    print(output.decode('utf-8') if output else "", error.decode('utf-8') if error else "")
+    if 0:
+        # Able to kill this process by referrring to pyro5-ns
+        cmd = 'pyro5-ns -n %s -p %d' % (cfg.nshost, cfg.nsport)
+        p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+        output, error = p2.communicate()
+        print(output.decode('utf-8') if output else "", error.decode('utf-8') if error else "")
+    else:
+        import Pyro5.nameserver
+        # Pyro5.nameserver.main([sys.excecutable,
+        Pyro5.nameserver.start_ns_loop(nshost,nsport)
 
 
 if __name__ == '__main__':

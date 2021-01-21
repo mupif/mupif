@@ -10,7 +10,7 @@ util.changeRootLogger('mechanical.log')
 ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
-daemon = cfg.Pyro4.Daemon(host=cfg.server2, port=cfg.serverPort2)
+daemon = cfg.Pyro5.api.Daemon(host=cfg.server2, port=cfg.serverPort2)
 
 mechanical = demoapp.mechanical('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputM13.in', '.')
 #register agent

@@ -22,7 +22,7 @@
 #
 
 import os
-import Pyro4
+import Pyro5
 from . import apierror
 from . import mupifobject
 from .dataid import PropertyID
@@ -165,7 +165,7 @@ ModelSchema = {
 }
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Model(mupifobject.MupifObject):
     """
     An abstract class representing an application and its interface (API).
@@ -241,8 +241,8 @@ class Model(mupifobject.MupifObject):
         """
         Register the Pyro daemon and nameserver. Required by several services
 
-        :param Pyro4.Daemon pyroDaemon: Optional pyro daemon
-        :param Pyro4.naming.Nameserver pyroNS: Optional nameserver
+        :param Pyro5.api.Daemon pyroDaemon: Optional pyro daemon
+        :param Pyro5.naming.Nameserver pyroNS: Optional nameserver
         :param string pyroURI: Optional URI of receiver
         :param string appName: Optional application name. Used for removing from pyroNS
         :param bool externalDaemon: Optional parameter when daemon was allocated externally.
@@ -305,7 +305,7 @@ class Model(mupifobject.MupifObject):
         :param int objectID: Identifies field with objectID (optional, default 0)
 
         :return: Requested field uri
-        :rtype: Pyro4.core.URI
+        :rtype: Pyro5.api.URI
         """
         if self.pyroDaemon is None:
             raise apierror.APIError('Error: getFieldURI requires to register pyroDaemon in application')
@@ -458,7 +458,7 @@ class Model(mupifobject.MupifObject):
         """
         Removes (unregisters) application from the name server.
 
-        :param Pyro4.naming.Nameserver nameServer: Optional instance of a nameServer
+        :param Pyro5.naming.Nameserver nameServer: Optional instance of a nameServer
         :param str appName: Optional name of the application to be removed
         """
         if nameServer is None:
@@ -475,7 +475,7 @@ class Model(mupifobject.MupifObject):
                 self.setMetadata('Status', 'Failed')
                 raise
 
-    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
+    @Pyro5.api.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Shutdowns daemons if created internally.
@@ -517,7 +517,7 @@ class Model(mupifobject.MupifObject):
         super(Model, self).printMetadata(nonEmpty)
     
 
-@Pyro4.expose
+@Pyro5.api.expose
 class RemoteModel (object):
     """
     Remote Application instances are normally represented by auto generated pyro proxy.
@@ -546,7 +546,7 @@ class RemoteModel (object):
     def getJobID(self):
         return self._jobID
     
-    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
+    @Pyro5.api.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Terminates the allocated job at jobManager

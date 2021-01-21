@@ -22,10 +22,10 @@
 #
 
 import zlib
-import Pyro4
+import Pyro5
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class PyroFile (object):
     """
     Helper Pyro class providing an access to local file. It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.

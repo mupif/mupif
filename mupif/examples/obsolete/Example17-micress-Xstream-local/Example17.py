@@ -32,7 +32,7 @@ sys.path.append('../../..') # Mupif path
 sys.path.append('../../APIs/micress') # xstream path
 sys.path.append('../../APIs/xstream') # xstream path
 from shutil import copyfile
-import Pyro4
+import Pyro5
 import time as timeTime
 from mupif import *
 import logging

@@ -2,7 +2,7 @@ import os,sys
 sys.path.append('..')
 import conf as cfg
 from mupif import *
-import Pyro4
+import Pyro5
 import logging
 log = logging.getLogger()
 util.changeRootLogger('server.log')
@@ -19,7 +19,7 @@ noSSH=False
 # for computer running a nameserver
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 9090 -j ACCEPT
 
-@Pyro4.expose
+@Pyro5.api.expose
 class PingServerApplication(model.Model):
     """
     Simple application that computes an aritmetical average of a mapped property

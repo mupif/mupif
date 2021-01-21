@@ -2,7 +2,7 @@ import sys
 sys.path.extend(['/home/nitram/Documents/work/MUPIF/mupif'])
 import os
 from mupif import *
-import Pyro4
+import Pyro5
 import logging
 log = logging.getLogger()
 import time as timeT

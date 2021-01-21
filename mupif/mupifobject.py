@@ -22,14 +22,14 @@
 #
 
 from builtins import object
-import Pyro4
+import Pyro5
 import json
 import jsonschema
 import pprint
 import copy
 from . import dumpable
 
-@Pyro4.expose
+@Pyro5.api.expose
 class MupifObject(dumpable.Dumpable):
     """
     An abstract class representing a base Mupif object.

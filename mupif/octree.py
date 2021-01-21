@@ -26,7 +26,7 @@ import math
 import itertools
 from . import bbox
 from . import localizer
-import Pyro4
+import Pyro5
 
 debug = 0
 refineLimit = 400  # refine cell if number of items exceeds this treshold value

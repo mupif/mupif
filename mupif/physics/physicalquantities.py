@@ -41,7 +41,7 @@ from .numberdict import NumberDict
 import numpy
 import re, string
 from functools import reduce
-import Pyro4
+import Pyro5
 import collections
 from mupif import dumpable
 import functools
@@ -52,7 +52,7 @@ def cmp(a, b):
 
 
 # Class definitions
-@Pyro4.expose
+@Pyro5.api.expose
 class PhysicalQuantity(dumpable.Dumpable):
 
     """
@@ -429,7 +429,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             raise TypeError('Argument of tan must be an angle')
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 @functools.total_ordering
 class PhysicalUnit(dumpable.Dumpable):
 

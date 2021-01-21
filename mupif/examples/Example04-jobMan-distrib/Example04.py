@@ -39,9 +39,9 @@ class Example04(workflow.Workflow):
         self.updateMetadata(metaData)
         
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server and create a tunnel to it
-        self.jobMan = pyroutil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
+        self.jobMan = pyroutil.connectJobManager(ns, cfg.jobManName)
         log.info('Connected to JobManager')
         self.app1 = None
         self.contrib = property.ConstantProperty(
@@ -51,7 +51,7 @@ class Example04(workflow.Workflow):
 
         try:
             self.app1 = pyroutil.allocateApplicationWithJobManager(
-                ns, self.jobMan, cfg.jobNatPorts[0], cfg.hkey,
+                ns, self.jobMan, cfg.jobNatPorts[0],
                 pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
             )
             log.info(self.app1)

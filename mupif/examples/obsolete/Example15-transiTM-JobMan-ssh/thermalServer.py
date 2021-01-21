@@ -17,7 +17,7 @@ if noSSH:
     cfg.jobManNatport = cfg.jobManPort
 
 #Run a daemon for jobManager on this machine
-daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport)
+daemon = cfg.Pyro5.api.Daemon(host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport)
 #Run job manager on a server
 #thermalApp = demoapp.thermal_nonstat('..'+os.path.sep+'Example13-thermoMechanicalNonStat'+os.path.sep+'inputT13.in','.')
 jobMan = JobManager.SimpleJobManager2(daemon, ns, None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)

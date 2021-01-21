@@ -22,7 +22,7 @@
 #
 
 import os
-import Pyro4
+import Pyro5
 import time as timeTime
 from . import model
 from . import timestep
@@ -55,7 +55,7 @@ WorkflowSchema["properties"].update({
 WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs"]
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Workflow(model.Model):
     """
     An abstract class representing a workflow and its interface (API).
@@ -166,7 +166,7 @@ class Workflow(model.Model):
         # pyroutil.connectNameServer(nshost, nsport, hkey)
         # try:
         #     uri = ns.lookup(workflowMonitorName)
-        #     workflowMonitor = Pyro4.Proxy(uri)
+        #     workflowMonitor = Pyro5.api.Proxy(uri)
         # except Exception as e:
         #     log.error("Cannot find workflow monitor")
         #     return # do not raise, silently continue without updating status

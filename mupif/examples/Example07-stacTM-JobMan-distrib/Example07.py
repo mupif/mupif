@@ -44,13 +44,12 @@ class Example07(workflow.Workflow):
 
     def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
         if mode == 1:
             self.thermalJobMan = pyroutil.connectJobManager(
                 ns,
                 cfg.jobManName,
-                cfg.hkey,
                 pyroutil.SSHContext(
                     userName=cfg.serverUserName,
                     sshClient=cfg.sshClient,
@@ -61,7 +60,6 @@ class Example07(workflow.Workflow):
             self.mechanicalJobMan = pyroutil.connectJobManager(
                 ns,
                 mCfg.jobManName,
-                cfg.hkey,
                 pyroutil.SSHContext(
                     userName=mCfg.serverUserName,
                     sshClient=mCfg.sshClient,
@@ -70,8 +68,8 @@ class Example07(workflow.Workflow):
                 )
             )
         else:
-            self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName, cfg.hkey)
-            self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName, cfg.hkey)
+            self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName)
+            self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName)
 
         # allocate the application instances
         try:
@@ -79,7 +77,6 @@ class Example07(workflow.Workflow):
                 ns,
                 self.thermalJobMan,
                 cfg.jobNatPorts[0],
-                cfg.hkey,
                 pyroutil.SSHContext(
                     userName=cfg.serverUserName,
                     sshClient=cfg.sshClient,
@@ -92,7 +89,7 @@ class Example07(workflow.Workflow):
                 ns,
                 self.mechanicalJobMan,
                 mCfg.jobNatPorts[0],
-                mCfg.hkey, pyroutil.SSHContext(
+                pyroutil.SSHContext(
                     userName=mCfg.serverUserName,
                     sshClient=mCfg.sshClient,
                     options=mCfg.options,
@@ -132,9 +129,9 @@ class Example07(workflow.Workflow):
 
                 log.info("Uploading input files to servers")
                 pf = self.thermalJobMan.getPyroFile(self.thermalSolver.getJobID(), "input.in", 'wb')
-                pyroutil.uploadPyroFile("inputT.in", pf, cfg.hkey)
+                pyroutil.uploadPyroFile("inputT.in", pf)
                 mf = self.mechanicalJobMan.getPyroFile(self.mechanicalSolver.getJobID(), "input.in", 'wb')
-                pyroutil.uploadPyroFile("inputM.in", mf, mCfg.hkey)
+                pyroutil.uploadPyroFile("inputM.in", mf)
 
                 # To be sure update only required passed metadata in models
                 passingMD = {
@@ -172,7 +169,7 @@ class Example07(workflow.Workflow):
         log.info("Thermal problem solved")
         uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri))
-        field = pyroutil.getObjectFromURI(uri, cfg.hkey)
+        field = pyroutil.getObjectFromURI(uri)
         self.mechanicalSolver.setField(field)
         log.info("Solving mechanical problem")
         self.mechanicalSolver.solveStep(istep)

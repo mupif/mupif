@@ -26,7 +26,7 @@ import threading
 import subprocess
 import socket
 import time as timeTime
-import Pyro4
+import Pyro5
 import logging
 import sys
 import time
@@ -56,13 +56,13 @@ SJM_USER_INDX = 2
 
 # SimpleJobManager2
 SJM2_PROC_INDX = 0  # object of subprocess.Popen
-SJM2_URI_INDX = 3  # Pyro4 uri
+SJM2_URI_INDX = 3  # Pyro5 uri
 SJM2_PORT_INDX = 4  # port
 SJM2_TICKET_EXPIRE_TIMEOUT = 10 # ticket timeout
 
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class SimpleJobManager2 (jobmanager.JobManager):
     """
     Simple job manager 2. 
@@ -280,7 +280,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
             except Exception as e:
                 log.debug("Can not terminate job %s" % key)
 
-    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
+    @Pyro5.api.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates job manager itself.

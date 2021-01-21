@@ -10,10 +10,10 @@ from Config import config
 cfg = config(mode)
 
 # locate nameserver
-ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 # Run a daemon for jobManager on this machine
 daemon = pyroutil.runDaemon(
-    host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport, hkey=cfg.hkey)
+    host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport)
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
@@ -22,4 +22,4 @@ jobMan = simplejobmanager.SimpleJobManager2(
 
 pyroutil.runJobManagerServer(
     server=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport, nshost=cfg.nshost,
-    nsport=cfg.nsport, appName=cfg.jobManName, hkey=cfg.hkey, jobman=jobMan, daemon=daemon)
+    nsport=cfg.nsport, appName=cfg.jobManName, jobman=jobMan, daemon=daemon)

@@ -35,7 +35,7 @@ from .physics.physicalquantities import PhysicalQuantity
 from numpy import array, arange, random, zeros
 import numpy
 import copy
-import Pyro4
+import Pyro5
 from enum import IntEnum
 import logging
 log = logging.getLogger()
@@ -59,7 +59,7 @@ class FieldType(IntEnum):
     FT_cellBased = 2
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Field(mupifobject.MupifObject, PhysicalQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial

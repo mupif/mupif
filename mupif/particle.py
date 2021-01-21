@@ -20,10 +20,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-import Pyro4
+import Pyro5
 from . import mupifobject
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Particle(mupifobject.MupifObject):
     """
     Representation of particle. Particle is is object characterized by its position and other attributes.
@@ -71,7 +71,7 @@ class Particle(mupifobject.MupifObject):
             raise KeyError ("No such attribute available")
     
 
-@Pyro4.expose
+@Pyro5.api.expose
 class ParticleSet (mupifobject.MupifObject):
     """
     Class representing a collection of Particles. The set stores particle data (positions) and attributes efficiently in the form of vectors.

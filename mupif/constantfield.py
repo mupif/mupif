@@ -24,7 +24,7 @@ from builtins import range
 from builtins import object
 import mupif
 
-import Pyro4
+import Pyro5
 import logging
 log = logging.getLogger()
 
@@ -38,7 +38,7 @@ except:
 # debug flag
 debug = 0
 
-@Pyro4.expose
+@Pyro5.api.expose
 class ConstantField(mupif.field.Field):
     """
     Representation of field with constant value. Field is a scalar, vector, or tensorial

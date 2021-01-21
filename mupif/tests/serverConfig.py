@@ -2,7 +2,7 @@
 import sys
 import os
 import os.path
-import Pyro4
+import Pyro5
 import logging
 log = logging.getLogger()
 import testApp
@@ -19,10 +19,10 @@ class serverConfig(object):
     """
     
     def __init__(self, mode):
-        Pyro4.config.SERIALIZER = "serpent"
-        Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
-        Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
-        Pyro4.config.SERVERTYPE = "multiplex"
+        Pyro5.config.SERIALIZER = "serpent"
+        # Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
+        # Pyro5.config.SERIALIZERS_ACCEPTED = {'serpent'}
+        Pyro5.config.SERVERTYPE = "multiplex"
 
         # Absolute path to mupif directory - used in JobMan2cmd
         mupif_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))

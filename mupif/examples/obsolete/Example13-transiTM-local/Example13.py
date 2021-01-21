@@ -22,11 +22,11 @@ class Demo13(workflow.Workflow):
         
         if (status): # experimental section by bp
             from Config import config
-            import Pyro4
+            import Pyro5
             cfg=config(3)
             ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
             uri = ns.lookup(cfg.monitorName)
-            self.workflowMonitor = Pyro4.Proxy(uri)
+            self.workflowMonitor = Pyro5.api.Proxy(uri)
         self.updateStatus('Initialized')
         if (status):
             time.sleep(10)

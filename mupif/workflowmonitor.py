@@ -23,7 +23,7 @@
 import logging
 from . import mupifobject
 log = logging.getLogger()
-import Pyro4
+import Pyro5
 
 # WM_METADATA_STATUS='status'
 # WM_METADATA_PROGRESS='progress'
@@ -40,7 +40,7 @@ import Pyro4
 #    Failed="Failed"
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class WorkflowMonitor(mupifobject.MupifObject):
     """
     An class implementing workflow monitor; a server keeping track of individual workflow executions and their status.

@@ -42,10 +42,10 @@ nsport  = 9090
 hkey = 'mmp-secret-key'
 
 
-import Pyro4
-Pyro4.config.SERIALIZER="pickle"
-Pyro4.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED={'pickle'}
+import Pyro5
+Pyro5.config.SERIALIZER="pickle"
+# Pyro5.config.PICKLE_PROTOCOL_VERSION=2 #to work with python 2.x and 3.x
+# Pyro5.config.SERIALIZERS_ACCEPTED={'pickle'}
 #Pyro4.config.LOGWIRE=True
 
 appIndx_Name = 0

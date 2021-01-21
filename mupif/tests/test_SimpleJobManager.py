@@ -8,16 +8,12 @@ import mupif.tests.testApp as testApp
 import multiprocessing
 import subprocess
 
-import Pyro4
-if mupif.pyroVer==4: from Pyro4.naming import startNSloop
-else: from Pyro5.nameserver import start_ns_loop as startNSloop
+import Pyro5
 
-
-
-Pyro4.config.SERIALIZER = "serpent"
-Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
-Pyro4.config.SERVERTYPE = "multiplex"
+Pyro5.config.SERIALIZER = "serpent"
+# Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
+# Pyro5.config.SERIALIZERS_ACCEPTED = {'serpent'}
+Pyro5.config.SERVERTYPE = "multiplex"
 
 import mupif.util
 log=mupif.util.setupLogger(None)
@@ -34,7 +30,7 @@ def availablePort(p0,p1,host='127.0.0.1'):
             s.close()
             return p
         except: pass
-    raise RuntimeError('No free port at %s:%d…%d'%(host,p0,p1))
+    raise RuntimeError(f'No free port at {host}:{p0}…{p1}')
 
 def waitPort(hostPort,timeout=10,dt=.5):
     import socket,time
@@ -46,21 +42,23 @@ def waitPort(hostPort,timeout=10,dt=.5):
             s.connect(hostPort)
             return
         except OSError:
-            if time.time()-t0>timeout: raise RuntimeError('Timeout %g s connecting to %s:%d'%(timeout,*hostPort))
+            if time.time()-t0>timeout: raise RuntimeError(f'Timeout {timeout} s connecting to {hostPort[0]}:{hsotPort[1]}')
             time.sleep(dt)
 
 class SimpleJobManager_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        import tempfile
+        cls.tmpdir=tempfile.TemporaryDirectory()
+        cls.tmp=cls.tmpdir.name
+
         nsPort=availablePort(9062,9099)
-        cls.nsloop=multiprocessing.Process(target=startNSloop,kwargs=dict(host='127.0.0.1',port=nsPort))
+        cls.nsloop=multiprocessing.Process(target=Pyro5.nameserver.start_ns_loop,kwargs=dict(host='127.0.0.1',port=nsPort))
         cls.nsloop.start()
-        #cls.nsproc=subprocess.Popen(['pyro4-ns', '-p', '9092', '-n', '127.0.0.1'], 
-        #    stdout=sys.stdin, stderr=sys.stderr)
-        print ("nameserver started")
+        log.info("nameserver started")
         waitPort(('127.0.0.1',nsPort))
         #print (cls.nsproc, cls.nsproc.pid)
-        cls.ns = mupif.pyroutil.connectNameServer(nshost='127.0.0.1', nsport=nsPort, hkey=None)
+        cls.ns = mupif.pyroutil.connectNameServer(nshost='127.0.0.1', nsport=nsPort)
         # print('here')
         cls.jobMan = mupif.simplejobmanager.SimpleJobManager2(
             daemon=None,
@@ -68,7 +66,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
             appAPIClass=testApp,
             appName="app", 
             portRange=(9000, 9030),
-            jobManWorkDir=".",
+            jobManWorkDir=cls.tmp,
             serverConfigPath=mupif.__path__[0]+"/tests", 
             serverConfigFile="serverConfig",
             serverConfigMode=0, 
@@ -85,6 +83,8 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.jobMan.terminate()
         cls.nsloop.terminate()
         cls.nsloop.join()
+        cls.tmpdir.cleanup()
+
 
     def tearDown (self):
         self.jobMan.terminateAllJobs()

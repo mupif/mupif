@@ -22,7 +22,7 @@
 from builtins import str
 import os
 import re
-import Pyro4
+import Pyro5
 import socket
 import getpass
 import subprocess
@@ -35,15 +35,46 @@ from . import apierror
 from . import pyrofile
 log = util.setupLogger(fileName=None)
 
-Pyro4.config.SERIALIZER = "pickle"
+Pyro5.config.SERIALIZER = "pickle"
 # some versions of Pyro don't have this attribute... (strange, is documented)
-if hasattr(Pyro4.config, 'PICKLE_PROTOCOL_VERSION'):
-    Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # use lower version for interoperability between python 2 and 3
-Pyro4.config.SERIALIZERS_ACCEPTED = {'pickle'}
+# if hasattr(Pyro5.config, 'PICKLE_PROTOCOL_VERSION'):
+#     Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # use lower version for interoperability between python 2 and 3
+# Pyro5.config.SERIALIZERS_ACCEPTED = {'pickle'}
 # Pyro4.config.THREADPOOL_SIZE=100
-Pyro4.config.SERVERTYPE = "multiplex"
+Pyro5.config.SERVERTYPE = "multiplex"
 
-# pyro4 nameserver metadata
+import importlib.resources
+from contextlib import ExitStack
+tmpfile=ExitStack()
+import itertools
+testSSL=dict([((who,what),str(tmpfile.enter_context(importlib.resources.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
+
+
+def useTestSSL():
+    '''
+    Set Pyro5 SSL test configuration as Pyro5.config. Not to be used in production settings.
+    '''
+    Pyro5.config.SSL=True
+    Pyro5.config.SSL_REQUIRECLIENTCERT=True
+    Pyro5.config.SSL_SERVERCERT=testSSL['server','cert']
+    Pyro5.config.SSL_SERVERKEY=testSSL['server','key']
+    Pyro5.config.SSL_CLIENTCERT=testSSL['client','cert']
+    Pyro5.config.SSL_CLIENTKEY=testSSL['client','key']
+    Pyro5.config.SSL_CACERTS=testSSL['rootCA','cert']
+
+def useTestSSL_env(e):
+    '''
+    Set Pyro5 SSL test configuration as environment variables. Not to be used in production settings.
+    '''
+    e['PYRO_SSL']='1'
+    e['PYRO_SSL_REQUIRECLIENTCERT']='1'
+    e['PYRO_SSL_SERVERCERT']=testSSL['server','cert']
+    e['PYRO_SSL_SERVERKEY']=testSSL['server','key']
+    e['PYRO_SSL_CLIENTCERT']=testSSL['client','cert']
+    e['PYRO_SSL_CLIENTKEY']=testSSL['client','key']
+    e['PYRO_SSL_CACERTS']=testSSL['rootCA','cert']
+
+# pyro5 nameserver metadata
 NS_METADATA_jobmanager = "type:jobmanager"
 NS_METADATA_appserver = "type:appserver"
 NS_METADATA_host = 'host'
@@ -152,16 +183,15 @@ class sshTunnel(object):
 
 # First, check that we can connect to a listening port of a name server
 # Second, connect there
-def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
+def connectNameServer(nshost, nsport, timeOut=3.0):
     """
     Connects to a NameServer.
 
     :param str nshost: IP address of nameServer
     :param int nsport: Nameserver port.
-    :param str hkey: A password string
     :param float timeOut: Waiting time for response in seconds
     :return: NameServer
-    :rtype: Pyro4.naming.Nameserver
+    :rtype: Pyro5.naming.Nameserver
     :raises Exception: When can not connect to a LISTENING port of nameserver
     """
     try:
@@ -182,17 +212,11 @@ def connectNameServer(nshost, nsport, hkey, timeOut=3.0):
 
     # locate nameserver
     try:
-        ns = Pyro4.locateNS(host=nshost, port=int(nsport), hmac_key=hkey)
-        msg = "Connected to NameServer on %s:%s. Pyro4 version on your localhost is %s" % (
-            nshost, nsport, Pyro4.constants.VERSION)
-        log.debug(msg)
+        ns = Pyro5.api.locate_ns(host=nshost, port=int(nsport))
+        log.debug(f"Connected to NameServer on {nshost}:{nsport}. Pyro5 version on your localhost is {Pyro5.__version__}.")
     except Exception:
-        msg = "Can not connect to NameServer on %s:%s. Is the NameServer running? Runs the NameServer on the same " \
-              "Pyro version as this version %s? Do you have the correct hmac_key (password is now %s)? Exiting." % \
-              (nshost, nsport, Pyro4.constants.VERSION, hkey)
-        log.exception(msg)
+        log.exception(f"Can not connect to NameServer on {nshost}:{nsport}. Is the NameServer running? Runs the NameServer on the same Pyro version as this version {Pyro5.__version__}? Exiting.")
         raise
-
     return ns
 
 
@@ -235,13 +259,12 @@ def getNSConnectionInfo(ns, name):
     return (host, port, nathost, natport)
             
 
-def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
+def _connectApp(ns, name, connectionTestTimeOut = 10. ):
     """
     Connects to a remote application.
 
-    :param Pyro4.naming.Nameserver ns: Instance of a nameServer
+    :param Pyro5.naming.Nameserver ns: Instance of a nameServer
     :param str name: Name of the application to be connected to
-    :param str hkey: A password string
     :param connectionTestTimeOut timeout for connection test
     :return: Application
     :rtype: Instance of an application
@@ -251,8 +274,7 @@ def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
         uri = ns.lookup(name)
         log.debug("Application %s, found URI %s on %s from a nameServer %s" % (
             name, uri, getNSConnectionInfo(ns, name), ns))
-        app2 = Pyro4.Proxy(uri)
-        app2._pyroHmacKey = hkey.encode(encoding='UTF-8')
+        app2 = Pyro5.api.Proxy(uri)
     except Exception as e:
         log.error("Cannot find registered server %s on %s" % (name, ns) )
         raise
@@ -269,8 +291,8 @@ def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
         sig = app2.getApplicationSignature()
         app2._pyroTimeout = None
         log.debug("Connected to " + sig + " with the application " + name)
-    except Pyro4.core.errors.CommunicationError as e:
-        log.error("Communication error, perhaps a wrong key hkey=%s?" % hkey)
+    except Pyro5.core.errors.CommunicationError as e:
+        log.error("Communication error, perhaps SSL issue?")
         raise
     except Exception as e:
         log.exception("Cannot connect to application " + name + ". Is the server running?")
@@ -279,13 +301,12 @@ def _connectApp(ns, name, hkey, connectionTestTimeOut = 10. ):
     return app2
 
 
-def connectApp(ns, name, hkey, sshContext=None, connectionTestTimeOut = 10.):
+def connectApp(ns, name, sshContext=None, connectionTestTimeOut = 10.):
     """
     Connects to a remote application, creates the ssh tunnel if necessary
 
-    :param Pyro4.naming.Nameserver ns: Instance of a nameServer
+    :param Pyro5.naming.Nameserver ns: Instance of a nameServer
     :param str name: Name of the application to be connected to
-    :param str hkey: A password string
     :param sshContext:
     :return: Application Decorator (docorating pyro proxy with ssh tunnel instance)
     :rtype: Instance of an application decorator
@@ -306,7 +327,7 @@ def connectApp(ns, name, hkey, sshContext=None, connectionTestTimeOut = 10.):
             )
             raise
 
-    app = _connectApp(ns, name, hkey, connectionTestTimeOut)
+    app = _connectApp(ns, name, connectionTestTimeOut)
     return model.RemoteModel(app, appTunnel=tunnel)
 
 
@@ -322,17 +343,16 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runDaemon(host, port, hkey, nathost=None, natport=None):
+def runDaemon(host, port, nathost=None, natport=None):
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
     :param int or tuple port: Port number where daemon will listen (internal port number) or tuple of possible ports
-    :param str hkey: A password string
     :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
     :param int natport: Server NAT port, optional (external port)
 
     :return Instance of the running daemon, None if a problem
-    :rtype Pyro4.Daemon
+    :rtype Pyro5.api.Daemon
     """
     
     if isinstance(port, (tuple, list)):
@@ -342,22 +362,20 @@ def runDaemon(host, port, hkey, nathost=None, natport=None):
 
     for iport in ports:
         try:
-            daemon = Pyro4.Daemon(host=host, port=int(iport), nathost=nathost, natport=util.NoneOrInt(natport))
-            if (hkey):
-                daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
-            log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
+            daemon = Pyro5.api.Daemon(host=host, port=int(iport), nathost=nathost, natport=util.NoneOrInt(natport))
+            log.info('Pyro5 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             return daemon
         except socket.error as e:
             log.debug('Socket port %s:%s seems to be already in use' % (host, iport))
             daemon = None
         except Exception:
-            log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
+            log.exception('Can not run Pyro5 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             daemon = None
     
-    raise apierror.APIError('Can not run Pyro4 daemon on configured ports')
+    raise apierror.APIError('Can not run Pyro5 daemon on configured ports')
 
 
-def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None, metadata=None):
+def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -369,31 +387,29 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     :param int nsport: Nameserver port
     :param str appName: Name of registered application
     :param instance app: Application instance
-    :param str hkey: A password string
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be automatically generated.
 
-    :raises Exception: if can not run Pyro4 daemon
+    :raises Exception: if can not run Pyro5 daemon
     """
     externalDaemon = False
     if not daemon:
         try:
-            daemon = Pyro4.Daemon(host=server, port=int(port), nathost=nathost, natport=util.NoneOrInt(natport))
-            daemon._pyroHmacKey = hkey.encode(encoding='UTF-8')
-            log.info('Pyro4 daemon runs on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
+            daemon = Pyro5.api.Daemon(host=server, port=int(port), nathost=nathost, natport=util.NoneOrInt(natport))
+            log.info('Pyro5 daemon runs on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
         except Exception:
-            log.exception('Can not run Pyro4 daemon on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
+            log.exception('Can not run Pyro5 daemon on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
             raise
     else:
         externalDaemon = True
 
-    ns = connectNameServer(nshost, nsport, hkey)
+    ns = connectNameServer(nshost, nsport)
     # register agent; register exposed class
-    # ExposedApp = Pyro4.expose(app)172.30.0.1
+    # ExposedApp = Pyro5.api.expose(app)172.30.0.1
     # Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
-    except Pyro4.core.errors.NamingError:
+    except Pyro5.core.errors.NamingError:
         pass
     else:
         log.warning('Application name \'%s\' is already registered on name server, overwriting.' % appName)
@@ -424,7 +440,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
 
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, appName, hkey, app, daemon=None):
+def runAppServer(server, port, nathost, natport, nshost, nsport, appName, app, daemon=None):
     """
     Runs a simple application server
 
@@ -436,15 +452,14 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, appName, hkey, 
     :param int nsport: Nameserver port
     :param str appName: Name of registered application
     :param instance app: Application instance
-    :param str hkey: A password string
     :param daemon: Reference to already running daemon, if available. Optional parameter.
 
-    :raises Exception: if can not run Pyro4 daemon
+    :raises Exception: if can not run Pyro5 daemon
     """
-    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
+    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
 
 
-def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName, hkey, jobman, daemon=None):
+def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName, jobman, daemon=None):
     """
     Registers and runs given jobManager server
 
@@ -455,11 +470,10 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
     :param str appName: Name of job manager to be registered at nameserver
-    :param str hkey: A password string
     :param jobman: Jobmanager
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
-    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, hkey=hkey, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
+    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
 
 # def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
@@ -524,17 +538,15 @@ def getIPfromUri(uri):
         return None
 
 
-def getObjectFromURI(uri, hkey):
+def getObjectFromURI(uri):
     """
     Returns object from given URI, e.g. returns a field
     :param str uri: URI from an object
-    :param str hkey: A password string
 
     :return: Field, Property etc.
-    :rtype: object including hkey
+    :rtype: object
     """
-    ret = Pyro4.Proxy(uri)
-    ret._pyroHmacKey = hkey.encode(encoding='UTF-8')
+    ret = Pyro5.api.Proxy(uri)
     return ret
 
 
@@ -548,12 +560,11 @@ def getUserInfo():
     return username, hostname
 
 
-def connectJobManager(ns, jobManName, hkey, sshContext=None):
+def connectJobManager(ns, jobManName, sshContext=None):
     """
     Connect to jobManager described by given jobManRec and create an optional ssh tunnel
 
     :param jobManName name under which jobmanager is registered on NS
-    :param str hkey: A password string
     :param sshContext describing optional ssh tunnel connection detail 
 
     :return: (JobManager proxy, jobManager Tunnel)
@@ -583,19 +594,18 @@ def connectJobManager(ns, jobManName, hkey, sshContext=None):
             raise
 
     # locate remote jobManager on (remote) server
-    jobMan = _connectApp(ns, jobManName, hkey)
+    jobMan = _connectApp(ns, jobManName)
     # return (jobMan, tunnelJobMan)
     return jobmanager.RemoteJobManager(jobMan, tunnelJobMan)
 
 
-def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None):
+def allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext=None):
     """
     Request new application instance to be spawned by  given jobManager.
     
-    :param Pyro4.naming.Nameserver ns: running name server
+    :param Pyro5.naming.Nameserver ns: running name server
     :param jobManager jobMan: jobmanager to use
     :param int natPort: nat port on a local computer for ssh tunnel for the application
-    :param str hkey: A password string
     :param sshContext sshContext: describing optional ssh tunnel connection detail
 
     :returns: Application instance
@@ -649,7 +659,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, hkey, sshContext=None
 
     # time.sleep(1)
     # connect to (remote) application, requests remote proxy
-    app = _connectApp(ns, retRec[1], hkey)
+    app = _connectApp(ns, retRec[1])
     if app is None:
         appTunnel.terminate()
     return model.RemoteModel(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
@@ -659,7 +669,7 @@ def allocateNextApplication(ns, jobMan, natPort, sshContext=None):
     """
     Request a new application instance to be spawned by given jobManager
     
-    :param Pyro4.naming.Nameserver ns: running name server
+    :param Pyro5.naming.Nameserver ns: running name server
     :param jobMan: jobmanager to use
     :param int natPort: nat port on a local computer for ssh tunnel for the application
     :param sshContext: describing optional ssh tunnel connection detail
@@ -679,8 +689,6 @@ def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
     :param pyrofile.PyroFile pyroFile: representation of existing remote server's file
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    # make sure if pyroFile is proxy to set hmac key
-    pyroFile._pyroHmacKey = hkey.encode(encoding='utf-8')
     file = pyrofile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
     if compressFlag:
         pyroFile.setCompressionFlag()
@@ -701,18 +709,15 @@ def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=True):
     downloadPyroFile(newLocalFileName, pyroFile, compressFlag)
 
 
-def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=True):
+def uploadPyroFile(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
     :param pyrofile.PyroFile pyroFile: represenation of remote file, this file will be created
-    :param str hkey: A password string
     :param int size: optional chunk size. The data are read and written in byte chunks of this size
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    # make sure if pyroFile is proxy to set hmac key
-    pyroFile._pyroHmacKey = hkey.encode(encoding='utf-8')
     file = pyrofile.PyroFile(clientFileName, 'rb', buffsize=size, compressFlag=compressFlag)
     log.info("Uploading %s", clientFileName)
     if compressFlag:
@@ -721,7 +726,6 @@ def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=
         log.info("Setting compression flag on")
     data = file.getChunk()
     while data:
-        #pyroFile._pyroHmacKey = hkey.encode(encoding='UTF-8')
         pyroFile.setChunk(data)  # this is where the data are sent over net via Pyro
         data = file.getChunk()
     getTermChunk = file.getTerminalChunk()
@@ -731,8 +735,8 @@ def uploadPyroFile(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=
     pyroFile.close()
 
 
-def uploadPyroFileOnServer(clientFileName, pyroFile, hkey, size=1024*1024, compressFlag=True):
+def uploadPyroFileOnServer(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
     """
     See :func:'downloadPyroFile'
     """
-    uploadPyroFile(clientFileName, pyroFile, hkey, size, compressFlag)
+    uploadPyroFile(clientFileName, pyroFile, size, compressFlag)

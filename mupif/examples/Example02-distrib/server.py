@@ -11,6 +11,7 @@ import argparse
 import logging
 sys.path.extend(['..', '../../..'])
 from mupif import *
+import mupif.pyroutil
 log = logging.getLogger()
 util.changeRootLogger('server.log')
 
@@ -24,4 +25,4 @@ cfg = config(mode)
 import application2
 app2 = application2.application2()
 
-pyroutil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, cfg.hkey, app=app2)
+pyroutil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, app=app2)

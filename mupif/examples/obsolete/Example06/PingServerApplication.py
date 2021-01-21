@@ -1,10 +1,10 @@
 from mupif import *
-import Pyro4
+import Pyro5
 
 import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
-@Pyro4.expose
+@Pyro5.api.expose
 class PingServerApplication(model.Model):
     """
     Simple application that computes an aritmetical average of a mapped property

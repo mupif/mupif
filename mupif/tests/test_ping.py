@@ -5,22 +5,19 @@ import socket
 sys.path.append('../..')
 
 import mupif, mupif.application
-import Pyro4
+import Pyro5
 
-if mupif.pyroVer==4: from Pyro4.naming import startNSloop
-else: from Pyro5.nameserver import start_ns_loop as startNSloop
-
-Pyro4.config.SERIALIZER = "serpent"
-Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
-Pyro4.config.SERIALIZERS_ACCEPTED = {'serpent'}
-Pyro4.config.SERVERTYPE = "multiplex"
+Pyro5.config.SERIALIZER = "serpent"
+# Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
+# Pyro5.config.SERIALIZERS_ACCEPTED = {'serpent'}
+Pyro5.config.SERVERTYPE = "multiplex"
 
 from mupif import pyroutil
-@Pyro4.expose
+@Pyro5.api.expose
 class AnyApp(mupif.model.Model):
     def __init__(self,f): super(AnyApp,self).__init__(f)
     def getApplicationSignature(self): return self.__class__.__name__+"@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
-@Pyro4.expose
+@Pyro5.api.expose
 class LocalApp(AnyApp): 
     def getApplicationSignature(self): 
         return "Hello from LocalApp"
@@ -49,7 +46,7 @@ class TestLocalApp(unittest.TestCase):
 
         # setup nameserver
 
-        self.nsloop=multiprocessing.Process(target=startNSloop,kwargs=dict(host=nshost,port=nsport,hmac=self.hkey))
+        self.nsloop=multiprocessing.Process(target=Pyro5.nameserver.start_ns_loop,kwargs=dict(host=nshost,port=nsport,hmac=self.hkey))
         self.nsloop.start()
         time.sleep(2) # some time for nameserver to start
 

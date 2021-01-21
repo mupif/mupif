@@ -1,6 +1,6 @@
 from builtins import range
 import mupif
-import Pyro4
+import Pyro5
 import meshgen
 import math
 import numpy as np
@@ -24,7 +24,7 @@ def getline(f):
             return line
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class thermal(mupif.model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
@@ -633,7 +633,7 @@ class thermal(mupif.model.Model):
         return "Stationary thermal-demo-solver, ver 1.0"
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class thermal_nonstat(thermal):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""
 
@@ -949,7 +949,7 @@ class thermal_nonstat(thermal):
         log.info("Time consumed %f s" % (timeTime.time() - start))
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class mechanical(mupif.model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 

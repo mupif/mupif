@@ -15,11 +15,11 @@ cfg = config(mode)
 util.changeRootLogger('thermal.log')
 
 # locate nameserver
-ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run a daemon for jobMamager on this machine
 daemon = pyroutil.runDaemon(
-    host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport, hkey=cfg.hkey)
+    host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport)
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
@@ -34,7 +34,6 @@ pyroutil.runJobManagerServer(
     nshost=cfg.nshost,
     nsport=cfg.nsport,
     appName=cfg.jobManName,
-    hkey=cfg.hkey,
     jobman=jobMan,
     daemon=daemon
 )

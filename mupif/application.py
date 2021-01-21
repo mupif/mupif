@@ -21,18 +21,18 @@
 # Boston, MA  02110-1301  USA
 #
 
-import Pyro4
+import Pyro5
 from . import model
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Application(model.Model):
     """
     Fully derived from model.Model. Only kept for backward compatibility.
     """
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class RemoteApplication (model.RemoteModel):
     """
     Fully derived from model.RemoteModel. Only kept for backward compatibility.

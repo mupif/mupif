@@ -21,7 +21,7 @@ import conf_vpn as cfg
 ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
 
 #Run a daemon for jobManager on this machine
-daemon = cfg.Pyro4.Daemon(host=cfg.server, port=cfg.serverPort)
+daemon = cfg.Pyro5.api.Daemon(host=cfg.server, port=cfg.serverPort)
 #Run job manager on a server
 
 #jobMan = simplejobmanager.SimpleJobManager2(daemon, ns, appAPIClass=None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)

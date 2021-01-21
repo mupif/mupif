@@ -28,7 +28,7 @@ import socket
 import time as timeTime
 import logging
 import os
-import Pyro4
+import Pyro5
 log = logging.getLogger()
 
 # error codes
@@ -61,7 +61,7 @@ class JobManNoResourcesException(JobManException):
     pass
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class JobManager(object):
     """
     An abstract (base) class representing a job manager. The purpose of the job manager is the following:
@@ -160,7 +160,7 @@ class JobManager(object):
         """
         Possibility to register the Pyro daemon and nameserver.
 
-        :param Pyro4.Daemon daemon: Optional pyro daemon
+        :param Pyro5.api.Daemon daemon: Optional pyro daemon
         :param Pyro4.naming.Nameserver ns: Optional nameserver
         :param string uri: Optional URI of receiver
         :param string appName:
@@ -202,7 +202,7 @@ class RemoteJobManager (object):
             # print ("RemoteJobManager: autoterminating sshTunnel")
             self._sshTunnel.terminate()
     
-    @Pyro4.oneway  # in case call returns much later than daemon.shutdown
+    @Pyro5.api.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
         """
         Terminates the application. Terminates the allocated job at jobManager

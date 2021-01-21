@@ -42,6 +42,7 @@ class Dumpable(object):
                 else: pass
         return ret
 
+
     @staticmethod
     def from_dict(dic,clss=None,obj=None):
         def _create(d):
@@ -63,5 +64,10 @@ class Dumpable(object):
         else:
             if len(dic)>0: raise RuntimeError('%d attributes left after deserialization: %s'%(len(dic),', '.join(dic.keys())))
         return obj
+
+    @staticmethod
+    def from_dict_with_name(classname,dic):
+        assert classname==dic['__class__']
+        return Dumpable.from_dict(dic)
 
 

@@ -2,8 +2,9 @@
 import sys
 import os
 import os.path
-import Pyro4
+import Pyro5
 import logging
+import mupif.pyroutil
 log = logging.getLogger()
 
 
@@ -20,10 +21,10 @@ class config(object):
         if mode not in [0, 1, 2, 3]:
             log.error("Unknown mode -m %d" % mode)
         
-        Pyro4.config.SERIALIZER = "pickle"
-        Pyro4.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
-        Pyro4.config.SERIALIZERS_ACCEPTED = {'pickle'}
-        Pyro4.config.SERVERTYPE = "multiplex"
+        Pyro5.config.SERIALIZER = "serpent"
+        # Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
+        # Pyro5.config.SERIALIZERS_ACCEPTED = {'pickle'}
+        Pyro5.config.SERVERTYPE = "multiplex"
 
         # Absolute path to mupif directory - used in JobMan2cmd
         mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
@@ -33,7 +34,9 @@ class config(object):
         
         # commmon attributes
         # Password for accessing nameServer and applications
-        self.hkey = 'mupif-secret-key'
+        # self.hkey = 'mupif-secret-key'
+        mupif.pyroutil.useTestSSL()
+
         # Name of job manager
         self.jobManName = 'Mupif.JobManager@Example'
         # Name of first application

@@ -15,7 +15,7 @@ log = logging.getLogger()
 util.changeRootLogger('mechanical.log')
 
 # locate nameserver
-ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
+ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
 # daemon = pyroutil.runDaemon(host=cfg.server3, port=cfg.serverPort3)
@@ -31,6 +31,5 @@ pyroutil.runAppServer(
     nshost=cfg.nshost,
     nsport=cfg.nsport,
     appName='mechanical',
-    hkey=cfg.hkey,
     app=mechanical
 )

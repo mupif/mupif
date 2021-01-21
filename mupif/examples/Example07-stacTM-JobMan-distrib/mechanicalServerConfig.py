@@ -8,7 +8,7 @@ import models
 
 class serverConfig(config):
     def __init__(self, mode):
-        # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
+        # inherit necessary variables: nshost, nsport, server, serverNathost
         super(serverConfig, self).__init__(mode)
         # Let Daemon run on higher ports
         self.serverPort = self.serverPort+1

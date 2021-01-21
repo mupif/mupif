@@ -1,4 +1,4 @@
-# This script starts a client for Pyro4 on this machine with Application1
+# This script starts a client for Pyro5 on this machine with Application1
 # Works with Pyro4 version 4.54
 # Tested on Ubuntu 16.04 and Win XP
 # Vit Smilauer 07/2017, vit.smilauer (et) fsv.cvut.cz
@@ -102,12 +102,12 @@ if mode == 1:  # just print out how to set up a SSH tunnel
     # pyroutil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
 
 # locate nameserver
-ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport, cfg.hkey)
+ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport)
 
 # application1 is local, create its instance
 app1 = application1()
 # locate (remote) application2, request remote proxy
-app2 = pyroutil.connectApp(ns, cfg.appName, cfg.hkey, sshContext)
+app2 = pyroutil.connectApp(ns, cfg.appName, sshContext)
 
 try:
     appsig = app2.getApplicationSignature()

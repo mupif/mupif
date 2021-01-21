@@ -21,10 +21,10 @@
 # Boston, MA  02110-1301  USA
 #
 from builtins import object
-import Pyro4
+import Pyro5
 
 
-@Pyro4.expose
+@Pyro5.api.expose
 class Function(object):
         """
         Represents a function.

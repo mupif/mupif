@@ -86,17 +86,14 @@ def main():
             conf.serverNathost = conf.server
 
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport, hkey=conf.hkey)
+        ns = pyroutil.connectNameServer(nshost=conf.nshost, nsport=conf.nsport)
 
         # Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
         # if conf.serverNathost==None:
         #     conf.serverNathost = conf.server
 
-        daemon = pyroutil.runDaemon(host=conf.server, port=int(daemonPort), nathost=conf.serverNathost, natport=natPort,
-                                    hkey=conf.hkey)
-        log.info('Running daemon on hosts %s port %s nathost %s natport %s hkey %s' % (
-            conf.server, daemonPort, conf.serverNathost, natPort, conf.hkey))
-
+        daemon = pyroutil.runDaemon(host=conf.server, port=int(daemonPort), nathost=conf.serverNathost, natport=natPort)
+        log.info(f'Running daemon {conf.server}%s:{daemonPort} (NAT {conf.serverNathost}:{natPort})')
         # Initialize application
         # app = DemoApplication.DemoApplication()
         log.info(
@@ -122,10 +119,7 @@ def main():
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('localhost', jobManCommPort))
             # needs something w/ buffer interface, which is bytes (and not str)
-            # if future.utils.PY3:
-            s.sendall(bytes(uri.asString(), 'utf-8'))
-            # else:
-            # s.sendall(uri.asString())
+            s.sendall(bytes(str(uri), 'utf-8'))
             s.close()
             daemon.requestLoop()
 
