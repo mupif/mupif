@@ -22,7 +22,7 @@
 #
 
 from builtins import object
-import Pyro5
+import Pyro5.api
 import json
 import jsonschema
 import pprint

@@ -96,7 +96,7 @@ def _registerDumpable(clss):
         # log.debug(f'Registering class {sub.__module__}.{sub.__name__}')
         Pyro5.api.register_class_to_dict(sub,dumpable.Dumpable.to_dict)
         Pyro5.api.register_dict_to_class((sub.__module__,sub.__name__),dumpable.Dumpable.from_dict_with_name)
-        registerDumpable(sub) # recurse
+        _registerDumpable(sub) # recurse
 
 _registerDumpable(dumpable.Dumpable)
 
