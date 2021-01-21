@@ -8,7 +8,6 @@ import sys
 sys.path.append('../..')
 import mupif.pyroutil
 import mupif.util
-import mupif.compat
 import subprocess
 sys.path.append('../examples')
 import argparse
