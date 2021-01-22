@@ -25,4 +25,4 @@ prune mupif/examples/Workshop-2017
 # Global patterns to exclude from any directory
 global-exclude *secret*
 
-recursive-include mupif/data
+recursive-include mupif/data *.key *.cert
