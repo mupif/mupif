@@ -3,8 +3,6 @@ scipy
 nose
 rednose
 Pyro5
-# only here so that readthedocs can build, remove once Pyro5 is the default
-Pyro4==4.75
 jsonpickle
 jsonschema
 vtk
