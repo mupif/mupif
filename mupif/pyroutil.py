@@ -43,11 +43,15 @@ Pyro5.config.SERIALIZER = "pickle"
 # Pyro4.config.THREADPOOL_SIZE=100
 Pyro5.config.SERVERTYPE = "multiplex"
 
-import importlib.resources
+try:
+    import importlib.resources as imp_res  # for newer Python versions
+except ImportError:
+    import importlib_resources as imp_res  # for older Python versions
+
 from contextlib import ExitStack
 tmpfile=ExitStack()
 import itertools
-testSSL=dict([((who,what),str(tmpfile.enter_context(importlib.resources.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
+testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
 
 
 def useTestSSL():
