@@ -78,6 +78,7 @@ setup(
         'jsonschema', 'vtk', 'pyvtk', 'matplotlib==3.0.3'
     ],
     include_package_data=True,
+    zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)
     url='http://www.mupif.org/',
     entry_points={
         'console_scripts': [
