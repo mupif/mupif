@@ -1,6 +1,8 @@
 Development notes
 ====================
 
+Live topics are discussed at `MuPIF github Wiki <https://github.com/mupif/mupif/wiki>`__.
+
 Testing under Wine
 -------------------
 
@@ -22,10 +24,5 @@ The last line prevents compilation of complex packages from the source (binaries
 
 After that, the test suite can be run as::
 
-   MUPIF_PYRO5=1 wenv nosetests --rednose
+   wenv nosetests --rednose
 
-TODO
------
-
-* rename packages to follow `PEP8 <https://pep8.org/>`__.
-* make Pyro5 default (rather than opt-in with ``MUPIF_PYRO5`` env var)

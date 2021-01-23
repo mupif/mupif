@@ -101,7 +101,7 @@ class JobManager(object):
 
         :param str user: user name
         :param int natPort: NAT port used in ssh tunnel
-        :ticket optional ticket for preallocated resource.
+        :ticket optional: ticket for preallocated resource.
 
         :return: tuple (error code, None). errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES). JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23). JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple

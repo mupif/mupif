@@ -153,9 +153,11 @@ class SimpleJobManager2 (jobmanager.JobManager):
         """
         Allocates a new job.
 
-        See :func:`JobManager.allocateJob
+        See :func:`JobManager.allocateJob`
+
         Modified to accept optional ticket for preallocated resource.
         Thread safe
+
         :except: unable to start a thread, no more resources
 
         """

@@ -290,7 +290,7 @@ Common API for all components
 The object-oriented approach allows to define hierarchy of classes. This
 is also used in designing MuPIF class structure, where all component
 classes form a hierarchy, where on top of this hierarchy is
-*MupifObject* class. This class introduces a common interface that is
+:obj:`~mupif.mupifobject.MupifObject` class. This class introduces a common interface that is
 then inherited by all derived classes, thus by all MuPIF components
 involving models (Model class), workflows, and high-level data
 components, such as properties or spatial fields.
@@ -300,58 +300,8 @@ metadata to the component. The metadata are identified by unique ID and
 can be of any type. Internally, they are stored in internal dictionary
 declared by *MupifObject.*
 
-=================================== ==================================================================
-**Service**                         **Description**
-\__init_\_ (self, jsonFileName='')  Constructor. Initializes the *MupifObject*.
-                                   
-                                    **ARGS:**
-                                   
-                                    -  jsonFileName: Optionally JSON filename to instantiate from
-                                   
-                                    None.
-getMetadata (self, key)             Returns metadata associated to given key
-                                   
-                                    **ARGS**:
-                                   
-                                    -  Key: unique metadataID identifying metadata
-                                   
-                                    **Returns**: metadata associated to key
-                                   
-                                    Throws *TypeError* if key does not exist
-hasMetadata(self, key)              Tests whether metadata with given key exist
-                                   
-                                    **Returns:** true if metadata entry exist, false otherwise
-setMetadata(self, key, val)         Sets metadata associated to key
-                                   
-                                    **ARGS:**
-                                   
-                                    -  Key: unique metadataID identifying metadata
-                                   
-                                    -  val(any_type): metadata
-getAllMetadata(self):               Gets all metadata of receiver
-                                   
-                                    **Returns**: dict with receiver metadata
-printMetadata(self, nonEmpty=False) Prints receiver metadata
-                                   
-                                    **ARGS**:
-                                   
-                                    -  nonEmpty: if true only keys with nonempty value will be printed
-updateMetadata(self, dictionary)    Updates receiver metadata with given metadata
-                                   
-                                    **ARGS**:
-                                   
-                                    -  Dictionary: dict containing metadata to update.
-validateMetadata(self, template)    Validates the receiver metadata to given template
-                                   
-                                    **ARGS**:
-                                   
-                                    -  Template: dict with JSON schema template
-toJson(self)                        Returns JSON string representation of receiver
-                                   
-                                    **Returns**: JSON representation (string)
-=================================== ==================================================================
 
-5.1.1 Metadata and metadata schemas
+Metadata and metadata schemas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The metadata and metadata schemas in MuPIF are stored in a form of JSON
@@ -443,12 +393,10 @@ the metadata schema is defined for *Model*, *Workflow*, and all data
 classes (in dataID.py).
 
 
-.. _sect-model-class:
-
 Model class
 ----------------
 
-This abstract class represents an external model and defines its
+The abstract :obj:`~mupif.model.Model` class represents an external model and defines its
 interface. The interface is defined in terms of abstract services for
 data exchange and steering. Derived classes represent individual
 simulation models. In terms of MODA [9] nomenclature, introduced by EMMC
@@ -462,222 +410,11 @@ represented using corresponding, newly introduced classes. Steering
 services allow invoking (execute) solution for a specific solution step,
 update solution state, terminate the application, etc.
 
-==================================================================================== ===========================================================================================================================================================================================================================================================================================================================================================================
-**Service**                                                                          **Description**
-\__init_\_(self, metaData={})                                                        Constructor. Initializes the application. Should define problem independ part of model metadata.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  metaData (dict): metadata to merge with receiver metadata
-initialize(self, file='', workdir='', metaData={}, validateMetaData=True,\*\*kwargs) Initializes application, i.e. should perform all steps after constructor and before run.
-                                                                                    
-                                                                                     **ARGS**\ :
-                                                                                    
-                                                                                     -  file (str): optional path to input file
-                                                                                    
-                                                                                     -  workfir (str): optional path to working directory
-                                                                                    
-                                                                                     -  metadata (dict): metadata to merge with receiver metadata
-                                                                                    
-                                                                                     -  validateMetaData (bool): if true, receiver metadata will be validated against class metadata template
-                                                                                    
-                                                                                     -  Kwargs: any optional arguments
-registerPyro (self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False) Register the Pyro daemon and nameserver. Required by several services
-                                                                                    
-                                                                                     **ARGS:**
-                                                                                    
-                                                                                     -  pyroDaemon(Pyro4.Daemon): Optional pyro daemon
-                                                                                    
-                                                                                     -  pyroNS(Pyro4.naming.Nameserver): Optional nameserver
-                                                                                    
-                                                                                     -  PyroURI (str): Optional URI of receiver
-                                                                                    
-                                                                                     -  appName (str): Optional application name. Used for removing from pyroNS
-                                                                                    
-                                                                                     -  externalDaemon (bool): Optional parameter when daemon was allocated externally.
-get(self, objectTypeID, time=None, objectID=0)                                       Returns the requested data object at given time. Object is identified by id.
-                                                                                    
-                                                                                     ARGS:
-                                                                                    
-                                                                                     -  objectTypeID (PropertyID or FieldID or FunctionID): Identifier of the object
-                                                                                    
-                                                                                     -  time (Physics.PhysicalQuantity): target time
-                                                                                    
-                                                                                     -  objectID (int): Identifies object with objectID (optional, default 0)
-                                                                                    
-                                                                                     Returns:
-                                                                                    
-                                                                                     Returns instance of requested data object.
-set(self, obj, objectID=0)                                                           Registers the given (remote) data object in model (application).
-                                                                                    
-                                                                                     ARGS:
-                                                                                    
-                                                                                     -  obj (Property.Property or Field.Field or Function.Function): data object to register
-                                                                                    
-                                                                                     -  objectID (int): Identifies object with objectID (optional, default 0)
-getField(self, fieldID, time)                                                        Returns the requested field at given time. Field is identified by fieldID. Deprecated, use get method instead.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  fieldID (FieldID): identifier
-                                                                                    
-                                                                                     -  time (PhysicalQuantity): target time
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     Returns requested field (Field).
-getFieldURI(self, fieldID, time)                                                     Returns the uri of requested field at given time. Field is identified by fieldID.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  fieldID (FieldID): identifier
-                                                                                    
-                                                                                     -  time (PhysicalQuantity): target time
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     Returns requested field (Field).
-setField(self, field)                                                                Registers the given (remote) field in application. Deprecated, use set method instead.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  field (Field): remote field to be registered by the application
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     None
-getProperty(self, propID, time, objectID=0)                                          Returns property identified by its ID evaluated at given time. Deprecated, use get() method instead.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  propID (PropertyID): property ID
-                                                                                    
-                                                                                     -  time (PhysicalQuantity): time when property to be evaluated
-                                                                                    
-                                                                                     -  objectID (int): identifies object/submesh on which property is evaluated (optional)
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     Returns representation of requested property
-                                                                                    
-                                                                                     (Property).
-setProperty(self, property, objectID=0)                                              Register given property in the application. Deprecated, use set method instead.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  property (Property): the property class
-                                                                                    
-                                                                                     -  objectID (int): identifies object/submesh on which property is evaluated (optional)
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     None
-getFunction(self, funcID, objectID=0)                                                Returns function identified by its ID. Deprecated, use get method instead.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  funcID (FunctionID): function ID
-                                                                                    
-                                                                                     -  objectID (int): identifies optional object/submesh
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     Returns requested function(Function)
-setFunction(self, func, objectID=0)                                                  Register given function in the application. Deprecated use set method instead.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  Func (Function): function to register
-                                                                                    
-                                                                                     -  objectID (int): identifies optional object/submesh
-getMesh (self, tstep)                                                                Returns the computational mesh for given solution step.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  tstep (TimeStep): solution step
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     Returns the representation of mesh (Mesh)
-solveStep(self, tstep, stageID=0, runInBackground=False)                             Solves the problem for a given time step. Proceeds the solution from actual state to given time. The actual state should not be updated at the end, as this method could be called multiple times for the same solution step until the global convergence is reached. When global convergence is reached, finishStep is called and then the actual state has to be updated.
-                                                                                    
-                                                                                     Solution can be split into individual stages identified by optional stageID parameter. In between the stages the additional data exchange can be performed. See also wait and isSolved services.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  tstep(TimeStep): solution step
-                                                                                    
-                                                                                     -  stageID(int): optional argument identifying solution stage
-                                                                                    
-                                                                                     -  runInBackground(bool): if set to True, the solution will run in background (in separate thread), if supported.
-                                                                                    
-                                                                                     **Returns**: None
-wait(self)                                                                           Wait until solve is completed when executed in background.
-                                                                                    
-                                                                                     **Returns**: None
-isSolved(self)                                                                       Returns true or false depending whether solve has completed when executed in background.
-                                                                                    
-                                                                                     **Returns**: (Boolean)
-finishStep(self, tstep)                                                              Called after a global convergence within a time step.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  tstep(TimeStep): solution step
-                                                                                    
-                                                                                     **Returns**: None
-getCriticalTimeStep(self)                                                            Returns the actual (related to the current state) critical time step increment.
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     critical time step (PhysicalQuantity)
-getAssemblyTime(self, tstep)                                                         Returns the assembly time related to a given time step. The registered fields (inputs) should be evaluated in this time.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  tstep (TimeStep): solution step
-                                                                                    
-                                                                                     **Returns**:
-                                                                                    
-                                                                                     assembly time (PhysicalQuantity)
-storeState(self, tstep)                                                              Store the solution state of an application.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  tstep(TimeStep): solution step
-                                                                                    
-                                                                                     **Returns**: None
-restoreState(self, tstep)                                                            Restore the saved state of an application.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  tstep(TimeStep): solution step
-                                                                                    
-                                                                                     **Returns**: None
-getAPIVersion(self)                                                                  Returns the supported API version.
-                                                                                    
-                                                                                     **Returns:** API version (str, int)
-getApplicationSignature(self)                                                        Get application signature.
-                                                                                    
-                                                                                     **Returns:** Returns the application identification (str)
-removeApp(self, nameServer=None, appName=None):                                      Removes (unregisters) application from the name server.
-                                                                                    
-                                                                                     **ARGS**:
-                                                                                    
-                                                                                     -  nameServer (Pyro4.naming.Nameserver): Optional instance of a nameServer
-                                                                                    
-                                                                                     -  appName (str): Optional name of the application to be removed
-                                                                                    
-                                                                                     **Returns:** None
-terminate(self)                                                                      Terminates the application. Shutdowns daemons if created internally.
-                                                                                    
-                                                                                     **Returns**: None
-getURI(self)                                                                         **Returns**: Returns the application URI or None if application not registered in Pyro (str)
-==================================================================================== ===========================================================================================================================================================================================================================================================================================================================================================================
 
 Workflow class
 -------------------
 
-This abstract class represents a simulation workflow. Workflow can
+The :obj:`~mupif.workflow.Workflow` abstract class represents a simulation workflow. Workflow can
 combine several applications into a complex simulation task. A key
 feature of *Workflow* class is that it is derived from *Model*
 (*Application*) class, so it shares the same API as *Model* Interface.
@@ -685,175 +422,27 @@ This essentially allows to treat any *Workflow* as *Model* and allows to
 build a hierarchy of nested workflows. In addition, the following
 services are declared:
 
-.. _section-5:
-
-========================================================================================================================== ===========================================================================================================================================
-**Service**                                                                                                                **Description**
-\__init_\_(self, metaData={})                                                                                              Constructor. Initializes the workflow. Should define problem independent part of metadata.
-                                                                                                                          
-|                                                                                                                          **ARGS**:
-                                                                                                                          
-                                                                                                                           -  metaData (dict): optional pass metadata to merge
-initialize(self, file='', workdir='',targetTime=PQ.PhysicalQuantity(0.,'s'),metaData={}, validateMetaData=True, \**kwargs) Initializes the workflow.
-                                                                                                                          
-                                                                                                                           **ARGS**:
-                                                                                                                          
-                                                                                                                           -  file (str): path to application initialization file.
-                                                                                                                          
-                                                                                                                           -  workdir (str): Optional parameter for working directory
-                                                                                                                          
-                                                                                                                           -  targetTime (Physics.PhysicalQuantity): Optional parameter for target time
-                                                                                                                          
-                                                                                                                           -  metaData (dict): optional metadata to merge
-                                                                                                                          
-                                                                                                                           -  validateMetaData (bool): if true, receiver metadata will be validated against class metadata template
-solve(self, runInBackground=False):                                                                                        Solves the workflow.
-                                                                                                                          
-                                                                                                                           The default implementation solves the problem in series of time steps using solveStep method (inherited) until the final time is reached.
-                                                                                                                          
-                                                                                                                           **ARGS**:
-                                                                                                                          
-                                                                                                                           -  runInBackground (bool): optional argument, default False. If True, the solution will run in background (in separate thread or remotely).
-                                                                                                                          
-                                                                                                                           **Returns**: None
-getAPIVersion(self)                                                                                                        Returns the supported API version.
-                                                                                                                          
-                                                                                                                           **Returns**: API version (str, int)
-getApplicationSignature(self)                                                                                              Get application signature.
-                                                                                                                          
-                                                                                                                           **Returns**: Returns the application identification (str)
-updateStatus(self, status, progress=0)                                                                                     Updates the workflow status. The status is submitted to workflow monitor, if registered on nameserver.
-                                                                                                                          
-                                                                                                                           ARGS:
-                                                                                                                          
-                                                                                                                           -  status (str): string describing the workflow status (initialized, running, failed, finished)
-                                                                                                                          
-                                                                                                                           -  progress (int): integer number indicating execution progress (in percent)
-========================================================================================================================== ===========================================================================================================================================
 
 Property class
 -------------------
 
-Property is a characteristic value of a problem, which has no spatial
+:obj:`~mupif.property.Property` is a characteristic value of a problem, which has no spatial
 variation. Property is identified by *PropertyID*, which is an
 enumeration determining its physical meaning. It can represent any
 quantity of a scalar, vector, or tensorial type. Property keeps its
 value, type, associated time and an optional *objectID*, identifying
 related component/subdomain.
 
-================================================================= ===============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
-**Service**                                                       **Description**
-\__init__(self,propID,                                            Constructor, initializes the property.
-                                                                 
-valueType,units, time=None,objectID=0)                            **ARGS**:
-                                                                 
-                                                                  -  value (tuple): value of a property. Scalar value is represented as array of size 1. Vector is represented as values packed in a tuple. Tensor is represented as 3D tensor stored in a tuple, column by column.
-                                                                 
-                                                                  -  propId (PropertyID): property ID
-                                                                 
-                                                                  -  valueType (ValueType): type of property value
-                                                                 
-                                                                  -  time (Physics.PhysicalQuantity): time
-                                                                 
-                                                                  -  units (Physics.PhysicalUnits, None): property units or None for time independent property
-                                                                 
-                                                                  -  objectID (int): optional ID of problem object / subdomain to which property is related.
-loadFromLocalFile(cls,fileName)                                   Alternative constructor from a Pickle module.
-                                                                 
-                                                                  **ARGS**:
-                                                                 
-                                                                  -  filename (str): File name
-                                                                 
-                                                                  **Returns:**
-                                                                 
-                                                                  Property instance (Property)
-getValue(self, time=None, \*kwargs)                               Returns the value of property in a tuple.
-                                                                 
-                                                                  **ARGS**:
-                                                                 
-                                                                  -  time (Physics.PhysicalQuantity): time to evaluate receiver at.
-                                                                 
-                                                                  -  \**kwargs: Arbitrary keyword arguments, see documentation of derived classes
-                                                                 
-                                                                  **Returns**:
-                                                                 
-                                                                  Property value as array (Physics.PhysicalQuantity)
-getValueType(self)                                                Returns the value type of property.
-                                                                 
-                                                                  **Returns**:
-                                                                 
-                                                                  Property value type (mupif.PropertyID)
-getPropertID(self)                                                Returns type of property.
-                                                                 
-                                                                  **Returns**:
-                                                                 
-                                                                  Receiver property ID (PropertyID)
-getObjectID(self)                                                 Returns property objectID.
-                                                                 
-                                                                  **Returns**:
-                                                                 
-                                                                  ID of related object (int)
-getUnits(self)                                                    Returns representation of property units.
-                                                                 
-                                                                  **Returns**:
-                                                                 
-                                                                  Returns receiver's units (Physics.PhysicalUnits)
-dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL) Dump Property to a file using Pickle module
-                                                                 
-                                                                  **ARGS**:
-                                                                 
-                                                                  -  filename (str): File name
-                                                                 
-                                                                  -  protocol (int): Used protocol - 0=ASCII, 1=old binary, 2=new binary
-inUnitsOf(self, \*units)                                          Express the quantity in different units. If one unit is specified, a new PhysicalQuantity object is returned that expresses the quantity in that unit. If several units are specified, the return value is a tuple of PhysicalObject instances with with one element per unit such that the sum of all quantities in the tuple equals the original quantity and all the values except for the last one are integers. This is used to convert to irregular unit systems like hour/minute/second.
-                                                                 
-                                                                  **ARGS**:
-                                                                 
-                                                                  -  Units (C{str}): one units
-                                                                 
-                                                                  **Returns:**
-                                                                 
-                                                                  One physical quantity (L{PhysicalQuantity} or C{tuple})
-                                                                 
-                                                                  **Raises:**
-                                                                 
-                                                                  TypeError: if any of the specified units are not compatible with the original unit
-================================================================= ===============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 Property with constant value in time is represented by
-*ConstantProperty* class derived from *Property* class. In the
-following, we just mention the modifications in interface from
-*Property* class.
+:obj:`~mupif.property.ConstantProperty` class derived from :obj:`~mupif.property.Property`.
 
-======================================================================= =================================================================================================================================================================================================================
-**Service**                                                             **Description**
-\__init__(self, value, propID, valueType, units, time=None, objectID=0) Constructor, initializes the property.
-                                                                       
-                                                                        **ARGS**:
-                                                                       
-                                                                        -  value (tuple): value of a property. Scalar value is represented as array of size 1. Vector is represented as values packed in a tuple. Tensor is represented as 3D tensor stored in a tuple, column by column.
-                                                                       
-                                                                        -  propId (PropertyID): property ID
-                                                                       
-                                                                        -  valueType (ValueType): type of property value
-                                                                       
-                                                                        -  time (Physics.PhysicalQuantity): time; None for constant property in time
-                                                                       
-                                                                        -  units (Physics.PhysicalUnits, string): property units or string
-                                                                       
-                                                                        -  objectID (int): optional ID of problem object / subdomain to which property is related.
-getTime(self)                                                           Returns time associated with this property.
-                                                                       
-                                                                        **Returns**:
-                                                                       
-                                                                        Time (Physics.PhysicalQuantity)
-======================================================================= =================================================================================================================================================================================================================
 
 Field class
 ----------------
 
-Representation of field. *Field* is a scalar, vector, or tensorial
-quantity defined on a spatial domain (represented by the *Mesh* class).
+:obj:`~mupif.field.Field` representats a field. It is a scalar, vector, or tensorial
+quantity defined on a spatial domain (represented by the :obj:`mupif.mesh.Mesh` class).
 The field provides interpolation services in space, but is assumed to be
 fixed in time (the application interface allows to request field at
 specific time). The fields are usually created by the individual
@@ -866,328 +455,23 @@ field class include a method for evaluating the field at any spatial
 position and a method to support graphical export (creation of VTK
 dataset).
 
-============================================================================================================================================================================================================================================================================================================= ====================================================================================================================================================================================================================================================================================================================================================================
-**Service**                                                                                                                                                                                                                                                                                                   **Description**
-\__init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased, objectID=0, metaData={})                                                                                                                                                                              Constructor. Initializes the field instance.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  mesh (Mesh): Instance of Mesh class representing underlying discretization.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  fieldID (FieldID): field type
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  valueType (ValueType): type of field values
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  units (Physics.PhysicalUnits): Field value units
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  time (double): time
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  values (tuple): field values, usually at mesh vertices (format dependent of particular field type)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  fieldType (FieldType): Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  objectID (int): Optional ID of problem object/subdomain to which field is related
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  metaData (dict): Optionally pass metadata to merge
-loadFromLocalFile(cls,fileName)                                                                                                                                                                                                                                                                               Alternative constructor from a Pickle module.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): File name
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Field instance (Field)
-getRecordSize(self)                                                                                                                                                                                                                                                                                           Return the number of scalars per value, depending on :obj:`valueType` passed when constructing the instance.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              number of scalars (1,3,9 respectively for scalar, vector, tensor) (int)
-getMesh(self)                                                                                                                                                                                                                                                                                                 Returns representation of underlying discretization.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Reference to associated mesh (Mesh)
-getValueType(self)                                                                                                                                                                                                                                                                                            Returns type of field values (ValueType) of the receiver.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              (ValueType)
-getFieldID(self)                                                                                                                                                                                                                                                                                              Returns FieldID, e.g. FID_Displacement, FID_Temperature.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Returns fieldID (FieldID)
-getFieldIDName(self)                                                                                                                                                                                                                                                                                          Returns name of the field.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Returns fieldID name (str)
-getFieldType(self)                                                                                                                                                                                                                                                                                            Returns receiver field type (values specified as vertex or cell values)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Returns fieldTypeID (FieldType)
-getTime(self)                                                                                                                                                                                                                                                                                                 Alternative constructor from a Pickle module.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Field time (Physics.PhysicalQuantity)
-evaluate(self, position, eps=0.001)                                                                                                                                                                                                                                                                           Evaluates the receiver at given spatial position.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  position (tuple, list of tuples): 3D position vector or list of position vectors
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  eps(double): Optional tolerance
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Receiver value or list of values evaluated at given position(s) (Physics.PhysicalQuantity).
-getVertexValue(self, componentID)                                                                                                                                                                                                                                                                             Returns the value associated with a given vertex component
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  componentID (tuple): A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              component value as (Physics.PhysicalQuantity)
-getCellValue(self, componentID)                                                                                                                                                                                                                                                                               Returns the value associated with a given integration point on a cell.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  componentID (tuple): A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              component value as (Physics.PhysicalQuantity)
-setValue(self, componentID, value)                                                                                                                                                                                                                                                                            Sets the value associated to given component (vertex or cell IP). Note, that the field values are updated after a commit method is invoked.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  componentID (tuple): The componentID is a tuple: (vertexID) or (CellID, IPID)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  value(tuple): Component value
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              None
-giveValue(self, componentID):                                                                                                                                                                                                                                                                                 Returns the value associated with a given component (vertex or integration point on a cell).
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  componentID (tuple): A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:**
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Tuple of values (tuple)
-setValue(self, componentID, value):                                                                                                                                                                                                                                                                           Sets the value associated with a given component (vertex or integration point on a cell).
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  componentID (tuple): A tuple identifying a component: vertex (vertexID,) or integration point (CellID, IPID)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  value (tuple): Value to be set for a given component, should have the same units as receiver
-commit(self)                                                                                                                                                                                                                                                                                                  Commits the recorded changes (via setValue method).
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**: None
-getUnits(self)                                                                                                                                                                                                                                                                                                **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Returns units of the receiver (Physics.PhysicalUnits)
-merge(self, field)                                                                                                                                                                                                                                                                                            Merges the receiver with a given field together.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              Both fields should be on different parts of the domain (can also overlap), but should be of the same type and refer to the same underlying discretization.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  field (Field): field to merge
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**: None
-field2VTKData (self name=None,lookupTable=None)                                                                                                                                                                                                                                                               Returns VTK representation of the receiver.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  Name (str): human-readable name of the field
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  lookupTable (pyvtk.LookupTable): color lookup table
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              VTK dataset (pyvtk)
-getMartixForTensor(self,values)                                                                                                                                                                                                                                                                               Reshape values to a list with 3x3 arrays. Usable for VTK export.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  Values (list): List containing tuples of 9 values, e.g. [(1,2,3,4,5,6,7,8,9), (1,2,3,4,5,6,7,8,9), ...]
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              List containing 3x3 matrices for each tensor (list)
-dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL)                                                                                                                                                                                                                                             Dump Field to a file using a Pickle serialization module.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): File name
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  protocol (int): Used protocol - 0=ASCII, 1=old binary, 2=new binary
-field2Image2D(self, plane='xy', elevation = (-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None,None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=True, figsize = (8,4), matPlotFig=None) Plots and/or saves 2D image using a matplotlib library. Works for structured and unstructured 2D/3D fields. 2D/3D fields need to define plane. This method gives only basic viewing options, for aesthetic and more elaborated output use e.g. VTK field export with postprocessors such as ParaView or Mayavi.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**: see the reference manual
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns:** handle to matPlotFig (matPlotFig)
-field2Image2DBlock(self)                                                                                                                                                                                                                                                                                      Block an open window from matPlotLib. Waits until closed.
-toHdf5(self,fileName,group='component1/part1')                                                                                                                                                                                                                                                                Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): HDF5 file
-makeFromHdf5(fileName,group='component1/part1')                                                                                                                                                                                                                                                               Restore Fields from HDF5 file.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): HDF5 file
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              list of new :obj:`Field` instances (Field, Field,…)
-toVTK2(self,fileName,format='ascii')                                                                                                                                                                                                                                                                          Save the instance as Unstructured Grid in VTK2 format (``.vtk``).
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): where to save
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  format (str): one of \``ascii`\` or \``binary`\`
-makeFromVTK2(fileName,unit,time=0,skip=['coolwarm'])                                                                                                                                                                                                                                                          Return fields stored in \*fileName\* in the VTK2 (``.vtk``) format.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): filename to load from
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  unit (PhysicalUnit): physical unit of filed values
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  time (float): time value for created fields (time is not saved in VTK2, thus cannot be recovered)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  skip (str,…): file names to be skipped when reading the input file; the default value skips the default coolwarm colormap.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              one field from VTK (Field)
-toVTK3(self,fileName,**kw)                                                                                                                                                                                                                                                                                    Save the instance as Unstructured Grid in VTK3 format (``.vtu``). This is a simple proxy for calling :obj:`manyToVTK3` with the instance as the only field to be saved. If multiple fields with identical mesh are to be saved in VTK3, use :obj:`manyToVTK3` directly.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filenamne (str): output file name
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  \**kw ():passed to :obj:`manyToVTK3`
-manyToVTK3(fields,fileName,ascii=False,compress=True)                                                                                                                                                                                                                                                         Save all fields passed as argument into VTK3 Unstructured Grid file (``*.vtu``). All *fields* must be defined on the same mesh object; exception will be raised if this is not the case.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filenamne (str): output file name
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  asci (bool): write numbers are ASCII in the XML-based VTU file (rather than base64-encoded binary in XML)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  compress (bool): apply compression to the data
-makeFromVTK3(fileName,units, time=0,forceVersion2=False)                                                                                                                                                                                                                                                      Create fields from a VTK unstructured grid file (``.vtu``, format version 3, or \``.vtp`\` with \*forceVersion2*); the mesh is shared between fields. \``vtk.vtkXMLGenericDataObjectReader`\` is used to open the file (unless \*forceVersion2\* is set), but it is checked that contained dataset is a \``vtk.vtkUnstructuredGrid`\` and an error is raised if not.
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **ARGS**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  filename (str): filename to load from
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  unit (Physics.PhysicalUnit): units of read values
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  time (float): time value for created fields (time is not saved in VTK3, thus cannot be recovered)
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              -  forceVersion2 (bool): if \``True``, \``vtk.vtkGenericDataObjectReader`\` (for VTK version 2) will be used to open the file, instead of \``vtk.vtkXMLGenericDataObjectReader``; this also supposes \*fileName\* ends with \``.vtk`\` (not checked, but may cause an error).
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              **Returns**:
-                                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                              list of new :obj:`Field` instances (Field,Field,...)
-inUnitsOf(self, \*units)                                                                                                                                                                                                                                                                                      Should return a new instance. As deep copy is expensive, this operation should be avoided. Better to use convertToUnits method performing in place conversion.
-============================================================================================================================================================================================================================================================================================================= ====================================================================================================================================================================================================================================================================================================================================================================
-
 
 Function class
 -------------------
 
-Represents a user defined function. Function is an object defined by
+:obj:`~mupif.function.Function` represents a user defined function. Function is an object defined by
 mathematical expression and can be a function of spatial position, time,
 and other variables. Derived classes should implement evaluate service
 by providing a corresponding expression. The function arguments are
 packed into a dictionary, consisting of pairs (called items) of keys and
 their corresponding values.
 
-================================== =====================================================================================================================================================================================================================================================================
-**Service**                        **Description**
-\__init__(self,funcID, objectID=0) Constructor. Initializes the function.
-                                  
-                                   **ARGS**:
-                                  
-                                   -  funcID (FunctionID): function ID
-                                  
-                                   -  objectID (int): optional ID of associated subdomain.
-evaluate (self, d)                 Evaluates the function for given parameters packed as a dictionary. A dictionary is container type that can store any number of Python objects, including other container types. Dictionaries consist of pairs (called items) of keys and their corresponding values.
-                                  
-                                   | 
-                                  
-                                   Example:
-                                  
-                                   d={'x':(1,2,3), 't':0.005} initializes dictionary containing tuple (vector) under 'x' key, double value 0.005 under 't' key.
-                                  
-                                   Some common keys:
-                                  
-                                   -  'x': position vector
-                                  
-                                   -  't': time
-                                  
-                                   **ARGS**:
-                                  
-                                   -  d (dictionary): dictionary containing function arguments (number and type depends on particular function)
-                                  
-                                   **RETURNS**: function value (tuple) evaluated for given parameters
-getID (self)                       Returns receiver's ID.
-                                  
-                                   **Returns**: id (FunctionID)
-getObjectID(self)                  **Returns**: returns receiver's object ID (int)
-================================== =====================================================================================================================================================================================================================================================================
 
 TimeStep class
 -------------------
 
-Class representing solution time step. The time step manages its number,
+:obj:`~mupif.timestep.TimeStep` represents solution time step. The time step manages its number,
 target time, and time increment.
-
-=================================================== =============================================================================================
-**Service**                                         **Description**
-\__init__(self, t, dt, targetTime, units=None, n=1) Constructor. Initializes the new time step.
-                                                   
-                                                    **ARGS**:
-                                                   
-                                                    -  t (double, Physics.PhysicalUnit): time
-                                                   
-                                                    -  dt (double, Physics.PhysicalUnit): step length (time increment)
-                                                   
-                                                    -  targetTime (double, Physics.PhysicalUnit): target simulation time, type depends on 'units'
-                                                   
-                                                    -  units (Physics.PhysicalUnit): optional units for t,dt,tarrgetTime if given as float values
-                                                   
-                                                    -  n (int): time step number
-getTime(self)                                       **Returns**:
-                                                   
-                                                    time step time (Physics.PhysicalQuantity)
-getTimeIncrement(self)                              **Returns**:
-                                                   
-                                                    time increment (Physics.PhysicalQuantity)
-getTargetTime (self)                                **Returns**:
-                                                   
-                                                    Target time (Physics.PhysicalQuantity)
-getNumber(self)                                     **Returns**:
-                                                   
-                                                    receiver's number (int)
-=================================================== =============================================================================================
 
 
 .. _fig-timestep:
@@ -1198,7 +482,7 @@ getNumber(self)                                     **Returns**:
 Mesh class
 ---------------
 
-Mesh class is an abstract representation of a computational domain and
+:obj:`~mupif.mesh.Mesh` is an abstract representation of a computational domain and
 its spatial discretization. The mesh geometry is described using
 computational cells (representing finite elements, finite difference
 stencils, etc.) and vertices (defining cell geometry). Derived classes
@@ -1208,158 +492,40 @@ general, the mesh services provide different ways how to access the
 underlying interpolation cells and vertices, based on their numbers, or
 spatial location.
 
-================================ ==========================================================================================================================================================================================================================================================================
-**Service**                      **Description**
-                                
-\__init__(self)                  Constructor, creates an empty mesh.
-copy(self)                       This will return a copy of the receiver. Note, that DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh duplication in every cell.
-                                
-                                 **Returns**: Copy of receiver (Mesh)
-getNumberOfVertices(self)        **Returns**:
-                                
-                                 Number of Vertices (int)
-getNumberOfCells(self)           **Returns**:
-                                
-                                 Number of Cells
-getVertex(self, i)               Returns i-th vertex (i corresponds to a vertex number, not a label).
-                                
-                                 **Returns**: vertex (Vertex)
-getCell(self, i)                 Returns i-th cell (identified by cell number, not label).
-                                
-                                 **Returns**: cell (Cell)
-vertexLabel2Number(self, label)  Returns local vertex number corresponding to given label. If no label corresponds, throws an exception.
-                                
-                                 **Returns**: vertex number (int)
-cellLabel2Number(self, label)    Returns local cell number corresponding to a given label. If no label corresponds, it throws an exception.
-                                
-                                 **Returns**: cell number (int)
-getVerticesInBBox (self, bbox):  Returns the list of all vertices which are inside given bounding Box
-                                
-                                 **ARGS**:
-                                
-                                 -  bbox (BoundingBox): bounding box
-                                
-                                 **Returns**: list of vertices inside bbox (list)
-getCellsInBBox (self, bbox):     Returns the list of cells which bbox intersects with given bounding box
-                                
-                                 **ARGS**:
-                                
-                                 -  bbox (BoundingBox): bounding box
-                                
-                                 **Returns**: list of cells at least partially in bbox (list)
-evaluateVertices(self, functor): Returns the list of all vertices for which the functor is satisfied. The functor is a user defined class with two methods: *giveBBox*\ () which returns an initial functor bbox, and *evaluate* (obj) which should return true if functor is satisfied for a given object.
-                                
-                                 **ARGS**:
-                                
-                                 -  functor: functor class
-                                
-                                 **Returns**:list of all vertices for which the functor is satisfied (list)
-evaluateCells(self, functor):    Returns the list of all cells for which the functor is satisfied. The functor is user defined class with two methods:\ *getBBox*\ () which returns an initial functor bbox, and *evaluate* (obj) which should return true if functor is satisfied for given object.
-                                
-                                 **ARGS**:
-                                
-                                 -  functor: functor class
-                                
-                                 **Returns**:List of all cells for which the functor is satisfied (list)
-================================ ==========================================================================================================================================================================================================================================================================
 
 Cell class
 ---------------
 
-Representation of a computational cell (finite element). The solution
+:obj:`~mupif.cell.Cell` represents a computational cell (finite element). The solution
 domain is composed of cells, whose geometry is defined using vertices.
 Cells provide interpolation over their associated volume, based on given
 vertex values. Derived classes will be implemented to support common
 interpolation cells (finite elements, FD stencils, etc.)
 
-============================================== =====================================================================================
-**Service**                                    **Description**
-\__init__(self, mesh, number, label, vertices) Constructor. Creates the new cell.
-                                              
-                                               **ARGS**:
-                                              
-                                               -  mesh(Mesh): the mesh to which cell belongs.
-                                              
-                                               -  number(int): local cell number
-                                              
-                                               -  label(int): cell label
-                                              
-                                               -  vertices(tuple): cell vertices (local numbers)
-copy(self)                                     This will copy the receiver, making deep copy of all attributes EXCEPT mesh attribute
-                                              
-                                               **Returns**: the copy of receiver (Cell)
-getVertices(self)                              **Returns**: the list of cell vertices (tuple of Vertex instances)
-containsPoint(self, point)                     **Returns**: True if cell contains given point, False otherwise
-getGeometryType(self)                          **Returns**: geometry type of receiver (CellGeometryType)
-getBBox(self)                                  **Returns**: bounding box of the receiver (BBox)
-============================================== =====================================================================================
 
 Vertex class
 ------------------
 
-Represents a vertex. In general, a set of vertices defines the geometry
+:obj:`~mupif.vertex.Vertex` represents a vertex. In general, a set of vertices defines the geometry
 of interpolation cells. A vertex is characterized by its position,
 number and label. Vertex number is locally assigned number (by *Mesh*
 class), while a label is a unique number defined by application.
 
-=========================================== ==============================================
-**Service**                                 **Description**
-\__init__(self, number, label, coords=None) Constructor. Creates the new vertex instance.
-                                           
-                                            **ARGS**:
-                                           
-                                            -  number(int): local vertex number
-                                           
-                                            -  label(int): vertex label
-                                           
-                                            -  coords(tuple): 3D position vector of verteX
-getCoordinates(self)                        **Returns**: receiver coordinates (tuple)
-getNumber(self)                             **Returns**: receiver number (int)
-getLabel(self)                              **Returns**: receiver label (int)
-=========================================== ==============================================
 
 BoundingBox
 -----------------
 
-Represents an axis aligned bounding box - a rectangle in 2d and a prism
+:obj:`~mupif.boundingbox.BoundingBox` represents an axis aligned bounding box - a rectangle in 2d and a prism
 in 3d. Its geometry is described using two points - lover left and upper
 right. The bounding box class provides fast and efficient methods for
 testing whether point is inside and whether an intersection with another
 bounding box exists.
 
-===================================== ==========================================================================
-**Service**                           **Description**
-                                     
-\__init__(self, coords_ll, coords_ur) Constructor. Creates the new Bounding box instance.
-                                     
-                                      **ARGS**:
-                                     
-                                      -  coords_ll (tuple): coordinates of lower left corner
-                                     
-                                      -  coords_ur (tuple): coordinates of upper right corner
-containsPoint (self, point)           Returns true if point inside receiver.
-                                     
-                                      **ARGS**:
-                                     
-                                      -  point (tuple): point coordinates
-                                     
-                                      **Returns**: True if point is inside receiver, false otherwise (Bool)
-intersects (self, bbox)               **Returns**: Returns true if receiver intersects given bounding box (Bool)
-merge (self, entity)                  Merges (expands) receiver with given entity (position or bbox)
-                                     
-                                      **ARGS**:
-                                     
-                                      -  entity (tuple or BoundingBox): position vector (tuple) or bounding box.
-                                     
-                                      **Returns**: None
-===================================== ==========================================================================
-
-.. _section-6:
 
 APIError
 --------------
 
-This class serves as a base class for exceptions thrown by the
+:obj:`~mupif.apierror.APIError` serves as a base class for exceptions thrown by the
 framework. Raising an exception is a way to signal that a routine could
 not execute normally - for example, when an input argument is invalid
 (e.g. value is outside of the domain of a function) or when a resource
@@ -1380,21 +546,6 @@ An exception is thrown by using the throw keyword from inside the
 try-block. Exception handlers are declared with the keyword "except",
 which must be placed immediately after the try block.
 
-=================== ===================================================================
-**Service**         **Description**
-\__init__(self,msg) Constructor. Initializes the exception.
-                   
-                    **ARGS**:
-                   
-                    -  msg (string) Error message
-                   
-                    | 
-\__str__(self)      **Returns**:
-                   
-                    string representation of the exception, ie. error message (string).
-=================== ===================================================================
-
-.. _section-7:
 
 Developing Application Program Interface (API)
 =================================================
@@ -1403,8 +554,8 @@ In order to establish an interface between the platform and external
 application, one has to implement a *Model* class. This class defines a
 generic interface in terms of general purpose, problem independent,
 methods that are designed to steer and communicate with the application.
-The Table 2 presents an overview of application interface, the full
-details with complete specification can be found in :ref:`sect-model-class` specification.
+This table presents an overview of application interface, the full
+details with complete specification can be found in :obj:`~mupif.model.Model`.
 
 =============================================== ==========================================================================
 Method                                          Description
@@ -1423,8 +574,6 @@ getAssemblyTime(tStep)                          Returns assembly time within a t
 getApplicationSignature()                       Returns the application identification
 terminate()                                     Terminates the application.
 =============================================== ==========================================================================
-
-Table 2: Model interface: an overview of basic methods.
 
 From the perspective of individual simulation tool, the interface
 implementation can be achieved
@@ -1500,8 +649,7 @@ various models and their steering. Natively, the workflow in MuPIF is
 represented as Python script combining MuPIF components into workflow.
 However, a many benefits can be further gained by implementing a
 workflow as class derived from abstract *Workflow* class. The benefits
-and example are discussed in chapter “\ `Workflow as a
-class <#_2f410my5sjmt>`__\ ”.
+and example are discussed in :numref:`sect-workflow-as-a-class`.
 
 Workflow templates
 --------------------
@@ -1596,8 +744,6 @@ Loosely coupled
    m2.terminate()
    m3.terminate()
 
-
-.. _section-8:
 
 Workflow example
 ---------------------
@@ -1747,6 +893,9 @@ computer, except a steering script.
    "Example07 (JobMan, VPN, ssh)",Local,Remote,"Remote, JobMan","Remote, JobMan"
    "Example08 (JobMan, VPN, ssh)",Local,Remote,"Remote, JobMan",Local
 
+
+.. _sect-workflow-as-a-class:
+
 Workflow as a class
 ------------------------
 
@@ -1821,7 +970,7 @@ communication to the user and allows to work with local and remote
 objects in the same way.
 
 The communication layer is built on `Pyro
-library <https://pythonhosted.org/Pyro4/>`__ [4], which provides a
+library <https://pythonhosted.org/Pyro5/>`__ [4], which provides a
 transparent distributed object system fully integrated into Python. It
 takes care of the network communication between the objects when they
 are distributed over different machines on the network. One just calls a
@@ -2545,4 +1694,4 @@ References
 
 #. The European Materials Modelling Council, https://emmc.info/, 2017.
 
-#. JSON Schema, https://json-schema.org/, 2019.
+#. 

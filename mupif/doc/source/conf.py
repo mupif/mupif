@@ -42,9 +42,11 @@ apidoc_toc_file='api'
 apidoc_excluded_paths=['tools']
 apidoc_module_first=True
 
+
 import sys
 sys.path.append('../../..')
 import mupif
+import mupif.tests
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -65,16 +67,24 @@ latex_documents=[('index','mupif.tex','MuPIF Documentation',
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'default'
-html_theme_options=dict(
-    github_banner=True,
-    github_user='mupif',
-    github_repo='mupif',
-    display_github=True
-)
+# https://readthedocsorg.readthedocs.io/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
+
+# use ReadTheDocs theme both locally and when building docs at readthedocs.io
+import os
+on_rtd=os.environ.get('READTHEDOCS',None)=='True'
+if not on_rtd:
+    import sphinx_rtd_theme
+    html_theme='sphinx_rtd_theme'
+    html_theme_path=[sphinx_rtd_theme.get_html_theme_path()]
+else:
+    html_theme='default'
+
+#html_theme_options=dict(
+#    github_banner=True,
+#    github_user='mupif',
+#    github_repo='mupif',
+#    display_github=True
+#)
 html_context=dict(
     github_banner=True,
     github_user='mupif',
