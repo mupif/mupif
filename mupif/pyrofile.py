@@ -36,7 +36,7 @@ class PyroFile (object):
         Constructor. Opens the corresponding file handle.
 
         :param str filename: file name to open
-        :param str mode: file mode ("r" opens for reading, "w" opens for writting, "rb" read binary, "rw" write binary)
+        :param str mode: file mode ("r" opens for reading, "w" opens for writting, "rb" read binary, "wb" write binary)
         :param int buffsize: optional size of file byte chunk that is to be transferred
         :param bool compressFlag: whether set to True the chunks given/set are compressed uzing zlib module, default is False
         """
@@ -78,6 +78,10 @@ class PyroFile (object):
 
         :param str buffer: data chunk to append
         """
+        # https://pyro5.readthedocs.io/en/stable/tipstricks.html#binary-data-transfer-file-transfer
+        if type(buffer)==dict:
+            import serpent
+            buffer=serpent.tobytes(buffer)
         if self.compressFlag:
             if not self.decompressor:
                 self.decompressor = zlib.decompressobj()
