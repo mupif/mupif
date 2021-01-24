@@ -75,6 +75,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
     """
 
     dumpAttrs=['mesh','fieldID','valueType','time','uri','fieldType','objectID','value','unit']
+
     def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased, objectID=0, metaData={}):
         """
         Initializes the field instance.

@@ -21,7 +21,7 @@ class config(object):
         if mode not in [0, 1, 2, 3]:
             log.error("Unknown mode -m %d" % mode)
         
-        Pyro5.config.SERIALIZER = "msgpack"
+        Pyro5.config.SERIALIZER = "serpent"
         # Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
         # Pyro5.config.SERIALIZERS_ACCEPTED = {'pickle'}
         Pyro5.config.SERVERTYPE = "multiplex"

@@ -35,7 +35,7 @@ from . import apierror
 from . import pyrofile
 log = util.setupLogger(fileName=None)
 
-Pyro5.config.SERIALIZER = "pickle"
+Pyro5.config.SERIALIZER = "msgpack"
 # some versions of Pyro don't have this attribute... (strange, is documented)
 # if hasattr(Pyro5.config, 'PICKLE_PROTOCOL_VERSION'):
 #     Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # use lower version for interoperability between python 2 and 3

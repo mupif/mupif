@@ -27,6 +27,7 @@ from . import util
 import math
 from . import mesh
 from . import cellgeometrytype
+from .dumpable import Dumpable
 import numpy as np
 import Pyro5
 
@@ -41,7 +42,7 @@ tolerance = 0.001
 
 
 @Pyro5.api.expose
-class Cell(object):
+class Cell(Dumpable):
     """
     Representation of a computational cell.
 
@@ -51,6 +52,9 @@ class Cell(object):
 
     .. automethod:: __init__
     """
+    # NB: do NOT serialize *mesh*, it is set in Mesh._postDump
+    dumpAttrs=['number','label','vertices',('mesh',None)]
+
     def __init__(self, mesh, number, label, vertices):
         """
         Initializes the cell.
@@ -210,6 +214,7 @@ class Triangle_2d_lin(Cell):
     0-----1
 
     """
+    dumpAttrs=[]
 
     def copy(self):
         """
@@ -336,6 +341,7 @@ class Triangle_2d_quad(Cell):
     0--3---1
 
     """
+    dumpAttrs=[]
 
     def copy(self):
         """
@@ -557,6 +563,7 @@ class Quad_2d_lin(Cell):
     """
     Unstructured 2d quad element with linear interpolation
     """
+    dumpAttrs=[]
 
     def copy(self):
         """
@@ -776,6 +783,7 @@ class Tetrahedron_3d_lin(Cell):
     """
     Unstructured 3d tetrahedral element with linear interpolation.
     """
+    dumpAttrs=[]
 
     def copy(self):
         """
@@ -916,6 +924,7 @@ class Brick_3d_lin(Cell):
 
     .. automethod:: _evalN
     """
+    dumpAttrs=[]
 
     def copy(self):
         """

@@ -1,16 +1,18 @@
 from builtins import object
 from . import bbox
+from .dumpable import Dumpable
 import Pyro5
 
 
 @Pyro5.api.expose
-class Vertex(object):
+class Vertex(Dumpable):
     """
     Represent a vertex. Vertices define the geometry of interpolation cells. Vertex is characterized by its position, number and label. Vertex number is locally assigned number, while label is a unique number referring to source application.
 
     .. automethod:: __init__
     .. automethod:: __repr__
     """
+    dumpAttrs=['number','label','coords']
     def __init__(self, number, label, coords=None):
         """
         Initializes the vertex.

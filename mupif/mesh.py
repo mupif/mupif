@@ -118,7 +118,16 @@ class Mesh(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
-    dumpAttrs=[('mapping',None,None)]
+
+    dumpAttrs=[('mapping',None),('__any_name_to_postprocess__after_all_other_attributes',lambda self: self._postDump())]
+
+
+    def _postDump(self):
+        '''Called when the instance is being reconstructed.'''
+        print('Mesh._postDump…')
+        for i in range(self.getNumberOfCells()):
+            self.getCell(i).mesh=self
+
 
     def __init__(self):
         self.mapping = None
@@ -393,7 +402,11 @@ class UnstructuredMesh(Mesh):
     .. automethod:: __buildCellLabelMap__
     """
 
-    dumpAttrs=['vertexList','cellList',('cellOctree',None),('vertexOctree',None),('vertexDict',None),('cellDict',None)]
+    dumpAttrs=['vertexList','cellList',
+        # these will be restored to None when the instance is reconstructed
+        ('cellOctree',None),('vertexOctree',None),('vertexDict',None),('cellDict',None)
+    ]
+
 
     def __init__(self):
         """

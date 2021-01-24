@@ -31,7 +31,9 @@
 Dictionary storing numerical values
 """
 
-class NumberDict(dict):
+from ..dumpable import Dumpable
+
+class NumberDict(dict,Dumpable):
 
     """
     Dictionary storing numerical values
@@ -44,8 +46,7 @@ class NumberDict(dict):
     and subtraction with other NumberDict instances, and multiplication
     and division by scalars.
     """
-
-    __dumpable_primitive__=1
+    dumpAttrs=[('data',lambda self: dict(self), lambda self,data: self.update(data))]
 
     def __getitem__(self, item):
         try:
