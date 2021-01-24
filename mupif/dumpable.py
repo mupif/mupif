@@ -24,7 +24,7 @@ class Dumpable(object):
         ret={}
         if clss is None:
             clss=self.__class__
-            ret['__class__']=(self.__class__.__module__,self.__class__.__name__)
+            ret['__class__']=self.__class__.__module__+'.'+self.__class__.__name__
         # print('%s has dumpAttrs: %s'%(clss.__name__,hasattr(clss,'dumpAttrs')))
         if 'dumpAttrs' in clss.__dict__:
             for attr in clss.dumpAttrs:
@@ -50,7 +50,7 @@ class Dumpable(object):
             else: return d
         if clss is None:
             import importlib
-            mod,classname=dic.pop('__class__')
+            mod,classname=dic.pop('__class__').rsplit('.',1)
             clss=getattr(importlib.import_module(mod),classname)
             obj=clss.__new__(clss)
         if 'dumpAttrs' in clss.__dict__:
