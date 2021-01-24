@@ -9,5 +9,6 @@ vtk
 pyvtk
 h5py
 matplotlib
+msgpack
 # for documentation
 sphinxcontrib-apidoc
