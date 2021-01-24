@@ -253,6 +253,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         """
         self.lock.acquire()
         # unregister the application from ns
+        self.ns._pyroClaimOwnership()
         self.ns.remove(jobID)
         # terminate the process
         if jobID in self.activeJobs:
@@ -289,6 +290,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         """
         try:
             self.terminateAllJobs()
+            self.ns._pyroClaimOwnership()
             self.ns.remove(self.applicationName)
             log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
         except Exception as e:
