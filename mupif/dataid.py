@@ -34,7 +34,6 @@ DataSchema = {
     ]
 }
 
-
 class FieldID(IntEnum):
     """
     This class represents the supported values of field IDs, e.g. displacement, strain, temperature.

@@ -1,9 +1,12 @@
 # from mupif.physics import NumberDict
 # import mupif.physics.NumberDict
 
-import serpent,enum
+import enum
+import pickle
+import serpent
 
-# serpent.register_class(enum.IntEnum,lambda obj,ser,ostr,ind: ser._serialize(obj.value,ostr,ind))
+
+
 
 class Dumpable(object):
     '''
@@ -22,21 +25,26 @@ class Dumpable(object):
     '''
     dumpAttrs=[]
 
+    pickleInside=False
+
     def to_dict(self,clss=None):
         def _handle_attr(attr,val,clssName):
             if isinstance(val,list): return [_handle_attr('%s[%d]'%(attr,i),v,clssName) for i,v in enumerate(val)]
             elif isinstance(val,tuple): return tuple([_handle_attr('%s[%d]'%(attr,i),v,clssName) for i,v in enumerate(val)])
             elif isinstance(val,dict): return dict([(k,_handle_attr('%s[%s]'%(attr,k),v,clssName)) for k,v in val.items()])
             elif isinstance(val,Dumpable): return val.to_dict()
-            elif isinstance(val,enum.IntEnum): return {'__class__':val.__class__.__module__+'.'+val.__class__.__name__,'value':int(val)}
+            elif isinstance(val,enum.Enum): return enum_to_dict(val)
             elif val.__class__.__module__.startswith('mupif.'): raise RuntimeError('%s.%s: type %s does not derive from Dumpable.'%(clssName,attr,val.__class__.__name__))
             else: return val
         import enum
         if not isinstance(self,Dumpable): raise RuntimeError("Not a Dumpable.");
         ret={}
         if clss is None:
-            clss=self.__class__
             ret['__class__']=self.__class__.__module__+'.'+self.__class__.__name__
+            if Dumpable.pickleInside:
+                ret['__pickle__']=pickle.dumps(self)
+                return ret
+            clss=self.__class__
         if 'dumpAttrs' in clss.__dict__:
             for attr in clss.dumpAttrs:
                 if isinstance(attr,tuple):
@@ -61,14 +69,16 @@ class Dumpable(object):
             elif isinstance(d,tuple): return tuple([_create(d_) for d_ in d])
             elif isinstance(d,dict): return dict([(k,_create(v)) for k,v in d.items()])
             else: return d
+        if '__pickle__' in dic:
+            data=dic['__pickle__']
+            if type(data)==dict: data=serpent.tobytes(data)
+            return pickle.loads(data)
         if clss is None:
             import importlib
             mod,classname=dic.pop('__class__').rsplit('.',1)
             clss=getattr(importlib.import_module(mod),classname)
             # some special cases here
-            if issubclass(clss,enum.IntEnum):
-                obj=clss(dic.pop('value'))
-                return obj
+            if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
             else: obj=clss.__new__(clss)
         # mupif classes
         if 'dumpAttrs' in clss.__dict__:
@@ -100,3 +110,9 @@ class Dumpable(object):
         return Dumpable.from_dict(dic)
 
 
+def enum_to_dict(e): return {'__class__':e.__class__.__module__+'.'+e.__class__.__name__,'value':e.value}
+def enum_from_dict(clss,dic): return clss(dic.pop('value'))
+def enum_from_dict_with_name(modClassName,dic):
+    mod,className=modClassName.rsplit('.',1)
+    clss=getattr(importlib.import_module(mod),className)
+    return clss(dic.pop('value'))
