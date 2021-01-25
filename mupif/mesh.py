@@ -20,17 +20,21 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-from builtins import str, zip, range, object
+from __future__ import annotations
 
 from . import apierror
 from . import octree
 from . import bbox
 from . import dumpable
+#from . import vertex
+#from . import cell
 import copy
 import time
 import sys
 import numpy
 import Pyro5
+import dataclasses
+import typing
 from . import cellgeometrytype
 try:
    import cPickle as pickle  # faster serialization if available
@@ -106,6 +110,7 @@ class MeshIterator(object):
             return self.__next__()  # Python 2.x compatibility
 
 
+@dataclasses.dataclass
 @Pyro5.api.expose
 class Mesh(dumpable.Dumpable):
     """
@@ -118,19 +123,22 @@ class Mesh(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
+    #dumpAttrs=[('mapping',None),('__any_name_to_postprocess__after_all_other_attributes',lambda self: self._postDump())]
 
-    dumpAttrs=[('mapping',None),('__any_name_to_postprocess__after_all_other_attributes',lambda self: self._postDump())]
+    mapping: typing.Any=None
 
+
+    def __post_init__(self): self._postDump()
 
     def _postDump(self):
         '''Called when the instance is being reconstructed.'''
         print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
-            self.getCell(i).mesh=self
+            object.__setattr__(self.getCell(i),'mesh',self)
 
 
-    def __init__(self):
-        self.mapping = None
+    #def __init__(self):
+    #    self.mapping = None
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
@@ -281,7 +289,7 @@ class Mesh(dumpable.Dumpable):
                 number=ci,
                 label=None,
                 # vertices=tuple(mci[ci])
-                vertices=[vertices[i] for i in mci[ci]]
+                vertices=[vertices[i].number for i in mci[ci]]
             ) for ci in range(mct.shape[0])
         ]
         ret.setup(vertexList=vertices, cellList=cells)
@@ -382,7 +390,7 @@ class Mesh(dumpable.Dumpable):
         """
         pickle.dump(self, open(fileName, 'wb'), protocol)
 
-
+@dataclasses.dataclass
 @Pyro5.api.expose
 class UnstructuredMesh(Mesh):
     """
@@ -402,13 +410,24 @@ class UnstructuredMesh(Mesh):
     .. automethod:: __buildCellLabelMap__
     """
 
-    dumpAttrs=['vertexList','cellList',
-        # these will be restored to None when the instance is reconstructed
-        ('cellOctree',None),('vertexOctree',None),('vertexDict',None),('cellDict',None)
-    ]
+    vertexList: typing.List[vertex.Vertex]=dataclasses.field(default_factory=lambda: [])
+    cellList: typing.List[cell.Cell]=dataclasses.field(default_factory=lambda: [])
+    #
+    vertexOctree: typing.Any=dataclasses.field(default=None,repr=False)
+    cellOctree: typing.Any=dataclasses.field(default=None,repr=False)
+    vertexDict: typing.Any=dataclasses.field(default=None,repr=False)
+    cellDict: typing.Any=dataclasses.field(default=None,repr=False)
+
+    #dumpAttrs=['vertexList','cellList',
+    #    # these will be restored to None when the instance is reconstructed
+    #    ('cellOctree',None),('vertexOctree',None),('vertexDict',None),('cellDict',None)
+    #]
 
 
-    def __init__(self):
+    # this is necessary for putting the mesh into set (in localizer)
+    def __hash__(self): return id(self)
+
+    def __old_init__(self):
         """
         Constructor.
         """
@@ -634,9 +653,10 @@ class UnstructuredMesh(Mesh):
 
         # renumber vertexDict verices 
         number = 0
-        for v in self.vertexList:
-            v.number = number
-            number = number+1
+        self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
+        #for v in self.vertexList:
+        #    #v.number = number
+        #    #number = number+1
         #
         # now merge cell lists
         #
@@ -655,9 +675,11 @@ class UnstructuredMesh(Mesh):
                 updatedVertices = []
                 for v in c.getVertices():
                     updatedVertices.append(self.vertexDict[v.label])
-                ccopy = c.copy()
-                ccopy.vertices = tuple(updatedVertices)
-                ccopy.mesh = self
+                if 0:
+                    ccopy = c.copy()
+                    ccopy.vertices = tuple(updatedVertices)
+                    ccopy.mesh = self
+                else: ccopy=dataclasses.replace(c,vertices=tuple(updatedVertices),mesh=self)
                 indx = len(self.cellList)
                 self.cellList[indx:] = [ccopy]
                 self.cellDict[ccopy.label] = indx
@@ -787,7 +809,7 @@ class UnstructuredMesh(Mesh):
                     mesh=ret,
                     number=len(cells),
                     label=None,
-                    vertices=[vertices[i] for iv in val[i]]
+                    vertices=[vertices[i].number for iv in val[i]]
                 ) for i in range(len(val))
             ])
         ret.setup(vertexList=vertices, cellList=cells)

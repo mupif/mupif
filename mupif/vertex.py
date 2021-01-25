@@ -2,8 +2,10 @@ from builtins import object
 from . import bbox
 from .dumpable import Dumpable
 import Pyro5
+from pydantic.dataclasses import dataclass
+import typing
 
-
+@dataclass(frozen=True)
 @Pyro5.api.expose
 class Vertex(Dumpable):
     """
@@ -12,8 +14,12 @@ class Vertex(Dumpable):
     .. automethod:: __init__
     .. automethod:: __repr__
     """
-    dumpAttrs=['number','label','coords']
-    def __init__(self, number, label, coords=None):
+    number: int
+    label: typing.Optional[int]
+    coords: typing.Tuple[float,...]
+
+    # dumpAttrs=['number','label','coords']
+    def __old_init__(self, number, label, coords=None):
         """
         Initializes the vertex.
 

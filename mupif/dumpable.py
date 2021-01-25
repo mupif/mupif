@@ -4,7 +4,7 @@
 import enum
 import pickle
 import serpent
-
+import dataclasses
 
 
 
@@ -46,14 +46,18 @@ class Dumpable(object):
                 return ret
             clss=self.__class__
         if 'dumpAttrs' in clss.__dict__:
-            for attr in clss.dumpAttrs:
+            for attr in clss.__dict__['dumpAttrs']:
                 if isinstance(attr,tuple):
                     if len(attr)==2: continue # not serialized at all
                     assert len(attr)==3
                     attr,a=attr[0],(attr[1](self) if callable(attr[1]) else attr[1])
                 else: a=getattr(self,attr)
                 ret[attr]=_handle_attr(attr,a,clss.__name__)
-        else: raise RuntimeError('Class %s.%s does not define dumpAttrs'%(clss.__module__,clss.__name__))
+        elif dataclasses.is_dataclass(clss):
+            for f in dataclasses.fields(clss):
+                if not f.repr: continue
+                ret[f.name]=_handle_attr(f.name,getattr(self,f.name),clss.__name__)
+        else: raise RuntimeError('Class %s.%s does not define dumpAttrs and is not a dataclass'%(clss.__module__,clss.__name__))
         if clss!=Dumpable:
             for base in clss.__bases__:
                 if issubclass(base,Dumpable): ret.update(base.to_dict(self,clss=base))
@@ -79,10 +83,14 @@ class Dumpable(object):
             clss=getattr(importlib.import_module(mod),classname)
             # some special cases here
             if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
+            if dataclasses.is_dataclass(clss):
+                kw=dict([(k,_create(v)) for k,v in dic.items()])
+                kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.repr==False]))
+                return clss(**kw)
             else: obj=clss.__new__(clss)
         # mupif classes
         if 'dumpAttrs' in clss.__dict__:
-            for attr in clss.dumpAttrs:
+            for attr in clss.__dict__['dumpAttrs']:
                 if isinstance(attr,tuple):
                     if len(attr)==2:
                         if callable(attr[1]): attr[1](obj)
@@ -93,9 +101,11 @@ class Dumpable(object):
                     if callable(attr[2]): attr[2](obj,dic.pop(attr[0]))
                     else: setattr(obj,attr[0],attr[2])
                 else:
-                    if attr in dic:
-                        # print('%s::%s=%s'%(obj.__class__.__name__,attr,dic[attr]))
-                        setattr(obj,attr,_create(dic.pop(attr)))
+                    if attr in dic: setattr(obj,attr,_create(dic.pop(attr)))
+        elif dataclasses.is_dataclass(clss):
+            for f in dataclasses.fields(clss):
+                # handles frozen dataclasses as well, hopefully
+                if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
         # recurse into base classes
         if clss!=Dumpable:
             for base in clss.__bases__:

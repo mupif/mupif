@@ -1,8 +1,9 @@
 import Pyro5
 import mupif.physics.physicalquantities as PQ
+from pydantic.dataclasses import dataclass
 from . import dumpable
 
-
+# @dataclass(frozen=True)
 @Pyro5.api.expose
 class TimeStep(dumpable.Dumpable):
     """
@@ -21,6 +22,11 @@ class TimeStep(dumpable.Dumpable):
     """
 
     dumpAttrs=['number','time','dt','targetTime']
+
+    #t: PQ.PhysicalQuantity
+    #dt: PQ.PhysicalQuantity
+    #targetTime: PQ.PhysicalQuantity
+    #units=
 
     def __init__(self, t, dt, targetTime, units=None, n=1):
         """

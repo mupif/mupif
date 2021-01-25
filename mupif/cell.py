@@ -20,12 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import range, object
-
 from . import bbox
 from . import util
 import math
-from . import mesh
+# from . import mesh
+import mupif.mesh
 from . import cellgeometrytype
 from .dumpable import Dumpable
 import numpy as np
@@ -33,14 +32,17 @@ import Pyro5
 
 import numpy
 import numpy.linalg
-
 # debug flag
 debug = 0
 
 # in element tolerance
 tolerance = 0.001
 
+from pydantic.dataclasses import dataclass
+import dataclasses
+import typing
 
+@dataclass(frozen=True)
 @Pyro5.api.expose
 class Cell(Dumpable):
     """
@@ -53,9 +55,19 @@ class Cell(Dumpable):
     .. automethod:: __init__
     """
     # NB: do NOT serialize *mesh*, it is set in Mesh._postDump
-    dumpAttrs=['number','label','vertices',('mesh',None)]
+    #dumpAttrs=['number','label','vertices',('mesh',None)
 
-    def __init__(self, mesh, number, label, vertices):
+    # mupif.mesh.Mesh
+
+    mesh: typing.Optional[typing.Any] = dataclasses.field(repr=False)
+    number: int
+    label: typing.Optional[int]
+    vertices: typing.Tuple[int,...]
+
+    #def __post_init__(self):
+    #    self.bbox=None
+
+    def __old_init__(self, mesh, number, label, vertices):
         """
         Initializes the cell.
 
@@ -96,7 +108,7 @@ class Cell(Dumpable):
         :return: A deep copy of a receiver
         :rtype: Cell
         """
-        return self.__class__(self.mesh, self.number, self.label, tuple(self.vertices))
+        return self.__class__(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     def getVertices(self):
         """
@@ -151,12 +163,7 @@ class Cell(Dumpable):
         :rtype: BBox
         """
 
-        # workaround for meshes pickled with previous versions; can be removed at some point
-        if not hasattr(self, 'bbox'):
-            self.bbox = None
-
-        if self.bbox:
-            return self.bbox
+        if hasattr(self,'bbox') and self.bbox is not None: return self.bbox
 
         # This piece should be rewritten
         init = True
@@ -181,7 +188,7 @@ class Cell(Dumpable):
             min_coords = [min_coords[i]-relPad*sizes[i] for i in (0, 1, 2)]  # pad on the negative side
             max_coords = [max_coords[i]+relPad*sizes[i] for i in (0, 1, 2)]  # pad on the positive side
 
-        self.bbox = bbox.BBox(tuple(min_coords), tuple(max_coords))
+        object.__setattr__(self,'bbox',bbox.BBox(tuple(min_coords), tuple(max_coords)))
         return self.bbox
 
     def getTransformationJacobian(self, coords):
@@ -223,7 +230,7 @@ class Triangle_2d_lin(Cell):
         :return: A deep copy of a receiver
         :rtype: Cell
         """
-        return Triangle_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
+        return Triangle_2d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
     def getGeometryType(cls):
@@ -350,7 +357,7 @@ class Triangle_2d_quad(Cell):
         :return: A deep copy of a receiver
         :rtype: Cell
         """
-        return Triangle_2d_quad(self.mesh, self.number, self.label, tuple(self.vertices))
+        return Triangle_2d_quad(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
     def getGeometryType(cls):
@@ -572,7 +579,7 @@ class Quad_2d_lin(Cell):
         :return: A deep copy of a receiver
         :rtype: Cell
         """
-        return Quad_2d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
+        return Quad_2d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
     def getGeometryType(cls):
@@ -792,7 +799,7 @@ class Tetrahedron_3d_lin(Cell):
         :return: A deep copy of a receiver
         :rtype: Cell
         """
-        return Tetrahedron_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
+        return Tetrahedron_3d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
     def getGeometryType(cls):
@@ -933,7 +940,7 @@ class Brick_3d_lin(Cell):
         :return: A deep copy of a receiver
         :rtype: Cell
         """
-        return Brick_3d_lin(self.mesh, self.number, self.label, tuple(self.vertices))
+        return Brick_3d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
     def getGeometryType(cls):

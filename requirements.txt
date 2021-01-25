@@ -10,5 +10,6 @@ pyvtk
 h5py
 matplotlib
 msgpack
+pydantic
 # for documentation
 sphinxcontrib-apidoc
