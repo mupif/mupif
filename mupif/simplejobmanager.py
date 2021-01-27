@@ -331,7 +331,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         See :func:`JobManager.uploadFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
-        pyroutil.uploadPyroFile(targetFileName, pyroFile, hkey)
+        pyroutil.uploadPyroFile(targetFileName, pyroFile)
 
     def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):
         """

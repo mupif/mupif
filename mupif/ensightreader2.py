@@ -248,8 +248,8 @@ def readEnsightField(name, parts, partRec, type, fieldID, mesh, units, time):
                                vertexVals[i*6+2], vertexVals[i*6+3],
                                vertexVals[i*6+4], vertexVals[i*6+4]))
 
-        field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_vertexBased)
-        return field
+        var_field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_vertexBased)
+        return var_field
 
     else:
         # ok nodal section missing, parts should provide per-cell variables
@@ -304,6 +304,6 @@ def readEnsightField(name, parts, partRec, type, fieldID, mesh, units, time):
             else:
                 line = f.readline()
         # so this should be per-cell variable file -> cell based field
-        field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_cellBased)
-        return field
+        var_field = field.Field(mesh, fieldID, ftype, units, time, values, field.FieldType.FT_cellBased)
+        return var_field
 

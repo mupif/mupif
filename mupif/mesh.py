@@ -26,8 +26,8 @@ from . import apierror
 from . import octree
 from . import bbox
 from . import dumpable
-#from . import vertex
-#from . import cell
+from . import vertex
+from . import cell
 import copy
 import time
 import sys

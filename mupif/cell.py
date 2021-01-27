@@ -470,7 +470,7 @@ class Triangle_2d_quad(Cell):
     def _getTransformationJacobianMtrx(self, lcoords):
         """
         Returns the jacobian matrix  J (x,y)/(ksi,eta)  of the receiver.
-        :param tuple coords: local (parametric) coordinates of the point
+        :param tuple lcoords: local (parametric) coordinates of the point
         :return: jacobian matrix
         :rtype: numpy.matrix
         """

@@ -739,7 +739,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
             elif 'cell_values' in f:
                 fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
             else:
-                ValueError("HDF5/mupif format error: unable to determine field type.")
+                raise ValueError("HDF5/mupif format error: unable to determine field type.")
             fieldID, valueType, units, time = FieldID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['units'].tostring(), f.attrs['time'].tostring()
             if units == '':
                 units = None  # special case, handled at saving time

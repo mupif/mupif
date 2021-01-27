@@ -206,7 +206,7 @@ class Octant(object):
         The functor should define getBBox() function to return functor bounding box. Only the objects within this bouding box will be processed.
         Functor should also define evaluate method accepting object as a parameter.
 
-        :param object functor: Functor
+        :param functor: Functor
         """
         if self.containsBBox(functor.getBBox()):
             if self.isTerminal():
