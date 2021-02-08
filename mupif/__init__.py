@@ -101,6 +101,9 @@ def _registerDumpable(clss):
     for c in dataid.FieldID,dataid.ParticleSetID,dataid.FunctionID,dataid.PropertyID:
         Pyro5.api.register_class_to_dict(c,dumpable.enum_to_dict)
         Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
+    # workaround for msgpack (?)
+    #Pyro5.api.register_class_to_dict(tuple,lambda i: dict(val=i))
+    #Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
 _registerDumpable(dumpable.Dumpable)
 

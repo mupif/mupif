@@ -26,6 +26,9 @@ class config(object):
         # Pyro5.config.SERIALIZERS_ACCEPTED = {'pickle'}
         Pyro5.config.SERVERTYPE = "multiplex"
 
+        Pyro5.config.DETAILED_TRACEBACK=True
+        sys.excepthook=Pyro5.errors.excepthook
+
         # Absolute path to mupif directory - used in JobMan2cmd
         mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
         sys.path.append(mupif_dir)

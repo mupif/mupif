@@ -20,8 +20,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import range
-from builtins import object
+from __future__ import annotations
+
 from . import cell
 from . import ValueType
 from . import bbox
@@ -30,7 +30,13 @@ from . import mupifobject
 from . import FieldID
 import mupif.mesh
 from .physics import physicalquantities 
-from .physics.physicalquantities import PhysicalQuantity
+from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
+
+from pydantic.dataclasses import dataclass
+import dataclasses
+
+import pydantic
+import typing
 
 from numpy import array, arange, random, zeros
 import numpy
@@ -58,7 +64,7 @@ class FieldType(IntEnum):
     FT_vertexBased = 1
     FT_cellBased = 2
 
-
+# @dataclass(config=dict(arbitrary_types_allowed=True))
 @Pyro5.api.expose
 class Field(mupifobject.MupifObject, PhysicalQuantity):
     """
@@ -76,7 +82,52 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
 
     dumpAttrs=['mesh','fieldID','valueType','time','uri','fieldType','objectID','value','unit']
 
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=FieldType.FT_vertexBased, objectID=0, metaData={}):
+    # Field is not a dataclass as of now
+    if 0:
+        mesh: typing.Any # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
+        fieldID: FieldID
+        valueType: ValueType
+        unit: typing.Union[PhysicalUnit,str]
+        time: PhysicalQuantity
+        value: typing.Union[typing.List,numpy.ndarray]=None
+        fieldType: FieldType=FieldType.FT_vertexBased
+        objectID: int=0
+        metaData: dict=dataclasses.field(default_factory=lambda: [])
+
+        def __post__init__(self):
+
+            if value is None:
+                if self.fieldType == FieldType.FT_vertexBased:
+                    ncomponents = mesh.getNumberOfVertices()
+                else:
+                    ncomponents = mesh.getNumberOfCells()
+                self.value = zeros((ncomponents, self.getRecordSize()))
+
+            if not physicalquantities.isPhysicalUnit(self.unit):
+                self.unit = physicalquantities.findUnit(self.unit)
+
+
+            self.setMetadata('Units', self.unit.name())
+            self.setMetadata('Type', 'mupif.field.Field')
+            self.setMetadata('Type_ID', str(self.fieldID))
+            self.setMetadata('FieldType', str(fieldType))
+            self.setMetadata('ValueType', str(self.valueType))
+            
+            self.updateMetadata(metaData)
+
+
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def __init__(
+        self,
+        mesh: typing.Any, # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
+        fieldID: FieldID,
+        valueType: ValueType,
+        units: typing.Union[PhysicalUnit,str],
+        time: PhysicalQuantity,
+        values: typing.Union[typing.List,numpy.ndarray]=None,
+        fieldType: FieldType=FieldType.FT_vertexBased,
+        objectID: int=0,
+        metaData: dict={}):
         """
         Initializes the field instance.
 
@@ -115,13 +166,6 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         else:
             self.unit = physicalquantities.findUnit(units)
             
-        self.setMetadata('Units', self.unit.name())
-        self.setMetadata('Type', 'mupif.field.Field')
-        self.setMetadata('Type_ID', str(self.fieldID))
-        self.setMetadata('FieldType', str(fieldType))
-        self.setMetadata('ValueType', str(self.valueType))
-        
-        self.updateMetadata(metaData)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
@@ -205,7 +249,15 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         """
         return self.time
 
-    def evaluate(self, positions, eps=0.0):
+    @pydantic.validate_arguments
+    def evaluate(self,
+        positions: typing.Union[
+            typing.List[typing.Tuple[float,float,float]], # list of 3d coords
+            typing.List[typing.Tuple[float,float]], # list of 2d coords
+            typing.Tuple[float,float,float], # single 3d coords
+            typing.Tuple[float,float] # single 2d coord
+        ],
+        eps: float=0.0):
         """
         Evaluates the receiver at given spatial position(s).
 
@@ -765,7 +817,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         self.field2VTKData().tofile(filename=fileName, format=format)
 
     @staticmethod
-    def makeFromVTK2(fileName, unit, time=0, skip=['coolwarm']):
+    def makeFromVTK2(fileName, unit, time=PhysicalQuantity(0,'s'), skip=['coolwarm']):
         """
         Return fields stored in *fileName* in the VTK2 (``.vtk``) format.
 
@@ -881,7 +933,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         # finito
 
     @staticmethod
-    def makeFromVTK3(fileName, units, time=0, forceVersion2=False):
+    def makeFromVTK3(fileName, units, time=PhysicalQuantity(0,'s'), forceVersion2=False):
         """
         Create fields from a VTK unstructured grid file (``.vtu``, format version 3, or ``.vtp`` with *forceVersion2*); the mesh is shared between fields.
 
