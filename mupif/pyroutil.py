@@ -54,6 +54,25 @@ import itertools
 testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
 
 
+def fixZeroIP(ip,name):
+    # origin: https://stackoverflow.com/a/28950776/761090
+    '''Guess (non-localhost) IP when binding to 0.0.0.0'''
+    if ip!='0.0.0.0': return ip
+    import socket
+    s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255',1)) # doesn't even have to be reachable
+        ret=s.getsockname()[0]
+        log.info('IP address for %s adjusted: %s → %s'%(name,ip,ret))
+        return ret
+    except Exception:
+        log.error('IP address for %s: adjustment of %s failed, returning 127.0.0.1'%(name,ip))
+        return '127.0.0.1'
+    finally:
+        s.close()
+
+
+
 def useTestSSL():
     '''
     Set Pyro5 SSL test configuration as Pyro5.config. Not to be used in production settings.
@@ -198,21 +217,23 @@ def connectNameServer(nshost, nsport, timeOut=3.0):
     :rtype: Pyro5.naming.Nameserver
     :raises Exception: When can not connect to a LISTENING port of nameserver
     """
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(timeOut)
-        try:  # Treat socket connection problems separately
-            s.connect((nshost, nsport))
-        except socket.error as msg:
+    
+    if nshost is not None and nsport!=0:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(timeOut)
+            try:  # Treat socket connection problems separately
+                s.connect((nshost, nsport))
+            except socket.error as msg:
+                log.exception(msg)
+                raise Exception('Socket connection error to nameServer')
+            s.close()
+            log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
+        except Exception:
+            msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + \
+                  ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
             log.exception(msg)
-            raise Exception('Socket connection error to nameServer')
-        s.close()
-        log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
-    except Exception:
-        msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + \
-              ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
-        log.exception(msg)
-        raise
+            raise
 
     # locate nameserver
     try:
@@ -358,7 +379,7 @@ def runDaemon(host, port, nathost=None, natport=None):
     :return Instance of the running daemon, None if a problem
     :rtype Pyro5.api.Daemon
     """
-    
+    host=fixZeroIP(host,'[daemon]')
     if isinstance(port, (tuple, list)):
         ports = port
     else:
@@ -396,6 +417,9 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daem
 
     :raises Exception: if can not run Pyro5 daemon
     """
+    # fix the IP address published so that it is not 0.0.0.0
+    server=fixZeroIP(server,appName)
+
     externalDaemon = False
     if not daemon:
         try:
@@ -438,7 +462,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daem
 
     log.debug('NameServer %s has registered uri %s' % (appName, uri))
     log.debug(
-        'Running runAppServer: server:%s, port:%s, nathost:%s, natport:%s, nameServer:%s, nameServerPort:%s, '
+        'Running runServer: server:%s, port:%s, nathost:%s, natport:%s, nameServer:%s, nameServerPort:%s, '
         'applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri)
     )
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread

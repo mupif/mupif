@@ -5,11 +5,11 @@ rednose
 Pyro5
 jsonpickle
 jsonschema
-vtk
+# vtk
 pyvtk
 h5py
 matplotlib
 msgpack
-pydantic
+pydantic>=1.7.3
 # for documentation
 sphinxcontrib-apidoc

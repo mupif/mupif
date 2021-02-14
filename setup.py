@@ -75,7 +75,8 @@ setup(
     # 'scipy' fails due to missing compiler for Lapack etc.
     install_requires=[
         'numpy', 'scipy', 'setuptools', 'enum34', 'pyvtk', 'config', 'nose', 'rednose', 'Pyro5', 'jsonpickle',
-        'jsonschema', 'vtk', 'pyvtk', 'matplotlib==3.0.3', 'msgpack', 'pydantic'
+        'jsonschema', 'pyvtk', 'matplotlib', 'msgpack', 'pydantic'
+        # 'vtk'
     ],
     include_package_data=True,
     zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)

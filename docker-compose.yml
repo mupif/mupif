@@ -1,0 +1,109 @@
+version: "3.3"
+services:
+    pyro-ns:
+        image: img-mupif
+        build: .
+        environment:
+            - PYRO_SERIALIZER=serpent
+            - PYRO_SERVERTYPE=multiplex
+            - PYRO_SSL=0
+        #  https://stackoverflow.com/a/51680331/761090
+        command: pyro5-ns -n 0.0.0.0
+        expose: ['1025-65535']
+    ex01:
+        image: img-mupif
+        working_dir: /tmp/mupif/mupif/examples/Example01-local
+        environment: ['PYTHONPATH=..']
+        command: python3 Example01.py --mode=4
+    ex02srv:
+        image: img-mupif
+        depends_on: ['pyro-ns']
+        working_dir: /tmp/mupif/mupif/examples/Example02-distrib
+        environment: ['PYTHONPATH=..']
+        command: python3 server.py --mode=4
+        expose: ['1025-65535']
+    ex02ex:
+        image: img-mupif
+        depends_on: ['ex02srv']
+        working_dir: /tmp/mupif/mupif/examples/Example02-distrib
+        environment: ['PYTHONPATH=..']
+        command: python3 Example02.py --mode=4
+        expose: ['1025-65535']
+    ex03:
+        image: img-mupif
+        working_dir: /tmp/mupif/mupif/examples/Example03-field-local
+        environment: ['PYTHONPATH=..']
+        command: python3 Example03.py
+    ex04srv:
+        image: img-mupif
+        depends_on: ['pyro-ns']
+        working_dir: /tmp/mupif/mupif/examples/Example04-jobMan-distrib
+        environment: ['PYTHONPATH=..']
+        command: python3 server.py --mode=4
+        expose: ['1025-65535']
+    ex04ex:
+        image: img-mupif
+        depends_on: ['ex04srv']
+        working_dir: /tmp/mupif/mupif/examples/Example04-jobMan-distrib
+        environment: ['PYTHONPATH=..']
+        command: python3 Example04.py --mode=4
+        expose: ['1025-65535']
+    ex05:
+        image: img-mupif
+        working_dir: /tmp/mupif/mupif/examples/Example05-units-local
+        environment: ['PYTHONPATH=..']
+        command: python3 Example05.py
+    ex06:
+        image: img-mupif
+        working_dir: /tmp/mupif/mupif/examples/Example06-stacTM-local
+        environment: ['PYTHONPATH=..']
+        command: python3 Example06.py
+    ex07srv-therm:
+        image: img-mupif
+        depends_on: ['pyro-ns']
+        working_dir: /tmp/mupif/mupif/examples/Example07-stacTM-JobMan-distrib
+        environment: 
+            - PYTHONPATH=..
+        command: python3 thermalServer.py --mode=4
+        expose: ['1025-65535']
+    ex07srv-mech:
+        image: img-mupif
+        depends_on: ['pyro-ns']
+        working_dir: /tmp/mupif/mupif/examples/Example07-stacTM-JobMan-distrib
+        environment: 
+            - PYTHONPATH=..
+        command: python3 mechanicalServer.py --mode=4
+        expose: ['1025-65535']
+    ex07ex:
+        image: img-mupif
+        depends_on: ['ex07srv-therm','ex07srv-mech']
+        working_dir: /tmp/mupif/mupif/examples/Example07-stacTM-JobMan-distrib
+        environment: ['PYTHONPATH=..']
+        command: python3 Example07.py --mode=4
+        expose: ['1025-65535']
+    ex08srv-therm:
+        image: img-mupif
+        depends_on: ['pyro-ns']
+        working_dir: /tmp/mupif/mupif/examples/Example08-transiTM-JobMan-distrib
+        environment: ['PYTHONPATH=..']
+        environment: 
+            - PYTHONPATH=..
+        command: python3 thermalServer.py --mode=4
+        expose: ['1025-65535']
+    ex08srv-mech:
+        image: img-mupif
+        depends_on: ['pyro-ns']
+        working_dir: /tmp/mupif/mupif/examples/Example08-transiTM-JobMan-distrib
+        environment: ['PYTHONPATH=..']
+        environment: 
+            - PYTHONPATH=..
+        command: python3 mechanicalServer.py --mode=4
+        expose: ['1025-65535']
+    ex08ex:
+        image: img-mupif
+        depends_on: ['ex08srv-therm','ex08srv-mech']
+        working_dir: /tmp/mupif/mupif/examples/Example08-transiTM-JobMan-distrib
+        environment: ['PYTHONPATH=..']
+        command: python3 Example08.py --mode=4
+        expose: ['1025-65535']
+

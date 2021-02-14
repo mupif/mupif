@@ -4,6 +4,7 @@ import os
 import os.path
 import Pyro5
 import logging
+import tempfile
 import mupif.pyroutil
 log = logging.getLogger()
 
@@ -18,7 +19,7 @@ class config(object):
     
     def __init__(self, mode):
         self.mode = mode
-        if mode not in [0, 1, 2, 3]:
+        if mode not in [0, 1, 2, 3, 4]:
             log.error("Unknown mode -m %d" % mode)
         
         Pyro5.config.SERIALIZER = "serpent"
@@ -38,7 +39,8 @@ class config(object):
         # commmon attributes
         # Password for accessing nameServer and applications
         # self.hkey = 'mupif-secret-key'
-        mupif.pyroutil.useTestSSL()
+        Pyro5.config.SSL=False
+        # mupif.pyroutil.useTestSSL()
 
         # Name of job manager
         self.jobManName = 'Mupif.JobManager@Example'
@@ -57,9 +59,16 @@ class config(object):
         # Auxiliary port used to communicate with application daemons on a local computer
         self.socketApps = 10000
         # Main directory for transmitting files
-        self.jobManWorkDir = '.'
+
+        # keep reference to the object around, the directory will be automatically deleted
+        self.jobManWorkDirTemp=tempfile.TemporaryDirectory(prefix='jobman')
+        self.jobManWorkDir = self.jobManWorkDirTemp.name # '.'
         # Path to JobMan2cmd.py
-        self.jobMan2CmdPath = "../../tools/JobMan2cmd.py"
+        if os.path.exists('../../tools'):
+            self.jobMan2CmdPath = "../../tools/JobMan2cmd.py"
+        elif os.path.exists('../tools'):
+            self.jobMan2CmdPath = "../tools/JobMan2cmd.py"
+        else: raise RuntimeError('Where is tools/JobMan2cmd.py?')
         
         if 'TRAVIS' in os.environ:  # run everything locally on TRAVIS
             self.mode = 0
@@ -193,6 +202,24 @@ class config(object):
             self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
 
+        if self.mode == 4:
+            ## docker-compose
+            ## this is attempt at zero-config setup
+            ## Pyro NS is located via broadcast and is used for looking up all the other components
+            self.nshost=None
+            self.nsport=0
+            self.monitorServer=None
+            self.monitorPort=0
+            self.server='0.0.0.0'
+            self.serverPort=0
+            self.serverNathost=None
+            self.serverNatport=None
+            self.jobNatPorts=[None]
+            self.server2='0.0.0.0'
+            self.serverPort2=0
+            self.server3='0.0.0.0'
+            self.serverPort3=0
+
         self.sshHost = ''
         # SSH CLIENT
         # User name for ssh connection, empty uses current login name
@@ -203,7 +230,7 @@ class config(object):
                 self.options = "-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key " \
                                "-oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts" % (thisdir, thisdir)
                 self.serverUserName = os.environ['USER']
-        elif mode == 0 or mode == 1:
+        elif mode in (0,1):
             self.serverUserName = os.getenv('USER')
             if sys.platform.lower().startswith('win'):  # Windows ssh client
                 self.sshClient = 'C:\\Program Files (x86)\\Putty\\putty.exe'
@@ -211,6 +238,7 @@ class config(object):
             else:  # Unix ssh client
                 self.sshClient = 'ssh'
                 self.options = '-oStrictHostKeyChecking=no'
-        elif mode == 2 or mode == 3:  # VPN
+        elif mode in (2,3,4):  # VPN
             self.sshClient = 'manual'
             self.options = ''
+        else: raise ValueError('Unknown network mode for example config: %d (must be 0,1,2,3,4)'%mode)

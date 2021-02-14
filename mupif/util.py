@@ -110,7 +110,7 @@ def getParentParser():
     :rtype: argparse object
     """
     parentParser = argparse.ArgumentParser(add_help=False)
-    parentParser.add_argument('-m', required=False, type=int, default=0, dest="mode",
+    parentParser.add_argument('-m','--mode', required=False, type=int, default=0, dest="mode",
                               help='Network mode 0-local (default), 1-ssh, 2-VPN')
     return parentParser
 
