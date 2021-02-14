@@ -3,22 +3,24 @@ import tempfile
 from mupif import *
 from mupif.physics.physicalquantities import PhysicalUnit as PU
 import mupif.physics.physicalquantities as PQ
-import math
+import math, os
 import numpy as np
 
-# check for python-vtk before running related tests
-try:
-    import vtk
-    vtkAvailable=True
-except ImportError:
-    vtkAvailable=False
+try: import vtk
+except ImportError: vtk=None
 
+try: import pyvtk
+except ImportError: pyvtk=None
+
+try: import meshio
+except ImportError: meshio=None
 
 class Field_TestCase(unittest.TestCase):
     def setUp(self):
 
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name
+        # self.tmpdir,self.tmp=None,'/tmp/mupif'; os.makedirs(self.tmp,exist_ok=True) # for debugging
         
         self.mesh = mesh.UnstructuredMesh()
         self.mesh.setup([vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(2.,0.,0.)), vertex.Vertex(2,2,(0.,5.,0.)), vertex.Vertex(3,3,(4.,2.,0.))], [cell.Triangle_2d_lin(self.mesh,1,1,(0,1,2)),cell.Triangle_2d_lin(self.mesh,2,2,(1,2,3))])
@@ -54,7 +56,7 @@ class Field_TestCase(unittest.TestCase):
         
     def tearDown(self):
 
-        self.tmpdir.cleanup()
+        if self.tmpdir: self.tmpdir.cleanup()
         
         self.f1 = None
         self.f2 = None
@@ -132,9 +134,8 @@ class Field_TestCase(unittest.TestCase):
         self.f4.commit()
         self.assertEqual(self.f4.getVertexValue(3).getValue(),[5],'error in setValue for f4')
     def test_getUnits(self):
-        # NB: PhysicalQuantity does not define __eq__ operator, hence string representation (name()) is compared
-        self.assertEqual(self.f1.getUnits().name(),PU({'m': 1}, 1,(1,0,0,0,0,0,0)).name(),'error in getUnits for f1')
-        self.assertEqual(self.f2.getUnits().name(),PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)).name(),'error in getUnits for f2')
+        self.assertEqual(self.f1.getUnits(),PU({'m': 1}, 1,(1,0,0,0,0,0,0)),'error in getUnits for f1')
+        self.assertEqual(self.f2.getUnits(),PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),'error in getUnits for f2')
         
     def test_merge(self):
         self.f5.merge(self.f1)
@@ -147,91 +148,61 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f5.getMesh().getCell(2).getVertices()[0].label,1,'error in merge (label 1)')
         self.assertEqual(self.f5.getMesh().getCell(2).getVertices()[1].label,2,'error in merge (label 2)')
         self.assertEqual(self.f5.getMesh().getCell(2).getVertices()[2].label,3,'error in merge (label 3)')
-       
+
+    def _compareFields(self,orig,loaded,units=True):
+        self.assertEqual(orig.getRecordSize(),loaded.getRecordSize())
+        self.assertEqual(orig.getValueType(),loaded.getValueType())
+        self.assertEqual(orig.getFieldID(),loaded.getFieldID())
+        self.assertEqual(orig.getFieldIDName(),loaded.getFieldIDName())
+        self.assertEqual(orig.getTime().getValue(),loaded.getTime().getValue())
+        self.assertEqual(orig.getVertexValue(0),loaded.getVertexValue(0))
+        self.assertEqual(orig.getVertexValue(1),loaded.getVertexValue(1))
+        self.assertEqual(orig.getVertexValue(2),loaded.getVertexValue(2))
+        self.assertEqual(orig.getVertexValue(3),loaded.getVertexValue(3))
+        self.assertEqual(orig.getUnits().name(),loaded.getUnits().name())
+        
+    def test_ioDump(self):
+        f=self.tmp+'/aa.dump'
+        self.f1.dumpToLocalFile(f)
+        res=self.f1.loadFromLocalFile(f)
+        self._compareFields(self.f1,res)
+
+    def test_ioHdf5(self):
+        f=self.tmp+'/aa.hdf5'
+        self.f1.toHdf5(f)
+        res=self.f1.makeFromHdf5(f)[0]
+        self._compareFields(self.f1,res)
+
+    @unittest.skipIf(pyvtk is None,'pyvtk not importable')
     def test_field2VTKData(self):
        self.res=self.f5.field2VTKData()
        import pyvtk
-       self.assertTrue(isinstance(self.res,pyvtk.VtkData),'error in getVTKRepresentation')       
-        
-    def test_dumpToLocalFile(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            f=tmp+'/aa.dump'
-            self.f1.dumpToLocalFile(f)
-            self.res=self.f1.loadFromLocalFile(f)
-        self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in dumpToLocalFile(getRecordSize for res)')
-        self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in dumpToLocalFile(getValueType for res)')    
-        self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in dumpToLocalFile(getFieldID for res)')
-        self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in dumpToLocalFile(getFieldIDName for res)')
-        self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in dumpToLocalFile(getTime for res)')
-        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in dumpToLocalFile(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in dumpToLocalFile(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in dumpToLocalFile(getVertexValue for res)')
-        print(self.res.getUnits())
-        print(self.f1.getUnits())
-        self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in dumpToLocalFile(getUnits for res)')
-        
-        self.f4.dumpToLocalFile('dump')
-        self.res=self.f4.loadFromLocalFile('dump')
-        self.assertEqual(self.res.getRecordSize(), self.f4.getRecordSize(), 'error in dumpToLocalFile(getRecordSize for res)')
-        self.assertEqual(self.res.getValueType(),self.f4.getValueType(), 'error in dumpToLocalFile(getValueType for res)')
-        self.assertEqual(self.res.getFieldID(),self.f4.getFieldID(),'error in dumpToLocalFile(getFieldID for res)')
-        self.assertEqual(self.res.getFieldIDName(),self.f4.getFieldIDName(),'error in dumpToLocalFile(getFieldIDName for res)')
-        self.assertEqual(self.res.getTime().getValue(),self.f4.getTime().getValue(), 'error in dumpToLocalFile(getTime for res)')
-        self.assertEqual(self.res.getVertexValue(0),self.f4.getVertexValue(0),'error in dumpToLocalFile(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(1),self.f4.getVertexValue(1),'error in dumpToLocalFile(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(2),self.f4.getVertexValue(2),'error in dumpToLocalFile(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(3),self.f4.getVertexValue(3),'error in dumpToLocalFile(getVertexValue for res)')
-        
-    def test_toHdf5(self):
-        f=self.tmp+'/aa.hdf5'
-        self.f1.toHdf5(f)
-        self.res=self.f1.makeFromHdf5(f)[0]
+       self.assertTrue(isinstance(self.res,pyvtk.VtkData),'error in getVTKRepresentation')
 
-        self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toHdf5(getRecordSize for res)')
-        self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toHdf5(getValueType for res)')    
-        self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toHdf5(getFieldID for res)')
-        self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in toHdf5(getFieldIDName for res)')
-        self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toHdf5(getTime for res)')
-        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in toHdf5(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in toHdf5(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in toHdf5(getVertexValue for res)')
-        self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in toHdf5(getUnits for res)')
-        
-    def test_toVTK2(self):
+    @unittest.skipIf(pyvtk is None,'pyvtk not importable')
+    def test_ioVTK2(self):
         f=self.tmp+'/aa.vtk'
         self.f1.toVTK2(f)
-        self.res=self.f1.makeFromVTK2(f, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
-
-        print(self.res)
-        self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toVTK2(getRecordSize for res)')
-        self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toVTK2(getValueType for res)')    
-        self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toVTK2(getFieldID for res)')
-        self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in toVTK2(getFieldIDName for res)')
-        self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toVTK2(getTime for res)')
-        # XXX: makeFromVTK2 returns 1-list, original field has 1-tuple
-        # what is right?
-        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in toVTK2(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in toVTK2(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in toVTK2(getVertexValue for res)')
+        res=self.f1.makeFromVTK2(f, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
         # VTK2 does not store units
-        # self.assertEqual(self.res.getUnits(),self.f1.getUnits(),'error in toVTK2(getUnits for res)')
+        self._compareFields(self.f1,res,units=False)
        
-    @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
-    def test_toVTK3(self):
+    @unittest.skipIf(vtk is None,'vtk (python-vtk*) not importable')
+    def test_ioVTK3(self):
         f=self.tmp+'/aa.vtu'
         self.f1.toVTK3(f)
-        self.res=self.f1.makeFromVTK3(f,self.f1.getUnits(),time=self.f1.getTime())[0]
-        self.assertEqual(self.res.getRecordSize(),self.f1.getRecordSize(), 'error in toVTK3(getRecordSize for res)')
-        self.assertEqual(self.res.getValueType(),self.f1.getValueType(), 'error in toVTK3(getValueType for res)')    
-        self.assertEqual(self.res.getFieldID(),self.f1.getFieldID(),'error in toVTK3(getFieldID for res)')
-        self.assertEqual(self.res.getFieldIDName(),self.f1.getFieldIDName(),'error in toVTK3(getFieldIDName for res)')
-        self.assertEqual(self.res.getTime().getValue(),self.f1.getTime().getValue(), 'error in toVTK3(getTime for res)')
-        self.assertEqual(self.res.getVertexValue(0),self.f1.getVertexValue(0),'error in toVTK3(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(1),self.f1.getVertexValue(1),'error in toVTK3(getVertexValue for res)')
-        self.assertEqual(self.res.getVertexValue(2),self.f1.getVertexValue(2),'error in toVTK3(getVertexValue for res)')
-        # VTK3 does not store units
-        # self.assertEqual(self.res.getUnits().name(),self.f1.getUnits().name(),'error in toVTK3(getUnits for res)')
-        
-        
+        self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnits(),time=self.f1.getTime())[0]
+        self._compareFields(self.f1,self.res)
+
+    @unittest.skipIf(meshio is None,'meshio not importable')
+    def test_ioMeshio(self):
+        m=self.f1.toMeshioMesh()
+        for ext in 'vtu','vtk','xdmf':
+            out=self.tmp+'/meshio.'+ext
+            m.write(out)
+            res=field.Field.makeFromMeshioMesh(out,units={self.f1.getFieldIDName():self.f1.getUnits()},time=self.f1.getTime())[0]
+            self._compareFields(self.f1,res)
+
+
 # python test_Field.py for stand-alone test being run
 if __name__=='__main__': unittest.main()

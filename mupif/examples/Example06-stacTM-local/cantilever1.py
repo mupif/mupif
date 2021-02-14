@@ -42,7 +42,7 @@ tstep = timestep.TimeStep(1., 1., 10, 's')
 app1 = demoapp.mechanical(fileName, '.')
 sol = app1.solveStep(tstep) 
 f = app1.getField(FieldID.FID_Displacement, tstep.getTargetTime())
-f.field2VTKData().tofile('cantilever1.vtk')
+f.toMeshioMesh().write('cantilever1.vtk')
 # f.field2Image2D(fieldComponent=1, title='Displacement', fileName='cantilever1.png')
 # right bottom point
 # time.sleep(2)

@@ -28,6 +28,7 @@ from . import bbox
 from . import apierror
 from . import mupifobject
 from . import FieldID
+from . import cellgeometrytype
 import mupif.mesh
 from .physics import physicalquantities 
 from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
@@ -40,6 +41,7 @@ import typing
 
 from numpy import array, arange, random, zeros
 import numpy
+import numpy as np
 import copy
 import Pyro5
 from enum import IntEnum
@@ -806,6 +808,63 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
             ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, units=units, time=time, valueType=valueType, values=values, fieldType=fieldType))
         hdf.close() # necessary for windows
         return ret
+
+
+    def toMeshioMesh(self):
+        return Field.manyToMeshioMesh([self])
+
+    @staticmethod
+    # @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def manyToMeshioMesh(
+        fields: typing.Sequence[mupif.Field]
+    ) -> typing.List[mupif.Field]:
+        import meshio
+        if len(fields)==0: raise ValueError('fields must not be enpty.')
+        if len(set([f.getMesh() for f in fields]))!=1: raise RuntimeError('All fields must share the same mupif.Mesh.')
+        msh=fields[0].getMesh()
+        points=msh.getVertices()
+        cell_data,point_data={},{}
+        # defined here: https://github.com/nschloe/meshio/blob/6a1b8c4c3db24ea788a8cac00e46c7f9d562e4d0/meshio/_common.py#L189
+        points,cells_list=msh.toMeshioPointsCells()
+        for f in fields:
+            assert f.getFieldType() in (FieldType.FT_vertexBased, FieldType.FT_cellBased)
+            ptData=f.getFieldType()==FieldType.FT_vertexBased
+            rows=msh.getNumberOfVertices() if ptData else msh.getNumberOfCells()
+            cols=f.getRecordSize()
+            dta=np.ndarray((rows,cols),dtype='float32')
+            dta=np.array([f.giveValue(row) for row in range(rows)])
+            (point_data if ptData else cell_data)[f.getFieldIDName()]=dta
+        return meshio.Mesh(points,cells_list,point_data,cell_data)
+
+
+    def makeFromMeshioMesh(
+            input: typing.Union[str,meshio.Mesh], # could also be buffer, is that useful?
+            units: dict[str,PhysicalUnit], # maps field name to PhysicalUnit
+            time: PhysicalQuantity=PhysicalQuantity(0,'s')
+        ) -> typing.List[Field]:
+        if isinstance(input,str):
+            import meshio
+            input=meshio.read(input)
+        msh=mupif.mesh.Mesh.makeFromMeshioPointsCells(input.points,input.cells)
+        ret=[]
+        for data,fieldType in (input.point_data,FieldType.FT_vertexBased),(input.cell_data,FieldType.FT_cellBased):
+            for fname,values in data.items():
+                # reshape scalar array saved as 1D
+                if len(values.shape)==1: values=np.reshape(values,(-1,1))
+                ret.append(Field(
+                    mesh=msh,
+                    fieldID=FieldID[fname],
+                    units=units.get(fname,None),
+                    time=time,
+                    valueType=ValueType.fromNumberOfComponents(values.shape[1]),
+                    values=values,
+                    fieldType=fieldType
+                ))
+        return ret
+
+
+    @staticmethod
+    def fromMeshioMesh(m): raise NotImplementedError('maybe later')
 
     def toVTK2(self, fileName, format='ascii'):
         """

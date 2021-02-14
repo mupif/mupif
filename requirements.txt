@@ -1,15 +1,14 @@
 numpy
 scipy
+meshio
 nose
 rednose
 Pyro5
+serpent
 jsonpickle
 jsonschema
-# vtk
-pyvtk
 h5py
 matplotlib
-msgpack
 pydantic>=1.7.3
 # for documentation
 sphinxcontrib-apidoc

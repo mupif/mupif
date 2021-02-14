@@ -151,19 +151,14 @@ class ConstantProperty(Property):
         :return: Property value as an array
         :rtype: tuple
         """
-        try:
-            if ((self.time is None) or (time is None) or (self.time == time)):
-                for key, value in kwargs.items():
-                    if key == 'unit':
-                        # print(key,value)
-                        self.convertToUnit(unit=value)
-                return self.value
-            else:
-                print("Property propID %d " % self.propID, "self.time", self.time, "time", time)
-                raise ValueError('Time out of range')
-        except:
-            print (self.time, time)
-            raise
+        if ((self.time is None) or (time is None) or (self.time == time)):
+            for key, value in kwargs.items():
+                if key == 'unit':
+                    # print(key,value)
+                    self.convertToUnit(unit=value)
+            return self.value
+        else:
+            raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
 
     def getTime(self):
         """

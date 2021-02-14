@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-from builtins import range
-#
-# This example requires pyvtk module, install it using
-# pip install pyvtk
-# Note: pyvtk is only available in Python 2.x (Sept, 2014)
-#
 import sys
 import logging
 sys.path.append('../../..')
@@ -59,8 +53,8 @@ def main():
     value2 = field2.evaluate(position)  # correct answer 287.0
     log.debug("Field2 value at position "+str(position)+" is "+str(value2))
 
-    field1.field2VTKData().tofile('example1')
-    field2.field2VTKData().tofile('example2')
+    field1.toMeshioMesh().write('example1.vtk')
+    field2.toMeshioMesh().write('example2.vtk')
 
     # Test pickle module - serialization
     field1.dumpToLocalFile('field.dat')

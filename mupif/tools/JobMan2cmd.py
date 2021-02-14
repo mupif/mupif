@@ -93,7 +93,7 @@ def main():
         #     conf.serverNathost = conf.server
 
         daemon = pyroutil.runDaemon(host=conf.server, port=int(daemonPort), nathost=conf.serverNathost, natport=natPort)
-        log.info(f'Running daemon {conf.server}%s:{daemonPort} (NAT {conf.serverNathost}:{natPort})')
+        log.info(f'Running daemon {conf.server}:{daemonPort} (NAT {conf.serverNathost}:{natPort})')
         # Initialize application
         # app = DemoApplication.DemoApplication()
         log.info(

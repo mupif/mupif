@@ -60,7 +60,7 @@ from . import timer
 from . import timestep
 from . import util
 from . import vertex
-from . import vtkreader2
+# from . import vtkreader2
 from . import remoteapprecord
 from . import pyrofile
 from . import mupifobject
@@ -73,7 +73,7 @@ from . import constantfield
 # List all submodules, so they can all be imported: from mupif import *
 __all__ = [
     # submodules
-    'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'ensightreader2', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'vtkreader2', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
+    'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'ensightreader2', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
     ##
     # objects imported from submodules
     'FieldID','PropertyID','FunctionID','ParticleSetID','ValueType'

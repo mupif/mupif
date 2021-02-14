@@ -111,14 +111,21 @@ class Example08(workflow.Workflow):
         
         log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
         
+        # suppress show meshio warnings that writing VTK ASCII is for debugging only
+        import logging
+        level0=logging.getLogger().level
+        logging.getLogger().setLevel(logging.ERROR)
+
         self.thermal.solveStep(istep)
         f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
-        data = f.field2VTKData().tofile('T_%s' % str(istep.getNumber()))
+        data = f.toMeshioMesh().write('T_%02d.vtk'%istep.getNumber(),binary=False)
 
         self.mechanical.setField(f)
         sol = self.mechanical.solveStep(istep) 
         f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
-        data = f.field2VTKData().tofile('M_%s' % str(istep.getNumber()))
+        data = f.toMeshioMesh().write('M_%02d.vtk'%istep.getNumber(),binary=False)
+
+        logging.getLogger().setLevel(level0)
 
         self.thermal.finishStep(istep)
         self.mechanical.finishStep(istep)

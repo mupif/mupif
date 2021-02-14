@@ -103,13 +103,13 @@ tstep = timestep.TimeStep(
 demo.solveStep(tstep)
 
 tf = demo.getField(FieldID.FID_Temperature, tstep.getTime())
-# tf.field2VTKData().tofile('thermal10')
+# tf.toMeshioMesh.write('thermal10.vtk')
 # tf.field2Image2D(title='Thermal', fileName='thermal.png')
 # time.sleep(1)
 t_val = tf.evaluate((4.1, 0.9, 0.0))
 
 mf = demo.getField(FieldID.FID_Displacement, tstep.getTime())
-# mf.field2VTKData().tofile('mechanical10')
+# mf.toMeshioMesh.write('mechanical10')
 # mf.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
 # time.sleep(1)
 m_val = mf.evaluate((4.1, 0.9, 0.0))

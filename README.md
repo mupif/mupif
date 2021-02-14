@@ -8,11 +8,12 @@ MuPIF is modular, object-oriented integration platform allowing to create comple
 [![Downloads](https://pepy.tech/badge/mupif)](https://pepy.tech/project/mupif)
 [![Downloads](https://pepy.tech/badge/mupif/month)](https://pepy.tech/project/mupif)
 
-## Project website
-http://www.mupif.org
+## Documentation
+* [User manual and reference](https://mupif.readthedocs.io/en/latest)
+* [MuPIF homepage](http://www.mupif.org)
 
 ## Prerequisites
-MuPIF requires the python interpreter, version 3.2 or newer. It has been tested on Linux / Windows systems. Network communication relies on Pyro4 module.
+MuPIF requires the python interpreter, version 3.8 or newer. It has been tested on Linux / Windows systems. Network communication relies on Pyro5 module.
 
 ## Installation
 
@@ -22,7 +23,7 @@ There are two options for MuPIF installation:
 * For a user space installation: `pip3 install mupif --user`
 
 The second option relies on the most advanced version on github:
-* ```git clone https://github.com/mupif/mupif.git mupif.git```*
+* ```git clone https://github.com/mupif/mupif.git mupif.git```
 
 ## License
 MuPIF has been developed at Czech Technical University by Borek Patzak and coworkers and is available under GNU Library or Lesser General Public License version 3.0 (LGPLv3).

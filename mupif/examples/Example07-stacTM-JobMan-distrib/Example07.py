@@ -179,8 +179,8 @@ class Example07(workflow.Workflow):
 
         # save results as vtk
         temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
-        temperatureField.field2VTKData().tofile('temperatureField')
-        displacementField.field2VTKData().tofile('displacementField')
+        temperatureField.toMeshioMesh().write('temperatureField.vtk')
+        displacementField.toMeshioMesh().write('displacementField.vtk')
         log.info("Time consumed %f s" % (timeT.time()-start))
 
     def getCriticalTimeStep(self):

@@ -132,7 +132,7 @@ class Mesh(dumpable.Dumpable):
 
     def _postDump(self):
         '''Called when the instance is being reconstructed.'''
-        print('Mesh._postDump…')
+        # print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
             object.__setattr__(self.getCell(i),'mesh',self)
 
@@ -293,6 +293,38 @@ class Mesh(dumpable.Dumpable):
             ) for ci in range(mct.shape[0])
         ]
         ret.setup(vertexList=vertices, cellList=cells)
+        return ret
+
+    def toMeshioPointsCells(self):
+        import numpy as np
+        ret={}
+        for ic in range(self.getNumberOfCells()):
+            c=self.getCell(ic)
+            cellGeomTypeMap={
+                cellgeometrytype.CGT_TRIANGLE_1:'triangle',
+                cellgeometrytype.CGT_QUAD:'quad',
+                cellgeometrytype.CGT_TETRA:'tetra',
+                cellgeometrytype.CGT_HEXAHEDRON:'hexahedron',
+                cellgeometrytype.CGT_TRIANGLE_2:'triangle6'
+            }
+            t=cellGeomTypeMap[c.getGeometryType()]
+            ids=[v.getNumber() for v in c.getVertices()]
+            if t in ret: ret[t].append(ids)
+            else: ret[t]=[ids]
+        return self.getVertices(),[(type,np.array(ids)) for type,ids in ret.items()]
+
+    @staticmethod
+    def makeFromMeshioPointsCells(points,cells):
+        ret=UnstructuredMesh()
+        vv=[vertex.Vertex(number=row,label=None,coords=tuple(points[row])) for row in range(points.shape[0])]
+        cc=[]
+        cgt=cellgeometrytype
+        c0=0
+        for block in cells:
+            klass=cell.Cell.getClassForCellGeometryType({'triangle':cgt.CGT_TRIANGLE_1,'quad':cgt.CGT_QUAD,'tetra':cgt.CGT_TETRA,'hexahedron':cgt.CGT_HEXAHEDRON,'triangle6':cgt.CGT_TRIANGLE_2}[block.type])
+            cc+=[klass(mesh=ret,number=c0+row,label=None,vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
+            c0+=block.data.shape[0]
+        ret.setup(vertexList=vv,cellList=cc)
         return ret
 
     def asVtkUnstructuredGrid(self):
