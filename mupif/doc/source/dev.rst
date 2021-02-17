@@ -18,7 +18,7 @@ The whole installation is the relatively simple:
 
    pip install wenv
    wenv init
-   wenv pip install --only-binary=vtk --only-binary=h5py --only-binary=pyrsistent -r requirements.txt
+   wenv pip install --only-binary=pyrsistent -r requirements.txt
 
 The last line prevents compilation of complex packages from the source (binaries are available).
 
