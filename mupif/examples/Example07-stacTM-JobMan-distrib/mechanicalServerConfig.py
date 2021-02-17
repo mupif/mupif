@@ -1,7 +1,7 @@
 import os
 import sys
 # Import example-wide configuration
-sys.path.extend(['..', '../Example06-stacTM-local'])
+sys.path.extend(['..'])
 from Config import config
 import models
 

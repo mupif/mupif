@@ -30,6 +30,6 @@ pyroutil.runAppServer(
     nathost=None,
     nshost=cfg.nshost,
     nsport=cfg.nsport,
-    appName='mechanical',
+    appName='mechanical-ex08',
     app=mechanical
 )

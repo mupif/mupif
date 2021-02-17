@@ -52,7 +52,7 @@ class Example08(workflow.Workflow):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
-        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName)
+        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName+'-ex08')
         
         try:
             self.thermal = pyroutil.allocateApplicationWithJobManager(
@@ -63,18 +63,19 @@ class Example08(workflow.Workflow):
             log.info('Created thermal job')
         except Exception as e:
             log.exception(e)
+            log.error('HSDFSD')
             self.terminate()
 
         # Connecting directly to mechanical instance, not using jobManager
-        self.mechanical = pyroutil.connectApp(ns, 'mechanical')
+        self.mechanical = pyroutil.connectApp(ns, 'mechanical-ex08')
 
         thermalSignature = self.thermal.getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)
         mechanicalSignature = self.mechanical.getApplicationSignature()
         log.info("Working mechanical server " + mechanicalSignature)
 
-        self.registerModel(self.thermal, 'thermal')
-        self.registerModel(self.mechanical, 'mechanical')
+        self.registerModel(self.thermal, 'thermal_8')
+        self.registerModel(self.mechanical, 'mechanical_8')
 
         super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
@@ -167,5 +168,4 @@ if __name__ == '__main__':
     demo.solve()
     demo.printMetadata()
     demo.terminate()
-    log.info("Test OK")
 

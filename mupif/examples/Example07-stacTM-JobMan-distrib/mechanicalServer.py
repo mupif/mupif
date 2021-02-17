@@ -18,7 +18,7 @@ daemon = pyroutil.runDaemon(
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
-    daemon, ns, cfg.applicationClass, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(),
+    daemon, ns, cfg.applicationClass, cfg.jobManName+'-ex07', cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(),
     'mechanicalServerConfig', mode, cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 
 pyroutil.runJobManagerServer(
@@ -28,7 +28,7 @@ pyroutil.runJobManagerServer(
     natport=cfg.serverNatport,
     nshost=cfg.nshost,
     nsport=cfg.nsport,
-    appName=cfg.jobManName,
+    appName=cfg.jobManName+'-ex07',
     jobman=jobMan,
     daemon=daemon
 )

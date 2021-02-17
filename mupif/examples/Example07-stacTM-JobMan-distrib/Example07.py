@@ -49,7 +49,7 @@ class Example07(workflow.Workflow):
         if mode == 1:
             self.thermalJobMan = pyroutil.connectJobManager(
                 ns,
-                cfg.jobManName,
+                cfg.jobManName+'-ex07',
                 pyroutil.SSHContext(
                     userName=cfg.serverUserName,
                     sshClient=cfg.sshClient,
@@ -59,7 +59,7 @@ class Example07(workflow.Workflow):
             )
             self.mechanicalJobMan = pyroutil.connectJobManager(
                 ns,
-                mCfg.jobManName,
+                mCfg.jobManName+'-ex07',
                 pyroutil.SSHContext(
                     userName=mCfg.serverUserName,
                     sshClient=mCfg.sshClient,
@@ -68,8 +68,8 @@ class Example07(workflow.Workflow):
                 )
             )
         else:
-            self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName)
-            self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName)
+            self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName+'-ex07')
+            self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName+'-ex07')
 
         # allocate the application instances
         try:
@@ -105,7 +105,7 @@ class Example07(workflow.Workflow):
                     userName=mCfg.serverUserName,
                     sshClient=mCfg.sshClient,
                     options=mCfg.options,
-                    sshHost=pyroutil.getNSConnectionInfo(ns, mCfg.jobManName)[0]
+                    sshHost=pyroutil.getNSConnectionInfo(ns, mCfg.jobManName+'-ex07')[0]
                 ),
                 self.mechanicalSolver,
                 self.thermalSolver
