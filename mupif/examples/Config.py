@@ -63,12 +63,8 @@ class config(object):
         # keep reference to the object around, the directory will be automatically deleted
         self.jobManWorkDirTemp=tempfile.TemporaryDirectory(prefix='jobman')
         self.jobManWorkDir = self.jobManWorkDirTemp.name # '.'
-        # Path to JobMan2cmd.py
-        if os.path.exists('../../tools'):
-            self.jobMan2CmdPath = "../../tools/JobMan2cmd.py"
-        elif os.path.exists('../tools'):
-            self.jobMan2CmdPath = "../tools/JobMan2cmd.py"
-        else: raise RuntimeError('Where is tools/JobMan2cmd.py?')
+
+        self.jobMan2CmdPath=None
         
         if 'TRAVIS' in os.environ:  # run everything locally on TRAVIS
             self.mode = 0
@@ -206,7 +202,7 @@ class config(object):
             ## docker-compose
             ## this is attempt at zero-config setup
             ## Pyro NS is located via broadcast and is used for looking up all the other components
-            self.nshost=None
+            self.nshost='0.0.0.0'
             self.nsport=0
             self.monitorServer=None
             self.monitorPort=0
