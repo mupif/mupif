@@ -82,33 +82,34 @@ class TestSaveLoad(unittest.TestCase):
         f2=ff2[0]
         self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
 
-    @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
-    def testFieldVtk3SaveLoad(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        v=self.tmp+'/aa.vtu'
-        f.toVTK3(v)
-        ff2=mupif.field.Field.makeFromVTK3(v, f.getUnits())
-        self.assertEqual(len(ff2),1)
-        f2=ff2[0]
-        # just compare coordinates of the first point
-        self.assertEqual(f.getMesh().getVertex(0).getCoordinates(),f2.getMesh().getVertex(0).getCoordinates())
-        # data hash comparison is too strict and fails
-        # as tried, however, saving to VTK again yields byte-to-byte identical .vtu
-        ## self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
-    def _testFieldVtk2SaveLoad(self,format):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
-        v=self.tmp+'/aa.vtk'
-        f.toVTK2(v,format=format)
-        ff2=mupif.field.Field.makeFromVTK2(v, f.getUnits())
-        self.assertEqual(len(ff2),1)
-        f2=ff2[0]
-        # just compare coordinates of the first point
-        self.assertEqual(f.getMesh().getVertex(0).getCoordinates(),f2.getMesh().getVertex(0).getCoordinates())
-    def testFieldVtk2SaveLoad_ascii(self):
-        self._testFieldVtk2SaveLoad(format='ascii')
-    @unittest.skipUnless(vtkAvailable,'Reading binary not supported by pyvtk, vtk (python-vtk/python-vtk6) would be used transparently instead but is not importable.') # vtkAvailable defined above
-#    def testFieldVtk2SaveLoad_binary(self):
-#        self._testFieldVtk2SaveLoad(format='binary')
+    if 0:
+        @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
+        def testFieldVtk3SaveLoad(self):
+            f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+            v=self.tmp+'/aa.vtu'
+            f.toVTK3(v)
+            ff2=mupif.field.Field.makeFromVTK3(v, f.getUnits())
+            self.assertEqual(len(ff2),1)
+            f2=ff2[0]
+            # just compare coordinates of the first point
+            self.assertEqual(f.getMesh().getVertex(0).getCoordinates(),f2.getMesh().getVertex(0).getCoordinates())
+            # data hash comparison is too strict and fails
+            # as tried, however, saving to VTK again yields byte-to-byte identical .vtu
+            ## self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
+        def _testFieldVtk2SaveLoad(self,format):
+            f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+            v=self.tmp+'/aa.vtk'
+            f.toVTK2(v,format=format)
+            ff2=mupif.field.Field.makeFromVTK2(v, f.getUnits())
+            self.assertEqual(len(ff2),1)
+            f2=ff2[0]
+            # just compare coordinates of the first point
+            self.assertEqual(f.getMesh().getVertex(0).getCoordinates(),f2.getMesh().getVertex(0).getCoordinates())
+        def testFieldVtk2SaveLoad_ascii(self):
+            self._testFieldVtk2SaveLoad(format='ascii')
+        @unittest.skipUnless(vtkAvailable,'Reading binary not supported by pyvtk, vtk (python-vtk/python-vtk6) would be used transparently instead but is not importable.') # vtkAvailable defined above
+        def testFieldVtk2SaveLoad_binary(self):
+            self._testFieldVtk2SaveLoad(format='binary')
 
     def testOctreeNotPickled(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
