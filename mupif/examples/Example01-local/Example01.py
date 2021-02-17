@@ -1,12 +1,13 @@
-import sys
-sys.path.append('../../..')
-from mupif import *
+import sys, os.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../..')
+
+
 import logging
-log = logging.getLogger()
-import mupif.physics.physicalquantities as PQ
+log=logging.getLogger('Ex01')
 
+from mupif.simple import *
 
-class application1(model.Model):
+class application1(Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
@@ -62,7 +63,7 @@ class application1(model.Model):
         }
 
         if propID == PropertyID.PID_Time_step:
-            return property.ConstantProperty(
+            return ConstantProperty(
                 (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
         else:
             raise apierror.APIError('Unknown property ID')
@@ -72,13 +73,13 @@ class application1(model.Model):
         self.value = 1.0*time
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(0.1, 's')
+        return PhysicalQuantity(0.1, 's')
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
 
 
-class application2(model.Model):
+class application2(Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
@@ -120,8 +121,8 @@ class application2(model.Model):
         self.updateMetadata(metaData)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = property.ConstantProperty(
-            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+        self.contrib = ConstantProperty(
+            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PhysicalQuantity(0., 's'))
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
         super(application2, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
@@ -136,7 +137,7 @@ class application2(model.Model):
         }
 
         if propID == PropertyID.PID_Time:
-            return property.ConstantProperty(
+            return ConstantProperty(
                 (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, metaData=md)
         else:
             raise apierror.APIError('Unknown property ID')
@@ -154,7 +155,7 @@ class application2(model.Model):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0, 's')
+        return PhysicalQuantity(1.0, 's')
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
@@ -179,7 +180,7 @@ app1.initialize(metaData=executionMetadata)
 # app1.printMetadata()
 
 app1.toJSONFile('aa.json')
-aa = mupifobject.MupifObject('aa.json')
+aa = MupifObject('aa.json')
 # aa.printMetadata()
 
 app2.initialize(metaData=executionMetadata)
@@ -199,7 +200,7 @@ while abs(time - targetTime) > 1.e-6:
         time = targetTime
     timestepnumber = timestepnumber+1
     # create a time step
-    istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+    istep = TimeStep(time, dt, targetTime, 's', timestepnumber)
 
     try:
         # solve problem 1
@@ -216,7 +217,7 @@ while abs(time - targetTime) > 1.e-6:
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
             atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
         
-    except apierror.APIError as e:
+    except APIError as e:
         log.error("mupif.APIError occurred:", e)
         log.error("Test FAILED")
         raise
