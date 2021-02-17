@@ -445,20 +445,16 @@ class UnstructuredMesh(Mesh):
     vertexList: typing.List[vertex.Vertex]=dataclasses.field(default_factory=lambda: [])
     cellList: typing.List[cell.Cell]=dataclasses.field(default_factory=lambda: [])
     #
-    vertexOctree: typing.Any=dataclasses.field(default=None,repr=False)
-    cellOctree: typing.Any=dataclasses.field(default=None,repr=False)
-    vertexDict: typing.Any=dataclasses.field(default=None,repr=False)
-    cellDict: typing.Any=dataclasses.field(default=None,repr=False)
-
-    #dumpAttrs=['vertexList','cellList',
-    #    # these will be restored to None when the instance is reconstructed
-    #    ('cellOctree',None),('vertexOctree',None),('vertexDict',None),('cellDict',None)
-    #]
+    vertexOctree: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
+    cellOctree: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
+    vertexDict: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
+    cellDict: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
 
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
 
+    # no longer used
     def __old_init__(self):
         """
         Constructor.

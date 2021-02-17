@@ -56,7 +56,7 @@ class Dumpable(object):
                 ret[attr]=_handle_attr(attr,a,clss.__name__)
         elif dataclasses.is_dataclass(clss):
             for f in dataclasses.fields(clss):
-                if not f.repr: continue
+                if f.metadata and f.metadata.get('mupif_nodump',False)==True: continue
                 ret[f.name]=_handle_attr(f.name,getattr(self,f.name),clss.__name__)
         else: raise RuntimeError('Class %s.%s does not define dumpAttrs and is not a dataclass'%(clss.__module__,clss.__name__))
         if clss!=Dumpable:
@@ -86,7 +86,7 @@ class Dumpable(object):
             if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
             if dataclasses.is_dataclass(clss):
                 kw=dict([(k,_create(v)) for k,v in dic.items()])
-                kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.repr==False]))
+                kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.metadata and f.metadata.get('mupif_nodump',False)==True]))
                 return clss(**kw)
             else: obj=clss.__new__(clss)
         # mupif classes

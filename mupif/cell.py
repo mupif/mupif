@@ -59,7 +59,7 @@ class Cell(Dumpable):
 
     # mupif.mesh.Mesh
 
-    mesh: typing.Optional[typing.Any] = dataclasses.field(repr=False)
+    mesh: typing.Optional[typing.Any] = dataclasses.field(repr=False,metadata=dict(mupif_nodump=True))
     number: int
     label: typing.Optional[int]
     vertices: typing.Tuple[int,...]
