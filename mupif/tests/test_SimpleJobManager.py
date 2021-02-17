@@ -53,12 +53,12 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.tmp=cls.tmpdir.name
 
         nsPort=availablePort(9062,9099)
-        cls.nsloop=multiprocessing.Process(target=Pyro5.nameserver.start_ns_loop,kwargs=dict(host='127.0.0.1',port=nsPort))
+        cls.nsloop=multiprocessing.Process(target=Pyro5.nameserver.start_ns_loop,kwargs=dict(host='0.0.0.0',port=nsPort))
         cls.nsloop.start()
         log.info("nameserver started")
         waitPort(('127.0.0.1',nsPort))
         #print (cls.nsproc, cls.nsproc.pid)
-        cls.ns = mupif.pyroutil.connectNameServer(nshost='127.0.0.1', nsport=nsPort)
+        cls.ns = mupif.pyroutil.connectNameServer(nshost='0.0.0.0', nsport=nsPort)
         # print('here')
         cls.jobMan = mupif.simplejobmanager.SimpleJobManager2(
             daemon=None,

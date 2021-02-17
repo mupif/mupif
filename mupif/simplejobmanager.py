@@ -20,10 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import str, range, object
+from __future__ import annotations
 
 import threading
 import subprocess
+import multiprocessing
 import socket
 import time as timeTime
 import Pyro5
@@ -36,6 +37,14 @@ from . import pyroutil
 from . import pyrofile
 import os
 import atexit
+import typing
+import importlib
+
+sys.excepthook=Pyro5.errors.excepthook
+Pyro5.config.DETAILED_TRACEBACK=True
+
+# spawn is safe for windows; this is a global setting
+if multiprocessing.get_start_method()!='spawn': multiprocessing.set_start_method('spawn',force=True)
 
 log=logging.getLogger(__name__)
 
@@ -49,18 +58,6 @@ try:
 except ImportError: pass
 
 
-# SimpleJobManager
-SJM_APP_INDX = 0
-SJM_STARTTIME_INDX = 1
-SJM_USER_INDX = 2
-
-# SimpleJobManager2
-SJM2_PROC_INDX = 0  # object of subprocess.Popen
-SJM2_URI_INDX = 3  # Pyro5 uri
-SJM2_PORT_INDX = 4  # port
-SJM2_TICKET_EXPIRE_TIMEOUT = 10 # ticket timeout
-
-
 
 @Pyro5.api.expose
 class SimpleJobManager2 (jobmanager.JobManager):
@@ -69,6 +66,20 @@ class SimpleJobManager2 (jobmanager.JobManager):
     This implementation avoids the problem of GIL lock by running applicaton 
     server under new process with its own daemon.
     """
+    from dataclasses import dataclass
+
+    # SimpleJobManager2
+    @dataclass
+    class ActiveJob(object):
+        proc: typing.Union[subprocess.Popen,multiprocessing.Process]
+        uri: str
+        starttime: float
+        user: str
+        port: int
+
+    ticketExpireTimeout=10
+    useCmd=False
+
     def __init__(self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000, overrideNsPort=0):
         """
         Constructor.
@@ -108,11 +119,39 @@ class SimpleJobManager2 (jobmanager.JobManager):
 
         log.debug('SimpleJobManager2: initialization done for application name %s' % self.applicationName)
 
+    @staticmethod
+    def _spawnProcess(pipe,ns,appName,configFile,jobID,cwd,mode,moduleDir=None):
+        '''
+        This function is called 
+        '''
+        # this is all run in the subprocess
+        # log.info('Changing directory to %s',cwd)
+        os.chdir(cwd)
+        import sys, Pyro5.errors
+        # sys.excepthook=Pyro5.errors.excepthook
+        #Pyro5.config.DETAILED_TRACEBACK=True
+        if moduleDir:
+            sys.path.append(moduleDir)
+            sys.path.append(moduleDir+'/..')
+        import mupif, mupif.pyroutil
+        confMod=importlib.import_module(configFile)
+        conf=confMod.serverConfig(mode)
+        uri=mupif.pyroutil.runAppServer(
+            app=conf.applicationClass(),appName=jobID,
+            # TODO: pass self.nshost etc
+            server='0.0.0.0',port=0,
+            nathost=None,natport=None,
+            nshost=None,nsport=0
+        )
+        pipe.send(uri) # as bytes
+
+
+
     def __checkTicket (self, ticket):
         """ Returns true, if ticket is valid, false otherwise"""
         currentTime = time.time()
         if (ticket in self.tickets):
-            if (currentTime-ticket.time) < SJM2_TICKET_EXPIRE_TIMEOUT:
+            if (currentTime-ticket.time) < SimpleJobManager2.ticketExpireTimeout:
                 return True
         return False
 
@@ -123,7 +162,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         currentTime = time.time()
         for i in range(len(self.tickets) - 1, -1, -1):
             # check if ticket expired
-            if (currentTime-self.tickets[i].time) > SJM2_TICKET_EXPIRE_TIMEOUT: 
+            if (currentTime-self.tickets[i].time) > SimpleJobManager2.ticketExpireTimeout: 
                 # remove it
                 del(self.tickets[i])
         return len(self.tickets)
@@ -187,52 +226,74 @@ class SimpleJobManager2 (jobmanager.JobManager):
                 log.exception(e)
                 raise
                 # return JOBMAN_ERR, None
-
-            try:
-                args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d',
-                        str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c',
-                        str(self.configFile), '-m', str(self.serverConfigMode)]
-                if self.overrideNsPort>0: args+=['--override-nsport',str(self.overrideNsPort)]
-                if self.jobMan2CmdPath[-3:] == '.py':
-                    # use the same python interpreter as running this code, prepend to the arguments
-                    args.insert(0, sys.executable)
-                    log.info("Using python interpreter %s" % sys.executable)
-                    proc = subprocess.Popen(args)  # stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                else:
-                    proc = subprocess.Popen(args)  # stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                log.debug('SimpleJobManager2: new subprocess has been started: %s', " ".join(args))
-            except Exception as e:
-                log.exception(e)
-                raise
-                # return JOBMAN_ERR, None
+            if SimpleJobManager2.useCmd:
+                try:
+                    args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d',
+                            str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c',
+                            str(self.configFile), '-m', str(self.serverConfigMode)]
+                    if self.overrideNsPort>0: args+=['--override-nsport',str(self.overrideNsPort)]
+                    if self.jobMan2CmdPath[-3:] == '.py':
+                        # use the same python interpreter as running this code, prepend to the arguments
+                        args.insert(0, sys.executable)
+                        log.info("Using python interpreter %s" % sys.executable)
+                        proc = subprocess.Popen(args)  # stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    else:
+                        proc = subprocess.Popen(args)  # stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                    log.debug('SimpleJobManager2: new subprocess has been started: %s', " ".join(args))
+                except Exception as e:
+                    log.exception(e)
+                    raise
+                    # return JOBMAN_ERR, None
             
-            try:
-                # try to get uri from Property.psubprocess
-                uri = None  # avoids UnboundLocalError in py3k
-                conn, addr = self.s.accept()
-                log.debug('Connected by %s' % str(addr))
-                while True:
-                    data = conn.recv(1024)
-                    if not data:
-                        break
-                    uri = repr(data).rstrip('\'').lstrip('\'')
-                    log.info('Received uri: %s' % uri)
-                conn.close()
-                # s.shutdown(socket.SHUT_RDWR)
-                # s.close()
+                try:
+                    # try to get uri from Property.psubprocess
+                    uri = None  # avoids UnboundLocalError in py3k
+                    conn, addr = self.s.accept()
+                    log.debug('Connected by %s' % str(addr))
+                    while True:
+                        data = conn.recv(1024)
+                        if not data:
+                            break
+                        uri = repr(data).rstrip('\'').lstrip('\'')
+                        log.info('Received uri: %s' % uri)
+                    conn.close()
+                    # s.shutdown(socket.SHUT_RDWR)
+                    # s.close()
 
-                # check if uri is ok
-                # either by doing some sort of regexp or query ns for it
-                start = timeTime.time()
-                self.activeJobs[jobID] = (proc, start, user, uri, jobPort)
-                log.debug('SimpleJobManager2: new process ')
-                log.debug(self.activeJobs[jobID])
-            except Exception as e:
-                log.exception(e)
-                log.error('Unable to start thread')
-                self.lock.release()
-                raise
-                # return JobManager.JOBMAN_ERR, None
+                except Exception as e:
+                    log.exception(e)
+                    log.error('Unable to start thread')
+                    self.lock.release()
+                    raise
+                    # return JobManager.JOBMAN_ERR, None
+            else:
+
+                parentPipe,childPipe=multiprocessing.Pipe()
+                proc=multiprocessing.Process(
+                    target=SimpleJobManager2._spawnProcess,
+                    name=self.applicationName,
+                    kwargs=dict(
+                        pipe=childPipe,
+                        ns=self.ns,
+                        jobID=jobID,
+                        cwd=targetWorkDir,
+                        appName=self.applicationName,
+                        configFile=self.configFile,
+                        moduleDir=self.serverConfigPath,
+                        mode=self.serverConfigMode
+                    )
+                )
+                proc.start()
+                if not parentPipe.poll(timeout=30): raise RuntimeError('Timeout waiting 30s for URI from spawned process.')
+                uri=parentPipe.recv()
+                log.info('Received URI: %s'%uri)
+
+            # check if uri is ok
+            # either by doing some sort of regexp or query ns for it
+            start = timeTime.time()
+            self.activeJobs[jobID] = SimpleJobManager2.ActiveJob(proc=proc,starttime=start,user=user,uri=uri,port=jobPort)
+            log.debug('SimpleJobManager2: new process ')
+            log.debug(self.activeJobs[jobID])
 
             log.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
             self.lock.release()
@@ -257,17 +318,22 @@ class SimpleJobManager2 (jobmanager.JobManager):
         self.ns.remove(jobID)
         # terminate the process
         if jobID in self.activeJobs:
+            job=self.activeJobs[jobID]
             try:
-                self.activeJobs[jobID][SJM2_PROC_INDX].terminate()
-                try:
-                    self.activeJobs[jobID][SJM2_PROC_INDX].wait(2)
-                except subprocess.TimeoutExpired:
-                    log.debug("SimpleJobManager2:terminateJob: jobID %s terminate wait timeout reached"%jobID)
+                job.proc.terminate()
+                if SimpleJobManager2.useCmd:
+                    try:
+                        job.proc.wait(2)
+                    except subprocess.TimeoutExpired:
+                        log.debug("SimpleJobManager2:terminateJob: jobID %s terminate wait timeout reached"%jobID)
+                else:
+                    job.proc.join(2)
+                    if job.proc.exitcode is None: log.debug(f'{jobID} still running after 2s timeout, killing.')
+                    job.proc.kill()
                 # free the assigned port
-                self.freePorts.append(self.activeJobs[jobID][SJM2_PORT_INDX])
+                self.freePorts.append(job.port)
                 # delete entry in the list of active jobs
-                log.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d' % (
-                    jobID, self.activeJobs[jobID][SJM2_PORT_INDX]))
+                log.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d' % (jobID, job.port))
                 del self.activeJobs[jobID]
             except KeyError:
                 log.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?' % jobID)
@@ -322,8 +388,8 @@ class SimpleJobManager2 (jobmanager.JobManager):
         status = []
         tnow = timeTime.time()
         for key in self.activeJobs:
-            status.append((key, tnow-self.activeJobs[key][SJM_STARTTIME_INDX], self.activeJobs[key][SJM_USER_INDX],
-                           self.activeJobs[key][SJM2_PORT_INDX]))
+            status.append((key, tnow-self.activeJobs[key].starttime, self.activeJobs[key].user,
+                           self.activeJobs[key].port))
         return status
 
     def uploadFile(self, jobID, filename, pyroFile, hkey):
