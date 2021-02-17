@@ -1,3 +1,13 @@
+'''
+This module is collects *all* classes and enumerations from MuPIF and is meant for uses outside of MuPIF source, such as in user scripts and application definitions. They are documented in their respective modules, not here.
+
+Use ``from mupif.simple import *`` to use all classes directly (such as Field, Mesh, TimeStep).
+
+Use ``import mupif.simple as mp`` (or any other shorthand) to use type ``mp.Field``, ``mp.Mesh``, ``mp.TimeStep``.
+
+
+'''
+
 import pkgutil
 import os.path
 d=os.path.dirname(os.path.abspath(__file__))
