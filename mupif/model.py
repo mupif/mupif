@@ -468,10 +468,12 @@ class Model(mupifobject.MupifObject):
         
         if nameServer is not None:  # local application can run without a nameServer
             try:
-                nameServer.remove(appName)
                 log.debug("Removing application %s from a nameServer %s" % (appName, nameServer))
+                nameServer._pyroClaimOwnership()
+                nameServer.remove(appName)
             except Exception as e:
                 log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer))
+                # print("".join(Pyro5.errors.get_pyro_traceback()))
                 self.setMetadata('Status', 'Failed')
                 raise
 
