@@ -4,15 +4,15 @@ sys.path.append('../..')
 import unittest
 from mupif import *
 import math
-from mupif import vtkreader2
-import pyvtk
 import os
 
 
 
 class VtkReader2_TestCase(unittest.TestCase):
     # Testing getIntegrationPoints
+    @unittest.skipIf(True,'deprecated')
     def test_ReadMesh(self):
+        from mupif import vtkreader2
         m = vtkreader2.readMesh(8, 2, 2, 2, ((0., 0., 0.), (1., 0., 0.),(1., 1., 0.),(0., 1., 0.),(0., 0., 1.), (1., 0., 1.),(1., 1., 1.),(0., 1., 1.)))
         nV = m.getNumberOfVertices()
         nC = m.getNumberOfCells()

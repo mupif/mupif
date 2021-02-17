@@ -173,31 +173,31 @@ class Field_TestCase(unittest.TestCase):
         res=self.f1.makeFromHdf5(f)[0]
         self._compareFields(self.f1,res)
 
-    @unittest.skipIf(pyvtk is None,'pyvtk not importable')
-    def test_field2VTKData(self):
-       self.res=self.f5.field2VTKData()
-       import pyvtk
-       self.assertTrue(isinstance(self.res,pyvtk.VtkData),'error in getVTKRepresentation')
+    #@unittest.skipIf(pyvtk is None,'pyvtk not importable')
+    #def test_field2VTKData(self):
+    #   self.res=self.f5.field2VTKData()
+    #   import pyvtk
+    #   self.assertTrue(isinstance(self.res,pyvtk.VtkData),'error in getVTKRepresentation')
 
-    @unittest.skipIf(pyvtk is None,'pyvtk not importable')
-    def test_ioVTK2(self):
-        f=self.tmp+'/aa.vtk'
-        self.f1.toVTK2(f)
-        res=self.f1.makeFromVTK2(f, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
-        # VTK2 does not store units
-        self._compareFields(self.f1,res,units=False)
+    #@unittest.skipIf(pyvtk is None,'pyvtk not importable')
+    #def test_ioVTK2(self):
+    #    f=self.tmp+'/aa.vtk'
+    #    self.f1.toVTK2(f)
+    #    res=self.f1.makeFromVTK2(f, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
+    #    # VTK2 does not store units
+    #    self._compareFields(self.f1,res,units=False)
        
-    @unittest.skipIf(vtk is None,'vtk (python-vtk*) not importable')
-    def test_ioVTK3(self):
-        f=self.tmp+'/aa.vtu'
-        self.f1.toVTK3(f)
-        self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnits(),time=self.f1.getTime())[0]
-        self._compareFields(self.f1,self.res)
+    #@unittest.skipIf(vtk is None,'vtk (python-vtk*) not importable')
+    #def test_ioVTK3(self):
+    #    f=self.tmp+'/aa.vtu'
+    #    self.f1.toVTK3(f)
+    #    self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnits(),time=self.f1.getTime())[0]
+    #    self._compareFields(self.f1,self.res)
 
     @unittest.skipIf(meshio is None,'meshio not importable')
     def test_ioMeshio(self):
         m=self.f1.toMeshioMesh()
-        for ext in 'vtu','vtk','xdmf':
+        for ext in 'vtu','vtk':
             out=self.tmp+'/meshio.'+ext
             m.write(out)
             res=field.Field.makeFromMeshioMesh(out,units={self.f1.getFieldIDName():self.f1.getUnits()},time=self.f1.getTime())[0]

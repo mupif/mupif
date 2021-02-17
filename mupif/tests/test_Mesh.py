@@ -5,8 +5,12 @@ sys.path.append('../..')
 from mupif import *
 import math
 import numpy as np
-import pyvtk
+import meshio
 import types
+
+try: import vtk
+except ImportError: vtk=None
+
 
 class Mesh_TestCase(unittest.TestCase):
     def setUp(self):
@@ -130,7 +134,8 @@ class Mesh_TestCase(unittest.TestCase):
         self.assertEqual(self.mesh3.getCell(0).getVertices()[2].label, 6, 'error in merge')
         self.assertEqual(self.mesh3.getCell(2).getVertices()[0].label, 16, 'error in merge')
         self.assertEqual(self.mesh3.getCell(2).getVertices()[1].label, 5, 'error in merge')
-
+    
+    @unittest.skipIf(vtk is None,'vtk not importable')
     def test_asVtkUnstructuredGrid(self):
         # @todo: not working with mesh1 because points have only two coordinates
         # @todo: not working with mesh4 because cell types are not supported ?
@@ -143,9 +148,14 @@ class Mesh_TestCase(unittest.TestCase):
 
     #Testing getVTKRepresentation
     def test_getVTKRepresentation(self):
-       self.res=self.mesh5.getVTKRepresentation()
-       import pyvtk
-       self.assertTrue(isinstance(self.res,pyvtk.DataSet.DataSet),'error in getVTKRepresentation')
+        pp,cc=self.mesh5.toMeshioPointsCells()
+        self.assertEqual(pp.shape,(4,3))
+        self.assertEqual('triangle',cc[0][0])
+        self.assertEqual(len(cc[0][1]),2)
+       # self.assertTrue(isinstance(self.res,meshio.Mesh))
+       #self.res=self.mesh5.getVTKRepresentation()
+       #import pyvtk
+       #self.assertTrue(isinstance(self.res,pyvtk.DataSet.DataSet),'error in getVTKRepresentation')
   
 # python test_Mesh.py for stand-alone test being run
 if __name__=='__main__': unittest.main()

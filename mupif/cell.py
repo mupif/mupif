@@ -201,6 +201,17 @@ class Cell(Dumpable):
         """
         # raise apierror.APIError("getTransformationJacobian not implemented")
 
+    def getMeshioGeometryStr(self):
+        meshioTypeMap={
+            cellgeometrytype.CGT_TRIANGLE_1:'triangle',
+            cellgeometrytype.CGT_QUAD:'quad',
+            cellgeometrytype.CGT_TETRA:'tetra',
+            cellgeometrytype.CGT_HEXAHEDRON:'hexahedron',
+            cellgeometrytype.CGT_TRIANGLE_2:'triangle6'
+        }
+        return meshioTypeMap[self.getGeometryType()]
+
+
 
 ##############################################################
 # Implementation of individual cells follows

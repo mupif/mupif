@@ -300,14 +300,7 @@ class Mesh(dumpable.Dumpable):
         ret={}
         for ic in range(self.getNumberOfCells()):
             c=self.getCell(ic)
-            cellGeomTypeMap={
-                cellgeometrytype.CGT_TRIANGLE_1:'triangle',
-                cellgeometrytype.CGT_QUAD:'quad',
-                cellgeometrytype.CGT_TETRA:'tetra',
-                cellgeometrytype.CGT_HEXAHEDRON:'hexahedron',
-                cellgeometrytype.CGT_TRIANGLE_2:'triangle6'
-            }
-            t=cellGeomTypeMap[c.getGeometryType()]
+            t=c.getMeshioGeometryStr()
             ids=[v.getNumber() for v in c.getVertices()]
             if t in ret: ret[t].append(ids)
             else: ret[t]=[ids]

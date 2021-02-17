@@ -464,48 +464,6 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         self.mesh = mesh
         self.value = values
 
-    def field2VTKData (self, name=None, lookupTable=None):
-        """
-        Creates VTK representation of the receiver. Useful for visualization. Requires pyvtk module.
-
-        :param str name: human-readable name of the field
-        :param pyvtk.LookupTable lookupTable: color lookup table
-        :return: Instance of pyvtk
-        :rtype: pyvtk.VtkData
-        """
-        import pyvtk
-
-        if name is None:
-            name = self.getFieldIDName()
-        if lookupTable and not isinstance(lookupTable, pyvtk.LookupTable):
-            log.info('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
-            lookupTable = None
-        if lookupTable is None:
-            lookupTable=pyvtk.LookupTable([(0, .231, .298, 1.0), (.4, .865, .865, 1.0), (.8, .706, .016, 1.0)], name='coolwarm')
-            # Scalars use different name than 'coolwarm'. Then Paraview uses its own color mapping instead of taking
-            # 'coolwarm' from *.vtk file. This prevents setting Paraview's color mapping.
-            scalarsKw = dict(name=name, lookup_table='default')
-        else:
-            scalarsKw = dict(name=name, lookup_table=lookupTable.name)
-        # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
-        vectorsKw = dict(name=name)  # vectors don't have a lookup_table
-
-        if self.fieldType == FieldType.FT_vertexBased:
-            if self.getValueType() == ValueType.Scalar:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value], **scalarsKw), lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Vector:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Vectors(self.value, **vectorsKw), lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Tensor:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
-            
-        else:
-            if self.getValueType() == ValueType.Scalar:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value], **scalarsKw), lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Vector:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Vectors(self.value, **vectorsKw),lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Tensor:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
-            
     def getMartixForTensor(self, values):
         """
         Reshape values to a list with 3x3 arrays. Usable for VTK export.
@@ -828,14 +786,16 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         points,cells_list=msh.toMeshioPointsCells()
         for f in fields:
             assert f.getFieldType() in (FieldType.FT_vertexBased, FieldType.FT_cellBased)
-            ptData=f.getFieldType()==FieldType.FT_vertexBased
-            rows=msh.getNumberOfVertices() if ptData else msh.getNumberOfCells()
+            ptData=(f.getFieldType()==FieldType.FT_vertexBased)
+            rows=(msh.getNumberOfVertices() if ptData else msh.getNumberOfCells())
             cols=f.getRecordSize()
             dta=np.ndarray((rows,cols),dtype='float32')
             dta=np.array([f.giveValue(row) for row in range(rows)])
-            (point_data if ptData else cell_data)[f.getFieldIDName()]=dta
+            (point_data if ptData else cell_data)[f.getFieldIDName()]=(dta if ptData else dta.T)
+            #print(f.getFieldIDName())
+            #print('Is point data?',ptData)
+            #print(f.getFieldIDName(),dta.shape)
         return meshio.Mesh(points,cells_list,point_data,cell_data)
-
 
     def makeFromMeshioMesh(
             input: typing.Union[str,meshio.Mesh], # could also be buffer, is that useful?
@@ -862,10 +822,90 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
                 ))
         return ret
 
-
     @staticmethod
     def fromMeshioMesh(m): raise NotImplementedError('maybe later')
 
+
+    def _sum(self, other, sign1, sign2):
+        """
+        Should return a new instance. As deep copy is expensive,
+        this operation should be avoided. Better to modify the field values.
+        """
+        raise TypeError('Not supported')
+ 
+    def inUnitsOf(self, *units):
+        """
+        Should return a new instance. As deep copy is expensive,
+        this operation should be avoided. Better to use convertToUnits method
+        performing in place conversion.
+        """
+        raise TypeError('Not supported')
+
+
+##
+## DEPRECATED
+##
+if 0: 
+
+#    def __deepcopy__(self, memo):
+#        """ Deepcopy operatin modified not to include attributes starting with underscore.
+#            These are supposed to be the ones valid only to s specific copy of the receiver.
+#            An example of these attributes are _PyroURI (injected by Application),
+#            where _PyroURI contains the URI of specific object, the copy should receive
+#            its own URI
+#        """
+#        cls = self.__class__
+#        dpcpy = cls.__new__(cls)
+#
+#        memo[id(self)] = dpcpy
+#        for attr in dir(self):
+#            if not attr.startswith('_'):
+#                value = getattr(self, attr)
+#                setattr(dpcpy, attr, copy.deepcopy(value, memo))
+#        return dpcpy
+
+    def field2VTKData (self, name=None, lookupTable=None):
+        """
+        Creates VTK representation of the receiver. Useful for visualization. Requires pyvtk module.
+
+        :param str name: human-readable name of the field
+        :param pyvtk.LookupTable lookupTable: color lookup table
+        :return: Instance of pyvtk
+        :rtype: pyvtk.VtkData
+        """
+        import pyvtk
+
+        if name is None:
+            name = self.getFieldIDName()
+        if lookupTable and not isinstance(lookupTable, pyvtk.LookupTable):
+            log.info('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
+            lookupTable = None
+        if lookupTable is None:
+            lookupTable=pyvtk.LookupTable([(0, .231, .298, 1.0), (.4, .865, .865, 1.0), (.8, .706, .016, 1.0)], name='coolwarm')
+            # Scalars use different name than 'coolwarm'. Then Paraview uses its own color mapping instead of taking
+            # 'coolwarm' from *.vtk file. This prevents setting Paraview's color mapping.
+            scalarsKw = dict(name=name, lookup_table='default')
+        else:
+            scalarsKw = dict(name=name, lookup_table=lookupTable.name)
+        # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
+        vectorsKw = dict(name=name)  # vectors don't have a lookup_table
+
+        if self.fieldType == FieldType.FT_vertexBased:
+            if self.getValueType() == ValueType.Scalar:
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value], **scalarsKw), lookupTable), 'Unstructured Grid Example')
+            elif self.getValueType() == ValueType.Vector:
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Vectors(self.value, **vectorsKw), lookupTable), 'Unstructured Grid Example')
+            elif self.getValueType() == ValueType.Tensor:
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
+            
+        else:
+            if self.getValueType() == ValueType.Scalar:
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value], **scalarsKw), lookupTable), 'Unstructured Grid Example')
+            elif self.getValueType() == ValueType.Vector:
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Vectors(self.value, **vectorsKw),lookupTable), 'Unstructured Grid Example')
+            elif self.getValueType() == ValueType.Tensor:
+                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
+            
     def toVTK2(self, fileName, format='ascii'):
         """
         Save the instance as Unstructured Grid in VTK2 format (``.vtk``).
@@ -1050,35 +1090,3 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
                     fieldType=fieldType
                 ))
         return ret
-
-    def _sum(self, other, sign1, sign2):
-        """
-        Should return a new instance. As deep copy is expensive,
-        this operation should be avoided. Better to modify the field values.
-        """
-        raise TypeError('Not supported')
- 
-    def inUnitsOf(self, *units):
-        """
-        Should return a new instance. As deep copy is expensive,
-        this operation should be avoided. Better to use convertToUnits method
-        performing in place conversion.
-        """
-        raise TypeError('Not supported')
-
-#    def __deepcopy__(self, memo):
-#        """ Deepcopy operatin modified not to include attributes starting with underscore.
-#            These are supposed to be the ones valid only to s specific copy of the receiver.
-#            An example of these attributes are _PyroURI (injected by Application),
-#            where _PyroURI contains the URI of specific object, the copy should receive
-#            its own URI
-#        """
-#        cls = self.__class__
-#        dpcpy = cls.__new__(cls)
-#
-#        memo[id(self)] = dpcpy
-#        for attr in dir(self):
-#            if not attr.startswith('_'):
-#                value = getattr(self, attr)
-#                setattr(dpcpy, attr, copy.deepcopy(value, memo))
-#        return dpcpy
