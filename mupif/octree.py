@@ -27,6 +27,7 @@ import itertools
 from . import bbox
 from . import localizer
 import Pyro5
+import pydantic
 
 debug = 0
 refineLimit = 400  # refine cell if number of items exceeds this treshold value
@@ -168,7 +169,11 @@ class Octant(object):
                 for i, j, k in self.childrenIJK():
                     self.children[i][j][k].remove(item, itemBBox)
 
-    def giveItemsInBBox(self, itemList, bbox):
+    @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
+    def giveItemsInBBox(self,
+        itemSet: set,
+        bbox: bbox.BBox
+    ):
         """ 
         Returns the list of objects inside the given bounding box. 
         Note: an object can be included several times, as can be assigned to several octants.
@@ -176,29 +181,22 @@ class Octant(object):
         :param list itemList: list containing the objects matching the criteria
         :param bbox.BBox bbox: target bounding box
         """ 
-        if debug:
-            tab = '  '*int(math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0)))
+        # if debug: tab = '  '*int(math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0)))
         if self.containsBBox(bbox):
             if self.isTerminal():
-                if debug:
-                    print(tab, "Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data))
+                # if debug: print(tab, "Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data))
                 for i in self.data:
-                    if debug: 
-                        print(tab, "checking ...", i)
-                        print(str(i.getBBox()), str(bbox))
-                        
-                    if i.getBBox().intersects(bbox):
-                        if isinstance(itemList, set):
-                            itemList.add(i)
-                        else:
-                            itemList.append(i)
+                    # if debug: print(tab, "checking ... \n   %s %s"%(str(i.getBBox()), str(bbox)))
+                    if i.getBBox().intersects(bbox): itemSet.add(i)
+                        #if isinstance(itemList, set):
+                        #    itemList.add(i)
+                        #else:
+                        #    itemList.append(i)
             else:
-                if debug:
-                    print(tab, "Parent containing bbox found ....", self.giveMyBBox())
+                # if debug: print(tab, "Parent containing bbox found ....", self.giveMyBBox())
                 for i, j, k in self.childrenIJK():
-                    if debug:
-                        print(tab, "  Checking child .....", self.children[i][j][k].giveMyBBox())
-                    self.children[i][j][k].giveItemsInBBox(itemList, bbox)
+                    # if debug: print(tab, "  Checking child .....", self.children[i][j][k].giveMyBBox())
+                    self.children[i][j][k].giveItemsInBBox(itemSet, bbox)
 
     def evaluate(self, functor):
         """ 
@@ -246,13 +244,7 @@ class Octree(localizer.Localizer):
         :param tuple mask: boolean tuple, where true values determine the coordinate indices in which octree octants are subdivided
         """
         self.mask = mask
-        # use fastOctant only for 3d, until it is verified to work in 1d/2d as well
-        import sys
-        if 'mupif.fastOctant' in sys.modules and min(mask) > 0:
-            print('mupif.fast: using mupif.fastOctant')
-            self.root = fastOctant.Octant(self, None, origin, size)
-        else:
-            self.root = Octant(self, None, origin, size)
+        self.root = Octant(self, None, origin, size)
 
     def insert(self, item):
         """
@@ -270,7 +262,7 @@ class Octree(localizer.Localizer):
 
     def giveItemsInBBox(self, bbox):
         """
-        Returns the list of objects inside the given bounding box. 
+        Returns the set of objects inside the given bounding box. 
         See :func:`Octant.giveItemsInBBox`
         """
         answer = set()
@@ -294,12 +286,3 @@ class Octree(localizer.Localizer):
         See :func:`Octant.giveDepth`
         """
         return self.root.giveDepth()
-
-
-try:
-    # this will be used by Octree ctor if necessary
-    from . import fastOctant
-    from minieigen import AlignedBox3  # register converter
-except ImportError:
-    pass
-    # print('mupif.fast: NOT using mupif.fastOctant')
