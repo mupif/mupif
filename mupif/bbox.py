@@ -21,14 +21,16 @@
 # Boston, MA  02110-1301  USA
 #
 
-from builtins import zip, str, range, object
+from __future__ import annotations
+
 import Pyro5
-
 debug = 0
-
+from pydantic.dataclasses import dataclass
+from typing import Union, Tuple
 
 @Pyro5.api.expose
-class BBox(object):
+@dataclass
+class BBox():
     """
     Represents a bounding box - a rectange in 2D and prism in 3D.
     Its geometry is described using two points - lover left and upper right corners.
@@ -38,15 +40,21 @@ class BBox(object):
     .. automethod:: __init__
     .. automethod:: __str__
     """
-    def __init__(self, coords_ll, coords_ur):
-        """
-        Constructor.
+    coords_ll: Union[Tuple[float,float],Tuple[float,float,float]]
+    coords_ur: Union[Tuple[float,float],Tuple[float,float,float]]
 
-        :param tuple coords_ll: Tuple with coordinates of lower left corner
-        :param tuple coords_ur: Tuple with coordinates of uper right corner
-        """
-        self.coords_ll = coords_ll
-        self.coords_ur = coords_ur
+    def __hash__(self): return id(self)
+
+    if 0:
+        def __init__(self, coords_ll, coords_ur):
+            """
+            Constructor.
+    
+            :param tuple coords_ll: Tuple with coordinates of lower left corner
+            :param tuple coords_ur: Tuple with coordinates of uper right corner
+            """
+            self.coords_ll = coords_ll
+            self.coords_ur = coords_ur
         
     def __str__(self):
         """
@@ -68,7 +76,7 @@ class BBox(object):
                 return False
         return True
 
-    def intersects(self, bbox):
+    def intersects(self, bbox: BBox):
         """ 
         Check intersection of a receiver with a bounding box
         
@@ -76,13 +84,28 @@ class BBox(object):
         :return: Returns True if receiver intersects given bounding box, otherwise False
         :rtype: bool
         """
-        nsd = len(self.coords_ll)
-        for i in range(nsd):
-            maxleft = max(self.coords_ll[i], bbox.coords_ll[i])
-            minright = min(self.coords_ur[i], bbox.coords_ur[i])
-            if maxleft > minright: 
-                return False
-        return True
+        nsd=len(self.coords_ll)
+        mnA,mxA,mnB,mxB=self.coords_ll,self.coords_ur,bbox.coords_ll,bbox.coords_ur
+        if nsd==3:
+            return (
+                mnA[0]<=mxB[0] and mnA[1]<=mxB[1] and mnA[2]<=mxB[2] and
+                mnB[0]<=mxA[0] and mnB[1]<=mxA[1] and mnB[2]<=mxA[2]
+            )
+        elif nsd==2:
+            return (
+                mnA[0]<=mxB[0] and mnA[1]<=mxB[1] and
+                mnB[0]<=mxA[0] and mnB[1]<=mxA[1]
+            )
+        else: raise ValueError(f'BBox dimension must be 2 or 3 (not {nsd}).')
+
+        if 0:
+            nsd = len(self.coords_ll)
+            for i in range(nsd):
+                maxleft = max(self.coords_ll[i], bbox.coords_ll[i])
+                minright = min(self.coords_ur[i], bbox.coords_ur[i])
+                if maxleft > minright: 
+                    return False
+            return True
 
     def merge(self, entity):
         """
@@ -101,39 +124,3 @@ class BBox(object):
             self.coords_ll = tuple([min(self.coords_ll[i], entity[i]) for i in range(nsd)])
             self.coords_ur = tuple([max(self.coords_ur[i], entity[i]) for i in range(nsd)])
 
-
-try:
-    from minieigen import AlignedBox3
-    BBoxBase = AlignedBox3
-
-    # add zero 3rd coordinate to 2-tuples
-    def extend2d(arg): return (arg[0], arg[1], 0) if len(arg) == 2 else arg
-    # some methods are called different, this adds the API of BBox from above
-    BBoxBase.containsPoint = lambda self, p: self.contains(extend2d(p))
-
-    def BBoxBase_merge(self, p):
-        if isinstance(p, BBoxBase):
-            self.extend(p)
-        else:
-            self.extend(extend2d(p))
-
-    BBoxBase.merge = BBoxBase_merge
-    BBoxBase.coords_ll = property(lambda self: self.min, lambda self, val: setattr(self, 'min', extend2d(val)))
-    BBoxBase.coords_ur = property(lambda self: self.max, lambda self, val: setattr(self, 'max', extend2d(val)))
-    BBoxBase.intersects = lambda self, b: not self.intersection(b).empty()
-
-    # this definition hijacks the plain BBox class defined without fastOctant
-    # it acts as pseudo-ctor which handles 2d coords by adding the 3rd, and checks for consistency
-    def BBox(mn, mx):
-        if len(mn) != len(mx):
-            raise ValueError("Min/max must have the same dimension (not %d/%d)." % (len(mn), len(mx)))
-        if len(mn) == 2:
-            return BBoxBase((mn[0], mn[1], 0), (mx[0], mx[1], 0))
-        elif len(mn) == 3:
-            return BBoxBase(mn, mx)
-        else:
-            raise ValueError("Min/max dimension must be 2 or 3 (not %d)." % len(mn))
-    print('mupif.fast: using minieigen.AlignedBox3')
-except ImportError:
-    pass
-    # print('mupif.fast: NOT using minieigen.AlignedBox3')
