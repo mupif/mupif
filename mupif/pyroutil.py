@@ -416,6 +416,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daem
     :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be automatically generated.
 
     :raises Exception: if can not run Pyro5 daemon
+    :returns: URI
     """
     # fix the IP address published so that it is not 0.0.0.0
     server=fixZeroIP(server,appName)
@@ -466,6 +467,7 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daem
         'applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri)
     )
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
+    return uri
 
 
 def runAppServer(server, port, nathost, natport, nshost, nsport, appName, app, daemon=None):
@@ -484,7 +486,7 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, appName, app, d
 
     :raises Exception: if can not run Pyro5 daemon
     """
-    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
+    return runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
 
 
 def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName, jobman, daemon=None):
@@ -501,7 +503,7 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     :param jobman: Jobmanager
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
-    runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
+    return runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
 
 
 # def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
@@ -663,6 +665,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext=None):
         log.info('Allocated job, returned record from jobManager:' + str(retRec))
     except Exception:
         log.exception("JobManager allocateJob() failed")
+        print("".join(Pyro5.errors.get_pyro_traceback()))
         raise
 
     # create tunnel to application's daemon running on (remote) server
