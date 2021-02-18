@@ -71,31 +71,24 @@ def fixZeroIP(ip,name):
     finally:
         s.close()
 
+from dataclasses import dataclass
+from typing import Optional, Union
+@dataclass
+class PyroNetConf:
+    nshost: Optional[str]=None
+    nsport: int=0
+    ns: Optional[Pyro5.api.Proxy]=None
+    nathost: Optional[str]=None
+    natport: int=0
+    host: Optional[str]=None
+    port: int=0
 
+    def getNS(self):
+        if self.ns is not None: return self.ns
+        # self.ns=Pyro5.api.locate_ns(host=self.nshost, port=self.nsport)
+        self.ns=connectNameServer(nshost=self.nshost, nsport=self.nsport)
+        return self.ns
 
-def useTestSSL():
-    '''
-    Set Pyro5 SSL test configuration as Pyro5.config. Not to be used in production settings.
-    '''
-    Pyro5.config.SSL=True
-    Pyro5.config.SSL_REQUIRECLIENTCERT=True
-    Pyro5.config.SSL_SERVERCERT=testSSL['server','cert']
-    Pyro5.config.SSL_SERVERKEY=testSSL['server','key']
-    Pyro5.config.SSL_CLIENTCERT=testSSL['client','cert']
-    Pyro5.config.SSL_CLIENTKEY=testSSL['client','key']
-    Pyro5.config.SSL_CACERTS=testSSL['rootCA','cert']
-
-def useTestSSL_env(e):
-    '''
-    Set Pyro5 SSL test configuration as environment variables. Not to be used in production settings.
-    '''
-    e['PYRO_SSL']='1'
-    e['PYRO_SSL_REQUIRECLIENTCERT']='1'
-    e['PYRO_SSL_SERVERCERT']=testSSL['server','cert']
-    e['PYRO_SSL_SERVERKEY']=testSSL['server','key']
-    e['PYRO_SSL_CLIENTCERT']=testSSL['client','cert']
-    e['PYRO_SSL_CLIENTKEY']=testSSL['client','key']
-    e['PYRO_SSL_CACERTS']=testSSL['rootCA','cert']
 
 # pyro5 nameserver metadata
 NS_METADATA_jobmanager = "type:jobmanager"
@@ -105,108 +98,10 @@ NS_METADATA_port = 'port'
 NS_METADATA_nathost = 'nathost'
 NS_METADATA_natport = 'natport'
 
+import pydantic
 
-class SSHContext(object):
-    """
-    Helper class to store ssh tunnel connection details. It is parameter to different methods (connectJobManager,
-    allocateApplicationWithJobManager, etc.).
-    When provided, the corresponding ssh tunnel connection is established and associated to proxy using decorator class
-    to make sure it can be terminated properly.
-    """
-    def __init__(self, userName='', sshClient='manual', options='', sshHost=''):
-        self.userName = userName
-        self.sshClient = sshClient
-        self.options = options
-        self.sshHost = sshHost
-        
-
-class sshTunnel(object):
-    """
-    Helper class to represent established ssh tunnel. It defines terminate and __del__ method
-    to ensure correct tunnel termination.
-    """
-    def __init__(self, remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
-        """ 
-        Constructor. Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux.
-
-        :param str remoteHost: IP of remote host
-        :param str userName: User name, if empty, current user name is used
-        :param int localPort: Local port
-        :param int remotePort: Remote port
-        :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
-        :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
-        :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
-        :param bool Reverse: True if reverse tunnel to be created (default is False)
-        
-        :raises Exception: if creation of a tunnel failed
-        """
-
-        if sshHost == '':
-            sshHost = remoteHost
-        if userName == '':
-            userName = os.getenv('USER')
-                
-        direction = 'L'
-        if Reverse is True:
-            direction = 'R'
-
-        # use direct system command. Paramiko or sshtunnel do not work.
-        # put ssh public key on a server - interaction with a keyboard
-        # for password will not work here (password goes through TTY, not stdin)
-        cmd = ''
-        if sshClient == 'ssh':
-            cmd = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.debug("Creating ssh tunnel via command: " + cmd)
-        elif sshClient == 'autossh':
-            cmd = 'autossh -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.debug("Creating autossh tunnel via command: " + cmd)
-        elif 'putty' in sshClient.lower():
-            # need to create a public key *.ppk using puttygen.
-            # It can be created by importing Linux private key.
-            # The path to that key is given as -i option
-            cmd = '%s -%s %s:%s:%s %s@%s -N %s' % (
-                sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.debug("Creating ssh tunnel via command: " + cmd)
-        elif sshClient == 'manual':
-            # You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-            print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.info("If ssh tunnel does not exist and you need it, do it manually using a command e.g. " + cmd1 +
-                     " , or " + cmd2)
-            self.tunnel = 'manual'
-        else:
-            log.error("Unknown ssh client, exiting")
-            exit(0)
-        try:
-            if cmd:
-                self.tunnel = subprocess.Popen(cmd.split())
-        except Exception:
-            log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
-            raise
-
-        time.sleep(1.0)
-
-    def terminate(self):
-        """
-        Terminate the connection.
-        """
-        if self.tunnel:
-            if not self.tunnel == "manual":
-                self.tunnel.terminate()
-                self.tunnel = None
-
-    def __del__(self):
-        self.terminate()
-
-
-# First, check that we can connect to a listening port of a name server
-# Second, connect there
-def connectNameServer(nshost, nsport, timeOut=3.0):
+@pydantic.validate_arguments
+def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=3.0):
     """
     Connects to a NameServer.
 
@@ -341,7 +236,7 @@ def connectApp(ns, name, sshContext=None, connectionTestTimeOut = 10.):
     if sshContext:
         (hostname, port, natHost, natport) = getNSConnectionInfo(ns, name)
         try:
-            tunnel = sshTunnel(remoteHost=hostname, userName=sshContext.userName, localPort=natport, remotePort=port,
+            tunnel = SshTunnel(remoteHost=hostname, userName=sshContext.userName, localPort=natport, remotePort=port,
                                sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
         except Exception:
             log.exception(
@@ -400,7 +295,7 @@ def runDaemon(host, port, nathost=None, natport=None):
     raise apierror.APIError('Can not run Pyro5 daemon on configured ports')
 
 
-def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daemon=None, metadata=None):
+def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -418,54 +313,49 @@ def runServer(server, port, nathost, natport, nshost, nsport, appName, app, daem
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
+    # server, port, nathost, natport, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
-    server=fixZeroIP(server,appName)
+    host=fixZeroIP(net.host,appName)
 
     externalDaemon = False
     if not daemon:
         try:
-            daemon = Pyro5.api.Daemon(host=server, port=int(port), nathost=nathost, natport=util.NoneOrInt(natport))
-            log.info('Pyro5 daemon runs on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
+            daemon = Pyro5.api.Daemon(host=host,port=net.port,nathost=net.nathost,natport=net.natport)
+            log.info(f'Pyro5 daemon runs on {host}:{net.port} using nathost {net.nathost}:{net.natport}')
         except Exception:
-            log.exception('Can not run Pyro5 daemon on %s:%s using nathost %s:%s' % (server, port, nathost, natport))
+            log.exception(f'Can not run Pyro5 daemon on {host}:{net.port} using nathost {net.nathost}:{net.natport}')
             raise
     else:
         externalDaemon = True
 
-    ns = connectNameServer(nshost, nsport)
-    # register agent; register exposed class
-    # ExposedApp = Pyro5.api.expose(app)172.30.0.1
+    ns=net.getNS()
     # Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
     except Pyro5.core.errors.NamingError:
         pass
     else:
-        log.warning('Application name \'%s\' is already registered on name server, overwriting.' % appName)
+        log.warning(f'Application name {appName} is already registered on name server, overwriting.')
     
     uri = daemon.register(app)
     try:
         app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
     except AttributeError as e:
         # catch attribute error (thrown when method not defined)
-        log.warning('Can not register daemon for application %s' % appName)
+        log.warning(f'Can not register daemon for application {appName}')
     except:
-        log.exception('Can not register daemon on %s:%s using nathost %s:%s on nameServer' % (
-            server, port, nathost, natport))
+        log.exception(f'Can not register daemon on {host}:{net.port} using nathost {net.nathost}:{net.natport} on nameServer')
         raise
 
     # generate connection metadata entry
-    metadata.add('%s:%s' % (NS_METADATA_host, server))
-    metadata.add('%s:%s' % (NS_METADATA_port, port))
-    metadata.add('%s:%s' % (NS_METADATA_nathost, nathost))
-    metadata.add('%s:%s' % (NS_METADATA_natport, natport))
+    metadata.add('%s:%s' % (NS_METADATA_host, host))
+    metadata.add('%s:%s' % (NS_METADATA_port, net.port))
+    metadata.add('%s:%s' % (NS_METADATA_nathost, net.nathost))
+    metadata.add('%s:%s' % (NS_METADATA_natport, net.natport))
     ns.register(appName, uri, metadata=metadata)
 
     log.debug('NameServer %s has registered uri %s' % (appName, uri))
-    log.debug(
-        'Running runServer: server:%s, port:%s, nathost:%s, natport:%s, nameServer:%s, nameServerPort:%s, '
-        'applicationName:%s, daemon URI %s' % (server, port, nathost, natport, nshost, nsport, appName, uri)
-    )
+    log.debug(f'Running runServer: server:{host}, port:{net.port}, nathost:{net.nathost}, natport:{net.natport}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
     return uri
 
@@ -486,7 +376,13 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, appName, app, d
 
     :raises Exception: if can not run Pyro5 daemon
     """
-    return runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=app, daemon=daemon, metadata={NS_METADATA_appserver})
+    return runServer(
+        net=PyroNetConf(host=server,port=port,nathost=nathost,natport=natport,nshost=nshost,nsport=nsport),
+        appName=appName,
+        app=app,
+        daemon=daemon,
+        metadata={NS_METADATA_appserver}
+    )
 
 
 def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName, jobman, daemon=None):
@@ -503,7 +399,13 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     :param jobman: Jobmanager
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
-    return runServer(server=server, port=port, nathost=nathost, natport=natport, nshost=nshost, nsport=nsport, appName=appName, app=jobman, daemon=daemon, metadata={NS_METADATA_jobmanager})
+    return runServer(
+        net=PyroNetConf(host=server,port=port,nathost=nathost,natport=natport,nshost=nshost,nsport=nsport),
+        appName=appName,
+        app=jobman,
+        daemon=daemon,
+        metadata={NS_METADATA_jobmanager}
+    )
 
 
 # def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
@@ -525,15 +427,15 @@ def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
     :param model.Model or model.RemoteModel fromApplication: Application object from which we want to create a tunnel
     :param model.Model or model.RemoteModel toApplication: Application object to which we want to create a tunnel
 
-    :return: Instance of sshTunnel class
-    :rtype: sshTunnel
+    :return: Instance of SshTunnel class
+    :rtype: SshTunnel
     """
     uri = toApplication.getURI()
     natPort = getNATfromUri(uri)
     # uri = fromApplication.getURI()
     fromNatPort = natPort  # getNATfromUri( uri )
     
-    tunnel = sshTunnel(
+    tunnel = SshTunnel(
         remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort,
         sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
     return tunnel
@@ -610,7 +512,7 @@ def connectJobManager(ns, jobManName, sshContext=None):
     tunnelJobMan = None
     if sshContext:
         try:
-            tunnelJobMan = sshTunnel(
+            tunnelJobMan = SshTunnel(
                 remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
                 sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
         except Exception:
@@ -673,7 +575,7 @@ def allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext=None):
     if sshContext:
         try:
             (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobMan.getNSName())
-            appTunnel = sshTunnel(
+            appTunnel = SshTunnel(
                 remoteHost=jobManHostname,
                 userName=sshContext.userName,
                 localPort=natPort,
@@ -771,3 +673,130 @@ def uploadPyroFileOnServer(clientFileName, pyroFile, size=1024*1024, compressFla
     See :func:'downloadPyroFile'
     """
     uploadPyroFile(clientFileName, pyroFile, size, compressFlag)
+
+
+
+
+
+def useTestSSL():
+    '''
+    Set Pyro5 SSL test configuration as Pyro5.config. Not to be used in production settings.
+    '''
+    Pyro5.config.SSL=True
+    Pyro5.config.SSL_REQUIRECLIENTCERT=True
+    Pyro5.config.SSL_SERVERCERT=testSSL['server','cert']
+    Pyro5.config.SSL_SERVERKEY=testSSL['server','key']
+    Pyro5.config.SSL_CLIENTCERT=testSSL['client','cert']
+    Pyro5.config.SSL_CLIENTKEY=testSSL['client','key']
+    Pyro5.config.SSL_CACERTS=testSSL['rootCA','cert']
+
+def useTestSSL_env(e):
+    '''
+    Set Pyro5 SSL test configuration as environment variables. Not to be used in production settings.
+    '''
+    e['PYRO_SSL']='1'
+    e['PYRO_SSL_REQUIRECLIENTCERT']='1'
+    e['PYRO_SSL_SERVERCERT']=testSSL['server','cert']
+    e['PYRO_SSL_SERVERKEY']=testSSL['server','key']
+    e['PYRO_SSL_CLIENTCERT']=testSSL['client','cert']
+    e['PYRO_SSL_CLIENTKEY']=testSSL['client','key']
+    e['PYRO_SSL_CACERTS']=testSSL['rootCA','cert']
+
+@dataclass
+class SSHContext(object):
+    """
+    Helper class to store ssh tunnel connection details. It is parameter to different methods (connectJobManager,
+    allocateApplicationWithJobManager, etc.).
+    When provided, the corresponding ssh tunnel connection is established and associated to proxy using decorator class
+    to make sure it can be terminated properly.
+    """
+    userName: str=''
+    sshClient: str='manual'
+    options: str=''
+    sshHost: str=''
+        
+
+class SshTunnel(object):
+    """
+    Helper class to represent established ssh tunnel. It defines terminate and __del__ method
+    to ensure correct tunnel termination.
+    """
+    def __init__(self, remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
+        """ 
+        Constructor. Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux.
+
+        :param str remoteHost: IP of remote host
+        :param str userName: User name, if empty, current user name is used
+        :param int localPort: Local port
+        :param int remotePort: Remote port
+        :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
+        :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
+        :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
+        :param bool Reverse: True if reverse tunnel to be created (default is False)
+        
+        :raises Exception: if creation of a tunnel failed
+        """
+
+        if sshHost == '':
+            sshHost = remoteHost
+        if userName == '':
+            userName = os.getenv('USER')
+                
+        direction = 'L'
+        if Reverse is True:
+            direction = 'R'
+
+        # use direct system command. Paramiko or sshtunnel do not work.
+        # put ssh public key on a server - interaction with a keyboard
+        # for password will not work here (password goes through TTY, not stdin)
+        cmd = ''
+        if sshClient == 'ssh':
+            cmd = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
+                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.debug("Creating ssh tunnel via command: " + cmd)
+        elif sshClient == 'autossh':
+            cmd = 'autossh -%s %s:%s:%s %s@%s -N %s' % (
+                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.debug("Creating autossh tunnel via command: " + cmd)
+        elif 'putty' in sshClient.lower():
+            # need to create a public key *.ppk using puttygen.
+            # It can be created by importing Linux private key.
+            # The path to that key is given as -i option
+            cmd = '%s -%s %s:%s:%s %s@%s -N %s' % (
+                sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.debug("Creating ssh tunnel via command: " + cmd)
+        elif sshClient == 'manual':
+            # You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
+            print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
+                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (
+                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            log.info("If ssh tunnel does not exist and you need it, do it manually using a command e.g. " + cmd1 +
+                     " , or " + cmd2)
+            self.tunnel = 'manual'
+        else:
+            log.error("Unknown ssh client, exiting")
+            exit(0)
+        try:
+            if cmd:
+                self.tunnel = subprocess.Popen(cmd.split())
+        except Exception:
+            log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
+            raise
+
+        time.sleep(1.0)
+
+    def terminate(self):
+        """
+        Terminate the connection.
+        """
+        if self.tunnel:
+            if not self.tunnel == "manual":
+                self.tunnel.terminate()
+                self.tunnel = None
+
+    def __del__(self):
+        self.terminate()
+
+

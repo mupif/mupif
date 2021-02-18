@@ -94,7 +94,7 @@ def main():
     # create tunnel to JobManager running on (remote) server
     try:
         if tunnel:
-            tunnelJobMan = pyroutil.sshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
+            tunnelJobMan = pyroutil.SshTunnel(remoteHost=hostname, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     except Exception as e:
         log.exception(e)
         tunnelJobMan.terminate()
@@ -106,7 +106,7 @@ def main():
         (errCode, jobID, jobPort) = jobMan.allocateJob(pyroutil.getUserInfo(), natPort=None)
         print("Application " + str(jobID) + " successfully allocted")
         if tunnel:
-            tunnelApp = pyroutil.sshTunnel(
+            tunnelApp = pyroutil.SshTunnel(
                 remoteHost=hostname, userName=username, localPort=6001, remotePort=jobPort, sshClient='ssh')
         app = pyroutil.connectApp(ns, jobID, hkey)
         

@@ -120,7 +120,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         log.debug('SimpleJobManager2: initialization done for application name %s' % self.applicationName)
 
     @staticmethod
-    def _spawnProcess(pipe,ns,appName,configFile,jobID,cwd,mode,moduleDir=None):
+    def _spawnProcess(pipe,ns,appName,configFile,jobID,jobPort,cwd,mode,overrideNsPort=None,moduleDir=None):
         '''
         This function is called 
         '''
@@ -136,10 +136,13 @@ class SimpleJobManager2 (jobmanager.JobManager):
         import mupif, mupif.pyroutil
         confMod=importlib.import_module(configFile)
         conf=confMod.serverConfig(mode)
+        if overrideNsPort:
+            log.info('Overriding config-specified nameserver port %d with --override-nsport=%d'%(conf.nsport,overrideNsPort))
+            conf.nsport=overrideNsPort
         uri=mupif.pyroutil.runAppServer(
-            app=conf.applicationClass(),appName=jobID,
-            # TODO: pass self.nshost etc
-            server='0.0.0.0',port=0,
+            app=conf.applicationClass(),
+            appName=jobID,
+            server=conf.server,port=jobPort,
             nathost=None,natport=None,
             nshost=None,nsport=0
         )
@@ -276,11 +279,13 @@ class SimpleJobManager2 (jobmanager.JobManager):
                         pipe=childPipe,
                         ns=self.ns,
                         jobID=jobID,
+                        jobPort=jobPort,
                         cwd=targetWorkDir,
                         appName=self.applicationName,
                         configFile=self.configFile,
                         moduleDir=self.serverConfigPath,
-                        mode=self.serverConfigMode
+                        mode=self.serverConfigMode,
+                        overrideNsPort=self.overrideNsPort
                     )
                 )
                 proc.start()

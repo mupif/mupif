@@ -27,7 +27,7 @@ for apprecord in conf.apps:
         sshHost = apprecord[conf.appIndx_SshHost]
     try:
 
-        tunnel = pyroutil.sshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
+        tunnel = pyroutil.SshTunnel(remoteHost=apprecord[conf.appIndx_ServerName],
                                     userName=apprecord[conf.appIndx_UserName],
                                     localPort=apprecord[conf.appIndx_NATPort], remotePort=apprecord[conf.appIndx_RemotePort],
                                     sshClient=apprecord[conf.appIndx_SshClient], options=apprecord[conf.appIndx_Options],

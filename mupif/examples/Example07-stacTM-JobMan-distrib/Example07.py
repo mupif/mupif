@@ -47,29 +47,15 @@ class Example07(workflow.Workflow):
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
         if mode == 1:
-            self.thermalJobMan = pyroutil.connectJobManager(
-                ns,
-                cfg.jobManName+'-ex07',
-                pyroutil.SSHContext(
-                    userName=cfg.serverUserName,
-                    sshClient=cfg.sshClient,
-                    options=cfg.options,
-                    sshHost=cfg.sshHost
-                )
+            sshContext=pyroutil.SSHContext(
+                userName=cfg.serverUserName,
+                sshClient=cfg.sshClient,
+                options=cfg.options,
+                sshHost=cfg.sshHost
             )
-            self.mechanicalJobMan = pyroutil.connectJobManager(
-                ns,
-                mCfg.jobManName+'-ex07',
-                pyroutil.SSHContext(
-                    userName=mCfg.serverUserName,
-                    sshClient=mCfg.sshClient,
-                    options=mCfg.options,
-                    sshHost=mCfg.sshHost
-                )
-            )
-        else:
-            self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName+'-ex07')
-            self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName+'-ex07')
+        else: sshContext=None
+        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName+'-ex07', sshContext=sshContext)
+        self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName+'-ex07', sshContext=sshContext)
 
         # allocate the application instances
         try:

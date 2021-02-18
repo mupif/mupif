@@ -71,7 +71,7 @@ class TestLocalApp(unittest.TestCase):
         print('Connected to nameserver')
         for i,app in enumerate(self.apps):
             # what is localport??
-            #tunnel=pyroutil.sshTunnel(remoteHost='localhost',userName='testuser-%d'%(2000+i),localPort=2000+i,remotePort=4000+i,sshClient='ssh',options='-oStrictHostKeyChecking=no',sshHost='')
+            #tunnel=pyroutil.SshTunnel(remoteHost='localhost',userName='testuser-%d'%(2000+i),localPort=2000+i,remotePort=4000+i,sshClient='ssh',options='-oStrictHostKeyChecking=no',sshHost='')
             #print('Tunnel established')
             a=pyroutil.connectApp(ns,pyroutil.getNSAppName(self.jobname,app.__class__.__name__))
             print('Connected to App through Pyro')

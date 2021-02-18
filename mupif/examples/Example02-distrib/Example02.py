@@ -99,7 +99,7 @@ targetTime = 1.0
 sshContext = None
 if mode == 1:  # just print out how to set up a SSH tunnel
     sshContext = pyroutil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
-    # pyroutil.sshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
+    # pyroutil.SshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
 
 # locate nameserver
 ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport)

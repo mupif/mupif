@@ -134,7 +134,7 @@ def main():
     # extablish secure ssh tunnel connection
     if ssh:
         (host, jobmannatport, jobManNatHost, port) = pyroutil.getNSConnectionInfo(ns, jobmanname)
-        tunnel = pyroutil.sshTunnel(
+        tunnel = pyroutil.SshTunnel(
             remoteHost=host, userName=username, localPort=jobmannatport, remotePort=port, sshClient='ssh')
     
     jobMan = pyroutil.connectJobManager(ns, jobmanname, hkey=hkey)
