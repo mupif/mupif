@@ -7,9 +7,13 @@ arrayTests="$@" #arguments from command line, i.e. test numbers
 export TRAVIS=1
 
 # in Travis virtualenv with python3, python is actually python3
-#export PYTHON=python
 export PYTHON=python3
+# export PYTHON="wenv python"
 export PYVER=`$PYTHON -c 'import sys; print(sys.version_info[0])'`
+
+if [ "$USE_WENV" == true ]; then
+   export PYTHON="wenv python"
+fi
 
 # kill all subprocesses when exiting
 # http://stackoverflow.com/a/22644006/761090
@@ -39,6 +43,7 @@ then
 else
     COMMAND=$PYTHON
 fi
+
 echo Setting command to $COMMAND
 
 

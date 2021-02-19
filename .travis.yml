@@ -7,20 +7,14 @@ install:
    # 1. at some point, move all this to requirements.txt; see http://docs.travis-ci.com/user/languages/python/
    # 2. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
    # 3. numpy is pre-installed by travis implicitly
-   #
-   - pip install --upgrade pip setuptools
-   # Install libraries for nosetests
-   - pip install h5py
-   - pip install pyvtk
-   - pip install vtk
-   # this seems to be the new active upstream for pyvtk supporting 2.x and 3.x
-   - pip install git+https://github.com/pearu/pyvtk.git
-   # codecov-python
-   - pip install codecov
-   #
-   - pip install matplotlib==3.0.3
-   # install mupif itself
-   - python setup.py install 
+   - pip install --upgrade pip setuptools codecov
+   # :nstall libraries for nosetests
+   - pip install -r requirements.txt
+   - python setup.py install
+   # wenv
+   - pip install wenv
+   - wenv init
+   - wenv pip install --only-binary=pyrsistent -r requirements.txt
 
 #before_script:
 #   # see https://github.com/fabric/fabric/blob/master/.travis.yml
@@ -32,10 +26,12 @@ script:
    - codecov -F unittests
    - pwd
    - pushd mupif/examples
-   - export USE_CODECOV=true
-   - /bin/bash testExamples.sh
+   - USE_CODECOV=true /bin/bash testExamples.sh
    - popd
    - codecov -F examples
+   # test under wine
+   - wenv nosetests --rednose
+   - cd examples; USE_WENV=true /bin/bash testExamples.sh
 
 ##
 ## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
@@ -53,3 +49,4 @@ addons:
          - openssh-server
          - openssh-client
          - python-vtk
+         - wine

@@ -1,6 +1,5 @@
 # ignore any file ending with tilde
 *~
-
 __pycache__
 *.pyc
 /.project
