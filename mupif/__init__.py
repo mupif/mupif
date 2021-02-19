@@ -44,7 +44,7 @@ from . import bbox
 from . import cellgeometrytype
 from . import cell
 from . import dataid
-from . import ensightreader2
+# from . import ensightreader2
 from . import field
 from . import function
 from . import integrationrule
@@ -73,7 +73,7 @@ from . import constantfield
 # List all submodules, so they can all be imported: from mupif import *
 __all__ = [
     # submodules
-    'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'ensightreader2', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
+    'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
     ##
     # objects imported from submodules
     'FieldID','PropertyID','FunctionID','ParticleSetID','ValueType'
