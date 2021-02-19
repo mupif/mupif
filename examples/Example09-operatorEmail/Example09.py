@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-sys.path.extend(['..', '../../..'])
+sys.path.extend(['..', '../..'])
 from mupif import *
 import jsonpickle
 import time  # for sleep

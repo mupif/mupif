@@ -5,7 +5,7 @@
 # Created 03/2018
 
 import sys
-sys.path.append('../../..')
+sys.path.append('../..')
 import demoapp
 from mupif import *
 import logging

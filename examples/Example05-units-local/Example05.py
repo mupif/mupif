@@ -2,7 +2,7 @@
 from builtins import str
 import sys
 import logging
-sys.path.append('../../..')
+sys.path.append('../..')
 
 from mupif import *
 import mupif.physics.physicalquantities as PQ

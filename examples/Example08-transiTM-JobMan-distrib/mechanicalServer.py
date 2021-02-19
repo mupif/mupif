@@ -3,7 +3,7 @@ import os
 import sys
 import logging
 import argparse
-sys.path.extend(['..', '../../..'])
+sys.path.extend(['..', '../..'])
 from mupif import *
 import models
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN

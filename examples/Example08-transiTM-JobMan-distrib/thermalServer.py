@@ -3,7 +3,7 @@ import os
 import sys
 import argparse
 
-sys.path.extend(['..', '../../..', '../Example06-stacTM-local'])
+sys.path.extend(['..', '../..', '../Example06-stacTM-local'])
 from mupif import *
 
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN

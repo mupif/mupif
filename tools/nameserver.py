@@ -5,7 +5,7 @@
 
 import os
 import sys
-sys.path.append('../..')
+sys.path.append('..')
 import mupif.pyroutil
 import mupif.util
 import subprocess
@@ -29,23 +29,24 @@ def main():
     # os.environ['PYRO_PICKLE_PROTOCOL_VERSION'] = '2'
     os.environ['PYRO_SERIALIZER'] = 'serpent'
     os.environ['PYRO_SERVERTYPE'] = 'multiplex'
-    mupif.pyroutil.useTestSSL_env(os.environ)
+    os.environ['PYRO_SSL'] = '0'
     
-    # Creation of nameserver
-    cmd = 'pyro5-check-config'
-    p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    output, error = p1.communicate()
-    print(output.decode('utf-8') if output else "", error if error else "")
-
     if 0:
+        cmd = 'pyro5-check-config'
+        p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output, error = p1.communicate()
+        print(output.decode('utf-8') if output else "", error if error else "")
+
         # Able to kill this process by referrring to pyro5-ns
         cmd = 'pyro5-ns -n %s -p %d' % (cfg.nshost, cfg.nsport)
         p2 = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
         output, error = p2.communicate()
         print(output.decode('utf-8') if output else "", error.decode('utf-8') if error else "")
     else:
+        # equivalent, does not need subprocess and shell etc
+        import Pyro5.configure
+        Pyro5.configure.dump()
         import Pyro5.nameserver
-        # Pyro5.nameserver.main([sys.excecutable,
         Pyro5.nameserver.start_ns_loop(nshost,nsport)
 
 

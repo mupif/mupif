@@ -1,5 +1,5 @@
 import sys, time
-sys.path.append('../../..')
+sys.path.append('../..')
 import meshgen
 from mupif import *
 import time

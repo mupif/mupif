@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import logging
-sys.path.append('../../..')
+sys.path.append('../..')
 from mupif import *
 import mupif
 import mupif.physics.physicalquantities as PQ

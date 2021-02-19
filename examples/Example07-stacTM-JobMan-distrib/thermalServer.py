@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.extend(['..', '../../..'])
+sys.path.extend(['.','..', '../..'])
 from mupif import *
 util.changeRootLogger('thermal.log')
 import argparse

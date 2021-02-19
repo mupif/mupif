@@ -4,7 +4,7 @@
 # Vit Smilauer 07/2017, vit.smilauer (et) fsv.cvut.cz
 
 import sys
-sys.path.extend(['..', '../../..'])
+sys.path.extend(['..', '../..'])
 from mupif import *
 import logging
 log = logging.getLogger()

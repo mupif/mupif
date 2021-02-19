@@ -1,7 +1,7 @@
 import sys
 import Pyro5
 import logging
-sys.path.extend(['..', '../../..'])
+sys.path.extend(['..', '../..'])
 from mupif import *
 import mupif.physics.physicalquantities as PQ
 
