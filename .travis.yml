@@ -30,6 +30,7 @@ script:
    - popd
    - codecov -F examples
    # test under wine
+   - echo '{"arch":"win64"}' > ~/.wenv.json
    - wenv nosetests --rednose
    - cd examples; USE_WENV=true /bin/bash testExamples.sh
 
