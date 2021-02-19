@@ -50,4 +50,4 @@ addons:
          - openssh-server
          - openssh-client
          - python-vtk
-         - wine
+         - wine64
