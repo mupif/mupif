@@ -30,17 +30,10 @@ class config(object):
         Pyro5.config.DETAILED_TRACEBACK=True
         sys.excepthook=Pyro5.errors.excepthook
 
-        # Absolute path to mupif directory - used in JobMan2cmd
-        mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../../.."))
-        sys.path.append(mupif_dir)
-        mupif_dir = os.path.abspath(os.path.join(os.getcwd(), "../.."))
-        sys.path.append(mupif_dir)
-        
         # commmon attributes
         # Password for accessing nameServer and applications
         # self.hkey = 'mupif-secret-key'
         Pyro5.config.SSL=False
-        # mupif.pyroutil.useTestSSL()
 
         # Name of job manager
         self.jobManName = 'Mupif.JobManager@Example'
@@ -220,20 +213,20 @@ class config(object):
         # SSH CLIENT
         # User name for ssh connection, empty uses current login name
         # serverUserName = os.environ.get( "USERNAME" )#current user-not working
-        if 'TRAVIS' in os.environ:
-                thisdir = os.path.dirname(os.path.abspath(__file__))
-                self.sshClient = 'ssh'
-                self.options = "-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key " \
-                               "-oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts" % (thisdir, thisdir)
-                self.serverUserName = os.environ['USER']
-        elif mode in (0,1):
-            self.serverUserName = os.getenv('USER')
-            if sys.platform.lower().startswith('win'):  # Windows ssh client
-                self.sshClient = 'C:\\Program Files (x86)\\Putty\\putty.exe'
-                self.options = '-i L:\\.ssh\\mech\id_rsa.ppk'
-            else:  # Unix ssh client
-                self.sshClient = 'ssh'
-                self.options = '-oStrictHostKeyChecking=no'
+        if 'TRAVIS' in os.environ or mode in (0,1):
+            thisdir = os.path.dirname(os.path.abspath(__file__))
+            self.sshClient='asyncssh'
+            self.options = "-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key " \
+                           "-oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts" % (thisdir, thisdir)
+            self.serverUserName = os.environ['USER']
+        #elif mode in (0,1):
+        #    self.serverUserName = os.getenv('USER')
+        #    if sys.platform.lower().startswith('win'):  # Windows ssh client
+        #        self.sshClient = 'C:\\Program Files (x86)\\Putty\\putty.exe'
+        #        self.options = '-i L:\\.ssh\\mech\id_rsa.ppk'
+        #    else:  # Unix ssh client
+        #        self.sshClient = 'ssh'
+        #        self.options = '-oStrictHostKeyChecking=no'
         elif mode in (2,3,4):  # VPN
             self.sshClient = 'manual'
             self.options = ''
