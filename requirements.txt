@@ -12,3 +12,4 @@ matplotlib
 pydantic>=1.7.3
 # for documentation
 sphinxcontrib-apidoc
+asyncssh
