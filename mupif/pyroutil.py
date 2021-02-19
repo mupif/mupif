@@ -721,6 +721,20 @@ class SshTunnel(object):
     Helper class to represent established ssh tunnel. It defines terminate and __del__ method
     to ensure correct tunnel termination.
     """
+
+    async def runAsyncSSH(self,fwd,**kw):
+        'Async function which just creates background asyncssh task (tunnel) and returns'
+        async def _go():
+            'Create asyncssh connection and local/remote forwarding tunnel'
+            import asyncssh
+            async with asyncssh.connect(**kw) as conn:
+                direction,localPort,remoteHost,remotePort=fwd
+                if direction=='L': listener=await conn.forward_local_port('',localPort,remoteHost,remotePort)
+                else: listener=await conn.forward_remote_port('',remotePort,'localhost',localPort)
+                await listener.wait_closed()
+        import asyncio
+        asyncio.create_task(_go())
+
     def __init__(self, remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
         """ 
         Constructor. Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux.
@@ -746,25 +760,24 @@ class SshTunnel(object):
         if Reverse is True:
             direction = 'R'
 
-        # use direct system command. Paramiko or sshtunnel do not work.
-        # put ssh public key on a server - interaction with a keyboard
-        # for password will not work here (password goes through TTY, not stdin)
-        cmd = ''
-        if sshClient == 'ssh':
-            cmd = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.debug("Creating ssh tunnel via command: " + cmd)
-        elif sshClient == 'autossh':
-            cmd = 'autossh -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.debug("Creating autossh tunnel via command: " + cmd)
-        elif 'putty' in sshClient.lower():
-            # need to create a public key *.ppk using puttygen.
-            # It can be created by importing Linux private key.
-            # The path to that key is given as -i option
-            cmd = '%s -%s %s:%s:%s %s@%s -N %s' % (
-                sshClient, direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.debug("Creating ssh tunnel via command: " + cmd)
+        self.sshClient=sshClient
+        self.tunnel=None
+
+        if sshClient == 'asyncssh':
+            # try to convert OpenSSH arguments to asyncssh options
+            import argparse
+            parser=argparse.ArgumentParser(add_help=False)
+            parser.add_argument('-F',dest='config')
+            parser.add_argument('-p',type=int,dest='ssh_port')
+            parser.add_argument('-oIdentityFile',type=str,action='append',dest='client_keys')
+            parser.add_argument('-oUserKnownHostsFile',type=str,dest='known_hosts')
+            parser.add_argument('-N',action='store_true')
+            kwopts=vars(parser.parse_args(options.split()))
+            port=kwopts.pop('ssh_port',22)
+            log.info('Options extracted from OpenSSH command-line: '+str(kwopts))
+            kwopts.pop('N',None) # not useful
+            import asyncio
+            asyncio.run(self.runAsyncSSH(fwd=(direction,localPort,remoteHost,remotePort),host=remoteHost,port=remotePort,**kwopts))
         elif sshClient == 'manual':
             # You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
             print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
@@ -774,16 +787,28 @@ class SshTunnel(object):
                 direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             log.info("If ssh tunnel does not exist and you need it, do it manually using a command e.g. " + cmd1 +
                      " , or " + cmd2)
-            self.tunnel = 'manual'
         else:
-            log.error("Unknown ssh client, exiting")
-            exit(0)
-        try:
-            if cmd:
+            # command-based clients, create self.tunnel as process which can be terminated
+
+            # use direct system command. Paramiko or sshtunnel do not work.
+            # put ssh public key on a server - interaction with a keyboard
+            # for password will not work here (password goes through TTY, not stdin)
+            if sshClient == 'ssh': cmd0 = 'ssh'
+            elif sshClient == 'autossh': cmd0 = 'autossh'
+            elif 'putty' in sshClient.lower(): cmd0=sshClient
+            else: raise ValueError('Unknown ssh client {sshClient}.')
+            # for putty:
+            # need to create a public key *.ppk using puttygen.
+            # It can be created by importing Linux private key.
+            # The path to that key is given as -i option
+            cmd = [cmd0,f'-{direction}',f'{localPort}:{remoteHost}:{remotePort}',f'{userName}@{sshHost}','-N',options]
+
+            try:
+                log.debug("Creating ssh tunnel via command: " + str(cmd))
                 self.tunnel = subprocess.Popen(cmd.split())
-        except Exception:
-            log.exception("Creation of a tunnel failed. Can not execute the command: %s " % cmd)
-            raise
+            except Exception:
+                log.exception("Creation of a tunnel failed. Can not execute the command: %s " % str(cmd))
+                raise
 
         time.sleep(1.0)
 
@@ -791,8 +816,11 @@ class SshTunnel(object):
         """
         Terminate the connection.
         """
-        if self.tunnel:
-            if not self.tunnel == "manual":
+        if self.tunnel is not None:
+            if self.sshCient=='python':
+                self.tunnel.cancel()
+                self.tunnel=None
+            else:
                 self.tunnel.terminate()
                 self.tunnel = None
 
