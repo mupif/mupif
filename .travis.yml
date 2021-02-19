@@ -1,24 +1,17 @@
 language: python
+dist: focal
 python:
    - "3.8"
 install:
    #  APT stuff is below separately
-   # 
-   # 1. at some point, move all this to requirements.txt; see http://docs.travis-ci.com/user/languages/python/
-   # 2. pip is exported for active virtualenv (2.7 or 3.4), no need to change anything :)
-   # 3. numpy is pre-installed by travis implicitly
-   - pip install --upgrade pip setuptools codecov
-   # :nstall libraries for nosetests
+   - pip install codecov wenv
    - pip install -r requirements.txt
-   - python setup.py install
+   # - python setup.py install # no need to install mupif really
    # wenv
-   - pip install wenv
+   - echo '{"arch":"win64"}' > ~/.wenv.json
    - wenv init
    - wenv pip install --only-binary=pyrsistent -r requirements.txt
 
-#before_script:
-#   # see https://github.com/fabric/fabric/blob/master/.travis.yml
-#   # for allowing passwordless SSH to localhost
 script:
    - ls -l
    - pwd
@@ -30,24 +23,14 @@ script:
    - popd
    - codecov -F examples
    # test under wine
-   - echo '{"arch":"win64"}' > ~/.wenv.json
    - wenv nosetests --rednose
    - cd examples; USE_WENV=true /bin/bash testExamples.sh
 
-##
-## container-based infrastructure (http://docs.travis-ci.com/user/migrating-from-legacy/)
-##
 sudo: false
-## maybe install NumPy from miniconda in the future: https://gist.github.com/dan-blanchard/7045057
 addons:
    apt:
       packages:
-         - libblas-dev
-         - liblapack-dev
-         - libsuitesparse-dev
-         - libhdf5-serial-dev
-         - gfortran
+         - python3-pip
          - openssh-server
          - openssh-client
-         - python-vtk
          - wine64

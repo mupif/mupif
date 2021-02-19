@@ -218,7 +218,8 @@ class config(object):
             self.sshClient='asyncssh'
             self.options = "-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key " \
                            "-oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts" % (thisdir, thisdir)
-            self.serverUserName = os.environ['USER']
+            # USERNAME is for win32
+            self.serverUserName = os.environ.get('USER',os.environ.get('USERNAME')) 
         #elif mode in (0,1):
         #    self.serverUserName = os.getenv('USER')
         #    if sys.platform.lower().startswith('win'):  # Windows ssh client
