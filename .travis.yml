@@ -34,3 +34,4 @@ addons:
          - openssh-server
          - openssh-client
          - wine64
+         - wine
