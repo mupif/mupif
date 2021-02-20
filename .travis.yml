@@ -1,5 +1,6 @@
-language: python
+os: linux
 dist: focal
+language: python
 python:
    - "3.8"
 install:
@@ -25,7 +26,6 @@ script:
    - wenv nosetests --rednose
    - cd examples; USE_WENV=true /bin/bash testExamples.sh
 
-sudo: false
 addons:
    apt:
       packages:
