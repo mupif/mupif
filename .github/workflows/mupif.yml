@@ -16,7 +16,7 @@ jobs:
       matrix:
         python-version: [ 3.8 ]  # , 3.9
         # runs-on: [ubuntu-20.40, windows-2019]
-        fail-fast: false
+        fail-fast: 0
         max-parallel: 1 # avoid localhost conflicts
     steps:
     - uses: actions/checkout@v2
@@ -51,8 +51,8 @@ jobs:
         wenv nosetests --rednose --force-color -v
     - name: examples (native)
       run: |
-        cd examples; USE_CODECOV=true /bin/bash testExamples.sh
+        cd examples; USE_CODECOV=true /bin/bash testExamples.sh 2>&1 | grcat ./grc.conf
         # codecov -F examples
     - name: exmaples (win32)
       run: |
-        cd examples; USE_WENV=true /bin/bash testExamples.sh
+        cd examples; USE_WENV=true /bin/bash testExamples.sh 2>&1 | grcat ./grc.conf
