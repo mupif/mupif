@@ -206,7 +206,7 @@ if 0:
 
     print("\nAncestors", onto.elasticMaterial.ancestors())
     print("\nSubclasses", list(onto.elasticMaterial.subclasses()))
-    print("\nProperties", list(YoungsModulus1.get_properties()))
+    #print("\nProperties", list(youngsModulus1.get_properties()))
     #print(list(YoungsModulus1.get_relations()))
 
 

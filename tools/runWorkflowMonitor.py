@@ -2,7 +2,7 @@
 import os,sys
 sys.path.extend(['..', '../..','../examples'])
 from mupif import WorkflowMonitor
-from mupif import Util
+from mupif import util
 from mupif import pyroutil
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
@@ -18,7 +18,7 @@ util.changeRootLogger('monitor.log')
 
 # locate nameserver
 ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.hkey)
-monitor = workflowmonitor.WorkflowMonitor()
+monitor = WorkflowMonitor()
 print(monitor.getAllMetadata())
 pyroutil.runAppServer(
     server=cfg.monitorServer,

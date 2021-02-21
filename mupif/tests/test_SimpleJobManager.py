@@ -42,7 +42,7 @@ def waitPort(hostPort,timeout=10,dt=.5):
             s.connect(hostPort)
             return
         except OSError:
-            if time.time()-t0>timeout: raise RuntimeError(f'Timeout {timeout} s connecting to {hostPort[0]}:{hsotPort[1]}')
+            if time.time()-t0>timeout: raise RuntimeError(f'Timeout {timeout} s connecting to {hostPort[0]}:{hostPort[1]}')
             time.sleep(dt)
 
 class SimpleJobManager_TestCase(unittest.TestCase):

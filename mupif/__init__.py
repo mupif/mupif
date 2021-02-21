@@ -69,6 +69,7 @@ from . import metadatakeys
 from . import physics
 from . import particle
 from . import constantfield
+from . import dumpable
 
 # List all submodules, so they can all be imported: from mupif import *
 __all__ = [

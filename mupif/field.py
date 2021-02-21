@@ -33,6 +33,8 @@ import mupif.mesh
 from .physics import physicalquantities 
 from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
 
+import meshio
+
 from pydantic.dataclasses import dataclass
 import dataclasses
 
@@ -85,37 +87,37 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
     dumpAttrs=['mesh','fieldID','valueType','time','uri','fieldType','objectID','value','unit']
 
     # Field is not a dataclass as of now
-    if 0:
-        mesh: typing.Any # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
-        fieldID: FieldID
-        valueType: ValueType
-        unit: typing.Union[PhysicalUnit,str]
-        time: PhysicalQuantity
-        value: typing.Union[typing.List,numpy.ndarray]=None
-        fieldType: FieldType=FieldType.FT_vertexBased
-        objectID: int=0
-        metaData: dict=dataclasses.field(default_factory=lambda: [])
+    #if 0:
+    #    mesh: typing.Any # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
+    #    fieldID: FieldID
+    #    valueType: ValueType
+    #    unit: typing.Union[PhysicalUnit,str]
+    #    time: PhysicalQuantity
+    #    value: typing.Union[typing.List,numpy.ndarray]=None
+    #    fieldType: FieldType=FieldType.FT_vertexBased
+    #    objectID: int=0
+    #    metaData: dict=dataclasses.field(default_factory=lambda: [])
 
-        def __post__init__(self):
+    #    def __post__init__(self):
 
-            if value is None:
-                if self.fieldType == FieldType.FT_vertexBased:
-                    ncomponents = mesh.getNumberOfVertices()
-                else:
-                    ncomponents = mesh.getNumberOfCells()
-                self.value = zeros((ncomponents, self.getRecordSize()))
+    #        if value is None:
+    #            if self.fieldType == FieldType.FT_vertexBased:
+    #                ncomponents = mesh.getNumberOfVertices()
+    #            else:
+    #                ncomponents = mesh.getNumberOfCells()
+    #            self.value = zeros((ncomponents, self.getRecordSize()))
 
-            if not physicalquantities.isPhysicalUnit(self.unit):
-                self.unit = physicalquantities.findUnit(self.unit)
+    #        if not physicalquantities.isPhysicalUnit(self.unit):
+    #            self.unit = physicalquantities.findUnit(self.unit)
 
 
-            self.setMetadata('Units', self.unit.name())
-            self.setMetadata('Type', 'mupif.field.Field')
-            self.setMetadata('Type_ID', str(self.fieldID))
-            self.setMetadata('FieldType', str(fieldType))
-            self.setMetadata('ValueType', str(self.valueType))
-            
-            self.updateMetadata(metaData)
+    #        self.setMetadata('Units', self.unit.name())
+    #        self.setMetadata('Type', 'mupif.field.Field')
+    #        self.setMetadata('Type_ID', str(self.fieldID))
+    #        self.setMetadata('FieldType', str(fieldType))
+    #        self.setMetadata('ValueType', str(self.valueType))
+    #        
+    #        self.updateMetadata(metaData)
 
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -803,7 +805,6 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
             time: PhysicalQuantity=PhysicalQuantity(0,'s')
         ) -> typing.List[Field]:
         if isinstance(input,str):
-            import meshio
             input=meshio.read(input)
         msh=mupif.mesh.Mesh.makeFromMeshioPointsCells(input.points,input.cells)
         ret=[]
