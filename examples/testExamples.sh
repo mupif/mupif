@@ -61,6 +61,7 @@ AppendLog () {
 willRunTest () {
     if [ -z "$arrayTests" ] || [[ " ${arrayTests[@]} " =~ " $1 " ]] ; then
         echo 'Running test' $1
+        jobs # show background jobs
         return 1
     else
         #echo 'FA'
