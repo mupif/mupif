@@ -51,8 +51,9 @@ jobs:
         wenv nosetests --rednose --force-color -v
     - name: examples (native)
       run: |
-        cd examples; USE_CODECOV=true grc --config grc.conf --stdout --stderr ./testExamples.sh 2>&1
+        #  grc --config grc.conf --stdout --stderr 
+        cd examples; USE_CODECOV=true ./testExamples.sh
         # codecov -F examples
     - name: exmaples (win32)
       run: |
-        cd examples; USE_WENV=true grc --config grc.conf --stdout --stderr ./testExamples.sh
+        cd examples; USE_WENV=true ./testExamples.sh
