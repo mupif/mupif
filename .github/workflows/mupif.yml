@@ -26,7 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install openssh-server wine64 wine flake8 python3-wheel python3-pip
+        sudo apt-get install grc openssh-server wine64 wine flake8 python3-wheel python3-pip
         # python -m pip install --upgrade pip
         python -m pip install codecov wenv
         pip install -r requirements.txt
