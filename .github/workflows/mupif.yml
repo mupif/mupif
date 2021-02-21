@@ -28,13 +28,13 @@ jobs:
       run: |
         sudo apt-get install grc openssh-server wine64 wine flake8 python3-wheel python3-pip
         # python -m pip install --upgrade pip
-        python -m pip install codecov wenv
-        pip install -r requirements.txt
+        python -m pip install -q codecov wenv
+        pip install -q -r requirements.txt
     - name: Prepare wenv
       run: |
         echo '{"arch":"win64"}' > ~/.wenv.json
         wenv init
-        wenv pip install --only-binary=pyrsistent -r requirements.txt
+        wenv pip install -q --only-binary=pyrsistent -r requirements.txt
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -51,8 +51,8 @@ jobs:
         wenv nosetests --rednose --force-color -v
     - name: examples (native)
       run: |
-        cd examples; USE_CODECOV=true /bin/bash testExamples.sh 2>&1 | grcat ./grc.conf
+        cd examples; USE_CODECOV=true grc --config grc.conf --stdout --stderr ./testExamples.sh 2>&1
         # codecov -F examples
     - name: exmaples (win32)
       run: |
-        cd examples; USE_WENV=true /bin/bash testExamples.sh 2>&1 | grcat ./grc.conf
+        cd examples; USE_WENV=true grc --config grc.conf --stdout --stderr ./testExamples.sh

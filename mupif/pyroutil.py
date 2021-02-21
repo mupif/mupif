@@ -54,20 +54,24 @@ import itertools
 testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
 
 
-def fixZeroIP(ip,name):
+def fixAnyIP(ip,name):
     # origin: https://stackoverflow.com/a/28950776/761090
-    '''Guess (non-localhost) IP when binding to 0.0.0.0'''
-    if ip!='0.0.0.0': return ip
+    '''Guess (non-localhost) IP when binding to '0.0.0.0' (IPv4) or '::' (IPv6)'''
+    if ip!='0.0.0.0' or ip!='::': return ip
+    ipv4=(ip=='0.0.0.0')
     import socket
-    s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s=socket.socket(socket.AF_INET if ipv4 else socket.AF_INET6, socket.SOCK_DGRAM)
     try:
-        s.connect(('10.255.255.255',1)) # doesn't even have to be reachable
+        # doesn't even have to be reachable
+        # 2001:db8::1234 is TESTNET address
+        s.connect(('10.255.255.255' if ipv4 else '2001:db8::1234',1)) 
         ret=s.getsockname()[0]
-        log.info('IP address for %s adjusted: %s → %s'%(name,ip,ret))
+        log.info(f'IPv{4 if ipv4 else 6} address for {name} adjusted: {ip} → {ret}')
         return ret
     except Exception:
-        log.error('IP address for %s: adjustment of %s failed, returning 127.0.0.1'%(name,ip))
-        return '127.0.0.1'
+        ret='127.0.0.1' if ipv4 else '::1'
+        log.error(f'IPv{4 if ipv4 else 6} address for {name}: adjustment of {ip} failed, returning {ret} (localhost)')
+        return ret
     finally:
         s.close()
 
@@ -274,7 +278,7 @@ def runDaemon(host, port, nathost=None, natport=None):
     :return Instance of the running daemon, None if a problem
     :rtype Pyro5.api.Daemon
     """
-    host=fixZeroIP(host,'[daemon]')
+    host=fixAnyIP(host,'[daemon]')
     if isinstance(port, (tuple, list)):
         ports = port
     else:
@@ -315,7 +319,7 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     """
     # server, port, nathost, natport, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
-    host=fixZeroIP(net.host,appName)
+    host=fixAnyIP(net.host,appName)
 
     externalDaemon = False
     if not daemon:
