@@ -52,8 +52,8 @@ jobs:
     - name: examples (native)
       run: |
         #  grc --config grc.conf --stdout --stderr 
-        cd examples; USE_CODECOV=true ./testExamples.sh
+        cd examples; USE_CODECOV=true grc --config grc.conf --stdout --stderr bash ./testExamples.sh
         # codecov -F examples
     - name: exmaples (win32)
       run: |
-        cd examples; USE_WENV=true ./testExamples.sh
+        cd examples; USE_WENV=true grc --config grc.conf --stdout --stderr bash bash ./testExamples.sh

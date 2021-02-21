@@ -17,21 +17,21 @@ from Config import config
 cfg = config(mode)
 import logging
 log = logging.getLogger()
-mupif.util.changeRootLogger('nameserver.log')
-
+# mupif.util.changeRootLogger('nameserver.log')
 
 def main():
     # Initializating variables
     nshost = cfg.nshost
     nsport = cfg.nsport
-    log.info(f"Starting nameserver on {cfg.nshost}:{cfg.nsport}")
+    log.warning(f"Starting nameserver on {cfg.nshost}:{cfg.nsport}")
     # os.environ['PYRO_SERIALIZERS_ACCEPTED'] = 'serpent,json,marshal,pickle'
     # os.environ['PYRO_PICKLE_PROTOCOL_VERSION'] = '2'
-    os.environ['PYRO_SERIALIZER'] = 'serpent'
-    os.environ['PYRO_SERVERTYPE'] = 'multiplex'
-    os.environ['PYRO_SSL'] = '0'
     
     if 0:
+        os.environ['PYRO_SERIALIZER'] = 'serpent'
+        os.environ['PYRO_SERVERTYPE'] = 'multiplex'
+        os.environ['PYRO_SSL'] = '0'
+
         cmd = 'pyro5-check-config'
         p1 = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         output, error = p1.communicate()
@@ -45,7 +45,11 @@ def main():
     else:
         # equivalent, does not need subprocess and shell etc
         import Pyro5.configure
-        Pyro5.configure.dump()
+        Pyro5.configure.SERIALIZER='serpent'
+        Pyro5.configure.PYRO_SERVERTYPE='multiplex'
+        Pyro5.configure.PYRO_SSL=0
+
+        log.warning(Pyro5.configure.global_config.dump())
         import Pyro5.nameserver
         Pyro5.nameserver.start_ns_loop(nshost,nsport)
 

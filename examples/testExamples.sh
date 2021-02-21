@@ -23,9 +23,12 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
 
 # run testing SSH server, will be killed by the trap
+echo '** Starting SSH server'
 bash ssh/test_ssh_server.sh &
 # testing Pyro nameserver
+echo '** Starting Pyro5 nameserver'
 $PYTHON ../tools/nameserver.py &
+
 sleep 1
 
 # accumulates failures, which are stored in $ret for each example, 1 for failure
