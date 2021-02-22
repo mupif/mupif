@@ -110,10 +110,11 @@ class SimpleJobManager2 (jobmanager.JobManager):
             self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
 
-        # Create a TCP/IP socket to get uri from daemon registering an application
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('localhost', self.jobMancmdCommPort))
-        self.s.listen(1)
+        if SimpleJobManager2.useCmd:
+            # Create a TCP/IP socket to get uri from daemon registering an application
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s.bind(('localhost', self.jobMancmdCommPort))
+            self.s.listen(1)
 
         #atexit.register(self.terminate)
 
@@ -144,7 +145,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
             appName=jobID,
             server=conf.server,port=jobPort,
             nathost=None,natport=None,
-            nshost=None,nsport=0
+            nshost=conf.nshost,nsport=conf.nsport
         )
         pipe.send(uri) # as bytes
 
@@ -377,7 +378,8 @@ class SimpleJobManager2 (jobmanager.JobManager):
             except:
                 pass
             self.daemon = None
-        self.s.close()
+        if SimpleJobManager2.useCmd:
+            self.s.close()
 
 
     def getApplicationSignature(self):

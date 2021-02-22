@@ -25,7 +25,7 @@ def getline(f):
 
 
 @Pyro5.api.expose
-class thermal(mupif.model.Model):
+class ThermalModel(mupif.model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self, metaData={}):
@@ -91,7 +91,7 @@ class thermal(mupif.model.Model):
                     'Representation': 'Finite volumes'
                 }
             }
-        super(thermal, self).__init__(metaData)
+        super(ThermalModel, self).__init__(metaData)
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
@@ -634,7 +634,7 @@ class thermal(mupif.model.Model):
 
 
 @Pyro5.api.expose
-class thermal_nonstat(thermal):
+class ThermalNonstatModel(ThermalModel):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""
 
     def __init__(self):
@@ -700,7 +700,7 @@ class thermal_nonstat(thermal):
                 'Representation': 'Finite volumes'
             }
         }
-        super(thermal_nonstat, self).__init__(metaData)
+        super(ThermalNonstatModel, self).__init__(metaData)
         self.mesh = None
         self.capacity = 1.0  # J/kg/K
         self.density = 1.0
@@ -950,7 +950,7 @@ class thermal_nonstat(thermal):
 
 
 @Pyro5.api.expose
-class mechanical(mupif.model.Model):
+class MechanicalModel(mupif.model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self):
@@ -1005,7 +1005,7 @@ class mechanical(mupif.model.Model):
                 'Representation': 'Finite volumes'
             }
         }
-        super(mechanical, self).__init__(metaData)
+        super(MechanicalModel, self).__init__(metaData)
         self.E = 30.0e+9  # ceramics
         self.nu = 0.25  # ceramics
         self.fx = [0., 0., 0., 0.]  # load in x

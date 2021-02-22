@@ -1,4 +1,3 @@
-#
 #           MuPIF: Multi-Physics Integration Framework
 #               Copyright (C) 2010-2014 Borek Patzak
 #
@@ -290,7 +289,8 @@ def runDaemon(host, port, nathost=None, natport=None):
             log.info('Pyro5 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
             return daemon
         except socket.error as e:
-            log.debug('Socket port %s:%s seems to be already in use' % (host, iport))
+            log.debug(f'Unable to run daemon on {host}:{iport}: {str(e)}')
+            # log.exception(e)
             daemon = None
         except Exception:
             log.exception('Can not run Pyro5 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
@@ -319,10 +319,10 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     """
     # server, port, nathost, natport, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
-    host=fixAnyIP(net.host,appName)
 
     externalDaemon = False
     if not daemon:
+        host=fixAnyIP(net.host,appName)
         try:
             daemon = Pyro5.api.Daemon(host=host,port=net.port,nathost=net.nathost,natport=net.natport)
             log.info(f'Pyro5 daemon runs on {host}:{net.port} using nathost {net.nathost}:{net.natport}')
@@ -348,18 +348,23 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
         # catch attribute error (thrown when method not defined)
         log.warning(f'Can not register daemon for application {appName}')
     except:
-        log.exception(f'Can not register daemon on {host}:{net.port} using nathost {net.nathost}:{net.natport} on nameServer')
+        log.exception(f'Can not register app with daemon {daemon.locationStr} using nathost {net.nathost}:{net.natport} on nameServer')
         raise
 
+
+    import setproctitle
+    setproctitle.setproctitle(appName)
+
     # generate connection metadata entry
-    metadata.add('%s:%s' % (NS_METADATA_host, host))
-    metadata.add('%s:%s' % (NS_METADATA_port, net.port))
+    _host,_port=daemon.locationStr.split(':')
+    metadata.add('%s:%s' % (NS_METADATA_host, _host))
+    metadata.add('%s:%s' % (NS_METADATA_port, _port))
     metadata.add('%s:%s' % (NS_METADATA_nathost, net.nathost))
     metadata.add('%s:%s' % (NS_METADATA_natport, net.natport))
     ns.register(appName, uri, metadata=metadata)
 
     log.debug('NameServer %s has registered uri %s' % (appName, uri))
-    log.debug(f'Running runServer: server:{host}, port:{net.port}, nathost:{net.nathost}, natport:{net.natport}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
+    log.debug(f'Running runServer: server:{_host}, port:{_port}, nathost:{net.nathost}, natport:{net.natport}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
     return uri
 

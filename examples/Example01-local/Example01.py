@@ -1,11 +1,12 @@
 import sys, os.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../..')
 
+from mupif.simple import *
+import mupif.util
 
 import logging
-log=logging.getLogger('Ex01')
-
-from mupif.simple import *
+log=mupif.util.setupLogger(None)
+# log.setLevel(logging.DEBUG)
 
 class application1(Model):
     """

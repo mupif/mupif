@@ -20,7 +20,7 @@ ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 # Run a daemon. It will run even the port has DROP/REJECT status. The connection from a client is then impossible.
 # daemon = pyroutil.runDaemon(host=cfg.server3, port=cfg.serverPort3)
 
-mechanical = models.mechanical()
+mechanical = models.MechanicalModel()
 # mechanical.initialize('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputM10.in', '.')
 
 pyroutil.runAppServer(

@@ -33,8 +33,8 @@ class Example06(workflow.Workflow):
         super(Example06, self).__init__(metaData=MD)
         self.updateMetadata(metaData)
 
-        self.thermalSolver = models.thermal()
-        self.mechanicalSolver = models.mechanical()
+        self.thermalSolver = models.ThermalModel()
+        self.mechanicalSolver = models.MechanicalModel()
 
         self.registerModel(self.thermalSolver, 'thermal')
         self.registerModel(self.mechanicalSolver, 'mechanical')

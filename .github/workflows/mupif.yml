@@ -5,16 +5,16 @@ name: MuPIF
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, act ]
   pull_request:
-    branches: [ master, dev ]
+    branches: [ master, dev, act ]
 
 jobs:
   build:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ 3.8 ]  # , 3.9
+        python-version: [ 3.8, 3.9 ]
         # runs-on: [ubuntu-20.40, windows-2019]
         # fail-fast: 0
       max-parallel: 1 # avoid localhost conflicts
@@ -26,7 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install grc openssh-server wine64 wine flake8 python3-wheel python3-pip
+        sudo apt-get install openssh-server wine64 wine flake8 python3-wheel python3-pip dos2unix
         # python -m pip install --upgrade pip
         python -m pip install -q codecov wenv
         pip install -q -r requirements.txt
@@ -44,16 +44,16 @@ jobs:
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=obsolete
     - name: nosetests (native)
       run: |
-        nosetests --rednose --force-color -v --with-coverage
+        nosetests --rednose --force-color -v --with-coverage 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: nosetests (win64)
       run: |
-        wenv nosetests --rednose --force-color -v
+        wenv nosetests --rednose -v  2>&1 | dos2unix | tools/grcat-mupif
     - name: examples (native)
+      timeout-minutes: 2 # normally about 35s
       run: |
-        #  grc --config grc.conf --stdout --stderr 
-        cd examples; USE_CODECOV=true bash ./testExamples.sh 2>&1 | grcat grc.conf 
-        # codecov -F examples
-    - name: exmaples (win32)
+        cd examples; ./runex.py --codecov 2>&1 | ../tools/grcat-mupif
+    - name: examples (win32)
+      timeout-minutes: 2 # normally about 50s
       run: |
-        cd examples; USE_WENV=true bash ./testExamples.sh 2>&1 | grcat grc.conf
+        cd examples; ./runex.py --wenv=all 2>&1 | dos2unix | ../tools/grcat-mupif

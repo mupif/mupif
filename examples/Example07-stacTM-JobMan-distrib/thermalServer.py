@@ -14,7 +14,7 @@ ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run a daemon for jobMamager on this machine
 daemon = pyroutil.runDaemon(
-    host=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport)
+    host=cfg.server, port=list(range(cfg.serverPort,cfg.serverPort+100)), nathost=cfg.serverNathost, natport=cfg.serverNatport)
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(

@@ -1,19 +1,21 @@
 #!/bin/bash
 #You may run all tests without argumens, or to use selected tests such as ./testExamples.sh '1 2'
-
 arrayTests="$@" #arguments from command line, i.e. test numbers
 
 # force running everything locally (ssh clients and servers)
 export TRAVIS=1
 
 # in Travis virtualenv with python3, python is actually python3
-export PYTHON=python3
+export PYTHON='python3 -u'
 # export PYTHON="wenv python"
 export PYVER=`$PYTHON -c 'import sys; print(sys.version_info[0])'`
 
 if [ "$USE_WENV" == true ]; then
-   export PYTHON="wenv python"
+   export PYTHON="wenv python -u"
 fi
+
+#export PYRO_LOGLEVEL='DEBUG'
+#export PYRO_LOGFILE='{stderr}'
 
 # kill all subprocesses when exiting
 # http://stackoverflow.com/a/22644006/761090
@@ -60,7 +62,8 @@ AppendLog () {
 
 willRunTest () {
     if [ -z "$arrayTests" ] || [[ " ${arrayTests[@]} " =~ " $1 " ]] ; then
-        echo 'Running test' $1
+        echo "========================= Running Example $1 ========================"
+        echo '   in directory' `pwd`
         jobs # show background jobs
         return 1
     else
@@ -71,7 +74,6 @@ willRunTest () {
 
 willRunTest '1'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example01-local
-        echo $PWD
         $COMMAND Example01.py
         ret=$?
         (( retval=$retval || $ret ))
@@ -81,7 +83,6 @@ fi
 
 willRunTest '2'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example02-distrib
-        echo $PWD
         $PYTHON server.py &
         PID1=$!
         echo $PID1
@@ -96,7 +97,6 @@ fi
 
 willRunTest '3'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example03-field-local
-        echo $PWD
         $COMMAND Example03.py
         ret=$?
         (( retval=$retval || $ret ))
@@ -106,7 +106,6 @@ fi
 
 willRunTest '4'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example04-jobMan-distrib
-        echo $PWD
         $PYTHON server.py &
         PID1=$!
         sleep 1
@@ -120,7 +119,6 @@ fi
 
 willRunTest '5'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example05-units-local
-        echo $PWD
         $COMMAND Example05.py
         ret=$?
         (( retval=$retval || $ret ))
@@ -140,7 +138,6 @@ fi
 
 willRunTest '7'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example07-stacTM-JobMan-distrib
-        echo $PWD
         $COMMAND thermalServer.py &
         PID1=$!
         $COMMAND mechanicalServer.py &
@@ -157,7 +154,6 @@ fi
 
 willRunTest '8'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example08-transiTM-JobMan-distrib
-        echo $PWD
         $COMMAND thermalServer.py &
         PID1=$!
         $COMMAND mechanicalServer.py &
@@ -174,7 +170,6 @@ fi
 
 willRunTest '9'; test=$?; if [ "$test" == 1  ] ; then
 pushd Example09-operatorEmail
-        echo $PWD
         $COMMAND Example09.py
         ret=$?
         (( retval=$retval || $ret ))
