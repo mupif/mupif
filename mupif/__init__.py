@@ -31,67 +31,55 @@ _branch = 'dev'
 
 import os, sys
 
-from .dataid import FieldID
-from .dataid import PropertyID
-from .dataid import FunctionID
-from .dataid import ParticleSetID
-from .valuetype import ValueType
+#
+# import everything recursively, inject into this module
+#
+import pkgutil
+import os.path
+d=os.path.dirname(os.path.abspath(__file__))
+__all__=[]
+for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
+    modsplit=modname.split('.')
+    # avoid foreign modules
+    if modsplit[0]!='mupif': continue
+    # avoid mupif itself
+    if modsplit==['mupif']: continue
+    try:
+        # important! don't call loader if the modules appeared in sys.modules meanwhile
+        # (it could have been imported another module indirectly)
+        # this would result in double import with catastrophic consequences
+        # such as the same class existing twice, but not being identical
+        if modname in sys.modules: mod=sys.modules[modname]
+        else: sys.modules[modname]=(mod:=loader.find_module(modname).load_module(modname))
+    except Exception as e:
+        sys.stderr.write(f'Error importing module {modname}: {str(e)}\n')
+    # direct submodules created as mupif.submodule
+    if len(modsplit)==2:
+        globals()[modsplit[1]]=mod
+        __all__.append(modsplit[1])
+    # contents of those does not need to be exposed as mupif.Class etc
+    if modsplit[1] in ('tests','maybe-something-more'): continue
+    # import contents of submodules (direct or indirect)
+    for name in mod.__dir__():
+        # don't export internal names
+        if name.startswith('_'): continue
+        obj=getattr(mod,name)
+        # skip builtins and externally imported things
+        if not hasattr(obj,'__module__') or not obj.__module__.startswith('mupif.'): continue
+        # catches classes and enumerations, exactly what we want
+        if isinstance(obj,type):
+            globals()[name]=obj
+            __all__.append(name)
+            # print(name,obj)
 
-from . import apierror
-from . import model
-from . import application
-from . import bbox
-from . import cellgeometrytype
-from . import cell
-from . import dataid
-# from . import ensightreader2
-from . import field
-from . import function
-from . import integrationrule
-from . import jobmanager
-from . import simplejobmanager
-from . import localizer
-from . import mesh
-from . import octree
-from . import operatorutil
-from . import property
-from . import pyroutil
-from . import timer
-from . import timestep
-from . import util
-from . import vertex
-# from . import vtkreader2
-from . import remoteapprecord
-from . import pyrofile
-from . import mupifobject
-from . import workflow
-from . import metadatakeys
-from . import physics
-from . import particle
-from . import constantfield
-from . import dumpable
+# print([k for k in sys.modules.keys() if k.startswith('mupif.')])
 
-# List all submodules, so they can all be imported: from mupif import *
-__all__ = [
-    # submodules
-    'apierror', 'model', 'application', 'bbox', 'cellgeometrytype', 'cell', 'dataid', 'field', 'function', 'integrationrule', 'jobmanager', 'simplejobmanager', 'localizer', 'mesh', 'octree', 'operatorutil', 'property', 'pyroutil', 'timer', 'timestep', 'util', 'valuetype', 'vertex', 'remoteapprecord', 'pyrofile', 'mupifobject', 'workflow', 'metadatakeys', 'physics', 'particle', 'constantfield',
-    ##
-    # objects imported from submodules
-    'FieldID','PropertyID','FunctionID','ParticleSetID','ValueType'
-]
-from . import util
-import logging
-import os
-
-# Create default logger
-log=util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
 
 
 ##
 ## register all types deriving (directly or indirectly) from Dumpable to Pyro5
 ##
-
-def _registerDumpable(clss):
+def _registerDumpable(clss=dumpable.Dumpable):
     import Pyro5.api
     for sub in clss.__subclasses__():
         # log.debug(f'Registering class {sub.__module__}.{sub.__name__}')
@@ -99,6 +87,7 @@ def _registerDumpable(clss):
         Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__,dumpable.Dumpable.from_dict_with_name)
         _registerDumpable(sub) # recurse
     # serialize ids if they are sent as top-level objects via Pyro5
+    from . import dataid
     for c in dataid.FieldID,dataid.ParticleSetID,dataid.FunctionID,dataid.PropertyID:
         Pyro5.api.register_class_to_dict(c,dumpable.enum_to_dict)
         Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
@@ -106,6 +95,13 @@ def _registerDumpable(clss):
     #Pyro5.api.register_class_to_dict(tuple,lambda i: dict(val=i))
     #Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
-_registerDumpable(dumpable.Dumpable)
+# register all dumpable types
+_registerDumpable()
 
+
+
+import logging
+import os
+# Create default logger
+log=util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
 

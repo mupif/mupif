@@ -28,13 +28,7 @@ recommended values from CODATA. Other conversion factors
 guarantee for the correctness of all entries in the unit
 table, so use this at your own risk.
 """
-from builtins import range, object, str  # py2k compat
 
-# http://stackoverflow.com/a/22679982/761090
-try:
-    basestring
-except NameError:
-    basestring = str
 
 # XXX
 from .numberdict import NumberDict
@@ -690,7 +684,7 @@ def getDimensionlessUnit():
 # Helper functions
 
 def findUnit(unit):
-    if isinstance(unit, basestring):
+    if isinstance(unit, str):
         name = unit.strip()
         unit = eval(name, _unit_table)
         for cruft in ['__builtins__', '__args__']:
@@ -945,7 +939,7 @@ def description():
     """Return a string describing all available units."""
     s = ''  # collector for description text
     for i,entry in enumerate(_help):
-        if isinstance(entry, basestring):
+        if isinstance(entry, str):
             # headline for new section
             s += '\n' + entry + '\n'
         elif isinstance(entry, tuple):

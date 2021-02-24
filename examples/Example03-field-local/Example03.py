@@ -2,32 +2,30 @@
 import sys
 import logging
 sys.path.append('../..')
-from mupif import *
-import mupif
-import mupif.physics.physicalquantities as PQ
+import mupif as mp
 
 log = logging.getLogger()
-temperatureUnit = PQ.PhysicalUnit('K', 1., [0, 0, 0, 0, 1, 0, 0, 0, 0])
+temperatureUnit = mp.PhysicalUnit('K', 1., [0, 0, 0, 0, 1, 0, 0, 0, 0])
 
 
 def main():
 
     # generate field and corresponding mesh
-    msh = mupif.mesh.UnstructuredMesh()
+    msh = mp.UnstructuredMesh()
     vertices = []
     values1 = []
     values2 = []
     num = 0
     for i in range(40):
         for j in range(15):
-            vertices.append(vertex.Vertex((i*15)+j, (i*15)+j+1, (float(i), float(j), 0.0)))
+            vertices.append(mp.Vertex((i*15)+j, (i*15)+j+1, (float(i), float(j), 0.0)))
             values1.append((num,))
             num += 0.5
     cells = []
     num = 0
     for i in range(39):
         for j in range(14):
-            cells.append(cell.Quad_2d_lin(msh, num, num, ((i*15)+j, (i+1)*15+j, (i+1)*15+j+1, ((i*15)+j+1))))
+            cells.append(mp.Quad_2d_lin(msh, num, num, ((i*15)+j, (i+1)*15+j, (i+1)*15+j+1, ((i*15)+j+1))))
             values2.append((num,))
             num += 1
 
@@ -35,15 +33,15 @@ def main():
 
     # Check saving a mesh
     msh.dumpToLocalFile('mesh.dat')
-    mupif.mesh.Mesh.loadFromLocalFile('mesh.dat')
+    mp.Mesh.loadFromLocalFile('mesh.dat')
 
-    time = PQ.PhysicalQuantity(1.0, 's')
+    time = mp.PhysicalQuantity(1.0, 's')
     # field1 is vertex based, i.e., field values are provided at vertices
-    field1 = field.Field(msh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values1)
+    field1 = mp.Field(msh, mp.FieldID.FID_Temperature, mp.ValueType.Scalar, temperatureUnit, time, values1)
     # field1.field2Image2D(title='Field', barFormatNum='%.0f')
     # field2 is cell based, i.e., field values are provided for cells
-    field2 = field.Field(
-        msh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values2, field.FieldType.FT_cellBased)
+    field2 = mp.Field(
+        msh, mp.FieldID.FID_Temperature, mp.ValueType.Scalar, temperatureUnit, time, values2, mp.FieldType.FT_cellBased)
 
     # evaluate field at given point
     position = (20.1, 7.5, 0.0)
@@ -58,7 +56,7 @@ def main():
 
     # Test pickle module - serialization
     field1.dumpToLocalFile('field.dat')
-    field3 = field.Field.loadFromLocalFile('field.dat')
+    field3 = mp.Field.loadFromLocalFile('field.dat')
     position = (20.1, 9.5, 0.0)
     value3 = field3.evaluate(position)  # correct answer 155.5
 

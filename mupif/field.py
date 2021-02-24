@@ -23,11 +23,11 @@
 from __future__ import annotations
 
 from . import cell
-from . import ValueType
+from .valuetype import ValueType
 from . import bbox
 from . import apierror
 from . import mupifobject
-from . import FieldID
+from .dataid import FieldID
 from . import cellgeometrytype
 import mupif.mesh
 from .physics import physicalquantities 
