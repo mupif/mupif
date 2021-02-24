@@ -789,7 +789,7 @@ class SshTunnel(object):
             asyncio.run(self.runAsyncSSH(fwd=(direction,localPort,remoteHost,remotePort),host=remoteHost,port=remotePort,**kwopts))
         elif sshClient == 'manual':
             # You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-            print(direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            print('sshClient==manual: ',direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
                 direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (

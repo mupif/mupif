@@ -1,7 +1,7 @@
 #!/usr/bin/env -S python3 -u
 import subprocess, argparse, os, os.path, sys, time, typing, atexit, logging
 thisDir=os.path.dirname(os.path.abspath(__file__))
-logging.basicConfig()
+logging.basicConfig(format='%(message)s')
 log=logging.getLogger('run-ex')
 log.setLevel(logging.DEBUG)
 
@@ -43,7 +43,8 @@ def getExec(main):
 def runBg(sleep=1):
     bbg=[
         subprocess.Popen([*getExec(main=False),'../tools/nameserver.py'],bufsize=0),
-        subprocess.Popen(['/bin/bash','ssh/test_ssh_server.sh'],bufsize=0)
+        #subprocess.Popen(['/bin/bash','ssh/test_ssh_server.sh'],bufsize=0)
+        subprocess.Popen([*getExec(main=False),'ssh/test_ssh_server.py'],bufsize=0),
     ]
     time.sleep(sleep)
     def bbgTerminate():

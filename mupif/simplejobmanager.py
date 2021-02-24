@@ -78,7 +78,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
         port: int
 
     ticketExpireTimeout=10
-    useCmd=False
 
     def __init__(self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000, overrideNsPort=0):
         """
@@ -88,7 +87,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         :param tuple portRange: start and end ports for jobs which will be allocated by a job manager
         :param str serverConfigFile: path to serverConfig file
         :param str jobMan2CmdPath: path to JobMan2cmd.py
-        :param int jobMancmdCommPort: optional communication port to communicate with jobman2cmd
+        :param int jobMancmdCommPort: OBSOLETE
         """
         super(SimpleJobManager2, self).__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
@@ -98,7 +97,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
 
         self.tickets = [] # list of tickets issued when pre-allocating resources; tickets generated using uuid 
         self.jobCounter = 0
-        self.jobMancmdCommPort = jobMancmdCommPort
         self.serverConfigPath = serverConfigPath
         self.configFile = serverConfigFile
         self.serverConfigMode = serverConfigMode
@@ -109,14 +107,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
             log.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d' % len(self.freePorts))
             self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
-
-        if SimpleJobManager2.useCmd:
-            # Create a TCP/IP socket to get uri from daemon registering an application
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.bind(('localhost', self.jobMancmdCommPort))
-            self.s.listen(1)
-
-        #atexit.register(self.terminate)
 
         log.debug('SimpleJobManager2: initialization done for application name %s' % self.applicationName)
 
@@ -230,48 +220,8 @@ class SimpleJobManager2 (jobmanager.JobManager):
                 log.exception(e)
                 raise
                 # return JOBMAN_ERR, None
-            if SimpleJobManager2.useCmd:
-                try:
-                    args = [self.jobMan2CmdPath, '-p', str(jobPort), '-j', str(jobID), '-n', str(natPort), '-d',
-                            str(targetWorkDir), '-s', str(self.jobMancmdCommPort), '-i', self.serverConfigPath,  '-c',
-                            str(self.configFile), '-m', str(self.serverConfigMode)]
-                    if self.overrideNsPort>0: args+=['--override-nsport',str(self.overrideNsPort)]
-                    if self.jobMan2CmdPath[-3:] == '.py':
-                        # use the same python interpreter as running this code, prepend to the arguments
-                        args.insert(0, sys.executable)
-                        log.info("Using python interpreter %s" % sys.executable)
-                        proc = subprocess.Popen(args)  # stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    else:
-                        proc = subprocess.Popen(args)  # stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                    log.debug('SimpleJobManager2: new subprocess has been started: %s', " ".join(args))
-                except Exception as e:
-                    log.exception(e)
-                    raise
-                    # return JOBMAN_ERR, None
-            
-                try:
-                    # try to get uri from Property.psubprocess
-                    uri = None  # avoids UnboundLocalError in py3k
-                    conn, addr = self.s.accept()
-                    log.debug('Connected by %s' % str(addr))
-                    while True:
-                        data = conn.recv(1024)
-                        if not data:
-                            break
-                        uri = repr(data).rstrip('\'').lstrip('\'')
-                        log.info('Received uri: %s' % uri)
-                    conn.close()
-                    # s.shutdown(socket.SHUT_RDWR)
-                    # s.close()
 
-                except Exception as e:
-                    log.exception(e)
-                    log.error('Unable to start thread')
-                    self.lock.release()
-                    raise
-                    # return JobManager.JOBMAN_ERR, None
-            else:
-
+            try:
                 parentPipe,childPipe=multiprocessing.Pipe()
                 proc=multiprocessing.Process(
                     target=SimpleJobManager2._spawnProcess,
@@ -290,9 +240,12 @@ class SimpleJobManager2 (jobmanager.JobManager):
                     )
                 )
                 proc.start()
-                if not parentPipe.poll(timeout=30): raise RuntimeError('Timeout waiting 30s for URI from spawned process.')
+                if not parentPipe.poll(timeout=10): raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
                 uri=parentPipe.recv()
                 log.info('Received URI: %s'%uri)
+            except Exception as e:
+                log.exceptioN(e)
+                raise
 
             # check if uri is ok
             # either by doing some sort of regexp or query ns for it
@@ -327,15 +280,9 @@ class SimpleJobManager2 (jobmanager.JobManager):
             job=self.activeJobs[jobID]
             try:
                 job.proc.terminate()
-                if SimpleJobManager2.useCmd:
-                    try:
-                        job.proc.wait(2)
-                    except subprocess.TimeoutExpired:
-                        log.debug("SimpleJobManager2:terminateJob: jobID %s terminate wait timeout reached"%jobID)
-                else:
-                    job.proc.join(2)
-                    if job.proc.exitcode is None: log.debug(f'{jobID} still running after 2s timeout, killing.')
-                    job.proc.kill()
+                job.proc.join(2)
+                if job.proc.exitcode is None: log.debug(f'{jobID} still running after 2s timeout, killing.')
+                job.proc.kill()
                 # free the assigned port
                 self.freePorts.append(job.port)
                 # delete entry in the list of active jobs
@@ -378,8 +325,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
             except:
                 pass
             self.daemon = None
-        if SimpleJobManager2.useCmd:
-            self.s.close()
 
 
     def getApplicationSignature(self):
