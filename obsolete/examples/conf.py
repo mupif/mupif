@@ -93,7 +93,7 @@ if 'TRAVIS' in os.environ:
     serverNathost='localhost'
     sshClient='ssh'
     thisdir=os.path.dirname(os.path.abspath(__file__))
-    options="-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key -oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts"%(thisdir,thisdir)
+    options="-p2024 -N -F%s -oIdentityFile=%s/ssh/test_ssh_client_rsa_key -oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts"%(os.devnullthisdir,thisdir)
     sshHosts=''
     serverUserName=os.environ['USER']
 

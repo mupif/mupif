@@ -41,17 +41,19 @@ def getExec(main):
 
 
 def runBg(sleep=1):
+    env=os.environ.copy()
+    env['PYTHONPATH']=os.pathsep.join([thisDir+'/..',thisDir])
     bbg=[
-        subprocess.Popen([*getExec(main=False),'../tools/nameserver.py'],bufsize=0),
-        #subprocess.Popen(['/bin/bash','ssh/test_ssh_server.sh'],bufsize=0)
-        subprocess.Popen([*getExec(main=False),'ssh/test_ssh_server.py'],bufsize=0),
+        subprocess.Popen([*getExec(main=False),thisDir+'/../tools/nameserver.py'],bufsize=0,env=env),
+        #subprocess.Popen(['/bin/bash','ssh/test_ssh_server.sh'],bufsize=0,env=env)
+        subprocess.Popen([*getExec(main=False),thisDir+'/ssh/test_ssh_server.py'],bufsize=0,env=env),
     ]
     time.sleep(sleep)
     def bbgTerminate():
         for b in bbg: b.terminate()
         time.sleep(.5)
         for b in bbg:
-            if b.returncode is not None: b.kill()
+            if b.returncode is None: b.kill()
 
     atexit.register(bbgTerminate)
 
@@ -76,7 +78,11 @@ def runEx(ex):
         log.exception(f'Exception running example {ex.num}')
         return -1
     finally:
-        for b in bg: b.kill()
+        failed=[]
+        for b in bg:
+            if b.returncode is not None: failed.append(b) # process died meanwhile
+            else: b.kill()
+        if failed: raise RuntimeError('Failed background processes:\n\n'+'\n * '.join([str(b.args) for b in failed]))
 
 # no examples means all examples
 if not args.exnum: args.exnum=[e.num for e in allEx]

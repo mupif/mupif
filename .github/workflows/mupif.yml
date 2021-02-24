@@ -10,12 +10,11 @@ on:
     branches: [ master, dev, act ]
 
 jobs:
-  build:
+  test-linux:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [ 3.8, 3.9 ]
-        # runs-on: [ubuntu-20.40, windows-2019]
         # fail-fast: 0
       max-parallel: 1 # avoid localhost conflicts
     steps:
@@ -26,7 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install openssh-server wine64 wine flake8 python3-wheel python3-pip dos2unix
+        sudo apt-get install wine64 wine flake8 python3-wheel python3-pip dos2unix
         # python -m pip install --upgrade pip
         python -m pip install -q codecov wenv
         pip install -q -r requirements.txt
@@ -43,10 +42,12 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=obsolete
     - name: nosetests (native)
+      timeout-minutes: 1
       run: |
         nosetests --rednose --force-color -v --with-coverage 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: nosetests (win64)
+      timeout-minutes: 1
       run: |
         wenv nosetests --rednose -v  2>&1 | dos2unix | tools/grcat-mupif
     - name: examples (native)
@@ -57,3 +58,30 @@ jobs:
       timeout-minutes: 2 # normally about 50s
       run: |
         cd examples; ./runex.py --wenv=all 2>&1 | dos2unix | ../tools/grcat-mupif
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.8] # , 3.9]
+      max-parallel: 1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python3 -m pip install wheel
+        python3 -m pip install -r requirements.txt
+    - name: nosetests
+      timeout-minutes: 1
+      # --traverse-namespace necessary for windows, see https://github.com/Pyomo/pyomo/issues/1257
+      run: python3 -m nose -v --rednose --traverse-namespace
+      # 2>&1 | python3 -u tools/grcat-mupif
+    - name: examples
+      timeout-minutes: 2
+      run: python3 examples/runex.py
+      # 2>&1 | python3 -u ../tools/grcat-mupif
+
+      

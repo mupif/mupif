@@ -25,7 +25,7 @@ class celsian(model.Model):
 
 
 #create application
-app = celsian("/dev/null")
+app = celsian(os.devnull)
 # run the application server
 appRecord = conf.apps['celsian']
 pyroutil.runAppServer(server=appRecord.serverName, 

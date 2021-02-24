@@ -53,7 +53,7 @@ class PingServerApplication(model.Model):
         return cfg.appName
 
 
-app2 = PingServerApplication("/dev/null")
+app2 = PingServerApplication(os.devnull)
 
 if noSSH: #set NATport=port and local IP
     cfg.server = cfg.serverNathost

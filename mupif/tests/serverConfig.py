@@ -66,5 +66,5 @@ class serverConfig(object):
         self.serverNatport = None
 
         self.applicationClass = testApp.testApp
-        self.applicationInitialFile = '/dev/null'  # dummy file
+        self.applicationInitialFile = os.devnull  # dummy file
 

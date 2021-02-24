@@ -21,7 +21,7 @@ class local(model.Model):
         return "CTU-server@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 
 #create application
-app = local("/dev/null")
+app = local(os.devnull)
 # run the application server
 appRecord = [item for item in conf.apps if item[0] == appname][0]
 pyroutil.runAppServer(server=appRecord[conf.appIndx_ServerName],

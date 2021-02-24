@@ -1,5 +1,5 @@
 import unittest
-import sys, multiprocessing, time
+import sys, multiprocessing, time, os
 import unittest,sys
 import socket
 sys.path.append('../..')
@@ -51,7 +51,7 @@ class TestLocalApp(unittest.TestCase):
         time.sleep(2) # some time for nameserver to start
 
         # setup apps
-        self.apps=(LocalApp("/dev/null"),) # CelsianApp("/dev/null"),MicressApp("/dev/null"),MmpraytracerApp("/dev/null")
+        self.apps=(LocalApp(os.devnull),) # CelsianApp(os.devnull),MicressApp(os.devnull),MmpraytracerApp(os.devnull)
         for i,app in enumerate(self.apps):
             # start "remote" servers (locally)
             print('Starting',app)

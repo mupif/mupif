@@ -216,8 +216,8 @@ class config(object):
         if 'TRAVIS' in os.environ or mode in (0,1):
             thisdir = os.path.dirname(os.path.abspath(__file__))
             self.sshClient='asyncssh'
-            self.options = "-p2024 -N -F/dev/null -oIdentityFile=%s/ssh/test_ssh_client_rsa_key " \
-                           "-oUserKnownHostsFile=%s/ssh/test_ssh_client_known_hosts" % (thisdir, thisdir)
+            self.options = f"-p2024 -N -F{os.devnull} -oIdentityFile={thisdir}/ssh/test_ssh_client_rsa_key " \
+                           f"-oUserKnownHostsFile={thisdir}/ssh/test_ssh_client_known_hosts"
             # USERNAME is for win32
             self.serverUserName = os.environ.get('USER',os.environ.get('USERNAME')) 
         #elif mode in (0,1):

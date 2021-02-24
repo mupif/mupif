@@ -21,7 +21,7 @@ class local(model.Model):
         return "local@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 
 #create application
-app = local("/dev/null")
+app = local(os.devnull)
 # run the application server
 appRecord = conf.apps['local']
 pyroutil.runAppServer(server=appRecord.serverName,

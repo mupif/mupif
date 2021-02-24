@@ -25,7 +25,7 @@ class micress(model.Model):
 
 
 #create application
-app = micress("/dev/null")
+app = micress(os.devnull)
 # run the application server
 appRecord = conf.apps['micress']
 pyroutil.runAppServer(server=appRecord.serverName, port=appRecord.remotePort, 
