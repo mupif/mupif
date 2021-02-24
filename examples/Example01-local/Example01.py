@@ -66,7 +66,7 @@ class Application1(mp.Model):
             return mp.ConstantProperty(
                 (self.value,), mp.PropertyID.PID_Time_step, mp.ValueType.Scalar, 's', time, metaData=md)
         else:
-            raise APIError('Unknown property ID')
+            raise mp.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = self.getAssemblyTime(tstep).inUnitsOf('s').getValue()

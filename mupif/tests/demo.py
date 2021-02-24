@@ -1,5 +1,3 @@
-from builtins import range
-
 import sys
 import math
 sys.path.append('../..')

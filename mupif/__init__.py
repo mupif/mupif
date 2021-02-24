@@ -44,6 +44,8 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
     if modsplit[0]!='mupif': continue
     # avoid mupif itself
     if modsplit==['mupif']: continue
+    # important, would mess tests up as they use from mupif import * and such (should not, being nested)
+    if modsplit[1] in ('tests',): continue
     try:
         # important! don't call loader if the modules appeared in sys.modules meanwhile
         # (it could have been imported another module indirectly)
@@ -58,7 +60,7 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
         globals()[modsplit[1]]=mod
         __all__.append(modsplit[1])
     # contents of those does not need to be exposed as mupif.Class etc
-    if modsplit[1] in ('tests','maybe-something-more'): continue
+    #if modsplit[1] in ('tests','maybe-something-more'): continue
     # import contents of submodules (direct or indirect)
     for name in mod.__dir__():
         # don't export internal names
