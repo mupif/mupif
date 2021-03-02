@@ -5,16 +5,19 @@ import math
 import numpy as np
 import ast
 
+
+def mkVertex(number,label,coords): return vertex.Vertex(number=number,label=label,coords=coords)
+
 class Vertex_TestCase(unittest.TestCase):
     def setUp(self):
         
-        self.v21=vertex.Vertex(1,1,(0.,0.))
-        self.v22=vertex.Vertex(2,2,(3.,0.))
-        self.v23=vertex.Vertex(3,3,(1.5,4.))        
+        self.v21=mkVertex(1,1,(0.,0.))
+        self.v22=mkVertex(2,2,(3.,0.))
+        self.v23=mkVertex(3,3,(1.5,4.))        
         
-        self.v31=vertex.Vertex(1,1,(0.,0.,6.))
-        self.v32=vertex.Vertex(2,2,(3.,0.,9.))
-        self.v33=vertex.Vertex(3,3,(1.5,4.,3.)) 
+        self.v31=mkVertex(1,1,(0.,0.,6.))
+        self.v32=mkVertex(2,2,(3.,0.,9.))
+        self.v33=mkVertex(3,3,(1.5,4.,3.)) 
         
     def tearDown(self):
         

@@ -4,7 +4,7 @@ import unittest,sys
 import socket
 sys.path.append('../..')
 
-import mupif, mupif.application
+import mupif
 import Pyro5
 
 Pyro5.config.SERIALIZER = "serpent"

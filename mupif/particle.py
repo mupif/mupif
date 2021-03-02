@@ -23,13 +23,20 @@
 import Pyro5
 from . import mupifobject
 
+import typing
+import pydantic
+
 @Pyro5.api.expose
 class Particle(mupifobject.MupifObject):
     """
     Representation of particle. Particle is is object characterized by its position and other attributes.
     Particles are typically managed by ParticleSet. Particle class is convinience mapping to ParticleSet.
     """
-    def __init__(self, particleSet, num):
+    
+    set: 'ParticleSet'
+    num: int
+
+    def __old_init__(self, particleSet, num):
         """
         Constructor, creates representation of particle in particleSet
         @param ParticleSet particleSet: master particle set 
@@ -72,12 +79,23 @@ class Particle(mupifobject.MupifObject):
     
 
 @Pyro5.api.expose
-class ParticleSet (mupifobject.MupifObject):
+class ParticleSet(mupifobject.MupifObject):
     """
     Class representing a collection of Particles. The set stores particle data (positions) and attributes efficiently in the form of vectors.
     ParticleSet keeps position vector for each particle and optional attributes (user defined) identified by key for each particle.
     """
-    def __init__(self, id, size, xcoords, ycoords, zcoords, rvesize=0, inclusionsize=0, **kwargs):
+
+    id: int
+    size: int
+    xc: typing.List[float]=[]
+    yc: typing.List[float]=[]
+    zc: typing.List[float]=[]
+    rvesize: float=0
+    inclusionsize: float=0
+    attributes: dict=pydantic.Field(default_factory=dict)
+
+
+    def __old_init__(self, id, size, xcoords, ycoords, zcoords, rvesize=0, inclusionsize=0, **kwargs):
         """
         Constructor.
         @param int size: number of particles in the set
@@ -103,7 +121,7 @@ class ParticleSet (mupifobject.MupifObject):
         Returns representation of i-th particle in the set
         """
         if i < self.size:
-            return Particle(self, i)
+            return Particle(set=self, num=i)
         else:
             raise IndexError("Particle index out of range")
 
@@ -140,9 +158,16 @@ class ParticleSet (mupifobject.MupifObject):
         """
         return self.inclusionsize
     
+
+
+Particle.update_forward_refs()
+
+
 if __name__ == "__main__":
     ps = ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), alpha=(10,11,12,13,14))
     p2 = ps.getParticle(2)
     print (p2.getPosition())
     print (p2.getAttribute('alpha'))
+
+
 

@@ -13,10 +13,13 @@ import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
 mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
+import threading
 cfg = config(mode)
 
 import mupif.physics.physicalquantities as PQ
 timeUnits = PQ.PhysicalUnit('s',   1., [0, 0, 1, 0, 0, 0, 0, 0, 0])
+
+threading.current_thread().setName('ex02-main')
 
 
 class application1(model.Model):

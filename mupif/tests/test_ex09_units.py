@@ -8,7 +8,7 @@ from mupif import *
 from mupif.tests import demo
 import mupif.physics.physicalquantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+timeUnits = PQ.makeUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class TestUnits(unittest.TestCase):
     def setUp(self):
@@ -37,7 +37,7 @@ class TestUnits(unittest.TestCase):
             v = app1.getProperty(PropertyID.PID_Velocity, istep.getTime())
           
             #Create a PhysicalQuantity object 
-            V = PQ.PhysicalQuantity(v.getValue(istep.getTime()), v.getUnits())
+            V = PQ.makeQuantity(v.getValue(istep.getTime()), v.getUnits())
 
             velocity = V.inBaseUnits()
             self.assert_(v.getValue(istep.getTime())==time)

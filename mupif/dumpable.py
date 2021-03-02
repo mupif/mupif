@@ -6,10 +6,35 @@ import pickle
 import serpent
 import dataclasses
 import importlib
+import sys
+import pprint
+import typing
+
+import pydantic
+from pydantic.dataclasses import dataclass
+
+# https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
+class BaseModelWithPositionalArgs(pydantic.BaseModel):
+
+    def __init__(self, *args, **kwargs):
+        pos_args = list(self.__fields__.keys())
+        # sys.stderr.write(str(self.__class__.__name__)+':'+str(args)+" | "+str(kwargs)+'\n')
+
+        for i in range(len(args)):
+            if i >= len(pos_args):
+                raise TypeError(f'__init__ takes {len(pos_args)} '
+                                'positional arguments but 2 were given.')
+            name = pos_args[i]
+            if name in kwargs:
+                raise TypeError(f'{name} cannot be both a keyword and '
+                                'positional argument.')
+            kwargs[name] = args[i]
+        # sys.stderr.write('\n\n'+str(super())+': '+pprint.pformat(kwargs)+'\n\n')
+        return super().__init__(**kwargs)
 
 
 
-class Dumpable(object):
+class Dumpable(pydantic.BaseModel):
     '''
     Base class for all serializable (dumpable) objects; all objects which are sent over the wire via python must be recursively dumpable, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
 
@@ -24,9 +49,9 @@ class Dumpable(object):
     The ``(attr,val)`` form of ``dumpAttrs`` item can be (ab)used to create a post-processing function, e.g. by saying ``('_postprocess',lambda self: self._postDump())``. Put it at the end of ``dumpAttrs`` to have it called when the reconstruction is about to finish. See :obj:`~mupif.mesh.Mesh` for this usage.
 
     '''
-    dumpAttrs=[]
+    # dumpAttrs: typing.Optional[typing.List[str]]
 
-    pickleInside=False
+    # pickleInside=False
 
     def to_dict(self,clss=None):
         def _handle_attr(attr,val,clssName):

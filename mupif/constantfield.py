@@ -20,26 +20,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import range
-from builtins import object
-import mupif
-
-import Pyro5
+import Pyro5.api
 import logging
 log = logging.getLogger()
+from . import field
+from pydantic.dataclasses import dataclass
 
-try:
-   import cPickle as pickle  # faster serialization if available
-except:
-   import pickle
-# import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute
-# lookup thread.lock failed
+import pickle
 
 # debug flag
 debug = 0
 
 @Pyro5.api.expose
-class ConstantField(mupif.field.Field):
+#@dataclass
+class ConstantField(field.Field):
     """
     Representation of field with constant value. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. 
@@ -47,7 +41,7 @@ class ConstantField(mupif.field.Field):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=mupif.field.FieldType.FT_vertexBased, objectID=0, metaData={}):
+    def __old_init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=field.FieldType.FT_vertexBased, objectID=0, metaData={}):
         """
         Initializes the field instance.
 

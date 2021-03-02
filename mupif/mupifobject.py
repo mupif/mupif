@@ -29,6 +29,12 @@ import pprint
 import copy
 from . import dumpable
 
+from pydantic.dataclasses import dataclass
+import pydantic
+
+#@dataclass
+#class MeshABC(object): pass
+
 @Pyro5.api.expose
 class MupifObject(dumpable.Dumpable):
     """
@@ -39,9 +45,13 @@ class MupifObject(dumpable.Dumpable):
 
     .. automethod:: __init__
     """
-    dumpAttrs=['metadata']
+    # dumpAttrs=['metadata']
+    # dumpAttrs: 
 
-    def __init__(self, jsonFileName=''):
+    metadata: dict = pydantic.Field(default_factory=dict)
+    # _pyroId: str=None
+
+    def __old_init__(self, jsonFileName=''):
         """
         Constructor. Initializes the object
         :param str jsonFileName: Optionally instantiate from JSON file

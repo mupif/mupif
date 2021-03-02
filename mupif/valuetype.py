@@ -9,6 +9,9 @@ class ValueType(IntEnum):
     Vector = 2
     Tensor = 3
 
+    def getNumberOfComponents(self):
+        return {ValueType.Scalar:1,ValueType.Vector:3,ValueType.Tensor:9}[self]
+
     @staticmethod
     def fromNumberOfComponents(i):
         """

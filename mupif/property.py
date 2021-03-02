@@ -1,13 +1,16 @@
 from . import mupifobject
 from mupif.physics import physicalquantities
-from mupif .physics.physicalquantities import PhysicalQuantity
+from mupif .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
 import Pyro5
 try:
     import cPickle as pickle  # faster serialization if available
 except:
     import pickle
 import collections
+import typing
 
+from . import dataid
+from . import valuetype
 
 @Pyro5.api.expose
 class Property(mupifobject.MupifObject, PhysicalQuantity):
@@ -19,9 +22,14 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
     .. automethod:: __init__
     """
 
-    dumpAttrs=['propID','valueType','objectID','unit']
+    #dumpAttrs=['propID','valueType','objectID','unit']
+    propID: dataid.PropertyID
+    valueType: valuetype.ValueType
+    unit: PhysicalUnit
+    objectID: int=0
+    # metaData
 
-    def __init__(self, propID, valueType, units, objectID=0, metaData={}):
+    def __old_init__(self, propID, valueType, units, objectID=0, metaData={}):
         """
         Initializes the property.
 
@@ -31,6 +39,8 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
         :type units: Physics.PhysicalUnits or string
         :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
         """
+        super().__init__(self,propID=propID,valueType=valueType,unit=units,objectID=objectID,metaData=metaData)
+        return
         mupifobject.MupifObject.__init__(self)
 
         self.propID = propID
@@ -107,9 +117,11 @@ class ConstantProperty(Property):
     .. automethod:: __init__
     """
 
-    dumpAttrs=['value','time']
+    #dumpAttrs=['value','time']
+    value: typing.Any # valuetype.ValueType
+    time: PhysicalQuantity
 
-    def __init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
+    def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
         """
         Initializes the property.
 
@@ -121,6 +133,7 @@ class ConstantProperty(Property):
         :type units: Physics.PhysicalUnits or string
         :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
         """
+
         Property.__init__(self, propID, valueType, units, objectID)
         self.value = value
         if physicalquantities.isPhysicalQuantity(time) or time is None:

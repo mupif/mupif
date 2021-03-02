@@ -78,7 +78,7 @@ class Workflow(model.Model):
         self.targetTime = None
         self._models = {}
 
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=PQ.makeQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -120,7 +120,7 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Running')
         self.setMetadata('Progress', 0.)
 
-        time = PQ.PhysicalQuantity(0., 's')
+        time = PQ.makeQuantity(0., 's')
         timeStepNumber = 0
         
         while abs(time.inUnitsOf('s').getValue()-self.targetTime.inUnitsOf('s').getValue()) > 1.e-6:

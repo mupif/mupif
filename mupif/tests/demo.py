@@ -6,8 +6,8 @@ import mupif
 from mupif import *
 import mupif.physics.physicalquantities as PQ
 
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-temperatureUnit = PQ.PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
+timeUnits = PQ.makeUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+temperatureUnit = PQ.makeUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
 
 
 def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):

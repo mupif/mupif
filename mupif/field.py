@@ -49,6 +49,7 @@ import Pyro5
 from enum import IntEnum
 import logging
 log = logging.getLogger()
+import pydantic
 
 try:
    import cPickle as pickle  # faster serialization if available
@@ -68,9 +69,9 @@ class FieldType(IntEnum):
     FT_vertexBased = 1
     FT_cellBased = 2
 
-# @dataclass(config=dict(arbitrary_types_allowed=True))
 @Pyro5.api.expose
-class Field(mupifobject.MupifObject, PhysicalQuantity):
+# @dataclass(config=dict(arbitrary_types_allowed=True))
+class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -84,44 +85,68 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
     .. automethod:: _evaluate
     """
 
-    dumpAttrs=['mesh','fieldID','valueType','time','uri','fieldType','objectID','value','unit']
+    #dumpAttrs=['mesh','fieldID','valueType','time','uri','fieldType','objectID','value','unit']
 
     # Field is not a dataclass as of now
-    #if 0:
-    #    mesh: typing.Any # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
-    #    fieldID: FieldID
-    #    valueType: ValueType
-    #    unit: typing.Union[PhysicalUnit,str]
-    #    time: PhysicalQuantity
-    #    value: typing.Union[typing.List,numpy.ndarray]=None
-    #    fieldType: FieldType=FieldType.FT_vertexBased
-    #    objectID: int=0
-    #    metaData: dict=dataclasses.field(default_factory=lambda: [])
+    if 1:
+        mesh: 'mupif.mesh.Mesh' # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
+        fieldID: FieldID
+        valueType: ValueType
+        unit: PhysicalUnit
+        time: PhysicalQuantity
+        #value: typing.Union[typing.List,numpy.ndarray,None]=None
+        fieldType: FieldType=FieldType.FT_vertexBased
+        value: typing.List=[]
+        objectID: int=0
+        metaData: dict=pydantic.Field(default_factory=dict)
 
-    #    def __post__init__(self):
+        @pydantic.validator('unit',pre=True,always=True)
+        def conv_unit(cls,u):
+            if isinstance(u,PhysicalUnit): return u
+            return PhysicalUnit(u)
 
-    #        if value is None:
-    #            if self.fieldType == FieldType.FT_vertexBased:
-    #                ncomponents = mesh.getNumberOfVertices()
-    #            else:
-    #                ncomponents = mesh.getNumberOfCells()
-    #            self.value = zeros((ncomponents, self.getRecordSize()))
+        @pydantic.validator('value',pre=True,always=True)
+        def conv_value(cls,v,values,**kwargs):
+            if isinstance(v,np.ndarray): return v.tolist()
+            if v is None:
+                if 'fieldType' not in values or values['fieldType']==FieldType.FT_vertexBased:
+                    ncomp=values['mesh'].getNumberOfVertices()
+                else: ncomp=values['mesh'].getNumberOfCells()
+                return np.zeros((ncomp,values['valueType'].getNumberOfComponents())).tolist()
+            return v
 
-    #        if not physicalquantities.isPhysicalUnit(self.unit):
-    #            self.unit = physicalquantities.findUnit(self.unit)
+        def __post__init__(self):
 
+            if self.value is None:
+                if self.fieldType == FieldType.FT_vertexBased:
+                    ncomponents = self.mesh.getNumberOfVertices()
+                else:
+                    ncomponents = self.mesh.getNumberOfCells()
+                self.value = zeros((ncomponents, self.getRecordSize()))
 
-    #        self.setMetadata('Units', self.unit.name())
-    #        self.setMetadata('Type', 'mupif.field.Field')
-    #        self.setMetadata('Type_ID', str(self.fieldID))
-    #        self.setMetadata('FieldType', str(fieldType))
-    #        self.setMetadata('ValueType', str(self.valueType))
-    #        
-    #        self.updateMetadata(metaData)
+            if not physicalquantities.isPhysicalUnit(self.unit):
+                self.unit = physicalquantities.findUnit(self.unit)
 
+            self.updateMetadata(dict(
+                Units=self.units.name(),
+                Type='mupif.field.Field',
+                Type_ID=str(self.fieldID),
+                FieldType=str(self.fieldType),
+                ValueType=str(self.valueType)
+            ))
+            #self.setMetadata('Units', self.units.name())
+            #self.setMetadata('Type', 'mupif.field.Field')
+            #self.setMetadata('Type_ID', str(self.fieldID))
+            #self.setMetadata('FieldType', str(self.fieldType))
+            #self.setMetadata('ValueType', str(self.valueType))
+            #
+            # self.updateMetadata(metaData)
 
+    #
+    # NO LONGER USED
+    #
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def __init__(
+    def __old_init__(
         self,
         mesh: typing.Any, # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
         fieldID: FieldID,
@@ -276,10 +301,10 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return PhysicalQuantity(ans, self.unit)
+            return PhysicalQuantity(value=ans, unit=self.unit)
         else:
             # single position passed
-            return PhysicalQuantity(self._evaluate(positions, eps), self.unit)
+            return PhysicalQuantity(value=self._evaluate(positions, eps), unit=self.unit)
 
     def _evaluate(self, position, eps):
         """
@@ -366,7 +391,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         :rtype: Physics.PhysicalQuantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
-            return PhysicalQuantity(self.value[vertexID], self.unit)
+            return PhysicalQuantity(value=self.value[vertexID], unit=self.unit)
         else:
             raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
         
@@ -379,21 +404,10 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         :rtype: Physics.PhysicalQuantity
         """
         if self.fieldType == FieldType.FT_cellBased:
-            return PhysicalQuantity(self.value[cellID], self.unit)
+            return PhysicalQuantity(value=self.value[cellID], unit=self.unit)
         else:
             raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
 
-    def _giveValue(self, componentID):
-        """
-        Returns the value associated with a given component (vertex or cell).
-        Depreceated, use getVertexValue() or getCellValue()
-
-        :param int componentID: An identifier of a component: vertexID or cellID
-        :return: The value
-        :rtype: Physics.PhysicalQuantity
-        """
-        return PhysicalQuantity(self.value[componentID], self.unit)
-    
     def giveValue(self, componentID):
         """
         Returns the value associated with a given component (vertex or cell).
@@ -402,7 +416,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         :return: The value
         :rtype: tuple
         """
-        return self.value[componentID]    
+        return self.value[componentID]  
 
     def setValue(self, componentID, value):
         """
@@ -706,7 +720,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
             # string/bytes may not contain NULL when stored as string in HDF5
             # see http://docs.h5py.org/en/2.3/strings.html
             # that's why we cast to opaque type "void" and uncast using tostring before unpickling
-            fieldGrp.attrs['units'] = numpy.void(pickle.dumps(self.unit))
+            fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.unit))
             fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time))
             # fieldGrp.attrs['time']=self.time.getValue()
             if self.fieldType == FieldType.FT_vertexBased:
@@ -754,18 +768,18 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
                 fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
             else:
                 raise ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID, valueType, units, time = FieldID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['units'].tostring(), f.attrs['time'].tostring()
-            if units == '':
-                units = None  # special case, handled at saving time
+            fieldID, valueType, unit, time = FieldID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tostring(), f.attrs['time'].tostring()
+            if unit == '':
+                unit = None  # special case, handled at saving time
             else:
-                units = pickle.loads(units)
+                unit = pickle.loads(unit)
             if time == '':
                 time = None  # special case, handled at saving time
             else:
                 time = pickle.loads(time)
            
             meshIndex = meshObjs.index(f['mesh'])  # find which mesh object this field refers to
-            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, units=units, time=time, valueType=valueType, values=values, fieldType=fieldType))
+            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, values=values, fieldType=fieldType))
         hdf.close() # necessary for windows
         return ret
 
@@ -801,8 +815,8 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
 
     def makeFromMeshioMesh(
             input: typing.Union[str,meshio.Mesh], # could also be buffer, is that useful?
-            units: dict[str,PhysicalUnit], # maps field name to PhysicalUnit
-            time: PhysicalQuantity=PhysicalQuantity(0,'s')
+            unit: dict[str,PhysicalUnit], # maps field name to PhysicalUnit
+            time: PhysicalQuantity=PhysicalQuantity(value=0,unit='s')
         ) -> typing.List[Field]:
         if isinstance(input,str):
             input=meshio.read(input)
@@ -815,7 +829,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
                 ret.append(Field(
                     mesh=msh,
                     fieldID=FieldID[fname],
-                    units=units.get(fname,None),
+                    unit=unit.get(fname,None),
                     time=time,
                     valueType=ValueType.fromNumberOfComponents(values.shape[1]),
                     values=values,
@@ -842,252 +856,3 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         """
         raise TypeError('Not supported')
 
-
-##
-## DEPRECATED
-##
-if 0: 
-
-#    def __deepcopy__(self, memo):
-#        """ Deepcopy operatin modified not to include attributes starting with underscore.
-#            These are supposed to be the ones valid only to s specific copy of the receiver.
-#            An example of these attributes are _PyroURI (injected by Application),
-#            where _PyroURI contains the URI of specific object, the copy should receive
-#            its own URI
-#        """
-#        cls = self.__class__
-#        dpcpy = cls.__new__(cls)
-#
-#        memo[id(self)] = dpcpy
-#        for attr in dir(self):
-#            if not attr.startswith('_'):
-#                value = getattr(self, attr)
-#                setattr(dpcpy, attr, copy.deepcopy(value, memo))
-#        return dpcpy
-
-    def field2VTKData (self, name=None, lookupTable=None):
-        """
-        Creates VTK representation of the receiver. Useful for visualization. Requires pyvtk module.
-
-        :param str name: human-readable name of the field
-        :param pyvtk.LookupTable lookupTable: color lookup table
-        :return: Instance of pyvtk
-        :rtype: pyvtk.VtkData
-        """
-        import pyvtk
-
-        if name is None:
-            name = self.getFieldIDName()
-        if lookupTable and not isinstance(lookupTable, pyvtk.LookupTable):
-            log.info('ignoring lookupTable which is not a pyvtk.LookupTable instance.')
-            lookupTable = None
-        if lookupTable is None:
-            lookupTable=pyvtk.LookupTable([(0, .231, .298, 1.0), (.4, .865, .865, 1.0), (.8, .706, .016, 1.0)], name='coolwarm')
-            # Scalars use different name than 'coolwarm'. Then Paraview uses its own color mapping instead of taking
-            # 'coolwarm' from *.vtk file. This prevents setting Paraview's color mapping.
-            scalarsKw = dict(name=name, lookup_table='default')
-        else:
-            scalarsKw = dict(name=name, lookup_table=lookupTable.name)
-        # see http://cens.ioc.ee/cgi-bin/cvsweb/python/pyvtk/examples/example1.py?rev=1.3 for an example
-        vectorsKw = dict(name=name)  # vectors don't have a lookup_table
-
-        if self.fieldType == FieldType.FT_vertexBased:
-            if self.getValueType() == ValueType.Scalar:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Scalars([val[0] for val in self.value], **scalarsKw), lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Vector:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Vectors(self.value, **vectorsKw), lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Tensor:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.PointData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
-            
-        else:
-            if self.getValueType() == ValueType.Scalar:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Scalars([val[0] for val in self.value], **scalarsKw), lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Vector:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Vectors(self.value, **vectorsKw),lookupTable), 'Unstructured Grid Example')
-            elif self.getValueType() == ValueType.Tensor:
-                return pyvtk.VtkData(self.mesh.getVTKRepresentation(), pyvtk.CellData(pyvtk.Tensors(self.getMartixForTensor(self.value), **vectorsKw), lookupTable), 'Unstructured Grid Example')
-            
-    def toVTK2(self, fileName, format='ascii'):
-        """
-        Save the instance as Unstructured Grid in VTK2 format (``.vtk``).
-
-        :param str fileName: where to save
-        :param str format: one of ``ascii`` or ``binary``
-        """
-        self.field2VTKData().tofile(filename=fileName, format=format)
-
-    @staticmethod
-    def makeFromVTK2(fileName, unit, time=PhysicalQuantity(0,'s'), skip=['coolwarm']):
-        """
-        Return fields stored in *fileName* in the VTK2 (``.vtk``) format.
-
-        :param str fileName: filename to load from
-        :param PhysicalUnit unit: physical unit of filed values
-        :param float time: time value for created fields (time is not saved in VTK2, thus cannot be recovered)
-        :param [string,] skip: file names to be skipped when reading the input file; the default value skips the default coolwarm colormap.
-        
-        :returns: one field from VTK
-        :rtype: Field 
-        
-        """
-        import pyvtk
-        from .dataid import FieldID
-        if not fileName.endswith('.vtk'):
-            log.warning('Field.makeFromVTK2: fileName should end with .vtk, you may get in trouble (proceeding).')
-        ret = []
-        try:
-            data = pyvtk.VtkData(fileName)  # this is where reading the file happens (inside pyvtk)
-        except NotImplementedError:
-            log.info('pyvtk fails to open (binary?) file "%s", trying through vtk.vtkGenericDataReader.' % fileName)
-            return Field.makeFromVTK3(fileName, time=time, units=unit, forceVersion2=True)
-        ugr = data.structure
-        if not isinstance(ugr, pyvtk.UnstructuredGrid):
-            raise NotImplementedError(
-                "grid type %s is not handled by mupif (only UnstructuredGrid is)." % ugr.__class__.__name__)
-        mesh = mupif.mesh.UnstructuredMesh.makeFromPyvtkUnstructuredGrid(ugr)
-        # get cell and point data
-        pd, cd = data.point_data.data, data.cell_data.data
-        for dd, fieldType in (pd, FieldType.FT_vertexBased), (cd, FieldType.FT_cellBased):
-            for d in dd:
-                # will raise KeyError if fieldID with that name is not defined
-                if d.name in skip:
-                    continue
-                fid = FieldID[d.name]
-                # determine the number of components using the expected number of values from the mesh
-                expectedNumVal = (mesh.getNumberOfVertices() if fieldType == FieldType.FT_vertexBased else mesh.getNumberOfCells())
-                nc = len(d.scalars)//expectedNumVal
-                valueType = ValueType.fromNumberOfComponents(nc)
-                values = [d.scalars[i*nc:i*nc+nc] for i in range(len(d.scalars))]
-                ret.append(Field(
-                    mesh=mesh,
-                    fieldID=fid,
-                    units=unit,  # not stored at all
-                    time=time,  # not stored either, set by caller
-                    valueType=valueType,
-                    values=values,
-                    fieldType=fieldType
-                ))
-        return ret
-
-    def toVTK3(self, fileName, **kw):
-        """
-        Save the instance as Unstructured Grid in VTK3 format (``.vtu``). This is a simple proxy for calling :obj:`manyToVTK3` with the instance as the only field to be saved. If multiple fields with identical mesh are to be saved in VTK3, use :obj:`manyToVTK3` directly.
-
-        :param fileName: output file name
-        :param ``**kw``: passed to :obj:`manyToVTK3`
-        """
-        return self.manyToVTK3([self], fileName, **kw)
-
-    @staticmethod
-    def manyToVTK3(fields, fileName, ascii=False, compress=True):
-        """
-        Save all fields passed as argument into VTK3 Unstructured Grid file (``*.vtu``).
-
-        All *fields* must be defined on the same mesh object; exception will be raised if this is not the case.
-
-        :param list of Field fields:
-        :param fileName: output file name
-        :param bool ascii: write numbers are ASCII in the XML-based VTU file (rather than base64-encoded binary in XML)
-        :param bool compress: apply compression to the data
-        """
-        import vtk
-        if not fields:
-            raise ValueError('At least one field must be passed.')
-        # check if all fields are defined on the same mesh
-        if len(set([f.mesh for f in fields])) != 1:
-            raise RuntimeError(
-                'Not all fields are sharing the same Mesh object (and could not be saved to a single .vtu file')
-        # convert mesh to VTK UnstructuredGrid
-        mesh = fields[0].getMesh()
-        vtkgrid = mesh.asVtkUnstructuredGrid()
-        # add fields as arrays
-        for f in fields:
-            arr = vtk.vtkDoubleArray()
-            arr.SetNumberOfComponents(f.getRecordSize())
-            arr.SetName(f.getFieldIDName())
-            assert f.getFieldType() in (FieldType.FT_vertexBased, FieldType.FT_cellBased)  # other future types not handled
-            if f.getFieldType() == FieldType.FT_vertexBased:
-                nn = mesh.getNumberOfVertices()
-            else:
-                nn = mesh.getNumberOfCells()
-            arr.SetNumberOfValues(nn)
-            for i in range(nn):
-                arr.SetTuple(i, f.giveValue(i))
-            if f.getFieldType() == FieldType.FT_vertexBased:
-                vtkgrid.GetPointData().AddArray(arr)
-            else:
-                vtkgrid.GetCellData().AddArray(arr)
-        # write the unstructured grid to file
-        writer = vtk.vtkXMLUnstructuredGridWriter()
-        if compress:
-            writer.SetCompressor(vtk.vtkZLibDataCompressor())
-        if ascii:
-            writer.SetDataModeToAscii()
-        writer.SetFileName(fileName)
-        # change between VTK5 and VTK6
-        if vtk.vtkVersion().GetVTKMajorVersion() == 6:
-            writer.SetInputData(vtkgrid)
-        else:
-            writer.SetInputData(vtkgrid)
-        writer.Write()
-        # finito
-
-    @staticmethod
-    def makeFromVTK3(fileName, units, time=PhysicalQuantity(0,'s'), forceVersion2=False):
-        """
-        Create fields from a VTK unstructured grid file (``.vtu``, format version 3, or ``.vtp`` with *forceVersion2*); the mesh is shared between fields.
-
-        ``vtk.vtkXMLGenericDataObjectReader`` is used to open the file (unless *forceVersion2* is set), but it is checked that contained dataset is a ``vtk.vtkUnstructuredGrid`` and an error is raised if not.
-
-        .. note:: Units are not supported when loading from VTK, all fields will have ``None`` unit assigned.
-
-        :param str fileName: VTK (``*.vtu``) file
-        :param PhysicalUnit units: units of read values
-        :param float time: time value for created fields (time is not saved in VTK3, thus cannot be recovered)
-        :param bool forceVersion2: if ``True``, ``vtk.vtkGenericDataObjectReader`` (for VTK version 2) will be used to open the file, isntead of ``vtk.vtkXMLGenericDataObjectReader``; this also supposes *fileName* ends with ``.vtk`` (not checked, but may cause an error).
-        :return: list of new :obj:`Field` instances
-        :rtype: [Field,Field,...]
-        """
-        import vtk
-        from .dataid import FieldID
-        # rr=vtk.vtkXMLUnstructuredGridReader()
-        if forceVersion2 or fileName.endswith('.vtk'):
-            rr = vtk.vtkGenericDataObjectReader()
-        else:
-            rr = vtk.vtkXMLGenericDataObjectReader()
-        rr.SetFileName(fileName)
-        rr.Update()
-        ugrid = rr.GetOutput()
-        if not isinstance(ugrid, vtk.vtkUnstructuredGrid):
-            raise RuntimeError("vtkDataObject read from '%s' must be a vtkUnstructuredGrid (not a %s)" % (
-                fileName, ugrid.__class__.__name__))
-        # import sys
-        # sys.stderr.write(str((ugrid,ugrid.__class__,vtk.vtkUnstructuredGrid)))
-        # make mesh -- implemented separately
-        mesh = mupif.mesh.UnstructuredMesh.makeFromVtkUnstructuredGrid(ugrid)
-        # fields which will be returned
-        ret = []
-        # get cell and point data
-        cd, pd = ugrid.GetCellData(), ugrid.GetPointData()
-        for data, fieldType in (pd, FieldType.FT_vertexBased), (cd, FieldType.FT_cellBased):
-            for idata in range(data.GetNumberOfArrays()):
-                aname, arr = pd.GetArrayName(idata), pd.GetArray(idata)
-                nt = arr.GetNumberOfTuples()
-                if nt == 0:
-                    raise RuntimeError("Zero values in field '%s', unable to determine value type." % aname)
-                t0 = arr.GetTuple(0)
-                valueType = ValueType.fromNumberOfComponents(len(arr.GetTuple(0)))
-                # this will raise KeyError if fieldID with that name not defined
-                fid = FieldID[aname]
-                # get actual values as tuples
-                values = [arr.GetTuple(t) for t in range(nt)]
-                ret.append(Field(
-                    mesh=mesh,
-                    fieldID=fid,
-                    units=units,  # not stored at all
-                    time=time,  # not stored either, set by caller
-                    valueType=valueType,
-                    values=values,
-                    fieldType=fieldType
-                ))
-        return ret

@@ -6,7 +6,7 @@ from mupif import *
 from mupif.tests import demo
 
 import mupif.physics.physicalquantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+timeUnits = PQ.makeUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
 
 class TestEx01(unittest.TestCase):
     def setUp(self):
@@ -38,7 +38,7 @@ class TestEx01(unittest.TestCase):
             # solve second sub-problem 
             app2.solveStep(istep)
             # get the averaged concentration
-            prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, PQ.PhysicalQuantity(time,timeUnits))
+            prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, PQ.makeQuantity(time,timeUnits))
             print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(istep.getTime()), prop.getValue(istep.getTime())))
         self.assertAlmostEqual(prop.getValue(istep.getTime()),0.55)
     def tearDown(self):

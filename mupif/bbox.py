@@ -23,14 +23,14 @@
 
 from __future__ import annotations
 
-import Pyro5
-debug = 0
+import Pyro5.api
 from pydantic.dataclasses import dataclass
 from typing import Union, Tuple
+from . import dumpable
 
 @Pyro5.api.expose
-@dataclass
-class BBox():
+# @dataclass
+class BBox(dumpable.BaseModelWithPositionalArgs):
     """
     Represents a bounding box - a rectange in 2D and prism in 3D.
     Its geometry is described using two points - lover left and upper right corners.

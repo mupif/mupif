@@ -19,7 +19,7 @@ class TimeStep_TestCase(unittest.TestCase):
         timestepnumber = 0
 
         try:
-            istep = timestep.TimeStep(time, dt, time + dt, None, timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,units=None, number=timestepnumber)
         except TypeError:
             pass
         except Exception as e:
@@ -28,9 +28,9 @@ class TimeStep_TestCase(unittest.TestCase):
             self.fail('Exception not raised')
 
 
-        time = PQ.PhysicalQuantity('0.0 s')
+        time = PQ.makeQuantity(0.0,'s')
         try:
-            istep = timestep.TimeStep(time, dt, targetTime, None, timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, units=None, number=timestepnumber)
         except TypeError:
             pass
         except Exception as e:
@@ -38,10 +38,10 @@ class TimeStep_TestCase(unittest.TestCase):
         else:
             self.fail('Exception not raised')
 
-        dt = PQ.PhysicalQuantity('0.5 s')
+        dt = PQ.makeQuantity(0.5,'s')
 
         try:
-            istep = timestep.TimeStep(time, dt, targetTime, None, timestepnumber)
+            istep = timestep.TimeStep(time=time,dt=dt, targetTime=targetTime, units=None, number=timestepnumber)
         except TypeError:
             pass
         except Exception as e:
@@ -56,7 +56,7 @@ class TimeStep_TestCase(unittest.TestCase):
         timestepnumber = 0
 
         # @todo what sould this do?
-        istep = timestep.TimeStep(time, dt, time + dt, 'm', timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=PQ.findUnit('m'), number=timestepnumber)
 
 
 
@@ -66,7 +66,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        istep = timestep.TimeStep(time, dt, time + dt, 's', timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=PQ.findUnit('s'), number=timestepnumber)
 
         dT = istep.getTimeIncrement()
         self.assertTrue(dT.getValue() == dt)
@@ -79,7 +79,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=PQ.findUnit('s'), number=timestepnumber)
 
         tT = istep.getTargetTime()
         self.assertTrue(tT.getValue() == 2.0)
@@ -91,7 +91,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 1
 
-        istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=PQ.findUnit('s'), number=timestepnumber)
 
         self.assertTrue(istep.getNumber() == 1)
 

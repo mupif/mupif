@@ -2,8 +2,8 @@ import unittest,sys
 sys.path.append('../..')
 
 from mupif import *
-from mupif.physics.physicalquantities import PhysicalUnit as PU
-from mupif.physics.physicalquantities import PhysicalQuantity as PQ
+from mupif.physics.physicalquantities import makeUnit as PU
+from mupif.physics.physicalquantities import makeQuantity as PQ
 import math
 import numpy as np
 
@@ -15,9 +15,9 @@ class Property_TestCase(unittest.TestCase):
         self.t3 = PQ(9,'s')
 
         
-        self.p1=property.ConstantProperty(16.,PropertyID.PID_Concentration,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
-        self.p2=property.ConstantProperty(7.,PropertyID.PID_Velocity,ValueType.Vector,PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
-        self.p3=property.ConstantProperty(9.,PropertyID.PID_ParticleSigma,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
+        self.p1=property.ConstantProperty(value=16.,propID=PropertyID.PID_Concentration,valueType=ValueType.Scalar,unit=PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
+        self.p2=property.ConstantProperty(value=7.,propID=PropertyID.PID_Velocity,valueType=ValueType.Vector,unit=PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
+        self.p3=property.ConstantProperty(value=9.,propID=PropertyID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
 
     def tearDown(self):
         

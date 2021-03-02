@@ -27,7 +27,8 @@ from . import octree
 from . import bbox
 from . import dumpable
 from . import vertex
-from . import cell
+# from . import cell
+from . import mupifobject
 import copy
 import time
 import sys
@@ -40,6 +41,8 @@ try:
    import cPickle as pickle  # faster serialization if available
 except:
    import pickle
+
+import pydantic
 
 # enum to distinguish iterartors provided by domain
 VERTICES = 0
@@ -110,7 +113,7 @@ class MeshIterator(object):
             return self.__next__()  # Python 2.x compatibility
 
 
-@dataclasses.dataclass
+#@dataclasses.dataclass
 @Pyro5.api.expose
 class Mesh(dumpable.Dumpable):
     """
@@ -313,6 +316,7 @@ class Mesh(dumpable.Dumpable):
         cc=[]
         cgt=cellgeometrytype
         c0=0
+        from . import cell
         for block in cells:
             klass=cell.Cell.getClassForCellGeometryType({'triangle':cgt.CGT_TRIANGLE_1,'quad':cgt.CGT_QUAD,'tetra':cgt.CGT_TETRA,'hexahedron':cgt.CGT_HEXAHEDRON,'triangle6':cgt.CGT_TRIANGLE_2}[block.type])
             cc+=[klass(mesh=ret,number=c0+row,label=None,vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
@@ -415,8 +419,8 @@ class Mesh(dumpable.Dumpable):
         """
         pickle.dump(self, open(fileName, 'wb'), protocol)
 
-@dataclasses.dataclass
 @Pyro5.api.expose
+#@dataclasses.dataclass
 class UnstructuredMesh(Mesh):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
@@ -435,13 +439,13 @@ class UnstructuredMesh(Mesh):
     .. automethod:: __buildCellLabelMap__
     """
 
-    vertexList: typing.List[vertex.Vertex]=dataclasses.field(default_factory=lambda: [])
-    cellList: typing.List[cell.Cell]=dataclasses.field(default_factory=lambda: [])
+    vertexList: typing.List[vertex.Vertex]=pydantic.Field(default_factory=lambda: [])
+    cellList: typing.List[cell.Cell]=pydantic.Field(default_factory=lambda: [])
     #
-    vertexOctree: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
-    cellOctree: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
-    vertexDict: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
-    cellDict: typing.Any=dataclasses.field(default=None,repr=False,metadata=dict(mupif_nodump=True))
+    vertexOctree: typing.Any=pydantic.Field(mupif_nodump=True)
+    cellOctree: typing.Any=pydantic.Field(mupif_nodump=True)
+    vertexDict: typing.Any=pydantic.Field(mupif_nodump=True)
+    cellDict: typing.Any=pydantic.Field(mupif_nodump=True)
 
 
     # this is necessary for putting the mesh into set (in localizer)
@@ -673,11 +677,11 @@ class UnstructuredMesh(Mesh):
                 self.vertexDict[v.label] = indx
 
         # renumber vertexDict verices 
-        number = 0
-        self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
-        #for v in self.vertexList:
-        #    #v.number = number
-        #    #number = number+1
+        n = 0
+        #self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
+        for v in self.vertexList:
+            v.number = n
+            n+=1
         #
         # now merge cell lists
         #
@@ -696,7 +700,7 @@ class UnstructuredMesh(Mesh):
                 updatedVertices = []
                 for v in c.getVertices():
                     updatedVertices.append(self.vertexDict[v.label])
-                if 0:
+                if 1:
                     ccopy = c.copy()
                     ccopy.vertices = tuple(updatedVertices)
                     ccopy.mesh = self

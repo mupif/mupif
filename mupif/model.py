@@ -36,6 +36,8 @@ from . import timestep
 from . import pyroutil
 import time
 
+from pydantic.dataclasses import dataclass
+
 import logging
 log = logging.getLogger()
 
@@ -164,8 +166,10 @@ ModelSchema = {
     ]
 }
 
+from typing import Optional,Any
 
 @Pyro5.api.expose
+#@dataclass
 class Model(mupifobject.MupifObject):
     """
     An abstract class representing an application and its interface (API).
@@ -179,7 +183,18 @@ class Model(mupifobject.MupifObject):
 
     .. automethod:: __init__
     """
-    def __init__(self, metaData={}):
+
+    pyroDaemon: Optional[Any]=None
+    externalDaemon: bool=False
+    pyroNs: Optional[str]=None
+    pyroURI: Optional[str]=None
+    appName: str=None
+    file: str=''
+    workDir: str=''
+
+
+
+    def __old_init__(self, metaData={}):
         """
         Constructor. Initializes the application.
 

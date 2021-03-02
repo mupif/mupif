@@ -24,7 +24,7 @@ from . import bbox
 from . import util
 import math
 # from . import mesh
-import mupif.mesh
+# import mupif.mesh
 from . import cellgeometrytype
 from .dumpable import Dumpable
 import numpy as np
@@ -41,10 +41,15 @@ tolerance = 0.001
 from pydantic.dataclasses import dataclass
 import dataclasses
 import typing
+from . import dumpable
+# from . import mesh
+from . import mupifobject
 
-@dataclass(frozen=True)
 @Pyro5.api.expose
-class Cell(Dumpable):
+#@dataclass(frozen=True)
+class Cell(dumpable.Dumpable):
+    #class Config:
+    #    frozen=True
     """
     Representation of a computational cell.
 
@@ -59,10 +64,12 @@ class Cell(Dumpable):
 
     # mupif.mesh.Mesh
 
-    mesh: typing.Optional[typing.Any] = dataclasses.field(repr=False,metadata=dict(mupif_nodump=True))
+    mesh: typing.Optional[typing.Any] # = dataclasses.field(repr=False,metadata=dict(mupif_nodump=True))
     number: int
     label: typing.Optional[int]
     vertices: typing.Tuple[int,...]
+
+    def __hash__(self): return id(self)
 
     #def __post_init__(self):
     #    self.bbox=None
@@ -232,7 +239,8 @@ class Triangle_2d_lin(Cell):
     0-----1
 
     """
-    dumpAttrs=[]
+    #dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -359,7 +367,8 @@ class Triangle_2d_quad(Cell):
     0--3---1
 
     """
-    dumpAttrs=[]
+    #dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -581,7 +590,8 @@ class Quad_2d_lin(Cell):
     """
     Unstructured 2d quad element with linear interpolation
     """
-    dumpAttrs=[]
+    #dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -801,7 +811,8 @@ class Tetrahedron_3d_lin(Cell):
     """
     Unstructured 3d tetrahedral element with linear interpolation.
     """
-    dumpAttrs=[]
+    #dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -942,7 +953,8 @@ class Brick_3d_lin(Cell):
 
     .. automethod:: _evalN
     """
-    dumpAttrs=[]
+    #dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
