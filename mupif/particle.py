@@ -141,7 +141,7 @@ class ParticleSet (mupifobject.MupifObject):
         return self.inclusionsize
     
 if __name__ == "__main__":
-    ps = ParticleSet (5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), alpha=(10,11,12,13,14))
+    ps = ParticleSet (1, 5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), alpha=(10,11,12,13,14))
     p2 = ps.getParticle(2)
     print (p2.getPosition())
     print (p2.getAttribute('alpha'))

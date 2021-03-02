@@ -303,12 +303,6 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
-    :param str server: Host name of the server (internal host name)
-    :param int port: Port number on the server where daemon will listen (internal port number)
-    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
-    :param int natport: Server NAT port as reported by nameserver (external port)
-    :param str nshost: Hostname of the computer running nameserver
-    :param int nsport: Nameserver port
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
@@ -814,7 +808,7 @@ class SshTunnel(object):
 
             try:
                 log.debug("Creating ssh tunnel via command: " + str(cmd))
-                self.tunnel = subprocess.Popen(cmd.split())
+                self.tunnel = subprocess.Popen(cmd.split())  # TODO cmd is a list - AttributeError: 'list' object has no attribute 'split'
             except Exception:
                 log.exception("Creation of a tunnel failed. Can not execute the command: %s " % str(cmd))
                 raise
@@ -826,7 +820,7 @@ class SshTunnel(object):
         Terminate the connection.
         """
         if self.tunnel is not None:
-            if self.sshCient=='python':
+            if self.sshCient=='python':  # TODO 'sshClient' variable is not anywhere else in this project
                 self.tunnel.cancel()
                 self.tunnel=None
             else:

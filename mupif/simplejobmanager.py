@@ -244,7 +244,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
                 uri=parentPipe.recv()
                 log.info('Received URI: %s'%uri)
             except Exception as e:
-                log.exceptioN(e)
+                log.exception(e)
                 raise
 
             # check if uri is ok

@@ -257,7 +257,7 @@ class Workflow(model.Model):
                     'Type': 'Workflow' if isinstance(mmodel, Workflow) else 'Model'
                 }
                 if isinstance(mmodel, Workflow):
-                    m_r_id.update({'Dependencies': model.getMetadata('Dependencies')})
+                    m_r_id.update({'Dependencies': mmodel.getMetadata('Dependencies')})
                 dependencies.append(m_r_id)
 
         self.setMetadata('Dependencies', dependencies)
