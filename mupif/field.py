@@ -730,7 +730,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
                 time = pickle.loads(time)
            
             meshIndex = meshObjs.index(f['mesh'])  # find which mesh object this field refers to
-            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, values=values, fieldType=fieldType))
+            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values, fieldType=fieldType))
         hdf.close() # necessary for windows
         return ret
 
@@ -783,7 +783,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
                     unit=unit.get(fname,None),
                     time=time,
                     valueType=ValueType.fromNumberOfComponents(values.shape[1]),
-                    values=values,
+                    value=values,
                     fieldType=fieldType
                 ))
         return ret

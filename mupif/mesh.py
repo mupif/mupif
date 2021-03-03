@@ -423,10 +423,10 @@ class UnstructuredMesh(Mesh):
 
     * vertexList: list of vertices
     * cellList: list of interpolation cells
-    * vertexOctree: vertex spatial localizer
-    * cellOctree: cell spatial localizer
-    * vertexDict: vertex dictionary
-    * cellDict: cell dictionary
+    * _vertexOctree: vertex spatial localizer
+    * _cellOctree: cell spatial localizer
+    * _vertexDict: vertex dictionary
+    * _cellDict: cell dictionary
 
     .. automethod:: __init__
     .. automethod:: __buildVertexLabelMap__
@@ -438,10 +438,17 @@ class UnstructuredMesh(Mesh):
     #
     def __init__(self,**kw):
         super().__init__(**kw)
-        self.vertexOctree=None
-        self.cellOctree=None
-        self.vertexDict=None
-        self.cellDict=None
+        self._vertexOctree=None
+        self._cellOctree=None
+        self._vertexDict=None
+        self._cellDict=None
+
+    # this hack is just for pickle
+    def __getstate__(self):
+        s=super().__getstate__()
+        for d in ['_vertexOctree','_cellOctree','_vertexDict','_cellDict']:
+            if d in s: del s[d]
+        return s
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
@@ -454,11 +461,11 @@ class UnstructuredMesh(Mesh):
         Mesh.__init__(self)
         self.vertexList = []
         self.cellList = []
-        self.vertexOctree = None
-        self.cellOctree = None
+        self._vertexOctree = None
+        self._cellOctree = None
         # label2local_number maps
-        self.vertexDict = None
-        self.cellDict = None
+        self._vertexDict = None
+        self._cellDict = None
 
     def setup(self, vertexList, cellList):
         """
@@ -502,11 +509,11 @@ class UnstructuredMesh(Mesh):
         c++ fastOctant, which the other side does not necessarily support.
 
         Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with
-        ``vertexOctree`` and ``cellOctree`` set to ``None``.
+        ``_vertexOctree`` and ``_cellOctree`` set to ``None``.
         """
         # shallow copy of __dict__
         d2 = self.__dict__.copy()
-        d2['vertexOctree'] = d2['cellOctree'] = None
+        d2['_vertexOctree'] = d2['_cellOctree'] = None
         return d2
 
     def getNumberOfVertices(self):
@@ -538,8 +545,8 @@ class UnstructuredMesh(Mesh):
         :return: Returns the vertex localizer.
         :rtype: Octree
         """
-        if self.vertexOctree: 
-            return self.vertexOctree
+        if self._vertexOctree: 
+            return self._vertexOctree
         else:
             vvv = self.vertices()
             c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
@@ -551,17 +558,17 @@ class UnstructuredMesh(Mesh):
             # setup vertex localizer
             size = max(y-x for x, y in zip(minc, maxc))
             mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-            self.vertexOctree = octree.Octree(minc, size, tuple(mask))
+            self._vertexOctree = octree.Octree(minc, size, tuple(mask))
             if debug: 
                 t0 = time.clock()
                 print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
             # add mesh vertices into octree
             for vertex in self.vertices():
-                self.vertexOctree.insert(vertex)
+                self._vertexOctree.insert(vertex)
             if debug:
                 print("done in ", time.clock() - t0, "[s]")
 
-            return self.vertexOctree
+            return self._vertexOctree
 
     def giveCellLocalizer(self):
         """
@@ -572,8 +579,8 @@ class UnstructuredMesh(Mesh):
         """
         if debug:
             t0 = time.clock()
-        if self.cellOctree: 
-            return self.cellOctree
+        if self._cellOctree: 
+            return self._cellOctree
         else:
             if debug:
                 print('Start at: ', time.clock()-t0)
@@ -590,59 +597,59 @@ class UnstructuredMesh(Mesh):
         # setup vertex localizer
         size = max(y-x for x, y in zip(minc, maxc))
         mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-        self.cellOctree = octree.Octree(minc, size, tuple(mask))
+        self._cellOctree = octree.Octree(minc, size, tuple(mask))
         if debug:
             print('Octree ctor: ', time.clock()-t0)
             print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
         for cell in self.cells():
-            self.cellOctree.insert(cell)
+            self._cellOctree.insert(cell)
         if debug:
             print("done in ", time.clock() - t0, "[s]")
-        return self.cellOctree
+        return self._cellOctree
 
     def __buildVertexLabelMap__(self):
         """
         Create a custom dictionary between vertex's label and Vertex instance.
         """
-        self.vertexDict = {}
+        self._vertexDict = {}
         # loop over vertex lists in both meshes
         for v in range(len(self.vertexList)):
-            if self.vertexList[v].label in self.vertexDict:
+            if self.vertexList[v].label in self._vertexDict:
                 if debug:
                     print("UnstructuredMesh::buildVertexLabelMap: multiple entry detected, vertex label ",
                           self.vertexList[v].label)
             else:
-                self.vertexDict[self.vertexList[v].label] = v
+                self._vertexDict[self.vertexList[v].label] = v
 
     def __buildCellLabelMap__(self):
         """
         Create a custom dictionary between cell's label and Cell instance.
         """
-        self.cellDict = {}
+        self._cellDict = {}
         # loop over vertex lists in both meshes
         for v in range(len(self.cellList)):
-            if self.cellList[v].label in self.cellDict:
+            if self.cellList[v].label in self._cellDict:
                 if debug:
                     print("UnstructuredMesh::buildCellLabelMap: multiple entry detected, cell label ",
                           self.cellList[v].label)
             else:
-                self.cellDict[self.cellList[v].label] = v
+                self._cellDict[self.cellList[v].label] = v
 
     def vertexLabel2Number(self, label):
         """
         See :func:`Mesh.vertexLabel2Number`
         """
-        if not self.vertexDict:
+        if not self._vertexDict:
             self.__buildVertexLabelMap__()
-        return self.vertexDict[label]
+        return self._vertexDict[label]
 
     def cellLabel2Number(self, label):
         """
         See :func:`Mesh.cellLabel2Number`
         """
-        if not self.cellDict:
+        if not self._cellDict:
             self.__buildCellLabelMap__()
-        return self.cellDict[label]
+        return self._cellDict[label]
 
     def merge(self, mesh):
         """
@@ -655,7 +662,7 @@ class UnstructuredMesh(Mesh):
         :param Mesh mesh: Source mesh for merging
         """
         # build vertex2local reciver map first
-        if not self.vertexDict:
+        if not self._vertexDict:
             self.__buildVertexLabelMap__()
         #
         # merge vertexLists
@@ -663,15 +670,15 @@ class UnstructuredMesh(Mesh):
         if debug:
             print("UnstructuredMesh::merge: merged vertices with label:")
         for v in mesh.vertices():
-            if v.label in self.vertexDict:
+            if v.label in self._vertexDict:
                 if debug:
                     print(v.label)
             else:
                 indx = len(self.vertexList)
                 self.vertexList[indx:] = [copy.deepcopy(v)]
-                self.vertexDict[v.label] = indx
+                self._vertexDict[v.label] = indx
 
-        # renumber vertexDict verices 
+        # renumber _vertexDict verices 
         n = 0
         #self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
         for v in self.vertexList:
@@ -681,20 +688,20 @@ class UnstructuredMesh(Mesh):
         # now merge cell lists
         #
 
-        if not self.cellDict:
+        if not self._cellDict:
             self.__buildCellLabelMap__()
 
         if debug:
             print("UnstructuredMesh::merge: merged cells with label:")
         for c in mesh.cells():
-            if c.label in self.cellDict:
+            if c.label in self._cellDict:
                 if debug:
                     print(c.label)
             else:
                 # update c vertex list according to new numbering
                 updatedVertices = []
                 for v in c.getVertices():
-                    updatedVertices.append(self.vertexDict[v.label])
+                    updatedVertices.append(self._vertexDict[v.label])
                 if 1:
                     ccopy = c.copy()
                     ccopy.vertices = tuple(updatedVertices)
@@ -702,11 +709,11 @@ class UnstructuredMesh(Mesh):
                 else: ccopy=dataclasses.replace(c,vertices=tuple(updatedVertices),mesh=self)
                 indx = len(self.cellList)
                 self.cellList[indx:] = [ccopy]
-                self.cellDict[ccopy.label] = indx
+                self._cellDict[ccopy.label] = indx
         print()
         # last step: invalidate receiver
-        self.vertexOctree = None
-        self.cellOctree = None
+        self._vertexOctree = None
+        self._cellOctree = None
 
     def getVTKRepresentation(self):
         """

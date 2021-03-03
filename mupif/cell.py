@@ -56,15 +56,15 @@ class Cell(dumpable.Dumpable):
     .. automethod:: __init__
     """
     
-    mesh: typing.Any=None
+    # mesh: typing.Any=None
     number: int
     label: typing.Optional[int]
     vertices: typing.Tuple[int,...]
 
-    def __TODO_init__(mesh=None,**kw):
+    def __init__(self,mesh,**kw):
         super().__init__(**kw)
-        # assign mesh here so that it does not get serialized
         self.mesh=mesh
+        # assign mesh here so that it does not get serialized
 
     def __hash__(self): return id(self)
 

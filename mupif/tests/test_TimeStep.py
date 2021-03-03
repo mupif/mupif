@@ -19,16 +19,16 @@ class TimeStep_TestCase(unittest.TestCase):
         timestepnumber = 0
 
         with self.assertRaises(pydantic.ValidationError): 
-            istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,units=None, number=timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,unit=None, number=timestepnumber)
 
         time = PQ.makeQuantity(0.0,'s')
         with self.assertRaises(pydantic.ValidationError):
-            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, units=None, number=timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
 
         dt = PQ.makeQuantity(0.5,'s')
 
         with self.assertRaises(pydantic.ValidationError):
-            istep = timestep.TimeStep(time=time,dt=dt, targetTime=targetTime, units=None, number=timestepnumber)
+            istep = timestep.TimeStep(time=time,dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
 
 
         time = 0.0

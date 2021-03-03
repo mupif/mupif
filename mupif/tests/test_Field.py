@@ -129,8 +129,8 @@ class Field_TestCase(unittest.TestCase):
         self.f4.commit()
         self.assertEqual(self.f4.getVertexValue(3).getValue(),(5,))
     def test_getUnits(self):
-        self.assertEqual(self.f1.getUnits(),mupif.U.m,'error in getUnits for f1')
-        self.assertEqual(self.f2.getUnits(),PQ.makeUnit({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)))
+        self.assertEqual(self.f1.getUnits(),mupif.U.m)
+        self.assertEqual(self.f2.getUnits(),mupif.U['kg/m/s**2'])
         
     def test_merge(self):
         self.f5.merge(self.f1)

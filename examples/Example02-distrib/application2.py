@@ -2,18 +2,18 @@ import sys
 import Pyro5
 import logging
 sys.path.extend(['..', '../..'])
-from mupif import *
-import mupif.physics.physicalquantities as PQ
+import mupif as mp
+#from mupif import *
 
 log = logging.getLogger()
 
 
 @Pyro5.api.expose
-class application2(model.Model):
+class Application2(mp.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
@@ -49,15 +49,18 @@ class application2(model.Model):
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        super(application2, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=MD)
+        self.updateMetadata(metadata)
         self.value = 0.0
         self.count = 0.0
-        self.contrib = property.ConstantProperty(
-            (0.,), PropertyID.PID_Time, ValueType.Scalar, 's', PQ.PhysicalQuantity(0., 's'))
+        self.contrib = mp.ConstantProperty(
+            value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.Q.s)
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(application2, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        #import pprint.prrint
+        #pprint(self.metadata)
+        #sys.exit(1)
+        super().initialize(file=file, workdir=workdir, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
     def getProperty(self, propID, time, objectID=0):
         md = {
@@ -68,26 +71,26 @@ class application2(model.Model):
             }
         }
 
-        if propID == PropertyID.PID_Time:
-            return property.ConstantProperty(
-                (self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, metaData=md)
+        if propID == mp.PropertyID.PID_Time:
+            return mp.ConstantProperty(
+                value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise apierror.APIError('Unknown property ID')
 
-    def setProperty(self, property, objectID=0):
-        if property.getPropertyID() == PropertyID.PID_Time_step:
+    def setProperty(self, prop, objectID=0):
+        if prop.getPropertyID() == mp.PropertyID.PID_Time_step:
             # remember the mapped value
-            self.contrib = property
+            self.contrib = prop
         else:
             raise apierror.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value = self.value+self.contrib.inUnitsOf('s').getValue(tstep.getTime())[0]
+        self.value = self.value+self.contrib.inUnitsOf(mp.U.s).getValue(tstep.getTime())[0]
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0, 's')
+        return 1.*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()

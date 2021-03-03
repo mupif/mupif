@@ -92,7 +92,7 @@ Q=sys.modules['mupif.physics.physicalquantities'].Q
 def _registerDumpable(clss=dumpable.Dumpable):
     import Pyro5.api
     for sub in clss.__subclasses__():
-        # log.debug(f'Registering class {sub.__module__}.{sub.__name__}')
+        # print(f'Registering class {sub.__module__}.{sub.__name__}')
         Pyro5.api.register_class_to_dict(sub,dumpable.Dumpable.to_dict)
         Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__,dumpable.Dumpable.from_dict_with_name)
         _registerDumpable(sub) # recurse

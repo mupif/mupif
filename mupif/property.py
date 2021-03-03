@@ -1,5 +1,6 @@
 from . import mupifobject
 from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
+from .physics import physicalquantities as PQ
 import Pyro5
 import pickle
 import collections
@@ -58,10 +59,10 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
         self.valueType = valueType
         self.objectID = objectID
 
-        if physicalquantities.isPhysicalUnit(units):
+        if PQ.isPhysicalUnit(units):
             self.unit = units
         else:
-            self.unit = physicalquantities.findUnit(units)
+            self.unit = PQ.findUnit(units)
 
         self.setMetadata('Type', 'mupif.property.Property')
         self.setMetadata('Type_ID', str(self.propID))
@@ -145,7 +146,7 @@ class ConstantProperty(Property):
 
         Property.__init__(self, propID, valueType, units, objectID)
         self.value = value
-        if physicalquantities.isPhysicalQuantity(time) or time is None:
+        if PQ.isPhysicalQuantity(time) or time is None:
             self.time = time
         else:
             raise TypeError("PhysicalValue expected for time")
@@ -193,7 +194,7 @@ class ConstantProperty(Property):
         """
         Override of PhysicalQuantity._sum method
         """
-        if not physicalquantities.isPhysicalQuantity(other):
+        if not PQ.isPhysicalQuantity(other):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
         new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
@@ -223,7 +224,7 @@ class ConstantProperty(Property):
 
         :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
         """
-        unit = physicalquantities.findUnit(unit)
+        unit = PQ.findUnit(unit)
         self.value = self._convertValue(self.value, self.unit, unit)
         self.unit = unit
 
@@ -272,8 +273,7 @@ class ConstantProperty(Property):
         :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = list(map(physicalquantities.findUnit, units))
-        # unit = physicalquantities.findUnit(units[0])
+        units = list(map(PQ.findUnit, units))
         unit = units[0]
         value = self._convertValue(self.value, self.unit, unit)
-        return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)
+        return ConstantProperty(value=value, propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)

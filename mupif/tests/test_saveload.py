@@ -50,7 +50,7 @@ class TestSaveLoad(unittest.TestCase):
         self.assertAlmostEqual(t22a,t22b)
         self.assertEqual(f.unit,f2.unit)
 
-    def _disabled__testFieldSerpent(self):
+    def testFieldSerpent(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         import serpent
@@ -120,12 +120,12 @@ class TestSaveLoad(unittest.TestCase):
         m.giveVertexLocalizer()
         m.giveCellLocalizer()
         # check localizers are there (break encapsulation, sorry)
-        self.assertTrue(m.vertexOctree is not None)
-        self.assertTrue(m.cellOctree is not None)
+        self.assertTrue(m._vertexOctree is not None)
+        self.assertTrue(m._cellOctree is not None)
         # but that they were not pickled
         m2=pickle.loads(pickle.dumps(m))
-        self.assertTrue(m2.vertexOctree is None)
-        self.assertTrue(m2.cellOctree is None)
+        self.assertTrue(m2._vertexOctree is None)
+        self.assertTrue(m2._cellOctree is None)
         
         
 

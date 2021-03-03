@@ -206,6 +206,9 @@ class Model(mupifobject.MupifObject):
             if k not in metadata: metadata[k]=v
         super().__init__(metadata=metadata,**kw)
 
+        #import pprint
+        #pprint.pprint(self.metadata)
+
     def __old_init__(self, metaData={}):
         """
         Constructor. Initializes the application.
@@ -245,7 +248,6 @@ class Model(mupifobject.MupifObject):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-
         self.updateMetadata(metaData)
         # self.printMetadata()
 
