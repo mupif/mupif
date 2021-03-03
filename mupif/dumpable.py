@@ -59,11 +59,11 @@ class Dumpable(pydantic.BaseModel):
 
     def __init__(self,*args,**kw):
         # print('### __init__ with '+str(kw))
-        if args: raise RuntimeError(f'{__class__.__module__}.{__class__.__name}: non-keyword args not allowed in the constructor.')
+        if args: raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
         # print(kw.keys())
         for k in kw.keys():
             if k not in self.__class__.__fields__:
-                raise ValueError(f'{__class__.__module__}.{__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
+                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
         super().__init__(*args,**kw)
 
     # don't pickle attributes starting with underscore
