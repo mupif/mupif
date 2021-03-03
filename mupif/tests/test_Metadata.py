@@ -1,6 +1,7 @@
 import unittest,sys
 sys.path.append('../..')
 from mupif import *
+import mupif
 import jsonschema
 
 
@@ -10,29 +11,29 @@ import jsonschema
 
 
 
-class testModel1(model.Model):
+class TestModel1(model.Model):
     """ Empty model1(with missing required metadata) to test metadata setting"""
 
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         metaData1 = {
             'Name': 'Empty application to test metadata',
             'ID': 'N/A',
             'Description': 'Model with missing metadata',
         }
         
-        super(testModel1, self).__init__(metaData1)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=metaData1)
+        self.updateMetadata(metadata)
         
        
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(testModel1, self).initialize(metaData=metaData, validateMetaData=validateMetaData, **kwargs)
+        super().initialize(metaData=metaData, validateMetaData=validateMetaData, **kwargs)
 
 
 
-class testModel2(model.Model):
+class TestModel2(model.Model):
     """ Empty model2 to test metadata setting"""
 
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         MD = {
             'Name': 'Empty application to test metadata',
             'ID': 'N/A',
@@ -64,14 +65,13 @@ class testModel2(model.Model):
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        super(testModel2, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=MD)
+        self.updateMetadata(metadata)
 
     def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(testModel2, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
 
-        
-    def getProperty(self, propID, time, objectID=0):
+    def getProperty(self, propID, timestep, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -79,9 +79,8 @@ class testModel2(model.Model):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
-
         if propID == PropertyID.PID_Time_step:
-            return property.ConstantProperty(time, PropertyID.PID_Time_step, ValueType.Scalar, 's', metaData=md)
+            return property.ConstantProperty(value=timestep.number, propID=PropertyID.PID_Time_step, valueType=ValueType.Scalar, unit=mupif.U.none, time=timestep.time, metadata=md)
 
     
     
@@ -90,72 +89,31 @@ class testModel2(model.Model):
         
 
 class Metadata_TestCase(unittest.TestCase):
+    executionMetadata = {
+        'Execution': {
+            'ID': '1',
+            'Use_case_ID': '1_1',
+            'Task_ID': '1'
+        }
+    }
     def setUp(self):
-        self.tm1 = testModel1()
-        self.tm2 = testModel2()
+        self.tm1 = TestModel1()
+        self.tm2 = TestModel2()
 
     def test_Init(self):
-        return
-        try:
-            self.tm1.initialize()
-        except jsonschema.exceptions.ValidationError: pass
-        #except fastjsonschema.JsonSchemaException: pass
-        except Exception as e:
-            self.fail('Unexpected exception raised: %s'%e)
-        else:
-            self.fail('Exception not raised')
-
-
-
-        executionMetadata = {
-            'Execution': {
-                'ID': '1',
-                'Use_case_ID': '1_1',
-                'Task_ID': '1'
-            }
-        }
-        try:            
-            self.tm2.initialize(metaData = executionMetadata)
-        except Exception as e:
-            self.fail(f'Unexpected exception raised: {str(e)}')
-
-            
+        with self.assertRaises(jsonschema.exceptions.ValidationError): self.tm1.initialize()
+        self.tm2.initialize(metaData=Metadata_TestCase.executionMetadata)
     def test_Name(self):
-        name = self.tm2.getMetadata('Name')
-        if name ==  'Empty application to test metadata':
-            pass
-        else:
-            self.fail('wrong name')
-
+        self.assertEqual(self.tm2.getMetadata('Name'),'Empty application to test metadata')
     def test_SolverLanguage(self):
-        lang = self.tm2.getMetadata('Solver.Language')
-        if lang ==  'Python3':
-            pass
-        else:
-            self.fail('wrong language')
-
-    #@unittest.expectedFailure
+        self.assertEqual(self.tm2.getMetadata('Solver.Language'),'Python3')
     def test_propery(self):
-        return
-        executionMetadata = {
-            'Execution': {
-                'ID': '1',
-                'Use_case_ID': '1_1',
-                'Task_ID': '1'
-            }
-        }
-        try:            
-            self.tm2.initialize(metaData = executionMetadata)
-        except Exception as e:
-            self.fail(f'Unexpected exception raised: {str(e)}')
-        propeucid = self.tm2.getProperty(PropertyID.PID_Time_step, timestep.TimeStep(1., 1., 10, 's')).getMetadata('Execution.Use_case_ID')
-        if propeucid == self.tm2.getMetadata('Execution.Use_case_ID'):
-            pass
-        else:
-            self.fail('wrong propery exectuion use case ID')
-            
+        self.tm2.initialize(metaData=Metadata_TestCase.executionMetadata)
+        import pprint
+        pprint.pprint(self.tm2.metadata)
+        propeucid=self.tm2.getProperty(propID=PropertyID.PID_Time_step, timestep=timestep.TimeStep(time=1., dt=1., targetTime=10, unit=mupif.U.s)).getMetadata('Execution.Use_case_ID')
+        self.assertEqual(propeucid,self.tm2.getMetadata('Execution.Use_case_ID'))
 
-        
 # python test_Metadata.py for stand-alone test being run
 if __name__=='__main__': unittest.main()
 

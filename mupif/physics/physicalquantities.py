@@ -53,7 +53,6 @@ def cmp(a, b):
 def makeQuantity(value,unit): return PhysicalQuantity(value=value,unit=unit)
 def makeUnit(names,factor,powers,offset=0.): return PhysicalUnit(names=names,factor=factor,powers=powers,offset=offset)
 
-# Class definitions
 @Pyro5.api.expose
 class PhysicalQuantity(dumpable.Dumpable):
 
@@ -457,10 +456,13 @@ class PhysicalUnit(dumpable.Dumpable):
     it. Units can be multiplied, divided, and raised to integer powers.
     """
 
-    names: NumberDict=NumberDict()
+    names: NumberDict=pydantic.Field(default_factory=NumberDict)
     factor: float
     powers: typing.List[int]
     offset: float = 0.
+
+    #class Config:
+    #    frozen = True
 
     @pydantic.validator('names',always=True,pre=True)
     def names_cook(cls,n):
@@ -661,7 +663,7 @@ class PhysicalUnit(dumpable.Dumpable):
         return self.powers[7] == 1 and reduce(lambda a, b: a + b, self.powers) == 1
 
     def setName(self, name):
-        self.names = NumberDict(data=dict(name=1))
+        self.names = NumberDict(data={name:1})
 
     def name(self):
         num = ''
@@ -813,14 +815,15 @@ def _addUnit(name, unit, comment=''):
     if comment:
         _help.append((name, comment, unit))
     if isinstance(unit,str):
-        # sys.stderr.write('Unit is: %s\n'%str(unit))
+        #sys.stderr.write('1: Unit is: %s\n'%str(unit))
         unit = eval(unit, _unit_table)
+        #sys.stderr.write('2: Unit is: %s\n'%str(unit))
         for cruft in ['__builtins__', '__args__']:
             try:
                 del _unit_table[cruft]
             except:
                 pass
-    # assert isinstance(unit,PhysicalUnit)
+    assert isinstance(unit,PhysicalUnit)
     #sys.stderr.write(f'_addUnit: {name}, {unit}\n')
     unit.setName(name)
     _unit_table[name] = unit
@@ -870,7 +873,8 @@ for unit in list(_unit_table.keys()):
 # Fundamental constants
 _help.append('Fundamental constants:')
 
-_unit_table['pi'] = numpy.pi
+# _unit_table['pi'] = _addUninumpy.pi
+_addUnit('pi',str(numpy.pi)+'*none','π constant')
 _addUnit('c', '299792458.*m/s', 'speed of light')
 _addUnit('mu0', '4.e-7*pi*N/A**2', 'permeability of vacuum')
 _addUnit('eps0', '1/mu0/c**2', 'permittivity of vacuum')
@@ -1006,6 +1010,30 @@ __doc__ += '\n' + description()
 # to have this available.
 
 # PhysicalQuantity(123,'s')
+
+
+_unit_table_attr,_quant_table,_quant_table_attr={},{},{}
+
+for k,v in _unit_table.items():
+    k2=k.replace(' ','').replace('-','_').replace('**','').replace('/','_')
+    _unit_table_attr[k2]=v
+    _quant_table[k]=_quant_table_attr[k2]=PhysicalQuantity(value=1,unit=v)
+
+class UnitProxy(object):
+    def __getitem__(self,n):
+        if n in _unit_table: return _unit_table[n]
+        return findUnit(n)
+    def __getattr__(self,n): return _unit_table_attr[n]
+
+class QuantityProxy(object):
+    def __getitem__(self,n):
+        if n in _quant_table: return _quant_table[n]
+        return PhysicalQuantity(value=1,unit=findUnit(n))
+    def __getattr__(self,n): return _quant_table_attr[n]
+
+U=UnitProxy()
+Q=QuantityProxy()
+
 
 if __name__ == '__main__':
 

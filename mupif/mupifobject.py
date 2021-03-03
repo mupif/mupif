@@ -29,11 +29,8 @@ import pprint
 import copy
 from . import dumpable
 
-from pydantic.dataclasses import dataclass
 import pydantic
 
-#@dataclass
-#class MeshABC(object): pass
 
 @Pyro5.api.expose
 class MupifObject(dumpable.Dumpable):
@@ -45,11 +42,8 @@ class MupifObject(dumpable.Dumpable):
 
     .. automethod:: __init__
     """
-    # dumpAttrs=['metadata']
-    # dumpAttrs: 
 
     metadata: dict = pydantic.Field(default_factory=dict)
-    # _pyroId: str=None
 
     def __old_init__(self, jsonFileName=''):
         """
@@ -69,6 +63,18 @@ class MupifObject(dumpable.Dumpable):
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
+        keys=key.split('.')
+        d=copy.deepcopy(self.metadata)
+        while True:
+            # import pprint
+            # pprint.pprint(d)
+            # print('KEYS ARE: ',str(keys))
+            d=d[keys[0]]
+            if len(keys)==1: return d
+            keys=keys[1:]
+
+        # what the heck was this?
+
         if self.hasMetadata(key):
             keys = key.split('.')
             elem = self.getAllMetadata()
@@ -174,13 +180,13 @@ class MupifObject(dumpable.Dumpable):
             else:
                 self.setMetadata(new_key, value)
         
-    def updateMetadata(self, dictionary):
+    @pydantic.validate_arguments
+    def updateMetadata(self, dictionary: dict):
         """ 
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
         """
-        if isinstance(dictionary, dict):
-            self._iterInDictOfMetadataForUpdate(dictionary, "")
+        self._iterInDictOfMetadataForUpdate(dictionary, "")
 
     def validateMetadata(self, template):
         """

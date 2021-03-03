@@ -33,7 +33,7 @@ Dictionary storing numerical values
 
 #from .dumpable import Dumpable
 from .. import dumpable
-import collections.abc
+import pydantic
 
 # @dataclasses.dataclass
 class NumberDict(dumpable.Dumpable):
@@ -51,7 +51,7 @@ class NumberDict(dumpable.Dumpable):
     """
     # dumpAttrs=[('data',lambda self: dict(self), lambda self,data: self.update(data))]
 
-    data: dict={}
+    data: dict=pydantic.Field(default_factory=dict)
 
 
     # implement mutable mapping protocol https://stackoverflow.com/a/19775773/761090

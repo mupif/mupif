@@ -169,7 +169,6 @@ ModelSchema = {
 from typing import Optional,Any
 
 @Pyro5.api.expose
-#@dataclass
 class Model(mupifobject.MupifObject):
     """
     An abstract class representing an application and its interface (API).
@@ -186,13 +185,26 @@ class Model(mupifobject.MupifObject):
 
     pyroDaemon: Optional[Any]=None
     externalDaemon: bool=False
-    pyroNs: Optional[str]=None
+    pyroNS: Optional[str]=None
     pyroURI: Optional[str]=None
     appName: str=None
-    file: str=''
+    file: Optional[str]=None
     workDir: str=''
 
-
+    def __init__(self,metadata={},**kw):
+        (username, hostname) = pyroutil.getUserInfo()
+        defaults=dict([
+            ('Username', username),
+            ('Hostname', hostname),
+            ('Status', 'Initialized'),
+            ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
+            ('Execution', {}),
+            ('Solver', {})
+        ])
+        # use defaults for metadata, unless given explicitly
+        for k,v in defaults.items():
+            if k not in metadata: metadata[k]=v
+        super().__init__(metadata=metadata,**kw)
 
     def __old_init__(self, metaData={}):
         """

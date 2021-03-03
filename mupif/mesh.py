@@ -113,7 +113,6 @@ class MeshIterator(object):
             return self.__next__()  # Python 2.x compatibility
 
 
-#@dataclasses.dataclass
 @Pyro5.api.expose
 class Mesh(dumpable.Dumpable):
     """
@@ -126,22 +125,17 @@ class Mesh(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
-    #dumpAttrs=[('mapping',None),('__any_name_to_postprocess__after_all_other_attributes',lambda self: self._postDump())]
-
     mapping: typing.Any=None
 
-
-    def __post_init__(self): self._postDump()
+    def __init__(self,*a,**kw):
+        super().__init__(*a,**kw)
+        self._postDump()
 
     def _postDump(self):
         '''Called when the instance is being reconstructed.'''
         # print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
             object.__setattr__(self.getCell(i),'mesh',self)
-
-
-    #def __init__(self):
-    #    self.mapping = None
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
@@ -442,11 +436,12 @@ class UnstructuredMesh(Mesh):
     vertexList: typing.List[vertex.Vertex]=pydantic.Field(default_factory=lambda: [])
     cellList: typing.List[cell.Cell]=pydantic.Field(default_factory=lambda: [])
     #
-    vertexOctree: typing.Any=pydantic.Field(mupif_nodump=True)
-    cellOctree: typing.Any=pydantic.Field(mupif_nodump=True)
-    vertexDict: typing.Any=pydantic.Field(mupif_nodump=True)
-    cellDict: typing.Any=pydantic.Field(mupif_nodump=True)
-
+    def __init__(self,**kw):
+        super().__init__(**kw)
+        self.vertexOctree=None
+        self.cellOctree=None
+        self.vertexDict=None
+        self.cellDict=None
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
@@ -500,7 +495,7 @@ class UnstructuredMesh(Mesh):
         ans.setup(vertexList, cellList)
         return ans
 
-    def __getstate__(self):
+    def __old_getstate__(self):
         """Customized method returning dictionary for pickling.
 
         We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on

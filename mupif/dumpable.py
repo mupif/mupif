@@ -11,7 +11,7 @@ import pprint
 import typing
 
 import pydantic
-from pydantic.dataclasses import dataclass
+# from pydantic.dataclasses import dataclass
 
 # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
 class BaseModelWithPositionalArgs(pydantic.BaseModel):
@@ -49,9 +49,15 @@ class Dumpable(pydantic.BaseModel):
     The ``(attr,val)`` form of ``dumpAttrs`` item can be (ab)used to create a post-processing function, e.g. by saying ``('_postprocess',lambda self: self._postDump())``. Put it at the end of ``dumpAttrs`` to have it called when the reconstruction is about to finish. See :obj:`~mupif.mesh.Mesh` for this usage.
 
     '''
-    # dumpAttrs: typing.Optional[typing.List[str]]
+    _pickleInside=False
 
-    # pickleInside=False
+    class Config:
+        # https://github.com/samuelcolvin/pydantic/discussions/2457
+        copy_on_model_validation = False
+        # https://github.com/samuelcolvin/pydantic/discussions/2459
+        extra='allow'
+
+
 
     def to_dict(self,clss=None):
         def _handle_attr(attr,val,clssName):
@@ -67,19 +73,12 @@ class Dumpable(pydantic.BaseModel):
         ret={}
         if clss is None:
             ret['__class__']=self.__class__.__module__+'.'+self.__class__.__name__
-            if Dumpable.pickleInside:
+            if Dumpable._pickleInside:
                 ret['__pickle__']=pickle.dumps(self)
                 return ret
             clss=self.__class__
-        if 'dumpAttrs' in clss.__dict__:
-            for attr in clss.__dict__['dumpAttrs']:
-                if isinstance(attr,tuple):
-                    if len(attr)==2: continue # not serialized at all
-                    assert len(attr)==3
-                    attr,a=attr[0],(attr[1](self) if callable(attr[1]) else attr[1])
-                else: a=getattr(self,attr)
-                ret[attr]=_handle_attr(attr,a,clss.__name__)
-        elif dataclasses.is_dataclass(clss):
+        if issubclass(clss,pydantic.BaseModel): return self.dict()
+        if dataclasses.is_dataclass(clss):
             for f in dataclasses.fields(clss):
                 if f.metadata and f.metadata.get('mupif_nodump',False)==True: continue
                 ret[f.name]=_handle_attr(f.name,getattr(self,f.name),clss.__name__)
@@ -109,33 +108,21 @@ class Dumpable(pydantic.BaseModel):
             clss=getattr(importlib.import_module(mod),classname)
             # some special cases here
             if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
+            if issubclass(clss,pydantic.BaseModel): return clss.construct(**dic)
             if dataclasses.is_dataclass(clss):
                 kw=dict([(k,_create(v)) for k,v in dic.items()])
                 kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.metadata and f.metadata.get('mupif_nodump',False)==True]))
                 return clss(**kw)
             else: obj=clss.__new__(clss)
         # mupif classes
-        if 'dumpAttrs' in clss.__dict__:
-            for attr in clss.__dict__['dumpAttrs']:
-                if isinstance(attr,tuple):
-                    if len(attr)==2:
-                        if callable(attr[1]): attr[1](obj)
-                        else: setattr(obj,attr[0],attr[1])
-                        continue
-                    assert len(attr)==3
-                    if not attr[0] in dic: continue
-                    if callable(attr[2]): attr[2](obj,dic.pop(attr[0]))
-                    else: setattr(obj,attr[0],attr[2])
-                else:
-                    if attr in dic: setattr(obj,attr,_create(dic.pop(attr)))
-        elif dataclasses.is_dataclass(clss):
+        if dataclasses.is_dataclass(clss):
             for f in dataclasses.fields(clss):
                 # handles frozen dataclasses as well, hopefully
                 if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
         # recurse into base classes
         if clss!=Dumpable:
             for base in clss.__bases__:
-                obj.from_dict(dic,clss=base,obj=obj)
+                Dumpable.from_dict(dic,clss=base,obj=obj)
         else:
             if len(dic)>0: raise RuntimeError('%d attributes left after deserialization: %s'%(len(dic),', '.join(dic.keys())))
         return obj
@@ -152,3 +139,24 @@ def enum_from_dict_with_name(modClassName,dic):
     mod,className=modClassName.rsplit('.',1)
     clss=getattr(importlib.import_module(mod),className)
     return clss(dic.pop('value'))
+
+if __name__=='__main__':
+    import typing
+    class TestDumpable(Dumpable):
+        num: int=0
+        dic: dict
+        recurse: typing.Optional['TestDumpable']=None
+        def __init__(self,**kw):
+            # print('This is my custom constructor')
+            super().__init__(**kw)
+    TestDumpable.update_forward_refs()
+    td0=TestDumpable(num=0,dic=dict(a=1,b=2,c=[1,2,3]))
+    td1=TestDumpable(num=1,dic=dict(),recurse=td0)
+    import pprint
+    d1=td1.dict()
+    pprint.pprint(d1)
+    td1a=TestDumpable.construct(**d1)
+    pprint.pprint(td1a.dict())
+
+    import pickle
+    pprint.pprint(pickle.loads(pickle.dumps(td1)).dict())

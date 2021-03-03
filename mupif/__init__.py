@@ -37,7 +37,7 @@ import os, sys
 import pkgutil
 import os.path
 d=os.path.dirname(os.path.abspath(__file__))
-__all__=[]
+__all__=['U','Q']
 for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
     modsplit=modname.split('.')
     # avoid foreign modules
@@ -51,7 +51,7 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
         # (it could have been imported another module indirectly)
         # this would result in double import with catastrophic consequences
         # such as the same class existing twice, but not being identical
-        print(modname)
+        #print(modname)
         if modname in sys.modules: mod=sys.modules[modname]
         else: sys.modules[modname]=(mod:=loader.find_module(modname).load_module(modname))
     except Exception as e:
@@ -75,6 +75,11 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
             globals()[name]=obj
             __all__.append(name)
             # print(name,obj)
+# make unique
+__all__=list(set(__all__))
+
+U=sys.modules['mupif.physics.physicalquantities'].U
+Q=sys.modules['mupif.physics.physicalquantities'].Q
 
 # print([k for k in sys.modules.keys() if k.startswith('mupif.')])
 

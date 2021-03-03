@@ -6,7 +6,7 @@ from mupif import *
 import math
 from mupif import timestep
 import mupif.physics.physicalquantities as PQ
-
+import pydantic
 
 
 class TimeStep_TestCase(unittest.TestCase):
@@ -18,36 +18,17 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        try:
+        with self.assertRaises(pydantic.ValidationError): 
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,units=None, number=timestepnumber)
-        except TypeError:
-            pass
-        except Exception as e:
-            self.fail('Unexpected exception raised:', e)
-        else:
-            self.fail('Exception not raised')
-
 
         time = PQ.makeQuantity(0.0,'s')
-        try:
+        with self.assertRaises(pydantic.ValidationError):
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, units=None, number=timestepnumber)
-        except TypeError:
-            pass
-        except Exception as e:
-            self.fail('Unexpected exception raised:', e)
-        else:
-            self.fail('Exception not raised')
 
         dt = PQ.makeQuantity(0.5,'s')
 
-        try:
+        with self.assertRaises(pydantic.ValidationError):
             istep = timestep.TimeStep(time=time,dt=dt, targetTime=targetTime, units=None, number=timestepnumber)
-        except TypeError:
-            pass
-        except Exception as e:
-            self.fail('Unexpected exception raised:', e)
-        else:
-            self.fail('Exception not raised')
 
 
         time = 0.0

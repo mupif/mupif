@@ -6,8 +6,6 @@ import mupif
 from mupif import *
 import mupif.physics.physicalquantities as PQ
 
-timeUnits = PQ.makeUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
-temperatureUnit = PQ.makeUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])
 
 
 def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):
@@ -36,7 +34,7 @@ def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):
         for iy in range(ny+1):
             if debug:
                 print("Adding vertex %d: %f %f %f " % (num, ix*dx, iy*dy, 0.0))
-            vertexlist.append(vertex.Vertex(num, num, coords=(origin[0]+1.0*ix*dx, origin[1]+1.0*iy*dy, 0.0)))
+            vertexlist.append(vertex.Vertex(number=num, label=num, coords=(origin[0]+1.0*ix*dx, origin[1]+1.0*iy*dy, 0.0)))
             num = num+1
 
     # generate cells
@@ -47,16 +45,16 @@ def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):
             if not tria:
                 if debug:
                     print("Adding quad %d: %d %d %d %d" % (num, si, si+ny+1, si+ny+2, si+1))
-                celllist.append(cell.Quad_2d_lin(mesh, num, num, vertices=(si, si+ny+1, si+ny+2, si+1)))
+                celllist.append(cell.Quad_2d_lin(mesh=mesh, number=num, label=num, vertices=(si, si+ny+1, si+ny+2, si+1)))
                 num = num+1
             else:
                 if debug:
                     print("Adding tria %d: %d %d %d" % (num, si, si+ny+1, si+ny+2))
-                celllist.append(cell.Triangle_2d_lin(mesh, num, num, vertices=(si, si+ny+1, si+ny+2)))
+                celllist.append(cell.Triangle_2d_lin(mesh=mesh, number=num, label=num, vertices=(si, si+ny+1, si+ny+2)))
                 num = num+1
                 if debug:
                     print("Adding tria %d: %d %d %d" % (num, si, si+ny+2, si+1))
-                celllist.append(cell.Triangle_2d_lin(mesh, num, num, vertices=(si, si+ny+2, si+1)))
+                celllist.append(cell.Triangle_2d_lin(mesh=mesh, number=num, label=num, vertices=(si, si+ny+2, si+1)))
                 num = num+1
                 
     mesh.setup(vertexlist, celllist)
@@ -67,12 +65,22 @@ class AppGridAvg(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
+
+    #value: float=0.0
+    #count: float=0.0
+    #contrib: float=0.0
+    #mesh: mupif.Mesh=pydantic.Field(default_factory=mupif.UnstructuredMesh)
+    #xl: float=10.0
+    #yl: float=10.0
+    #nx: int=50
+    #nt: int=50
+
     def __init__(self, file):
-        super(self.__class__,self).__init__(file)
+        super(self.__class__,self).__init__(file=file)
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
-        self.mesh = mesh.UnstructuredMesh()
+        self.mesh = mupif.UnstructuredMesh()
         self.field = None
         # generate a simple mesh here
         self.xl = 10.0 # domain (0..xl)(0..yl)
@@ -97,7 +105,7 @@ class AppGridAvg(model.Model):
                         dist = math.sqrt((x-self.xl/2.)*(x-self.xl/2.)+(y-self.yl/2.)*(y-self.yl/2.))
                         val = math.cos(coeff*dist) * math.exp(-4.0*dist/self.xl)
                         values.append((val,))
-                self.field=field.Field(self.mesh, FieldID.FID_Temperature, ValueType.Scalar, temperatureUnit, time, values)
+                self.field=field.Field(mesh=self.mesh, fieldID=FieldID.FID_Temperature, valueType=ValueType.Scalar, unit=mupif.U.K, time=time, value=values)
                 
             return self.field
         else:
@@ -107,7 +115,7 @@ class AppGridAvg(model.Model):
         return
 
     def getCriticalTimeStep(self):
-        return  PQ.PhysicalQuantity(1.0, 's')
+        return mupif.Q.s
 
     def getApplicationSignature(self):
         return "Demo app. 1.0"
@@ -117,9 +125,10 @@ class AppMinMax(model.Model):
     """
     Simple application that computes min and max values of the field
     """
-    def __init__(self):
-        super(self.__class__,self).__init__(file)
-        extField = None
+    extField: mupif.Field=None
+    #def __init__(self):
+    #    super(self.__class__,self).__init__(file=file)
+    #    extField = None
     
     def setField(self, field):
         self.extField = field
@@ -137,21 +146,22 @@ class AppMinMax(model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Min):
-            return property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, propID, mupif.U.none, time=time)
         elif (propID == PropertyID.PID_Demo_Max):
-            return property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, propID, mupif.U.none, time=time)
         else:
             raise apierror.APIError ('Unknown property ID')
-    
+
 
 class AppIntegrateField(model.Model):
     """
     Simple application that computes integral value of field over 
     its domain and area/volume of the domain
     """
-    def __init__(self):
-        super(self.__class__, self).__init__(file)
-        self.extField = None
+    extField: mupif.Field=None
+    #def __init__(self):
+    #    super(self.__class__, self).__init__(file=file)
+    #    self.extField = None
 
     def setField(self, field):
         self.extField = field
@@ -184,35 +194,39 @@ class AppCurrTime(model.Model):
     """
     Simple application that generates a property (concentration or velocity) with a value equal to actual time
     """
-    def __init__(self, file):
-        # calls constructor from Application module
-        super(self.__class__, self).__init__(file)
+    #def __init__(self, file):
+    #    # calls constructor from Application module
+    #    super(self.__class__, self).__init__(file=file)
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
-            return property.ConstantProperty(self.value, PropertyID.PID_Concentration, ValueType.Scalar, 'kg/m**3', time=time)
+            return property.ConstantProperty(value=self.value, propID=PropertyID.PID_Concentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
         if (propID == PropertyID.PID_Velocity):
-            return property.ConstantProperty(self.value, PropertyID.PID_Velocity, ValueType.Scalar, 'm/s', time=time)
+            return property.ConstantProperty(value=self.value, propID=PropertyID.PID_Velocity, valueType=ValueType.Scalar, unit=mupif.U['m/s'], time=time)
         else:
             raise apierror.APIError ('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf(timeUnits).getValue()
+        time = tstep.getTime().inUnitsOf(mupif.U.s).getValue()
         self.value=1.0*time
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(0.1, 's')
+        return 0.1*mupif.Q.s
 
 
 class AppPropAvg(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, file):
-        super(self.__class__,self).__init__(file)
-        self.value = 0.0
-        self.count = 0.0
-        self.contrib = None
+    value: float=0.0
+    count: float=0.0
+    contrib: float=0.0
+
+    #def __init__(self, file):
+    #    super(self.__class__,self).__init__(file=file)
+    #    self.value = 0.0
+    #    self.count = 0.0
+    #    self.contrib = None
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
@@ -232,5 +246,5 @@ class AppPropAvg(model.Model):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0, 's')
+        return 1.0*mupif.Q.s
 

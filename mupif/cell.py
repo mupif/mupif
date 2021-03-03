@@ -38,15 +38,11 @@ debug = 0
 # in element tolerance
 tolerance = 0.001
 
-from pydantic.dataclasses import dataclass
-import dataclasses
 import typing
 from . import dumpable
-# from . import mesh
 from . import mupifobject
 
 @Pyro5.api.expose
-#@dataclass(frozen=True)
 class Cell(dumpable.Dumpable):
     #class Config:
     #    frozen=True
@@ -59,15 +55,16 @@ class Cell(dumpable.Dumpable):
 
     .. automethod:: __init__
     """
-    # NB: do NOT serialize *mesh*, it is set in Mesh._postDump
-    #dumpAttrs=['number','label','vertices',('mesh',None)
-
-    # mupif.mesh.Mesh
-
-    mesh: typing.Optional[typing.Any] # = dataclasses.field(repr=False,metadata=dict(mupif_nodump=True))
+    
+    mesh: typing.Any=None
     number: int
     label: typing.Optional[int]
     vertices: typing.Tuple[int,...]
+
+    def __TODO_init__(mesh=None,**kw):
+        super().__init__(**kw)
+        # assign mesh here so that it does not get serialized
+        self.mesh=mesh
 
     def __hash__(self): return id(self)
 
@@ -239,7 +236,6 @@ class Triangle_2d_lin(Cell):
     0-----1
 
     """
-    #dumpAttrs=[]
     def __hash__(self): return id(self)
 
     def copy(self):
@@ -367,7 +363,6 @@ class Triangle_2d_quad(Cell):
     0--3---1
 
     """
-    #dumpAttrs=[]
     def __hash__(self): return id(self)
 
     def copy(self):
@@ -590,7 +585,6 @@ class Quad_2d_lin(Cell):
     """
     Unstructured 2d quad element with linear interpolation
     """
-    #dumpAttrs=[]
     def __hash__(self): return id(self)
 
     def copy(self):
@@ -811,7 +805,6 @@ class Tetrahedron_3d_lin(Cell):
     """
     Unstructured 3d tetrahedral element with linear interpolation.
     """
-    #dumpAttrs=[]
     def __hash__(self): return id(self)
 
     def copy(self):
@@ -953,7 +946,6 @@ class Brick_3d_lin(Cell):
 
     .. automethod:: _evalN
     """
-    #dumpAttrs=[]
     def __hash__(self): return id(self)
 
     def copy(self):

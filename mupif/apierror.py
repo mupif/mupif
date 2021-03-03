@@ -37,5 +37,4 @@ class APIError(Exception):
     Exception handlers are declared with the keyword "except", which must be placed immediately after the try block.
 
     """
-    dumpAttrs=[]
 

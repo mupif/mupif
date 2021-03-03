@@ -1,19 +1,16 @@
 from . import mupifobject
-from mupif.physics import physicalquantities
-from mupif .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
+from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
 import Pyro5
-try:
-    import cPickle as pickle  # faster serialization if available
-except:
-    import pickle
+import pickle
 import collections
 import typing
+import pydantic
 
 from . import dataid
 from . import valuetype
 
 @Pyro5.api.expose
-class Property(mupifobject.MupifObject, PhysicalQuantity):
+class Property(mupifobject.MupifObject,PhysicalQuantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -22,12 +19,25 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
     .. automethod:: __init__
     """
 
-    #dumpAttrs=['propID','valueType','objectID','unit']
     propID: dataid.PropertyID
     valueType: valuetype.ValueType
     unit: PhysicalUnit
     objectID: int=0
-    # metaData
+    metadata: dict=pydantic.Field(default_factory=dict)
+
+    def __init__(self,metadata={},**kw):
+        super().__init__(metadata=metadata,**kw)
+        defaults=dict([
+            ('Type', 'mupif.property.Property'),
+            ('Type_ID', str(self.propID)),
+            ('Units', self.unit.name()),
+            ('ValueType', str(self.valueType))
+        ])
+        for k,v in defaults.items():
+            if k not in metadata: self.updateMetadata(dict(k=v))
+
+        #import pprint
+        #pprint.pprint(self.metadata)
 
     def __old_init__(self, propID, valueType, units, objectID=0, metaData={}):
         """
@@ -117,8 +127,7 @@ class ConstantProperty(Property):
     .. automethod:: __init__
     """
 
-    #dumpAttrs=['value','time']
-    value: typing.Any # valuetype.ValueType
+    value: typing.Union[float,typing.Tuple[float,...]]
     time: PhysicalQuantity
 
     def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):

@@ -35,9 +35,6 @@ from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
 
 import meshio
 
-from pydantic.dataclasses import dataclass
-import dataclasses
-
 import pydantic
 import typing
 
@@ -51,12 +48,7 @@ import logging
 log = logging.getLogger()
 import pydantic
 
-try:
-   import cPickle as pickle  # faster serialization if available
-except:
-   import pickle
-# import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute
-# lookup thread.lock failed
+import pickle
 
 # debug flag
 debug = 0
@@ -70,7 +62,6 @@ class FieldType(IntEnum):
     FT_cellBased = 2
 
 @Pyro5.api.expose
-# @dataclass(config=dict(arbitrary_types_allowed=True))
 class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
@@ -85,62 +76,43 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     .. automethod:: _evaluate
     """
 
-    #dumpAttrs=['mesh','fieldID','valueType','time','uri','fieldType','objectID','value','unit']
+    mesh: 'mupif.mesh.Mesh'
+    fieldID: FieldID
+    valueType: ValueType
+    unit: PhysicalUnit
+    time: PhysicalQuantity
+    fieldType: FieldType=FieldType.FT_vertexBased
+    value: typing.List=[]
+    objectID: int=0
+    metaData: dict=pydantic.Field(default_factory=dict)
 
-    # Field is not a dataclass as of now
-    if 1:
-        mesh: 'mupif.mesh.Mesh' # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
-        fieldID: FieldID
-        valueType: ValueType
-        unit: PhysicalUnit
-        time: PhysicalQuantity
-        #value: typing.Union[typing.List,numpy.ndarray,None]=None
-        fieldType: FieldType=FieldType.FT_vertexBased
-        value: typing.List=[]
-        objectID: int=0
-        metaData: dict=pydantic.Field(default_factory=dict)
+    @pydantic.validator('unit',pre=True,always=True)
+    def conv_unit(cls,u):
+        if isinstance(u,PhysicalUnit): return u
+        return PhysicalUnit(u)
 
-        @pydantic.validator('unit',pre=True,always=True)
-        def conv_unit(cls,u):
-            if isinstance(u,PhysicalUnit): return u
-            return PhysicalUnit(u)
+    @pydantic.validator('value',pre=True,always=True)
+    def conv_value(cls,v,values,**kwargs):
+        if isinstance(v,np.ndarray): return v.tolist()
+        if v is None: return []
+        return v
 
-        @pydantic.validator('value',pre=True,always=True)
-        def conv_value(cls,v,values,**kwargs):
-            if isinstance(v,np.ndarray): return v.tolist()
-            if v is None:
-                if 'fieldType' not in values or values['fieldType']==FieldType.FT_vertexBased:
-                    ncomp=values['mesh'].getNumberOfVertices()
-                else: ncomp=values['mesh'].getNumberOfCells()
-                return np.zeros((ncomp,values['valueType'].getNumberOfComponents())).tolist()
-            return v
+    def __init__(self,**kw):
+        super().__init__(**kw) # this calls the real ctor
+        # fix zero values
+        if len(self.value)==0:
+            if self.fieldType==FieldType.FT_vertexBased: ncomp=self.mesh.getNumberOfVertices()
+            else: ncomp=self.mesh.getNumberOfCells()
+            self.value=np.zeros((ncomp,self.valueType.getNumberOfComponents())).tolist()
+        # add some extra metadata
+        self.updateMetadata({
+            'Units':self.unit.name(),
+            'Type':'mupif.field.Field',
+            'Type_ID':str(self.fieldID),
+            'FieldType':str(self.fieldType),
+            'ValueType':str(self.valueType)
+        })
 
-        def __post__init__(self):
-
-            if self.value is None:
-                if self.fieldType == FieldType.FT_vertexBased:
-                    ncomponents = self.mesh.getNumberOfVertices()
-                else:
-                    ncomponents = self.mesh.getNumberOfCells()
-                self.value = zeros((ncomponents, self.getRecordSize()))
-
-            if not physicalquantities.isPhysicalUnit(self.unit):
-                self.unit = physicalquantities.findUnit(self.unit)
-
-            self.updateMetadata(dict(
-                Units=self.units.name(),
-                Type='mupif.field.Field',
-                Type_ID=str(self.fieldID),
-                FieldType=str(self.fieldType),
-                ValueType=str(self.valueType)
-            ))
-            #self.setMetadata('Units', self.units.name())
-            #self.setMetadata('Type', 'mupif.field.Field')
-            #self.setMetadata('Type_ID', str(self.fieldID))
-            #self.setMetadata('FieldType', str(self.fieldType))
-            #self.setMetadata('ValueType', str(self.valueType))
-            #
-            # self.updateMetadata(metaData)
 
     #
     # NO LONGER USED
@@ -195,18 +167,6 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         else:
             self.unit = physicalquantities.findUnit(units)
             
-
-    @classmethod
-    def loadFromLocalFile(cls, fileName):
-        """
-        Alternative constructor which loads instance directly from a Pickle module.
-
-        :param str fileName: File name
-
-        :return: Returns Field instance
-        :rtype: Field
-        """
-        return pickle.load(open(fileName, 'rb'))
 
     def getRecordSize(self):
         """
@@ -493,15 +453,6 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         for i in values:
             tensor.append(numpy.reshape(i, (3, 3)))
         return tensor
-
-    def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
-        """
-        Dump Field to a file using a Pickle serialization module.
-
-        :param str fileName: File name
-        :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
-        """
-        pickle.dump(self, open(fileName, 'wb'), protocol)
 
     def field2Image2D(self, plane='xy', elevation=(-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None, None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=True, figsize=(8, 4), matPlotFig=None):
         """ 

@@ -2,15 +2,15 @@ import sys
 sys.path.append('../..')
 
 import unittest
+import mupif
 from mupif import *
 from mupif.tests import demo
 
-import mupif.physics.physicalquantities as PQ
-timeUnits = PQ.makeUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+# import mupif.physics.physicalquantities as PQ
 
 class TestEx01(unittest.TestCase):
     def setUp(self):
-        self.app1,self.app2=demo.AppCurrTime(None),demo.AppPropAvg(None)
+        self.app1,self.app2=demo.AppCurrTime(file=None),demo.AppPropAvg(file=None)
     def testEx01(self):
         app1,app2=self.app1,self.app2
         time  = 0
@@ -18,8 +18,8 @@ class TestEx01(unittest.TestCase):
         targetTime = 1.0
         while (abs(time -targetTime) > 1.e-6):
             #determine critical time step
-            dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(),
-                     app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue())
+            dt = min(app1.getCriticalTimeStep().inUnitsOf(mupif.U.s).getValue(),
+                     app2.getCriticalTimeStep().inUnitsOf(mupif.U.s).getValue())
             #update time
             time = time+dt
             if (time > targetTime):
@@ -27,7 +27,7 @@ class TestEx01(unittest.TestCase):
                 time = targetTime
             timestepnumber = timestepnumber+1
             # create a time step
-            istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mupif.U.s, number=timestepnumber)
 
             # solve problem 1
             app1.solveStep(istep)
@@ -38,7 +38,7 @@ class TestEx01(unittest.TestCase):
             # solve second sub-problem 
             app2.solveStep(istep)
             # get the averaged concentration
-            prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, PQ.makeQuantity(time,timeUnits))
+            prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, time*mupif.Q.s)
             print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime().getValue(), c.getValue(istep.getTime()), prop.getValue(istep.getTime())))
         self.assertAlmostEqual(prop.getValue(istep.getTime()),0.55)
     def tearDown(self):
