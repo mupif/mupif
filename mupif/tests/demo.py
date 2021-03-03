@@ -230,7 +230,7 @@ class AppPropAvg(model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):
-            return property.ConstantProperty(self.value/self.count, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3', time=time)
+            return property.ConstantProperty(value=self.value/self.count, propID=PropertyID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
         else:
             raise apierror.APIError ('Unknown property ID')
 

@@ -66,6 +66,16 @@ class Dumpable(pydantic.BaseModel):
                 raise ValueError(f'{__class__.__module__}.{__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
         super().__init__(*args,**kw)
 
+    # don't pickle attributes starting with underscore
+    def __getstate__(self):
+        s=super().__getstate__()
+        sd=s['__dict__']
+        for k in list(sd.keys()):
+            if k.startswith('_'): sd[k]=None # del sd[k]
+        return s
+
+
+
 
 
     def to_dict(self,clss=None):

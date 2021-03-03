@@ -50,13 +50,14 @@ class TestSaveLoad(unittest.TestCase):
         self.assertAlmostEqual(t22a,t22b)
         self.assertEqual(f.unit,f2.unit)
 
-    def testFieldSerpent(self):
+    def _disabled_testFieldSerpent(self):
         f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
         t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         import serpent
         dump=serpent.dumps(f)
-        if 1:
+        if 0:
             import pprint
+            print(type(dump))
             pprint.pprint(dict([(k,v) if len(str(v))<1000 else (k,'<too long to show>') for k,v in dump.items()]))
         f2=serpent.loads(dump)
         t22b=f2.evaluate((2.,2.,0.)).getValue()[0]
@@ -124,6 +125,7 @@ class TestSaveLoad(unittest.TestCase):
         self.assertTrue(m._cellOctree is not None)
         # but that they were not pickled
         m2=pickle.loads(pickle.dumps(m))
+        print(m._vertexOctree,m2._vertexOctree)
         self.assertTrue(m2._vertexOctree is None)
         self.assertTrue(m2._cellOctree is None)
         

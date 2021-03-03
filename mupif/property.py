@@ -129,7 +129,7 @@ class ConstantProperty(Property):
     """
 
     value: typing.Union[float,typing.Tuple[float,...]]
-    time: PhysicalQuantity
+    time: typing.Optional[PhysicalQuantity]
 
     def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
         """

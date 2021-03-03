@@ -435,20 +435,13 @@ class UnstructuredMesh(Mesh):
 
     vertexList: typing.List[vertex.Vertex]=pydantic.Field(default_factory=lambda: [])
     cellList: typing.List[cell.Cell]=pydantic.Field(default_factory=lambda: [])
-    #
+
     def __init__(self,**kw):
         super().__init__(**kw)
         self._vertexOctree=None
         self._cellOctree=None
         self._vertexDict=None
         self._cellDict=None
-
-    # this hack is just for pickle
-    def __getstate__(self):
-        s=super().__getstate__()
-        for d in ['_vertexOctree','_cellOctree','_vertexDict','_cellDict']:
-            if d in s: del s[d]
-        return s
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
