@@ -156,7 +156,6 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(orig.getVertexValue(3),loaded.getVertexValue(3))
         self.assertEqual(orig.getUnits().name(),loaded.getUnits().name())
         
-    @unittest.expectedFailure
     def test_ioDump(self):
         f=self.tmp+'/aa.dump'
         self.f1.dumpToLocalFile(f)

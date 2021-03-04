@@ -29,7 +29,8 @@ from . import apierror
 from . import mupifobject
 from .dataid import FieldID
 from . import cellgeometrytype
-import mupif.mesh
+#import mupif.mesh
+from . import mesh
 from .physics import physicalquantities 
 from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
 
@@ -76,7 +77,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     .. automethod:: _evaluate
     """
 
-    mesh: 'mupif.mesh.Mesh'
+    mesh: mesh.Mesh # 'mupif.mesh.Mesh'
     fieldID: FieldID
     valueType: ValueType
     unit: PhysicalUnit
@@ -709,7 +710,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         meshObjs = [obj for name, obj in grp.items() if name.startswith('mesh_')]
         fieldObjs = [obj for name, obj in grp.items() if name.startswith('field_')]
         # construct all meshes as mupif objects
-        meshes = [mupif.mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        meshes = [mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
         # construct all fields as mupif objects
         ret = []
         for f in fieldObjs:
@@ -771,7 +772,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         ) -> typing.List[Field]:
         if isinstance(input,str):
             input=meshio.read(input)
-        msh=mupif.mesh.Mesh.makeFromMeshioPointsCells(input.points,input.cells)
+        msh=mesh.Mesh.makeFromMeshioPointsCells(input.points,input.cells)
         ret=[]
         for data,fieldType in (input.point_data,FieldType.FT_vertexBased),(input.cell_data,FieldType.FT_cellBased):
             for fname,values in data.items():

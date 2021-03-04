@@ -1167,12 +1167,12 @@ class MechanicalModel(mupif.model.Model):
                         values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
 
             return mupif.field.Field(
-                self.mesh,
-                mupif.FieldID.FID_Displacement,
-                mupif.ValueType.Vector,
-                'm',
-                time,
-                values
+                mesh=self.mesh,
+                fieldID=mupif.FieldID.FID_Displacement,
+                valueType=mupif.ValueType.Vector,
+                unit=mp.U.m,
+                time=time,
+                value=values
             )
         else:
             raise mupif.apierror.APIError('Unknown field ID')

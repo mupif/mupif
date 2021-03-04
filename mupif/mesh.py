@@ -27,7 +27,7 @@ from . import octree
 from . import bbox
 from . import dumpable
 from . import vertex
-# from . import cell
+from . import cell
 from . import mupifobject
 import copy
 import time
@@ -37,10 +37,7 @@ import Pyro5
 import dataclasses
 import typing
 from . import cellgeometrytype
-try:
-   import cPickle as pickle  # faster serialization if available
-except:
-   import pickle
+import pickle
 
 import pydantic
 

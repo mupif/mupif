@@ -23,8 +23,6 @@
 from . import bbox
 from . import util
 import math
-# from . import mesh
-# import mupif.mesh
 from . import cellgeometrytype
 from .dumpable import Dumpable
 import numpy as np
@@ -61,7 +59,7 @@ class Cell(dumpable.Dumpable):
     label: typing.Optional[int]
     vertices: typing.Tuple[int,...]
 
-    def __init__(self,mesh,**kw):
+    def __init__(self,mesh=None,**kw):
         super().__init__(**kw)
         self.mesh=mesh
         # assign mesh here so that it does not get serialized

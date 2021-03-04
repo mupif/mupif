@@ -139,6 +139,8 @@ class Dumpable(pydantic.BaseModel):
                 return clss(**kw)
             else: obj=clss.__new__(clss)
         if issubclass(clss,pydantic.BaseModel):
+            #print(f'# constructing: {clss.__name__}')
+            #print(f'# kw are: {", ".join(dic.keys())}')
             return clss(**dict([(k,_create(v)) for k,v in dic.items()]))
         # this will go
         if dataclasses.is_dataclass(clss):

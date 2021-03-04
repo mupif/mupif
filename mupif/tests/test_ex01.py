@@ -27,7 +27,7 @@ class TestEx01(unittest.TestCase):
                 time = targetTime
             timestepnumber = timestepnumber+1
             # create a time step
-            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mupif.Q.s, number=timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mupif.U.s, number=timestepnumber)
 
             # solve problem 1
             app1.solveStep(istep)
