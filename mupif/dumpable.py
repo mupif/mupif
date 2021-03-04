@@ -13,24 +13,25 @@ import typing
 import pydantic
 # from pydantic.dataclasses import dataclass
 
-# https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
-class BaseModelWithPositionalArgs(pydantic.BaseModel):
+if 0:
+    # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
+    class BaseModelWithPositionalArgs(pydantic.BaseModel):
 
-    def __init__(self, *args, **kwargs):
-        pos_args = list(self.__fields__.keys())
-        # sys.stderr.write(str(self.__class__.__name__)+':'+str(args)+" | "+str(kwargs)+'\n')
+        def __init__(self, *args, **kwargs):
+            pos_args = list(self.__fields__.keys())
+            # sys.stderr.write(str(self.__class__.__name__)+':'+str(args)+" | "+str(kwargs)+'\n')
 
-        for i in range(len(args)):
-            if i >= len(pos_args):
-                raise TypeError(f'__init__ takes {len(pos_args)} '
-                                'positional arguments but 2 were given.')
-            name = pos_args[i]
-            if name in kwargs:
-                raise TypeError(f'{name} cannot be both a keyword and '
-                                'positional argument.')
-            kwargs[name] = args[i]
-        # sys.stderr.write('\n\n'+str(super())+': '+pprint.pformat(kwargs)+'\n\n')
-        return super().__init__(**kwargs)
+            for i in range(len(args)):
+                if i >= len(pos_args):
+                    raise TypeError(f'__init__ takes {len(pos_args)} '
+                                    'positional arguments but 2 were given.')
+                name = pos_args[i]
+                if name in kwargs:
+                    raise TypeError(f'{name} cannot be both a keyword and '
+                                    'positional argument.')
+                kwargs[name] = args[i]
+            # sys.stderr.write('\n\n'+str(super())+': '+pprint.pformat(kwargs)+'\n\n')
+            return super().__init__(**kwargs)
 
 
 

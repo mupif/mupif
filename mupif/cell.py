@@ -59,7 +59,7 @@ class Cell(dumpable.Dumpable):
     label: typing.Optional[int]
     vertices: typing.Tuple[int,...]
 
-    def __init__(self,mesh=None,**kw):
+    def __init__(self,*,mesh=None,**kw):
         super().__init__(**kw)
         self.mesh=mesh
         # assign mesh here so that it does not get serialized

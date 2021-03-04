@@ -26,7 +26,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
     objectID: int=0
     metadata: dict=pydantic.Field(default_factory=dict)
 
-    def __init__(self,metadata={},**kw):
+    def __init__(self,*,metadata={},**kw):
         super().__init__(metadata=metadata,**kw)
         defaults=dict([
             ('Type', 'mupif.property.Property'),

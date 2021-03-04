@@ -66,7 +66,7 @@ class Workflow(model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, metadata={}):
+    def __init__(self, *, metadata={}):
         """
         Constructor. Initializes the workflow
 

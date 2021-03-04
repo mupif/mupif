@@ -61,7 +61,7 @@ class ConstantField(field.Field):
         :param dict metadata: Optionally pass metadata for merging
         """
         
-        super(ConstantField, self).__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metadata)
+        super().__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metadata)
 
     def evaluate(self, positions, eps=0.0):
         """
