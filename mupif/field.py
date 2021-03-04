@@ -455,7 +455,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
             tensor.append(numpy.reshape(i, (3, 3)))
         return tensor
 
-    def field2Image2D(self, plane='xy', elevation=(-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None, None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=True, figsize=(8, 4), matPlotFig=None):
+    def plot2D(self, plane='xy', elevation=(-1.e-6, 1.e-6), numX=10, numY=20, interp='linear', fieldComponent=0, vertex=True, colorBar='horizontal', colorBarLegend='', barRange=(None, None), barFormatNum='%.3g', title='', xlabel='', ylabel='', fileName='', show=False, figsize=(8, 4), matPlotFig=None):
         """ 
         Plots and/or saves 2D image using a matplotlib library. Works for structured and unstructured 2D/3D fields. 2D/3D fields need to define plane. This method gives only basic viewing options, for aesthetic and more elaborated output use e.g. VTK field export with 
         postprocessors such as ParaView or Mayavi. Idea from https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html#id1
@@ -483,17 +483,18 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         :rtype: matPlotFig
         """
         
-        try:
-            import numpy as np
-            import math
-            from scipy.interpolate import griddata
-            import matplotlib
-            matplotlib.use('TkAgg')  # Qt4Agg gives an empty, black window
-            import matplotlib.pyplot as plt
-        except ImportError as e:
-            log.error('Skipping field2Image2D due to missing modules: %s' % e)
-            return None
-            # raise
+        import numpy as np
+        import math
+        from scipy.interpolate import griddata
+        import matplotlib
+        import matplotlib.pyplot as plt
+        if 0:
+            try:
+                matplotlib.use('TkAgg')  # Qt4Agg gives an empty, black window
+            except ImportError as e:
+                log.error('Skipping field2Image2D due to missing modules: %s' % e)
+                return None
+                # raise
         
         if self.fieldType != FieldType.FT_vertexBased:
             raise apierror.APIError('Only FieldType.FT_vertexBased is now supported')
@@ -553,12 +554,12 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         
         # print (grid_z1.T)
         
-        plt.ion()  # ineractive mode
+        # plt.ion()  # ineractive mode
         
-        if matPlotFig is None:
-            matPlotFig = plt.figure(figsize=figsize)
-            # plt.xlim(xMin, xMax)
-            # plt.ylim(yMin, yMax)
+        #if matPlotFig is None:
+        #    matPlotFig = plt.figure(figsize=figsize)
+        #    # plt.xlim(xMin, xMax)
+        #    # plt.ylim(yMin, yMax)
         
         plt.clf()
         plt.axis((xMin, xMax, yMin, yMax))
@@ -596,7 +597,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
             matPlotFig.canvas.draw()
             # plt.ioff()
             # plt.show(block=True)
-        return matPlotFig
+        # return matPlotFig
   
     def field2Image2DBlock(self):
         """

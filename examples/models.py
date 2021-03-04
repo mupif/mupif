@@ -142,7 +142,7 @@ class ThermalModel(mupif.model.Model):
         except Exception as e:
             log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
             log.exception(e)
-            exit(1)
+            raise
 
         line = lines.pop(0)
         size = line.split()
