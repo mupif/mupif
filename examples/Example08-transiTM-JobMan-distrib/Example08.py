@@ -14,7 +14,7 @@ log = logging.getLogger()
 import time as timeTime
 start = timeTime.time()
 log.info('Timer started')
-import mupif.physics.physicalquantities as PQ
+import mupif as mp
 
 
 # localize JobManager running on (remote) server and create a tunnel to it
@@ -23,7 +23,7 @@ import mupif.physics.physicalquantities as PQ
 
 class Example08(workflow.Workflow):
    
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         """
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -41,14 +41,14 @@ class Example08(workflow.Workflow):
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
 
-        super(Example08, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=MD)
+        self.updateMetadata(metadata)
 
         self.thermal = None
         self.mechanical = None
         self.thermalJobMan = None
     
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', targetTime=0*mp.Q.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
@@ -77,7 +77,7 @@ class Example08(workflow.Workflow):
         self.registerModel(self.thermal, 'thermal_8')
         self.registerModel(self.mechanical, 'mechanical_8')
 
-        super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData)
+        super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -94,12 +94,12 @@ class Example08(workflow.Workflow):
         self.thermal.initialize(
             file='inputT.in',
             workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
-            metaData=passingMD
+            metadata=passingMD
         )
         self.mechanical.initialize(
             file='..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM10.in',
             workdir='.',
-            metaData=passingMD
+            metadata=passingMD
         )
 
         # self.thermal.printMetadata()
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=PQ.PhysicalQuantity(10., 's'), metaData=workflowMD)
+    demo.initialize(targetTime=10*mp.Q.s, metadata=workflowMD)
     # demo.printMetadata()
     # print(demo.hasMetadata('Execution.ID'))
     # exit(0)

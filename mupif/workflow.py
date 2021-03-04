@@ -89,10 +89,6 @@ class Workflow(model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
         self.generateMetadataModelRefsID()
-        print(100*'#')
-        print('Workflow: updating metadata')
-        import pprint
-        pprint.pprint(metadata)
         self.updateMetadata(metadata)
 
         # print (targetTime)

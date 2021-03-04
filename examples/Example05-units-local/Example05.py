@@ -3,18 +3,17 @@ from builtins import str
 import sys
 import logging
 sys.path.append('../..')
-
-from mupif import *
 import mupif.physics.physicalquantities as PQ
+import mupif as mp
 
 log = logging.getLogger()
 
 
-class application1(model.Model):
+class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         MD = {
             'Name': 'Simple application returning simulation time',
             'ID': 'N/A',
@@ -46,32 +45,32 @@ class application1(model.Model):
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Simulation time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
-        super(application1, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=MD)
+        self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
-        super(application1, self).initialize(file, workdir, metaData, validateMetaDatas)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
-        if propID == PropertyID.PID_Time:
-            return property.ConstantProperty((self.value,), PropertyID.PID_Time, ValueType.Scalar, 's', time, 0)
+        if propID == mp.PropertyID.PID_Time:
+            return mp.ConstantProperty(value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, objectID=0)
         else:
-            raise apierror.APIError('Unknown property ID')
+            raise mp.APIError('Unknown property ID')
             
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf('s').getValue()
+        time = tstep.getTime().inUnitsOf(mp.U.s).getValue()
         self.value = 1.0*time
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(0.1, 's')
+        return .1*mp.Q.s
 
 
 time = 0
 timestepnumber = 0
 targetTime = 1.0  # 10 steps is enough
 
-app1 = application1()
+app1 = Application1()
 
 executionMetadata = {
     'Execution': {
@@ -81,13 +80,13 @@ executionMetadata = {
     }
 }
 
-app1.initialize(metaData=executionMetadata)
+app1.initialize(metadata=executionMetadata)
 
 value = 0.
 while abs(time - targetTime) > 1.e-6:
 
     # determine critical time step
-    dt = app1.getCriticalTimeStep().inUnitsOf('s').getValue()
+    dt = app1.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue()
     # update time
     time = time+dt
     if time > targetTime:
@@ -96,15 +95,15 @@ while abs(time - targetTime) > 1.e-6:
     timestepnumber = timestepnumber+1
     log.debug("Step: %g %g %g" % (timestepnumber, time, dt))
     # create a time step
-    istep = timestep.TimeStep(time, dt, targetTime, 's', timestepnumber)
+    istep = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
     
     # solve problem 1
     app1.solveStep(istep)
     # request Concentration property from app1
-    v = app1.getProperty(PropertyID.PID_Time, istep.getTime())
+    v = app1.getProperty(mp.PropertyID.PID_Time, istep.getTime())
     
     # Create a PhysicalQuantity object
-    V = PQ.PhysicalQuantity(v.getValue(istep.getTime())[0], v.getUnits())
+    V = PQ.PhysicalQuantity(value=v.getValue(istep.getTime())[0], unit=v.getUnits())
 
     val = V.inBaseUnits()
     log.debug(val)

@@ -50,8 +50,8 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
-        super().initialize(file, workdir, metaData, validateMetaData)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         md = {
@@ -124,8 +124,8 @@ class Application2(mp.Model):
         self.contrib = mp.ConstantProperty(
             value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.Q.s)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
-        super().initialize(file, workdir, metaData, validateMetaData)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         md = {
@@ -176,14 +176,14 @@ executionMetadata = {
     }
 }
 
-app1.initialize(metaData=executionMetadata)
+app1.initialize(metadata=executionMetadata)
 # app1.printMetadata()
 
 #app1.toJSONFile('aa.json')
 #aa = mp.MupifObject('aa.json')
 # aa.printMetadata()
 
-app2.initialize(metaData=executionMetadata)
+app2.initialize(metadata=executionMetadata)
 
 prop = None
 istep = None

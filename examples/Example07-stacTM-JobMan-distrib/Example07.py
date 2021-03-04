@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.extend(['.','..', '../..'])
 from mupif import *
+import mupif as mp
 import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
 mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
@@ -17,7 +18,7 @@ import mupif.physics.physicalquantities as PQ
 
 class Example07(workflow.Workflow):
    
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -33,8 +34,8 @@ class Example07(workflow.Workflow):
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
-        super(Example07, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=MD)
+        self.updateMetadata(metadata)
 
         self.thermalJobMan = None
         self.mechanicalJobMan = None
@@ -42,7 +43,7 @@ class Example07(workflow.Workflow):
         self.mechanicalSolver = None
         self.appsTunnel = None
 
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', targetTime=0*mp.Q.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
@@ -103,7 +104,7 @@ class Example07(workflow.Workflow):
             self.registerModel(self.thermalSolver, 'thermal')
             self.registerModel(self.mechanicalSolver, 'mechanical')
 
-            super(Example07, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
+            super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata,
                                               validateMetaData=validateMetaData)
             if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
 
@@ -133,12 +134,12 @@ class Example07(workflow.Workflow):
                 self.thermalSolver.initialize(
                     file="./input.in",
                     workdir=self.thermalJobMan.getJobWorkDir(self.thermalSolver.getJobID()),
-                    metaData=passingMD
+                    metadata=passingMD
                 )
                 self.mechanicalSolver.initialize(
                     file="./input.in",
                     workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
-                    metaData=passingMD
+                    metadata=passingMD
                 )
 
             else:
@@ -171,7 +172,7 @@ class Example07(workflow.Workflow):
 
     def getCriticalTimeStep(self):
         # determine critical time step
-        return PQ.PhysicalQuantity(1.0, 's')
+        return 1*mp.Q.s
 
     def terminate(self):
         self.thermalSolver.terminate()
@@ -195,7 +196,7 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=PQ.PhysicalQuantity(1., 's'), metaData=md)
+    demo.initialize(targetTime=1*mp.Q.s, metadata=md)
     demo.solve()
     demo.printMetadata()
     demo.printListOfModels()

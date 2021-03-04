@@ -1,5 +1,5 @@
-from builtins import range
 import mupif
+import mupif as mp
 import Pyro5
 import meshgen
 import math
@@ -7,12 +7,8 @@ import numpy as np
 import time as timeTime
 import os
 import logging
-import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger('ex01_models')
-
-
-timeUnits = PQ.PhysicalUnit('s', 1., [0, 0, 1, 0, 0, 0, 0, 0, 0])
 
 
 def getline(f):
@@ -95,10 +91,10 @@ class ThermalModel(mupif.model.Model):
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
-            (1.,),
-            mupif.PropertyID.PID_effective_conductivity,
-            mupif.ValueType.Scalar,
-            'W/m/K'
+            value=(1.,),
+            propID=mupif.PropertyID.PID_effective_conductivity,
+            valueType=mupif.ValueType.Scalar,
+            unit=mupif.U['W/m/K']
         )
         self.tria = False
 
@@ -279,11 +275,12 @@ class ThermalModel(mupif.model.Model):
                 else:
                     values.append((self.T[self.loc[i]],))
             return mupif.field.Field(
-                self.mesh, mupif.FieldID.FID_Temperature,
-                mupif.ValueType.Scalar,
-                'C',
-                time,
-                values
+                mesh=self.mesh,
+                fieldID=mupif.FieldID.FID_Temperature,
+                valueType=mupif.ValueType.Scalar,
+                unit=mupif.U.C,
+                time=time,
+                value=values
             )
         elif fieldID == mupif.FieldID.FID_Material_number:
             values = []
@@ -294,16 +291,16 @@ class ThermalModel(mupif.model.Model):
                     values.append((0,))
             # print (values)
             return mupif.field.Field(
-                self.mesh,
-                mupif.FieldID.FID_Material_number,
-                mupif.ValueType.Scalar,
-                PQ.getDimensionlessUnit(),
-                time,
-                values,
+                mesh=self.mesh,
+                fieldID=mupif.FieldID.FID_Material_number,
+                valueType=mupif.ValueType.Scalar,
+                unit=mp.Q.none, # PQ.getDimensionlessUnit(),
+                time=time,
+                value=values,
                 fieldType=mupif.field.FieldType.FT_cellBased
             )
         else:
-            raise mupif.apierror.APIError('Unknown field ID')
+            raise mupif.APIError('Unknown field ID')
 
     def isInclusion(self, e):
         vertices = e.getVertices()
@@ -574,15 +571,15 @@ class ThermalModel(mupif.model.Model):
             eff_conductivity = sumQ / self.yl * self.xl / (
                         self.dirichletBCs[(self.ny + 1) * (self.nx + 1) - 1] - self.dirichletBCs[0])
             return mupif.property.ConstantProperty(
-                eff_conductivity,
-                mupif.PropertyID.PID_effective_conductivity,
-                mupif.ValueType.Scalar,
-                'W/m/K',
-                time,
-                0
+                value=eff_conductivity,
+                propID=mupif.PropertyID.PID_effective_conductivity,
+                valueType=mupif.ValueType.Scalar,
+                unit=mp.U['W/m/K'],
+                time=time,
+                objectID=0
             )
         else:
-            raise mupif.apierror.APIError('Unknown property ID')
+            raise mupif.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if property.getPropertyID() == mupif.PropertyID.PID_effective_conductivity:
@@ -624,7 +621,7 @@ class ThermalModel(mupif.model.Model):
             raise mupif.apierror.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(100.0, 's')
+        return 100*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
@@ -725,7 +722,7 @@ class ThermalNonstatModel(ThermalModel):
         return
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(100.0, 's')
+        return 100*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime() - tstep.getTimeIncrement() * self.Tau
@@ -772,7 +769,7 @@ class ThermalNonstatModel(ThermalModel):
         mesh = self.mesh
         self.volume = 0.0
         self.integral = 0.0
-        dt = tstep.getTimeIncrement().inUnitsOf(timeUnits).getValue()
+        dt = tstep.getTimeIncrement().inUnitsOf(mupif.U.s).getValue()
 
         if tstep.getNumber() == 0:  # assign mesh only for 0th time step
             return
@@ -1038,7 +1035,7 @@ class MechanicalModel(mupif.model.Model):
             self.readInput()
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(0.4, 's')
+        return .4*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()

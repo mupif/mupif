@@ -27,7 +27,7 @@ class config(object):
         # Pyro5.config.SERIALIZERS_ACCEPTED = {'pickle'}
         Pyro5.config.SERVERTYPE = "multiplex"
 
-        Pyro5.config.DETAILED_TRACEBACK=True
+        Pyro5.config.DETAILED_TRACEBACK=False
         sys.excepthook=Pyro5.errors.excepthook
 
         # commmon attributes

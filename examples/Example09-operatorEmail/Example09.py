@@ -32,7 +32,7 @@ class EmailAPI(model.Model):
         self.outputs = {}
         self.key = 'Operator-results'
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
         MD = {
             'Name': 'Email operator application',
             'ID': 'N/A',
@@ -66,7 +66,7 @@ class EmailAPI(model.Model):
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
         }
         self.updateMetadata(MD)
-        super().initialize(file, workdir, metaData, validateMetaData)
+        super().initialize(file, workdir, metadata, validateMetaData)
 
     def setProperty(self, property, objectID=0):
         # remember the mapped value
@@ -87,7 +87,7 @@ class EmailAPI(model.Model):
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' % (self.key, value))
-                    return property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0, metaData=md)
+                    return property.ConstantProperty(value, propID, ValueType.Scalar, PQ.getDimensionlessUnit(), time, 0, metadata=md)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -129,7 +129,7 @@ try:
         }
     }
     
-    app.initialize(metaData=executionMetadata)
+    app.initialize(metadata=executionMetadata)
 
     # CumulativeConcentration property on input
     p = property.ConstantProperty(0.1, PropertyID.PID_CumulativeConcentration, ValueType.Scalar, 'kg/m**3')

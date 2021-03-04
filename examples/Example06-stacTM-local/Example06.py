@@ -3,6 +3,7 @@ sys.path.append('../..')
 sys.path.append('..')
 import models
 from mupif import *
+import mupif as mp
 import mupif.physics.physicalquantities as PQ
 import time
 import logging
@@ -12,7 +13,7 @@ log = logging.getLogger()
 
 class Example06(workflow.Workflow):
 
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         """
         Initializes the workflow.
         """
@@ -30,8 +31,8 @@ class Example06(workflow.Workflow):
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}
             ]
         }
-        super(Example06, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super(Example06, self).__init__(metadata=MD)
+        self.updateMetadata(metadata)
 
         self.thermalSolver = models.ThermalModel()
         self.mechanicalSolver = models.MechanicalModel()
@@ -39,8 +40,8 @@ class Example06(workflow.Workflow):
         self.registerModel(self.thermalSolver, 'thermal')
         self.registerModel(self.mechanicalSolver, 'mechanical')
 
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True):
-        super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
+    def initialize(self, file='', workdir='', targetTime=0*mp.Q.s, metadata={}, validateMetaData=True):
+        super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata,
                                           validateMetaData=validateMetaData)
 
         passingMD = {
@@ -51,8 +52,8 @@ class Example06(workflow.Workflow):
             }
         }
 
-        self.thermalSolver.initialize('inputT10.in', '.', metaData=passingMD)
-        self.mechanicalSolver.initialize('inputM10.in', '.', metaData=passingMD)
+        self.thermalSolver.initialize('inputT10.in', '.', metadata=passingMD)
+        self.mechanicalSolver.initialize('inputM10.in', '.', metadata=passingMD)
         #self.mechanicalSolver.printMetadata(nonEmpty=False)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
@@ -92,13 +93,9 @@ md = {
 }
 
 demo = Example06()
-demo.initialize(targetTime=PQ.PhysicalQuantity('1 s'), metaData=md)
+demo.initialize(targetTime=1*mp.Q.s, metadata=md)
 
-tstep = timestep.TimeStep(
-    PQ.PhysicalQuantity('1 s'),
-    PQ.PhysicalQuantity('1 s'),
-    PQ.PhysicalQuantity('10 s')
-)
+tstep = timestep.TimeStep(time=1*mp.Q.s,dt=1*mp.Q.s,targetTime=10*mp.Q.s)
 
 demo.solveStep(tstep)
 

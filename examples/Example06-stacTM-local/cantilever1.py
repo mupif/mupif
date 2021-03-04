@@ -38,7 +38,7 @@ def createAppInputFile():
 
 # Input data for app1 are in cantilever1.in
 createAppInputFile()
-tstep = timestep.TimeStep(1., 1., 10, 's')
+tstep = TimeStep(time=1., dt=1., targetTime=10, unit=mp.U.s)
 app1 = demoapp.mechanical(fileName, '.')
 sol = app1.solveStep(tstep) 
 f = app1.getField(FieldID.FID_Displacement, tstep.getTargetTime())
