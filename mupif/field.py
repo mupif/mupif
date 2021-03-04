@@ -742,8 +742,8 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     @staticmethod
     # @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def manyToMeshioMesh(
-        fields: typing.Sequence[mupif.Field]
-    ) -> typing.List[mupif.Field]:
+        fields: typing.Sequence[Field]
+    ) -> typing.List[Field]:
         import meshio
         if len(fields)==0: raise ValueError('fields must not be enpty.')
         if len(set([f.getMesh() for f in fields]))!=1: raise RuntimeError('All fields must share the same mupif.Mesh.')

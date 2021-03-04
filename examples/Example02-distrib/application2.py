@@ -75,14 +75,14 @@ class Application2(mp.Model):
             return mp.ConstantProperty(
                 value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
-            raise apierror.APIError('Unknown property ID')
+            raise mp.APIError('Unknown property ID')
 
     def setProperty(self, prop, objectID=0):
         if prop.getPropertyID() == mp.PropertyID.PID_Time_step:
             # remember the mapped value
             self.contrib = prop
         else:
-            raise apierror.APIError('Unknown property ID')
+            raise mp.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property

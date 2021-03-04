@@ -4,7 +4,6 @@ sys.path.append('..')
 import models
 from mupif import *
 import mupif as mp
-import mupif.physics.physicalquantities as PQ
 import time
 import logging
 
@@ -70,7 +69,7 @@ class Example06(workflow.Workflow):
             raise apierror.APIError('Unknown field ID')
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0, 's')
+        return 1*mp.Q.s
 
     def terminate(self):
         self.thermalSolver.terminate()
