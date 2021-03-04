@@ -52,9 +52,12 @@ class Dumpable(pydantic.BaseModel):
     _pickleInside=False
 
     class Config:
-        # https://github.com/samuelcolvin/pydantic/discussions/2457
+        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
+        # see https://github.com/samuelcolvin/pydantic/discussions/2457
         copy_on_model_validation = False
-        # https://github.com/samuelcolvin/pydantic/discussions/2459
+        # this unfortunately also allows arbitrary **kw passed to the ctor
+        # but we filter that in the custom __init__ function just below
+        # see https://github.com/samuelcolvin/pydantic/discussions/2459
         extra='allow'
 
     def __init__(self,*args,**kw):
@@ -73,9 +76,6 @@ class Dumpable(pydantic.BaseModel):
         for k in list(sd.keys()):
             if k.startswith('_'): sd[k]=None # del sd[k]
         return s
-
-
-
 
 
     def to_dict(self,clss=None):
@@ -97,24 +97,15 @@ class Dumpable(pydantic.BaseModel):
                 return ret
             clss=self.__class__
         if issubclass(clss,pydantic.BaseModel):
-            # ret=self.dict()
-            #ret['__class__']=self.__class__.__module__+'.'+self.__class__.__name__
-            #return ret
+            # only dump fields which are registered properly
             for attr in clss.__fields__.keys():
                 ret[attr]=_handle_attr(attr,getattr(self,attr),clss.__name__)
-        elif 'dumpAttrs' in clss.__dict__:
-            for attr in clss.__dict__['dumpAttrs']:
-                if isinstance(attr,tuple):
-                    if len(attr)==2: continue # not serialized at all
-                    assert len(attr)==3
-                    attr,a=attr[0],(attr[1](self) if callable(attr[1]) else attr[1])
-                else: a=getattr(self,attr)
-                ret[attr]=_handle_attr(attr,a,clss.__name__)
+        # this will go
         elif dataclasses.is_dataclass(clss):
             for f in dataclasses.fields(clss):
                 if f.metadata and f.metadata.get('mupif_nodump',False)==True: continue
                 ret[f.name]=_handle_attr(f.name,getattr(self,f.name),clss.__name__)
-        else: raise RuntimeError('Class %s.%s does not define dumpAttrs and is not a dataclass'%(clss.__module__,clss.__name__))
+        else: raise RuntimeError('Class %s.%s is not a pydantic.BaseModel and not a dataclass'%(clss.__module__,clss.__name__))
         if clss!=Dumpable:
             for base in clss.__bases__:
                 if issubclass(base,Dumpable): ret.update(base.to_dict(self,clss=base))
@@ -130,9 +121,10 @@ class Dumpable(pydantic.BaseModel):
             elif isinstance(d,tuple): return tuple([_create(d_) for d_ in d])
             elif isinstance(d,dict): return dict([(k,_create(v)) for k,v in d.items()])
             else: return d
+        # we saved the inside with pickle, just unpickle here
         if '__pickle__' in dic:
             data=dic['__pickle__']
-            if type(data)==dict: data=serpent.tobytes(data)
+            if type(data)==dict: data=serpent.tobytes(data) # serpent serializes bytes in a funny way
             return pickle.loads(data)
         if clss is None:
             import importlib
@@ -148,22 +140,8 @@ class Dumpable(pydantic.BaseModel):
             else: obj=clss.__new__(clss)
         if issubclass(clss,pydantic.BaseModel):
             return clss(**dict([(k,_create(v)) for k,v in dic.items()]))
-
-        # mupif classes
-        #if 'dumpAttrs' in clss.__dict__:
-        #    for attr in clss.__dict__['dumpAttrs']:
-        #        if isinstance(attr,tuple):
-        #            if len(attr)==2:
-        #                if callable(attr[1]): attr[1](obj)
-        #                else: setattr(obj,attr[0],attr[1])
-        #                continue
-        #            assert len(attr)==3
-        #            if not attr[0] in dic: continue
-        #            if callable(attr[2]): attr[2](obj,dic.pop(attr[0]))
-        #            else: setattr(obj,attr[0],attr[2])
-        #        else:
-        #            if attr in dic: setattr(obj,attr,_create(dic.pop(attr)))
-        elif dataclasses.is_dataclass(clss):
+        # this will go
+        if dataclasses.is_dataclass(clss):
             for f in dataclasses.fields(clss):
                 # handles frozen dataclasses as well, hopefully
                 if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
@@ -180,6 +158,12 @@ class Dumpable(pydantic.BaseModel):
         assert classname==dic['__class__']
         # print(f'@@@ {classname} ###')
         return Dumpable.from_dict(dic)
+
+    def dumpToLocalFile(self,filename):
+        pickle.dump(self,open(filename,'wb'))
+    @staticmethod
+    def loadFromLocalFile(filename):
+        return pickle.load(open(filename,'rb'))
 
 
 def enum_to_dict(e): return {'__class__':e.__class__.__module__+'.'+e.__class__.__name__,'value':e.value}

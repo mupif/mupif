@@ -66,31 +66,34 @@ class Workflow(model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         """
         Constructor. Initializes the workflow
 
-        :param dict metaData: Optionally pass metadata.
+        :param dict metadata: Optionally pass metadata.
         """
-        super(Workflow, self).__init__(metaData=metaData)
+        super(Workflow, self).__init__(metadata=metadata)
 
         self.workflowMonitor = None  # No monitor by default
         self.targetTime = None
         self._models = {}
 
-    def initialize(self, file='', workdir='', targetTime=PQ.makeQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=0.*PQ.Q.s, metadata={}, validateMetaData=True):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
         :param PhysicalQuantity targetTime: target simulation time
-        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() )
+        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
-        :param named_arguments kwargs: Arbitrary further parameters
         """
         self.generateMetadataModelRefsID()
-        self.updateMetadata(metaData)
+        print(100*'#')
+        print('Workflow: updating metadata')
+        import pprint
+        pprint.pprint(metadata)
+        self.updateMetadata(metadata)
 
         # print (targetTime)
         if PQ.isPhysicalQuantity(targetTime):
@@ -120,7 +123,7 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Running')
         self.setMetadata('Progress', 0.)
 
-        time = PQ.makeQuantity(0., 's')
+        time = 0.*PQ.Q.s
         timeStepNumber = 0
         
         while abs(time.inUnitsOf('s').getValue()-self.targetTime.inUnitsOf('s').getValue()) > 1.e-6:
@@ -129,7 +132,7 @@ class Workflow(model.Model):
             if time > self.targetTime:
                 time = self.targetTime
             timeStepNumber = timeStepNumber+1
-            istep = timestep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=self.targetTime, number=timeStepNumber)
         
             log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
 

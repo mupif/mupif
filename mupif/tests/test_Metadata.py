@@ -15,18 +15,18 @@ class TestModel1(model.Model):
     """ Empty model1(with missing required metadata) to test metadata setting"""
 
     def __init__(self, metadata={}):
-        metaData1 = {
+        metadata1 = {
             'Name': 'Empty application to test metadata',
             'ID': 'N/A',
             'Description': 'Model with missing metadata',
         }
         
-        super().__init__(metadata=metaData1)
+        super().__init__(metadata=metadata1)
         self.updateMetadata(metadata)
         
        
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super().initialize(metaData=metaData, validateMetaData=validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
 
 
@@ -68,8 +68,8 @@ class TestModel2(model.Model):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(file, workdir, metadata, validateMetaData, **kwargs)
 
     def getProperty(self, propID, timestep, objectID=0):
         md = {
@@ -102,13 +102,13 @@ class Metadata_TestCase(unittest.TestCase):
 
     def test_Init(self):
         with self.assertRaises(jsonschema.exceptions.ValidationError): self.tm1.initialize()
-        self.tm2.initialize(metaData=Metadata_TestCase.executionMetadata)
+        self.tm2.initialize(metadata=Metadata_TestCase.executionMetadata)
     def test_Name(self):
         self.assertEqual(self.tm2.getMetadata('Name'),'Empty application to test metadata')
     def test_SolverLanguage(self):
         self.assertEqual(self.tm2.getMetadata('Solver.Language'),'Python3')
     def test_propery(self):
-        self.tm2.initialize(metaData=Metadata_TestCase.executionMetadata)
+        self.tm2.initialize(metadata=Metadata_TestCase.executionMetadata)
         import pprint
         pprint.pprint(self.tm2.metadata)
         propeucid=self.tm2.getProperty(propID=PropertyID.PID_Time_step, timestep=timestep.TimeStep(time=1., dt=1., targetTime=10, unit=mupif.U.s)).getMetadata('Execution.Use_case_ID')

@@ -209,11 +209,11 @@ class Model(mupifobject.MupifObject):
         #import pprint
         #pprint.pprint(self.metadata)
 
-    def __old_init__(self, metaData={}):
+    def __old_init__(self, metadata={}):
         """
         Constructor. Initializes the application.
 
-        :param dict metaData: Optionally pass metadata for merging.
+        :param dict metadata: Optionally pass metadata for merging.
         """
         super(Model, self).__init__()
 
@@ -236,19 +236,19 @@ class Model(mupifobject.MupifObject):
         self.setMetadata('Execution', {})
         self.setMetadata('Solver', {})
 
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
-        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
         # self.printMetadata()
 
         self.setMetadata('Name', self.getApplicationSignature())

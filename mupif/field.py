@@ -84,7 +84,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     fieldType: FieldType=FieldType.FT_vertexBased
     value: typing.List=[]
     objectID: int=0
-    metaData: dict=pydantic.Field(default_factory=dict)
+    metadata: dict=pydantic.Field(default_factory=dict)
 
     @pydantic.validator('unit',pre=True,always=True)
     def conv_unit(cls,u):
@@ -128,7 +128,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         values: typing.Union[typing.List,numpy.ndarray]=None,
         fieldType: FieldType=FieldType.FT_vertexBased,
         objectID: int=0,
-        metaData: dict={}):
+        metadata: dict={}):
         """
         Initializes the field instance.
 
@@ -141,7 +141,7 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         :type values: list of tuples representing individual values
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
-        :param dict metaData: Optionally pass metadata for merging
+        :param dict metadata: Optionally pass metadata for merging
         """
         
         super(Field, self).__init__()

@@ -41,7 +41,7 @@ class ConstantField(field.Field):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-    def __old_init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=field.FieldType.FT_vertexBased, objectID=0, metaData={}):
+    def __old_init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=field.FieldType.FT_vertexBased, objectID=0, metadata={}):
         """
         Initializes the field instance.
 
@@ -54,10 +54,10 @@ class ConstantField(field.Field):
         :type values: tuple representing field value (constant)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
-        :param dict metaData: Optionally pass metadata for merging
+        :param dict metadata: Optionally pass metadata for merging
         """
         
-        super(ConstantField, self).__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metaData)
+        super(ConstantField, self).__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metadata)
 
     def evaluate(self, positions, eps=0.0):
         """

@@ -215,5 +215,3 @@ class MupifObject(dumpable.Dumpable):
         with open(filename, "w") as f:
             json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
 
-
-

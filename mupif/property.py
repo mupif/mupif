@@ -40,7 +40,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
         #import pprint
         #pprint.pprint(self.metadata)
 
-    def __old_init__(self, propID, valueType, units, objectID=0, metaData={}):
+    def __old_init__(self, propID, valueType, units, objectID=0, metadata={}):
         """
         Initializes the property.
 
@@ -50,7 +50,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
         :type units: Physics.PhysicalUnits or string
         :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
         """
-        super().__init__(self,propID=propID,valueType=valueType,unit=units,objectID=objectID,metaData=metaData)
+        super().__init__(self,propID=propID,valueType=valueType,unit=units,objectID=objectID,metadata=metadata)
         return
         mupifobject.MupifObject.__init__(self)
 
@@ -69,7 +69,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
         self.setMetadata('Units', self.unit.name())
         self.setMetadata('ValueType', str(self.valueType))
 
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
 
     def getValue(self, time=None, **kwargs):
         """
@@ -131,7 +131,7 @@ class ConstantProperty(Property):
     value: typing.Union[float,typing.Tuple[float,...]]
     time: typing.Optional[PhysicalQuantity]
 
-    def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
+    def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metadata={}):
         """
         Initializes the property.
 
@@ -151,7 +151,7 @@ class ConstantProperty(Property):
         else:
             raise TypeError("PhysicalValue expected for time")
 
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
 
     def __str__(self):
         return str(self.value) + '{' + self.unit.name() + ',' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
