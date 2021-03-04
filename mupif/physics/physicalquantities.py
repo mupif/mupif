@@ -151,9 +151,6 @@ class PhysicalQuantity(dumpable.Dumpable):
         if isinstance(u,PhysicalUnit): return u
         #sys.stderr.write(f'findUnit(u): {findUnit(u)}\n')
         return findUnit(u)
-        
-
-    #dumpAttrs=['value','unit']
 
     def __old_init__(self, *args):
         """

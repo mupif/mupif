@@ -22,9 +22,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
 
     propID: dataid.PropertyID
     valueType: valuetype.ValueType
-    unit: PhysicalUnit
     objectID: int=0
-    metadata: dict=pydantic.Field(default_factory=dict)
 
     def __init__(self,*,metadata={},**kw):
         super().__init__(metadata=metadata,**kw)
