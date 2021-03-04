@@ -5,9 +5,9 @@ name: MuPIF
 
 on:
   push:
-    branches: [ master, dev, act ]
+    branches: [ master, dev, pydantic ]
   pull_request:
-    branches: [ master, dev, act ]
+    branches: [ master, dev, pydantic ]
 
 jobs:
   test-linux:
