@@ -38,10 +38,7 @@ import pkgutil
 import os.path
 d=os.path.dirname(os.path.abspath(__file__))
 __all__=['U','Q']
-def _onerror(modname):
-    if modname.startswith('mupif'): raise ImportError(f'Error importing {modname}.')
-    print(f'Ignoring error importing {modname}')
-for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix='',onerror=_onerror):
+for loader,modname,ispkg in pkgutil.walk_packages(path=[d],prefix='mupif.'):
     modsplit=modname.split('.')
     # avoid foreign modules
     if modsplit[0]!='mupif': continue
