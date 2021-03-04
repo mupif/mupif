@@ -143,7 +143,7 @@ class Example08(workflow.Workflow):
         if self.mechanical is not None:
             self.mechanical.terminate()
         # self.printMetadata()
-        super(Example08, self).terminate()
+        super().terminate()
     
     def getApplicationSignature(self):
         return "Example08 workflow 1.0 - Thermo-mechanical non-stationary problem"

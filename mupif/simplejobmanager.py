@@ -89,7 +89,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         :param str jobMan2CmdPath: path to JobMan2cmd.py
         :param int jobMancmdCommPort: OBSOLETE
         """
-        super(SimpleJobManager2, self).__init__(appName, jobManWorkDir, maxJobs)
+        super().__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
         self.appAPIClass = appAPIClass
         self.daemon = daemon
@@ -244,7 +244,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
                 uri=parentPipe.recv()
                 log.info('Received URI: %s'%uri)
             except Exception as e:
-                log.exceptioN(e)
+                log.exception(e)
                 raise
 
             # check if uri is ok

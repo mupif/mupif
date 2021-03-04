@@ -191,7 +191,7 @@ class Model(mupifobject.MupifObject):
     file: Optional[str]=None
     workDir: str=''
 
-    def __init__(self,metadata={},**kw):
+    def __init__(self,*,metadata={},**kw):
         (username, hostname) = pyroutil.getUserInfo()
         defaults=dict([
             ('Username', username),
@@ -545,7 +545,7 @@ class Model(mupifobject.MupifObject):
         """
         if self.hasMetadata('Name'):
             print('AppName:\'%s\':' % self.getMetadata('Name'))
-        super(Model, self).printMetadata(nonEmpty)
+        super().printMetadata(nonEmpty)
     
 
 @Pyro5.api.expose

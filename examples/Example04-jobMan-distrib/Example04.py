@@ -85,7 +85,7 @@ class Example04(mp.Workflow):
     def terminate(self):    
         self.app1.terminate()
         self.jobMan.terminate()
-        super(Example04, self).terminate()
+        super().terminate()
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
     def getProperty(self, propID, time, objectID=0):

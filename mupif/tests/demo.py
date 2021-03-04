@@ -76,7 +76,7 @@ class AppGridAvg(model.Model):
     #nt: int=50
 
     def __init__(self, file):
-        super(self.__class__,self).__init__(file=file)
+        super().__init__(file=file)
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
@@ -126,9 +126,6 @@ class AppMinMax(model.Model):
     Simple application that computes min and max values of the field
     """
     extField: mupif.Field=None
-    #def __init__(self):
-    #    super(self.__class__,self).__init__(file=file)
-    #    extField = None
     
     def setField(self, field):
         self.extField = field
@@ -159,9 +156,6 @@ class AppIntegrateField(model.Model):
     its domain and area/volume of the domain
     """
     extField: mupif.Field=None
-    #def __init__(self):
-    #    super(self.__class__, self).__init__(file=file)
-    #    self.extField = None
 
     def setField(self, field):
         self.extField = field
@@ -194,9 +188,6 @@ class AppCurrTime(model.Model):
     """
     Simple application that generates a property (concentration or velocity) with a value equal to actual time
     """
-    #def __init__(self, file):
-    #    # calls constructor from Application module
-    #    super(self.__class__, self).__init__(file=file)
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Concentration):
@@ -221,12 +212,6 @@ class AppPropAvg(model.Model):
     value: float=0.0
     count: float=0.0
     contrib: float=0.0
-
-    #def __init__(self, file):
-    #    super(self.__class__,self).__init__(file=file)
-    #    self.value = 0.0
-    #    self.count = 0.0
-    #    self.contrib = None
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_CumulativeConcentration):

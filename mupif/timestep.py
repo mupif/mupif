@@ -26,7 +26,7 @@ class TimeStep(dumpable.Dumpable):
     class Config:
         frozen=True
 
-    number: int=0
+    number: int=1
     unit: typing.Optional[PQ.PhysicalUnit]=None
     time: PQ.PhysicalQuantity
     dt: PQ.PhysicalQuantity

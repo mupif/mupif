@@ -72,7 +72,7 @@ class Workflow(model.Model):
 
         :param dict metadata: Optionally pass metadata.
         """
-        super(Workflow, self).__init__(metadata=metadata)
+        super().__init__(metadata=metadata)
 
         self.workflowMonitor = None  # No monitor by default
         self.targetTime = None

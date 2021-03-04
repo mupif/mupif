@@ -53,7 +53,7 @@ class WorkflowMonitor(mupifobject.MupifObject):
         """
         Constructor. Initializes the monitor server
         """
-        super(WorkflowMonitor, self).__init__()
+        super().__init__()
         # self.workflows={}
 
     def updateMetadata(self, key, valueDict):

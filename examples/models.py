@@ -87,7 +87,7 @@ class ThermalModel(mupif.model.Model):
                     'Representation': 'Finite volumes'
                 }
             }
-        super(ThermalModel, self).__init__(metadata)
+        super().__init__(metadata=metadata)
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
@@ -697,7 +697,7 @@ class ThermalNonstatModel(ThermalModel):
                 'Representation': 'Finite volumes'
             }
         }
-        super(ThermalNonstatModel, self).__init__(metadata)
+        super().__init__(metadata=metadata)
         self.mesh = None
         self.capacity = 1.0  # J/kg/K
         self.density = 1.0
@@ -1002,7 +1002,7 @@ class MechanicalModel(mupif.model.Model):
                 'Representation': 'Finite volumes'
             }
         }
-        super(MechanicalModel, self).__init__(metadata)
+        super().__init__(metadata=metadata)
         self.E = 30.0e+9  # ceramics
         self.nu = 0.25  # ceramics
         self.fx = [0., 0., 0., 0.]  # load in x

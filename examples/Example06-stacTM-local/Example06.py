@@ -30,7 +30,7 @@ class Example06(workflow.Workflow):
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}
             ]
         }
-        super(Example06, self).__init__(metadata=MD)
+        super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
         self.thermalSolver = models.ThermalModel()
@@ -74,7 +74,7 @@ class Example06(workflow.Workflow):
     def terminate(self):
         self.thermalSolver.terminate()
         self.mechanicalSolver.terminate()
-        super(Example06, self).terminate()
+        super().terminate()
 
     def getApplicationSignature(self):
         return "Example06 workflow 1.0"

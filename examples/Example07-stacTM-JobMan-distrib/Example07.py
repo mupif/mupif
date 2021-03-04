@@ -178,7 +178,7 @@ class Example07(workflow.Workflow):
         self.thermalSolver.terminate()
         self.mechanicalSolver.terminate()
         self.appsTunnel.terminate()
-        super(Example07, self).terminate()
+        super().terminate()
 
     def getApplicationSignature(self):
         return "Example07 workflow 1.0"
