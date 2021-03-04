@@ -20,26 +20,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import range
-from builtins import object
-import mupif
-
-import Pyro5
+import Pyro5.api
 import logging
 log = logging.getLogger()
+from . import field
+from . import bbox
+from . import dataid
+from . import valuetype
+from pydantic.dataclasses import dataclass
+from .physics import physicalquantities as PQ
 
-try:
-   import cPickle as pickle  # faster serialization if available
-except:
-   import pickle
-# import logging - never use it here, it causes cPickle.PicklingError: Can't pickle <type 'thread.lock'>: attribute
-# lookup thread.lock failed
+import pickle
 
 # debug flag
 debug = 0
 
 @Pyro5.api.expose
-class ConstantField(mupif.field.Field):
+class ConstantField(field.Field):
     """
     Representation of field with constant value. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. 
@@ -47,7 +44,8 @@ class ConstantField(mupif.field.Field):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-    def __init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=mupif.field.FieldType.FT_vertexBased, objectID=0, metaData={}):
+
+    def __old_init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=field.FieldType.FT_vertexBased, objectID=0, metadata={}):
         """
         Initializes the field instance.
 
@@ -60,10 +58,10 @@ class ConstantField(mupif.field.Field):
         :type values: tuple representing field value (constant)
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
         :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
-        :param dict metaData: Optionally pass metadata for merging
+        :param dict metadata: Optionally pass metadata for merging
         """
         
-        super(ConstantField, self).__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metaData)
+        super().__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metadata)
 
     def evaluate(self, positions, eps=0.0):
         """
@@ -80,10 +78,10 @@ class ConstantField(mupif.field.Field):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return mupif.physics.physicalquantities.PhysicalQuantity(ans, self.unit)
+            return PQ.PhysicalQuantity(value=ans, unit=self.unit)
         else:
             # single position passed
-            return mupif.physics.physicalquantities.PhysicalQuantity(self._evaluate(positions, eps), self.unit)
+            return PQ.PhysicalQuantity(value=self._evaluate(positions, eps), unit=self.unit)
 
     def _evaluate(self, position, eps):
         """
@@ -97,7 +95,7 @@ class ConstantField(mupif.field.Field):
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         if (self.mesh): #if mesh provide, check if inside
-           cells = self.mesh.giveCellLocalizer().giveItemsInBBox(mupif.bbox.BBox([c-eps for c in position], [c+eps for c in position]))
+           cells = self.mesh.giveCellLocalizer().giveItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
            # answer=None
            if len(cells):
               return self.value
@@ -137,7 +135,7 @@ class ConstantField(mupif.field.Field):
         :return: The value
         :rtype: Physics.PhysicalQuantity
         """
-        return mupif.physics.physicalquantities.PhysicalQuantity(self.value, self.unit)
+        return PQ.PhysicalQuantity(value=self.value, unit=self.unit)
     
     def giveValue(self, componentID):
         """
@@ -170,7 +168,9 @@ class ConstantField(mupif.field.Field):
 
 
 if __name__ == '__main__':
-   cf = ConstantField(None,mupif.dataid.FieldID.FID_Temperature, mupif.ValueType.Scalar, 'degC', 0.0, values=(15.,))
-   ans = cf.evaluate((10,0,0))
-   print (ans)
+    cf = ConstantField(
+        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=valuetype.ValueType.Scalar, unit=PQ.U['degC'], time=0.0, values=(15.,)
+    )
+    ans = cf.evaluate((10,0,0))
+    print (ans)
    

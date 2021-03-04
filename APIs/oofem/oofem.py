@@ -64,7 +64,7 @@ class OOFEM(model.Model):
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
         """
-        super(OOFEM, self).__init__(file, workdir)
+        super().__init__(file=file, workdir=workdir)
         dr = liboofem.OOFEMTXTDataReader(file)
         self.oofem_pb = liboofem.InstanciateProblem(dr,liboofem.problemMode._processor,0)
         self.oofem_pb.checkProblemConsistency()

@@ -116,6 +116,9 @@ for attr in ('classes','individuals','object_properties','data_properties','anno
     print('%s: %s\n'%(attr,str(list(getattr(onto,attr)()))))
 print('units: %s'%str([c for c in onto.classes() if issubclass(c,emmo.SIUnit)]))
 
+print(dir(tCond))
+print(tCond.label,tCond.name,tCond.namespace,tCond.iri,tCond.storid,tCond.__hash__())
+
 # this does not work really
 
 print("Searching ontology:",onto.search(iri="*proper*"))

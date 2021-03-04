@@ -23,8 +23,6 @@
 from . import bbox
 from . import util
 import math
-# from . import mesh
-import mupif.mesh
 from . import cellgeometrytype
 from .dumpable import Dumpable
 import numpy as np
@@ -38,13 +36,14 @@ debug = 0
 # in element tolerance
 tolerance = 0.001
 
-from pydantic.dataclasses import dataclass
-import dataclasses
 import typing
+from . import dumpable
+from . import mupifobject
 
-@dataclass(frozen=True)
 @Pyro5.api.expose
-class Cell(Dumpable):
+class Cell(dumpable.Dumpable):
+    #class Config:
+    #    frozen=True
     """
     Representation of a computational cell.
 
@@ -54,32 +53,20 @@ class Cell(Dumpable):
 
     .. automethod:: __init__
     """
-    # NB: do NOT serialize *mesh*, it is set in Mesh._postDump
-    #dumpAttrs=['number','label','vertices',('mesh',None)
 
-    # mupif.mesh.Mesh
-
-    mesh: typing.Optional[typing.Any] = dataclasses.field(repr=False,metadata=dict(mupif_nodump=True))
+    #: Local cell number; local numbering should start from 0 and should be continuous.
     number: int
+    #: Cell label, arbitrary unique number.
     label: typing.Optional[int]
+    #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
-    #def __post_init__(self):
-    #    self.bbox=None
+    def __init__(self,*,mesh=None,**kw):
+        super().__init__(**kw)
+        #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized
+        self.mesh=mesh
 
-    def __old_init__(self, mesh, number, label, vertices):
-        """
-        Initializes the cell.
-
-        :param mesh.Mesh mesh: The mesh to which a cell belongs to
-        :param int number: A local cell number. Local numbering should start from 0 and should be continuous.
-        :param int label: A cell label. Arbitrary unique number.
-        :param tuple vertices: A cell vertices (local numbers)
-        """
-        self.mesh = mesh
-        self.number = number
-        self.label = label
-        self.vertices = tuple(vertices)
+    def __hash__(self): return id(self)
 
     # static attribute (cache)
     _subclasses = {}
@@ -232,7 +219,7 @@ class Triangle_2d_lin(Cell):
     0-----1
 
     """
-    dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -359,7 +346,7 @@ class Triangle_2d_quad(Cell):
     0--3---1
 
     """
-    dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -581,7 +568,7 @@ class Quad_2d_lin(Cell):
     """
     Unstructured 2d quad element with linear interpolation
     """
-    dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -801,7 +788,7 @@ class Tetrahedron_3d_lin(Cell):
     """
     Unstructured 3d tetrahedral element with linear interpolation.
     """
-    dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """
@@ -942,7 +929,7 @@ class Brick_3d_lin(Cell):
 
     .. automethod:: _evalN
     """
-    dumpAttrs=[]
+    def __hash__(self): return id(self)
 
     def copy(self):
         """

@@ -2,6 +2,8 @@ import Pyro5
 import mupif.physics.physicalquantities as PQ
 from pydantic.dataclasses import dataclass
 from . import dumpable
+import typing
+import pydantic
 
 # @dataclass(frozen=True)
 @Pyro5.api.expose
@@ -21,14 +23,32 @@ class TimeStep(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
-    dumpAttrs=['number','time','dt','targetTime']
+    class Config:
+        frozen=True
+
+    number: int=1
+    unit: typing.Optional[PQ.PhysicalUnit]=None
+    time: PQ.PhysicalQuantity
+    dt: PQ.PhysicalQuantity
+    targetTime: PQ.PhysicalQuantity
+
+    #@pydantic.validator('unit',pre=True)
+    #def conv_unit(cls,u):
+    #    if isinstance(u,PQ.PhysicalUnit): return u
+    #    return PQ.findUnit(u)
+
+    @pydantic.validator('time','dt','targetTime',pre=True)
+    def conv_times(cls,t,values):
+        if isinstance(t,PQ.PhysicalQuantity): return t
+        if 'unit' not in values: raise ValueError(f'When giving time as {type(t).__name__} (not a PhysicalQuantity), unit must be given.')
+        return PQ.PhysicalQuantity(value=t,unit=values['unit'])
 
     #t: PQ.PhysicalQuantity
     #dt: PQ.PhysicalQuantity
     #targetTime: PQ.PhysicalQuantity
     #units=
 
-    def __init__(self, t, dt, targetTime, units=None, n=1):
+    def __old_init__(self, t, dt, targetTime, units=None, n=1):
         """
         Initializes time step.
 

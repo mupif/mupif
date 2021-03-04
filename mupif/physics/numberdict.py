@@ -31,9 +31,10 @@
 Dictionary storing numerical values
 """
 
-from ..dumpable import Dumpable
+from .. import dumpable
+import pydantic
 
-class NumberDict(dict,Dumpable):
+class NumberDict(dumpable.Dumpable):
 
     """
     Dictionary storing numerical values
@@ -46,58 +47,56 @@ class NumberDict(dict,Dumpable):
     and subtraction with other NumberDict instances, and multiplication
     and division by scalars.
     """
-    dumpAttrs=[('data',lambda self: dict(self), lambda self,data: self.update(data))]
 
-    def __getitem__(self, item):
-        try:
-            return dict.__getitem__(self, item)
-        except KeyError:
-            return 0
+    #: data storage itself
+    data: dict=pydantic.Field(default_factory=dict)
 
-    def __coerce__(self, other):
-        if type(other) == type({}):
-            other = NumberDict(other)
-        return self, other
 
     def __add__(self, other):
         sum_dict = NumberDict()
-        for key in self.keys():
-            sum_dict[key] = self[key]
-        for key in other.keys():
-            sum_dict[key] = sum_dict[key] + other[key]
+        if isinstance(other,dict): other=NumberDict(data=other)
+        for key in self.data.keys():
+            sum_dict.data[key] = self.data[key]
+        for key in other.data.keys():
+            sum_dict.data[key] = sum_dict.data.get(key,0) + other.data[key]
         return sum_dict
 
     def __sub__(self, other):
         sum_dict = NumberDict()
-        for key in self.keys():
-            sum_dict[key] = self[key]
-        for key in other.keys():
-            sum_dict[key] = sum_dict[key] - other[key]
+        if isinstance(other,dict): other=NumberDict(data=other)
+        for key in self.data.keys():
+            sum_dict.data[key] = self.data[key]
+        for key in other.data.keys():
+            sum_dict.data[key] = sum_dict.data.get(key,0) - other.data[key]
         return sum_dict
 
     # needed for py3k compatibility
     def __rsub__(self,other):
-       ret=NumberDict()
-       for key in self.keys(): ret[key]=-self[key]
-       for key in other.keys(): ret[key]=other[key]-self[key]
-       return ret
+        ret=NumberDict()
+        if isinstance(other,dict): other=NumberDict(data=other)
+        for key in self.data.keys(): ret.data[key]=-self.data[key]
+        for key in other.data.keys(): ret.data[key]=other.data[key]-self.data.get(key,0)
+        return ret
 
     def __mul__(self, other):
         new = NumberDict()
-        for key in self.keys():
-            new[key] = other*self[key]
+        if isinstance(other,dict): other=NumberDict(data=other)
+        for key in self.data.keys():
+            new.data[key] = other*self.data[key]
         return new
     __rmul__ = __mul__
 
     def __floordiv__(self, other):
         new = NumberDict()
-        for key in self.keys():
-            new[key] = self[key]//other
+        if isinstance(other,dict): other=NumberDict(data=other)
+        for key in self.data.keys():
+            new.data[key] = self.data[key]//other
         return new
 
     def __truediv__(self,other):
         new = NumberDict()
-        for key in self.keys():
-            new[key] = self[key]/other
+        if isinstance(other,dict): other=NumberDict(data=other)
+        for key in self.data.keys():
+            new.data[key] = self.data[key]/other
         return new
     __div__=__truediv__

@@ -41,7 +41,7 @@ import typing
 import importlib
 
 sys.excepthook=Pyro5.errors.excepthook
-Pyro5.config.DETAILED_TRACEBACK=True
+Pyro5.config.DETAILED_TRACEBACK=False
 
 # spawn is safe for windows; this is a global setting
 if multiprocessing.get_start_method()!='spawn': multiprocessing.set_start_method('spawn',force=True)
@@ -89,7 +89,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         :param str jobMan2CmdPath: path to JobMan2cmd.py
         :param int jobMancmdCommPort: OBSOLETE
         """
-        super(SimpleJobManager2, self).__init__(appName, jobManWorkDir, maxJobs)
+        super().__init__(appName, jobManWorkDir, maxJobs)
         # remember application API class to create new app instances later
         self.appAPIClass = appAPIClass
         self.daemon = daemon

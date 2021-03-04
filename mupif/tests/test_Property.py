@@ -2,9 +2,10 @@ import unittest,sys
 sys.path.append('../..')
 
 from mupif import *
-from mupif.physics.physicalquantities import PhysicalUnit as PU
-from mupif.physics.physicalquantities import PhysicalQuantity as PQ
+from mupif.physics.physicalquantities import makeUnit as PU
+from mupif.physics.physicalquantities import makeQuantity as PQ
 import math
+import mupif as mp
 import numpy as np
 
 class Property_TestCase(unittest.TestCase):
@@ -15,9 +16,9 @@ class Property_TestCase(unittest.TestCase):
         self.t3 = PQ(9,'s')
 
         
-        self.p1=property.ConstantProperty(16.,PropertyID.PID_Concentration,ValueType.Scalar,PU({'m': 1}, 1,(1,0,0,0,0,0,0)),time=self.t1,objectID=1)
-        self.p2=property.ConstantProperty(7.,PropertyID.PID_Velocity,ValueType.Vector,PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0)),time=self.t2,objectID=16)
-        self.p3=property.ConstantProperty(9.,PropertyID.PID_ParticleSigma,ValueType.Tensor,PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0)),time=self.t3, objectID=8)
+        self.p1=property.ConstantProperty(value=16.,propID=PropertyID.PID_Concentration,valueType=ValueType.Scalar,unit=mp.U['m'],time=self.t1,objectID=1)
+        self.p2=property.ConstantProperty(value=7.,propID=PropertyID.PID_Velocity,valueType=ValueType.Vector,unit=mp.U['m/s'],time=self.t2,objectID=16)
+        self.p3=property.ConstantProperty(value=9.,propID=PropertyID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=mp.U['kg/m/s**2'],time=self.t3, objectID=8)
 
     def tearDown(self):
         
@@ -64,43 +65,36 @@ class Property_TestCase(unittest.TestCase):
         
         self.assertEqual(self.p3.getPropertyID(),PropertyID.PID_ParticleSigma,'wrong getPropertyID for p3')
         
-#Testing getObjectID        
     def test_getObjectID(self):
-        self.assertEqual(self.p1.getObjectID(),1,'wrong getObjectID for p1')
+        self.assertEqual(self.p1.getObjectID(),1)
+        self.assertEqual(self.p2.getObjectID(),16)
+        self.assertEqual(self.p3.getObjectID(),8)
         
-        self.assertEqual(self.p2.getObjectID(),16,'wrong getObjectID for p2')
-        
-        self.assertEqual(self.p3.getObjectID(),8,'wrong getObjectID for p3')
-        
-#Testing getUnits
     def test_getUnits(self):
-        self.assertEqual(self.p1.getUnits().isCompatible(PU({'m':1}, 1,(1,0,0,0,0,0,0))), True, 'wrong getUnits for p1')
+        self.assertTrue(self.p1.getUnits().isCompatible(mp.U['m']))
+        self.assertTrue(self.p2.getUnits().isCompatible(mp.U['m/s']))
+        self.assertTrue(self.p3.getUnits().isCompatible(mp.U['kg/m/s**2']))
         
-        self.assertEqual(self.p2.getUnits().isCompatible(PU({'m': 1, 's': -1}, 1,(1,0,1,0,0,0,0))),True,'wrong getUnits for p2')
-        
-        self.assertEqual(self.p3.getUnits().isCompatible(PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0))),True,'wrong getUnits for p3')
-        
-#Testing dumpToLocalFile and loadFromLocalFile     
     def test_dumpToLocalFile(self):
         self.res=None
         self.p1.dumpToLocalFile('dumpfile')
         self.res=property.ConstantProperty.loadFromLocalFile('dumpfile')
-        self.assertEqual(self.res.getValue(self.t1),16.,'error in dumpToLocal File_getValue for p1')
-        self.assertEqual(self.res.getValueType(),ValueType.Scalar,'wrong in dumpToLocal File_ValueType for p1')
-        self.assertEqual(self.res.getTime(),PQ(6,'s'),'wrong dumpToLocal File_getTime for p1')
-        self.assertEqual(self.res.getPropertyID(),PropertyID.PID_Concentration,'wrong dumpToLocal File_getPropertyID for p1')
-        self.assertEqual(self.res.getObjectID(),1,'wrong dumpToLocal File_getObjectID for p1')
-        self.assertEqual(self.res.getUnits().isCompatible(PU({'m':1}, 1,(1,0,0,0,0,0,0))), True, 'wrong getUnits for p1')
+        self.assertEqual(self.res.getValue(self.t1),16.)
+        self.assertEqual(self.res.getValueType(),ValueType.Scalar,)
+        self.assertEqual(self.res.getTime(),PQ(6,'s'))
+        self.assertEqual(self.res.getPropertyID(),PropertyID.PID_Concentration)
+        self.assertEqual(self.res.getObjectID(),1)
+        self.assertTrue(self.res.getUnits().isCompatible(mp.U['m']))
         
         self.res=None
         self.p3.dumpToLocalFile('dumpfile2')
         self.res=property.ConstantProperty.loadFromLocalFile('dumpfile2')
-        self.assertEqual(self.res.getValue(self.t3),9.,'error in dumpToLocal File_getValue for p3')
+        self.assertEqual(self.res.getValue(self.t3),9.)
         self.assertEqual(self.res.getValueType(),ValueType.Tensor,'wrong dumpToLocal File_ValueType for p3')
         self.assertEqual(self.res.getTime(),PQ(9,'s'),'wrong dumpToLocal File_getTime for p3')
         self.assertEqual(self.res.getPropertyID(),PropertyID.PID_ParticleSigma,'wrong dumpToLocal File_getPropertyID for p3')
         self.assertEqual(self.res.getObjectID(),8,'wrong dumpToLocal File_getObjectID for p3')
-        self.assertEqual(self.p3.getUnits().isCompatible(PU({'kg': 1, 's': -2, 'm': -1}, 1,(1,1,1,0,0,0,0))),True,'wrong dumpToLocal File_getUnits for p3')
+        self.assertTrue(self.p3.getUnits().isCompatible(mp.U['kg/m/s**2']))
         
 # python test_Property.py for stand-alone test being run
 if __name__=='__main__': unittest.main()

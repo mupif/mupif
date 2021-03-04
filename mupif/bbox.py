@@ -23,14 +23,14 @@
 
 from __future__ import annotations
 
-import Pyro5
-debug = 0
+import Pyro5.api
 from pydantic.dataclasses import dataclass
 from typing import Union, Tuple
+from . import dumpable
+import pydantic
 
 @Pyro5.api.expose
-@dataclass
-class BBox():
+class BBox(pydantic.BaseModel):
     """
     Represents a bounding box - a rectange in 2D and prism in 3D.
     Its geometry is described using two points - lover left and upper right corners.
@@ -45,16 +45,15 @@ class BBox():
 
     def __hash__(self): return id(self)
 
-    if 0:
-        def __init__(self, coords_ll, coords_ur):
-            """
-            Constructor.
-    
-            :param tuple coords_ll: Tuple with coordinates of lower left corner
-            :param tuple coords_ur: Tuple with coordinates of uper right corner
-            """
-            self.coords_ll = coords_ll
-            self.coords_ur = coords_ur
+    # proxy ctor to allow positional arguments
+    def __init__(self, coords_ll, coords_ur):
+        """
+        Constructor.
+
+        :param tuple coords_ll: Tuple with coordinates of lower left corner
+        :param tuple coords_ur: Tuple with coordinates of uper right corner
+        """
+        super().__init__(coords_ll=coords_ll,coords_ur=coords_ur)
         
     def __str__(self):
         """

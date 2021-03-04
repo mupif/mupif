@@ -36,6 +36,8 @@ from . import timestep
 from . import pyroutil
 import time
 
+from pydantic.dataclasses import dataclass
+
 import logging
 log = logging.getLogger()
 
@@ -164,6 +166,7 @@ ModelSchema = {
     ]
 }
 
+from typing import Optional,Any
 
 @Pyro5.api.expose
 class Model(mupifobject.MupifObject):
@@ -179,11 +182,38 @@ class Model(mupifobject.MupifObject):
 
     .. automethod:: __init__
     """
-    def __init__(self, metaData={}):
+
+    pyroDaemon: Optional[Any]=None
+    externalDaemon: bool=False
+    pyroNS: Optional[str]=None
+    pyroURI: Optional[str]=None
+    appName: str=None
+    file: Optional[str]=None
+    workDir: str=''
+
+    def __init__(self,*,metadata={},**kw):
+        (username, hostname) = pyroutil.getUserInfo()
+        defaults=dict([
+            ('Username', username),
+            ('Hostname', hostname),
+            ('Status', 'Initialized'),
+            ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
+            ('Execution', {}),
+            ('Solver', {})
+        ])
+        # use defaults for metadata, unless given explicitly
+        for k,v in defaults.items():
+            if k not in metadata: metadata[k]=v
+        super().__init__(metadata=metadata,**kw)
+
+        #import pprint
+        #pprint.pprint(self.metadata)
+
+    def __old_init__(self, metadata={}):
         """
         Constructor. Initializes the application.
 
-        :param dict metaData: Optionally pass metadata for merging.
+        :param dict metadata: Optionally pass metadata for merging.
         """
         super(Model, self).__init__()
 
@@ -206,20 +236,19 @@ class Model(mupifobject.MupifObject):
         self.setMetadata('Execution', {})
         self.setMetadata('Solver', {})
 
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
         :param str file: Name of file
         :param str workdir: Optional parameter for working directory
-        :param dict metaData: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
+        :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() ).
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
         # self.printMetadata()
 
         self.setMetadata('Name', self.getApplicationSignature())
@@ -516,7 +545,7 @@ class Model(mupifobject.MupifObject):
         """
         if self.hasMetadata('Name'):
             print('AppName:\'%s\':' % self.getMetadata('Name'))
-        super(Model, self).printMetadata(nonEmpty)
+        super().printMetadata(nonEmpty)
     
 
 @Pyro5.api.expose

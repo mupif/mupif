@@ -29,6 +29,9 @@ import pprint
 import copy
 from . import dumpable
 
+import pydantic
+
+
 @Pyro5.api.expose
 class MupifObject(dumpable.Dumpable):
     """
@@ -39,9 +42,10 @@ class MupifObject(dumpable.Dumpable):
 
     .. automethod:: __init__
     """
-    dumpAttrs=['metadata']
 
-    def __init__(self, jsonFileName=''):
+    metadata: dict = pydantic.Field(default_factory=dict)
+
+    def __old_init__(self, jsonFileName=''):
         """
         Constructor. Initializes the object
         :param str jsonFileName: Optionally instantiate from JSON file
@@ -59,6 +63,18 @@ class MupifObject(dumpable.Dumpable):
         :return: metadata associated to key, throws TypeError if key does not exist
         :raises: TypeError
         """
+        keys=key.split('.')
+        d=copy.deepcopy(self.metadata)
+        while True:
+            # import pprint
+            # pprint.pprint(d)
+            # print('KEYS ARE: ',str(keys))
+            d=d[keys[0]]
+            if len(keys)==1: return d
+            keys=keys[1:]
+
+        # what the heck was this?
+
         if self.hasMetadata(key):
             keys = key.split('.')
             elem = self.getAllMetadata()
@@ -164,13 +180,13 @@ class MupifObject(dumpable.Dumpable):
             else:
                 self.setMetadata(new_key, value)
         
-    def updateMetadata(self, dictionary):
+    @pydantic.validate_arguments
+    def updateMetadata(self, dictionary: dict):
         """ 
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
         """
-        if isinstance(dictionary, dict):
-            self._iterInDictOfMetadataForUpdate(dictionary, "")
+        self._iterInDictOfMetadataForUpdate(dictionary, "")
 
     def validateMetadata(self, template):
         """
@@ -198,6 +214,4 @@ class MupifObject(dumpable.Dumpable):
     def toJSONFile(self, filename, indent=4):
         with open(filename, "w") as f:
             json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
-
-
 

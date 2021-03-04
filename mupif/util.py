@@ -40,7 +40,7 @@ def setupLogger(fileName, level=logging.DEBUG):
     lg.setLevel(level)
     if lg.hasHandlers(): return lg
     # lg = logging.getLogger(loggerName)
-    formatLog = '%(asctime)s [%(process)d|%(processName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
+    formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
     formatTime = '%H:%M:%S' # '%Y-%m-%d %H:%M:%S'
     formatter = logging.Formatter(formatLog, formatTime)
 

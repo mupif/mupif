@@ -6,11 +6,13 @@ from mupif import *
 import math
 import numpy as np
 
+def mkVertex(number,label,coords): return vertex.Vertex(number=number,label=label,coords=coords)
+
 class Triangle_2d_lin_TestCase(unittest.TestCase):
     def setUp(self):
         self.mesh = mesh.UnstructuredMesh()
-        self.mesh.setup((vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(0.,5.))), [])
-        self.cell = cell.Triangle_2d_lin(self.mesh, 0, 1, (0,1,2))
+        self.mesh.setup((mkVertex(0,0,(0.,0.)), mkVertex(1,1,(2.,0.)), mkVertex(2,2,(0.,5.))), [])
+        self.cell = cell.Triangle_2d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2))
 
     def tearDown(self):
         self.mesh = None
@@ -82,8 +84,8 @@ class Triangle_2d_lin_TestCase(unittest.TestCase):
 class Triangle_2d_quad_TestCase(unittest.TestCase):
     def setUp(self):
         self.mesh = mesh.UnstructuredMesh()
-        self.mesh.setup((vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(0.,5.)), vertex.Vertex(3,3,(1.,0.)), vertex.Vertex(4,4,(1.,2.5)), vertex.Vertex(5,5,(0.,2.5))), [])
-        self.cell = cell.Triangle_2d_quad(self.mesh, 0, 1, (0,1,2,3,4,5))
+        self.mesh.setup((mkVertex(0,0,(0.,0.)), mkVertex(1,1,(2.,0.)), mkVertex(2,2,(0.,5.)), mkVertex(3,3,(1.,0.)), mkVertex(4,4,(1.,2.5)), mkVertex(5,5,(0.,2.5))), [])
+        self.cell = cell.Triangle_2d_quad(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3,4,5))
 
     def tearDown(self):
         self.mesh = None
@@ -155,8 +157,8 @@ class Triangle_2d_quad_TestCase(unittest.TestCase):
 class Quad_2d_lin_TestCase(unittest.TestCase):
     def setUp(self):
         self.mesh=mesh.UnstructuredMesh()
-        self.mesh.setup((vertex.Vertex(0,0,(0.,0.)), vertex.Vertex(1,1,(2.,0.)), vertex.Vertex(2,2,(4.,2.)), vertex.Vertex(3,3,(0.,5.))), [])
-        self.cell = cell.Quad_2d_lin(self.mesh, 0, 1, (0,1,2,3))
+        self.mesh.setup((mkVertex(0,0,(0.,0.)), mkVertex(1,1,(2.,0.)), mkVertex(2,2,(4.,2.)), mkVertex(3,3,(0.,5.))), [])
+        self.cell = cell.Quad_2d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3))
 
     def tearDown(self):
         self.mesh = None
@@ -238,12 +240,12 @@ class Quad_2d_lin_TestCase(unittest.TestCase):
 class Tetrahedron_3d_lin_TestCase(unittest.TestCase):
     def setUp(self):
         self.mesh=mesh.UnstructuredMesh()
-        self.mesh.setup((vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(2.,0.,3.)), vertex.Vertex(2,2,(4.,2.,1.)), vertex.Vertex(3,3,(0.,5.,5.))), [])
-        self.cell = cell.Tetrahedron_3d_lin(self.mesh, 0, 1, (0,1,2,3))
+        self.mesh.setup((mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(2.,0.,3.)), mkVertex(2,2,(4.,2.,1.)), mkVertex(3,3,(0.,5.,5.))), [])
+        self.cell = cell.Tetrahedron_3d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3))
         
         self.mesh2=mesh.UnstructuredMesh()
-        self.mesh2.setup((vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(0.,2.,0.)), vertex.Vertex(2,2,(4.,0.,0.)), vertex.Vertex(3,3,(0.,0.,6.))), [])
-        self.cell2 = cell.Tetrahedron_3d_lin(self.mesh2, 0, 1, (0,1,2,3))
+        self.mesh2.setup((mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(0.,2.,0.)), mkVertex(2,2,(4.,0.,0.)), mkVertex(3,3,(0.,0.,6.))), [])
+        self.cell2 = cell.Tetrahedron_3d_lin(mesh=self.mesh2, number=0, label=1, vertices=(0,1,2,3))
 
     def tearDown(self):
         self.mesh = None
@@ -359,8 +361,8 @@ class Tetrahedron_3d_lin_TestCase(unittest.TestCase):
 class Brick_3d_lin_TestCase(unittest.TestCase):
     def setUp(self):
         self.mesh=mesh.UnstructuredMesh()
-        self.mesh.setup((vertex.Vertex(0,0,(0.,0.,0.)), vertex.Vertex(1,1,(0.,3.,0.)), vertex.Vertex(2,2,(5.,3.,0.)), vertex.Vertex(3,3,(5.,0.,0.)), vertex.Vertex(4,4,(0.,0.,-2.)), vertex.Vertex(5,5,(0.,3.,-2.)), vertex.Vertex(6,6,(5.,3.,-2.)),vertex.Vertex(7,7,(5.,0.,-2.))), [])
-        self.cell = cell.Brick_3d_lin(self.mesh, 0, 1, (0,1,2,3,4,5,6,7))
+        self.mesh.setup((mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(0.,3.,0.)), mkVertex(2,2,(5.,3.,0.)), mkVertex(3,3,(5.,0.,0.)), mkVertex(4,4,(0.,0.,-2.)), mkVertex(5,5,(0.,3.,-2.)), mkVertex(6,6,(5.,3.,-2.)),mkVertex(7,7,(5.,0.,-2.))), [])
+        self.cell = cell.Brick_3d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3,4,5,6,7))
         
     def tearDown(self):
         self.mesh = None

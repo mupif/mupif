@@ -13,17 +13,19 @@ import argparse
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
 mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
 from Config import config
+import threading
 cfg = config(mode)
-
-import mupif.physics.physicalquantities as PQ
-timeUnits = PQ.PhysicalUnit('s',   1., [0, 0, 1, 0, 0, 0, 0, 0, 0])
+import mupif as mp
 
 
-class application1(model.Model):
+threading.current_thread().setName('ex02-main')
+
+
+class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -59,8 +61,8 @@ class application1(model.Model):
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated'}]
         }
-        super(application1, self).__init__(metaData=MD)
-        self.updateMetadata(metaData)
+        super().__init__(metadata=MD)
+        self.updateMetadata(metadata)
         self.value = 0.
 
     def getProperty(self, propID, time, objectID=0):
@@ -72,21 +74,21 @@ class application1(model.Model):
             }
         }
 
-        if propID == PropertyID.PID_Time_step:
+        if propID == mp.PropertyID.PID_Time_step:
             return property.ConstantProperty(
-                (self.value,), PropertyID.PID_Time_step, ValueType.Scalar, 's', time, metaData=md)
+                value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise apierror.APIError('Unknown property ID')
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()
         self.value = 1.0*time
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(0.1, 's')
+        return .1*mp.Q.s
 
     def getAsssemblyTime(self, tstep):
         return tstep.getTime()
@@ -105,7 +107,7 @@ if mode == 1:  # just print out how to set up a SSH tunnel
 ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport)
 
 # application1 is local, create its instance
-app1 = application1()
+app1 = Application1()
 # locate (remote) application2, request remote proxy
 app2 = pyroutil.connectApp(ns, cfg.appName, sshContext)
 
@@ -125,16 +127,16 @@ executionMetadata = {
     }
 }
 
-app1.initialize(metaData=executionMetadata)
-app2.initialize(metaData=executionMetadata)
+app1.initialize(metadata=executionMetadata)
+app2.initialize(metadata=executionMetadata)
 
 prop = None
 istep = None
 
 while abs(time - targetTime) > 1.e-6:
     # determine critical time step
-    dt2 = app2.getCriticalTimeStep().inUnitsOf(timeUnits).getValue()
-    dt = min(app1.getCriticalTimeStep().inUnitsOf(timeUnits).getValue(), dt2)
+    dt2 = app2.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue()
+    dt = min(app1.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue(), dt2)
     # update time
     time = time+dt
     if time > targetTime:
@@ -143,19 +145,19 @@ while abs(time - targetTime) > 1.e-6:
     timestepnumber = timestepnumber+1
     log.debug("Step: %d %f %f" % (timestepnumber, time, dt))
     # create a time step
-    istep = timestep.TimeStep(time, dt, targetTime, timeUnits, timestepnumber)
+    istep = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
 
     try:
         # solve problem 1
         app1.solveStep(istep)
         # handshake the data
-        c = app1.getProperty(PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
+        c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
         app2.setProperty(c)
         # app2.setProperty(app1.getProperty(PropertyID.PID_Time, app2.getAssemblyTime(istep)))
         # solve second sub-problem 
         app2.solveStep(istep)
 
-        prop = app2.getProperty(PropertyID.PID_Time, istep.getTime())
+        prop = app2.getProperty(mp.PropertyID.PID_Time, istep.getTime())
 
         atime = app2.getAssemblyTime(istep)
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (

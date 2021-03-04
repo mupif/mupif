@@ -23,7 +23,7 @@
 
 from .dumpable import Dumpable
 
-class APIError(Exception,Dumpable):
+class APIError(Exception):
     """
     This class serves as a base class for exceptions thrown by the framework.
     Raising an exception is a way to signal that a routine could not execute normally - for example, 
@@ -37,5 +37,4 @@ class APIError(Exception,Dumpable):
     Exception handlers are declared with the keyword "except", which must be placed immediately after the try block.
 
     """
-    dumpAttrs=[]
 

@@ -39,13 +39,20 @@ import Pyro5
 import collections
 from mupif import dumpable
 import functools
+import sys
+
+from pydantic.dataclasses import dataclass
+import typing
+import pydantic
 
 
 def cmp(a, b):
     return (a > b) - (a < b)
 
 
-# Class definitions
+def makeQuantity(value,unit): return PhysicalQuantity(value=value,unit=unit)
+def makeUnit(names,factor,powers,offset=0.): return PhysicalUnit(names=names,factor=factor,powers=powers,offset=offset)
+
 @Pyro5.api.expose
 class PhysicalQuantity(dumpable.Dumpable):
 
@@ -135,9 +142,17 @@ class PhysicalQuantity(dumpable.Dumpable):
     print value
     """
 
-    dumpAttrs=['value','unit']
+    value: typing.Union[float,typing.List[float]]=0
+    unit: 'PhysicalUnit'
 
-    def __init__(self, *args):
+    @pydantic.validator('unit',pre=True,always=True)
+    def convert_unit(cls,u):
+        #sys.stderr.write(f'Validating unit {u}\n')
+        if isinstance(u,PhysicalUnit): return u
+        #sys.stderr.write(f'findUnit(u): {findUnit(u)}\n')
+        return findUnit(u)
+
+    def __old_init__(self, *args):
         """
         There are two constructor calling patterns:
 
@@ -183,7 +198,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             new_value = tuple((sign1*v1+sign2*v2*factor for v1, v2 in zip(self.value, other.value)))
         else:
             new_value = sign1*self.value + sign2*other.value*factor
-        return self.__class__(new_value, self.unit)
+        return self.__class__(value=new_value,unit=self.unit)
 
     def __add__(self, other):
         return self._sum(other, 1, 1)
@@ -222,7 +237,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             # tuple valued (vector)
             if not isPhysicalQuantity(other):
                 newVal = tuple((v*other for v in self.value))
-                return self.__class__(newVal, self.unit)
+                return self.__class__(value=newVal, unit=self.unit)
             else:
                 # other is physical quantity with units
                 if isinstance(other.value, collections.Iterable):
@@ -231,16 +246,16 @@ class PhysicalQuantity(dumpable.Dumpable):
                     # scalar
                     newVal = tuple((v*other.value for v in self.value))
                     unit = self.unit*other.unit
-                    return self.__class__(newVal, unit)
+                    return self.__class__(value=newVal, unit=unit)
         else:
             if not isPhysicalQuantity(other):
-                return self.__class__(self.value*other, self.unit)
+                return self.__class__(value=self.value*other, unit=self.unit)
             value = self.value*other.value
             unit = self.unit*other.unit
             if unit.isDimensionless():
                 return value*unit.factor
             else:
-                return self.__class__(value, unit)
+                return self.__class__(value=value, unit=unit)
 
     __rmul__ = __mul__
 
@@ -249,7 +264,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             # tuple valued (vector)
             if not isPhysicalQuantity(other):
                 newVal = tuple((v/other for v in self.value))
-                return self.__class__(newVal, self.unit)
+                return self.__class__(value=newVal, unit=self.unit)
             else:
                 # other is physical quantity with units
                 if isinstance(other.value, collections.Iterable):
@@ -258,26 +273,26 @@ class PhysicalQuantity(dumpable.Dumpable):
                     # scalar
                     newVal = tuple((v/other.value for v in self.value))
                     unit = self.unit/other.unit
-                    return self.__class__(newVal, unit)
+                    return self.__class__(value=newVal, unit=unit)
         else:
             if not isPhysicalQuantity(other):
-                return self.__class__(self.value/other, self.unit)
+                return self.__class__(value=self.value/other, unit=self.unit)
             value = self.value/other.value
             unit = self.unit/other.unit
             if unit.isDimensionless():
                 return value*unit.factor
             else:
-                return self.__class__(value, unit)
+                return self.__class__(value=value, unit=unit)
 
     def __rtruediv__(self, other):
         if not isPhysicalQuantity(other):
-            return self.__class__(other/self.value, pow(self.unit, -1))
+            return self.__class__(value=other/self.value, unit=pow(self.unit, -1))
         value = other.value/self.value
         unit = other.unit/self.unit
         if unit.isDimensionless():
             return value*unit.factor
         else:
-            return self.__class__(value, unit)
+            return self.__class__(value=value, unit=unit)
 
     __div__ = __truediv__
     __rdiv__ = __rtruediv__
@@ -285,19 +300,19 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __pow__(self, other):
         if isPhysicalQuantity(other):
             raise TypeError('Exponents must be dimensionless')
-        return self.__class__(pow(self.value, other), pow(self.unit, other))
+        return self.__class__(value=pow(self.value, other), unit=pow(self.unit, other))
 
     def __rpow__(self, other):
         raise TypeError('Exponents must be dimensionless')
 
     def __abs__(self):
-        return self.__class__(abs(self.value), self.unit)
+        return self.__class__(value=abs(self.value), unit=self.unit)
 
     def __pos__(self):
         return self
 
     def __neg__(self):
-        return self.__class__(-self.value, self.unit)
+        return self.__class__(value=-self.value, unit=self.unit)
 
     def __bool__(self):
         return self.value != 0
@@ -339,7 +354,7 @@ class PhysicalQuantity(dumpable.Dumpable):
         if len(units) == 1:
             unit = units[0]
             value = _convertValue(self.value, self.unit, unit)
-            return self.__class__(value, unit)
+            return self.__class__(value=value, unit=unit)
         else:
             units.sort()
             result = []
@@ -351,7 +366,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                     rounded = value
                 else:
                     rounded = _round(value)
-                result.append(self.__class__(rounded, units[i]))
+                result.append(self.__class__(value=rounded, units=units[i]))
                 value = value - rounded
                 unit = units[i]
             return tuple(result)
@@ -380,7 +395,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             num = '1'
         else:
             num = num[1:]
-        return self.__class__(new_value, num + denom)
+        return self.__class__(value=new_value, unit = num + denom)
 
     def isCompatible(self, unit):
         """
@@ -395,7 +410,8 @@ class PhysicalQuantity(dumpable.Dumpable):
 
     def getValue(self):
         """Return value (float) of physical quantity (no unit)."""
-        return self.value
+        if isinstance(self.value,float): return self.value
+        return tuple(self.value)
 
     def getUnitName(self):
         """Return unit (string) of physical quantity."""
@@ -423,6 +439,8 @@ class PhysicalQuantity(dumpable.Dumpable):
             raise TypeError('Argument of tan must be an angle')
 
 
+
+
 @Pyro5.api.expose
 @functools.total_ordering
 class PhysicalUnit(dumpable.Dumpable):
@@ -434,50 +452,35 @@ class PhysicalUnit(dumpable.Dumpable):
     factor, and the exponentials of each of the SI base units that enter into
     it. Units can be multiplied, divided, and raised to integer powers.
     """
- 
-    dumpAttrs=['names','factor','offset','powers']
 
-    def __init__(self, names, factor, powers, offset=0):
-        """
-        :param names: a dictionary mapping each name component to its
-                      associated integer power (e.g. C{{'m': 1, 's': -1}})
-                      for M{m/s}). As a shorthand, a string may be passed
-                      which is assigned an implicit power 1.
-        :type names: C{dict} or C{str}
-        :param factor: a scaling factor
-        :type factor: C{float}
-        :param powers: the integer powers for each of the nine base units
-        :type powers: C{list} of C{int}
-        :param offset: an additive offset to the base unit (used only for
-                       temperatures)
-        :type offset: C{float}
-        """
-        if type(names) == type(''):
-            self.names = NumberDict()
-            self.names[names] = 1
-        else:
-            self.names = names
-        self.factor = factor
-        self.offset = offset
-        self.powers = list(powers)
+    #: a dictionary mapping each name component to its associated integer power (e.g. C{{'m': 1, 's': -1}}) for M{m/s}). As a shorthand, a string may be passed which is assigned an implicit power 1.
+    names: NumberDict=pydantic.Field(default_factory=NumberDict)
+    #: scaling factor
+    factor: float
+    #: the integer powers for each of the nine base units
+    powers: typing.List[int]
+    #: an additive offset to the base unit (used only for temperatures)
+    offset: float = 0.
+
+    #class Config:
+    #    frozen = True
+
+    @pydantic.validator('names',always=True,pre=True)
+    def names_cook(cls,n):
+        if n is None: return NumberDict()
+        elif isinstance(n,str):
+            ret=NumberDict()
+            ret.data[n]=1
+            return ret
+        else: return n
+    @pydantic.validator('powers',always=True,pre=True)
+    def powers_cook(cls,p):
+        return list(p)
 
     def __repr__(self):
         return '<PhysicalUnit ' + self.name() + '>'
 
     __str__ = __repr__
-
-    #
-    # no longer used in Python3
-    # use functools.total_ordering decorator and __lt__ and __eq__ instead
-    # https://stackoverflow.com/a/8277028/761090
-    #
-    def __cmp__(self, other):
-        if isPhysicalUnit(other):
-            if self.powers != other.powers:
-                raise TypeError('Incompatible units')
-            return cmp(self.factor, other.factor)
-        else:
-            return -1
 
     def __eq__(self,other):
         return self.powers==other.powers and self.factor==other.factor and self.offset==other.offset and self.names==other.names
@@ -488,15 +491,15 @@ class PhysicalUnit(dumpable.Dumpable):
         if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):
             raise TypeError("cannot multiply units with non-zero offset")
         if isPhysicalUnit(other):
-            return PhysicalUnit(self.names+other.names,
-                                self.factor*other.factor,
-                                map(lambda a, b: a+b,
-                                    self.powers, other.powers))
+            return PhysicalUnit(names=self.names+other.names,
+                                factor=self.factor*other.factor,
+                                powers=list(map(lambda a, b: a+b,
+                                    self.powers, other.powers)))
         else:
-            return PhysicalUnit(self.names+{str(other): 1},
-                                self.factor*other,
-                                self.powers,
-                                self.offset * other)
+            return PhysicalUnit(names=self.names+{str(other): 1},
+                                factor=self.factor*other,
+                                powers=self.powers,
+                                offset=self.offset * other)
 
     __rmul__ = __mul__
 
@@ -504,26 +507,26 @@ class PhysicalUnit(dumpable.Dumpable):
         if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):
             raise TypeError("cannot divide units with non-zero offset")
         if isPhysicalUnit(other):
-            return PhysicalUnit(self.names-other.names,
-                                self.factor/other.factor,
-                                map(lambda a, b: a-b,
-                                    self.powers, other.powers))
+            return PhysicalUnit(names=self.names-other.names,
+                                factor=self.factor/other.factor,
+                                powers=list(map(lambda a, b: a-b,
+                                    self.powers, other.powers)))
         else:
-            return PhysicalUnit(self.names+{str(other): -1},
-                                self.factor/other, self.powers)
+            return PhysicalUnit(names=self.names+{str(other): -1},
+                                factor=self.factor/other, powers=self.powers)
 
     def __rtruediv__(self, other):
         if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):
             raise TypeError("cannot divide units with non-zero offset")
         if isPhysicalUnit(other):
-            return PhysicalUnit(other.names-self.names,
-                                other.factor/self.factor,
-                                map(lambda a, b: a-b,
-                                    other.powers, self.powers))
+            return PhysicalUnit(names=other.names-self.names,
+                                factor=other.factor/self.factor,
+                                powers=list(map(lambda a, b: a-b,
+                                    other.powers, self.powers)))
         else:
-            return PhysicalUnit({str(other): 1}-self.names,
-                                other/self.factor,
-                                map(lambda x: -x, self.powers))
+            return PhysicalUnit(names={str(other): 1}-self.names,
+                                factor=other/self.factor,
+                                powers=list(map(lambda x: -x, self.powers)))
     __div__ = __truediv__
     __rdiv__ = __rtruediv__
 
@@ -531,8 +534,8 @@ class PhysicalUnit(dumpable.Dumpable):
         if self.offset != 0:
             raise TypeError("cannot exponentiate units with non-zero offset")
         if isinstance(other, (int, numpy.integer)):
-            return PhysicalUnit(other*self.names, pow(self.factor, other),
-                                map(lambda x, p=other: x*p, self.powers))
+            return PhysicalUnit(names=other*self.names, factor=pow(self.factor, other),
+                                powers=list(map(lambda x, p=other: x*p, self.powers)))
         if isinstance(other, float):
             inv_exp = 1./other
             rounded = int(numpy.floor(inv_exp+0.5))
@@ -551,7 +554,7 @@ class PhysicalUnit(dumpable.Dumpable):
                             names[str(f)] = 1
                         for i in range(len(p)):
                             names[_base_names[i]] = p[i]
-                    return PhysicalUnit(names, f, p)
+                    return PhysicalUnit(names=names, factor=f, powers=list(p))
                 else:
                     raise TypeError('Illegal exponent')
         raise TypeError('Only integer and inverse integer exponents allowed')
@@ -621,14 +624,13 @@ class PhysicalUnit(dumpable.Dumpable):
         return self.powers[7] == 1 and reduce(lambda a, b: a + b, self.powers) == 1
 
     def setName(self, name):
-        self.names = NumberDict()
-        self.names[name] = 1
+        self.names = NumberDict(data={name:1})
 
     def name(self):
         num = ''
         denom = ''
-        for unit in self.names.keys():
-            power = self.names[unit]
+        for unit in self.names.data.keys():
+            power = self.names.data[unit]
             if power < 0:
                 denom = denom + '/' + unit
                 if power < -1:
@@ -642,6 +644,10 @@ class PhysicalUnit(dumpable.Dumpable):
         else:
             num = num[1:]
         return num + denom
+
+
+#
+PhysicalQuantity.update_forward_refs()
 
 
 # Type checks
@@ -718,19 +724,20 @@ def assertPhysicalUnitEqual (first, second, msg=None):
     return first.__cmp__(second)
 
 
+
 # SI unit definitions
 _base_names = ['m', 'kg', 's', 'A', 'K', 'mol', 'cd', 'rad', 'sr']
 
-_base_units = [('m',   PhysicalUnit('m',   1.,    [1,0,0,0,0,0,0,0,0])),
-               ('g',   PhysicalUnit('g',   0.001, [0,1,0,0,0,0,0,0,0])),
-               ('s',   PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])),
-               ('A',   PhysicalUnit('A',   1.,    [0,0,0,1,0,0,0,0,0])),
-               ('K',   PhysicalUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])),
-               ('mol', PhysicalUnit('mol', 1.,    [0,0,0,0,0,1,0,0,0])),
-               ('cd',  PhysicalUnit('cd',  1.,    [0,0,0,0,0,0,1,0,0])),
-               ('rad', PhysicalUnit('rad', 1.,    [0,0,0,0,0,0,0,1,0])),
-               ('sr',  PhysicalUnit('sr',  1.,    [0,0,0,0,0,0,0,0,1])),
-               ('none',PhysicalUnit('',  1.,    [0,0,0,0,0,0,0,0,0])),  # No units
+_base_units = [('m',   makeUnit('m',   1.,    [1,0,0,0,0,0,0,0,0])),
+               ('g',   makeUnit('g',   0.001, [0,1,0,0,0,0,0,0,0])),
+               ('s',   makeUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])),
+               ('A',   makeUnit('A',   1.,    [0,0,0,1,0,0,0,0,0])),
+               ('K',   makeUnit('K',   1.,    [0,0,0,0,1,0,0,0,0])),
+               ('mol', makeUnit('mol', 1.,    [0,0,0,0,0,1,0,0,0])),
+               ('cd',  makeUnit('cd',  1.,    [0,0,0,0,0,0,1,0,0])),
+               ('rad', makeUnit('rad', 1.,    [0,0,0,0,0,0,0,1,0])),
+               ('sr',  makeUnit('sr',  1.,    [0,0,0,0,0,0,0,0,1])),
+               ('none',makeUnit('',  1.,    [0,0,0,0,0,0,0,0,0])),  # No units
                ]
 
 _prefixes = [('Y',  1.e24),
@@ -768,13 +775,17 @@ def _addUnit(name, unit, comment=''):
         raise KeyError('Unit ' + name + ' already defined')
     if comment:
         _help.append((name, comment, unit))
-    if type(unit) == type(''):
+    if isinstance(unit,str):
+        #sys.stderr.write('1: Unit is: %s\n'%str(unit))
         unit = eval(unit, _unit_table)
+        #sys.stderr.write('2: Unit is: %s\n'%str(unit))
         for cruft in ['__builtins__', '__args__']:
             try:
                 del _unit_table[cruft]
             except:
                 pass
+    assert isinstance(unit,PhysicalUnit)
+    #sys.stderr.write(f'_addUnit: {name}, {unit}\n')
     unit.setName(name)
     _unit_table[name] = unit
 
@@ -784,6 +795,7 @@ def _addPrefixed(unit):
     _prefixed_names = []
     for prefix in _prefixes:
         name = prefix[0] + unit
+        # sys.stderr.write(name+'\n')
         _addUnit(name, prefix[1]*_unit_table[unit])
         _prefixed_names.append(name)
     _help.append(', '.join(_prefixed_names))
@@ -793,7 +805,7 @@ def _addPrefixed(unit):
 _help.append('SI derived units; these automatically get prefixes:\n' +
              ', '.join([prefix + ' (%.0E)' % value for prefix, value in _prefixes]) + '\n')
 
-_unit_table['kg'] = PhysicalUnit('kg',   1., [0, 1, 0, 0, 0, 0, 0, 0, 0])
+_unit_table['kg'] = makeUnit('kg',   1., [0, 1, 0, 0, 0, 0, 0, 0, 0])
 
 _addUnit('Hz', '1/s', 'Hertz')
 _addUnit('N', 'm*kg/s**2', 'Newton')
@@ -822,7 +834,8 @@ for unit in list(_unit_table.keys()):
 # Fundamental constants
 _help.append('Fundamental constants:')
 
-_unit_table['pi'] = numpy.pi
+# _unit_table['pi'] = _addUninumpy.pi
+_addUnit('pi',str(numpy.pi)+'*none','π constant')
 _addUnit('c', '299792458.*m/s', 'speed of light')
 _addUnit('mu0', '4.e-7*pi*N/A**2', 'permeability of vacuum')
 _addUnit('eps0', '1/mu0/c**2', 'permittivity of vacuum')
@@ -930,8 +943,8 @@ _help.append('Temperature units:')
 # for degC and degF because you can't add units
 kelvin = findUnit ('K')
 _addUnit('degR', '(5./9.)*K', 'degrees Rankine')
-_addUnit('degC', PhysicalUnit(None, 1.0, kelvin.powers, 273.15), 'degrees Celcius')
-_addUnit('degF', PhysicalUnit(None, 5./9., kelvin.powers, 459.67), 'degree Fahrenheit')
+_addUnit('degC', makeUnit(None, 1.0, kelvin.powers, 273.15), 'degrees Celcius')
+_addUnit('degF', makeUnit(None, 5./9., kelvin.powers, 459.67), 'degree Fahrenheit')
 del kelvin
 
 
@@ -956,6 +969,32 @@ __doc__ += '\n' + description()
 
 # Some demonstration code. Run with "python -i physicalquantities.py"
 # to have this available.
+
+# PhysicalQuantity(123,'s')
+
+
+_unit_table_attr,_quant_table,_quant_table_attr={},{},{}
+
+for k,v in _unit_table.items():
+    k2=k.replace(' ','').replace('-','_').replace('**','').replace('/','_')
+    _unit_table_attr[k2]=v
+    _quant_table[k]=_quant_table_attr[k2]=PhysicalQuantity(value=1,unit=v)
+
+class UnitProxy(object):
+    def __getitem__(self,n):
+        if n in _unit_table: return _unit_table[n]
+        return findUnit(n)
+    def __getattr__(self,n): return _unit_table_attr[n]
+
+class QuantityProxy(object):
+    def __getitem__(self,n):
+        if n in _quant_table: return _quant_table[n]
+        return PhysicalQuantity(value=1,unit=findUnit(n))
+    def __getattr__(self,n): return _quant_table_attr[n]
+
+U=UnitProxy()
+Q=QuantityProxy()
+
 
 if __name__ == '__main__':
 

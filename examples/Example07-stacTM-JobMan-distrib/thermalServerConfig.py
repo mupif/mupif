@@ -9,7 +9,7 @@ import models
 class serverConfig(config):
     def __init__(self, mode):
         # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
-        super(serverConfig, self).__init__(mode)
+        super().__init__(mode)
 
         self.applicationClass = models.ThermalModel
         self.applicationInitialFile = 'input.in'  # dummy file

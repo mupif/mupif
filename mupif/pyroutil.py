@@ -345,9 +345,8 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
         log.exception(f'Can not register app with daemon {daemon.locationStr} using nathost {net.nathost}:{net.natport} on nameServer')
         raise
 
-
-    import setproctitle
-    setproctitle.setproctitle(appName)
+    import threading
+    threading.current_thread().setName(appName)
 
     # generate connection metadata entry
     _host,_port=daemon.locationStr.split(':')

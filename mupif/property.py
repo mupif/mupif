@@ -1,16 +1,17 @@
 from . import mupifobject
-from mupif.physics import physicalquantities
-from mupif .physics.physicalquantities import PhysicalQuantity
+from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
+from .physics import physicalquantities as PQ
 import Pyro5
-try:
-    import cPickle as pickle  # faster serialization if available
-except:
-    import pickle
+import pickle
 import collections
+import typing
+import pydantic
 
+from . import dataid
+from . import valuetype
 
 @Pyro5.api.expose
-class Property(mupifobject.MupifObject, PhysicalQuantity):
+class Property(mupifobject.MupifObject,PhysicalQuantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -19,9 +20,25 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
     .. automethod:: __init__
     """
 
-    dumpAttrs=['propID','valueType','objectID','unit']
+    propID: dataid.PropertyID
+    valueType: valuetype.ValueType
+    objectID: int=0
 
-    def __init__(self, propID, valueType, units, objectID=0, metaData={}):
+    def __init__(self,*,metadata={},**kw):
+        super().__init__(metadata=metadata,**kw)
+        defaults=dict([
+            ('Type', 'mupif.property.Property'),
+            ('Type_ID', str(self.propID)),
+            ('Units', self.unit.name()),
+            ('ValueType', str(self.valueType))
+        ])
+        for k,v in defaults.items():
+            if k not in metadata: self.updateMetadata(dict(k=v))
+
+        #import pprint
+        #pprint.pprint(self.metadata)
+
+    def __old_init__(self, propID, valueType, units, objectID=0, metadata={}):
         """
         Initializes the property.
 
@@ -31,6 +48,8 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
         :type units: Physics.PhysicalUnits or string
         :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
         """
+        super().__init__(self,propID=propID,valueType=valueType,unit=units,objectID=objectID,metadata=metadata)
+        return
         mupifobject.MupifObject.__init__(self)
 
         self.propID = propID
@@ -38,17 +57,17 @@ class Property(mupifobject.MupifObject, PhysicalQuantity):
         self.valueType = valueType
         self.objectID = objectID
 
-        if physicalquantities.isPhysicalUnit(units):
+        if PQ.isPhysicalUnit(units):
             self.unit = units
         else:
-            self.unit = physicalquantities.findUnit(units)
+            self.unit = PQ.findUnit(units)
 
         self.setMetadata('Type', 'mupif.property.Property')
         self.setMetadata('Type_ID', str(self.propID))
         self.setMetadata('Units', self.unit.name())
         self.setMetadata('ValueType', str(self.valueType))
 
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
 
     def getValue(self, time=None, **kwargs):
         """
@@ -107,9 +126,10 @@ class ConstantProperty(Property):
     .. automethod:: __init__
     """
 
-    dumpAttrs=['value','time']
+    value: typing.Union[float,typing.Tuple[float,...]]
+    time: typing.Optional[PhysicalQuantity]
 
-    def __init__(self, value, propID, valueType, units, time=None, objectID=0, metaData={}):
+    def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metadata={}):
         """
         Initializes the property.
 
@@ -121,14 +141,15 @@ class ConstantProperty(Property):
         :type units: Physics.PhysicalUnits or string
         :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
         """
+
         Property.__init__(self, propID, valueType, units, objectID)
         self.value = value
-        if physicalquantities.isPhysicalQuantity(time) or time is None:
+        if PQ.isPhysicalQuantity(time) or time is None:
             self.time = time
         else:
             raise TypeError("PhysicalValue expected for time")
 
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
 
     def __str__(self):
         return str(self.value) + '{' + self.unit.name() + ',' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
@@ -171,7 +192,7 @@ class ConstantProperty(Property):
         """
         Override of PhysicalQuantity._sum method
         """
-        if not physicalquantities.isPhysicalQuantity(other):
+        if not PQ.isPhysicalQuantity(other):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
         new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
@@ -201,7 +222,7 @@ class ConstantProperty(Property):
 
         :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
         """
-        unit = physicalquantities.findUnit(unit)
+        unit = PQ.findUnit(unit)
         self.value = self._convertValue(self.value, self.unit, unit)
         self.unit = unit
 
@@ -250,8 +271,7 @@ class ConstantProperty(Property):
         :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = list(map(physicalquantities.findUnit, units))
-        # unit = physicalquantities.findUnit(units[0])
+        units = list(map(PQ.findUnit, units))
         unit = units[0]
         value = self._convertValue(self.value, self.unit, unit)
-        return ConstantProperty(value, self.propID, self.valueType, unit, self.time, self.objectID)
+        return ConstantProperty(value=value, propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)

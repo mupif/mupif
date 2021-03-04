@@ -5,7 +5,6 @@ import Pyro5
 from pydantic.dataclasses import dataclass
 import typing
 
-@dataclass(frozen=True)
 @Pyro5.api.expose
 class Vertex(Dumpable):
     """
@@ -16,9 +15,13 @@ class Vertex(Dumpable):
     """
     number: int
     label: typing.Optional[int]
-    coords: typing.Tuple[float,...]
+    coords: typing.Union[typing.Tuple[float,float],typing.Tuple[float,float,float]]
 
-    # dumpAttrs=['number','label','coords']
+    #class Config:
+    #    frozen=True
+
+    def __hash__(self): return id(self)
+
     def __old_init__(self, number, label, coords=None):
         """
         Initializes the vertex.

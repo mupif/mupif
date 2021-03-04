@@ -4,7 +4,7 @@ import unittest,sys
 import socket
 sys.path.append('../..')
 
-import mupif, mupif.application
+import mupif
 import Pyro5
 
 Pyro5.config.SERIALIZER = "serpent"
@@ -15,7 +15,7 @@ Pyro5.config.SERVERTYPE = "multiplex"
 from mupif import pyroutil
 @Pyro5.api.expose
 class AnyApp(mupif.model.Model):
-    def __init__(self,f): super(AnyApp,self).__init__(f)
+    def __init__(self,f): super().__init__(file=f)
     def getApplicationSignature(self): return self.__class__.__name__+"@"+ socket.gethostbyaddr(socket.gethostname())[0]+" version 1.0"
 @Pyro5.api.expose
 class LocalApp(AnyApp): 
@@ -36,7 +36,6 @@ class TestLocalApp(unittest.TestCase):
     jobname='TestLocalApp'
     # hkey='mupif-secret-key'
     sshpwd='ssh-secret-key'
-    # def __init__(self): super(TestLocalApp,self).__init__()
     def setUp(self):
         nshost,nsport='localhost',5000
         # 2000+i: ssh forwarder (forwards to localhost:3000+i); username testuser-2001 (number is port number), password is always mmp-secret-key

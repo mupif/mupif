@@ -1,5 +1,5 @@
-from builtins import range
 import mupif
+import mupif as mp
 import Pyro5
 import meshgen
 import math
@@ -7,12 +7,8 @@ import numpy as np
 import time as timeTime
 import os
 import logging
-import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger('ex01_models')
-
-
-timeUnits = PQ.PhysicalUnit('s', 1., [0, 0, 1, 0, 0, 0, 0, 0, 0])
 
 
 def getline(f):
@@ -28,9 +24,9 @@ def getline(f):
 class ThermalModel(mupif.model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
-    def __init__(self, metaData={}):
-        if len(metaData) == 0:
-            metaData = {
+    def __init__(self, metadata={}):
+        if len(metadata) == 0:
+            metadata = {
                 'Name': 'Stationary thermal problem',
                 'ID': 'Thermo-1',
                 'Description': 'Stationary heat conduction using finite elements on rectangular domain',
@@ -91,14 +87,14 @@ class ThermalModel(mupif.model.Model):
                     'Representation': 'Finite volumes'
                 }
             }
-        super(ThermalModel, self).__init__(metaData)
+        super().__init__(metadata=metadata)
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
-            (1.,),
-            mupif.PropertyID.PID_effective_conductivity,
-            mupif.ValueType.Scalar,
-            'W/m/K'
+            value=(1.,),
+            propID=mupif.PropertyID.PID_effective_conductivity,
+            valueType=mupif.ValueType.Scalar,
+            unit=mupif.U['W/m/K']
         )
         self.tria = False
 
@@ -127,8 +123,8 @@ class ThermalModel(mupif.model.Model):
         self.b = None
         self.bp = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
         if self.file != "":
             self.readInput()
@@ -146,7 +142,7 @@ class ThermalModel(mupif.model.Model):
         except Exception as e:
             log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
             log.exception(e)
-            exit(1)
+            raise
 
         line = lines.pop(0)
         size = line.split()
@@ -279,11 +275,12 @@ class ThermalModel(mupif.model.Model):
                 else:
                     values.append((self.T[self.loc[i]],))
             return mupif.field.Field(
-                self.mesh, mupif.FieldID.FID_Temperature,
-                mupif.ValueType.Scalar,
-                'C',
-                time,
-                values
+                mesh=self.mesh,
+                fieldID=mupif.FieldID.FID_Temperature,
+                valueType=mupif.ValueType.Scalar,
+                unit=mupif.U.C,
+                time=time,
+                value=values
             )
         elif fieldID == mupif.FieldID.FID_Material_number:
             values = []
@@ -294,16 +291,16 @@ class ThermalModel(mupif.model.Model):
                     values.append((0,))
             # print (values)
             return mupif.field.Field(
-                self.mesh,
-                mupif.FieldID.FID_Material_number,
-                mupif.ValueType.Scalar,
-                PQ.getDimensionlessUnit(),
-                time,
-                values,
+                mesh=self.mesh,
+                fieldID=mupif.FieldID.FID_Material_number,
+                valueType=mupif.ValueType.Scalar,
+                unit=mp.Q.none, # PQ.getDimensionlessUnit(),
+                time=time,
+                value=values,
                 fieldType=mupif.field.FieldType.FT_cellBased
             )
         else:
-            raise mupif.apierror.APIError('Unknown field ID')
+            raise mupif.APIError('Unknown field ID')
 
     def isInclusion(self, e):
         vertices = e.getVertices()
@@ -574,15 +571,15 @@ class ThermalModel(mupif.model.Model):
             eff_conductivity = sumQ / self.yl * self.xl / (
                         self.dirichletBCs[(self.ny + 1) * (self.nx + 1) - 1] - self.dirichletBCs[0])
             return mupif.property.ConstantProperty(
-                eff_conductivity,
-                mupif.PropertyID.PID_effective_conductivity,
-                mupif.ValueType.Scalar,
-                'W/m/K',
-                time,
-                0
+                value=eff_conductivity,
+                propID=mupif.PropertyID.PID_effective_conductivity,
+                valueType=mupif.ValueType.Scalar,
+                unit=mp.U['W/m/K'],
+                time=time,
+                objectID=0
             )
         else:
-            raise mupif.apierror.APIError('Unknown property ID')
+            raise mupif.APIError('Unknown property ID')
 
     def setProperty(self, property, objectID=0):
         if property.getPropertyID() == mupif.PropertyID.PID_effective_conductivity:
@@ -624,7 +621,7 @@ class ThermalModel(mupif.model.Model):
             raise mupif.apierror.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(100.0, 's')
+        return 100*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
@@ -638,7 +635,7 @@ class ThermalNonstatModel(ThermalModel):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""
 
     def __init__(self):
-        metaData = {
+        metadata = {
             'Name': 'Non-stationary thermal problem',
             'ID': 'NonStatThermo-1',
             'Description': 'Non-stationary heat conduction using finite elements on a rectangular domain',
@@ -700,7 +697,7 @@ class ThermalNonstatModel(ThermalModel):
                 'Representation': 'Finite volumes'
             }
         }
-        super(ThermalNonstatModel, self).__init__(metaData)
+        super().__init__(metadata=metadata)
         self.mesh = None
         self.capacity = 1.0  # J/kg/K
         self.density = 1.0
@@ -712,8 +709,8 @@ class ThermalNonstatModel(ThermalModel):
         self.P = None
         self.Tp = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
         if self.file != "":
             self.readInput(tria=True)
@@ -725,7 +722,7 @@ class ThermalNonstatModel(ThermalModel):
         return
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(100.0, 's')
+        return 100*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime() - tstep.getTimeIncrement() * self.Tau
@@ -772,7 +769,7 @@ class ThermalNonstatModel(ThermalModel):
         mesh = self.mesh
         self.volume = 0.0
         self.integral = 0.0
-        dt = tstep.getTimeIncrement().inUnitsOf(timeUnits).getValue()
+        dt = tstep.getTimeIncrement().inUnitsOf(mupif.U.s).getValue()
 
         if tstep.getNumber() == 0:  # assign mesh only for 0th time step
             return
@@ -954,7 +951,7 @@ class MechanicalModel(mupif.model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self):
-        metaData = {
+        metadata = {
             'Name': 'Plane stress linear elastic',
             'ID': 'Mechanical-1',
             'Description': 'Plane stress problem with linear elastic thermo-elastic material',
@@ -1005,7 +1002,7 @@ class MechanicalModel(mupif.model.Model):
                 'Representation': 'Finite volumes'
             }
         }
-        super(MechanicalModel, self).__init__(metaData)
+        super().__init__(metadata=metadata)
         self.E = 30.0e+9  # ceramics
         self.nu = 0.25  # ceramics
         self.fx = [0., 0., 0., 0.]  # load in x
@@ -1031,14 +1028,14 @@ class MechanicalModel(mupif.model.Model):
         self.integral = 0.0
         self.T = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
         if self.file != "":
             self.readInput()
 
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(0.4, 's')
+        return .4*mp.Q.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
@@ -1170,12 +1167,12 @@ class MechanicalModel(mupif.model.Model):
                         values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
 
             return mupif.field.Field(
-                self.mesh,
-                mupif.FieldID.FID_Displacement,
-                mupif.ValueType.Vector,
-                'm',
-                time,
-                values
+                mesh=self.mesh,
+                fieldID=mupif.FieldID.FID_Displacement,
+                valueType=mupif.ValueType.Vector,
+                unit=mp.U.m,
+                time=time,
+                value=values
             )
         else:
             raise mupif.apierror.APIError('Unknown field ID')

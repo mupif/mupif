@@ -37,8 +37,8 @@ import os, sys
 import pkgutil
 import os.path
 d=os.path.dirname(os.path.abspath(__file__))
-__all__=[]
-for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
+__all__=['U','Q']
+for loader,modname,ispkg in pkgutil.walk_packages(path=[d],prefix='mupif.'):
     modsplit=modname.split('.')
     # avoid foreign modules
     if modsplit[0]!='mupif': continue
@@ -51,10 +51,12 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
         # (it could have been imported another module indirectly)
         # this would result in double import with catastrophic consequences
         # such as the same class existing twice, but not being identical
+        #print(modname)
         if modname in sys.modules: mod=sys.modules[modname]
         else: sys.modules[modname]=(mod:=loader.find_module(modname).load_module(modname))
     except Exception as e:
         sys.stderr.write(f'Error importing module {modname}: {str(e)}\n')
+        raise
     # direct submodules created as mupif.submodule
     if len(modsplit)==2:
         globals()[modsplit[1]]=mod
@@ -73,10 +75,16 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
             globals()[name]=obj
             __all__.append(name)
             # print(name,obj)
+# make unique
+__all__=list(set(__all__))
+
+U=sys.modules['mupif.physics.physicalquantities'].U
+Q=sys.modules['mupif.physics.physicalquantities'].Q
 
 # print([k for k in sys.modules.keys() if k.startswith('mupif.')])
 
-
+# make flake8 happy
+# from . import dumpable, util
 
 ##
 ## register all types deriving (directly or indirectly) from Dumpable to Pyro5
@@ -84,7 +92,7 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d+'/..'],prefix=''):
 def _registerDumpable(clss=dumpable.Dumpable):
     import Pyro5.api
     for sub in clss.__subclasses__():
-        # log.debug(f'Registering class {sub.__module__}.{sub.__name__}')
+        # print(f'Registering class {sub.__module__}.{sub.__name__}')
         Pyro5.api.register_class_to_dict(sub,dumpable.Dumpable.to_dict)
         Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__,dumpable.Dumpable.from_dict_with_name)
         _registerDumpable(sub) # recurse
@@ -100,6 +108,8 @@ def _registerDumpable(clss=dumpable.Dumpable):
 # register all dumpable types
 _registerDumpable()
 
+
+field.Field.update_forward_refs()
 
 
 import logging

@@ -10,19 +10,18 @@ import sys
 import argparse
 import logging
 sys.path.extend(['.','..', '../..'])
-from mupif import *
-import mupif.pyroutil
+import mupif as mp
 log = logging.getLogger()
-util.changeRootLogger('server.log')
+mp.util.changeRootLogger('server.log')
 
 # Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
+mode = argparse.ArgumentParser(parents=[mp.util.getParentParser()]).parse_args().mode
 
 from Config import config
 
 cfg = config(mode)
 
 import application2
-app2 = application2.application2()
+app2 = application2.Application2()
 
-pyroutil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, app=app2)
+mp.pyroutil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, app=app2)
