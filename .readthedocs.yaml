@@ -1,0 +1,5 @@
+# https://docs.readthedocs.io/en/stable/config-file/v2.html
+version: 2
+# default python is 3.7, we need 3.8
+python:
+   version: 3.8
