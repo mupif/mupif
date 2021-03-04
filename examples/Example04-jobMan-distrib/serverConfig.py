@@ -11,6 +11,6 @@ class serverConfig(config):
         # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
         super(serverConfig, self).__init__(mode)
 
-        self.applicationClass = application2.application2
+        self.applicationClass = application2.Application2
         self.applicationInitialFile = os.devnull  # dummy file
 

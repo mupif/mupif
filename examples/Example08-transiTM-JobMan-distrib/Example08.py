@@ -48,7 +48,7 @@ class Example08(workflow.Workflow):
         self.mechanical = None
         self.thermalJobMan = None
     
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity(0., 's'), metaData={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
@@ -77,7 +77,7 @@ class Example08(workflow.Workflow):
         self.registerModel(self.thermal, 'thermal_8')
         self.registerModel(self.mechanical, 'mechanical_8')
 
-        super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
+        super(Example08, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData)
 
         # To be sure update only required passed metadata in models
         passingMD = {

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import sys
 import logging
+import tempfile
 sys.path.append('../..')
 import mupif as mp
 
 log = logging.getLogger()
-temperatureUnit = mp.PhysicalUnit('K', 1., [0, 0, 0, 0, 1, 0, 0, 0, 0])
 
 
 def main():
@@ -18,30 +18,31 @@ def main():
     num = 0
     for i in range(40):
         for j in range(15):
-            vertices.append(mp.Vertex((i*15)+j, (i*15)+j+1, (float(i), float(j), 0.0)))
+            vertices.append(mp.Vertex(number=(i*15)+j, label=(i*15)+j+1, coords=(float(i), float(j), 0.0)))
             values1.append((num,))
             num += 0.5
     cells = []
     num = 0
     for i in range(39):
         for j in range(14):
-            cells.append(mp.Quad_2d_lin(msh, num, num, ((i*15)+j, (i+1)*15+j, (i+1)*15+j+1, ((i*15)+j+1))))
+            cells.append(mp.Quad_2d_lin(mesh=msh, number=num, label=num, vertices=((i*15)+j, (i+1)*15+j, (i+1)*15+j+1, ((i*15)+j+1))))
             values2.append((num,))
             num += 1
 
     msh.setup(vertices, cells)
 
-    # Check saving a mesh
-    msh.dumpToLocalFile('mesh.dat')
-    mp.Mesh.loadFromLocalFile('mesh.dat')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Check saving a mesh
+        msh.dumpToLocalFile(tmpdir+'/mesh.dat')
+        mp.Mesh.loadFromLocalFile(tmpdir+'/mesh.dat')
 
-    time = mp.PhysicalQuantity(1.0, 's')
     # field1 is vertex based, i.e., field values are provided at vertices
-    field1 = mp.Field(msh, mp.FieldID.FID_Temperature, mp.ValueType.Scalar, temperatureUnit, time, values1)
+    field1 = mp.Field(mesh=msh, fieldID=mp.FieldID.FID_Temperature, valueType=mp.ValueType.Scalar, unit=mp.U.K, time=mp.Q.s, value=values1)
     # field1.field2Image2D(title='Field', barFormatNum='%.0f')
     # field2 is cell based, i.e., field values are provided for cells
     field2 = mp.Field(
-        msh, mp.FieldID.FID_Temperature, mp.ValueType.Scalar, temperatureUnit, time, values2, mp.FieldType.FT_cellBased)
+        mesh=msh, fieldID=mp.FieldID.FID_Temperature, valueType=mp.ValueType.Scalar, unit=mp.U.K, time=mp.Q.s, value=values2, fieldType=mp.FieldType.FT_cellBased
+    )
 
     # evaluate field at given point
     position = (20.1, 7.5, 0.0)

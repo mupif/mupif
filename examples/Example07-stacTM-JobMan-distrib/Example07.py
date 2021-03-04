@@ -42,7 +42,7 @@ class Example07(workflow.Workflow):
         self.mechanicalSolver = None
         self.appsTunnel = None
 
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
@@ -104,7 +104,7 @@ class Example07(workflow.Workflow):
             self.registerModel(self.mechanicalSolver, 'mechanical')
 
             super(Example07, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
-                                              validateMetaData=validateMetaData, **kwargs)
+                                              validateMetaData=validateMetaData)
             if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
 
                 thermalSolverSignature = self.thermalSolver.getApplicationSignature()

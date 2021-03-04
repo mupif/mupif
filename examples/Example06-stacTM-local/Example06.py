@@ -39,9 +39,9 @@ class Example06(workflow.Workflow):
         self.registerModel(self.thermalSolver, 'thermal')
         self.registerModel(self.mechanicalSolver, 'mechanical')
 
-    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True):
         super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData,
-                                          validateMetaData=validateMetaData, **kwargs)
+                                          validateMetaData=validateMetaData)
 
         passingMD = {
             'Execution': {

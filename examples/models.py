@@ -28,9 +28,9 @@ def getline(f):
 class ThermalModel(mupif.model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
-    def __init__(self, metaData={}):
-        if len(metaData) == 0:
-            metaData = {
+    def __init__(self, metadata={}):
+        if len(metadata) == 0:
+            metadata = {
                 'Name': 'Stationary thermal problem',
                 'ID': 'Thermo-1',
                 'Description': 'Stationary heat conduction using finite elements on rectangular domain',
@@ -91,7 +91,7 @@ class ThermalModel(mupif.model.Model):
                     'Representation': 'Finite volumes'
                 }
             }
-        super(ThermalModel, self).__init__(metaData)
+        super(ThermalModel, self).__init__(metadata)
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
@@ -127,8 +127,8 @@ class ThermalModel(mupif.model.Model):
         self.b = None
         self.bp = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
         if self.file != "":
             self.readInput()
@@ -638,7 +638,7 @@ class ThermalNonstatModel(ThermalModel):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""
 
     def __init__(self):
-        metaData = {
+        metadata = {
             'Name': 'Non-stationary thermal problem',
             'ID': 'NonStatThermo-1',
             'Description': 'Non-stationary heat conduction using finite elements on a rectangular domain',
@@ -700,7 +700,7 @@ class ThermalNonstatModel(ThermalModel):
                 'Representation': 'Finite volumes'
             }
         }
-        super(ThermalNonstatModel, self).__init__(metaData)
+        super(ThermalNonstatModel, self).__init__(metadata)
         self.mesh = None
         self.capacity = 1.0  # J/kg/K
         self.density = 1.0
@@ -712,8 +712,8 @@ class ThermalNonstatModel(ThermalModel):
         self.P = None
         self.Tp = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
         if self.file != "":
             self.readInput(tria=True)
@@ -954,7 +954,7 @@ class MechanicalModel(mupif.model.Model):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self):
-        metaData = {
+        metadata = {
             'Name': 'Plane stress linear elastic',
             'ID': 'Mechanical-1',
             'Description': 'Plane stress problem with linear elastic thermo-elastic material',
@@ -1005,7 +1005,7 @@ class MechanicalModel(mupif.model.Model):
                 'Representation': 'Finite volumes'
             }
         }
-        super(MechanicalModel, self).__init__(metaData)
+        super(MechanicalModel, self).__init__(metadata)
         self.E = 30.0e+9  # ceramics
         self.nu = 0.25  # ceramics
         self.fx = [0., 0., 0., 0.]  # load in x
@@ -1031,8 +1031,8 @@ class MechanicalModel(mupif.model.Model):
         self.integral = 0.0
         self.T = None
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=False, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
         if self.file != "":
             self.readInput()

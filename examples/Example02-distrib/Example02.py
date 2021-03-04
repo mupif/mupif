@@ -25,7 +25,7 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metaData={}):
+    def __init__(self, metadata={}):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -62,7 +62,7 @@ class Application1(mp.Model):
                  'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
-        self.updateMetadata(metaData)
+        self.updateMetadata(metadata)
         self.value = 0.
 
     def getProperty(self, propID, time, objectID=0):
@@ -80,8 +80,8 @@ class Application1(mp.Model):
         else:
             raise apierror.APIError('Unknown property ID')
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
+        super().initialize(file, workdir, metadata, validateMetaData)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()
@@ -127,8 +127,8 @@ executionMetadata = {
     }
 }
 
-app1.initialize(metaData=executionMetadata)
-app2.initialize(metaData=executionMetadata)
+app1.initialize(metadata=executionMetadata)
+app2.initialize(metadata=executionMetadata)
 
 prop = None
 istep = None

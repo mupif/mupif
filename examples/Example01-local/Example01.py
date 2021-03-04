@@ -50,8 +50,8 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
+        super().initialize(file, workdir, metaData, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         md = {
@@ -124,8 +124,8 @@ class Application2(mp.Model):
         self.contrib = mp.ConstantProperty(
             value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.Q.s)
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super().initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
+        super().initialize(file, workdir, metaData, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         md = {

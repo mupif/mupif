@@ -50,8 +50,8 @@ class application1(model.Model):
         self.updateMetadata(metaData)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
-        super(application1, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
+        super(application1, self).initialize(file, workdir, metaData, validateMetaDatas)
 
     def getProperty(self, propID, time, objectID=0):
         if propID == PropertyID.PID_Time:

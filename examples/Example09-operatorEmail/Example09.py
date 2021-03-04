@@ -32,7 +32,7 @@ class EmailAPI(model.Model):
         self.outputs = {}
         self.key = 'Operator-results'
 
-    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True, **kwargs):
+    def initialize(self, file='', workdir='', metaData={}, validateMetaData=True):
         MD = {
             'Name': 'Email operator application',
             'ID': 'N/A',
@@ -66,7 +66,7 @@ class EmailAPI(model.Model):
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
         }
         self.updateMetadata(MD)
-        super(EmailAPI, self).initialize(file, workdir, metaData, validateMetaData, **kwargs)
+        super().initialize(file, workdir, metaData, validateMetaData)
 
     def setProperty(self, property, objectID=0):
         # remember the mapped value
