@@ -3,3 +3,5 @@ version: 2
 # default python is 3.7, we need 3.8
 python:
    version: 3.8
+   install:
+   - requirements: requirements.txt
