@@ -453,9 +453,13 @@ class PhysicalUnit(dumpable.Dumpable):
     it. Units can be multiplied, divided, and raised to integer powers.
     """
 
+    #: a dictionary mapping each name component to its associated integer power (e.g. C{{'m': 1, 's': -1}}) for M{m/s}). As a shorthand, a string may be passed which is assigned an implicit power 1.
     names: NumberDict=pydantic.Field(default_factory=NumberDict)
+    #: scaling factor
     factor: float
+    #: the integer powers for each of the nine base units
     powers: typing.List[int]
+    #: an additive offset to the base unit (used only for temperatures)
     offset: float = 0.
 
     #class Config:
@@ -473,50 +477,10 @@ class PhysicalUnit(dumpable.Dumpable):
     def powers_cook(cls,p):
         return list(p)
 
-
-
-    def __old_init__(self, names, factor, powers, offset=0):
-        """
-        :param names: a dictionary mapping each name component to its
-                      associated integer power (e.g. C{{'m': 1, 's': -1}})
-                      for M{m/s}). As a shorthand, a string may be passed
-                      which is assigned an implicit power 1.
-        :type names: C{dict} or C{str}
-        :param factor: a scaling factor
-        :type factor: C{float}
-        :param powers: the integer powers for each of the nine base units
-        :type powers: C{list} of C{int}
-        :param offset: an additive offset to the base unit (used only for
-                       temperatures)
-        :type offset: C{float}
-        """
-        if type(names) == type(''):
-            self.names = NumberDict()
-            self.names[names] = 1
-        else:
-            self.names = names
-        self.factor = factor
-        self.offset = offset
-        self.powers = list(powers)
-
-
     def __repr__(self):
         return '<PhysicalUnit ' + self.name() + '>'
 
     __str__ = __repr__
-
-    #
-    # no longer used in Python3
-    # use functools.total_ordering decorator and __lt__ and __eq__ instead
-    # https://stackoverflow.com/a/8277028/761090
-    #
-    def __cmp__(self, other):
-        if isPhysicalUnit(other):
-            if self.powers != other.powers:
-                raise TypeError('Incompatible units')
-            return cmp(self.factor, other.factor)
-        else:
-            return -1
 
     def __eq__(self,other):
         return self.powers==other.powers and self.factor==other.factor and self.offset==other.offset and self.names==other.names

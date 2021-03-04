@@ -63,7 +63,7 @@ class FieldType(IntEnum):
     FT_cellBased = 2
 
 @Pyro5.api.expose
-class Field(mupifobject.MupifObject): #, PhysicalQuantity):
+class Field(mupifobject.MupifObject, PhysicalQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -76,16 +76,19 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
     .. automethod:: __init__
     .. automethod:: _evaluate
     """
-
-    mesh: mesh.Mesh # 'mupif.mesh.Mesh'
+    #: Instance of a Mesh class representing the underlying discretization.
+    mesh: mesh.Mesh 
+    #: Field type (displacement, strain, temperature ...)
     fieldID: FieldID
+    #: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
     valueType: ValueType
-    unit: PhysicalUnit
+    #: Time associated with field values
     time: PhysicalQuantity
     fieldType: FieldType=FieldType.FT_vertexBased
+    #: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
     value: typing.List=[]
+    #: Optional ID of problem object/subdomain to which field is related, default = 0
     objectID: int=0
-    metadata: dict=pydantic.Field(default_factory=dict)
 
     @pydantic.validator('unit',pre=True,always=True)
     def conv_unit(cls,u):
@@ -133,16 +136,16 @@ class Field(mupifobject.MupifObject): #, PhysicalQuantity):
         """
         Initializes the field instance.
 
-        :param mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
-        :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType valueType: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
-        :param Physics.PhysicalUnits units: Field value units
-        :param Physics.PhysicalQuantity time: Time associated with field values
-        :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
+        :param mesh.Mesh mesh: 
+        :param FieldID fieldID: 
+        :param ValueType valueType: 
+        :param Physics.PhysicalUnits units: 
+        :param Physics.PhysicalQuantity time: 
+        :param values: 
         :type values: list of tuples representing individual values
         :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
-        :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
-        :param dict metadata: Optionally pass metadata for merging
+        :param int objectID: 
+        :param dict metadata: 
         """
         
         super(Field, self).__init__()

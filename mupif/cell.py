@@ -53,35 +53,20 @@ class Cell(dumpable.Dumpable):
 
     .. automethod:: __init__
     """
-    
-    # mesh: typing.Any=None
+
+    #: Local cell number; local numbering should start from 0 and should be continuous.
     number: int
+    #: Cell label, arbitrary unique number.
     label: typing.Optional[int]
+    #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
     def __init__(self,*,mesh=None,**kw):
         super().__init__(**kw)
+        #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized
         self.mesh=mesh
-        # assign mesh here so that it does not get serialized
 
     def __hash__(self): return id(self)
-
-    #def __post_init__(self):
-    #    self.bbox=None
-
-    def __old_init__(self, mesh, number, label, vertices):
-        """
-        Initializes the cell.
-
-        :param mesh.Mesh mesh: The mesh to which a cell belongs to
-        :param int number: A local cell number. Local numbering should start from 0 and should be continuous.
-        :param int label: A cell label. Arbitrary unique number.
-        :param tuple vertices: A cell vertices (local numbers)
-        """
-        self.mesh = mesh
-        self.number = number
-        self.label = label
-        self.vertices = tuple(vertices)
 
     # static attribute (cache)
     _subclasses = {}

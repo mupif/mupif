@@ -31,11 +31,9 @@
 Dictionary storing numerical values
 """
 
-#from .dumpable import Dumpable
 from .. import dumpable
 import pydantic
 
-# @dataclasses.dataclass
 class NumberDict(dumpable.Dumpable):
 
     """
@@ -49,20 +47,10 @@ class NumberDict(dumpable.Dumpable):
     and subtraction with other NumberDict instances, and multiplication
     and division by scalars.
     """
-    # dumpAttrs=[('data',lambda self: dict(self), lambda self,data: self.update(data))]
 
+    #: data storage itself
     data: dict=pydantic.Field(default_factory=dict)
 
-
-    # implement mutable mapping protocol https://stackoverflow.com/a/19775773/761090
-    # inheriting from abc.MutableMapping does the rest
-    #def __getitem__(self, item): return self.data.get(item,0)
-    #def __iter__(self): return self.data.__iter__()
-    #def __len__(self): return self.data.__len__()
-    #def __setitem__(self,key,item): return self.data.__setitem__(key,item)
-    #def __delitem__(self,key): return self.data.__delitem__(key)
-
-    # def keys(self): return self.data.keys()
 
     def __add__(self, other):
         sum_dict = NumberDict()
