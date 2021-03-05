@@ -31,7 +31,7 @@ jobs:
         pip install -q -r requirements.txt
     - name: Prepare wenv
       run: |
-        echo '{"arch":"win64"}' > ~/.wenv.json
+        echo '{"arch":"win64","pythonversion":"3.8.5"}' > ~/.wenv.json
         wenv init
         wenv pip install -q --only-binary=pyrsistent -r requirements.txt
     - name: Lint with flake8
