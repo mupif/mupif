@@ -559,9 +559,9 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
             plt.title(title)    
         if fileName:
             plt.savefig(fileName, bbox_inches='tight')
-        if show:
-            matPlotFig.canvas.draw()
-        # return plt
+        #if show:
+        #    matPlotFig.canvas.draw()
+        #return plt
 
     def field2Image2DBlock(self):
         """
