@@ -543,7 +543,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         yMin = min(vy)
         yMax = max(vy)
         
-        print(xMin, xMax, yMin, yMax)
+        #print(xMin, xMax, yMin, yMax)
         
         # Create the Triangulation; no triangles so Delaunay triangulation created.
         triang = matplotlib.tri.Triangulation(vx, vy)
