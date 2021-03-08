@@ -75,7 +75,7 @@ setup(
     # 'scipy' fails due to missing compiler for Lapack etc.
     install_requires=[
         'numpy', 'scipy', 'setuptools', 'config', 'nose', 'rednose', 'Pyro5', 'jsonpickle',
-        'jsonschema', 'matplotlib', 'pydantic', 'serpent', 'meshio'
+        'jsonschema', 'matplotlib', 'pydantic', 'serpent', 'meshio', 'h5py', 'asyncssh'
     ],
     include_package_data=True,
     zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)
