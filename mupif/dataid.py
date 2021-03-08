@@ -52,6 +52,8 @@ class FieldID(IntEnum):
     FID_FibreOrientation = 11
     FID_DomainNumber = 12
     FID_Permeability = 13
+    FID_Velocity = 14
+    FID_Pressure = 15
     FID_ESI_VPS_Displacement = 10001
 
     # GY field IDs
