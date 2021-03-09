@@ -471,7 +471,8 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         :param str fileName: if nonempty, a filename is written to the disk, usually png, pdf, ps, eps and svg are supported
         :param bool show: if the plot should be showed
         :param tuple figsize: size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
-        
+        :param Field warpField: vector field to wrap geometry
+        :param float warpScale: warping scale
         :return: handle to matplotlib figure
         """
         import numpy as np
