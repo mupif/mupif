@@ -21,7 +21,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
     """
 
     propID: dataid.PropertyID
-    valueType: valuetype.ValueType
+    valueType: valuetype.ValueType=valuetype.ValueType.Scalar
     objectID: int=0
 
     def __init__(self,*,metadata={},**kw):
