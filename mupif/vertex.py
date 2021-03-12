@@ -13,26 +13,14 @@ class Vertex(Dumpable):
     .. automethod:: __init__
     .. automethod:: __repr__
     """
-    number: int
-    label: typing.Optional[int]
-    coords: typing.Union[typing.Tuple[float,float],typing.Tuple[float,float,float]]
+    number: int #: Local vertex number
+    label: typing.Optional[int] #: Vertex label
+    coords: typing.Union[typing.Tuple[float,float],typing.Tuple[float,float,float]] #: 3D position vector of a vertex
 
     #class Config:
     #    frozen=True
 
     def __hash__(self): return id(self)
-
-    def __old_init__(self, number, label, coords=None):
-        """
-        Initializes the vertex.
-
-        :param int number: Local vertex number
-        :param int label: Vertex label
-        :param tuple coords: 3D position vector of a vertex
-        """
-        self.number = number
-        self.label = label
-        self.coords = coords
 
     def getCoordinates(self):
         """

@@ -209,35 +209,6 @@ class Model(mupifobject.MupifObject):
         #import pprint
         #pprint.pprint(self.metadata)
 
-    def __old_init__(self, metadata={}):
-        """
-        Constructor. Initializes the application.
-
-        :param dict metadata: Optionally pass metadata for merging.
-        """
-        super(Model, self).__init__()
-
-        # mupif internals (do not change)
-        self.pyroDaemon = None
-        self.externalDaemon = False
-        self.pyroNS = None
-        self.pyroURI = None
-        self.appName = None
-        
-        self.file = ""
-        self.workDir = ""
-        
-        (username, hostname) = pyroutil.getUserInfo()
-        self.setMetadata('Username', username)
-        self.setMetadata('Hostname', hostname)
-        self.setMetadata('Status', 'Initialized')
-        self.setMetadata('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-
-        self.setMetadata('Execution', {})
-        self.setMetadata('Solver', {})
-
-        self.updateMetadata(metadata)
-
     def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.

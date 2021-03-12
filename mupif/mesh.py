@@ -443,19 +443,6 @@ class UnstructuredMesh(Mesh):
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
 
-    # no longer used
-    def __old_init__(self):
-        """
-        Constructor.
-        """
-        Mesh.__init__(self)
-        self.vertexList = []
-        self.cellList = []
-        self._vertexOctree = None
-        self._cellOctree = None
-        # label2local_number maps
-        self._vertexDict = None
-        self._cellDict = None
 
     def setup(self, vertexList, cellList):
         """
@@ -491,20 +478,6 @@ class UnstructuredMesh(Mesh):
         ans = UnstructuredMesh()
         ans.setup(vertexList, cellList)
         return ans
-
-    def __old_getstate__(self):
-        """Customized method returning dictionary for pickling.
-
-        We don't want to pickle (and pass over the wire) cell and vertex localizers -- those may be based on
-        c++ fastOctant, which the other side does not necessarily support.
-
-        Therefore return ``__dict__`` (that's what pickle does in the absence of ``__getstate__``) but with
-        ``_vertexOctree`` and ``_cellOctree`` set to ``None``.
-        """
-        # shallow copy of __dict__
-        d2 = self.__dict__.copy()
-        d2['_vertexOctree'] = d2['_cellOctree'] = None
-        return d2
 
     def getNumberOfVertices(self):
         """

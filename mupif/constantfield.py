@@ -41,27 +41,9 @@ class ConstantField(field.Field):
     Representation of field with constant value. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. 
 
-    .. automethod:: __init__
     .. automethod:: _evaluate
     """
 
-    def __old_init__(self, mesh, fieldID, valueType, units, time, values=None, fieldType=field.FieldType.FT_vertexBased, objectID=0, metadata={}):
-        """
-        Initializes the field instance.
-
-        :param mesh.Mesh mesh: Instance of a Mesh class representing the underlying discretization
-        :param FieldID fieldID: Field type (displacement, strain, temperature ...)
-        :param ValueType valueType: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
-        :param Physics.PhysicalUnits units: Field value units
-        :param Physics.PhysicalQuantity time: Time associated with field values
-        :param values: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
-        :type values: tuple representing field value (constant)
-        :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
-        :param int objectID: Optional ID of problem object/subdomain to which field is related, default = 0
-        :param dict metadata: Optionally pass metadata for merging
-        """
-        
-        super().__init__(mesh, fieldID, valueType, units, time, values, fieldType, objectID, metadata)
 
     def evaluate(self, positions, eps=0.0):
         """

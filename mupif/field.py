@@ -118,60 +118,6 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         })
 
 
-    #
-    # NO LONGER USED
-    #
-    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def __old_init__(
-        self,
-        mesh: typing.Any, # should be mupif.mesh.Mesh, but pydantic does not validate subclasses (?)
-        fieldID: FieldID,
-        valueType: ValueType,
-        units: typing.Union[PhysicalUnit,str],
-        time: PhysicalQuantity,
-        values: typing.Union[typing.List,numpy.ndarray]=None,
-        fieldType: FieldType=FieldType.FT_vertexBased,
-        objectID: int=0,
-        metadata: dict={}):
-        """
-        Initializes the field instance.
-
-        :param mesh.Mesh mesh: 
-        :param FieldID fieldID: 
-        :param ValueType valueType: 
-        :param Physics.PhysicalUnits units: 
-        :param Physics.PhysicalQuantity time: 
-        :param values: 
-        :type values: list of tuples representing individual values
-        :param FieldType fieldType: Optional, determines field type (values specified as vertex or cell values), default is FT_vertexBased
-        :param int objectID: 
-        :param dict metadata: 
-        """
-        
-        super(Field, self).__init__()
-        self.mesh = mesh
-        self.fieldID = fieldID
-        self.valueType = valueType
-        self.time = time
-        self.uri = None  # pyro uri; used in distributed setting
-        # self.log = logging.getLogger()
-        self.fieldType = fieldType
-        self.objectID = objectID        
-        if values is None:
-            if self.fieldType == FieldType.FT_vertexBased:
-                ncomponents = mesh.getNumberOfVertices()
-            else:
-                ncomponents = mesh.getNumberOfCells()
-            self.value = zeros((ncomponents, self.getRecordSize()))
-        else:
-            self.value = values
-
-        if physicalquantities.isPhysicalUnit(units):
-            self.unit = units
-        else:
-            self.unit = physicalquantities.findUnit(units)
-            
-
     def getRecordSize(self):
         """
         Return the number of scalars per value, depending on :obj:`valueType` passed when constructing the instance.

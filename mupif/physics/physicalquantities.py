@@ -152,34 +152,6 @@ class PhysicalQuantity(dumpable.Dumpable):
         #sys.stderr.write(f'findUnit(u): {findUnit(u)}\n')
         return findUnit(u)
 
-    def __old_init__(self, *args):
-        """
-        There are two constructor calling patterns:
-
-            1. PhysicalQuantity(value, unit), where value is any number
-            and unit is either string defining the unit or PhysicalUnit instance
-
-            2. PhysicalQuantity(value_with_unit), where value_with_unit
-            is a string that contains both the value and the unit,
-            i.e. '1.5 m/s'. This form is provided for more convenient
-            interactive use.
-
-        :param args: either (value, unit) or (value_with_unit,)
-        :type args: (number, C{str}) or (C{str},)
-        """
-        if len(args) == 2:
-            self.value = args[0]
-            if isPhysicalUnit(args[1]):
-                self.unit = args[1]
-            else:
-                self.unit = findUnit(args[1])
-        else:
-            s = args[0].strip()
-            match = PhysicalQuantity._number.match(s)
-            if match is None:
-                raise TypeError('No number found')
-            self.value = float(match.group(0))
-            self.unit = findUnit(s[len(match.group(0)):])
 
     _number = re.compile('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?')
 

@@ -45,17 +45,6 @@ class MupifObject(dumpable.Dumpable):
 
     metadata: dict = pydantic.Field(default_factory=dict)
 
-    def __old_init__(self, jsonFileName=''):
-        """
-        Constructor. Initializes the object
-        :param str jsonFileName: Optionally instantiate from JSON file
-        """
-        self.metadata = {}
-        
-        if jsonFileName:
-            with open(jsonFileName) as f:
-                self.metadata = json.load(f)
-
     def getMetadata(self, key):
         """
         Returns metadata associated to given key

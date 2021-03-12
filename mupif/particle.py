@@ -33,17 +33,9 @@ class Particle(mupifobject.MupifObject):
     Particles are typically managed by ParticleSet. Particle class is convinience mapping to ParticleSet.
     """
     
-    set: 'ParticleSet'
-    num: int
+    set: 'ParticleSet' #: master particle set
+    num: int #: particle index
 
-    def __old_init__(self, particleSet, num):
-        """
-        Constructor, creates representation of particle in particleSet
-        @param ParticleSet particleSet: master particle set 
-        @param int num: particle index
-        """
-        self.set = particleSet
-        self.num = num
     def getPosition (self):
         """
         Returns particle position
@@ -86,34 +78,13 @@ class ParticleSet(mupifobject.MupifObject):
     """
 
     id: int
-    size: int
-    xc: typing.List[float]=[]
-    yc: typing.List[float]=[]
-    zc: typing.List[float]=[]
+    size: int                   #: number of particles in the set
+    xc: typing.List[float]=[]   #: array of particle x coordinates
+    yc: typing.List[float]=[]   #: array of particle y coordinates
+    zc: typing.List[float]=[]   #: array of particle z coordinates
     rvesize: float=0
     inclusionsize: float=0
-    attributes: dict=pydantic.Field(default_factory=dict)
-
-
-    def __old_init__(self, id, size, xcoords, ycoords, zcoords, rvesize=0, inclusionsize=0, **kwargs):
-        """
-        Constructor.
-        @param int size: number of particles in the set
-        @param list xcoords: array of particle x coordinates
-        @param list ycoords: array of particle x coordinates
-        @param list zcoords: array of particle x coordinates
-        @param kwargs: optional keyword arguments to define additional particle attributes, if type of values should be arrays with attribute values for each particle
-        """
-        self.id = id
-        self.size = size
-        self.xc = list(xcoords)
-        self.yc = list(ycoords)
-        self.zc = list(zcoords)
-        self.rvesize = rvesize
-        self.inclusionsize = inclusionsize
-        assert ((len(self.xc) == self.size) and (len(self.yc) == self.size) and (len(self.zc) == self.size)), "Size mismatch in ParticleSet.__init__"
-        self.attributes = {} #attributes per particle
-        self.attributes.update(kwargs)
+    attributes: dict=pydantic.Field(default_factory=dict) #: optional keyword arguments to define additional particle attributes, if type of values should be arrays with attribute values for each particle
 
 
     def getParticle (self, i):

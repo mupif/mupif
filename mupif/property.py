@@ -21,8 +21,8 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
     """
 
     propID: dataid.PropertyID
-    valueType: valuetype.ValueType=valuetype.ValueType.Scalar
-    objectID: int=0
+    valueType: valuetype.ValueType=valuetype.ValueType.Scalar #: type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
+    objectID: int=0 #: Optional ID of problem object/subdomain to which property is related
 
     def __init__(self,*,metadata={},**kw):
         super().__init__(metadata=metadata,**kw)
@@ -37,37 +37,6 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
 
         #import pprint
         #pprint.pprint(self.metadata)
-
-    def __old_init__(self, propID, valueType, units, objectID=0, metadata={}):
-        """
-        Initializes the property.
-
-        :param PropertyID propID: Property ID
-        :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
-        :param units: Property units or string
-        :type units: Physics.PhysicalUnits or string
-        :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
-        """
-        super().__init__(self,propID=propID,valueType=valueType,unit=units,objectID=objectID,metadata=metadata)
-        return
-        mupifobject.MupifObject.__init__(self)
-
-        self.propID = propID
-        # self.units = units
-        self.valueType = valueType
-        self.objectID = objectID
-
-        if PQ.isPhysicalUnit(units):
-            self.unit = units
-        else:
-            self.unit = PQ.findUnit(units)
-
-        self.setMetadata('Type', 'mupif.property.Property')
-        self.setMetadata('Type_ID', str(self.propID))
-        self.setMetadata('Units', self.unit.name())
-        self.setMetadata('ValueType', str(self.valueType))
-
-        self.updateMetadata(metadata)
 
     def getValue(self, time=None, **kwargs):
         """
@@ -129,27 +98,6 @@ class ConstantProperty(Property):
     value: typing.Union[float,typing.Tuple[float,...]]
     time: typing.Optional[PhysicalQuantity]
 
-    def __old_init__(self, value, propID, valueType, units, time=None, objectID=0, metadata={}):
-        """
-        Initializes the property.
-
-        :param tuple value: A tuple (array) representing property value
-        :param PropertyID propID: Property ID
-        :param ValueType valueType: Type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
-        :param Physics.PhysicalQuantity time: Time when property is evaluated. If None (default), no time dependence
-        :param units: Property units or string
-        :type units: Physics.PhysicalUnits or string
-        :param int objectID: Optional ID of problem object/subdomain to which property is related, default = 0
-        """
-
-        Property.__init__(self, propID, valueType, units, objectID)
-        self.value = value
-        if PQ.isPhysicalQuantity(time) or time is None:
-            self.time = time
-        else:
-            raise TypeError("PhysicalValue expected for time")
-
-        self.updateMetadata(metadata)
 
     def __str__(self):
         return str(self.value) + '{' + self.unit.name() + ',' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
