@@ -81,26 +81,13 @@ class Field(value.Value):
     mesh: mesh.Mesh 
     #: Field type (displacement, strain, temperature ...)
     fieldID: FieldID
-    #: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
-    # valueType: ValueType
     #: Time associated with field values
     time: Quantity
+    #: whether the field is vertex-based or cell-based
     fieldType: FieldType=FieldType.FT_vertexBased
-    #: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
-    #  value: typing.List=[]
     #: Optional ID of problem object/subdomain to which field is related, default = 0
     objectID: int=0
 
-    #@pydantic.validator('unit',pre=True,always=True)
-    #def conv_unit(cls,u):
-    #    if isinstance(u,Unit): return u
-    #    return Unit(u)
-
-    #@pydantic.validator('value',pre=True,always=True)
-    #def conv_value(cls,v,values,**kwargs):
-    #    if isinstance(v,np.ndarray): return v.tolist()
-    #    if v is None: return []
-    #    return v
 
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor

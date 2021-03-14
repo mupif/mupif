@@ -7,6 +7,7 @@ import pydantic
 
 from . import dataid
 from . import value
+from . import units
 from .units import Quantity,Unit,findUnit
 
 @Pyro5.api.expose
@@ -64,9 +65,7 @@ class ConstantProperty(Property):
     .. automethod:: __init__
     """
 
-    #value: typing.Union[float,typing.Tuple[float,...]]
     time: typing.Optional[Quantity]
-
 
     def __str__(self):
         return str(self.value) + '{' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
