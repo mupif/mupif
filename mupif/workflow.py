@@ -92,10 +92,10 @@ class Workflow(model.Model):
         self.updateMetadata(metadata)
 
         # print (targetTime)
-        if isinstance(targetTime,PhysicalQuantity):
+        if isinstance(targetTime,units.Quantity):
             self.targetTime = targetTime
         else:
-            raise TypeError('targetTime is not PhysicalQuantity')
+            raise TypeError('targetTime is not Quantity')
         
         self.file = file
         if workdir == '':
@@ -119,7 +119,7 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Running')
         self.setMetadata('Progress', 0.)
 
-        time = 0.*PQ.Q.s
+        time = 0.*units.U.s
         timeStepNumber = 0
         
         while abs(time.inUnitsOf('s').getValue()-self.targetTime.inUnitsOf('s').getValue()) > 1.e-6:

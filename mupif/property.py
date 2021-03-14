@@ -7,8 +7,7 @@ import pydantic
 
 from . import dataid
 from . import valuetype
-from . import units
-from .units import Quantity,Unit
+from .units import Quantity,Unit,findUnit
 
 @Pyro5.api.expose
 class Property(mupifobject.MupifObject,Quantity):
@@ -219,7 +218,7 @@ class ConstantProperty(Property):
         :rtype: L{Quantity} or C{tuple} of L{Quantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = list(map(unit.findUnit, units))
+        units = list(map(findUnit, units))
         unit = units[0]
         value = self._convertValue(self.value, self.unit, unit)
         return ConstantProperty(value=value, propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)

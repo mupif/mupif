@@ -163,6 +163,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                 repr(self.unit.name()) + ')')
 
     def _sum(self, other, sign1, sign2):
+        if isinstance(other,PhysicalUnit): other=1.*other
         if not isinstance(other,PhysicalQuantity):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
@@ -173,17 +174,21 @@ class PhysicalQuantity(dumpable.Dumpable):
         return self.__class__(value=new_value,unit=self.unit)
 
     def __add__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         return self._sum(other, 1, 1)
 
     __radd__ = __add__
 
     def __sub__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         return self._sum(other, 1, -1)
 
     def __rsub__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         return self._sum(other, -1, 1)
 
     def __cmp__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         diff = self._sum(other, 1, -1)
         if isinstance(diff.value, collections.Iterable):
             return all(v == 0 for v in diff.value)
@@ -191,6 +196,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             return cmp(diff.value, 0)
 
     def __eq__(self, other):  # python3 stuff
+        if isinstance(other,PhysicalUnit): other=1.*other
         diff = self._sum(other, 1, -1)
         if isinstance(diff.value, collections.Iterable):
             return all(v == 0 for v in diff.value)
@@ -198,6 +204,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             return diff.value == 0
 
     def __lt__(self, other):  # python3 stuff
+        if isinstance(other,PhysicalUnit): other=1.*other
         diff = self._sum(other, 1, -1)
         if isinstance(diff.value, collections.Iterable):
             return all(v < 0 for v in diff.value)
@@ -205,6 +212,7 @@ class PhysicalQuantity(dumpable.Dumpable):
             return diff.value < 0
     
     def __mul__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         if isinstance(self.value, collections.Iterable):
             # tuple valued (vector)
             if not isinstance(other,PhysicalQuantity):
@@ -232,6 +240,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     __rmul__ = __mul__
 
     def __truediv__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         if isinstance(self.value, collections.Iterable):
             # tuple valued (vector)
             if not isinstance(other,PhysicalQuantity):
@@ -257,6 +266,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                 return self.__class__(value=value, unit=unit)
 
     def __rtruediv__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         if not isinstance(other,PhysicalQuantity):
             return self.__class__(value=other/self.value, unit=pow(self.unit, -1))
         value = other.value/self.value
@@ -270,6 +280,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     __rdiv__ = __rtruediv__
 
     def __pow__(self, other):
+        if isinstance(other,PhysicalUnit): other=1.*other
         if isinstance(other,PhysicalQuantity):
             raise TypeError('Exponents must be dimensionless')
         return self.__class__(value=pow(self.value, other), unit=pow(self.unit, other))
@@ -338,7 +349,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                     rounded = value
                 else:
                     rounded = _round(value)
-                result.append(self.__class__(value=rounded, units=units[i]))
+                result.append(self.__class__(value=rounded, unit=units[i]))
                 value = value - rounded
                 unit = units[i]
             return tuple(result)
@@ -410,6 +421,11 @@ class PhysicalQuantity(dumpable.Dumpable):
         else:
             raise TypeError('Argument of tan must be an angle')
 
+    def asUnit(self):
+        'Return this quantity as a unit'
+        return makeUnit('',self.value*self.unit.factor,self.unit.powers,self.value*self.unit.offset)
+
+
 
 
 
@@ -455,6 +471,7 @@ class PhysicalUnit(dumpable.Dumpable):
     __str__ = __repr__
 
     def __eq__(self,other):
+        if isinstance(other,PhysicalQuantity): return 1.*self==other
         return self.powers==other.powers and self.factor==other.factor and self.offset==other.offset and self.names==other.names
     def __lt__(self,other):
         return self.powers<other.powers or self.factor<other.factor or self.offset<other.offset and self.names<other.names
@@ -468,10 +485,8 @@ class PhysicalUnit(dumpable.Dumpable):
                                 powers=list(map(lambda a, b: a+b,
                                     self.powers, other.powers)))
         else:
-            return PhysicalUnit(names=self.names+{str(other): 1},
-                                factor=self.factor*other,
-                                powers=self.powers,
-                                offset=self.offset * other)
+            assert isinstance(other,(float,int))
+            return PhysicalQuantity(value=other,unit=self)
 
     __rmul__ = __mul__
 
@@ -483,9 +498,13 @@ class PhysicalUnit(dumpable.Dumpable):
                                 factor=self.factor/other.factor,
                                 powers=list(map(lambda a, b: a-b,
                                     self.powers, other.powers)))
+        # this will force calling PhysicalQuantity.__rtruediv__ with operands swapped
+        elif isinstance(other,PhysicalQuantity): return NotImplemented
         else:
-            return PhysicalUnit(names=self.names+{str(other): -1},
-                                factor=self.factor/other, powers=self.powers)
+            assert isinstance(other,(float,int))
+            unit=PhysicalUnit(names=self.names+{str(other): -1},
+                                factor=self.factor, powers=self.powers)
+            return PhysicalQuantity(value=1./other,unit=unit)
 
     def __rtruediv__(self, other):
         if self.offset != 0 or (isinstance(other,PhysicalUnit) and other.offset != 0):
@@ -496,9 +515,12 @@ class PhysicalUnit(dumpable.Dumpable):
                                 powers=list(map(lambda a, b: a-b,
                                     other.powers, self.powers)))
         else:
-            return PhysicalUnit(names={str(other): 1}-self.names,
-                                factor=other/self.factor,
+            assert isinstance(other,(float,int))
+            unit=PhysicalUnit(names={str(other): 1}-self.names,
+                                factor=1./self.factor,
                                 powers=list(map(lambda x: -x, self.powers)))
+            return PhysicalQuantity(value=other,unit=unit)
+
     __div__ = __truediv__
     __rdiv__ = __rtruediv__
 
@@ -726,6 +748,7 @@ def _addUnit(name, unit, comment=''):
                 del _unit_table[cruft]
             except:
                 pass
+    if isinstance(unit,PhysicalQuantity): unit=unit.asUnit()
     assert isinstance(unit,PhysicalUnit)
     #sys.stderr.write(f'_addUnit: {name}, {unit}\n')
     unit.setName(name)
@@ -940,18 +963,18 @@ Q=QuantityProxy()
 
 if __name__ == '__main__':
 
-    l = PhysicalQuantity(10., 'm')
-    big_l = PhysicalQuantity(10., 'km')
+    l = PhysicalQuantity(value=10., unit='m')
+    big_l = PhysicalQuantity(value=10., unit='km')
     print(big_l + l)
-    t = PhysicalQuantity(314159., 's')
+    t = PhysicalQuantity(value=314159., unit='s')
     print(t.inUnitsOf('d','h','min','s'))
 
     p = PhysicalQuantity # just a shorthand...
 
-    e = p('2.7 Hartree*Nav')
+    e = p(value=2.7,unit='Hartree*Nav')
     e.convertToUnit('kcal/mol')
     print(e)
     print(e.inBaseUnits())
 
-    freeze = p('0 degC')
+    freeze = p(value=0,unit='degC')
     print(freeze.inUnitsOf ('degF'))

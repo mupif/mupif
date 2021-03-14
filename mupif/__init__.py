@@ -84,7 +84,7 @@ Q=sys.modules['mupif.units'].Q
 # print([k for k in sys.modules.keys() if k.startswith('mupif.')])
 
 # make flake8 happy
-# from . import dumpable, util
+from . import dumpable, util
 
 ##
 ## register all types deriving (directly or indirectly) from Dumpable to Pyro5
@@ -108,7 +108,8 @@ def _registerDumpable(clss=dumpable.Dumpable):
 # register all dumpable types
 _registerDumpable()
 
-
+# this is for pydantic
+from . import field
 field.Field.update_forward_refs()
 
 

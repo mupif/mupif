@@ -37,11 +37,11 @@ def main():
         mp.Mesh.loadFromLocalFile(tmpdir+'/mesh.dat')
 
     # field1 is vertex based, i.e., field values are provided at vertices
-    field1 = mp.Field(mesh=msh, fieldID=mp.FieldID.FID_Temperature, valueType=mp.ValueType.Scalar, unit=mp.U.K, time=mp.Q.s, value=values1)
+    field1 = mp.Field(mesh=msh, fieldID=mp.FieldID.FID_Temperature, valueType=mp.ValueType.Scalar, unit=mp.U.K, time=1.*mp.Q.s, value=values1)
     # field1.field2Image2D(title='Field', barFormatNum='%.0f')
     # field2 is cell based, i.e., field values are provided for cells
     field2 = mp.Field(
-        mesh=msh, fieldID=mp.FieldID.FID_Temperature, valueType=mp.ValueType.Scalar, unit=mp.U.K, time=mp.Q.s, value=values2, fieldType=mp.FieldType.FT_cellBased
+        mesh=msh, fieldID=mp.FieldID.FID_Temperature, valueType=mp.ValueType.Scalar, unit=mp.U.K, time=1.*mp.Q.s, value=values2, fieldType=mp.FieldType.FT_cellBased
     )
 
     # evaluate field at given point
