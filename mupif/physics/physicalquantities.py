@@ -33,6 +33,7 @@ table, so use this at your own risk.
 # XXX
 from .numberdict import NumberDict
 import numpy
+import numpy as np
 import re, string
 from functools import reduce
 import Pyro5
@@ -40,6 +41,7 @@ import collections
 from mupif import dumpable
 import functools
 import sys
+from .. import dumpable
 
 from pydantic.dataclasses import dataclass
 import typing
@@ -142,8 +144,14 @@ class PhysicalQuantity(dumpable.Dumpable):
     print value
     """
 
-    value: typing.Union[float,typing.List[float]]=0
+    value: dumpable.NumpyArrayFloat64=pydantic.Field(default_factory=lambda: np.array([]))
     unit: 'PhysicalUnit'
+
+    @pydantic.validator('value',pre=True,always=True)
+    def convert_value(cls,v):
+        if isinstance(v,np.ndarray): return v
+        #return np.atleast_1d(v)
+        return np.array(v)
 
     @pydantic.validator('unit',pre=True,always=True)
     def convert_unit(cls,u):
@@ -151,6 +159,20 @@ class PhysicalQuantity(dumpable.Dumpable):
         if isinstance(u,PhysicalUnit): return u
         #sys.stderr.write(f'findUnit(u): {findUnit(u)}\n')
         return findUnit(u)
+
+
+    @staticmethod
+    def _isScalarValue(v):
+        return (
+            isinstance(v,(float,int))
+            or (
+                isinstance(v,np.ndarray) and
+                (v.shape==() or v.shape==(1,))
+            )
+        )
+
+    def hasScalarValue(self): return PhysicalQuantity._isScalarValue(self.value)
+    def hasVectorValue(self): return not PhysicalQuantity._isScalarValue(self.value)
 
 
     _number = re.compile('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?')
@@ -167,7 +189,7 @@ class PhysicalQuantity(dumpable.Dumpable):
         if not isinstance(other,PhysicalQuantity):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
-        if isinstance(self.value, collections.Iterable):
+        if self.hasVectorValue():
             new_value = tuple((sign1*v1+sign2*v2*factor for v1, v2 in zip(self.value, other.value)))
         else:
             new_value = sign1*self.value + sign2*other.value*factor
@@ -190,7 +212,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __cmp__(self, other):
         if isinstance(other,PhysicalUnit): other=1.*other
         diff = self._sum(other, 1, -1)
-        if isinstance(diff.value, collections.Iterable):
+        if diff.hasVectorValue():
             return all(v == 0 for v in diff.value)
         else:
             return cmp(diff.value, 0)
@@ -198,7 +220,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __eq__(self, other):  # python3 stuff
         if isinstance(other,PhysicalUnit): other=1.*other
         diff = self._sum(other, 1, -1)
-        if isinstance(diff.value, collections.Iterable):
+        if diff.hasVectorValue():
             return all(v == 0 for v in diff.value)
         else:
             return diff.value == 0
@@ -206,21 +228,21 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __lt__(self, other):  # python3 stuff
         if isinstance(other,PhysicalUnit): other=1.*other
         diff = self._sum(other, 1, -1)
-        if isinstance(diff.value, collections.Iterable):
+        if diff.hasVectorValue():
             return all(v < 0 for v in diff.value)
         else:
             return diff.value < 0
     
     def __mul__(self, other):
         if isinstance(other,PhysicalUnit): other=1.*other
-        if isinstance(self.value, collections.Iterable):
+        if self.hasVectorValue():
             # tuple valued (vector)
             if not isinstance(other,PhysicalQuantity):
                 newVal = tuple((v*other for v in self.value))
                 return self.__class__(value=newVal, unit=self.unit)
             else:
                 # other is physical quantity with units
-                if isinstance(other.value, collections.Iterable):
+                if self.hasVectorValue():
                     raise TypeError('Incompatible types')
                 else:
                     # scalar
@@ -240,18 +262,20 @@ class PhysicalQuantity(dumpable.Dumpable):
     __rmul__ = __mul__
 
     def __truediv__(self, other):
+        # sys.stderr.write(f'__truediv__: {str(self)} {str(self.value)} / {str(other)}')
         if isinstance(other,PhysicalUnit): other=1.*other
-        if isinstance(self.value, collections.Iterable):
+        # if isinstance(other,PhysicalQuantity): return 
+        if self.hasVectorValue():
             # tuple valued (vector)
             if not isinstance(other,PhysicalQuantity):
                 newVal = tuple((v/other for v in self.value))
                 return self.__class__(value=newVal, unit=self.unit)
             else:
                 # other is physical quantity with units
-                if isinstance(other.value, collections.Iterable):
-                    raise TypeError('Incompatible types')
+                if self.hasVectorValue():
+                    raise TypeError(f'Incompatible types: {self.value.__class__.__name__} and {other.value.__class__.__name__}')
                 else:
-                    # scalar
+                    # scalar or PhysicalQuantity
                     newVal = tuple((v/other.value for v in self.value))
                     unit = self.unit/other.unit
                     return self.__class__(value=newVal, unit=unit)
@@ -393,8 +417,9 @@ class PhysicalQuantity(dumpable.Dumpable):
 
     def getValue(self):
         """Return value (float) of physical quantity (no unit)."""
-        if isinstance(self.value,float): return self.value
-        return tuple(self.value)
+        #if isinstance(self.value,float): return self.value
+        #return tuple(self.value)
+        return self.value
 
     def getUnitName(self):
         """Return unit (string) of physical quantity."""
@@ -486,6 +511,7 @@ class PhysicalUnit(dumpable.Dumpable):
                                     self.powers, other.powers)))
         else:
             assert isinstance(other,(float,int))
+            # sys.stderr.write(f'{self} __mul__ {other} {other.__class__.__name__}\n')
             return PhysicalQuantity(value=other,unit=self)
 
     __rmul__ = __mul__
@@ -677,7 +703,7 @@ def _round(x):
 
 def _convertValue(value, src_unit, target_unit):
     (factor, offset) = src_unit.conversionTupleTo(target_unit)
-    if isinstance(value, collections.Iterable):
+    if not PhysicalQuantity._isScalarValue(value):
         return tuple((v+offset)*factor for v in value)
     else:
         return (value + offset) * factor

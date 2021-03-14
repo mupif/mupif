@@ -7,7 +7,6 @@ import jsonpickle
 import time  # for sleep
 import logging
 log = logging.getLogger()
-import mupif.physics.physicalquantities as PQ
 
 #
 # Expected response from operator: E-mail with "CSJ01" (workflow + jobID)
@@ -114,7 +113,7 @@ class EmailAPI(model.Model):
                 time.sleep(60)  # wait
             
     def getCriticalTimeStep(self):
-        return PQ.PhysicalQuantity(1.0, 's')
+        return 1.*mp.U.s
 
 
 #################################################

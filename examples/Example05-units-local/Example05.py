@@ -3,7 +3,6 @@ from builtins import str
 import sys
 import logging
 sys.path.append('../..')
-import mupif.physics.physicalquantities as PQ
 import mupif as mp
 
 log = logging.getLogger()
@@ -63,7 +62,7 @@ class Application1(mp.Model):
         self.value = 1.0*time
 
     def getCriticalTimeStep(self):
-        return .1*mp.Q.s
+        return .1*mp.U.s
 
 
 time = 0
@@ -103,7 +102,7 @@ while abs(time - targetTime) > 1.e-6:
     v = app1.getProperty(mp.PropertyID.PID_Time, istep.getTime())
     
     # Create a PhysicalQuantity object
-    V = PQ.PhysicalQuantity(value=v.getValue(istep.getTime())[0], unit=v.getUnits())
+    V = mp.Quantity(value=v.getValue(istep.getTime())[0], unit=v.getUnit())
 
     val = V.inBaseUnits()
     log.debug(val)

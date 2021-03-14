@@ -88,7 +88,7 @@ class Application1(mp.Model):
         self.value = 1.0*time
 
     def getCriticalTimeStep(self):
-        return .1*mp.Q.s
+        return .1*mp.U.s
 
     def getAsssemblyTime(self, tstep):
         return tstep.getTime()

@@ -23,7 +23,7 @@
 from __future__ import annotations
 
 from . import cell
-from .valuetype import ValueType
+from .value import ValueType
 from . import bbox
 from . import apierror
 from . import mupifobject
@@ -31,9 +31,11 @@ from .dataid import FieldID
 from . import cellgeometrytype
 #import mupif.mesh
 from . import mesh
+from . import value
 from .units import Quantity, Unit
 
 import meshio
+import sys
 
 import pydantic
 import typing
@@ -62,7 +64,7 @@ class FieldType(IntEnum):
     FT_cellBased = 2
 
 @Pyro5.api.expose
-class Field(mupifobject.MupifObject, Quantity):
+class Field(value.Value):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -80,25 +82,25 @@ class Field(mupifobject.MupifObject, Quantity):
     #: Field type (displacement, strain, temperature ...)
     fieldID: FieldID
     #: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
-    valueType: ValueType
+    # valueType: ValueType
     #: Time associated with field values
     time: Quantity
     fieldType: FieldType=FieldType.FT_vertexBased
     #: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
-    value: typing.List=[]
+    #  value: typing.List=[]
     #: Optional ID of problem object/subdomain to which field is related, default = 0
     objectID: int=0
 
-    @pydantic.validator('unit',pre=True,always=True)
-    def conv_unit(cls,u):
-        if isinstance(u,Unit): return u
-        return Unit(u)
+    #@pydantic.validator('unit',pre=True,always=True)
+    #def conv_unit(cls,u):
+    #    if isinstance(u,Unit): return u
+    #    return Unit(u)
 
-    @pydantic.validator('value',pre=True,always=True)
-    def conv_value(cls,v,values,**kwargs):
-        if isinstance(v,np.ndarray): return v.tolist()
-        if v is None: return []
-        return v
+    #@pydantic.validator('value',pre=True,always=True)
+    #def conv_value(cls,v,values,**kwargs):
+    #    if isinstance(v,np.ndarray): return v.tolist()
+    #    if v is None: return []
+    #    return v
 
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
@@ -109,7 +111,7 @@ class Field(mupifobject.MupifObject, Quantity):
             self.value=np.zeros((ncomp,self.valueType.getNumberOfComponents())).tolist()
         # add some extra metadata
         self.updateMetadata({
-            'Units':self.unit.name(),
+            'Units':self.getUnit().name(),
             'Type':'mupif.field.Field',
             'Type_ID':str(self.fieldID),
             'FieldType':str(self.fieldType),
@@ -117,21 +119,6 @@ class Field(mupifobject.MupifObject, Quantity):
         })
 
 
-    def getRecordSize(self):
-        """
-        Return the number of scalars per value, depending on :obj:`valueType` passed when constructing the instance.
-
-        :return: number of scalars (1,3,9 respectively for scalar, vector, tensor)
-        :rtype: int
-        """
-        if self.valueType == ValueType.Scalar:
-            return 1
-        elif self.valueType == ValueType.Vector:
-            return 3
-        elif self.valueType == ValueType.Tensor:
-            return 9
-        else:
-            raise ValueError("Invalid value of Field.valueType (%d)." % self.valueType)
 
     def getMesh(self):
         """
@@ -141,15 +128,6 @@ class Field(mupifobject.MupifObject, Quantity):
         :rtype: mesh.Mesh
         """
         return self.mesh
-
-    def getValueType(self):
-        """
-        Returns ValueType of the field, e.g. scalar, vector, tensor.
-
-        :return: Returns value type of the receiver
-        :rtype: ValueType
-        """
-        return self.valueType
 
     def getFieldID(self):
         """
@@ -210,10 +188,10 @@ class Field(mupifobject.MupifObject, Quantity):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return Quantity(value=ans, unit=self.unit)
+            return Quantity(value=ans, unit=self.getUnit())
         else:
             # single position passed
-            return Quantity(value=self._evaluate(positions, eps), unit=self.unit)
+            return Quantity(value=self._evaluate(positions, eps), unit=self.getUnit())
 
     def _evaluate(self, position, eps):
         """
@@ -300,7 +278,7 @@ class Field(mupifobject.MupifObject, Quantity):
         :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
-            return Quantity(value=self.value[vertexID], unit=self.unit)
+            return Quantity(value=self.value[vertexID], unit=self.getUnit())
         else:
             raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
         
@@ -313,36 +291,10 @@ class Field(mupifobject.MupifObject, Quantity):
         :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_cellBased:
-            return Quantity(value=self.value[cellID], unit=self.unit)
+            return Quantity(value=self.value[cellID], unit=self.getUnit())
         else:
             raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
 
-    def giveValue(self, componentID):
-        """
-        Returns the value associated with a given component (vertex or cell).
-
-        :param int componentID: An identifier of a component: vertexID or cellID
-        :return: The value
-        :rtype: tuple
-        """
-        return self.value[componentID]  
-
-    def setValue(self, componentID, value):
-        """
-        Sets the value associated with a given component (vertex or cell).
-
-        :param int componentID: An identifier of a component: vertexID or cellID
-        :param tuple value: Value to be set for a given component, should have the same units as receiver
-
-        .. Note:: If a mesh has mapping attached (a mesh view) then we have to remember value locally and record change. The source field values are updated after commit() method is invoked.
-        """
-        self.value[componentID] = value
-
-    def commit(self):
-        """
-        Commits the recorded changes (via setValue method) to a primary field.
-        """
-    
     def getObjectID(self):
         """
         Returns field objectID.
@@ -351,13 +303,6 @@ class Field(mupifobject.MupifObject, Quantity):
         :rtype: int
         """
         return self.objectID
-    
-    def getUnits(self):
-        """
-        :return: Returns units of the receiver
-        :rtype: Physics.Units
-        """
-        return self.unit
 
     def merge(self, field):
         """
@@ -466,7 +411,7 @@ class Field(mupifobject.MupifObject, Quantity):
                 warpVec =  (warpScale * s for s in warpField.evaluate(coords).getValue())
                 coords = tuple(map(lambda x, y: x + y, coords,warpVec))
             #print(coords)
-            value = self.giveValue(i)[fieldComponent]
+            value = self.getRecord(i)[fieldComponent]
             vx.append(coords[indX])
             vy.append(coords[indY])
             vertexValue.append(value)
@@ -575,7 +520,7 @@ class Field(mupifobject.MupifObject, Quantity):
         newgrp = lowestUnused(trsf=lambda i: 'mesh_%02d' % i, predicate=lambda t: t in gg)
         mh5 = self.getMesh().asHdf5Object(parentgroup=gg, newgroup=newgrp)
 
-        if self.value:
+        if len(self.value)>0:
             fieldGrp = hdf.create_group(lowestUnused(trsf=lambda i, group=group: group+'/field_%02d' % i, predicate=lambda t: t in hdf))
             fieldGrp['mesh'] = mh5
             fieldGrp.attrs['fieldID'] = self.fieldID
@@ -585,7 +530,6 @@ class Field(mupifobject.MupifObject, Quantity):
             # that's why we cast to opaque type "void" and uncast using tostring before unpickling
             fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.unit))
             fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time))
-            # fieldGrp.attrs['time']=self.time.getValue()
             if self.fieldType == FieldType.FT_vertexBased:
                 val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float)
                 for vert in range(self.getMesh().getNumberOfVertices()):
@@ -642,7 +586,7 @@ class Field(mupifobject.MupifObject, Quantity):
                 time = pickle.loads(time)
            
             meshIndex = meshObjs.index(f['mesh'])  # find which mesh object this field refers to
-            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values, fieldType=fieldType))
+            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values.tolist(), fieldType=fieldType))
         hdf.close() # necessary for windows
         return ret
 
@@ -668,8 +612,9 @@ class Field(mupifobject.MupifObject, Quantity):
             ptData=(f.getFieldType()==FieldType.FT_vertexBased)
             rows=(msh.getNumberOfVertices() if ptData else msh.getNumberOfCells())
             cols=f.getRecordSize()
-            dta=np.ndarray((rows,cols),dtype='float32')
-            dta=np.array([f.giveValue(row) for row in range(rows)])
+            # sys.stderr.write(f'each record has {cols} components\n')
+            # dta=np.ndarray((rows,cols),dtype='float32')
+            dta=np.array([f.getRecord(row) for row in range(rows)])
             (point_data if ptData else cell_data)[f.getFieldIDName()]=(dta if ptData else dta.T)
             #print(f.getFieldIDName())
             #print('Is point data?',ptData)
@@ -695,7 +640,7 @@ class Field(mupifobject.MupifObject, Quantity):
                     unit=unit.get(fname,None),
                     time=time,
                     valueType=ValueType.fromNumberOfComponents(values.shape[1]),
-                    value=values,
+                    value=values.tolist(),
                     fieldType=fieldType
                 ))
         return ret

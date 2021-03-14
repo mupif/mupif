@@ -44,9 +44,9 @@ class Field_TestCase(unittest.TestCase):
         self.f6=field.Field(mesh=self.mesh4,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,unit=mupif.U.m,time=16*mupif.Q.s,value=[(0,),(12,),(39,),(33,),(114,)],fieldType=FieldType.FT_vertexBased)
         self.f7=field.Field(mesh=self.mesh4,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,unit=mupif.U.m,time=16*mupif.Q.s,value=[(2,),(16,)],fieldType=FieldType.FT_cellBased)
         self.f8 = field.Field(mesh=self.mesh, fieldID=FieldID.FID_Displacement, valueType=ValueType.Scalar,
-                              unit=mupif.U.m, time=13*mupif.Q.s, value=None, fieldType=FieldType.FT_vertexBased)
+                              unit=mupif.U.m, time=13*mupif.Q.s, value=[], fieldType=FieldType.FT_vertexBased)
         self.f9 = field.Field(mesh=self.mesh, fieldID=FieldID.FID_Displacement, valueType=ValueType.Scalar,
-                              unit=mupif.U.m, time=13*mupif.Q.s, value=None,
+                              unit=mupif.U.m, time=13*mupif.Q.s, value=[],
                               fieldType=FieldType.FT_cellBased)
 
         l = len(self.f8.value)
@@ -114,17 +114,15 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getVertexValue(1).getValue(),(16,))
         self.assertEqual(self.f4.getVertexValue(2).getValue(),(36,))
         self.assertEqual(self.f4.getVertexValue(3).getValue(),(33,))
-    def test_setValue(self):
-        self.f1.setValue(0,[5])
-        self.f1.commit()
+    def test_setRecord(self):
+        self.f1.setRecord(0,[5])
         self.assertEqual(self.f1.getVertexValue(0).getValue(),(5,)) 
         
-        self.f4.setValue(3,[5])
-        self.f4.commit()
+        self.f4.setRecord(3,[5])
         self.assertEqual(self.f4.getVertexValue(3).getValue(),(5,))
-    def test_getUnits(self):
-        self.assertEqual(self.f1.getUnits(),mupif.U.m)
-        self.assertEqual(self.f2.getUnits(),mupif.U['kg/m/s**2'])
+    def test_getUnit(self):
+        self.assertEqual(self.f1.getUnit(),mupif.U.m)
+        self.assertEqual(self.f2.getUnit(),mupif.U['kg/m/s**2'])
         
     def test_merge(self):
         self.f5.merge(self.f1)
@@ -148,7 +146,7 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(orig.getVertexValue(1),loaded.getVertexValue(1))
         self.assertEqual(orig.getVertexValue(2),loaded.getVertexValue(2))
         self.assertEqual(orig.getVertexValue(3),loaded.getVertexValue(3))
-        self.assertEqual(orig.getUnits().name(),loaded.getUnits().name())
+        self.assertEqual(orig.getUnit().name(),loaded.getUnit().name())
         
     def test_ioDump(self):
         f=self.tmp+'/aa.dump'
@@ -180,7 +178,7 @@ class Field_TestCase(unittest.TestCase):
     #def test_ioVTK3(self):
     #    f=self.tmp+'/aa.vtu'
     #    self.f1.toVTK3(f)
-    #    self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnits(),time=self.f1.getTime())[0]
+    #    self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnit(),time=self.f1.getTime())[0]
     #    self._compareFields(self.f1,self.res)
 
     @unittest.skipIf(meshio is None,'meshio not importable')
@@ -189,7 +187,7 @@ class Field_TestCase(unittest.TestCase):
         for ext in 'vtu','vtk':
             out=self.tmp+'/meshio.'+ext
             m.write(out)
-            res=field.Field.makeFromMeshioMesh(out,unit={self.f1.getFieldIDName():self.f1.getUnits()},time=self.f1.getTime())[0]
+            res=field.Field.makeFromMeshioMesh(out,unit={self.f1.getFieldIDName():self.f1.getUnit()},time=self.f1.getTime())[0]
             self._compareFields(self.f1,res)
 
 

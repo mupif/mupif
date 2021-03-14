@@ -35,9 +35,11 @@ class TestUnits(unittest.TestCase):
             v = app1.getProperty(PropertyID.PID_Velocity, istep.getTime())
           
             #Create a PhysicalQuantity object 
-            V = mupif.units.makeQuantity(v.getValue(istep.getTime()), v.getUnits())
+            V = mupif.units.makeQuantity(v.getValue(istep.getTime()), v.getUnit())
 
             velocity = V.inBaseUnits()
+            print(istep.getTime())
+            print(time)
             self.assert_(v.getValue(istep.getTime())==time)
 
             #can be converted in km/s?

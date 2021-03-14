@@ -21,7 +21,7 @@ class TimeStep_TestCase(unittest.TestCase):
         with self.assertRaises(pydantic.ValidationError): 
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,unit=None, number=timestepnumber)
 
-        time = 0.*mp.Q.s
+        time = 0.*mp.U.s
         with self.assertRaises(pydantic.ValidationError):
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
 

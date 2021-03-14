@@ -39,7 +39,7 @@ class Example06(workflow.Workflow):
         self.registerModel(self.thermalSolver, 'thermal')
         self.registerModel(self.mechanicalSolver, 'mechanical')
 
-    def initialize(self, file='', workdir='', targetTime=0*mp.Q.s, metadata={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata,
                                           validateMetaData=validateMetaData)
 
@@ -69,7 +69,7 @@ class Example06(workflow.Workflow):
             raise apierror.APIError('Unknown field ID')
 
     def getCriticalTimeStep(self):
-        return 1*mp.Q.s
+        return 1*mp.U.s
 
     def terminate(self):
         self.thermalSolver.terminate()
@@ -92,9 +92,9 @@ md = {
 }
 
 demo = Example06()
-demo.initialize(targetTime=1*mp.Q.s, metadata=md)
+demo.initialize(targetTime=1*mp.U.s, metadata=md)
 
-tstep = timestep.TimeStep(time=1*mp.Q.s,dt=1*mp.Q.s,targetTime=10*mp.Q.s)
+tstep = timestep.TimeStep(time=1*mp.U.s,dt=1*mp.U.s,targetTime=10*mp.U.s)
 
 demo.solveStep(tstep)
 

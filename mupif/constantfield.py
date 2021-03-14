@@ -26,7 +26,7 @@ log = logging.getLogger()
 from . import field
 from . import bbox
 from . import dataid
-from . import valuetype
+from . import value
 from . import units
 from pydantic.dataclasses import dataclass
 
@@ -135,8 +135,6 @@ class ConstantField(field.Field):
 
         :param int componentID: An identifier of a component: vertexID or cellID
         :param tuple value: New value of the receiver (tuple)
-
-        .. Note:: If a mesh has mapping attached (a mesh view) then we have to remember value locally and record change. The source field values are updated after commit() method is invoked.
         """
         self.value = value
 
@@ -151,7 +149,7 @@ class ConstantField(field.Field):
 
 if __name__ == '__main__':
     cf = ConstantField(
-        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=valuetype.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,)
+        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=value.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,)
     )
     ans = cf.evaluate((10,0,0))
     print (ans)

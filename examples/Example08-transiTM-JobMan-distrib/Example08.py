@@ -48,7 +48,7 @@ class Example08(workflow.Workflow):
         self.mechanical = None
         self.thermalJobMan = None
     
-    def initialize(self, file='', workdir='', targetTime=0*mp.Q.s, metadata={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=10*mp.Q.s, metadata=workflowMD)
+    demo.initialize(targetTime=10*mp.U.s, metadata=workflowMD)
     # demo.printMetadata()
     # print(demo.hasMetadata('Execution.ID'))
     # exit(0)

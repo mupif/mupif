@@ -6,9 +6,35 @@ import importlib
 import sys
 import pprint
 import typing
+import numpy
+import numpy as np
 
 import pydantic
 # from pydantic.dataclasses import dataclass
+
+from typing import Generic, TypeVar
+from pydantic.fields import ModelField
+# from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
+DType = TypeVar('DType')
+class NumpyArray(np.ndarray, Generic[DType]):
+    """Wrapper class for numpy arrays that stores and validates type information.
+    This can be used in place of a numpy array, but when used in a pydantic BaseModel
+    or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
+    declared type.
+    """
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+    @classmethod
+    def validate(cls, val, field: ModelField):
+        dtype_field = field.sub_fields[0]
+        actual_dtype = dtype_field.type_.__args__[0]
+        # If numpy cannot create an array with the request dtype, an error will be raised
+        # and correctly bubbled up.
+        np_array = np.array(val, dtype=actual_dtype)
+        return np_array
+
+NumpyArrayFloat64=NumpyArray[typing.Literal['float64']]
 
 if 0:
     # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
@@ -83,6 +109,7 @@ class Dumpable(pydantic.BaseModel):
             elif isinstance(val,dict): return dict([(k,_handle_attr('%s[%s]'%(attr,k),v,clssName)) for k,v in val.items()])
             elif isinstance(val,Dumpable): return val.to_dict()
             elif isinstance(val,enum.Enum): return enum_to_dict(val)
+            elif isinstance(val,numpy.ndarray): return {'__class__':'numpy.ndarray','arr':val.tolist(),'dtype':str(val.dtype)}
             elif val.__class__.__module__.startswith('mupif.'): raise RuntimeError('%s.%s: type %s does not derive from Dumpable.'%(clssName,attr,val.__class__.__name__))
             else: return val
         import enum
@@ -98,12 +125,7 @@ class Dumpable(pydantic.BaseModel):
             # only dump fields which are registered properly
             for attr in clss.__fields__.keys():
                 ret[attr]=_handle_attr(attr,getattr(self,attr),clss.__name__)
-        # this will go
-        elif dataclasses.is_dataclass(clss):
-            for f in dataclasses.fields(clss):
-                if f.metadata and f.metadata.get('mupif_nodump',False)==True: continue
-                ret[f.name]=_handle_attr(f.name,getattr(self,f.name),clss.__name__)
-        else: raise RuntimeError('Class %s.%s is not a pydantic.BaseModel and not a dataclass'%(clss.__module__,clss.__name__))
+        else: raise RuntimeError('Class %s.%s is not a pydantic.BaseModel'%(clss.__module__,clss.__name__))
         if clss!=Dumpable:
             for base in clss.__bases__:
                 if issubclass(base,Dumpable): ret.update(base.to_dict(self,clss=base))
@@ -131,20 +153,23 @@ class Dumpable(pydantic.BaseModel):
             # some special cases here
             if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
             if issubclass(clss,pydantic.BaseModel): pass
-            if dataclasses.is_dataclass(clss):
-                kw=dict([(k,_create(v)) for k,v in dic.items()])
-                kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.metadata and f.metadata.get('mupif_nodump',False)==True]))
-                return clss(**kw)
+            if issubclass(clss,numpy.ndarray):
+                if clss!=numpy.ndarray: raise RuntimeError('Subclass of numpy.ndarray %s.%s not handled.'%(mod,classname))
+                return numpy.array(dic['arr'],dtype=dic['dtype'])
+            #if dataclasses.is_dataclass(clss):
+            #    kw=dict([(k,_create(v)) for k,v in dic.items()])
+            #    kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.metadata and f.metadata.get('mupif_nodump',False)==True]))
+            #    return clss(**kw)
             else: obj=clss.__new__(clss)
         if issubclass(clss,pydantic.BaseModel):
             #print(f'# constructing: {clss.__name__}')
             #print(f'# kw are: {", ".join(dic.keys())}')
             return clss(**dict([(k,_create(v)) for k,v in dic.items()]))
         # this will go
-        if dataclasses.is_dataclass(clss):
-            for f in dataclasses.fields(clss):
-                # handles frozen dataclasses as well, hopefully
-                if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
+        #if dataclasses.is_dataclass(clss):
+        #    for f in dataclasses.fields(clss):
+        #        # handles frozen dataclasses as well, hopefully
+        #        if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
         # recurse into base classes
         if clss!=Dumpable:
             for base in clss.__bases__:

@@ -54,7 +54,7 @@ class Application2(mp.Model):
         self.value = 0.0
         self.count = 0.0
         self.contrib = mp.ConstantProperty(
-            value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.Q.s)
+            value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
     def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
         #import pprint.prrint
@@ -90,7 +90,7 @@ class Application2(mp.Model):
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
-        return 1.*mp.Q.s
+        return 1.*mp.U.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()

@@ -294,7 +294,7 @@ class ThermalModel(mupif.model.Model):
                 mesh=self.mesh,
                 fieldID=mupif.FieldID.FID_Material_number,
                 valueType=mupif.ValueType.Scalar,
-                unit=mp.Q.none, # PQ.getDimensionlessUnit(),
+                unit=mp.U.none,
                 time=time,
                 value=values,
                 fieldType=mupif.field.FieldType.FT_cellBased
@@ -621,7 +621,7 @@ class ThermalModel(mupif.model.Model):
             raise mupif.apierror.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
-        return 100*mp.Q.s
+        return 100*mp.U.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
@@ -722,7 +722,7 @@ class ThermalNonstatModel(ThermalModel):
         return
 
     def getCriticalTimeStep(self):
-        return 100*mp.Q.s
+        return 100*mp.U.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime() - tstep.getTimeIncrement() * self.Tau
@@ -1035,7 +1035,7 @@ class MechanicalModel(mupif.model.Model):
             self.readInput()
 
     def getCriticalTimeStep(self):
-        return .4*mp.Q.s
+        return .4*mp.U.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()

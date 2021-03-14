@@ -6,11 +6,11 @@ import typing
 import pydantic
 
 from . import dataid
-from . import valuetype
+from . import value
 from .units import Quantity,Unit,findUnit
 
 @Pyro5.api.expose
-class Property(mupifobject.MupifObject,Quantity):
+class Property(value.Value):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -20,7 +20,7 @@ class Property(mupifobject.MupifObject,Quantity):
     """
 
     propID: dataid.PropertyID
-    valueType: valuetype.ValueType=valuetype.ValueType.Scalar #: type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
+    valueType: value.ValueType=value.ValueType.Scalar #: type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
     objectID: int=0 #: Optional ID of problem object/subdomain to which property is related
 
     def __init__(self,*,metadata={},**kw):
@@ -33,28 +33,6 @@ class Property(mupifobject.MupifObject,Quantity):
         ])
         for k,v in defaults.items():
             if k not in metadata: self.updateMetadata(dict(k=v))
-
-        #import pprint
-        #pprint.pprint(self.metadata)
-
-    def getValue(self, time=None, **kwargs):
-        """
-        Returns the value of property in a tuple.
-        :param Physics.Quantity time: Time of property evaluation
-        :param \**kwargs: Arbitrary keyword arguments, see documentation of derived classes.
-
-        :return: Property value as an array
-        :rtype: tuple
-        """
-
-    def getValueType(self):
-        """
-        Returns the value type of property.
-
-        :return: Property value type
-        :rtype: mupif.PropertyID
-        """
-        return self.valueType
 
     def getPropertyID(self):
         """
@@ -74,14 +52,6 @@ class Property(mupifobject.MupifObject,Quantity):
         """
         return self.objectID
 
-    def getUnits(self):
-        """
-        Returns representation of property units.
-
-        :return: Returns receiver's units (Units)
-        :rtype: Quantity
-        """
-        return self.unit
 
 
 @Pyro5.api.expose
@@ -94,36 +64,30 @@ class ConstantProperty(Property):
     .. automethod:: __init__
     """
 
-    value: typing.Union[float,typing.Tuple[float,...]]
+    #value: typing.Union[float,typing.Tuple[float,...]]
     time: typing.Optional[Quantity]
 
 
     def __str__(self):
-        return str(self.value) + '{' + self.unit.name() + ',' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
+        return str(self.value) + '{' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
 
     def __repr__(self):
         return (self.__class__.__name__ + '(' +
                 repr(self.value) + ',' +
-                repr(self.unit.name()) + ',' +
                 repr(self.propID)+',' +
                 repr(self.valueType) + ',' +
                 't=' + repr(self.time) +
                 ')')
 
-    def getValue(self, time=None, **kwargs):
+    def getValue(self, time=None):
         """
         Returns the value of property in a tuple.
         :param Physics.Quantity time: Time of property evaluation
-        :param \**kwargs: None.
 
         :return: Property value as an array
         :rtype: tuple
         """
         if ((self.time is None) or (time is None) or (self.time == time)):
-            for key, value in kwargs.items():
-                if key == 'unit':
-                    # print(key,value)
-                    self.convertToUnit(unit=value)
             return self.value
         else:
             raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
@@ -135,7 +99,7 @@ class ConstantProperty(Property):
         """
         return self.time
 
-    def _sum(self, other, sign1, sign2):
+    def _old__sum(self, other, sign1, sign2):
         """
         Override of Quantity._sum method
         """
@@ -147,19 +111,8 @@ class ConstantProperty(Property):
         #            sign2*other.value*other.unit.conversionFactorTo(self.unit)
         return self.__class__(new_value, self.propID, self.valueType, self.time, self.unit)
 
-    def _convertValue(self, value, src_unit, target_unit):
-        """
-        Helper function to evaluate value+offset*factor, where
-        factor and offset are obtained from
-        conversionTupleTo(target_unit)
-        """
-        (factor, offset) = src_unit.conversionTupleTo(target_unit)
-        if isinstance(value, collections.Iterable):
-            return tuple((v+offset)*factor for v in value)
-        else:
-            return (value + offset) * factor
 
-    def convertToUnit(self, unit):
+    def _old_convertToUnit(self, unit):
         """
         Change the unit and adjust the value such that
         the combination is equivalent to the original one. The new unit
@@ -199,26 +152,20 @@ class ConstantProperty(Property):
         file.close()
         return ans
 
-    def inUnitsOf(self, *units):
+    def inUnitsOf(self, unit):
         """
-        Express the quantity in different units. If one unit is
-        specified, a new Quantity object is returned that
-        expresses the quantity in that unit. If several units
-        are specified, the return value is a tuple of
-        PhysicalObject instances with with one element per unit such
-        that the sum of all quantities in the tuple equals the
-        original quantity and all the values except for the last one
-        are integers. This is used to convert to irregular unit
-        systems like hour/minute/second.
-
-        :param units: one units
-        :type units: C{str}
-
-        :returns: one physical quantity
-        :rtype: L{Quantity} or C{tuple} of L{Quantity}
-        :raises TypeError: if any of the specified units are not compatible with the original unit
+        Express the quantity in different units.
         """
-        units = list(map(findUnit, units))
-        unit = units[0]
-        value = self._convertValue(self.value, self.unit, unit)
-        return ConstantProperty(value=value, propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)
+        return ConstantProperty(value=self._convertValue(self.value, self.unit, unit), propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)
+
+    def _convertValue(self, value, src_unit, target_unit):
+        """
+        Helper function to evaluate value+offset*factor, where
+        factor and offset are obtained from
+        conversionTupleTo(target_unit)
+        """
+        (factor, offset) = src_unit.conversionTupleTo(target_unit)
+        if isinstance(value, collections.Iterable):
+            return tuple((v+offset)*factor for v in value)
+        else:
+            return (value + offset) * factor

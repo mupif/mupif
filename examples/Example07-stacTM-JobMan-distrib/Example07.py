@@ -13,7 +13,6 @@ mCfg = serverConfig(mode)
 import logging
 log = logging.getLogger()
 import time as timeT
-import mupif.physics.physicalquantities as PQ
 
 
 class Example07(workflow.Workflow):
@@ -43,7 +42,7 @@ class Example07(workflow.Workflow):
         self.mechanicalSolver = None
         self.appsTunnel = None
 
-    def initialize(self, file='', workdir='', targetTime=0*mp.Q.s, metadata={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
@@ -172,7 +171,7 @@ class Example07(workflow.Workflow):
 
     def getCriticalTimeStep(self):
         # determine critical time step
-        return 1*mp.Q.s
+        return 1*mp.U.s
 
     def terminate(self):
         self.thermalSolver.terminate()
@@ -196,7 +195,7 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=1*mp.Q.s, metadata=md)
+    demo.initialize(targetTime=1*mp.U.s, metadata=md)
     demo.solve()
     demo.printMetadata()
     demo.printListOfModels()
