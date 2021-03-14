@@ -35,7 +35,7 @@ class TimeStep(dumpable.Dumpable):
     @pydantic.validator('time','dt','targetTime',pre=True)
     def conv_times(cls,t,values):
         if isinstance(t,units.Quantity): return t
-        if 'unit' not in values: raise ValueError(f'When giving time as {type(t).__name__} (not a PhysicalQuantity), unit must be given.')
+        if 'unit' not in values or values['unit'] is None: raise ValueError(f'When giving time as {type(t).__name__} (not a Quantity), unit must be given.')
         return units.Quantity(value=t,unit=values['unit'])
 
     def getTime(self):

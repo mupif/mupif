@@ -102,7 +102,7 @@ while abs(time - targetTime) > 1.e-6:
     v = app1.getProperty(mp.PropertyID.PID_Time, istep.getTime())
     
     # Create a PhysicalQuantity object
-    V = mp.Quantity(value=v.getValue(istep.getTime())[0], unit=v.getUnit())
+    V = mp.units.Quantity(value=v.getValue(istep.getTime())[0], unit=v.getUnit())
 
     val = V.inBaseUnits()
     log.debug(val)
@@ -114,11 +114,11 @@ while abs(time - targetTime) > 1.e-6:
     log.debug(V.isCompatible('m'))
     
     # convert to min
-    V.convertToUnit('min')
-    log.debug(V)
+    V2=V.inUnitsOf('min')
+    log.debug(V2)
 
     # give only the value
-    value = V.getValue()
+    value = V2.getValue()
     log.debug(value)
 
 if abs(value-targetTime/60.) <= 1.e-4:

@@ -49,6 +49,9 @@ class Value(mupifobject.MupifObject):
     # value: typing.Any
     valueType: ValueType=ValueType.Scalar
 
+    #class Config:
+    #    arbitrary_types_allowed=True
+
     def __init__(self,unit=None,**kw):
         if unit is not None:
             warnings.warn('Field(unit=...) is no longer to be used; pass value as Quantity with unit attached instead.',DeprecationWarning)

@@ -114,7 +114,7 @@ class AppGridAvg(model.Model):
         return
 
     def getCriticalTimeStep(self):
-        return mupif.Q.s
+        return 1.*mupif.Q.s
 
     def getApplicationSignature(self):
         return "Demo app. 1.0"

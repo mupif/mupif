@@ -96,6 +96,9 @@ def _registerDumpable(clss=dumpable.Dumpable):
         Pyro5.api.register_class_to_dict(sub,dumpable.Dumpable.to_dict)
         Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__,dumpable.Dumpable.from_dict_with_name)
         _registerDumpable(sub) # recurse
+
+def _registerOther():
+    import Pyro5.api
     # serialize ids if they are sent as top-level objects via Pyro5
     from . import dataid
     for c in dataid.FieldID,dataid.ParticleSetID,dataid.FunctionID,dataid.PropertyID:
@@ -107,6 +110,7 @@ def _registerDumpable(clss=dumpable.Dumpable):
 
 # register all dumpable types
 _registerDumpable()
+_registerOther()
 
 # this is for pydantic
 from . import field

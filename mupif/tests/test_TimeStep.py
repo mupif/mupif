@@ -50,8 +50,8 @@ class TimeStep_TestCase(unittest.TestCase):
         istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=mp.U.s, number=timestepnumber)
 
         dT = istep.getTimeIncrement()
-        self.assertTrue(dT.getValue() == dt)
-        self.assertTrue(dT.getUnitName() == 's')
+        self.assertEqual(dT.getValue(),dt)
+        self.assertEqual(dT.getUnitName(),'s')
 
 
     def test_getTargetTime(self):
@@ -63,8 +63,8 @@ class TimeStep_TestCase(unittest.TestCase):
         istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
 
         tT = istep.getTargetTime()
-        self.assertTrue(tT.getValue() == 2.0)
-        self.assertTrue(tT.getUnitName() == 's')
+        self.assertEqual(tT.getValue(), 2.0)
+        self.assertEqual(tT.getUnitName(), 's')
 
     def test_getTimeStepNumber(self):
         time = 0.0
@@ -74,7 +74,7 @@ class TimeStep_TestCase(unittest.TestCase):
 
         istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
 
-        self.assertTrue(istep.getNumber() == 1)
+        self.assertEqual(istep.getNumber(), 1)
 
 
 

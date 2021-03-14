@@ -28,7 +28,7 @@ class Property(value.Value):
         defaults=dict([
             ('Type', 'mupif.property.Property'),
             ('Type_ID', str(self.propID)),
-            ('Units', self.getUnit().name()),
+            ('Units', self.getUnit().to_string()),
             ('ValueType', str(self.valueType))
         ])
         for k,v in defaults.items():

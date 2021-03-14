@@ -99,7 +99,7 @@ class Field(value.Value):
                 self.value=Quantity(value=np.zeros((ncomp,self.valueType.getNumberOfComponents())),unit=self.value.unit)
         # add some extra metadata
         self.updateMetadata({
-            'Units':self.getUnit().name(),
+            'Units':self.getUnit().to_string(),
             'Type':'mupif.field.Field',
             'Type_ID':str(self.fieldID),
             'FieldType':str(self.fieldType),

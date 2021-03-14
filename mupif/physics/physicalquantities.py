@@ -178,11 +178,11 @@ class PhysicalQuantity(dumpable.Dumpable):
     _number = re.compile('[+-]?[0-9]+(\\.[0-9]*)?([eE][+-]?[0-9]+)?')
 
     def __str__(self):
-        return str(self.value) + ' ' + self.unit.name()
+        return str(self.value) + ' ' + self.unit.name
 
     def __repr__(self):
         return (self.__class__.__name__ + '(' + repr(self.value) + ',' + 
-                repr(self.unit.name()) + ')')
+                repr(self.unit.name) + ')')
 
     def _sum(self, other, sign1, sign2):
         if isinstance(other,PhysicalUnit): other=1.*other
@@ -337,6 +337,7 @@ class PhysicalQuantity(dumpable.Dumpable):
 
         :raise TypeError: if the unit string is not a know unit or a unit incompatible with the current one
         """
+        raise RuntimeError('convertToUnit (in-place conversion) is removed, use inUnitsOf and assignment instead')
         unit = findUnit(unit)
         self.value = _convertValue(self.value, self.unit, unit)
         self.unit = unit
@@ -426,7 +427,7 @@ class PhysicalQuantity(dumpable.Dumpable):
 
     def getUnitName(self):
         """Return unit (string) of physical quantity."""
-        return self.unit.name()
+        return self.unit.name
 
     def sqrt(self):
         return pow(self, 0.5)
@@ -494,7 +495,7 @@ class PhysicalUnit(dumpable.Dumpable):
         return list(p)
 
     def __repr__(self):
-        return '<PhysicalUnit ' + self.name() + '>'
+        return '<PhysicalUnit ' + self.name + '>'
 
     __str__ = __repr__
 
@@ -596,7 +597,7 @@ class PhysicalUnit(dumpable.Dumpable):
         if self.offset != other.offset and self.factor != other.factor:
             raise TypeError(('Unit conversion (%s to %s) cannot be expressed ' +
                              'as a simple multiplicative factor') % \
-                             (self.name(), other.name()))
+                             (self.name, other.name))
         return self.factor/other.factor
 
     def conversionTupleTo(self, other): # added 1998/09/29 GPW
@@ -649,6 +650,7 @@ class PhysicalUnit(dumpable.Dumpable):
     def setName(self, name):
         self.names = NumberDict(data={name:1})
 
+    @property
     def name(self):
         num = ''
         denom = ''
@@ -667,6 +669,8 @@ class PhysicalUnit(dumpable.Dumpable):
         else:
             num = num[1:]
         return num + denom
+    # compat with astropy
+    def to_string(self): return self.name
 
 
 #

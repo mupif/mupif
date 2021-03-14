@@ -12,6 +12,9 @@ import numpy as np
 import pydantic
 # from pydantic.dataclasses import dataclass
 
+try: import astropy.units
+except: astropy=None
+
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
@@ -109,7 +112,15 @@ class Dumpable(pydantic.BaseModel):
             elif isinstance(val,dict): return dict([(k,_handle_attr('%s[%s]'%(attr,k),v,clssName)) for k,v in val.items()])
             elif isinstance(val,Dumpable): return val.to_dict()
             elif isinstance(val,enum.Enum): return enum_to_dict(val)
-            elif isinstance(val,numpy.ndarray): return {'__class__':'numpy.ndarray','arr':val.tolist(),'dtype':str(val.dtype)}
+            # explicitly don't handle subtypes
+            elif type(val)==numpy.ndarray: return {'__class__':'numpy.ndarray','arr':val.tolist(),'dtype':str(val.dtype)}
+            elif astropy and isinstance(val,astropy.units.UnitBase): return {'__class__':'astropy.units.Unit','unit':val.to_string()}
+            elif astropy and isinstance(val,astropy.units.Quantity):
+                return {
+                    '__class__':'astropy.units.Quantity',
+                    'value':_handle_attr('value',np.array(val.value),val.__class__.__name__),
+                    'unit':val.unit.to_string()
+                }
             elif val.__class__.__module__.startswith('mupif.'): raise RuntimeError('%s.%s: type %s does not derive from Dumpable.'%(clssName,attr,val.__class__.__name__))
             else: return val
         import enum
@@ -152,18 +163,20 @@ class Dumpable(pydantic.BaseModel):
             clss=getattr(importlib.import_module(mod),classname)
             # some special cases here
             if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
-            if issubclass(clss,pydantic.BaseModel): pass
+            if astropy and clss==astropy.units.Unit: return astropy.units.Unit(dic['unit'])
+            if astropy and clss==astropy.units.Quantity:
+                return astropy.units.Quantity(Dumpable.from_dict(dic['value']),astropy.units.Unit(dic['unit']))
             if issubclass(clss,numpy.ndarray):
                 if clss!=numpy.ndarray: raise RuntimeError('Subclass of numpy.ndarray %s.%s not handled.'%(mod,classname))
                 return numpy.array(dic['arr'],dtype=dic['dtype'])
-            #if dataclasses.is_dataclass(clss):
-            #    kw=dict([(k,_create(v)) for k,v in dic.items()])
-            #    kw.update(dict([(f.name,None) for f in dataclasses.fields(clss) if f.metadata and f.metadata.get('mupif_nodump',False)==True]))
-            #    return clss(**kw)
-            else: obj=clss.__new__(clss)
+            if issubclass(clss,pydantic.BaseModel): pass
+            #print('here D')
+            obj=clss.__new__(clss)
         if issubclass(clss,pydantic.BaseModel):
             #print(f'# constructing: {clss.__name__}')
             #print(f'# kw are: {", ".join(dic.keys())}')
+            #import pprint
+            #pprint.pprint(dic)
             return clss(**dict([(k,_create(v)) for k,v in dic.items()]))
         # this will go
         #if dataclasses.is_dataclass(clss):

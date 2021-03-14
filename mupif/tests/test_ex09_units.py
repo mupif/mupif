@@ -49,11 +49,11 @@ class TestUnits(unittest.TestCase):
             self.assertFalse(V.isCompatible('km'))
           
             # convert in km/h
-            V.convertToUnit('km/h') 
+            V=V.inUnitsOf('km/h') 
             #sys.stderr.write(str(V))
 
             #give only the value
-            value = float(str(V).split()[0])
+            value = float(V.value) # str(V).split()[0])
             self.assertAlmostEqual(value,3.6*v.getValue(istep.getTime()))
 
             if time==targetTime: break

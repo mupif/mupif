@@ -145,7 +145,7 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(orig.getVertexValue(1),loaded.getVertexValue(1))
         self.assertEqual(orig.getVertexValue(2),loaded.getVertexValue(2))
         self.assertEqual(orig.getVertexValue(3),loaded.getVertexValue(3))
-        self.assertEqual(orig.getUnit().name(),loaded.getUnit().name())
+        self.assertEqual(orig.getUnit().name,loaded.getUnit().name)
         
     def test_ioDump(self):
         f=self.tmp+'/aa.dump'

@@ -14,3 +14,4 @@ pydantic>=1.7.3
 sphinxcontrib-apidoc
 asyncssh
 setproctitle
+deprecated
