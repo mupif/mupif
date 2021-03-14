@@ -10,6 +10,8 @@ import typing
 import deprecated
 import pydantic
 import numpy as np
+import warnings
+import pprint
 
 
 class ValueType(IntEnum):
@@ -41,14 +43,26 @@ class ValueType(IntEnum):
 
 class Value(mupifobject.MupifObject):
 
-    unit: units.Unit
-    value: dumpable.NumpyArrayFloat64=pydantic.Field(default_factory=lambda: np.array([]))
+    #unit: units.Unit
+    #value: dumpable.NumpyArrayFloat64=pydantic.Field(default_factory=lambda: np.array([]))
+    value: units.Quantity
+    # value: typing.Any
     valueType: ValueType=ValueType.Scalar
 
-    @pydantic.validator('value',pre=True,always=True)
-    def convert_value(cls,v):
-        if isinstance(v,np.ndarray): return v
-        return np.array(v)
+    def __init__(self,unit=None,**kw):
+        if unit is not None:
+            warnings.warn('Field(unit=...) is no longer to be used; pass value as Quantity with unit attached instead.',DeprecationWarning)
+            if 'value' in kw:
+                if isinstance(kw['value'],units.Quantity): raise ValueError(f'unit {unit} was given, but value is a Quantity with unit {kw["value"].unit} already')
+                kw['value']=units.Quantity(value=kw['value'],unit=unit)
+            #for k,v in kw.items():
+            #    print(k,v.__class__.__name__,str(v)[:50])
+            #pprint.pprint(kw)
+        super().__init__(**kw) # this calls the real ctor
+
+    def getValue(self): return self.value.value
+
+    def getQuantity(self): return self.value
 
     def getValueType(self):
         """
@@ -66,7 +80,7 @@ class Value(mupifobject.MupifObject):
         :param int componentID: An identifier of a component: vertexID or cellID
         :param tuple value: Value to be set for a given component, should have the same units as receiver
         """
-        self.value[componentID] = value
+        self.value.value[componentID] = value
 
     def getRecord(self, componentID):
         """
@@ -77,7 +91,7 @@ class Value(mupifobject.MupifObject):
         :return: Property value as an array
         :rtype: tuple
         """
-        return self.value[componentID]
+        return self.value.value[componentID]
 
 
     def getRecordSize(self):
@@ -97,4 +111,5 @@ class Value(mupifobject.MupifObject):
         """
         Returns representation of property units.
         """
-        return self.unit
+        if hasattr(self,'_unit'): return self._unit
+        return self.value.unit

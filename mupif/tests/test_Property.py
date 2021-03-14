@@ -22,6 +22,7 @@ class Property_TestCase(unittest.TestCase):
     def test_getValue(self):
         res=self.p1.getValue(6*mp.U.s)
         self.assertEqual(res,16.)
+        self.assertEqual(self.p1.getQuantity(6*mp.U.s),16.*mp.U.m)
         
         res=self.p2.getValue(self.t2)
         self.assertEqual(res,7.)  
@@ -60,7 +61,7 @@ class Property_TestCase(unittest.TestCase):
             self.p1.dumpToLocalFile(tmp+'/dumpfile')
             self.res=property.ConstantProperty.loadFromLocalFile(tmp+'/dumpfile')
             self.assertEqual(self.res.getValue(self.t1),16.)
-            self.assertEqual(self.res.getValueType(),ValueType.Scalar,)
+            self.assertEqual(self.res.getValueType(),ValueType.Scalar)
             self.assertEqual(self.res.getTime(),6*mp.U.s)
             self.assertEqual(self.res.getPropertyID(),PropertyID.PID_Concentration)
             self.assertEqual(self.res.getObjectID(),1)

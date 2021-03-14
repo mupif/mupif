@@ -21,7 +21,6 @@ class Property(value.Value):
     """
 
     propID: dataid.PropertyID
-    valueType: value.ValueType=value.ValueType.Scalar #: type of a property, i.e. scalar, vector, tensor. Tensor is by default a tuple of 9 values, being compatible with Field's tensor.
     objectID: int=0 #: Optional ID of problem object/subdomain to which property is related
 
     def __init__(self,*,metadata={},**kw):
@@ -29,7 +28,7 @@ class Property(value.Value):
         defaults=dict([
             ('Type', 'mupif.property.Property'),
             ('Type_ID', str(self.propID)),
-            ('Units', self.unit.name()),
+            ('Units', self.getUnit().name()),
             ('ValueType', str(self.valueType))
         ])
         for k,v in defaults.items():
@@ -78,6 +77,10 @@ class ConstantProperty(Property):
                 't=' + repr(self.time) +
                 ')')
 
+    def getQuantity(self, time=None):
+        if self._timeIsValid(time): return self.value
+        raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
+
     def getValue(self, time=None):
         """
         Returns the value of property in a tuple.
@@ -86,10 +89,11 @@ class ConstantProperty(Property):
         :return: Property value as an array
         :rtype: tuple
         """
-        if ((self.time is None) or (time is None) or (self.time == time)):
-            return self.value
-        else:
-            raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
+        if self._timeIsValid(time): return self.value.value
+        raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
+
+    def _timeIsValid(self,time=None):
+        return ((self.time is None) or (time is None) or (self.time == time))
 
     def getTime(self):
         """
@@ -155,16 +159,16 @@ class ConstantProperty(Property):
         """
         Express the quantity in different units.
         """
-        return ConstantProperty(value=self._convertValue(self.value, self.unit, unit), propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)
+        return ConstantProperty(value=self.value.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time, objectID=self.objectID)
 
-    def _convertValue(self, value, src_unit, target_unit):
-        """
-        Helper function to evaluate value+offset*factor, where
-        factor and offset are obtained from
-        conversionTupleTo(target_unit)
-        """
-        (factor, offset) = src_unit.conversionTupleTo(target_unit)
-        if isinstance(value, collections.Iterable):
-            return tuple((v+offset)*factor for v in value)
-        else:
-            return (value + offset) * factor
+    #def _convertValue(self, value, src_unit, target_unit):
+    #    """
+    #    Helper function to evaluate value+offset*factor, where
+    #    factor and offset are obtained from
+    #    conversionTupleTo(target_unit)
+    #    """
+    #    (factor, offset) = src_unit.conversionTupleTo(target_unit)
+    #    if value.hasVectorValue(): # isinstance(value, collections.Iterable):
+    #        return tuple((v+offset)*factor for v in value)
+    #    else:
+    #        return (value + offset) * factor

@@ -92,10 +92,11 @@ class Field(value.Value):
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
         # fix zero values
-        if len(self.value)==0:
-            if self.fieldType==FieldType.FT_vertexBased: ncomp=self.mesh.getNumberOfVertices()
-            else: ncomp=self.mesh.getNumberOfCells()
-            self.value=np.zeros((ncomp,self.valueType.getNumberOfComponents())).tolist()
+        if 1:
+            if len(self.value)==0:
+                if self.fieldType==FieldType.FT_vertexBased: ncomp=self.mesh.getNumberOfVertices()
+                else: ncomp=self.mesh.getNumberOfCells()
+                self.value=Quantity(value=np.zeros((ncomp,self.valueType.getNumberOfComponents())),unit=self.value.unit)
         # add some extra metadata
         self.updateMetadata({
             'Units':self.getUnit().name(),
@@ -201,7 +202,7 @@ class Field(value.Value):
                             if debug:
                                 log.debug(icell.getVertices())
                             try:
-                                answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
+                                answer = icell.interpolate(position, [self.value.value[i.number] for i in icell.getVertices()])
                             except IndexError:
                                 log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                                 raise
@@ -230,7 +231,7 @@ class Field(value.Value):
                             log.debug(icell.getVertices())
 
                         try:
-                            tmp = self.value[icell.number]
+                            tmp = self.value.value[icell.number]
                             if count == 0:
                                 answer = list(tmp)
                             else:
@@ -265,7 +266,7 @@ class Field(value.Value):
         :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
-            return Quantity(value=self.value[vertexID], unit=self.getUnit())
+            return  Quantity(value=self.getRecord(vertexID), unit=self.getUnit())
         else:
             raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
         
@@ -278,7 +279,7 @@ class Field(value.Value):
         :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_cellBased:
-            return Quantity(value=self.value[cellID], unit=self.getUnit())
+            return Quantity(value=self.getRecord(cellID), unit=self.getUnit())
         else:
             raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
 
@@ -308,15 +309,15 @@ class Field(value.Value):
         if self.fieldType == FieldType.FT_vertexBased:
             values = [0]*mesh.getNumberOfVertices()
             for v in range(self.mesh.getNumberOfVertices()):
-                values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)] = self.value[v]
+                values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)] = self.value.value[v]
             for v in range(field.mesh.getNumberOfVertices()):
-                values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)] = field.value[v]
+                values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)] = field.value.value[v]
         else:
             values = [0]*mesh.getNumberOfCells()
             for v in range(self.mesh.getNumberOfCells()):
-                values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)] = self.value[v]
+                values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)] = self.value.value[v]
             for v in range(field.mesh.getNumberOfCells()):
-                values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)] = field.value[v]
+                values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)] = field.value.value[v]
 
         self.mesh = mesh
         self.value = values
@@ -515,7 +516,7 @@ class Field(value.Value):
             # string/bytes may not contain NULL when stored as string in HDF5
             # see http://docs.h5py.org/en/2.3/strings.html
             # that's why we cast to opaque type "void" and uncast using tostring before unpickling
-            fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.unit))
+            fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.getUnit()))
             fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time))
             if self.fieldType == FieldType.FT_vertexBased:
                 val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float)

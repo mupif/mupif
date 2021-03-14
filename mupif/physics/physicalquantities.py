@@ -324,6 +324,9 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __bool__(self):
         return self.value != 0
 
+    def __len__(self):
+        return self.value.shape[0]
+
     def convertToUnit(self, unit):
         """
         Change the unit and adjust the value such that
@@ -510,9 +513,9 @@ class PhysicalUnit(dumpable.Dumpable):
                                 powers=list(map(lambda a, b: a+b,
                                     self.powers, other.powers)))
         else:
-            assert isinstance(other,(float,int))
+            assert isinstance(other,(float,int,np.ndarray,tuple,list))
             # sys.stderr.write(f'{self} __mul__ {other} {other.__class__.__name__}\n')
-            return PhysicalQuantity(value=other,unit=self)
+            return PhysicalQuantity(value=np.array(other),unit=self)
 
     __rmul__ = __mul__
 
