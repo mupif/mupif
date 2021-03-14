@@ -1,6 +1,4 @@
 from . import mupifobject
-from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
-from .physics import physicalquantities as PQ
 import Pyro5
 import pickle
 import collections
@@ -9,9 +7,11 @@ import pydantic
 
 from . import dataid
 from . import valuetype
+from . import units
+from .units import Quantity,Unit
 
 @Pyro5.api.expose
-class Property(mupifobject.MupifObject,PhysicalQuantity):
+class Property(mupifobject.MupifObject,Quantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -41,7 +41,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
     def getValue(self, time=None, **kwargs):
         """
         Returns the value of property in a tuple.
-        :param Physics.PhysicalQuantity time: Time of property evaluation
+        :param Physics.Quantity time: Time of property evaluation
         :param \**kwargs: Arbitrary keyword arguments, see documentation of derived classes.
 
         :return: Property value as an array
@@ -80,7 +80,7 @@ class Property(mupifobject.MupifObject,PhysicalQuantity):
         Returns representation of property units.
 
         :return: Returns receiver's units (Units)
-        :rtype: PhysicalQuantity
+        :rtype: Quantity
         """
         return self.unit
 
@@ -96,7 +96,7 @@ class ConstantProperty(Property):
     """
 
     value: typing.Union[float,typing.Tuple[float,...]]
-    time: typing.Optional[PhysicalQuantity]
+    time: typing.Optional[Quantity]
 
 
     def __str__(self):
@@ -114,7 +114,7 @@ class ConstantProperty(Property):
     def getValue(self, time=None, **kwargs):
         """
         Returns the value of property in a tuple.
-        :param Physics.PhysicalQuantity time: Time of property evaluation
+        :param Physics.Quantity time: Time of property evaluation
         :param \**kwargs: None.
 
         :return: Property value as an array
@@ -132,15 +132,15 @@ class ConstantProperty(Property):
     def getTime(self):
         """
         :return: Receiver time
-        :rtype: PhysicalQuantity or None
+        :rtype: Quantity or None
         """
         return self.time
 
     def _sum(self, other, sign1, sign2):
         """
-        Override of PhysicalQuantity._sum method
+        Override of Quantity._sum method
         """
-        if not PQ.isPhysicalQuantity(other):
+        if not isinstance(other,Quantity):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
         new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
@@ -170,7 +170,7 @@ class ConstantProperty(Property):
 
         :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
         """
-        unit = PQ.findUnit(unit)
+        unit = unit.findUnit(unit)
         self.value = self._convertValue(self.value, self.unit, unit)
         self.unit = unit
 
@@ -203,7 +203,7 @@ class ConstantProperty(Property):
     def inUnitsOf(self, *units):
         """
         Express the quantity in different units. If one unit is
-        specified, a new PhysicalQuantity object is returned that
+        specified, a new Quantity object is returned that
         expresses the quantity in that unit. If several units
         are specified, the return value is a tuple of
         PhysicalObject instances with with one element per unit such
@@ -216,10 +216,10 @@ class ConstantProperty(Property):
         :type units: C{str}
 
         :returns: one physical quantity
-        :rtype: L{PhysicalQuantity} or C{tuple} of L{PhysicalQuantity}
+        :rtype: L{Quantity} or C{tuple} of L{Quantity}
         :raises TypeError: if any of the specified units are not compatible with the original unit
         """
-        units = list(map(PQ.findUnit, units))
+        units = list(map(unit.findUnit, units))
         unit = units[0]
         value = self._convertValue(self.value, self.unit, unit)
         return ConstantProperty(value=value, propID=self.propID, valueType=self.valueType, unit=unit, time=self.time, objectID=self.objectID)

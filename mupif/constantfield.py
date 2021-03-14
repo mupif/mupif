@@ -27,8 +27,8 @@ from . import field
 from . import bbox
 from . import dataid
 from . import valuetype
+from . import units
 from pydantic.dataclasses import dataclass
-from .physics import physicalquantities as PQ
 
 import pickle
 
@@ -60,10 +60,10 @@ class ConstantField(field.Field):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return PQ.PhysicalQuantity(value=ans, unit=self.unit)
+            return units.Quantity(value=ans, unit=self.unit)
         else:
             # single position passed
-            return PQ.PhysicalQuantity(value=self._evaluate(positions, eps), unit=self.unit)
+            return units.Quantity(value=self._evaluate(positions, eps), unit=self.unit)
 
     def _evaluate(self, position, eps):
         """
@@ -117,7 +117,7 @@ class ConstantField(field.Field):
         :return: The value
         :rtype: Physics.PhysicalQuantity
         """
-        return PQ.PhysicalQuantity(value=self.value, unit=self.unit)
+        return units.Quantity(value=self.value, unit=self.unit)
     
     def giveValue(self, componentID):
         """
@@ -151,7 +151,7 @@ class ConstantField(field.Field):
 
 if __name__ == '__main__':
     cf = ConstantField(
-        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=valuetype.ValueType.Scalar, unit=PQ.U['degC'], time=0.0, values=(15.,)
+        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=valuetype.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,)
     )
     ans = cf.evaluate((10,0,0))
     print (ans)

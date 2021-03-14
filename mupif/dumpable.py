@@ -1,6 +1,3 @@
-# from mupif.physics import NumberDict
-# import mupif.physics.NumberDict
-
 import enum
 import pickle
 import serpent

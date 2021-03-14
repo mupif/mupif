@@ -5,9 +5,8 @@ from mupif import *
 import mupif
 import tempfile
 from mupif.tests import demo
-import mupif.physics.physicalquantities as PQ
 
-tstep = timestep.TimeStep(time=0., dt=1., targetTime=1., unit=PQ.U.s)
+tstep = timestep.TimeStep(time=0., dt=1., targetTime=1., unit=mupif.U.s)
 
 
 # check for python-vtk before running related tests
@@ -22,7 +21,7 @@ class TestSaveLoad(unittest.TestCase):
     def setUp(self):
         self.app1=demo.AppGridAvg(None)
         #register assertEqual operation for physicalquantities
-        self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertphysicalquantitiesEqual)
+        # self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertphysicalquantitiesEqual)
 
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name

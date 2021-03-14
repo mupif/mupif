@@ -4,7 +4,6 @@ sys.path.append('../..')
 
 import mupif
 from mupif import *
-import mupif.physics.physicalquantities as PQ
 
 
 
@@ -177,9 +176,9 @@ class AppIntegrateField(model.Model):
 
     def getProperty(self, propID, time, objectID=0):
         if (propID == PropertyID.PID_Demo_Integral):
-            return property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, propID, PQ.getDimensionlessUnit(), time=time)
+            return property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, propID, mupif.U.none, time=time)
         elif (propID == PropertyID.PID_Demo_Volume):
-            return property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, propID, PQ.getDimensionlessUnit(),time=time)
+            return property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, propID, mupif.U.node,time=time)
         else:
             raise apierror.APIError ('Unknown property ID')
 

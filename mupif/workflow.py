@@ -26,9 +26,9 @@ import Pyro5
 import time as timeTime
 from . import model
 from . import timestep
+from . import units
 import copy
 import logging
-import mupif.physics.physicalquantities as PQ
 
 log = logging.getLogger()
 
@@ -78,7 +78,7 @@ class Workflow(model.Model):
         self.targetTime = None
         self._models = {}
 
-    def initialize(self, file='', workdir='', targetTime=0.*PQ.Q.s, metadata={}, validateMetaData=True):
+    def initialize(self, file='', workdir='', targetTime=0.*units.Q.s, metadata={}, validateMetaData=True):
         """
         Initializes application, i.e. all functions after constructor and before run.
         
@@ -92,7 +92,7 @@ class Workflow(model.Model):
         self.updateMetadata(metadata)
 
         # print (targetTime)
-        if PQ.isPhysicalQuantity(targetTime):
+        if isinstance(targetTime,PhysicalQuantity):
             self.targetTime = targetTime
         else:
             raise TypeError('targetTime is not PhysicalQuantity')

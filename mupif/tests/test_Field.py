@@ -1,8 +1,6 @@
 import unittest
 import tempfile
 from mupif import *
-# from mupif.physics.physicalquantities import PhysicalUnit as PU
-import mupif.physics.physicalquantities as PQ
 import mupif
 import math, os
 import numpy as np
@@ -56,10 +54,6 @@ class Field_TestCase(unittest.TestCase):
         l = len(self.f9.value)
         self.assertEqual(l, self.mesh.getNumberOfCells())
 
-
-        # register assertEqual operation for physicalquantities
-        #self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertphysicalquantitiesEqual)
-        
     def tearDown(self):
         if self.tmpdir: self.tmpdir.cleanup()
         

@@ -163,7 +163,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                 repr(self.unit.name()) + ')')
 
     def _sum(self, other, sign1, sign2):
-        if not isPhysicalQuantity(other):
+        if not isinstance(other,PhysicalQuantity):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
         if isinstance(self.value, collections.Iterable):
@@ -207,7 +207,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __mul__(self, other):
         if isinstance(self.value, collections.Iterable):
             # tuple valued (vector)
-            if not isPhysicalQuantity(other):
+            if not isinstance(other,PhysicalQuantity):
                 newVal = tuple((v*other for v in self.value))
                 return self.__class__(value=newVal, unit=self.unit)
             else:
@@ -220,7 +220,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                     unit = self.unit*other.unit
                     return self.__class__(value=newVal, unit=unit)
         else:
-            if not isPhysicalQuantity(other):
+            if not isinstance(other,PhysicalQuantity):
                 return self.__class__(value=self.value*other, unit=self.unit)
             value = self.value*other.value
             unit = self.unit*other.unit
@@ -234,7 +234,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     def __truediv__(self, other):
         if isinstance(self.value, collections.Iterable):
             # tuple valued (vector)
-            if not isPhysicalQuantity(other):
+            if not isinstance(other,PhysicalQuantity):
                 newVal = tuple((v/other for v in self.value))
                 return self.__class__(value=newVal, unit=self.unit)
             else:
@@ -247,7 +247,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                     unit = self.unit/other.unit
                     return self.__class__(value=newVal, unit=unit)
         else:
-            if not isPhysicalQuantity(other):
+            if not isinstance(other,PhysicalQuantity):
                 return self.__class__(value=self.value/other, unit=self.unit)
             value = self.value/other.value
             unit = self.unit/other.unit
@@ -257,7 +257,7 @@ class PhysicalQuantity(dumpable.Dumpable):
                 return self.__class__(value=value, unit=unit)
 
     def __rtruediv__(self, other):
-        if not isPhysicalQuantity(other):
+        if not isinstance(other,PhysicalQuantity):
             return self.__class__(value=other/self.value, unit=pow(self.unit, -1))
         value = other.value/self.value
         unit = other.unit/self.unit
@@ -270,7 +270,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     __rdiv__ = __rtruediv__
 
     def __pow__(self, other):
-        if isPhysicalQuantity(other):
+        if isinstance(other,PhysicalQuantity):
             raise TypeError('Exponents must be dimensionless')
         return self.__class__(value=pow(self.value, other), unit=pow(self.unit, other))
 
@@ -460,9 +460,9 @@ class PhysicalUnit(dumpable.Dumpable):
         return self.powers<other.powers or self.factor<other.factor or self.offset<other.offset and self.names<other.names
 
     def __mul__(self, other):
-        if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):
+        if self.offset != 0 or (isinstance(other,PhysicalUnit) and other.offset != 0):
             raise TypeError("cannot multiply units with non-zero offset")
-        if isPhysicalUnit(other):
+        if isinstance(other,PhysicalUnit):
             return PhysicalUnit(names=self.names+other.names,
                                 factor=self.factor*other.factor,
                                 powers=list(map(lambda a, b: a+b,
@@ -476,9 +476,9 @@ class PhysicalUnit(dumpable.Dumpable):
     __rmul__ = __mul__
 
     def __truediv__(self, other):
-        if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):
+        if self.offset != 0 or (isinstance(other,PhysicalUnit) and other.offset != 0):
             raise TypeError("cannot divide units with non-zero offset")
-        if isPhysicalUnit(other):
+        if isinstance(other,PhysicalUnit):
             return PhysicalUnit(names=self.names-other.names,
                                 factor=self.factor/other.factor,
                                 powers=list(map(lambda a, b: a-b,
@@ -488,9 +488,9 @@ class PhysicalUnit(dumpable.Dumpable):
                                 factor=self.factor/other, powers=self.powers)
 
     def __rtruediv__(self, other):
-        if self.offset != 0 or (isPhysicalUnit(other) and other.offset != 0):
+        if self.offset != 0 or (isinstance(other,PhysicalUnit) and other.offset != 0):
             raise TypeError("cannot divide units with non-zero offset")
-        if isPhysicalUnit(other):
+        if isinstance(other,PhysicalUnit):
             return PhysicalUnit(names=other.names-self.names,
                                 factor=other.factor/self.factor,
                                 powers=list(map(lambda a, b: a-b,
@@ -622,36 +622,6 @@ class PhysicalUnit(dumpable.Dumpable):
 PhysicalQuantity.update_forward_refs()
 
 
-# Type checks
-
-def isPhysicalUnit(x):
-    """
-    :param x: an object
-    :type x: any
-
-    :returns: C{True} if x is a L{PhysicalUnit}
-    :rtype: C{bool}
-    """
-    try:
-        return hasattr(x, 'factor') and hasattr(x, 'powers')
-    except AttributeError:
-        return False
-       
-
-def isPhysicalQuantity(x):
-    """
-    :param x: an object
-    :type x: any
-
-    :returns: C{True} if x is a L{PhysicalQuantity}
-    :rtype: C{bool}
-    """
-    try:
-        return hasattr(x, 'value') and hasattr(x, 'unit')
-    except AttributeError:
-        return False
-       
-
 def getDimensionlessUnit():
     """
     return dimensionless unit
@@ -671,7 +641,7 @@ def findUnit(unit):
             except:
                 pass
 
-    if not isPhysicalUnit(unit):
+    if not isinstance(unit,PhysicalUnit):
         raise TypeError(str(unit) + ' is not a unit')
     return unit
 

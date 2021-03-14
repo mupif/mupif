@@ -3,9 +3,9 @@ sys.path.append('../..')
 
 import unittest
 from mupif import *
+import mupif as mp
 import math
 from mupif import timestep
-import mupif.physics.physicalquantities as PQ
 import pydantic
 
 
@@ -21,11 +21,11 @@ class TimeStep_TestCase(unittest.TestCase):
         with self.assertRaises(pydantic.ValidationError): 
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,unit=None, number=timestepnumber)
 
-        time = PQ.makeQuantity(0.0,'s')
+        time = 0.*mp.Q.s
         with self.assertRaises(pydantic.ValidationError):
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
 
-        dt = PQ.makeQuantity(0.5,'s')
+        dt = .5*mp.U.s
 
         with self.assertRaises(pydantic.ValidationError):
             istep = timestep.TimeStep(time=time,dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
@@ -37,7 +37,7 @@ class TimeStep_TestCase(unittest.TestCase):
         timestepnumber = 0
 
         # @todo what sould this do?
-        istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=PQ.findUnit('m'), number=timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=mp.U.m, number=timestepnumber)
 
 
 
@@ -47,7 +47,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=PQ.findUnit('s'), number=timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=mp.U.s, number=timestepnumber)
 
         dT = istep.getTimeIncrement()
         self.assertTrue(dT.getValue() == dt)
@@ -60,7 +60,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 0
 
-        istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=PQ.findUnit('s'), number=timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
 
         tT = istep.getTargetTime()
         self.assertTrue(tT.getValue() == 2.0)
@@ -72,7 +72,7 @@ class TimeStep_TestCase(unittest.TestCase):
         targetTime = 2.0
         timestepnumber = 1
 
-        istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=PQ.findUnit('s'), number=timestepnumber)
+        istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
 
         self.assertTrue(istep.getNumber() == 1)
 

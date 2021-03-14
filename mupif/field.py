@@ -31,8 +31,7 @@ from .dataid import FieldID
 from . import cellgeometrytype
 #import mupif.mesh
 from . import mesh
-from .physics import physicalquantities 
-from .physics.physicalquantities import PhysicalQuantity, PhysicalUnit
+from .units import Quantity, Unit
 
 import meshio
 
@@ -63,7 +62,7 @@ class FieldType(IntEnum):
     FT_cellBased = 2
 
 @Pyro5.api.expose
-class Field(mupifobject.MupifObject, PhysicalQuantity):
+class Field(mupifobject.MupifObject, Quantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -83,7 +82,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
     #: Type of field values (scalar, vector, tensor). Tensor is a tuple of 9 values. It is changed to 3x3 for VTK output automatically.
     valueType: ValueType
     #: Time associated with field values
-    time: PhysicalQuantity
+    time: Quantity
     fieldType: FieldType=FieldType.FT_vertexBased
     #: Field values (format dependent on a particular field type, however each individual value should be stored as tuple, even scalar value)
     value: typing.List=[]
@@ -92,8 +91,8 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
 
     @pydantic.validator('unit',pre=True,always=True)
     def conv_unit(cls,u):
-        if isinstance(u,PhysicalUnit): return u
-        return PhysicalUnit(u)
+        if isinstance(u,Unit): return u
+        return Unit(u)
 
     @pydantic.validator('value',pre=True,always=True)
     def conv_value(cls,v,values,**kwargs):
@@ -184,7 +183,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         Get time of the field.
 
         :return: Time of field data
-        :rtype: Physics.PhysicalQuantity
+        :rtype: Physics.Quantity
         """
         return self.time
 
@@ -204,17 +203,17 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
         :type positions: tuple, a list of tuples
         :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
         :return: field value(s)
-        :rtype: Physics.PhysicalQuantity with given value or tuple of values
+        :rtype: Physics.Quantity with given value or tuple of values
         """
         # test if positions is a list of positions
         if isinstance(positions, list):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
-            return PhysicalQuantity(value=ans, unit=self.unit)
+            return Quantity(value=ans, unit=self.unit)
         else:
             # single position passed
-            return PhysicalQuantity(value=self._evaluate(positions, eps), unit=self.unit)
+            return Quantity(value=self._evaluate(positions, eps), unit=self.unit)
 
     def _evaluate(self, position, eps):
         """
@@ -298,10 +297,10 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
 
         :param int vertexID: Vertex identifier
         :return: The value
-        :rtype: Physics.PhysicalQuantity
+        :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
-            return PhysicalQuantity(value=self.value[vertexID], unit=self.unit)
+            return Quantity(value=self.value[vertexID], unit=self.unit)
         else:
             raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
         
@@ -311,10 +310,10 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
 
         :param int cellID: Cell identifier
         :return: The value
-        :rtype: Physics.PhysicalQuantity
+        :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_cellBased:
-            return PhysicalQuantity(value=self.value[cellID], unit=self.unit)
+            return Quantity(value=self.value[cellID], unit=self.unit)
         else:
             raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
 
@@ -356,7 +355,7 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
     def getUnits(self):
         """
         :return: Returns units of the receiver
-        :rtype: Physics.PhysicalUnits
+        :rtype: Physics.Units
         """
         return self.unit
 
@@ -679,8 +678,8 @@ class Field(mupifobject.MupifObject, PhysicalQuantity):
 
     def makeFromMeshioMesh(
             input: typing.Union[str,meshio.Mesh], # could also be buffer, is that useful?
-            unit: dict[str,PhysicalUnit], # maps field name to PhysicalUnit
-            time: PhysicalQuantity=PhysicalQuantity(value=0,unit='s')
+            unit: dict[str,Unit], # maps field name to Unit
+            time: Quantity=Quantity(value=0,unit='s')
         ) -> typing.List[Field]:
         if isinstance(input,str):
             input=meshio.read(input)

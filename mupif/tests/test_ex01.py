@@ -6,8 +6,6 @@ import mupif
 from mupif import *
 from mupif.tests import demo
 
-# import mupif.physics.physicalquantities as PQ
-
 class TestEx01(unittest.TestCase):
     def setUp(self):
         self.app1,self.app2=demo.AppCurrTime(file=None),demo.AppPropAvg(file=None)

@@ -1,7 +1,7 @@
 import Pyro5
-import mupif.physics.physicalquantities as PQ
 from pydantic.dataclasses import dataclass
 from . import dumpable
+from . import units
 import typing
 import pydantic
 
@@ -27,35 +27,35 @@ class TimeStep(dumpable.Dumpable):
         frozen=True
 
     number: int=1
-    unit: typing.Optional[PQ.PhysicalUnit]=None
-    time: PQ.PhysicalQuantity #: Time(time at the end of time step)
-    dt: PQ.PhysicalQuantity   #: Step length (time increment)
-    targetTime: PQ.PhysicalQuantity #: target simulation time (time at the end of simulation, not of a single TimeStep)
+    unit: typing.Optional[units.Unit]=None
+    time: units.Quantity #: Time(time at the end of time step)
+    dt: units.Quantity   #: Step length (time increment)
+    targetTime: units.Quantity #: target simulation time (time at the end of simulation, not of a single TimeStep)
 
     @pydantic.validator('time','dt','targetTime',pre=True)
     def conv_times(cls,t,values):
-        if isinstance(t,PQ.PhysicalQuantity): return t
+        if isinstance(t,units.Quantity): return t
         if 'unit' not in values: raise ValueError(f'When giving time as {type(t).__name__} (not a PhysicalQuantity), unit must be given.')
-        return PQ.PhysicalQuantity(value=t,unit=values['unit'])
+        return units.Quantity(value=t,unit=values['unit'])
 
     def getTime(self):
         """
         :return: Time
-        :rtype:  PQ.PhysicalQuantity
+        :rtype:  units.Quantity
         """
         return self.time
 
     def getTimeIncrement(self):
         """
         :return: Time increment
-        :rtype:  PQ.PhysicalQuantity
+        :rtype:  units.Quantity
         """
         return self.dt
 
     def getTargetTime(self):
         """
         :return: Target time
-        :rtype:  PQ.PhysicalQuantity
+        :rtype:  units.Quantity
         """
         return self.targetTime
 

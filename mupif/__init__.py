@@ -78,8 +78,8 @@ for loader,modname,ispkg in pkgutil.walk_packages(path=[d],prefix='mupif.'):
 # make unique
 __all__=list(set(__all__))
 
-U=sys.modules['mupif.physics.physicalquantities'].U
-Q=sys.modules['mupif.physics.physicalquantities'].Q
+U=sys.modules['mupif.units'].U
+Q=sys.modules['mupif.units'].Q
 
 # print([k for k in sys.modules.keys() if k.startswith('mupif.')])
 
