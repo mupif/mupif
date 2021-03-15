@@ -88,15 +88,14 @@ class Field(value.Value):
     #: Optional ID of problem object/subdomain to which field is related, default = 0
     objectID: int=0
 
-
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
         # fix zero values
         if 1:
-            if len(self.value)==0:
+            if len(self.quantity)==0:
                 if self.fieldType==FieldType.FT_vertexBased: ncomp=self.mesh.getNumberOfVertices()
                 else: ncomp=self.mesh.getNumberOfCells()
-                self.value=Quantity(value=np.zeros((ncomp,self.valueType.getNumberOfComponents())),unit=self.value.unit)
+                self.quantity=Quantity(value=np.zeros((ncomp,self.valueType.getNumberOfComponents())),unit=self.quantity.unit)
         # add some extra metadata
         self.updateMetadata({
             'Units':self.getUnit().to_string(),
@@ -202,7 +201,7 @@ class Field(value.Value):
                             if debug:
                                 log.debug(icell.getVertices())
                             try:
-                                answer = icell.interpolate(position, [self.value.value[i.number] for i in icell.getVertices()])
+                                answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
                             except IndexError:
                                 log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                                 raise
@@ -231,7 +230,7 @@ class Field(value.Value):
                             log.debug(icell.getVertices())
 
                         try:
-                            tmp = self.value.value[icell.number]
+                            tmp = self.value[icell.number]
                             if count == 0:
                                 answer = list(tmp)
                             else:
@@ -307,20 +306,20 @@ class Field(value.Value):
         if self.fieldType != field.fieldType:
             raise TypeError("Field::merge: fieldType of receiver and parameter is different")
         if self.fieldType == FieldType.FT_vertexBased:
-            values = [0]*mesh.getNumberOfVertices()
-            for v in range(self.mesh.getNumberOfVertices()):
-                values[mesh.vertexLabel2Number(self.mesh.getVertex(v).label)] = self.value.value[v]
-            for v in range(field.mesh.getNumberOfVertices()):
-                values[mesh.vertexLabel2Number(field.mesh.getVertex(v).label)] = field.value.value[v]
+            values=np.zeros_like(self.quantity,shape=(mesh.getNumberOfVertices(),self.getRecordSize()))
+            #values = [0]*mesh.getNumberOfVertices()
+            for f in self,field:
+                for v in range(f.mesh.getNumberOfVertices()):
+                    values[mesh.vertexLabel2Number(f.mesh.getVertex(v).label)] = f.getRecord(v)
         else:
-            values = [0]*mesh.getNumberOfCells()
-            for v in range(self.mesh.getNumberOfCells()):
-                values[mesh.cellLabel2Number(self.mesh.giveCell(v).label)] = self.value.value[v]
-            for v in range(field.mesh.getNumberOfCells()):
-                values[mesh.cellLabel2Number(field.mesh.giveCell(v).label)] = field.value.value[v]
+            # values = [0]*mesh.getNumberOfCells()
+            values=np.zeros_like(self.quantity,shape=(mesh.getNumberOfCells(),self.getRecordSize()))
+            for f in self,field:
+                for v in range(f.mesh.getNumberOfCells()):
+                    values[mesh.cellLabel2Number(f.mesh.giveCell(v).label)] = f.getRecord(v)
 
         self.mesh = mesh
-        self.value = values
+        self.quantity = values
 
     def getMartixForTensor(self, values):
         """

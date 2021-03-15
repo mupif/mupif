@@ -67,18 +67,18 @@ class ConstantProperty(Property):
     time: typing.Optional[Quantity]
 
     def __str__(self):
-        return str(self.value) + '{' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
+        return str(self.quantity) + '{' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)
 
     def __repr__(self):
         return (self.__class__.__name__ + '(' +
-                repr(self.value) + ',' +
+                repr(self.quantity) + ',' +
                 repr(self.propID)+',' +
                 repr(self.valueType) + ',' +
                 't=' + repr(self.time) +
                 ')')
 
     def getQuantity(self, time=None):
-        if self._timeIsValid(time): return self.value
+        if self._timeIsValid(time): return self.quantity
         raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
 
     def getValue(self, time=None):
@@ -89,7 +89,7 @@ class ConstantProperty(Property):
         :return: Property value as an array
         :rtype: tuple
         """
-        if self._timeIsValid(time): return self.value.value
+        if self._timeIsValid(time): return self.value
         raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
 
     def _timeIsValid(self,time=None):
@@ -159,7 +159,7 @@ class ConstantProperty(Property):
         """
         Express the quantity in different units.
         """
-        return ConstantProperty(value=self.value.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time, objectID=self.objectID)
+        return ConstantProperty(quantity=self.quantity.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time, objectID=self.objectID)
 
     #def _convertValue(self, value, src_unit, target_unit):
     #    """
