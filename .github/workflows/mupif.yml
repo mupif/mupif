@@ -45,7 +45,9 @@ jobs:
       timeout-minutes: 1
       run: |
         nosetests --rednose --force-color -v --with-coverage 2>&1 | tools/grcat-mupif
-        codecov -F unittests
+    - name: codecov
+      timeout-minutes: 1
+      run: codecov -F unittests
     - name: nosetests (win64)
       timeout-minutes: 1
       run: |

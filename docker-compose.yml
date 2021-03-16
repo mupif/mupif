@@ -53,7 +53,6 @@ services:
         expose: ['1025-65535']
     ex05:
         image: img-mupif
- 
         working_dir: /tmp/mupif/examples/Example05-units-local
         environment: ['PYTHONPATH=..']
         command: python3 Example05.py
