@@ -6,11 +6,8 @@ import argparse
 sys.path.extend(['..', '../..', '../Example06-stacTM-local'])
 from mupif import *
 
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
-from Config import config
-
-cfg = config(mode)
+from exconfig import ExConfig
+cfg=ExConfig()
 
 util.changeRootLogger('thermal.log')
 
@@ -23,7 +20,7 @@ daemon = pyroutil.runDaemon(
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
-    daemon=daemon, ns=ns, appAPIClass=None, appName=cfg.jobManName+'-ex08', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(), serverConfigFile='thermalServerConfig', serverConfigMode=mode,
+    daemon=daemon, ns=ns, appAPIClass=None, appName=cfg.jobManName+'-ex08', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(), serverConfigFile='thermalServerConfig', serverConfigMode=cfg.mode,
     maxJobs=cfg.maxJobs)
 
 pyroutil.runJobManagerServer(

@@ -6,11 +6,8 @@ import argparse
 sys.path.extend(['..', '../..'])
 from mupif import *
 import models
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
-from Config import config
-
-cfg = config(mode)
+from exconfig import ExConfig
+cfg=ExConfig()
 log = logging.getLogger()
 util.changeRootLogger('mechanical.log')
 

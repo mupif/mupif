@@ -27,6 +27,7 @@ import getpass
 import subprocess
 import threading
 import time
+import json
 from . import model
 from . import jobmanager
 from . import util
@@ -56,7 +57,7 @@ testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.cer
 def fixAnyIP(ip,name):
     # origin: https://stackoverflow.com/a/28950776/761090
     '''Guess (non-localhost) IP when binding to '0.0.0.0' (IPv4) or '::' (IPv6)'''
-    if ip!='0.0.0.0' or ip!='::': return ip
+    if ip not in ('0.0.0.0','::'): return ip
     ipv4=(ip=='0.0.0.0')
     import socket
     s=socket.socket(socket.AF_INET if ipv4 else socket.AF_INET6, socket.SOCK_DGRAM)
@@ -96,15 +97,12 @@ class PyroNetConf:
 # pyro5 nameserver metadata
 NS_METADATA_jobmanager = "type:jobmanager"
 NS_METADATA_appserver = "type:appserver"
-NS_METADATA_host = 'host'
-NS_METADATA_port = 'port'
-NS_METADATA_nathost = 'nathost'
-NS_METADATA_natport = 'natport'
+NS_METADATA_network="network:" # plus JSON
 
 import pydantic
 
 @pydantic.validate_arguments
-def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=3.0):
+def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=3.0) -> Pyro5.client.Proxy :
     """
     Connects to a NameServer.
 
@@ -115,6 +113,11 @@ def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=
     :rtype: Pyro5.naming.Nameserver
     :raises Exception: When can not connect to a LISTENING port of nameserver
     """
+
+    # the configuration is the same for nameserver and the clients
+    # for the server, 0.0.0.0 binds all local interfaces
+    # for the client, 0.0.0.0 is meaningless
+    if nshost=='0.0.0.0' or nshost=='::': nshost=None
     
     if nshost is not None and nsport!=0:
         try:
@@ -160,27 +163,11 @@ def getNSConnectionInfo(ns, name):
     :rtype: tuple
     """
     mdata = getNSmetadata(ns, name)
-    host = None
-    port = None
-    nathost = None
-    natport = None
-    
-    for i in mdata:
-        match = re.search('\A'+NS_METADATA_host+':([\w\.]+)', i)
-        if match:
-            host = match.group(1)
-        match = re.search('\A'+NS_METADATA_port+':(\w+)', i)
-        if match:
-            port = int(match.group(1))
-        match = re.search('\A'+NS_METADATA_nathost+':([\w\.]+)', i)
-        if match:
-            nathost = match.group(1)
-        match = re.search('\A'+NS_METADATA_natport+':(\w+)', i)
-        if match:
-            natport = match.group(1)
-        
-    return (host, port, nathost, natport)
-            
+    for md in mdata:
+        if not md.startswith(NS_METADATA_network): continue
+        d=json.loads(md[len(NS_METADATA_network):])
+        return (d.get('host',None),d.get('port',None),d.get('nathost',None),d.get('natport',None))
+    return (None,None,None,None)
 
 def _connectApp(ns, name, connectionTestTimeOut = 10. ):
     """
@@ -306,7 +293,7 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
-    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "connection:server:port:nathost:natport" will be automatically generated.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated.
 
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
@@ -350,13 +337,13 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
 
     # generate connection metadata entry
     _host,_port=daemon.locationStr.split(':')
-    metadata.add('%s:%s' % (NS_METADATA_host, _host))
-    metadata.add('%s:%s' % (NS_METADATA_port, _port))
-    metadata.add('%s:%s' % (NS_METADATA_nathost, net.nathost))
-    metadata.add('%s:%s' % (NS_METADATA_natport, net.natport))
+
+    if metadata is None: metadata=set()
+    metadata.add(NS_METADATA_network+json.dumps({'host':_host,'port':_port,'nathost':net.nathost,'natport':net.natport}))
+
     ns.register(appName, uri, metadata=metadata)
 
-    log.debug('NameServer %s has registered uri %s' % (appName, uri))
+    log.debug(f'NameServer {appName} has registered uri {uri}')
     log.debug(f'Running runServer: server:{_host}, port:{_port}, nathost:{net.nathost}, natport:{net.natport}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
     return uri

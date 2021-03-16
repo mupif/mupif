@@ -3,11 +3,8 @@ import sys
 sys.path.extend(['.','..', '../..'])
 from mupif import *
 util.changeRootLogger('mechanical.log')
-import argparse
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
-from mechanicalServerConfig import serverConfig
-cfg = serverConfig(mode)
+import mechanicalServerConfig
+cfg = mechanicalServerConfig.ServerConfig()
 
 # locate nameserver
 ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
@@ -19,7 +16,7 @@ daemon = pyroutil.runDaemon(
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
     daemon=daemon, ns=ns, appAPIClass=cfg.applicationClass, appName=cfg.jobManName+'-ex07', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(),
-    serverConfigFile='mechanicalServerConfig', serverConfigMode=mode, maxJobs=cfg.maxJobs)
+    serverConfigFile='mechanicalServerConfig', serverConfigMode=cfg.mode, maxJobs=cfg.maxJobs)
 
 pyroutil.runJobManagerServer(
     server=cfg.server,

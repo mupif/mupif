@@ -2,14 +2,14 @@ import os
 import sys
 # Import example-wide configuration
 sys.path.append('..')
-from Config import config
+from exconfig import ExConfig
 import models
 
 
-class serverConfig(config):
-    def __init__(self, mode):
+class ServerConfig(ExConfig):
+    def __init__(self,*,mode=None):
         # inherit necessary variables: nshost, nsport, hkey, server, serverNathost
-        super().__init__(mode)
+        super().__init__(mode=mode)
 
         self.applicationClass = models.ThermalModel
         self.applicationInitialFile = 'input.in'  # dummy file
@@ -17,7 +17,7 @@ class serverConfig(config):
         self.jobManWorkDir = os.path.abspath(os.path.join(os.getcwd(), 'thermalWorkDir'))
         self.sshHost = '127.0.0.1'  # ip adress of the server running thermal server
         self.serverPort = 44820
-        if mode == 1:
+        if self.mode == 'ctu-ssh':
             self.serverNathost = '127.0.0.1'
             self.serverNatport = 6025
         else:

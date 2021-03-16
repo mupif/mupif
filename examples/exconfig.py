@@ -8,8 +8,26 @@ import tempfile
 import mupif.pyroutil
 log = logging.getLogger()
 
+allModes=[
+    'localhost', # 0: 
+    'ctu-ssh', # 1: ssh with real CTU IP addresses
+    'vpn', # 2: vpn without ssh
+    'wtf', # 3: "VPN emulated as local, no ssh tunnels" ?
+    'local-noconf'
+]
 
-class config(object):
+def getServerConfigMode():
+    import argparse
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-m','--mode',
+        default='localhost',
+        dest='mode',
+        choices=allModes,
+        help='Network mode for examples')
+    return parser.parse_args().mode
+
+
+class ExConfig(object):
     """
     Auxiliary class holding configuration variables for local, ssh, or VPN connection.
     Used mainly in mupif/examples/*
@@ -17,10 +35,12 @@ class config(object):
     Typically, -m0 is local configuration, -m1 is ssh configuration, -m2 is VPN configuration, -m3 is VPN emulated as local
     """
     
-    def __init__(self, mode):
-        self.mode = mode
-        if mode not in [0, 1, 2, 3, 4]:
-            log.error("Unknown mode -m %d" % mode)
+    def __init__(self,*,mode=None):
+        if mode is None: mode=getServerConfigMode()
+        self.mode=mode
+
+        #if mode not in [0, 1, 2, 3, 4]:
+        #    log.error("Unknown mode -m %d" % mode)
         
         Pyro5.config.SERIALIZER = "serpent"
         # Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
@@ -59,10 +79,10 @@ class config(object):
 
         self.jobMan2CmdPath=None
         
-        if 'TRAVIS' in os.environ:  # run everything locally on TRAVIS
-            self.mode = 0
+        #if 'TRAVIS' in os.environ:  # run everything locally on TRAVIS
+        #    self.mode = 0
         
-        if self.mode == 0:  # localhost. Jobmanager uses NAT with ssh tunnels
+        if self.mode == 'localhost':  # localhost. Jobmanager uses NAT with ssh tunnels
             # NAME SERVER
             # IP/name of a name server
             self.nshost = '127.0.0.1'
@@ -94,7 +114,7 @@ class config(object):
             self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
            
-        if self.mode == 1:  # ssh
+        elif self.mode == 'ctu-ssh':  # ssh
             # NAME SERVER
             # IP/name of a name server
             self.nshost = '147.32.130.71'
@@ -121,7 +141,7 @@ class config(object):
             self.serverNatport2 = 5558
             self.appName2 = 'MuPIFServer2'
         
-        if self.mode == 2:  # VPN, no ssh tunnels
+        elif self.mode == 'vpn':  # VPN, no ssh tunnels
             # NAME SERVER
             # IP/name of a name server
             self.nshost = '172.30.0.1'
@@ -157,7 +177,7 @@ class config(object):
             self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
 
-        if self.mode == 3:  # VPN emulated as local, no ssh tunnels
+        elif self.mode == 'wtf':  # VPN emulated as local, no ssh tunnels
             # NAME SERVER
             # IP/name of a name server
             self.nshost = '127.0.0.1'
@@ -191,7 +211,7 @@ class config(object):
             self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
 
-        if self.mode == 4:
+        elif self.mode == 'local-noconf':
             ## docker-compose
             ## this is attempt at zero-config setup
             ## Pyro NS is located via broadcast and is used for looking up all the other components
@@ -209,26 +229,20 @@ class config(object):
             self.server3='0.0.0.0'
             self.serverPort3=0
 
+        else: raise ValueError(f'Unhandled network mode "{mode}" for general setup (must be one of {", ".join(allModes)}).')
+
         self.sshHost = ''
         # SSH CLIENT
         # User name for ssh connection, empty uses current login name
         # serverUserName = os.environ.get( "USERNAME" )#current user-not working
-        if 'TRAVIS' in os.environ or mode in (0,1):
+        if self.mode in ('localhost','ctu-ssh'):
             thisdir = os.path.dirname(os.path.abspath(__file__))
             self.sshClient='asyncssh'
             self.options = f"-p2024 -N -F{os.devnull} -oIdentityFile={thisdir}/ssh/test_ssh_client_rsa_key " \
                            f"-oUserKnownHostsFile={thisdir}/ssh/test_ssh_client_known_hosts"
             # USERNAME is for win32
-            self.serverUserName = os.environ.get('USER',os.environ.get('USERNAME')) 
-        #elif mode in (0,1):
-        #    self.serverUserName = os.getenv('USER')
-        #    if sys.platform.lower().startswith('win'):  # Windows ssh client
-        #        self.sshClient = 'C:\\Program Files (x86)\\Putty\\putty.exe'
-        #        self.options = '-i L:\\.ssh\\mech\id_rsa.ppk'
-        #    else:  # Unix ssh client
-        #        self.sshClient = 'ssh'
-        #        self.options = '-oStrictHostKeyChecking=no'
-        elif mode in (2,3,4):  # VPN
+            self.serverUserName = os.environ.get('USER',os.environ.get('USERNAME'))
+        elif self.mode in ('vpn','wtf','local-noconf'):  # VPN
             self.sshClient = 'manual'
             self.options = ''
-        else: raise ValueError('Unknown network mode for example config: %d (must be 0,1,2,3,4)'%mode)
+        else: raise ValueError(f'Unhandled network mode "{mode}" for ssh setup: (must be one of {", ".join(allModes)}).')

@@ -9,15 +9,12 @@ from mupif import *
 import logging
 log = logging.getLogger()
 
-import argparse
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
-from Config import config
-import threading
-cfg = config(mode)
+from exconfig import ExConfig
+cfg = ExConfig()
 import mupif as mp
 
 
+import threading
 threading.current_thread().setName('ex02-main')
 
 
@@ -99,7 +96,7 @@ timestepnumber = 0
 targetTime = 1.0
 
 sshContext = None
-if mode == 1:  # just print out how to set up a SSH tunnel
+if cfg.mode == 'ctu-ssh':  # just print out how to set up a SSH tunnel
     sshContext = pyroutil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
     # pyroutil.SshTunnel(cfg.server, cfg.serverUserName, cfg.serverNatport, cfg.serverPort, cfg.sshClient, cfg.options)
 

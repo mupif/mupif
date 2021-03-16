@@ -103,18 +103,6 @@ def quadratic_real(a, b, c):
         return (y1 - t, y2 - t)
 
 
-def getParentParser():
-    """ 
-    Parent parser for controling running mode. Used in MuPIF's examples.
-    Mode 0-local (default), 1-ssh, 2-VPN with option -m.
-    
-    :return: parent parser object
-    :rtype: argparse object
-    """
-    parentParser = argparse.ArgumentParser(add_help=False)
-    parentParser.add_argument('-m','--mode', required=False, type=int, default=0, dest="mode",
-                              help='Network mode 0-local (default), 1-ssh, 2-VPN')
-    return parentParser
 
 
 def NoneOrInt(arg):

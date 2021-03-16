@@ -2,14 +2,13 @@ import os
 import sys
 # Import example-wide configuration
 sys.path.extend(['..'])
-from Config import config
+from exconfig import ExConfig
 import models
 
 
-class serverConfig(config):
-    def __init__(self, mode):
-        # inherit necessary variables: nshost, nsport, server, serverNathost
-        super().__init__(mode)
+class ServerConfig(ExConfig):
+    def __init__(self,*,mode=None):
+        super().__init__(mode=mode)
         # Let Daemon run on higher ports
         self.serverPort = self.serverPort+1
         if self.serverNatport is not None:
@@ -26,7 +25,7 @@ class serverConfig(config):
         self.sshHost = '127.0.0.1'  # ip adress of the server running mechanical server
         
         self.serverPort = 44920
-        if mode == 1:
+        if self.mode=='ctu-vpn':
             self.serverNathost = '127.0.0.1'
             self.serverNatport = 6050
         else:

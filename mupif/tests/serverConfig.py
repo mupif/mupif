@@ -10,7 +10,7 @@ import testApp
 
 
 
-class serverConfig(object):
+class ServerConfig(object):
     """
     Auxiliary class holding configuration variables for local, ssh, or VPN connection.
     Used mainly in mupif/examples/*
@@ -18,7 +18,7 @@ class serverConfig(object):
     Typically, -m0 is local configuration, -m1 is ssh configuration, -m2 is VPN configuration, -m3 is VPN emulated as local
     """
     
-    def __init__(self, mode):
+    def __init__(self, *, mode):
         Pyro5.config.SERIALIZER = "serpent"
         # Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
         # Pyro5.config.SERIALIZERS_ACCEPTED = {'serpent'}
@@ -44,8 +44,6 @@ class serverConfig(object):
         self.socketApps = 10000
         # Main directory for transmitting files
         self.jobManWorkDir = '.'
-        # Path to JobMan2cmd.py
-        self.jobMan2CmdPath = "../tools/JobMan2cmd.py"
         
         
         # NAME SERVER

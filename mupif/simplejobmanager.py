@@ -123,7 +123,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
             sys.path.append(moduleDir+'/..')
         import mupif, mupif.pyroutil
         confMod=importlib.import_module(configFile)
-        conf=confMod.serverConfig(mode)
+        conf=confMod.ServerConfig(mode=mode)
         if overrideNsPort:
             log.info('Overriding config-specified nameserver port %d with --override-nsport=%d'%(conf.nsport,overrideNsPort))
             conf.nsport=overrideNsPort

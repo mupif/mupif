@@ -72,10 +72,8 @@ class SimpleJobManager_TestCase(unittest.TestCase):
             jobManWorkDir=cls.tmp,
             serverConfigPath=mupif.__path__[0]+"/tests", 
             serverConfigFile="serverConfig",
-            serverConfigMode=0, 
-            jobMan2CmdPath=mupif.__path__[0]+"/tools/JobMan2cmd.py",
+            serverConfigMode='localhost', 
             maxJobs=2,
-            jobMancmdCommPort=availablePort(10000,10100),
             overrideNsPort=nsPort
         )
         # test jobManager

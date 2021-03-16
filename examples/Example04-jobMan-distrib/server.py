@@ -3,11 +3,8 @@ import sys
 sys.path.extend(['..', '../..'])
 import mupif as mp
 mp.util.changeRootLogger('server.log')
-import argparse
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[mp.util.getParentParser()]).parse_args().mode
-from Config import config
-cfg = config(mode)
+from exconfig import ExConfig
+cfg=ExConfig()
 
 # locate nameserver
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
@@ -25,7 +22,7 @@ jobMan = mp.SimpleJobManager2(
     jobManWorkDir=cfg.jobManWorkDir,
     serverConfigPath=os.getcwd(),
     serverConfigFile='serverConfig',
-    serverConfigMode=mode,
+    serverConfigMode=cfg.mode,
     maxJobs=cfg.maxJobs,
 )
 

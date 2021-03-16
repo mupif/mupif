@@ -14,12 +14,8 @@ import mupif as mp
 log = logging.getLogger()
 mp.util.changeRootLogger('server.log')
 
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[mp.util.getParentParser()]).parse_args().mode
-
-from Config import config
-
-cfg = config(mode)
+from exconfig import ExConfig
+cfg=ExConfig()
 
 import application2
 app2 = application2.Application2()

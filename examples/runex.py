@@ -11,6 +11,8 @@ parser.add_argument('--wenv',choices=['all','main','servers'],help='Run some com
 parser.add_argument('exnum',nargs='*',type=int,help='Example numbers to run (if not given, all examples will be run)',metavar='N')
 args=parser.parse_args(sys.argv[1:])
 
+netOpts=['--mode','localhost']
+
 from dataclasses import dataclass
 @dataclass
 class ExCfg():
@@ -44,7 +46,7 @@ def runBg(sleep=1):
     env=os.environ.copy()
     env['PYTHONPATH']=os.pathsep.join([thisDir+'/..',thisDir])
     bbg=[
-        subprocess.Popen([*getExec(main=False),thisDir+'/../tools/nameserver.py'],bufsize=0,env=env),
+        subprocess.Popen([*getExec(main=False),thisDir+'/../tools/nameserver.py']+netOpts,bufsize=0,env=env),
         #subprocess.Popen(['/bin/bash','ssh/test_ssh_server.sh'],bufsize=0,env=env)
         subprocess.Popen([*getExec(main=False),thisDir+'/ssh/test_ssh_server.py'],bufsize=0,env=env),
     ]
@@ -62,15 +64,15 @@ def runEx(ex):
     env=os.environ.copy()
     exDir=thisDir+'/'+ex.dir
     env['PYTHONPATH']=os.pathsep.join([thisDir+'/..',thisDir,exDir])
-    env['TRAVIS']='1' # for correct network config
+    # env['TRAVIS']='1' # for correct network config
     bg=[]
     try:
         for script in ex.scripts[1:]:
-            cmd=[*getExec(main=False),script]
+            cmd=[*getExec(main=False),script]+netOpts
             print(f'** Running {cmd} in {exDir} (background)')
             bg.append(subprocess.Popen(cmd,cwd=exDir,env=env,bufsize=0))
         time.sleep(len(ex.scripts[1:])) # sleep one second per background server
-        args=[*getExec(main=True),ex.scripts[0]]
+        args=[*getExec(main=True),ex.scripts[0]]+netOpts
         log.info(f'** Running {args} in {exDir}')
         ret=subprocess.run(args,cwd=exDir,env=env,bufsize=0).returncode
         return ret

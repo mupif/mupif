@@ -3,13 +3,9 @@ import os
 sys.path.extend(['.','..', '../..'])
 from mupif import *
 import mupif as mp
-import argparse
-# Read int for mode as number behind '-m' argument: 0-local (default), 1-ssh, 2-VPN
-mode = argparse.ArgumentParser(parents=[util.getParentParser()]).parse_args().mode
-from thermalServerConfig import serverConfig
-cfg = serverConfig(mode)
-from mechanicalServerConfig import serverConfig
-mCfg = serverConfig(mode)
+import thermalServerConfig, mechanicalServerConfig
+cfg=thermalServerConfig.ServerConfig()
+mCfg=mechanicalServerConfig.ServerConfig()
 import logging
 log = logging.getLogger()
 import time as timeT
@@ -46,7 +42,7 @@ class Example07(workflow.Workflow):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
-        if mode == 1:
+        if cfg.mode == 'ctu-vpn':
             sshContext=pyroutil.SSHContext(
                 userName=cfg.serverUserName,
                 sshClient=cfg.sshClient,
