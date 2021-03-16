@@ -73,7 +73,7 @@ class JobManager(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, appName, jobManWorkDir, maxJobs=1):
+    def __init__(self, *, appName, jobManWorkDir, maxJobs=1):
         """
         Constructor. Initializes the receiver.
 

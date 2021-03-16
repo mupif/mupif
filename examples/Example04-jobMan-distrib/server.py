@@ -26,9 +26,7 @@ jobMan = mp.SimpleJobManager2(
     serverConfigPath=os.getcwd(),
     serverConfigFile='serverConfig',
     serverConfigMode=mode,
-    jobMan2CmdPath=cfg.jobMan2CmdPath,
     maxJobs=cfg.maxJobs,
-    jobMancmdCommPort=cfg.socketApps
 )
 
 mp.pyroutil.runJobManagerServer(

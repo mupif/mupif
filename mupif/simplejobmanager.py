@@ -79,17 +79,15 @@ class SimpleJobManager2 (jobmanager.JobManager):
 
     ticketExpireTimeout=10
 
-    def __init__(self, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, jobMan2CmdPath, maxJobs=1, jobMancmdCommPort=10000, overrideNsPort=0):
+    def __init__(self, *, daemon, ns, appAPIClass, appName, portRange, jobManWorkDir, serverConfigPath, serverConfigFile, serverConfigMode, maxJobs=1, overrideNsPort=0):
         """
         Constructor.
 
         See :func:`SimpleJobManager.__init__`
         :param tuple portRange: start and end ports for jobs which will be allocated by a job manager
         :param str serverConfigFile: path to serverConfig file
-        :param str jobMan2CmdPath: path to JobMan2cmd.py
-        :param int jobMancmdCommPort: OBSOLETE
         """
-        super().__init__(appName, jobManWorkDir, maxJobs)
+        super().__init__(appName=appName, jobManWorkDir=jobManWorkDir, maxJobs=maxJobs)
         # remember application API class to create new app instances later
         self.appAPIClass = appAPIClass
         self.daemon = daemon
@@ -100,7 +98,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
         self.serverConfigPath = serverConfigPath
         self.configFile = serverConfigFile
         self.serverConfigMode = serverConfigMode
-        self.jobMan2CmdPath = jobMan2CmdPath
         self.overrideNsPort = overrideNsPort
         self.freePorts = list(range(portRange[0], portRange[1]+1))
         if maxJobs > len(self.freePorts):

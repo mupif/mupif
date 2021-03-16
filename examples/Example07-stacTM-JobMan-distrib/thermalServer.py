@@ -18,8 +18,8 @@ daemon = pyroutil.runDaemon(
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
-    daemon, ns, cfg.applicationClass, cfg.jobManName+'-ex07', cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(),
-    'thermalServerConfig', mode, cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
+    daemon=daemon, ns=ns, appAPIClass=cfg.applicationClass, appName=cfg.jobManName+'-ex07', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(),
+    serverConfigFile='thermalServerConfig', serverConfigMode=mode, maxJobs=cfg.maxJobs)
 
 pyroutil.runJobManagerServer(
     server=cfg.server,
