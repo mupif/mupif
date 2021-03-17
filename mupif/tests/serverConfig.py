@@ -5,7 +5,8 @@ import os.path
 import Pyro5
 import logging
 log = logging.getLogger()
-import testApp
+#import testApp
+from . import testApp
 
 
 

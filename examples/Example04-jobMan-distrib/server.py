@@ -1,26 +1,25 @@
-import os
-import sys
-sys.path.extend(['..', '../..'])
+import sys, os.path, os
+d=os.path.dirname(os.path.abspath(__file__))
+sys.path+=[d+'/..',d+'/../Example02-distrib']
 import mupif as mp
 mp.util.changeRootLogger('server.log')
 from exconfig import ExConfig
 cfg=ExConfig()
+import application2
+
+# extend the configuration
+cfg.applicationClass=application2.Application2
 
 # locate nameserver
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager2(
-    daemon=None,
+    serverConfig=cfg,
     ns=ns,
-    appAPIClass=None,
     appName=cfg.jobManName,
-    portRange=cfg.portsForJobs,
     jobManWorkDir=cfg.jobManWorkDir,
-    serverConfigPath=os.getcwd(),
-    serverConfigFile='serverConfig',
-    serverConfigMode=cfg.mode,
-    maxJobs=cfg.maxJobs,
+    maxJobs=cfg.maxJobs
 )
 
 mp.pyroutil.runJobManagerServer(

@@ -1,5 +1,12 @@
-import sys
-sys.path.append('../..')
+import sys, os.path
+#sys.path.append('../..')
+thisDir=os.path.dirname(os.path.abspath(__file__))
+sys.path+=[thisDir+'/..',thisDir+'../..']
+
+
+import mupif.tests.serverConfig as sc
+serverConfig=sc.ServerConfig(mode='localhost')
+
 
 import unittest
 import time
@@ -8,6 +15,7 @@ import mupif
 import mupif.tests.testApp as testApp
 import multiprocessing
 import subprocess
+import importlib
 
 import Pyro5
 
@@ -68,19 +76,16 @@ class SimpleJobManager_TestCase(unittest.TestCase):
             waitPort(('localhost',nsPort))
         except:
             cls.nsloop.kill()
+            raise
         cls.ns = mupif.pyroutil.connectNameServer(nshost='localhost', nsport=nsPort)
+        serverConfig.nsport=nsPort
+
         cls.jobMan = mupif.simplejobmanager.SimpleJobManager2(
-            daemon=None,
             ns=cls.ns,
-            appAPIClass=testApp,
             appName="app", 
-            portRange=(9000, 9030),
             jobManWorkDir=cls.tmp,
-            serverConfigPath=mupif.__path__[0]+"/tests", 
-            serverConfigFile="serverConfig",
-            serverConfigMode='localhost', 
-            maxJobs=2,
-            overrideNsPort=nsPort
+            serverConfig=serverConfig,
+            maxJobs=2
         )
         # test jobManager
         cls.jobMan.getApplicationSignature()
