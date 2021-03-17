@@ -15,12 +15,12 @@ util.changeRootLogger('thermal.log')
 ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run a daemon for jobMamager on this machine
-daemon = pyroutil.runDaemon(
-    host=cfg.server, port=list(range(cfg.serverPort,cfg.serverPort+100)), nathost=cfg.serverNathost, natport=cfg.serverNatport)
+#daemon = pyroutil.runDaemon(
+#    host=cfg.server, port=list(range(cfg.serverPort,cfg.serverPort+100)), nathost=cfg.serverNathost, natport=cfg.serverNatport)
 
 # Run job manager on a server
 jobMan = simplejobmanager.SimpleJobManager2(
-    daemon=daemon, ns=ns, appAPIClass=None, appName=cfg.jobManName+'-ex08', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(), serverConfigFile='thermalServerConfig', serverConfigMode=cfg.mode,
+    daemon=None, ns=ns, appAPIClass=None, appName=cfg.jobManName+'-ex08', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(), serverConfigFile='thermalServerConfig', serverConfigMode=cfg.mode,
     maxJobs=cfg.maxJobs)
 
 pyroutil.runJobManagerServer(
@@ -32,7 +32,7 @@ pyroutil.runJobManagerServer(
     nsport=cfg.nsport,
     appName=cfg.jobManName+'-ex08',
     jobman=jobMan,
-    daemon=daemon
+    daemon=None
 )
 
 

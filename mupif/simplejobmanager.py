@@ -90,7 +90,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         super().__init__(appName=appName, jobManWorkDir=jobManWorkDir, maxJobs=maxJobs)
         # remember application API class to create new app instances later
         self.appAPIClass = appAPIClass
-        self.daemon = daemon
+        # self.daemon = daemon
         self.ns = ns
 
         self.tickets = [] # list of tickets issued when pre-allocating resources; tickets generated using uuid 
@@ -130,7 +130,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         uri=mupif.pyroutil.runAppServer(
             app=conf.applicationClass(),
             appName=jobID,
-            server=conf.server,port=jobPort,
+            server=conf.server, port=0, # ,port=jobPort,
             nathost=None,natport=None,
             nshost=conf.nshost,nsport=conf.nsport
         )
@@ -311,17 +311,19 @@ class SimpleJobManager2 (jobmanager.JobManager):
             log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
         except Exception as e:
             log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
-        if self.daemon:
+        if self.pyroDaemon:
             try:
-                self.daemon.unregister(self)
+                self.pyroDaemon.unregister(self)
             except:
                 pass
-            log.info("SimpleJobManager2:terminate Shutting down daemon %s" % self.daemon)
-            try:
-                self.daemon.shutdown()
-            except:
-                pass
-            self.daemon = None
+            if not self.externalDaemon:
+                log.info("SimpleJobManager2:terminate Shutting down daemon %s" % self.pyroDaemon)
+                try:
+                    self.pyroDaemon.shutdown()
+                except:
+                    pass
+            self.pyroDaemon = None
+        else: log.warn('Not terminating daemon since none assigned.')
 
 
     def getApplicationSignature(self):
@@ -355,6 +357,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
         targetFileName = self.getJobWorkDir(jobID)+os.path.sep+filename
         log.info('SimpleJobManager2:getPyroFile ' + targetFileName)
         pfile = pyrofile.PyroFile(targetFileName, mode, buffSize)
-        self.daemon.register(pfile)
+        self.pyroDaemon.register(pfile)
 
         return pfile

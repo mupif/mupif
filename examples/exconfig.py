@@ -69,9 +69,6 @@ class ExConfig(object):
 
         # Maximum number of jobs
         self.maxJobs = 20
-        # Auxiliary port used to communicate with application daemons on a local computer
-        self.socketApps = 10000
-        # Main directory for transmitting files
 
         # keep reference to the object around, the directory will be automatically deleted
         self.jobManWorkDirTemp=tempfile.TemporaryDirectory(prefix='jobman')

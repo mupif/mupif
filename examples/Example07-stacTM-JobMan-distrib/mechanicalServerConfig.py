@@ -13,7 +13,6 @@ class ServerConfig(ExConfig):
         self.serverPort = self.serverPort+1
         if self.serverNatport is not None:
             self.serverNatport += 1
-        self.socketApps = self.socketApps+1
         self.portsForJobs = (9250, 9300)
         self.jobNatPorts = [None] if self.jobNatPorts[0] is None else list(range(6230, 6300))
         

@@ -86,6 +86,14 @@ class JobManager(object):
         self.activeJobs = {}  # dictionary of active jobs
         self.jobManWorkDir = jobManWorkDir
 
+        # XXX: this is the same as in Model.registerPyro
+        # there should be a common base for things exposed over Pyro
+        self.pyroDaemon = None
+        self.pyroNS = None
+        self.pyroURI = None
+        self.appName = None
+        self.externalDaemon = None
+
     def preAllocate (self, requirements=None): 
         """
             Allows to pre-allocate(reserve) the resource. 
@@ -166,6 +174,14 @@ class JobManager(object):
         :param string appName:
         :param bool externalDaemon: Optional parameter when damon was allocated externally.
         """
+        # XXX: this is the same as in Model.registerPyro
+        # there should be a common base for things exposed over Pyro
+        self.pyroDaemon = daemon
+        self.pyroNS = ns
+        self.pyroURI = uri
+        self.appName = appName
+        self.externalDaemon = externalDaemon
+
 
     def getJobWorkDir(self, jobID):
         """

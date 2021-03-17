@@ -48,6 +48,10 @@ try:
 except ImportError:
     import importlib_resources as imp_res  # for older Python versions
 
+
+import Pyro5.api
+Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: pr._pyroConnection.sock.getsockname())
+
 from contextlib import ExitStack
 tmpfile=ExitStack()
 import itertools
@@ -253,7 +257,7 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runDaemon(host, port, nathost=None, natport=None):
+def runDaemon(host: str, port, nathost=None, natport=None) -> Pyro5.api.Daemon:
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
@@ -324,10 +328,11 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     
     uri = daemon.register(app)
     try:
+        # the same interface shared by both Model and JobManager
         app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
-    except AttributeError as e:
-        # catch attribute error (thrown when method not defined)
-        log.warning(f'Can not register daemon for application {appName}')
+    #except AttributeError as e:
+    #    # catch attribute error (thrown when method not defined)
+    #    log.warning(f'Can not register daemon for application {appName}')
     except:
         log.exception(f'Can not register app with daemon {daemon.locationStr} using nathost {net.nathost}:{net.natport} on nameServer')
         raise
@@ -806,7 +811,7 @@ class SshTunnel(object):
         Terminate the connection.
         """
         if self.tunnel is not None:
-            if self.sshCient=='python':  # TODO 'sshClient' variable is not anywhere else in this project
+            if self.sshClient=='python':  # TODO 'sshClient' variable is not anywhere else in this project
                 self.tunnel.cancel()
                 self.tunnel=None
             else:
