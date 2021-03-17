@@ -1,6 +1,6 @@
 import sys, os.path, os
 d=os.path.dirname(os.path.abspath(__file__))
-sys.path+=[d+'/..',d+'/../Example02-distrib']
+sys.path+=[d+'/..',d+'/../Example02-distrib',d+'../..']
 import mupif as mp
 mp.util.changeRootLogger('server.log')
 from exconfig import ExConfig
