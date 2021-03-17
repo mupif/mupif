@@ -1,0 +1,72 @@
+version: "3.3"
+# each client is in a different network (so they don't see each other directly, only through the VPN)
+# the central node takes part in all these networks
+# the nameserver needs to be exposed to the VPN only since otherwise it might be
+# discovered on the wrong network (172.29....), leading to incorrect self-address being
+# registered in the NS, and clients could not talk to each other afterwards
+networks:
+   client1net:
+   client2net:
+   client3net:
+services:
+    central:
+        image: wg
+        build: ../../..
+        networks: ["client1net","client2net","client3net"]
+        cap_add: ["SYS_ADMIN","NET_ADMIN"]
+        entrypoint: ["/bin/sh","-c"]
+        command:
+        - |
+           set -e -x
+           sudo wg-quick up central
+           sudo wg show
+           # bind the nameserver to the VPN *only*
+           pyro5-ns -n 192.168.132.1 
+        # expose is only informative
+        # this is where wireguard is exposed on the "outer" (LAN) interface
+        expose: ['11111'] 
+    client1:
+        image: wg
+        depends_on: ['central']
+        networks: ["client1net"]
+        entrypoint: ["/bin/sh","-c"]
+        cap_add: ["SYS_ADMIN","NET_ADMIN"]
+        working_dir: /tmp/mupif/examples/Example07-stacTM-JobMan-distrib
+        command:
+        - |
+           set -e -x
+           sudo wg-quick up client1
+           sudo wg show
+           ping -c2 central       # pings central through client1net
+           ping -c2 192.168.132.1 # pings central through the VPN
+           PYTHONPATH=.. python3 mechanicalServer.py --mode=local-noconf
+    client2:
+        image: wg
+        depends_on: ['central']
+        networks: ["client2net"]
+        entrypoint: ["/bin/sh","-c"]
+        cap_add: ["SYS_ADMIN","NET_ADMIN"]
+        working_dir: /tmp/mupif/examples/Example07-stacTM-JobMan-distrib
+        command:
+        - |
+           set -e -x
+           sudo wg-quick up client2
+           sudo wg show
+           ping -c2 central
+           ping -c2 192.168.132.1
+           PYTHONPATH=.. python3 thermalServer.py --mode=local-noconf
+    client3:
+        image: wg
+        depends_on: ['central']
+        networks: ["client3net"]
+        entrypoint: ["/bin/sh","-c"]
+        cap_add: ["SYS_ADMIN","NET_ADMIN"]
+        working_dir: /tmp/mupif/examples/Example07-stacTM-JobMan-distrib
+        command:
+        - |
+           set -e -x
+           sudo wg-quick up client3
+           sudo wg show
+           ping -c4 central
+           ping -c4 192.168.132.1
+           PYTHONPATH=.. python3 Example07.py --mode=local-noconf

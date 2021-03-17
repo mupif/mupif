@@ -49,8 +49,8 @@ except ImportError:
     import importlib_resources as imp_res  # for older Python versions
 
 
-import Pyro5.api
-Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: pr._pyroConnection.sock.getsockname())
+#import Pyro5.api
+#Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: object.__getattr__(pr,'_pyroConnection').sock.getsockname())
 
 from contextlib import ExitStack
 tmpfile=ExitStack()
@@ -135,9 +135,7 @@ def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=
             s.close()
             log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
         except Exception:
-            msg = "Can not connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport) + \
-                  ". Does a firewall block INPUT or OUTPUT on the port? Exiting."
-            log.exception(msg)
+            log.exception(f'Socket pre-check failed: can not connect to a LISTENING port of nameserver on {nshost}:{nsport}. Does a firewall block INPUT or OUTPUT on the port?')
             raise
 
     # locate nameserver
@@ -145,7 +143,7 @@ def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=
         ns = Pyro5.api.locate_ns(host=nshost, port=int(nsport))
         log.debug(f"Connected to NameServer on {nshost}:{nsport}. Pyro5 version on your localhost is {Pyro5.__version__}.")
     except Exception:
-        log.exception(f"Can not connect to NameServer on {nshost}:{nsport}. Is the NameServer running? Runs the NameServer on the same Pyro version as this version {Pyro5.__version__}? Exiting.")
+        log.exception(f"Unable to locate nameserver at {nshost}:{nsport}. Is the NameServer running? Runs the NameServer on the same Pyro version as this version {Pyro5.__version__}? Exiting.")
         raise
     return ns
 
@@ -257,7 +255,7 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runDaemon(host: str, port, nathost=None, natport=None) -> Pyro5.api.Daemon:
+def __old_runDaemon(host: str, port, nathost=None, natport=None) -> Pyro5.api.Daemon:
     """
     Runs a daemon without registering to a name server
     :param str(int) host: Host name where daemon runs. This is typically a localhost
@@ -302,12 +300,19 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
+
+    ns=net.getNS()
     # server, port, nathost, natport, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
 
     externalDaemon = False
     if not daemon:
-        host=fixAnyIP(net.host,appName)
+        #host=fixAnyIP(net.host,appName)
+        host=net.host
+        if host in ('0.0.0.0','::'):
+            ns._pyroBind() # connect so that _pyroConnection exists
+            host=ns._pyroConnection.sock.getsockname()[0]
+            log.warning(f"Adjusted INADDR_ANY {net.host} → {host} as per NS socket")
         try:
             daemon = Pyro5.api.Daemon(host=host,port=net.port,nathost=net.nathost,natport=net.natport)
             log.info(f'Pyro5 daemon runs on {host}:{net.port} using nathost {net.nathost}:{net.natport}')
@@ -317,7 +322,6 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     else:
         externalDaemon = True
 
-    ns=net.getNS()
     # Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
