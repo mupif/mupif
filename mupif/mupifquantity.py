@@ -41,11 +41,24 @@ class ValueType(IntEnum):
 
 
 
-class Value(mupifobject.MupifObject):
+class MupifQuantity(mupifobject.MupifObject):
+    '''
+    Abstract base class for representing a quantity, common parent class for
+    :obj:`Field` and :obj:`Property` classes. Quantity means value and an
+    associated unit.
+
+    The quantity itself can be accessed as `MupifQuantity.quantity` (or `.q` as
+    shorthand) and can be used for unit-aware arithmetics.
+
+    Value and unit can be accessed separately as `value` and `unit`.
+    '''
 
     quantity: units.Quantity
     valueType: ValueType=ValueType.Scalar
 
+    # shorthand accessor for quantity (less typing)
+    @property
+    def q(self): return self.quantity
     # access value and unit directly
     @property
     def value(self): return self.quantity.value
@@ -83,15 +96,12 @@ class Value(mupifobject.MupifObject):
         self.quantity.value[componentID] = value
 
     def getRecord(self, componentID):
-        """
-        Returns the value of property in a tuple.
-        :param Physics.Quantity time: Time of property evaluation
-        :param \**kwargs: Arbitrary keyword arguments, see documentation of derived classes.
-
-        :return: Property value as an array
-        :rtype: tuple
-        """
+        "Return value in one point (cell, vertex or similar)"
         return self.quantity.value[componentID]
+
+    def getRecordQuantity(self, componentID):
+        "Return value in one point (cell, vertex or similar)"
+        return self.quantity[componentID]
 
 
     def getRecordSize(self):

@@ -23,15 +23,13 @@
 from __future__ import annotations
 
 from . import cell
-from .value import ValueType
 from . import bbox
 from . import apierror
 from . import mupifobject
 from .dataid import FieldID
 from . import cellgeometrytype
-#import mupif.mesh
 from . import mesh
-from . import value
+from . import mupifquantity
 from .units import Quantity, Unit
 
 import meshio
@@ -64,7 +62,7 @@ class FieldType(IntEnum):
     FT_cellBased = 2
 
 @Pyro5.api.expose
-class Field(value.Value):
+class Field(mupifquantity.MupifQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -305,21 +303,20 @@ class Field(value.Value):
         # some type checking first
         if self.fieldType != field.fieldType:
             raise TypeError("Field::merge: fieldType of receiver and parameter is different")
+        if self.unit!=field.unit: raise ValueError('fields have different units (merge is currently not unit-aware; this limitation will be remove with astropy.units)')
         if self.fieldType == FieldType.FT_vertexBased:
-            values=np.zeros_like(self.quantity,shape=(mesh.getNumberOfVertices(),self.getRecordSize()))
-            #values = [0]*mesh.getNumberOfVertices()
+            vv=np.zeros_like(self.value,shape=(mesh.getNumberOfVertices(),self.getRecordSize()))
             for f in self,field:
                 for v in range(f.mesh.getNumberOfVertices()):
-                    values[mesh.vertexLabel2Number(f.mesh.getVertex(v).label)] = f.getRecord(v)
+                    vv[mesh.vertexLabel2Number(f.mesh.getVertex(v).label)] = f.getRecord(v)
         else:
-            # values = [0]*mesh.getNumberOfCells()
-            values=np.zeros_like(self.quantity,shape=(mesh.getNumberOfCells(),self.getRecordSize()))
+            vv=np.zeros_like(self.value,shape=(mesh.getNumberOfCells(),self.getRecordSize()))
             for f in self,field:
                 for v in range(f.mesh.getNumberOfCells()):
-                    values[mesh.cellLabel2Number(f.mesh.giveCell(v).label)] = f.getRecord(v)
+                    vv[mesh.cellLabel2Number(f.mesh.giveCell(v).label)] = f.getRecord(v)
 
         self.mesh = mesh
-        self.quantity = values
+        self.value = vv
 
     def getMartixForTensor(self, values):
         """
@@ -626,7 +623,7 @@ class Field(value.Value):
                     fieldID=FieldID[fname],
                     unit=unit.get(fname,None),
                     time=time,
-                    valueType=ValueType.fromNumberOfComponents(values.shape[1]),
+                    valueType=mupifquantity.ValueType.fromNumberOfComponents(values.shape[1]),
                     value=values.tolist(),
                     fieldType=fieldType
                 ))

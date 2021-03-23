@@ -6,12 +6,12 @@ import typing
 import pydantic
 
 from . import dataid
-from . import value
+from . import mupifquantity
 from . import units
 from .units import Quantity,Unit,findUnit
 
 @Pyro5.api.expose
-class Property(value.Value):
+class Property(mupifquantity.MupifQuantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 

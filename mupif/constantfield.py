@@ -26,7 +26,7 @@ log = logging.getLogger()
 from . import field
 from . import bbox
 from . import dataid
-from . import value
+from . import mupifquantity
 from . import units
 from pydantic.dataclasses import dataclass
 
@@ -149,7 +149,7 @@ class ConstantField(field.Field):
 
 if __name__ == '__main__':
     cf = ConstantField(
-        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=value.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,)
+        mesh=None,fieldID=dataid.FieldID.FID_Temperature, valueType=mupifquantity.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,)
     )
     ans = cf.evaluate((10,0,0))
     print (ans)
