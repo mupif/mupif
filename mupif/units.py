@@ -13,6 +13,7 @@ else:
     import numpy as np
     from astropy.units import Unit
     from astropy.units import Quantity
+    # monkey-patches: compatibility with mupif's physical quantities
     Quantity.inUnitsOf=Quantity.to
     Quantity.getValue=lambda self: self.value
     Quantity.getUnitName=lambda self: self.unit.to_string()
@@ -27,8 +28,12 @@ else:
     Quantity.isCompatible=isCompatible
     def findUnit(unit): return Unit(unit)
     def makeQuantity(val,unit): return Quantity(val,unit)
+    # for compatibility with our physical quantities
     dimensionless=au.def_unit('none',1*au.dimensionless_unscaled)
+    degC=au.def_unit('degC',au.deg_C) 
     au.add_enabled_units([dimensionless])
+    # enable temperature conversions by default
+    au.add_enabled_equivalencies([au.equivalencies.temperature()])
 
 
     class UnitProxy(object):
@@ -36,6 +41,7 @@ else:
         def __getattr__(self,n): return Unit(n)
     U=Q=UnitProxy()
 
+    # pydantic typechecking
     def Quantity_validate(cls,v):
         if isinstance(v,Quantity): return v
         raise TypeError(f'Quantity instance required (not a {v.__class__.__name__})')
@@ -50,7 +56,8 @@ else:
     def Unit_get_validators(cls): yield Unit_validate
     Unit.__get_validators__=Unit_get_validators
 
-
+    # pyro serialization (this is for single-value type only)
+    # embedding within a dumpable is handled in dumpable.py
     import Pyro5.api
     Pyro5.api.register_class_to_dict(au.Unit,lambda x: {'__class__':'astropy.units.Unit','unit':x.to_string()})
     Pyro5.api.register_dict_to_class('astropy.units.Unit',lambda cname,x: au.Unit(x['unit']))
