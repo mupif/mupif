@@ -195,7 +195,7 @@ class JobManager(object):
         return self.jobManWorkDir + os.path.sep + jobID
         
 
-@deprecated.deprecated
+# @deprecated.deprecated
 class RemoteJobManager (object):
     """
     Remote jobManager instances are normally represented by auto generated pyro proxy.

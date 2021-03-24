@@ -369,7 +369,7 @@ def connectJobManager(ns, jobManName):
     :raises Exception: if creation of a tunnel failed
     """
 
-    return _connectApp(ns, jobManName)
+    return jobmanager.RemoteJobManager(_connectApp(ns, jobManName))
 
 def allocateApplicationWithJobManager(ns, jobMan):
     """
@@ -392,7 +392,7 @@ def allocateApplicationWithJobManager(ns, jobMan):
         log.exception("JobManager allocateJob() failed")
         print("".join(Pyro5.errors.get_pyro_traceback()))
         raise
-    return _connectApp(ns, jobid)
+    return model.RemoteModel(_connectApp(ns, jobid),jobMan=jobMan,jobID=jobid)
 
 
 def allocateNextApplication(ns, jobMan):

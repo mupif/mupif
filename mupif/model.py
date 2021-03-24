@@ -473,7 +473,8 @@ class Model(mupifobject.MupifObject):
                 nameServer._pyroClaimOwnership()
                 nameServer.remove(appName)
             except Exception as e:
-                log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer))
+                # log.warning("Cannot remove application %s from nameServer %s" % (appName, nameServer))
+                log.exception(f"Cannot remove {appName} from {nameServer}?")
                 # print("".join(Pyro5.errors.get_pyro_traceback()))
                 self.setMetadata('Status', 'Failed')
                 raise
@@ -525,7 +526,6 @@ class Model(mupifobject.MupifObject):
     def getJobID(self):
         return self._jobID
     
-@deprecated.deprecated
 @Pyro5.api.expose
 class RemoteModel (object):
     """

@@ -296,8 +296,8 @@ class SimpleJobManager (jobmanager.JobManager):
             self.ns.remove(self.applicationName)
             log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
         except Exception as e:
-            # log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
-            lgo.exception(f"Can not remove job {self.applicationName} from nameserver {self.ns}")
+            log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
+            log.exception(f"Can not remove job {self.applicationName} from nameserver {self.ns}")
         if self.pyroDaemon:
             try:
                 self.pyroDaemon.unregister(self)
