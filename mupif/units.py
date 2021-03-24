@@ -1,5 +1,5 @@
 
-useAstropy=False
+useAstropy=True
 
 if not useAstropy:
     from .physics.physicalquantities import PhysicalUnit as Unit
@@ -33,7 +33,7 @@ else:
     degC=au.def_unit('degC',au.deg_C) 
     au.add_enabled_units([dimensionless])
     # enable temperature conversions by default
-    au.add_enabled_equivalencies([au.equivalencies.temperature()])
+    au.add_enabled_equivalencies(au.equivalencies.temperature())
 
 
     class UnitProxy(object):
@@ -43,15 +43,15 @@ else:
 
     # pydantic typechecking
     def Quantity_validate(cls,v):
-        if isinstance(v,Quantity): return v
-        raise TypeError(f'Quantity instance required (not a {v.__class__.__name__})')
+        if not isinstance(v,Quantity): raise TypeError(f'Quantity instance required (not a {v.__class__.__name__})')
+        return v
     @classmethod
     def Quantity_get_validators(cls): yield Quantity_validate
     Quantity.__get_validators__=Quantity_get_validators
 
     def Unit_validate(cls,v):
-        if isinstance(v,au.UnitBase): return v
-        raise TypeError(f'Unit instance required (not a {v.__class__.__name__})')
+        if not isinstance(v,au.UnitBase): raise TypeError(f'Unit instance required (not a {v.__class__.__name__})')
+        return v
     @classmethod
     def Unit_get_validators(cls): yield Unit_validate
     Unit.__get_validators__=Unit_get_validators

@@ -9,6 +9,7 @@ jsonpickle
 jsonschema
 h5py
 matplotlib
+astropy
 pydantic>=1.7.3
 # for documentation
 sphinxcontrib-apidoc
