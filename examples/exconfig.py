@@ -5,6 +5,10 @@ import os.path
 import Pyro5
 import logging
 import tempfile
+# for mupif itself
+thisDir=os.path.dirname(os.path.abspath(__file__))
+sys.path+=[thisDir+'/../..']
+
 import mupif.pyroutil
 log = logging.getLogger()
 
