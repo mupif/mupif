@@ -1,31 +1,29 @@
-import os
-import sys
-sys.path.extend(['.','..', '../..'])
-from mupif import *
-util.changeRootLogger('thermal.log')
-import thermalServerConfig
-cfg = thermalServerConfig.ServerConfig()
+import os, sys
+sys.path+=['..']
+from exconfig import ExConfig
+import models
+import mupif as mp
+
+cfg=ExConfig()
+cfg.applicationClass=models.ThermalModel
 
 # locate nameserver
-ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
-
-# Run a daemon for jobMamager on this machine
-#daemon = pyroutil.runDaemon(
-#    host=cfg.server, port=list(range(cfg.serverPort,cfg.serverPort+100)), nathost=cfg.serverNathost, natport=cfg.serverNatport)
+ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
-jobMan = simplejobmanager.SimpleJobManager2(
-    daemon=None, ns=ns, appAPIClass=cfg.applicationClass, appName=cfg.jobManName+'-ex07', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(),
-    serverConfigFile='thermalServerConfig', serverConfigMode=cfg.mode, maxJobs=cfg.maxJobs)
+jobMan = mp.SimpleJobManager(
+    serverConfig=cfg,
+    ns=ns,
+    appName='Mupif.JobManager@ThermalSolver-ex07',
+    jobManWorkDir=cfg.jobManWorkDir,
+    maxJobs=cfg.maxJobs
+)
 
-pyroutil.runJobManagerServer(
+mp.pyroutil.runJobManagerServer(
     server=cfg.server,
     port=cfg.serverPort,
-    nathost=cfg.serverNathost,
-    natport=cfg.serverNatport,
     nshost=cfg.nshost,
     nsport=cfg.nsport,
-    appName=cfg.jobManName+'-ex07',
+    # appName=cfg.jobManName+'-ex07',
     jobman=jobMan,
-    daemon=None
 )

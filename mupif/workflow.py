@@ -197,7 +197,7 @@ class Workflow(model.Model):
         :param model.Model or model.RemoteModel or Workflow model:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
         """
-        if isinstance(mmodel, (Workflow, model.Model, model.RemoteModel)):
+        if isinstance(mmodel, (Workflow, model.Model, model.RemoteModel, Pyro5.api.Proxy)):
             if label is None:
                 i = 0
                 while label in self.getListOfModelLabels() or i == 0:
@@ -209,7 +209,7 @@ class Workflow(model.Model):
             else:
                 raise KeyError("Given model label already exists.")
         else:
-            raise TypeError("Parameter model should be instance of Workflow, Model or RemoteModel.")
+            raise TypeError("Parameter model should be instance of Workflow, Model, RemoteModel or Pyro5.api.Proxy.")
 
     def getDictOfModels(self):
         """

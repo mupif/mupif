@@ -18,7 +18,7 @@ ns = pyroutil.connectNameServer(nshost=sConf.nshost, nsport=sConf.nsport, hkey=s
 #Run a daemon for jobMamager on this machine
 daemon = pyroutil.runDaemon(host=sConf.server, port=sConf.jobManPort, nathost=sConf.serverNathost, natport=sConf.jobManNatport)
 #Run job manager on a server
-jobMan = JobManager.SimpleJobManager2(daemon, ns, sConf.applicationClass, "Mupif.PingServerApplication", sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'serverConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
+jobMan = JobManager.SimpleJobManager(daemon, ns, sConf.applicationClass, "Mupif.PingServerApplication", sConf.jobManPortsForJobs, sConf.jobManWorkDir, os.getcwd(), 'serverConfig', sConf.jobMan2CmdPath, sConf.jobManMaxJobs, sConf.jobManSocket)
 
 #set up daemon with JobManager
 uri = daemon.register(jobMan)

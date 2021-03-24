@@ -1,31 +1,31 @@
 import os
 import sys
-sys.path.extend(['.','..', '../..'])
-from mupif import *
-util.changeRootLogger('mechanical.log')
-import mechanicalServerConfig
-cfg = mechanicalServerConfig.ServerConfig()
+sys.path+=['..']
+import mupif as mp
+
+
+from exconfig import ExConfig
+cfg=ExConfig()
+import models
+cfg.applicationClass=models.MechanicalModel
 
 # locate nameserver
-ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
-
-# Run a daemon for jobMamager on this machine
-#daemon = pyroutil.runDaemon(
-#    host=cfg.server, port=list(range(cfg.serverPort,cfg.serverPort+100)), nathost=cfg.serverNathost, natport=cfg.serverNatport)
+ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
-jobMan = simplejobmanager.SimpleJobManager2(
-    daemon=None, ns=ns, appAPIClass=cfg.applicationClass, appName=cfg.jobManName+'-ex07', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(),
-    serverConfigFile='mechanicalServerConfig', serverConfigMode=cfg.mode, maxJobs=cfg.maxJobs)
+jobMan = mp.SimpleJobManager(
+    serverConfig=cfg,
+    ns=ns,
+    appName='Mupif.JobManager@MechanicalSolver-ex07',
+    maxJobs=cfg.maxJobs,
+    jobManWorkDir=cfg.jobManWorkDir,
+)
 
-pyroutil.runJobManagerServer(
+mp.pyroutil.runJobManagerServer(
     server=cfg.server,
-    port=cfg.serverPort,
-    nathost=cfg.serverNathost,
-    natport=cfg.serverNatport,
+    port=cfg.serverPort+1,
     nshost=cfg.nshost,
     nsport=cfg.nsport,
-    appName=cfg.jobManName+'-ex07',
+    # appName=cfg.jobManName+'-ex07',
     jobman=jobMan,
-    daemon=None
 )

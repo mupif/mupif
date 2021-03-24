@@ -52,12 +52,13 @@ def main():
     value2 = field2.evaluate(position)  # correct answer 287.0
     log.debug("Field2 value at position "+str(position)+" is "+str(value2))
 
-    field1.toMeshioMesh().write('example1.vtk')
-    field2.toMeshioMesh().write('example2.vtk')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        field1.toMeshioMesh().write(tmpdir+'/example1.vtk')
+        field2.toMeshioMesh().write(tmpdir+'/example2.vtk')
+        # Test pickle module - serialization
+        field1.dumpToLocalFile(tmpdir+'/field.dat')
+        field3 = mp.Field.loadFromLocalFile(tmpdir+'/field.dat')
 
-    # Test pickle module - serialization
-    field1.dumpToLocalFile('field.dat')
-    field3 = mp.Field.loadFromLocalFile('field.dat')
     position = (20.1, 9.5, 0.0)
     value3 = field3.evaluate(position)  # correct answer 155.5
 

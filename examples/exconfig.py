@@ -61,17 +61,12 @@ class ExConfig(object):
         self.appName = 'MuPIFServer'
         self.monitorName = 'monitor.MuPIF'
 
-        # Jobs in JobManager
-        # Range of ports to be assigned on the server to jobs
-        self.portsForJobs = (9000, 9100)
-        # NAT client ports used to establish ssh connections
-        self.jobNatPorts = list(range(6000, 6100))
 
         # Maximum number of jobs
         self.maxJobs = 20
 
         # keep reference to the object around, the directory will be automatically deleted
-        self.jobManWorkDirTemp=tempfile.TemporaryDirectory(prefix='jobman')
+        self.jobManWorkDirTemp=tempfile.TemporaryDirectory(prefix='mupif-')
         self.jobManWorkDir = self.jobManWorkDirTemp.name # '.'
 
         self.jobMan2CmdPath=None
@@ -104,8 +99,6 @@ class ExConfig(object):
             # SECOND SERVER for another application on remote computer
             self.server2 = self.server
             self.serverPort2 = 44385
-            self.serverNathost2 = self.server
-            self.serverNatport2 = 5558
             self.appName2 = 'MuPIFServer2'
 
             self.server3 = '127.0.0.1'
@@ -126,16 +119,10 @@ class ExConfig(object):
             self.server = '147.32.130.71'
             # Port of server's daemon
             self.serverPort = 44382
-            # Nat IP/name (necessary for ssh tunnel)
-            self.serverNathost = '127.0.0.1'
-            # Nat port (necessary for ssh tunnel)
-            self.serverNatport = 5555
 
             # SECOND SERVER for another application (usually runs locally)
             self.server2 = '127.0.0.1'
             self.serverPort2 = 44385
-            self.serverNathost2 = self.server2
-            self.serverNatport2 = 5558
             self.appName2 = 'MuPIFServer2'
         
         elif self.mode == 'vpn':  # VPN, no ssh tunnels
@@ -157,16 +144,10 @@ class ExConfig(object):
             self.serverPort = 44382
             # Nat IP/name
             self.serverNathost = None
-            # Nat port
-            self.serverNatport = None
-            self.jobNatPorts = [None]
 
             # SECOND SERVER for another application (usually runs locally)
             self.server2 = '127.0.0.1'
             self.serverPort2 = 44383
-            self.serverNathost2 = None
-            self.serverNatport2 = None
-            # self.appName2 = 'MuPIFServer2'
            
             # third SERVER - an application running on local computer in VPN
             # this server can be accessed only from script from the same computer
@@ -189,11 +170,6 @@ class ExConfig(object):
             self.server = '127.0.0.1'
             # Port of server's daemon
             self.serverPort = 44382
-            # Nat IP/name
-            self.serverNathost = None
-            # Nat port
-            self.serverNatport = None
-            self.jobNatPorts = [None]
 
             # SECOND SERVER for another application (usually runs locally)
             self.server2 = '127.0.0.1'
@@ -218,9 +194,6 @@ class ExConfig(object):
             self.monitorPort=0
             self.server='0.0.0.0'
             self.serverPort=0
-            self.serverNathost=None
-            self.serverNatport=None
-            self.jobNatPorts=[None]
             self.server2='0.0.0.0'
             self.serverPort2=0
             self.server3='0.0.0.0'

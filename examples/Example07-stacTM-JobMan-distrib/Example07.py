@@ -3,12 +3,16 @@ import os
 sys.path.extend(['.','..', '../..'])
 from mupif import *
 import mupif as mp
-import thermalServerConfig, mechanicalServerConfig
-cfg=thermalServerConfig.ServerConfig()
-mCfg=mechanicalServerConfig.ServerConfig()
+# import thermalServerConfig, mechanicalServerConfig
+#cfg=thermalServerConfig.ServerConfig()
+#mCfg=mechanicalServerConfig.ServerConfig()
 import logging
 log = logging.getLogger()
 import time as timeT
+
+# this is only needed for nshost/nsport
+import exconfig
+cfg=exconfig.ExConfig()
 
 
 class Example07(workflow.Workflow):
@@ -42,57 +46,21 @@ class Example07(workflow.Workflow):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
         # connect to JobManager running on (remote) server
-        if cfg.mode == 'ctu-vpn':
-            sshContext=pyroutil.SSHContext(
-                userName=cfg.serverUserName,
-                sshClient=cfg.sshClient,
-                options=cfg.options,
-                sshHost=cfg.sshHost
-            )
-        else: sshContext=None
-        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName+'-ex07', sshContext=sshContext)
-        self.mechanicalJobMan = pyroutil.connectJobManager(ns, mCfg.jobManName+'-ex07', sshContext=sshContext)
+        self.thermalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@ThermalSolver-ex07')
+        self.mechanicalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@MechanicalSolver-ex07')
 
         # allocate the application instances
         try:
             self.thermalSolver = pyroutil.allocateApplicationWithJobManager(
-                ns,
-                self.thermalJobMan,
-                cfg.jobNatPorts[0],
-                pyroutil.SSHContext(
-                    userName=cfg.serverUserName,
-                    sshClient=cfg.sshClient,
-                    options=cfg.options,
-                    sshHost=cfg.sshHost
-                )
+                ns=ns,
+                jobMan=self.thermalJobMan,
             )
             log.info('Created thermal job')
             self.mechanicalSolver = pyroutil.allocateApplicationWithJobManager(
-                ns,
-                self.mechanicalJobMan,
-                mCfg.jobNatPorts[0],
-                pyroutil.SSHContext(
-                    userName=mCfg.serverUserName,
-                    sshClient=mCfg.sshClient,
-                    options=mCfg.options,
-                    sshHost=mCfg.sshHost
-                )
+                ns=ns,
+                jobMan=self.mechanicalJobMan,
             )
             log.info('Created mechanical job')
-            log.info('Creating reverse tunnel')
-            
-            # Create a reverse tunnel so mechanical server can access thermal server directly
-            self.appsTunnel = pyroutil.connectApplicationsViaClient(
-                pyroutil.SSHContext(
-                    userName=mCfg.serverUserName,
-                    sshClient=mCfg.sshClient,
-                    options=mCfg.options,
-                    sshHost=pyroutil.getNSConnectionInfo(ns, mCfg.jobManName+'-ex07')[0]
-                ),
-                self.mechanicalSolver,
-                self.thermalSolver
-            )
-
         except Exception as e:
             log.exception(e)
         else:  # No exception
@@ -172,7 +140,7 @@ class Example07(workflow.Workflow):
     def terminate(self):
         self.thermalSolver.terminate()
         self.mechanicalSolver.terminate()
-        self.appsTunnel.terminate()
+        if self.appsTunnel: self.appsTunnel.terminate()
         super().terminate()
 
     def getApplicationSignature(self):

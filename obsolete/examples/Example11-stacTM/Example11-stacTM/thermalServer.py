@@ -24,6 +24,6 @@ ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport, hkey=cfg.h
 daemon = cfg.Pyro5.api.Daemon(host=cfg.server, port=cfg.serverPort)
 #Run job manager on a server
 
-#jobMan = simplejobmanager.SimpleJobManager2(daemon, ns, appAPIClass=None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
+#jobMan = simplejobmanager.SimpleJobManager(daemon, ns, appAPIClass=None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 
 pyroutil.runJobManagerServer(server=cfg.server, port=cfg.serverPort, nathost=cfg.server, natport=cfg.serverPort, nshost=cfg.nshost, nsport=cfg.nsport, appName=cfg.jobManName, hkey=cfg.hkey, jobman=jobMan, daemon=daemon)

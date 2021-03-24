@@ -80,7 +80,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.ns = mupif.pyroutil.connectNameServer(nshost='localhost', nsport=nsPort)
         serverConfig.nsport=nsPort
 
-        cls.jobMan = mupif.simplejobmanager.SimpleJobManager2(
+        cls.jobMan = mupif.simplejobmanager.SimpleJobManager(
             ns=cls.ns,
             appName="app", 
             jobManWorkDir=cls.tmp,
@@ -102,7 +102,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         self.jobMan.terminateAllJobs()
 
     def test_getApplicationSignature(self):
-        self.assertTrue(self.jobMan.getApplicationSignature() == 'Mupif.JobManager.SimpleJobManager2')
+        self.assertTrue(self.jobMan.getApplicationSignature() == 'Mupif.JobManager.SimpleJobManager')
     
     def test_allocateJob(self):
         self.assertListEqual(self.jobMan.getStatus(), [])

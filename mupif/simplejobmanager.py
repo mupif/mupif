@@ -60,7 +60,7 @@ except ImportError: pass
 
 
 @Pyro5.api.expose
-class SimpleJobManager2 (jobmanager.JobManager):
+class SimpleJobManager (jobmanager.JobManager):
     """
     Simple job manager 2. 
     This implementation avoids the problem of GIL lock by running applicaton 
@@ -68,7 +68,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
     """
     from dataclasses import dataclass
 
-    # SimpleJobManager2
+    # SimpleJobManager
     @dataclass
     class ActiveJob(object):
         proc: typing.Union[subprocess.Popen,multiprocessing.Process]
@@ -84,9 +84,6 @@ class SimpleJobManager2 (jobmanager.JobManager):
         maxJobs=1,
         serverConfig=None,
         daemon=None,
-        serverConfigFile=None, serverConfigMode=None, serverConfigPath=None, # these will go later
-        portRange=None,   # unused
-        appAPIClass=None, # unused
         overrideNsPort=0):
         """
         Constructor.
@@ -96,37 +93,18 @@ class SimpleJobManager2 (jobmanager.JobManager):
         :param str serverConfigFile: path to serverConfig file
         """
         super().__init__(appName=appName, jobManWorkDir=jobManWorkDir, maxJobs=maxJobs)
-        # remember application API class to create new app instances later
-        self.appAPIClass = appAPIClass
-        # self.daemon = daemon
         self.ns = ns
 
         self.tickets = [] # list of tickets issued when pre-allocating resources; tickets generated using uuid 
         self.jobCounter = 0
         self.serverConfig = serverConfig
-        if serverConfig is not None and (serverConfigFile is not None or serverConfigMode is not None or serverConfigPath is not None):
-            log.warning("serverConfig overrules serverConfigFile, serverConfigMode, serverConfigPath (some of them were specified)")
-            self.serverConfigPath=self.configFile=self.serverConfigMode=None
-        if serverConfig is None:
-            # legacy config via path, configfile and mode
-            if serverConfigPath:
-                sys.path.append(serverConfigPath)
-                sys.path.append(serverConfigPath+'/..')
-            import mupif, mupif.pyroutil
-            confMod=importlib.import_module(serverConfigFile)
-            self.serverConfig=confMod.ServerConfig(mode=serverConfigMode)
-
         self.overrideNsPort = overrideNsPort
-        #self.freePorts = list(range(portRange[0], portRange[1]+1))
-        #if maxJobs > len(self.freePorts):
-        #    log.error('SimpleJobManager2: not enough free ports, changing maxJobs to %d' % len(self.freePorts))
-        #    self.maxJobs = len(self.freePorts)
         self.lock = threading.Lock()
 
-        log.debug('SimpleJobManager2: initialization done for application name %s' % self.applicationName)
+        log.debug('SimpleJobManager: initialization done for application name %s' % self.applicationName)
 
     @staticmethod
-    def _spawnProcess(*,pipe,ns,appName,jobID,cwd,overrideNsPort=None,jobPort=0,mode=None,moduleDir=None,configFile=None,conf=None):
+    def _spawnProcess(*,pipe,ns,appName,jobID,cwd,overrideNsPort=None,mode=None,moduleDir=None,configFile=None,conf=None):
         '''
         This function is called 
         '''
@@ -140,11 +118,12 @@ class SimpleJobManager2 (jobmanager.JobManager):
         if overrideNsPort:
             log.info('Overriding config-specified nameserver port %d with --override-nsport=%d'%(conf.nsport,overrideNsPort))
             conf.nsport=overrideNsPort
+        app=conf.applicationClass()
+        app.setJobID(jobID)
         uri=mupif.pyroutil.runAppServer(
-            app=conf.applicationClass(),
+            app=app,
             appName=jobID,
-            server=conf.server, port=jobPort,
-            nathost=None,natport=None,
+            server=conf.server,
             nshost=conf.nshost,nsport=conf.nsport
         )
         pipe.send(uri) # as bytes
@@ -155,7 +134,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         """ Returns true, if ticket is valid, false otherwise"""
         currentTime = time.time()
         if (ticket in self.tickets):
-            if (currentTime-ticket.time) < SimpleJobManager2.ticketExpireTimeout:
+            if (currentTime-ticket.time) < SimpleJobManager.ticketExpireTimeout:
                 return True
         return False
 
@@ -166,7 +145,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         currentTime = time.time()
         for i in range(len(self.tickets) - 1, -1, -1):
             # check if ticket expired
-            if (currentTime-self.tickets[i].time) > SimpleJobManager2.ticketExpireTimeout: 
+            if (currentTime-self.tickets[i].time) > SimpleJobManager.ticketExpireTimeout: 
                 # remove it
                 del(self.tickets[i])
         return len(self.tickets)
@@ -192,7 +171,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
             return ticket
 
 
-    def allocateJob(self, user, natPort, ticket=None): 
+    def allocateJob(self, user, natPort=0, ticket=None): 
         """
         Allocates a new job.
 
@@ -205,7 +184,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
 
         """
         self.lock.acquire()
-        log.info('SimpleJobManager2: allocateJob...')
+        log.info('SimpleJobManager: allocateJob...')
         # allocate job if valid ticket given or available resource exist
         ntickets = self.__getNumberOfActiveTickets()
         validTicket = ticket and self.__checkTicket(ticket)
@@ -215,17 +194,15 @@ class SimpleJobManager2 (jobmanager.JobManager):
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
-            log.debug('SimpleJobManager2: trying to allocate '+jobID)
+            log.debug('SimpleJobManager: trying to allocate '+jobID)
             # run the new application instance served by corresponding pyro daemon in a new process
-            #jobPort = -1 # self.freePorts.pop(0)
-            #log.info('SimpleJobManager2: port to be assigned %d' % jobPort)
 
             try:
                 targetWorkDir = self.getJobWorkDir(jobID)
-                log.info('SimpleJobManager2: Checking target workdir %s', targetWorkDir)
+                log.info('SimpleJobManager: Checking target workdir %s', targetWorkDir)
                 if not os.path.exists(targetWorkDir):
                     os.makedirs(targetWorkDir)
-                    log.info('SimpleJobManager2: creating target workdir %s', targetWorkDir)
+                    log.info('SimpleJobManager: creating target workdir %s', targetWorkDir)
             except Exception as e:
                 log.exception(e)
                 raise
@@ -238,11 +215,10 @@ class SimpleJobManager2 (jobmanager.JobManager):
                     jobID=jobID,
                     cwd=targetWorkDir,
                     appName=self.applicationName,
-                    # overrideNsPort=self.overrideNsPort,
                     conf=self.serverConfig
                 )
                 proc=multiprocessing.Process(
-                    target=SimpleJobManager2._spawnProcess,
+                    target=SimpleJobManager._spawnProcess,
                     name=self.applicationName,
                     kwargs=kwargs
                 )
@@ -259,16 +235,16 @@ class SimpleJobManager2 (jobmanager.JobManager):
             # check if uri is ok
             # either by doing some sort of regexp or query ns for it
             start = timeTime.time()
-            self.activeJobs[jobID] = SimpleJobManager2.ActiveJob(proc=proc,starttime=start,user=user,uri=uri,port=jobPort)
-            log.debug('SimpleJobManager2: new process ')
+            self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc,starttime=start,user=user,uri=uri,port=jobPort)
+            log.debug('SimpleJobManager: new process ')
             log.debug(self.activeJobs[jobID])
 
-            log.info('SimpleJobManager2:allocateJob: allocated ' + jobID)
+            log.info('SimpleJobManager:allocateJob: allocated ' + jobID)
             self.lock.release()
             return jobmanager.JOBMAN_OK, jobID, jobPort
         
         else:
-            log.error('SimpleJobManager2: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs))
+            log.error('SimpleJobManager: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs))
             self.lock.release()
             raise jobmanager.JobManNoResourcesException("SimpleJobManager: no more resources")
             # return (JOBMAN_NO_RESOURCES,None)
@@ -292,13 +268,11 @@ class SimpleJobManager2 (jobmanager.JobManager):
                 job.proc.join(2)
                 if job.proc.exitcode is None: log.debug(f'{jobID} still running after 2s timeout, killing.')
                 job.proc.kill()
-                # free the assigned port
-                #self.freePorts.append(job.port)
                 # delete entry in the list of active jobs
-                log.debug('SimpleJobManager2:terminateJob: job %s terminated, freeing port %d' % (jobID, job.port))
+                log.debug('SimpleJobManager:terminateJob: job %s terminated' % (jobID))
                 del self.activeJobs[jobID]
             except KeyError:
-                log.debug('SimpleJobManager2:terminateJob: jobID error, job %s already terminated?' % jobID)
+                log.debug('SimpleJobManager:terminateJob: jobID error, job %s already terminated?' % jobID)
         self.lock.release()
    
     def terminateAllJobs(self):
@@ -322,14 +296,15 @@ class SimpleJobManager2 (jobmanager.JobManager):
             self.ns.remove(self.applicationName)
             log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
         except Exception as e:
-            log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
+            # log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
+            lgo.exception(f"Can not remove job {self.applicationName} from nameserver {self.ns}")
         if self.pyroDaemon:
             try:
                 self.pyroDaemon.unregister(self)
             except:
                 pass
             if not self.externalDaemon:
-                log.info("SimpleJobManager2:terminate Shutting down daemon %s" % self.pyroDaemon)
+                log.info("SimpleJobManager:terminate Shutting down daemon %s" % self.pyroDaemon)
                 try:
                     self.pyroDaemon.shutdown()
                 except:
@@ -342,7 +317,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         """
         See :func:`SimpleJobManager.getApplicationSignature`
         """
-        return 'Mupif.JobManager.SimpleJobManager2'
+        return 'Mupif.JobManager.SimpleJobManager'
 
     def getStatus(self):
         """
@@ -351,8 +326,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         status = []
         tnow = timeTime.time()
         for key in self.activeJobs:
-            status.append((key, tnow-self.activeJobs[key].starttime, self.activeJobs[key].user,
-                           self.activeJobs[key].port))
+            status.append((key, tnow-self.activeJobs[key].starttime, self.activeJobs[key].user))
         return status
 
     def uploadFile(self, jobID, filename, pyroFile, hkey):
@@ -367,7 +341,7 @@ class SimpleJobManager2 (jobmanager.JobManager):
         See :func:`JobManager.getPyroFile`
         """
         targetFileName = self.getJobWorkDir(jobID)+os.path.sep+filename
-        log.info('SimpleJobManager2:getPyroFile ' + targetFileName)
+        log.info('SimpleJobManager:getPyroFile ' + targetFileName)
         pfile = pyrofile.PyroFile(targetFileName, mode, buffSize)
         self.pyroDaemon.register(pfile)
 

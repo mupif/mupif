@@ -49,13 +49,13 @@ class Example08(workflow.Workflow):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
-        self.thermalJobMan = pyroutil.connectJobManager(ns, cfg.jobManName+'-ex08')
+        self.thermalJobMan = pyroutil.connectJobManager(ns, 'thermal-nonstat-ex08')
         
         try:
             self.thermal = pyroutil.allocateApplicationWithJobManager(
                 ns, self.thermalJobMan,
-                cfg.jobNatPorts[0],
-                pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+                #cfg.jobNatPorts[0],
+                #pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
             )
             log.info('Created thermal job')
         except Exception as e:

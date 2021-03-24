@@ -14,7 +14,7 @@ cfg.applicationClass=application2.Application2
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
-jobMan = mp.SimpleJobManager2(
+jobMan = mp.SimpleJobManager(
     serverConfig=cfg,
     ns=ns,
     appName=cfg.jobManName,
@@ -23,6 +23,7 @@ jobMan = mp.SimpleJobManager2(
 )
 
 mp.pyroutil.runJobManagerServer(
-    server=cfg.server, port=cfg.serverPort, nathost=cfg.serverNathost, natport=cfg.serverNatport, nshost=cfg.nshost,
-    nsport=cfg.nsport, appName=cfg.jobManName, jobman=jobMan, daemon=None
+    server=cfg.server, port=cfg.serverPort,
+    nshost=cfg.nshost, nsport=cfg.nsport,
+    jobman=jobMan
 )

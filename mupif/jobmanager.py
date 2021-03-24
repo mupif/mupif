@@ -29,6 +29,7 @@ import time as timeTime
 import logging
 import os
 import Pyro5
+import deprecated
 log = logging.getLogger()
 
 # error codes
@@ -103,7 +104,7 @@ class JobManager(object):
             The returned ticket is valid only for fixed time period), then should expire.
         """
         return False
-    def allocateJob(self, user, natPort, ticket=None):
+    def allocateJob(self, user, natPort=0, ticket=None):
         """
         Allocates a new job.
 
@@ -194,6 +195,7 @@ class JobManager(object):
         return self.jobManWorkDir + os.path.sep + jobID
         
 
+@deprecated.deprecated
 class RemoteJobManager (object):
     """
     Remote jobManager instances are normally represented by auto generated pyro proxy.

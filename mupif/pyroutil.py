@@ -28,6 +28,7 @@ import subprocess
 import threading
 import time
 import json
+import deprecated
 from . import model
 from . import jobmanager
 from . import util
@@ -58,27 +59,6 @@ import itertools
 testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
 
 
-def fixAnyIP(ip,name):
-    # origin: https://stackoverflow.com/a/28950776/761090
-    '''Guess (non-localhost) IP when binding to '0.0.0.0' (IPv4) or '::' (IPv6)'''
-    if ip not in ('0.0.0.0','::'): return ip
-    ipv4=(ip=='0.0.0.0')
-    import socket
-    s=socket.socket(socket.AF_INET if ipv4 else socket.AF_INET6, socket.SOCK_DGRAM)
-    try:
-        # doesn't even have to be reachable
-        # 2001:db8::1234 is TESTNET address
-        s.connect(('10.255.255.255' if ipv4 else '2001:db8::1234',1)) 
-        ret=s.getsockname()[0]
-        log.info(f'IPv{4 if ipv4 else 6} address for {name} adjusted: {ip} → {ret}')
-        return ret
-    except Exception:
-        ret='127.0.0.1' if ipv4 else '::1'
-        log.error(f'IPv{4 if ipv4 else 6} address for {name}: adjustment of {ip} failed, returning {ret} (localhost)')
-        return ret
-    finally:
-        s.close()
-
 from dataclasses import dataclass
 from typing import Optional, Union
 @dataclass
@@ -86,8 +66,6 @@ class PyroNetConf:
     nshost: Optional[str]=None
     nsport: int=0
     ns: Optional[Pyro5.api.Proxy]=None
-    nathost: Optional[str]=None
-    natport: int=0
     host: Optional[str]=None
     port: int=0
 
@@ -168,7 +146,7 @@ def getNSConnectionInfo(ns, name):
     for md in mdata:
         if not md.startswith(NS_METADATA_network): continue
         d=json.loads(md[len(NS_METADATA_network):])
-        return (d.get('host',None),d.get('port',None),d.get('nathost',None),d.get('natport',None))
+        return (d.get('host',None),d.get('port',None))
     return (None,None,None,None)
 
 def _connectApp(ns, name, connectionTestTimeOut = 10. ):
@@ -212,35 +190,8 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
 
     return app2
 
-
-def connectApp(ns, name, sshContext=None, connectionTestTimeOut = 10.):
-    """
-    Connects to a remote application, creates the ssh tunnel if necessary
-
-    :param Pyro5.naming.Nameserver ns: Instance of a nameServer
-    :param str name: Name of the application to be connected to
-    :param sshContext:
-    :return: Application Decorator (docorating pyro proxy with ssh tunnel instance)
-    :rtype: Instance of an application decorator
-    :raises Exception: When cannot find registered server or Cannot connect to application
-    """
-    tunnel = None
-    if sshContext:
-        (hostname, port, natHost, natport) = getNSConnectionInfo(ns, name)
-        try:
-            tunnel = SshTunnel(remoteHost=hostname, userName=sshContext.userName, localPort=natport, remotePort=port,
-                               sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
-        except Exception:
-            log.exception(
-                'Creating ssh tunnel failed for remoteHost %s userName %s localPort %s remotePort %s sshClient %s '
-                'options %s sshHost %s' % (
-                    hostname, sshContext.userName, natport, port, sshContext.sshClient, sshContext.options,
-                    sshContext.sshHost)
-            )
-            raise
-
-    app = _connectApp(ns, name, connectionTestTimeOut)
-    return model.RemoteModel(app, appTunnel=tunnel)
+def connectApp(ns, name, connectionTestTimeOut = 10.):
+    return _connectApp(ns, name, connectionTestTimeOut)
 
 
 def getNSAppName(jobname, appname):
@@ -253,39 +204,6 @@ def getNSAppName(jobname, appname):
     :rtype: str
     """
     return 'Mupif'+'.'+jobname+'.'+appname
-
-
-def __old_runDaemon(host: str, port, nathost=None, natport=None) -> Pyro5.api.Daemon:
-    """
-    Runs a daemon without registering to a name server
-    :param str(int) host: Host name where daemon runs. This is typically a localhost
-    :param int or tuple port: Port number where daemon will listen (internal port number) or tuple of possible ports
-    :param str(int) nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
-    :param int natport: Server NAT port, optional (external port)
-
-    :return Instance of the running daemon, None if a problem
-    :rtype Pyro5.api.Daemon
-    """
-    host=fixAnyIP(host,'[daemon]')
-    if isinstance(port, (tuple, list)):
-        ports = port
-    else:
-        ports = (port,)
-
-    for iport in ports:
-        try:
-            daemon = Pyro5.api.Daemon(host=host, port=int(iport), nathost=nathost, natport=util.NoneOrInt(natport))
-            log.info('Pyro5 daemon runs on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
-            return daemon
-        except socket.error as e:
-            log.debug(f'Unable to run daemon on {host}:{iport}: {str(e)}')
-            # log.exception(e)
-            daemon = None
-        except Exception:
-            log.exception('Can not run Pyro5 daemon on %s:%s using nathost %s:%s' % (host, iport, nathost, natport))
-            daemon = None
-    
-    raise apierror.APIError('Can not run Pyro5 daemon on configured ports')
 
 
 def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
@@ -302,22 +220,21 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     """
 
     ns=net.getNS()
-    # server, port, nathost, natport, nshost, nsport, 
+    # server, port, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
 
     externalDaemon = False
     if not daemon:
-        #host=fixAnyIP(net.host,appName)
         host=net.host
         if host in ('0.0.0.0','::'):
             ns._pyroBind() # connect so that _pyroConnection exists
             host=ns._pyroConnection.sock.getsockname()[0]
             log.warning(f"Adjusted INADDR_ANY {net.host} → {host} as per NS socket")
         try:
-            daemon = Pyro5.api.Daemon(host=host,port=net.port,nathost=net.nathost,natport=net.natport)
-            log.info(f'Pyro5 daemon runs on {host}:{net.port} using nathost {net.nathost}:{net.natport}')
+            daemon = Pyro5.api.Daemon(host=host,port=net.port)
+            log.info(f'Pyro5 daemon runs on {host}:{net.port}')
         except Exception:
-            log.exception(f'Can not run Pyro5 daemon on {host}:{net.port} using nathost {net.nathost}:{net.natport}')
+            log.exception(f'Can not run Pyro5 daemon on {host}:{net.port}')
             raise
     else:
         externalDaemon = True
@@ -338,7 +255,7 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     #    # catch attribute error (thrown when method not defined)
     #    log.warning(f'Can not register daemon for application {appName}')
     except:
-        log.exception(f'Can not register app with daemon {daemon.locationStr} using nathost {net.nathost}:{net.natport} on nameServer')
+        log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
         raise
 
     import threading
@@ -348,24 +265,22 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     _host,_port=daemon.locationStr.split(':')
 
     if metadata is None: metadata=set()
-    metadata.add(NS_METADATA_network+json.dumps({'host':_host,'port':_port,'nathost':net.nathost,'natport':net.natport}))
+    metadata.add(NS_METADATA_network+json.dumps({'host':_host,'port':_port}))
 
     ns.register(appName, uri, metadata=metadata)
 
     log.debug(f'NameServer {appName} has registered uri {uri}')
-    log.debug(f'Running runServer: server:{_host}, port:{_port}, nathost:{net.nathost}, natport:{net.natport}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
+    log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
     threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
     return uri
 
 
-def runAppServer(server, port, nathost, natport, nshost, nsport, appName, app, daemon=None):
+def runAppServer(*, server, nshost, nsport, appName, app, port=0):
     """
     Runs a simple application server
 
     :param str server: Host name of the server (internal host name)
     :param int port: Port number on the server where daemon will listen (internal port number)
-    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
-    :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
     :param str appName: Name of registered application
@@ -375,22 +290,20 @@ def runAppServer(server, port, nathost, natport, nshost, nsport, appName, app, d
     :raises Exception: if can not run Pyro5 daemon
     """
     return runServer(
-        net=PyroNetConf(host=server,port=port,nathost=nathost,natport=natport,nshost=nshost,nsport=nsport),
+        net=PyroNetConf(host=server,nshost=nshost,nsport=nsport),
         appName=appName,
         app=app,
-        daemon=daemon,
+        # daemon=daemon,
         metadata={NS_METADATA_appserver}
     )
 
 
-def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName, jobman, daemon=None):
+def runJobManagerServer(*, server, nshost, nsport, jobman, port=0):
     """
     Registers and runs given jobManager server
 
     :param str server: Host name of the server (internal host name)
     :param int port: Port number on the server where daemon will listen (internal port number)
-    :param str nathost: Hostname of the server as reported by nameserver, for secure ssh tunnel it should be set to 'localhost' (external host name)
-    :param int natport: Server NAT port as reported by nameserver (external port)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
     :param str appName: Name of job manager to be registered at nameserver
@@ -398,57 +311,12 @@ def runJobManagerServer(server, port, nathost, natport, nshost, nsport, appName,
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
     return runServer(
-        net=PyroNetConf(host=server,port=port,nathost=nathost,natport=natport,nshost=nshost,nsport=nsport),
-        appName=appName,
+        net=PyroNetConf(host=server,nshost=nshost,nsport=nsport),
+        appName=jobman.getNSName(),
         app=jobman,
-        daemon=daemon,
+        # daemon=daemon,
         metadata={NS_METADATA_jobmanager}
     )
-
-
-# def connectApplicationsViaClient(fromSolverAppRec, toApplication, sshClient='ssh', options=''):
-def connectApplicationsViaClient(fromContext, fromApplication, toApplication):
-    """
-    Create a reverse ssh tunnel so one server application can connect to another one.
-
-    Typically, steering_computer creates connection to server1 and server2. However, there
-    is no direct link server1-server2 which is needed for Field operations (getField, setField).
-    Assume a working connection server1-steering_computer on NAT port 6000. This function creates
-    a tunnel steering_computer:6000 and server2:7000 so server2 has direct access to server1's data.
-
-           steering_computer
-            /              \
-    from server1:6000     to server2:7000
-
-
-    :param SSHContext fromContext: Remote application
-    :param model.Model or model.RemoteModel fromApplication: Application object from which we want to create a tunnel
-    :param model.Model or model.RemoteModel toApplication: Application object to which we want to create a tunnel
-
-    :return: Instance of SshTunnel class
-    :rtype: SshTunnel
-    """
-    uri = toApplication.getURI()
-    natPort = getNATfromUri(uri)
-    # uri = fromApplication.getURI()
-    fromNatPort = natPort  # getNATfromUri( uri )
-    
-    tunnel = SshTunnel(
-        remoteHost='127.0.0.1', userName=fromContext.userName, localPort=natPort, remotePort=fromNatPort,
-        sshClient=fromContext.sshClient, options=fromContext.options, sshHost=fromContext.sshHost, Reverse=True)
-    return tunnel
-
-
-def getNATfromUri(uri):
-    """
-    Return NAT port from URI, e.g. return 5555 from string PYRO:obj_b178eed8e1994135adf9864725f1d50f@127.0.0.1:5555
-
-    :param str uri: URI from an object
-
-    :return: NAT port number
-    :rtype: int
-    """
-    return int(re.search('(\d+)$', str(uri)).group(0))
 
 
 def getIPfromUri(uri):
@@ -490,126 +358,55 @@ def getUserInfo():
     return username, hostname
 
 
-def connectJobManager(ns, jobManName, sshContext=None):
+def connectJobManager(ns, jobManName):
     """
     Connect to jobManager described by given jobManRec and create an optional ssh tunnel
 
     :param jobManName name under which jobmanager is registered on NS
-    :param sshContext describing optional ssh tunnel connection detail 
 
     :return: (JobManager proxy, jobManager Tunnel)
     :rtype: jobmanager.RemoteJobManager
     :raises Exception: if creation of a tunnel failed
     """
 
-    (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobManName)
-    log.info('Located Job Manager %s at: %s %s %s %s' % (
-        jobManName, jobManHostname, jobManPort, jobManNatHost, jobManNatport))
-    # (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
-    # create tunnel to JobManager running on (remote) server
-    tunnelJobMan = None
-    if sshContext:
-        try:
-            tunnelJobMan = SshTunnel(
-                remoteHost=jobManHostname, userName=sshContext.userName, localPort=jobManNatport, remotePort=jobManPort,
-                sshClient=sshContext.sshClient, options=sshContext.options, sshHost=sshContext.sshHost)
-        except Exception:
-            log.exception(
-                'Creating ssh tunnel for JobManager failed for remoteHost %s userName %s localPort %s remotePort %s '
-                'sshClient %s options %s sshHost %s' % (
-                    jobManHostname, sshContext.userName, jobManNatport, jobManPort, sshContext.sshClient,
-                    sshContext.options, sshContext.sshHost
-                )
-            )
-            raise
+    return _connectApp(ns, jobManName)
 
-    # locate remote jobManager on (remote) server
-    jobMan = _connectApp(ns, jobManName)
-    # return (jobMan, tunnelJobMan)
-    return jobmanager.RemoteJobManager(jobMan, tunnelJobMan)
-
-
-def allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext=None):
+def allocateApplicationWithJobManager(ns, jobMan):
     """
     Request new application instance to be spawned by  given jobManager.
     
     :param Pyro5.naming.Nameserver ns: running name server
     :param jobManager jobMan: jobmanager to use
-    :param int natPort: nat port on a local computer for ssh tunnel for the application
-    :param sshContext sshContext: describing optional ssh tunnel connection detail
 
     :returns: Application instance
     :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
 
-    # (jobManPort, jobManNatport, jobManHostname, jobManUserName, jobManName) = jobManRec
     log.debug('Trying to connect to JobManager')
-    # (jobMan, tunnelJobMan) = connectJobManager (ns, jobManName, userName, sshClient, options, sshHost)
-
-    # if jobMan is None:
-    #     e = OSError("Can not connect to JobManager")
-    #     log.exception(e)
-    #     raise e
-    # else:
-    #     log.debug('Connected to JobManager %s using tunnel %s' % (jobMan, tunnelJobMan))
-
-    # if tunnelJobMan is None:
-    #     e = OSError("Can not create a ssh tunnel to JobManager")
-    #     log.exception(e)
-    #     raise
-
     try:
         (username, hostname) = getUserInfo()
-        retRec = jobMan.allocateJob(username+"@"+hostname, natPort=natPort)
-        log.info('Allocated job, returned record from jobManager:' + str(retRec))
+        status,jobid,jobport = jobMan.allocateJob(username+"@"+hostname)
+        log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
     except Exception:
         log.exception("JobManager allocateJob() failed")
         print("".join(Pyro5.errors.get_pyro_traceback()))
         raise
-
-    # create tunnel to application's daemon running on (remote) server
-    appTunnel = None
-    if sshContext:
-        try:
-            (jobManHostname, jobManPort, jobManNatHost, jobManNatport) = getNSConnectionInfo(ns, jobMan.getNSName())
-            appTunnel = SshTunnel(
-                remoteHost=jobManHostname,
-                userName=sshContext.userName,
-                localPort=natPort,
-                remotePort=retRec[2],
-                sshClient=sshContext.sshClient,
-                options=sshContext.options,
-                sshHost=sshContext.sshHost
-            )
-        except Exception:
-            log.exception("Creating ssh tunnel for application's daemon failed")
-            raise
-    else:
-        log.info("Scenario: Connecting to " + retRec[1] + " " + str(retRec[2]))
-
-    # time.sleep(1)
-    # connect to (remote) application, requests remote proxy
-    app = _connectApp(ns, retRec[1])
-    if app is None:
-        appTunnel.terminate()
-    return model.RemoteModel(app, jobMan=jobMan, jobID=retRec[1], appTunnel=appTunnel)
+    return _connectApp(ns, jobid)
 
 
-def allocateNextApplication(ns, jobMan, natPort, sshContext=None):
+def allocateNextApplication(ns, jobMan):
     """
     Request a new application instance to be spawned by given jobManager
     
     :param Pyro5.naming.Nameserver ns: running name server
     :param jobMan: jobmanager to use
-    :param int natPort: nat port on a local computer for ssh tunnel for the application
-    :param sshContext: describing optional ssh tunnel connection detail
     
     :return: Application instance
     :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
-    return allocateApplicationWithJobManager(ns, jobMan, natPort, sshContext)
+    return allocateApplicationWithJobManager(ns, jobMan)
 
 
 def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
@@ -674,32 +471,7 @@ def uploadPyroFileOnServer(clientFileName, pyroFile, size=1024*1024, compressFla
 
 
 
-
-
-def useTestSSL():
-    '''
-    Set Pyro5 SSL test configuration as Pyro5.config. Not to be used in production settings.
-    '''
-    Pyro5.config.SSL=True
-    Pyro5.config.SSL_REQUIRECLIENTCERT=True
-    Pyro5.config.SSL_SERVERCERT=testSSL['server','cert']
-    Pyro5.config.SSL_SERVERKEY=testSSL['server','key']
-    Pyro5.config.SSL_CLIENTCERT=testSSL['client','cert']
-    Pyro5.config.SSL_CLIENTKEY=testSSL['client','key']
-    Pyro5.config.SSL_CACERTS=testSSL['rootCA','cert']
-
-def useTestSSL_env(e):
-    '''
-    Set Pyro5 SSL test configuration as environment variables. Not to be used in production settings.
-    '''
-    e['PYRO_SSL']='1'
-    e['PYRO_SSL_REQUIRECLIENTCERT']='1'
-    e['PYRO_SSL_SERVERCERT']=testSSL['server','cert']
-    e['PYRO_SSL_SERVERKEY']=testSSL['server','key']
-    e['PYRO_SSL_CLIENTCERT']=testSSL['client','cert']
-    e['PYRO_SSL_CLIENTKEY']=testSSL['client','key']
-    e['PYRO_SSL_CACERTS']=testSSL['rootCA','cert']
-
+@deprecated.deprecated
 @dataclass
 class SSHContext(object):
     """

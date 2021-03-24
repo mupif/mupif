@@ -20,4 +20,7 @@ cfg=ExConfig()
 import application2
 app2 = application2.Application2()
 
-mp.pyroutil.runAppServer(cfg.server, cfg.serverPort, cfg.serverNathost, cfg.serverNatport, cfg.nshost, cfg.nsport, cfg.appName, app=app2)
+mp.pyroutil.runAppServer(server=cfg.server, port=cfg.serverPort,
+    # cfg.serverNathost, cfg.serverNatport,
+    nshost=cfg.nshost, nsport=cfg.nsport,
+    appName=cfg.appName, app=app2)

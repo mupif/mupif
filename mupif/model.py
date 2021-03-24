@@ -34,6 +34,7 @@ from . import field
 from . import function
 from . import timestep
 from . import pyroutil
+import deprecated
 import time
 
 from pydantic.dataclasses import dataclass
@@ -517,8 +518,14 @@ class Model(mupifobject.MupifObject):
         if self.hasMetadata('Name'):
             print('AppName:\'%s\':' % self.getMetadata('Name'))
         super().printMetadata(nonEmpty)
-    
 
+    
+    def setJobID(self,jobid):
+        self._jobID=jobid
+    def getJobID(self):
+        return self._jobID
+    
+@deprecated.deprecated
 @Pyro5.api.expose
 class RemoteModel (object):
     """

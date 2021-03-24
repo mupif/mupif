@@ -23,8 +23,6 @@ mechanical = models.MechanicalModel()
 pyroutil.runAppServer(
     server=cfg.server3,
     port=cfg.serverPort3,
-    natport=None,
-    nathost=None,
     nshost=cfg.nshost,
     nsport=cfg.nsport,
     appName='mechanical-ex08',

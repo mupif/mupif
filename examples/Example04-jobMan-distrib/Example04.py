@@ -47,8 +47,9 @@ class Example04(mp.Workflow):
 
         try:
             self.app1 = mp.pyroutil.allocateApplicationWithJobManager(
-                ns, self.jobMan, cfg.jobNatPorts[0],
-                mp.pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+                ns=ns, jobMan=self.jobMan,
+                # cfg.jobNatPorts[0],
+                # mp.pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
             )
             log.info(self.app1)
         except Exception as e:

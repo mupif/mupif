@@ -4,35 +4,39 @@ import sys
 import argparse
 
 sys.path.extend(['..', '../..', '../Example06-stacTM-local'])
-from mupif import *
+#from mupif import *
+import mupif as mp
+import models
 
 from exconfig import ExConfig
 cfg=ExConfig()
+cfg.applicationClass=models.ThermalNonstatModel
+cfg.applicationInitialFile='inputT10.in' # used?
 
-util.changeRootLogger('thermal.log')
+#util.changeRootLogger('thermal.log')
 
 # locate nameserver
-ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run a daemon for jobMamager on this machine
-#daemon = pyroutil.runDaemon(
+#daemon = mp.pyroutil.runDaemon(
 #    host=cfg.server, port=list(range(cfg.serverPort,cfg.serverPort+100)), nathost=cfg.serverNathost, natport=cfg.serverNatport)
 
 # Run job manager on a server
-jobMan = simplejobmanager.SimpleJobManager2(
-    daemon=None, ns=ns, appAPIClass=None, appName=cfg.jobManName+'-ex08', portRange=cfg.portsForJobs, jobManWorkDir=cfg.jobManWorkDir, serverConfigPath=os.getcwd(), serverConfigFile='thermalServerConfig', serverConfigMode=cfg.mode,
-    maxJobs=cfg.maxJobs)
+jobMan = mp.SimpleJobManager(
+    serverConfig=cfg,
+    ns=ns,
+    appName='thermal-nonstat-ex08',
+    jobManWorkDir=cfg.jobManWorkDir,
+    maxJobs=cfg.maxJobs
+)
 
-pyroutil.runJobManagerServer(
+mp.pyroutil.runJobManagerServer(
     server=cfg.server,
     port=cfg.serverPort,
-    nathost=None,
-    natport=None,
     nshost=cfg.nshost,
     nsport=cfg.nsport,
-    appName=cfg.jobManName+'-ex08',
-    jobman=jobMan,
-    daemon=None
+    jobman=jobMan
 )
 
 

@@ -29,7 +29,7 @@ pyroutil.runAppServer(server=cfg.server3, port=cfg.serverPort3, nathost=cfg.serv
 ##Run a daemon for jobManager on this machine
 #daemon = cfg.Pyro4.Daemon(host=127.0.0.1, port=44382)
 ##Run job manager on a server
-#jobMan = JobManager.SimpleJobManager2(daemon, ns, None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
+#jobMan = JobManager.SimpleJobManager(daemon, ns, None, cfg.jobManName, cfg.portsForJobs, cfg.jobManWorkDir, os.getcwd(), 'thermalServerConfig', cfg.jobMan2CmdPath, cfg.maxJobs, cfg.socketApps)
 ##set up daemon with JobManager
 #uri = daemon.register(jobMan)
 ##register JobManager to nameServer
