@@ -6,10 +6,10 @@ import mupif
 from mupif import *
 from mupif.tests import demo
 
-class TestEx01(unittest.TestCase):
+class TestApp(unittest.TestCase):
     def setUp(self):
         self.app1,self.app2=demo.AppCurrTime(file=None),demo.AppPropAvg(file=None)
-    def testEx01(self):
+    def test_app(self):
         app1,app2=self.app1,self.app2
         time  = 0
         timestepnumber=0
