@@ -1,0 +1,6 @@
+This exmaple does not take place in runex.py, because it requires Slurm PBS.
+
+Run the following commands in three terminals.
+    python runns.py
+    python server.py
+    python main.py
