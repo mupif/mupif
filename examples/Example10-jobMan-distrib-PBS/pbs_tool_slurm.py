@@ -1,4 +1,15 @@
 import subprocess
+from simple_slurm import Slurm
+
+
+def submit_job(command, job_name, output, cpus_per_task=1):
+    slurm = Slurm(
+        job_name=job_name,
+        output=output,
+        cpus_per_task=cpus_per_task
+    )
+    jobid = slurm.sbatch(command)
+    return jobid
 
 
 # This function analyzes the output of 'qstat [jobid]' command, which has the form:

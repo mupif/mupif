@@ -98,18 +98,15 @@ class Application10(mp.Model):
         f.write("%f" % inputvalue)
         f.close()
 
-        # create the job
-        slurm = Slurm(
-            cpus_per_task=1,
-            job_name='MupifExample10',
-            output='./%A_%a.out',
-        )
-
+        # submit the job
         rp = os.path.realpath(__file__)
         dirname = os.path.dirname(rp)
-
-        # submit the job
-        jobid = slurm.sbatch('python %s/appexec.py %s %s' % (dirname, inpfile, outfile))
+        jobid = pbs_tool_slurm.submit_job(
+            command='python %s/appexec.py %s %s' % (dirname, inpfile, outfile),
+            job_name='MupifExample10',
+            output=dirname + '/%A_%a.out',
+            cpus_per_task=1
+        )
 
         # wait until the job is finished
         # After its completion, the job stays in the list of jobs with 'Completed' status for a while.
