@@ -34,54 +34,94 @@ import os, sys
 #
 # import everything recursively, inject into this module
 #
-import pkgutil
-import os.path
-d=os.path.dirname(os.path.abspath(__file__))
-__all__=['U','Q']
-for loader,modname,ispkg in pkgutil.walk_packages(path=[d],prefix='mupif.'):
-    modsplit=modname.split('.')
-    # avoid foreign modules
-    if modsplit[0]!='mupif': continue
-    # avoid mupif itself
-    if modsplit==['mupif']: continue
-    # important, would mess tests up as they use from mupif import * and such (should not, being nested)
-    if modsplit[1] in ('tests',): continue
-    try:
-        # important! don't call loader if the modules appeared in sys.modules meanwhile
-        # (it could have been imported another module indirectly)
-        # this would result in double import with catastrophic consequences
-        # such as the same class existing twice, but not being identical
-        #print(modname)
-        if modname in sys.modules: mod=sys.modules[modname]
-        else: sys.modules[modname]=(mod:=loader.find_module(modname).load_module(modname))
-    except Exception as e:
-        sys.stderr.write(f'Error importing module {modname}: {str(e)}\n')
-        raise
-    # direct submodules created as mupif.submodule
-    if len(modsplit)==2:
-        globals()[modsplit[1]]=mod
-        __all__.append(modsplit[1])
-    # contents of those does not need to be exposed as mupif.Class etc
-    #if modsplit[1] in ('tests','maybe-something-more'): continue
-    # import contents of submodules (direct or indirect)
-    for name in mod.__dir__():
-        # don't export internal names
-        if name.startswith('_'): continue
-        obj=getattr(mod,name)
-        # skip builtins and externally imported things
-        if not hasattr(obj,'__module__') or not obj.__module__.startswith('mupif.'): continue
-        # catches classes and enumerations, exactly what we want
-        if isinstance(obj,type):
-            globals()[name]=obj
-            __all__.append(name)
-            # print(name,obj)
-# make unique
-__all__=list(set(__all__))
+def autoImports():
+    import pkgutil
+    import os.path
+    d=os.path.dirname(os.path.abspath(__file__))
+    aa=['U','Q']
+    ret=''
+    for loader,modname,ispkg in pkgutil.walk_packages(path=[d],prefix='mupif.'):
+        modsplit=modname.split('.')
+        # avoid foreign modules
+        if modsplit[0]!='mupif': continue
+        # avoid mupif itself
+        if modsplit==['mupif']: continue
+        # important, would mess tests up as they use from mupif import * and such (should not, being nested)
+        if modsplit[1] in ('tests','physics'): continue
+        try:
+            # important! don't call loader if the modules appeared in sys.modules meanwhile
+            # (it could have been imported another module indirectly)
+            # this would result in double import with catastrophic consequences
+            # such as the same class existing twice, but not being identical
+            #print(modname)
+            if modname in sys.modules: mod=sys.modules[modname]
+            else: sys.modules[modname]=(mod:=loader.find_module(modname).load_module(modname))
+        except Exception as e:
+            sys.stderr.write(f'Error importing module {modname}: {str(e)}\n')
+            raise
+        # direct submodules created as mupif.submodule
+        if len(modsplit)==2:
+            # globals()[modsplit[1]]=mod
+            # __all__.append(modsplit[1])
+            aa.append(modsplit[1])
+        # contents of those does not need to be exposed as mupif.Class etc
+        #if modsplit[1] in ('tests','maybe-something-more'): continue
+        # import contents of submodules (direct or indirect)
+        names=[]
+        for name in mod.__dir__():
+            # don't export internal names
+            if name.startswith('_'): continue
+            obj=getattr(mod,name)
+            # skip builtins and externally imported things
+            if not hasattr(obj,'__module__') or not obj.__module__.startswith('mupif.'): continue
+            # catches classes and enumerations, exactly what we want
+            if isinstance(obj,type):
+                aa.append(name)
+                names.append(name)
+        if names: ret+=f'from .{".".join(modsplit[1:])} import {", ".join(names)}\n'
+    ret+=f'__all__=[{",".join([repr(a) for a in aa])}]\n'
+    return ret
 
-U=sys.modules['mupif.units'].U
-Q=sys.modules['mupif.units'].Q
+# these are imported explicitly (not classes but rather instances)
+from .units import U
+from .units import Q
 
-# print([k for k in sys.modules.keys() if k.startswith('mupif.')])
+#
+# this is the output from mupif.autoImports()
+# it must be refreshed by hand whne new class is added or removed
+#
+from .apierror import Dumpable, APIError
+from .bbox import BBox
+from .cell import Dumpable, Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahedron_3d_lin, Brick_3d_lin
+from .constantfield import ConstantField
+from .dataid import FieldID, ParticleSetID, FunctionID, PropertyID
+from .dumpable import NumpyArray, Dumpable
+from .field import FieldID, FieldType, Field
+from .function import Function
+from .integrationrule import IntegrationRule, GaussIntegrationRule
+from .jobmanager import JobManException, JobManNoResourcesException, JobManager, RemoteJobManager
+from .localizer import Localizer
+from .mesh import MeshIterator, Mesh, UnstructuredMesh
+from .model import PropertyID, FieldID, FunctionID, ParticleSetID, Model, RemoteModel
+from .mupifobject import MupifObject
+from .mupifquantity import ValueType, MupifQuantity
+from .octree import Octant, Octree
+from .operatorutil import OperatorInteraction, OperatorEMailInteraction
+from .particle import Particle, ParticleSet
+from .property import Property, ConstantProperty
+from .pyrofile import PyroFile
+from .pyroutil import PyroNetConf, SSHContext, SshTunnel
+from .remoteapprecord import RemoteAppRecord
+from .simplejobmanager import SimpleJobManager
+from .timer import Timer
+from .timestep import TimeStep
+from .units import UnitProxy
+from .vertex import Dumpable, Vertex
+from .workflow import Workflow
+from .workflowmonitor import WorkflowMonitor
+__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','FieldID','ParticleSetID','FunctionID','PropertyID','dumpable','NumpyArray','Dumpable','field','FieldID','FieldType','Field','function','Function','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','PropertyID','FieldID','FunctionID','ParticleSetID','Model','RemoteModel','mupifobject','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','SSHContext','SshTunnel','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
+
+
 
 # make flake8 happy
 from . import dumpable, util
