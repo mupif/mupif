@@ -357,7 +357,7 @@ def _cookSchema(desc,prefix='',schemaName=''):
                 if self.row is None: val=np.array([_lookup(r) for r in range(self.ctx.dataset.shape[0])])
                 else: val=_lookup(self.row)
                 if unit: return astropy.units.Quantity(value=val,unit=unit)
-                else: return val    
+                else: return val
             meth['get'+capitalize(key)]=inherentGetter
         # normal data attribute
         elif 'dtype' in val:
@@ -477,10 +477,9 @@ def _cookSchema(desc,prefix='',schemaName=''):
         T_bases=(MupifObject,)
     else:
         T_bases=()
-        #import pydantic, typing
-        #ret.T=pydantic.create_model(T_name,row=(typing.Optional[int],None),ctx=(Any,None),__base__=MupifObject)
-        #for k,v in meth.items(): ret.T.k=v
     ret.T=type(T_name,T_bases,meth)
+    # TODO: ret.T.__module__=<md5hash of JSON>
+    # so that the (T.__module__,T.__name__) tuple used in serialization is unique
     if not prefix:
         ret.T.name=schemaName # schema knows its own name, for convenience of creating schema registry
         # pydantic defines __iter__; it cannot be deleted, thus we have to redefine instead
@@ -498,7 +497,7 @@ class RootContext:
 def makeSchemaRegistry(dd):
     return dict([((T:=_cookSchema(d)).name,T) for d in dd])
 
-
+import json
 # TODO: move to mupif.units, hide astropy
 import astropy.units
 astropy.units.add_enabled_units([
@@ -569,17 +568,36 @@ def _read_grains(h5name):
 
 
 @Pyro5.api.expose
-class HeavyDataProxy(MupifObject):
+class HeavyDataHandle(MupifObject):
     h5path: str
     h5group: str
-    def getProxy(self):
-        h5=h5py.File(self.h5path,'r')
-        grp=h5[self.h5group]
+    h5uri: typing.Optional[str]=None
+    def readRoot(self):
+        if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
+        self._h5obj=h5py.File(self.h5path,'r')
+        grp=self._h5obj[self.h5group]
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
         h5name=self.h5group.rsplit('/',1)[-1]
-        top=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
-        return top
-    # def downloadHeavy(self):
+        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
+        return root
+    def makeRoot(self,*,schema,schemasJson):
+        if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
+        self._h5obj=h5py.File(self.h5path,'w')
+        grp=self._h5obj.require_group(self.h5group)
+        grp.attrs['schemas']=schemasJson
+        grp.attrs['schema']=schema
+        h5name=self.h5group.rsplit('/',1)[-1]
+        schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
+        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
+        return root
+    def __init__(self,**kw):
+        super().__init__(**kw) # this calls the real ctor
+        self._h5obj=None
+        if self.h5uri is not None:
+            uri=Pyro5.api.URI(self.h5uri)
+            remote=pyro.api.Proxy(uri)
+            fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
+            pyroutil.downloadPyroFile(self.h5path,remote)
 
 '''
 future ideas:
@@ -599,8 +617,9 @@ if __name__=='__main__':
     _read_grains('/tmp/grains.h5')
 
     # this won't work through Pyro yet
-    pp=HeavyDataProxy(h5path='/tmp/grains.h5',h5group='grains')
-    print(pp.getProxy().getMolecules(0).getAtoms(5).getIdentity().getElement())
-    print(pp.getProxy()[0].getMolecules()[5].getAtoms().getIdentity().getElement())
+    pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='grains')
+    root=pp.readRoot()
+    print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
+    print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
 
 

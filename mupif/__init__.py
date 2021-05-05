@@ -98,6 +98,7 @@ from .dataid import FieldID, ParticleSetID, FunctionID, PropertyID
 from .dumpable import NumpyArray, Dumpable
 from .field import FieldID, FieldType, Field
 from .function import Function
+from .heavydata import HeavyDataHandle
 from .integrationrule import IntegrationRule, GaussIntegrationRule
 from .jobmanager import JobManException, JobManNoResourcesException, JobManager, RemoteJobManager
 from .localizer import Localizer
@@ -119,7 +120,7 @@ from .units import UnitProxy
 from .vertex import Dumpable, Vertex
 from .workflow import Workflow
 from .workflowmonitor import WorkflowMonitor
-__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','FieldID','ParticleSetID','FunctionID','PropertyID','dumpable','NumpyArray','Dumpable','field','FieldID','FieldType','Field','function','Function','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','PropertyID','FieldID','FunctionID','ParticleSetID','Model','RemoteModel','mupifobject','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','SSHContext','SshTunnel','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
+__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','FieldID','ParticleSetID','FunctionID','PropertyID','dumpable','NumpyArray','Dumpable','field','FieldID','FieldType','Field','function','Function','heavydata','HeavyDataHandle','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','PropertyID','FieldID','FunctionID','ParticleSetID','Model','RemoteModel','mupifobject','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','SSHContext','SshTunnel','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
 
 
 
