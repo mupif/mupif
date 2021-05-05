@@ -2,6 +2,7 @@
 useAstropy=True
 
 if not useAstropy:
+    raise RuntimeError('MuPIF without astropy (mupif.units.useAtropy) is no longer supported.')
     from .physics.physicalquantities import PhysicalUnit as Unit
     from .physics.physicalquantities import PhysicalQuantity as Quantity
     from .physics.physicalquantities import U
