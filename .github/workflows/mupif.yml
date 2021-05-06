@@ -56,7 +56,7 @@ jobs:
       timeout-minutes: 2 # normally about 35s
       run: |
         set -euo pipefail
-        cd examples; ./runex.py --codecov 2>&1 | ../tools/grcat-mupif
+        cd examples; ./runex.py --codecov 1 2 3 4 5 6 8 2>&1 | ../tools/grcat-mupif
     - name: examples (win32)
       timeout-minutes: 2 # normally about 50s
       run: |

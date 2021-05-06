@@ -594,10 +594,11 @@ class HeavyDataHandle(MupifObject):
         super().__init__(**kw) # this calls the real ctor
         self._h5obj=None
         if self.h5uri is not None:
-            uri=Pyro5.api.URI(self.h5uri)
-            remote=pyro.api.Proxy(uri)
-            fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
-            pyroutil.downloadPyroFile(self.h5path,remote)
+            raise NotImplementedError('Automatic HDF5 file transfer not yet implemented.')
+            #uri=Pyro5.api.URI(self.h5uri)
+            #remote=pyro.api.Proxy(uri)
+            #fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
+            #pyroutil.downloadPyroFile(self.h5path,remote)
 
 '''
 future ideas:
