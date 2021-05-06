@@ -14,6 +14,7 @@ else:
     import numpy as np
     from astropy.units import Unit
     from astropy.units import Quantity
+    import astropy.constants
     # monkey-patches: compatibility with mupif's physical quantities
     Quantity.inUnitsOf=Quantity.to
     Quantity.getValue=lambda self: self.value
@@ -30,9 +31,13 @@ else:
     def findUnit(unit): return Unit(unit)
     def makeQuantity(val,unit): return Quantity(val,unit)
     # for compatibility with our physical quantities
-    dimensionless=au.def_unit('none',1*au.dimensionless_unscaled)
     degC=au.def_unit('degC',au.deg_C) 
-    au.add_enabled_units([dimensionless])
+    au.add_enabled_units([
+        # elementary charge is technically a constant
+        au.def_unit('e',astropy.constants.si.e),
+        # this is shorter
+        au.def_unit('none',au.dimensionless_unscaled)
+    ])
     # enable temperature conversions by default
     au.add_enabled_equivalencies(au.equivalencies.temperature())
 

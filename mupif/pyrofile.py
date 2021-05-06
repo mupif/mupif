@@ -31,7 +31,7 @@ class PyroFile (object):
     Helper Pyro class providing an access to local file. It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.
     """
 
-    def __init__(self, filename, mode, buffsize=1024, compressFlag=False):
+    def __init__(self, filename, mode, buffsize=2**20, compressFlag=False):
         """
         Constructor. Opens the corresponding file handle.
 

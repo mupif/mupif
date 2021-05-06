@@ -417,14 +417,20 @@ def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
     :param pyrofile.PyroFile pyroFile: representation of existing remote server's file
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
+    import sys
     file = pyrofile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
     if compressFlag:
         pyroFile.setCompressionFlag()
         file.setCompressionFlag()
+    # sys.stderr.write('Getting first chunk…\n')
     data = pyroFile.getChunk()  # this is where the potential remote communication via Pyro happen
-    while data:
+    while True:
+        # sys.stderr.write(f'Getting chunk [file size: {os.stat(newLocalFileName).st_size}]\n')
         file.setChunk(data)
         data = pyroFile.getChunk()
+        # serpent returns bytes as dict... omg, handle that as well
+        if not data or (isinstance(data,dict) and not data['data']): break
+    # sys.stderr.write('Getting terminal chunk…\n')
     file.setChunk(pyroFile.getTerminalChunk())
     pyroFile.close()
     file.close()
