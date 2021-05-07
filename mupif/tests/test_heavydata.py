@@ -51,6 +51,8 @@ class Heavydata_TestCase(unittest.TestCase):
                     struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
+        # this is for checking the value later
+        grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('Q')
         t1=time.time()
         sys.stderr.write(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
 
@@ -97,10 +99,12 @@ class Heavydata_TestCase(unittest.TestCase):
             # this MUST be called to get local instance of the handle
             # its constructor will download the HDF5 file, if the h5uri attribute is set
             local=proxy.getLocalCopy()
+            self.assertEqual(local.__class__,mp.heavydata.HeavyDataHandle)
             sys.stderr.write(f'Local handle is a {local.__class__.__name__}\n')
             root=local.readRoot()
-            sys.stderr.write(f'Proxied root has {len(root)} grains, {root.__class__}\n')
+            # sys.stderr.write(f'Local root has {len(root)} grains, {root.__class__}\n')
             self.assertEqual(C.numGrains,len(root))
+            self.assertEqual(root[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
@@ -109,11 +113,11 @@ class Heavydata_TestCase(unittest.TestCase):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
-            regStr=proxy.getSchemaRegistry()
-            # create context classes and (!!) register them in Pyro on the local side for deserialization
-            reg=mp.heavydata.makeSchemaRegistry(json.loads(regStr))
-            proxy.readRoot()
-            sys.stderr.write(f'Root context is a {proxy.__class__.__name__}\n')
+            root=proxy.readRoot()
+            self.assertEqual(root.__class__,Pyro5.api.Proxy)
+            sys.stderr.write(f'Proxied root is {root.__class__}\n')
+            # special methods don't currently work with Pyro5, use __getitem__ instead of [] for now
+            self.assertEqual(root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()

@@ -279,6 +279,7 @@ import types
 import json
 import tempfile
 import logging
+import os
 log=logging.getLogger(__name__)
 
 
@@ -331,6 +332,8 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]  
     
+    T_name='HeavyDataContext_'+schemaName+('_'+prefix.replace('.','_') if prefix else '')
+
     # top-level only
     if not schemaName:
         schemaName=desc['_schema']
@@ -338,6 +341,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         h=hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
         fakeModule=types.ModuleType('_mupif_heavydata_'+h.hexdigest(),'Synthetically generated module for mupif.HeavyDataHandle schemas')
+        if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
         sys.modules[fakeModule.__name__]=fakeModule
         
     ret=CookedSchemaFragment(dtypes=[],defaults={})
@@ -381,6 +385,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
                 if self.row is not None: value=self.ctx.dataset[fq,self.row]
                 else: value=self.ctx.dataset[fq]
+                if isinstance(value,bytes): value=value.decode('utf-8')
                 if unit is None: return value
                 return units.Quantity(value=value,unit=unit)
             def setter(self,val,*,fq=fq,unit=unit,dtype=dtype):
@@ -421,6 +426,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
                 subgrp=self.ctx.h5group.require_group(dir)
                 SchemaT=self.ctx.schemaRegistry[schema]
                 ret=SchemaT(RootContext(h5group=subgrp,h5name=name,schemaRegistry=self.ctx.schemaRegistry),row=None)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return ret
             meth['get'+capitalize(key)]=subschemaGetter
@@ -429,7 +435,11 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
             cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule)
             ret.dtypes+=cooked.dtypes
             ret.defaults.update(cooked.defaults)
-            meth['get'+capitalize(key)]=lambda self, T=cooked.T: T(self)
+            def nestedGetter(self,*,T=cooked.T):
+                ret=T(self)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
+                return ret
+            meth['get'+capitalize(key)]=nestedGetter # lambda self, T=cooked.T: T(self)
     # define common methods for the context type
     def T_init(self,other=None,row=None,baseClass=None,**kw):
         'Context constructor; copies h5 context and row from *other*, optionally sets *row* as well'
@@ -451,7 +461,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         if(row<0 or row>=self.ctx.dataset.shape[0]): raise IndexError(f"{fq}: row index {row} out of range 0…{self.ctx.dataset.shape[0]}.")
         # self.ctx.dataset[row] # this would raise ValueError but iteration protocol needs IndexError
         # print(f'Item #{row}: returning {self.__class__(self,row=row)}')
-        return self.__class__(self,row=row)
+        ret=self.__class__(self,row=row)
+        if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
+        return ret
     def T_len(self):
         'Return sequence length'
         _T_assertDataset(self,msg=f'querying dataset length')
@@ -480,48 +492,46 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     meth['row']=None
     meth['ctx']=None
     # pydantic needs this
-    meth['__annotations__']=dict(row=typing.Optional[int],ctx=typing.Any)
-    meth['__fields_set__']=set()
+    #meth['__annotations__']=dict(row=typing.Optional[int],ctx=typing.Any)
+    #meth['__fields_set__']=set()
 
-    T_name='HeavyDataContext_'+schemaName+('_'+prefix.replace('.','_') if prefix else '')
 
     # those are defined only for the "root" context
     if not prefix:
         meth['allocate']=T_allocate
         ret.dtypes=np.dtype(ret.dtypes)
-        T_bases=(MupifObject,)
+        T_bases=()
     else:
-        T_bases=(dumpable.Dumpable,) # only top-level has metadata, the rest ist just a Dumpable
+        T_bases=() # only top-level has metadata
 
     T=type(T_name,T_bases,meth)
-
-    ## make the (T.__module__,T.__name__) tuple used in serialization is unique
-    T.__module__=fakeModule.__name__
+    T.__module__=fakeModule.__name__ ## make the (T.__module__,T.__name__) tuple used in serialization unique
+    T=Pyro5.api.expose(T)
     setattr(fakeModule,T_name,T)
 
     # FIXME: this is misplaced
-    Pyro5.api.register_class_to_dict(T,dumpable.Dumpable.to_dict)
-    Pyro5.api.register_dict_to_class(T.__module__+'.'+T.__name__,dumpable.Dumpable.from_dict_with_name)
-
+    # Pyro5.api.register_class_to_dict(T,dumpable.Dumpable.to_dict)
+    # Pyro5.api.register_dict_to_class(T.__module__+'.'+T.__name__,dumpable.Dumpable.from_dict_with_name)
 
     if not prefix:
         T.name=schemaName # schema knows its own name, for convenience of creating schema registry
         # pydantic defines __iter__; it cannot be deleted, thus we have to redefine instead
-        T.__iter__=T_iter
+        # T.__iter__=T_iter
         return T
     else:
         ret.T=T
         return ret
 
-# @dataclass
-class RootContext(dumpable.Dumpable):
+@dataclass
+@Pyro5.api.expose
+class RootContext():
     h5group: Any
     h5name: str
-    # schemaRegistry: dict
+    schemaRegistry: dict
     dataset: Any=None
-    def __init__(self,schemaRegistry=None,**kw):
-        super().__init__(**kw)
-        self.schemaRegistry=schemaRegistry
+    #def __init__(self,schemaRegistry=None,**kw):
+    #    super().__init__(**kw)
+    #    self.schemaRegistry=schemaRegistry
 
 def makeSchemaRegistry(dd):
     return dict([((T:=_cookSchema(d)).name,T) for d in dd])
@@ -598,6 +608,9 @@ class HeavyDataHandle(MupifObject):
         'Return schema registry as JSON string'
         self._openRead()
         return self._h5obj[self.h5group].attrs['schemas']
+    def _returnProxy(self,v):
+        if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(v)
+        return v
     def _openRead(self):
         if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r')
     def readRoot(self):
@@ -606,8 +619,8 @@ class HeavyDataHandle(MupifObject):
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
         h5name=self.h5group.rsplit('/',1)[-1]
         root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
-        sys.stderr.write(f'root: {root}')
-        return root
+        sys.stderr.write(f'root: {root}\n')
+        return self._returnProxy(root)
     def makeRoot(self,*,schema,schemasJson):
         if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
         self._h5obj=h5py.File(self.h5path,'w')
@@ -617,20 +630,21 @@ class HeavyDataHandle(MupifObject):
         h5name=self.h5group.rsplit('/',1)[-1]
         schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
         root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
-        return root
+        return self._returnProxy(root)
     def getLocalCopy(self):
         return self
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
         self._h5obj=None
         if self.h5uri is not None:
-            #sys.stderr.write('Initiating HDF5 transfer!!\n')
+            sys.stderr.write('HDF5 transfer: starting…\n')
             uri=Pyro5.api.URI(self.h5uri)
             remote=Pyro5.api.Proxy(uri)
             #sys.stderr.write(f'Remote is {remote}\n')
             fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
             log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
             pyroutil.downloadPyroFile(self.h5path,remote)
+            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.')
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
 
