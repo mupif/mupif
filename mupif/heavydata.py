@@ -447,9 +447,11 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
             ddoc['shape']='dynamic'
         else:
             dtype=np.dtype((dtype,shape))
-            basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
+            log.warning('defaults for non-scalar quantities (dtype.subdtype) not yet supported.')
+            # basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
+            basedtype=dtype # workaround
             if basedtype.kind=='f': default=np.nan
-            elif basedtype.kind in 'iu': default=0
+            elif basedtype.kind in 'iu': default=0 
             ddoc['dtype']=f'`{basedtype.name}`'
         if unit: ddoc['unit']=f"`{str(unit)}`"
         if 'lookup' in v:
@@ -517,7 +519,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
             ret.doc+=[docHead+': '+doc]
-            if default: ret.defaults[fq]=default # add to the defaults
+            if default is not None: ret.defaults[fq]=default # add to the defaults
             def getter(self,*,fq=fq,unit=unit):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
                 if self.row is not None: value=self.ctx.dataset[fq,self.row]
@@ -616,8 +618,10 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         'allocates the backing dataset, setting them to default values.'
         if self.ctx.dataset: raise RuntimeError(f'Dataset already exists (shape {self._values.shape}), re-allocation not supported.')
         self.ctx.dataset=self.ctx.h5group.create_dataset(self.ctx.h5name,shape=(size,),dtype=ret.dtypes,compression='gzip')
-        # defaults broadcast to all rows
-        for fq,val in ret.defaults.items(): self.ctx.dataset[fq]=val
+        # FIXME: default scalar should broadcast to all rows, but does not (see subdtype above)
+        for fq,val in ret.defaults.items():
+            # sys.stderr.write(f'{fq}: setting default value of {val}\n')
+            self.ctx.dataset[fq]=val
         # TODO: store schema JSON into dataset attributes
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')

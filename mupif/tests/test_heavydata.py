@@ -30,13 +30,13 @@ class Heavydata_TestCase(unittest.TestCase):
     # we need to write the file before reading it back
     def test_01_write(self):
         C=self.__class__
-        h5name=C.tmp+'/grain.h5'
+        C.h5path=C.tmp+'/grain2.h5'
         import time, random
         import astropy.units as u
         t0=time.time()
         atomCounter=0
         # precompiled schemas
-        handle=mp.HeavyDataHandle(h5path=C.tmp+'/grain.h5',h5group='grains')
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='grains')
         grains=handle.makeRoot(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         grains.allocate(size=C.numGrains)
         sys.stderr.write(f"There is {len(grains)} grains.\n")
@@ -62,7 +62,7 @@ class Heavydata_TestCase(unittest.TestCase):
     def test_02_read(self):
         C=self.__class__
         import time
-        handle=mp.HeavyDataHandle(h5path=C.tmp+'/grain.h5',h5group='grains')
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='grains')
         grains=handle.readRoot()
         t0=time.time()
         atomCounter=0
@@ -88,7 +88,7 @@ class Heavydata_TestCase(unittest.TestCase):
         C.daemonThread.start()
     def test_04_publish(self):
         C=self.__class__
-        handle=mp.HeavyDataHandle(h5path=C.tmp+'/grain.h5',h5group='grains')
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='grains')
         C.uri=C.daemon.register(handle)
         # binary mode must be specified explicitly!
         # otherwise: remote UnicodeDecodeError somewhere, and then 
