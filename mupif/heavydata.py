@@ -274,7 +274,8 @@ import h5py
 import Pyro5.api
 # metadata support
 from .mupifobject import MupifObject
-from . import units, pyroutil
+from . import units, pyroutil, dumpable
+import types
 import json
 import tempfile
 import logging
@@ -336,7 +337,8 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         import hashlib
         h=hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
-        fakeModule=h.hexdigest()
+        fakeModule=types.ModuleType('_mupif_heavydata_'+h.hexdigest(),'Synthetically generated module for mupif.HeavyDataHandle schemas')
+        sys.modules[fakeModule.__name__]=fakeModule
         
     ret=CookedSchemaFragment(dtypes=[],defaults={})
     
@@ -429,8 +431,10 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
             ret.defaults.update(cooked.defaults)
             meth['get'+capitalize(key)]=lambda self, T=cooked.T: T(self)
     # define common methods for the context type
-    def T_init(self,other,row=None):
+    def T_init(self,other=None,row=None,baseClass=None,**kw):
         'Context constructor; copies h5 context and row from *other*, optionally sets *row* as well'
+        # print(self.__class__.__bases__)
+        for B in self.__class__.__bases__: B.__init__(self,**kw)
         if isinstance(other,RootContext):
             self.ctx,self.row=other,row
             # print(f"[ROOT] {self}, other={other}")
@@ -479,7 +483,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     meth['__annotations__']=dict(row=typing.Optional[int],ctx=typing.Any)
     meth['__fields_set__']=set()
 
-    T_name='Ctx_'+schemaName+'_'+prefix.replace('.','_')
+    T_name='HeavyDataContext_'+schemaName+('_'+prefix.replace('.','_') if prefix else '')
 
     # those are defined only for the "root" context
     if not prefix:
@@ -487,23 +491,37 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         ret.dtypes=np.dtype(ret.dtypes)
         T_bases=(MupifObject,)
     else:
-        T_bases=()
-    ret.T=type(T_name,T_bases,meth)
-    # make the (T.__module__,T.__name__) tuple used in serialization is unique
-    ret.T.__module__=fakeModule
-    if not prefix:
-        ret.T.name=schemaName # schema knows its own name, for convenience of creating schema registry
-        # pydantic defines __iter__; it cannot be deleted, thus we have to redefine instead
-        ret.T.__iter__=T_iter
-        return ret.T
-    return ret
+        T_bases=(dumpable.Dumpable,) # only top-level has metadata, the rest ist just a Dumpable
 
-@dataclass
-class RootContext:
+    T=type(T_name,T_bases,meth)
+
+    ## make the (T.__module__,T.__name__) tuple used in serialization is unique
+    T.__module__=fakeModule.__name__
+    setattr(fakeModule,T_name,T)
+
+    # FIXME: this is misplaced
+    Pyro5.api.register_class_to_dict(T,dumpable.Dumpable.to_dict)
+    Pyro5.api.register_dict_to_class(T.__module__+'.'+T.__name__,dumpable.Dumpable.from_dict_with_name)
+
+
+    if not prefix:
+        T.name=schemaName # schema knows its own name, for convenience of creating schema registry
+        # pydantic defines __iter__; it cannot be deleted, thus we have to redefine instead
+        T.__iter__=T_iter
+        return T
+    else:
+        ret.T=T
+        return ret
+
+# @dataclass
+class RootContext(dumpable.Dumpable):
     h5group: Any
     h5name: str
-    schemaRegistry: dict
+    # schemaRegistry: dict
     dataset: Any=None
+    def __init__(self,schemaRegistry=None,**kw):
+        super().__init__(**kw)
+        self.schemaRegistry=schemaRegistry
 
 def makeSchemaRegistry(dd):
     return dict([((T:=_cookSchema(d)).name,T) for d in dd])
@@ -576,13 +594,19 @@ class HeavyDataHandle(MupifObject):
     h5path: str
     h5group: str
     h5uri: typing.Optional[str]=None
+    def getSchemaRegistry(self):
+        'Return schema registry as JSON string'
+        self._openRead()
+        return self._h5obj[self.h5group].attrs['schemas']
+    def _openRead(self):
+        if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r')
     def readRoot(self):
-        if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
-        self._h5obj=h5py.File(self.h5path,'r')
+        self._openRead()
         grp=self._h5obj[self.h5group]
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
         h5name=self.h5group.rsplit('/',1)[-1]
         root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
+        sys.stderr.write(f'root: {root}')
         return root
     def makeRoot(self,*,schema,schemasJson):
         if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
@@ -610,6 +634,9 @@ class HeavyDataHandle(MupifObject):
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
 
+import h5py
+h5py.Group.__getstate__=lambda *args, **kw: None
+
 '''
 future ideas:
 * Create all context classes as Ctx_<md5 of the JSON schema> so that the name is unique.\
@@ -630,6 +657,7 @@ if __name__=='__main__':
     # this won't work through Pyro yet
     pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='grains')
     root=pp.readRoot()
+    print(pp.readRoot().getMolecules())
     print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
     print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
 

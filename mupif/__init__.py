@@ -124,6 +124,8 @@ __all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable
 
 
 
+import h5py
+
 # make flake8 happy
 from . import dumpable, util
 
@@ -147,6 +149,8 @@ def _registerOther():
         Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
     # workaround for msgpack (?)
     #Pyro5.api.register_class_to_dict(tuple,lambda i: dict(val=i))
+    #Pyro5.api.register_class_to_dict(h5py.Group,lambda o:{'__class__':'h5py.Group'})
+    #Pyro5.api.register_dict_to_class('h5py.Group',lambda _,d: None)
     #Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
 # register all dumpable types

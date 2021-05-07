@@ -6,6 +6,7 @@ import multiprocessing
 import threading
 import time
 import Pyro5.api
+import json
 
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
@@ -74,20 +75,22 @@ class Heavydata_TestCase(unittest.TestCase):
                     atomCounter+=1
         t1=time.time()
         sys.stderr.write(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
-    def test_03_publish(self):
+    def test_03_daemon_start(self):
+        C=self.__class__
+        C.daemon=Pyro5.api.Daemon()
+        C.daemonRun=True
+        C.daemonThread=threading.Thread(target=C.daemon.requestLoop,kwargs=dict(loopCondition=lambda: C.daemonRun))
+        C.daemonThread.start()
+    def test_04_publish(self):
         C=self.__class__
         handle=mp.HeavyDataHandle(h5path=C.tmp+'/grain.h5',h5group='grains')
-        daemon=Pyro5.api.Daemon()
-        C.uri=daemon.register(handle)
+        C.uri=C.daemon.register(handle)
         # binary mode must be specified explicitly!
         # otherwise: remote UnicodeDecodeError somewhere, and then 
         # TypeError: a bytes-like object is required, not 'dict'
-        handle.h5uri=str(daemon.register(mp.PyroFile(handle.h5path,mode='rb')))
+        handle.h5uri=str(C.daemon.register(mp.PyroFile(handle.h5path,mode='rb')))
         sys.stderr.write(f'Handle URI is {C.uri}, HDF5 URI is {handle.h5uri}\n')
-        C.daemonRun=True
-        C.daemonThread=threading.Thread(target=daemon.requestLoop,kwargs=dict(loopCondition=lambda: C.daemonRun))
-        C.daemonThread.start()
-    def test_04_consume(self):
+    def test_05_consume_local(self):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
@@ -100,10 +103,25 @@ class Heavydata_TestCase(unittest.TestCase):
             self.assertEqual(C.numGrains,len(root))
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
+            self.test_99_daemon_stop()
             raise
-        finally:
-            sys.stderr.write('Stopping daemon\n')
-            C.daemonRun=False
-            C.daemonThread.join()
+    def test_06_consume_remote(self):
+        C=self.__class__
+        try:
+            proxy=Pyro5.api.Proxy(C.uri)
+            regStr=proxy.getSchemaRegistry()
+            # create context classes and (!!) register them in Pyro on the local side for deserialization
+            reg=mp.heavydata.makeSchemaRegistry(json.loads(regStr))
+            proxy.readRoot()
+            sys.stderr.write(f'Root context is a {proxy.__class__.__name__}\n')
+        except Exception:
+            sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
+            self.test_99_daemon_stop()
+            raise
+    def test_99_daemon_stop(self):
+        C=self.__class__
+        sys.stderr.write('Stopping daemon\n')
+        C.daemonRun=False
+        C.daemonThread.join()
 
 
