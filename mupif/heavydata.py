@@ -619,7 +619,7 @@ class HeavyDataHandle(MupifObject):
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
         h5name=self.h5group.rsplit('/',1)[-1]
         root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
-        sys.stderr.write(f'root: {root}\n')
+        # sys.stderr.write(f'root: {root}\n')
         return self._returnProxy(root)
     def makeRoot(self,*,schema,schemasJson):
         if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
@@ -644,7 +644,7 @@ class HeavyDataHandle(MupifObject):
             fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
             log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
             pyroutil.downloadPyroFile(self.h5path,remote)
-            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.')
+            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
 

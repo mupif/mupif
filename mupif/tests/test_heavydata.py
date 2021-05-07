@@ -21,7 +21,10 @@ class Heavydata_TestCase(unittest.TestCase):
         time.sleep(.5)
     @classmethod
     def tearDownClass(cls):
-        cls.tmpdir.cleanup()
+        try: cls.tmpdir.cleanup()
+        except: pass
+        # this would fail under Windows:
+        #  NotADirectoryError: [WinError 267] The directory name is invalid: 'C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\tmptwrsfaka\\grain.h5'
 
     # tests are run alphabetically (https://nose.readthedocs.io/en/latest/writing_tests.html)
     # we need to write the file before reading it back
@@ -92,7 +95,7 @@ class Heavydata_TestCase(unittest.TestCase):
         # TypeError: a bytes-like object is required, not 'dict'
         handle.h5uri=str(C.daemon.register(mp.PyroFile(handle.h5path,mode='rb')))
         sys.stderr.write(f'Handle URI is {C.uri}, HDF5 URI is {handle.h5uri}\n')
-    def test_05_consume_local(self):
+    def test_05_read_local(self):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
@@ -100,7 +103,7 @@ class Heavydata_TestCase(unittest.TestCase):
             # its constructor will download the HDF5 file, if the h5uri attribute is set
             local=proxy.getLocalCopy()
             self.assertEqual(local.__class__,mp.heavydata.HeavyDataHandle)
-            sys.stderr.write(f'Local handle is a {local.__class__.__name__}\n')
+            # sys.stderr.write(f'Local handle is a {local.__class__.__name__}\n')
             root=local.readRoot()
             # sys.stderr.write(f'Local root has {len(root)} grains, {root.__class__}\n')
             self.assertEqual(C.numGrains,len(root))
@@ -109,15 +112,18 @@ class Heavydata_TestCase(unittest.TestCase):
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
             raise
-    def test_06_consume_remote(self):
+    def test_06_read_remote(self):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
             root=proxy.readRoot()
             self.assertEqual(root.__class__,Pyro5.api.Proxy)
-            sys.stderr.write(f'Proxied root is {root.__class__}\n')
             # special methods don't currently work with Pyro5, use __getitem__ instead of [] for now
             self.assertEqual(root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
+            a0id=root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity()
+            self.assertRaises(KeyError,a0id.getAtomicMass) # Q is not a valid element
+            self.assertRaises(OSError,lambda: a0id.setElement('H')) # HDF5 is open read-only
+            # self.assertEqual(a0id.getAtomicMass(),1)
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
