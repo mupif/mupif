@@ -1,3 +1,116 @@
+'''
+
+Sample schema documentation
+----------------------------
+
+schema atom
+~~~~~~~~~~~~~~
+
+* ``identity``
+
+   * ``element``: dtype: ``bytes16``
+   * ``atomicNumber``: dtype: ``int64``, read-only: table look-up by ``identity.element``
+   * ``atomicMass``: dtype: ``float32``, unit: ``u``, read-only: table look-up by ``identity.element``
+* ``properties``
+
+   * ``physical``
+
+      * ``partialCharge``
+
+         * ``neutral``: dtype: ``float64``, unit: ``e``, default: ``nan``
+         * ``anion``: dtype: ``float64``, unit: ``e``, default: ``nan``
+         * ``cation``: dtype: ``float64``, unit: ``e``, default: ``nan``
+      * ``polarizability``
+
+         * ``neutral``: dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
+         * ``anion``: dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
+         * ``cation``: dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
+   * ``topology``
+
+      * ``parent``: dtype: ``int64``, default: ``0``
+      * ``type``: shape: dynamic, dtype: string (utf-8 encoded)
+      * ``name``: shape: dynamic, dtype: string (utf-8 encoded)
+      * ``position``: shape: [3], dtype: ``float64``, unit: ``Angstrom``, default: ``nan``
+      * ``velocity``: shape: [3], dtype: ``float64``, unit: ``Angstrom / ps``, default: ``nan``
+      * ``structure``: shape: dynamic, dtype: ``[int64,…]``
+
+schema molecule
+~~~~~~~~~~~~~~~~~~
+
+* ``identity``
+
+   * ``chemicalName``: shape: dynamic, dtype: string (utf-8 encoded)
+   * ``molecularWeight``: dtype: ``float64``, unit: ``u``, default: ``nan``
+* ``properties``
+
+   * ``electrical``
+
+      * ``HOMO``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+      * ``LUMO``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+      * ``siteEnergy``
+
+         * ``orbital``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+         * ``electrostatic``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+         * ``polarization``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+      * ``transferIntegrals``: shape: dynamic, dtype: ``[float64,…]``
+      * ``reorganizationEnergyInternal``
+
+         * ``anion``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+         * ``cation``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+   * ``physical``
+
+      * ``polarizability``
+
+         * ``neutral``: shape: [3×3], dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
+         * ``anion``: shape: [3×3], dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
+         * ``cation``: shape: [3×3], dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
+   * ``chemical``
+
+* ``topology``
+
+   * ``parent``: dtype: ``int64``, unit: ``none``, default: ``0``
+   * ``centerOfMass``: shape: [3], dtype: ``float64``, unit: ``Angstrom``, default: ``nan``
+   * ``symmetryAxis``: shape: [3], dtype: ``float64``, unit: ``Angstrom``, default: ``nan``
+   * ``structureNeighbors``: shape: dynamic, dtype: ``[int64,…]``
+* ``implementation``
+
+   * ``forceFieldType``: shape: dynamic, dtype: string (utf-8 encoded)
+* ``atoms``: nested data at ``molecule_{ROW}/atoms``, schema ``atom``.
+
+schema grain
+~~~~~~~~~~~~~~~
+
+* ``identity``
+
+   * ``material``: shape: dynamic, dtype: string (utf-8 encoded)
+* ``properties``
+
+   * ``eletrical``
+
+      * ``freeElectrons``: dtype: ``int64``, unit: ``none``, default: ``0``
+      * ``freeHoles``: dtype: ``int64``, unit: ``none``, default: ``0``
+   * ``physical``
+
+      * ``reorganizationEnergyExternal``: dtype: ``float64``, unit: ``eV``, default: ``nan``
+   * ``chemical``
+
+* ``topology``
+
+   * ``parent``: dtype: ``int64``, default: ``0``
+   * ``cellSize``: shape: [3], dtype: ``float64``, unit: ``m``, default: ``nan``
+* ``implementation``
+
+   * ``boundaryCondition``: dtype: string (utf-8 encoded), shape: dynamic
+* ``molecules``: nested data at ``grain_{ROW}/molecules``, schema ``molecule``.
+
+
+
+'''
+
+
+
+
+
 sampleSchemas_json='''
 [
     {
@@ -264,6 +377,7 @@ sampleSchemas_json='''
 ]
 '''
 
+import dataclasses
 from dataclasses import dataclass
 from typing import Any
 import typing
@@ -281,8 +395,6 @@ import tempfile
 import logging
 import os
 log=logging.getLogger(__name__)
-
-
 
 def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     '''
@@ -307,50 +419,73 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         dtypes: list   # accumulates numpy dtypes for compound datatype 
         defaults: dict # default values, nan for floats and 0 for integers
         T: Any=None    # nested context type
+        doc: typing.List[str]=dataclasses.field(default_factory=list) # accumulates documentation (as markdown nested list)
+        def append(self,other):
+            self.dtypes+=other.dtypes
+            self.defaults.update(other.defaults)
+            self.doc+=other.doc
+
             
-    def dtypeUnitDefault(v):
-        'Parse dictionary *v* (part of the schema) and return (dtype,unit,default) tuple'
+    def dtypeUnitDefaultDoc(v):
+        'Parse dictionary *v* (part of the schema) and return (dtype,unit,default,doc) tuple'
         shape=v['shape'] if 'shape' in v else ()
         if isinstance(shape,list): shape=tuple(shape)
+        ddoc={}
+        if shape: ddoc['shape']=f'[{"×".join([str(s) for s in shape])}]'
         unit=units.Unit(v['unit']) if 'unit' in v else None
         dtype=v['dtype']
         default=None
         if dtype=='a':
             dtype=h5py.string_dtype(encoding='utf-8')
             shape=None
+            ddoc['dtype']='string (utf-8 encoded)'
+            ddoc['shape']='dynamic'
         elif shape=='variable':
+            ddoc['dtype']=f'`[{np.dtype(dtype).name},…]`'
             dtype=h5py.vlen_dtype(np.dtype(dtype))
             shape=None
+            ddoc['shape']='dynamic'
         else:
             dtype=np.dtype((dtype,shape))
-            kind=(dtype.kind if not hasattr(dtype,'subtype') or dtype.subtype is None else dtype.subtype[0].kind)
-            if kind=='f': default=np.nan
-            elif kind in 'iu': default=0
-        return dtype,unit,default
+            basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
+            if basedtype.kind=='f': default=np.nan
+            elif basedtype.kind in 'iu': default=0
+            ddoc['dtype']=f'`{basedtype.name}`'
+        if unit: ddoc['unit']=f"`{str(unit)}`"
+        if 'lookup' in v:
+            ddoc['read-only']=f'table look-up by `{v["key"]}`'
+            default=None
+        if default is not None: ddoc['default']=f"`{str(default)}`"
+        return dtype,unit,default,', '.join(f'{k}: {v}' for k,v in ddoc.items())
 
     def capitalize(k):
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]  
     
-    T_name='HeavyDataContext_'+schemaName+('_'+prefix.replace('.','_') if prefix else '')
+    ret=CookedSchemaFragment(dtypes=[],defaults={})
+    meth={} # accumulate attribute access methods
+    docLevel=(0 if not schemaName else prefix.count('.')+1)
 
     # top-level only
     if not schemaName:
         schemaName=desc['_schema']
+        assert len(prefix)==0
+        T_name='Context_'+schemaName
         import hashlib
         h=hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
         fakeModule=types.ModuleType('_mupif_heavydata_'+h.hexdigest(),'Synthetically generated module for mupif.HeavyDataHandle schemas')
         if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
         sys.modules[fakeModule.__name__]=fakeModule
-        
-    ret=CookedSchemaFragment(dtypes=[],defaults={})
-    
-    meth={} # accumulate attribute access methods
+        ret.doc+=[f'## schema {schemaName}','']
+    else:
+        T_name='Context_'+schemaName+prefix.replace('.','_')
+
     
     for key,val in desc.items():
         # fully-qualified name: for messages and compound field name in h5py
         fq=(f"{prefix}.{key}" if prefix else key)
+        docHead=docLevel*3*' '+f'* `{key}`'
         # special keys start with underscore, so far only _schema is used
         if key.startswith('_'):
             if key=='_schema': continue
@@ -358,7 +493,8 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         if not isinstance(val,dict): raise TypeError("{fq}: value is not a dictionary.")
         # attribute defined via lookup, not stored
         if 'lookup' in val:
-            dtype,unit,default=dtypeUnitDefault(val)
+            dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
+            ret.doc+=[docHead+': '+doc]
             lKey,lDict=val['key'],val['lookup']
             if isinstance(lKey,bytes): lKey=lKey.decode('utf8')
             # bind local values via default args (closure)
@@ -378,8 +514,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
             meth['get'+capitalize(key)]=inherentGetter
         # normal data attribute
         elif 'dtype' in val:
-            dtype,unit,default=dtypeUnitDefault(val)
+            dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
+            ret.doc+=[docHead+': '+doc]
             if default: ret.defaults[fq]=default # add to the defaults
             def getter(self,*,fq=fq,unit=unit):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
@@ -429,12 +566,13 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return ret
+            ret.doc+=[docHead+f': nested data at `{path}`, schema `{schema}`.']
             meth['get'+capitalize(key)]=subschemaGetter
         else:
             # recurse
+            ret.doc+=[docHead,''] # empty line for nesting in restructured text
             cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule)
-            ret.dtypes+=cooked.dtypes
-            ret.defaults.update(cooked.defaults)
+            ret.append(cooked)
             def nestedGetter(self,*,T=cooked.T):
                 ret=T(self)
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
@@ -515,6 +653,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
 
     if not prefix:
         T.name=schemaName # schema knows its own name, for convenience of creating schema registry
+        T.__doc__='\n'.join(ret.doc)+'\n'
         # pydantic defines __iter__; it cannot be deleted, thus we have to redefine instead
         # T.__iter__=T_iter
         return T
@@ -604,10 +743,11 @@ class HeavyDataHandle(MupifObject):
     h5path: str
     h5group: str
     h5uri: typing.Optional[str]=None
-    def getSchemaRegistry(self):
+    def getSchemaRegistry(self,compile=False):
         'Return schema registry as JSON string'
         self._openRead()
-        return self._h5obj[self.h5group].attrs['schemas']
+        ssh=self._h5obj[self.h5group].attrs['schemas']
+        return ssh if not compile else makeSchemaRegistry(json.loads(ssh))
     def _returnProxy(self,v):
         if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(v)
         return v
@@ -665,13 +805,15 @@ future ideas:
 if __name__=='__main__':
     import json, pprint
     # print(json.dumps(json.loads(sampleSchemas_json),indent=2))
-    _make_grains('/tmp/grains.h5')
-    _read_grains('/tmp/grains.h5')
+    #_make_grains('/tmp/grains.h5')
+    #_read_grains('/tmp/grains.h5')
 
     # this won't work through Pyro yet
     pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='grains')
+    for key,val in pp.getSchemaRegistry(compile=True).items():
+        print(val.__doc__.replace('`','``'))
     root=pp.readRoot()
-    print(pp.readRoot().getMolecules())
+    print(pp.readRoot()[0].getMolecules())
     print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
     print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
 
