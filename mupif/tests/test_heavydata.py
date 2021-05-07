@@ -122,7 +122,9 @@ class Heavydata_TestCase(unittest.TestCase):
             self.assertEqual(root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
             a0id=root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity()
             self.assertRaises(KeyError,a0id.getAtomicMass) # Q is not a valid element
-            self.assertRaises(OSError,lambda: a0id.setElement('H')) # HDF5 is open read-only
+            # HDF5 is open read-only: "Unable to create group (no write intent on file)"
+            # exceptiion type varies (h5py version?)
+            self.assertRaises((OSError,ValueError),lambda: a0id.setElement('H')) 
             # self.assertEqual(a0id.getAtomicMass(),1)
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
