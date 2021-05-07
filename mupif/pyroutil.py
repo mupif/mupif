@@ -422,16 +422,8 @@ def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
     if compressFlag:
         pyroFile.setCompressionFlag()
         file.setCompressionFlag()
-    # sys.stderr.write('Getting first chunk…\n')
-    data = pyroFile.getChunk()  # this is where the potential remote communication via Pyro happen
-    while True:
-        # sys.stderr.write(f'Getting chunk [file size: {os.stat(newLocalFileName).st_size}]\n')
+    for data in pyroFile.getChunk():
         file.setChunk(data)
-        data = pyroFile.getChunk()
-        # serpent returns bytes as dict... omg, handle that as well
-        if not data or (isinstance(data,dict) and not data['data']): break
-    # sys.stderr.write('Getting terminal chunk…\n')
-    file.setChunk(pyroFile.getTerminalChunk())
     pyroFile.close()
     file.close()
 
@@ -458,12 +450,8 @@ def uploadPyroFile(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
         file.setCompressionFlag()
         pyroFile.setCompressionFlag()
         log.info("Setting compression flag on")
-    data = file.getChunk()
-    while data:
+    for data in file.getChunk():
         pyroFile.setChunk(data)  # this is where the data are sent over net via Pyro
-        data = file.getChunk()
-    getTermChunk = file.getTerminalChunk()
-    pyroFile.setChunk(getTermChunk)
     log.info("File transfer finished")
     file.close()
     pyroFile.close()

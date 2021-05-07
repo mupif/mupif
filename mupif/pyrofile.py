@@ -55,22 +55,19 @@ class PyroFile (object):
         :rtype: str
         """
         data = self.myfile.read(self.buffsize)
-        if data and self.compressFlag:
-            if not self.compressor:
-                self.compressor = zlib.compressobj()
-            data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
-        return data
-
-    def getTerminalChunk(self):
-        """
-        Reads and returns the terminal bytes from source. In case of of source without compression, an empty string should be returned,
-        in case of compressed stream the termination sequence is returned (see zlib flush(Z_FINAL))
-        :rtype: str
-        """
-        if self.compressFlag:
-            return self.compressor.flush(zlib.Z_FINISH)
+        if data:
+            # some data read, not yet EOF
+            if self.compressFlag:
+                if not self.compressor: self.compressor = zlib.compressobj()
+                data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
+            yield data
         else:
-            return ""
+            # no data read: EOF
+            # flush compressor if necessary (used to be the terminal chunk)
+            if self.compressor:
+                ret=self.compressor.flush(zlib.Z_FINISH)
+                compressor=None # perhaps not necessary
+                yield ret
 
     def setChunk(self, buffer):
         """
