@@ -127,6 +127,7 @@ __all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable
 #import h5py
 import numpy
 import serpent
+import io
 
 # make flake8 happy
 from . import dumpable, util
@@ -149,8 +150,10 @@ def _registerOther():
     for c in dataid.FieldID,dataid.ParticleSetID,dataid.FunctionID,dataid.PropertyID:
         Pyro5.api.register_class_to_dict(c,dumpable.enum_to_dict)
         Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
-    Pyro5.api.register_class_to_dict(numpy.ndarray,lambda a: {'__class__':'numpy.ndarray','buffer':a.tobytes()})
-    Pyro5.api.register_dict_to_class('numpy.ndarray',lambda name,dic: numpy.frombuffer(serpent.tobytes(buf) if isinstance(buf:=dic['buffer'],dict) else buf))
+    # don't use numpy.ndarray.tobytes as it is not cross-plaform; npy files are
+    Pyro5.api.register_class_to_dict(numpy.ndarray,lambda arr: {'__class__':'numpy.ndarray','npy':(numpy.save(buf:=io.BytesIO(),arr,allow_pickle=False),buf.getvalue())[1]})
+    Pyro5.api.register_dict_to_class('numpy.ndarray',lambda name,dic: numpy.load(io.BytesIO(serpent.tobytes(buf) if isinstance(buf:=dic['npy'],dict) else buf),allow_pickle=False))
+
     # workaround for msgpack (?)
     #Pyro5.api.register_class_to_dict(tuple,lambda i: dict(val=i))
     #Pyro5.api.register_class_to_dict(h5py.Group,lambda o:{'__class__':'h5py.Group'})
