@@ -136,7 +136,7 @@ class Heavydata_TestCase(unittest.TestCase):
             handle=Pyro5.api.Proxy(C.uri2)
             grains=handle.makeRoot(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
             grains.allocate(size=C.numGrains)
-            sys.stderr.write(f"There is {len(grains)} grains.\n")
+            sys.stderr.write(f"There is {grains.__len__()} grains.\n")
             #for ig,g in enumerate(grains):
             for ig in range(grains.__len__()):
                 g=grains.__getitem__(ig)
