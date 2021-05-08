@@ -8,6 +8,7 @@ import pprint
 import typing
 import numpy
 import numpy as np
+import Pyro5
 
 import pydantic
 # from pydantic.dataclasses import dataclass
@@ -60,7 +61,7 @@ if 0:
             return super().__init__(**kwargs)
 
 
-
+@Pyro5.api.expose
 class Dumpable(pydantic.BaseModel):
     '''
     Base class for all serializable (dumpable) objects; all objects which are sent over the wire via python must be recursively dumpable, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
@@ -143,6 +144,17 @@ class Dumpable(pydantic.BaseModel):
                 else: pass
         return ret
 
+    def copyRemote(self):
+        '''
+        Create local copy from Pyro's Proxy of this object.
+
+        This abuses the in-band transfer of types in Pyro serializers, thus returning the dictionary with appropriate keys (`__class__` in particular) will automatically deserialize it into an object on the other (local) side of the wire.
+
+        This method does some check whether the object is exposed via Pyro (thus presumable accessed via a Proxy). This cannot be detected reliably, however, thus calling `copyRemote()` on local (unproxied) object will return dictionary rather than a copy of the object.
+        '''
+        daemon=getattr(self,'_pyroDaemon',None)
+        if not daemon: raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
+        return self.to_dict()
 
     @staticmethod
     def from_dict(dic,clss=None,obj=None):

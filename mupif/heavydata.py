@@ -388,7 +388,7 @@ import h5py
 import Pyro5.api
 # metadata support
 from .mupifobject import MupifObject
-from . import units, pyroutil, dumpable
+from . import units, pyroutil, dumpable, pyrofile
 import types
 import json
 import tempfile
@@ -672,9 +672,6 @@ class RootContext():
     h5name: str
     schemaRegistry: dict
     dataset: Any=None
-    #def __init__(self,schemaRegistry=None,**kw):
-    #    super().__init__(**kw)
-    #    self.schemaRegistry=schemaRegistry
 
 def makeSchemaRegistry(dd):
     return dict([((T:=_cookSchema(d)).name,T) for d in dd])
@@ -775,13 +772,21 @@ class HeavyDataHandle(MupifObject):
         schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
         root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
         return self._returnProxy(root)
-    def getLocalCopy(self):
-        return self
+    def exposeData(self):
+        if (daemon:=getattr(self,'_pyroDaemon',None)) is None: raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
+        if self.h5uri: return # already exposed
+        # binary mode is necessary!
+        # otherwise: remote UnicodeDecodeError somewhere, and then 
+        # TypeError: a bytes-like object is required, not 'dict'
+        self.h5uri=str(daemon.register(pyrofile.PyroFile(self.h5path,mode='rb')))
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
+        #sys.stderr.write(f'{self.__class__.__name__}.__init__(**kw={str(kw)})\n')
+        #import traceback
+        #traceback.print_stack(file=sys.stderr)
         self._h5obj=None
         if self.h5uri is not None:
-            sys.stderr.write('HDF5 transfer: starting…\n')
+            sys.stderr.write(f'HDF5 transfer: starting…\n')
             uri=Pyro5.api.URI(self.h5uri)
             remote=Pyro5.api.Proxy(uri)
             #sys.stderr.write(f'Remote is {remote}\n')

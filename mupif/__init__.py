@@ -124,7 +124,9 @@ __all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable
 
 
 
-import h5py
+#import h5py
+import numpy
+import serpent
 
 # make flake8 happy
 from . import dumpable, util
@@ -147,6 +149,8 @@ def _registerOther():
     for c in dataid.FieldID,dataid.ParticleSetID,dataid.FunctionID,dataid.PropertyID:
         Pyro5.api.register_class_to_dict(c,dumpable.enum_to_dict)
         Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
+    Pyro5.api.register_class_to_dict(numpy.ndarray,lambda a: {'__class__':'numpy.ndarray','buffer':a.tobytes()})
+    Pyro5.api.register_dict_to_class('numpy.ndarray',lambda name,dic: numpy.frombuffer(serpent.tobytes(buf) if isinstance(buf:=dic['buffer'],dict) else buf))
     # workaround for msgpack (?)
     #Pyro5.api.register_class_to_dict(tuple,lambda i: dict(val=i))
     #Pyro5.api.register_class_to_dict(h5py.Group,lambda o:{'__class__':'h5py.Group'})
@@ -165,5 +169,5 @@ field.Field.update_forward_refs()
 import logging
 import os
 # Create default logger
-log=util.setupLogger(fileName='mupif.log', level=logging.DEBUG if 'TRAVIS' in os.environ else logging.DEBUG)
+log=util.setupLogger(fileName='mupif.log', level=logging.DEBUG)
 
