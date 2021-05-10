@@ -209,7 +209,7 @@ class Model2 (mp.Model):
         repMol.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
         if (0): #todo: replace atoms (does not work)
             repMol.getAtoms().allocate(size=random.randint(30,60))
-            for a in m.getAtoms():
+            for a in repMol.getAtoms():
                 a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
                 a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
                 a.getProperties().getTopology().setVelocity((24,5,77)*u.m/u.s)
