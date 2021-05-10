@@ -135,7 +135,7 @@ ModelSchema = {
             "items": {
                 "type": "object",  # Object supplies a dictionary
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                     "Obj_ID": {"type": "array"},  # optional parameter for additional info, list int or str
                     "Name": {"type": "string"},
@@ -151,7 +151,7 @@ ModelSchema = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.FieldID.FID_Temperature
                     "Obj_ID": {"type": "array"},  # optional parameter for additional info, list of int or str
                     "Name": {"type": "string"},

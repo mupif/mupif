@@ -374,3 +374,6 @@ class PropertyID(IntEnum):
     PID_maxMisesStress = 1000005
     PID_maxPrincipalStress = 1000006
     PID_Hyper2 = 1000007
+
+    #
+    PID_GrainState = 200000
