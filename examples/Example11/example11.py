@@ -181,10 +181,43 @@ class Model2 (mp.Model):
         self.outputGrainState=mp.HeavyDataHandle(h5path=path,h5group='grains')
         outGrains = self.outputGrainState.makeRoot(schemasJson=mp.heavydata.sampleSchemas_json, schema='grain')
         inGrains = self.inputGrainState.readRoot()
-        #todo: copy inGrains to outGrains
-        #todo: relace random molecule with another one
+        outGrains.allocate(size=len(inGrains))
+        #todo: copy inGrains to outGrains (check for more elegant way)
+        for igNum,ig in enumerate(inGrains):
+            outGrains[igNum].getMolecules().allocate(size=len(ig.getMolecules()))
+            for imNum, im in enumerate(ig.getMolecules()):
+                om = outGrains[igNum].getMolecules()[imNum]
+                om.getIdentity().setMolecularWeight(im.getIdentity().getMolecularWeight())
+                om.getAtoms().allocate(size=len(im.getAtoms()))
+                for iaNum, ia in enumerate(im.getAtoms()):
+                    oa = om.getAtoms()[iaNum]
+                    oa.getIdentity().setElement(ia.getIdentity().getElement())
+                    oa.getProperties().getTopology().setPosition(ia.getProperties().getTopology().getPosition())
+                    oa.getProperties().getTopology().setVelocity(ia.getProperties().getTopology().getVelocity())
+                    oa.getProperties().getTopology().setStructure(ia.getProperties().getTopology().getStructure())
+                    atomCounter+=1
         t1=time.time()
         print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+        #todo: replace random molecule with another one
+        # select random grain and molecule
+        t0=time.time()
+        atomCounter = 0
+        rgNum = random.randint(0,len(inGrains))
+        rmNum = random.randint(0,len(inGrains[rgNum].getMolecules()))
+        repMol = inGrains[rgNum].getMolecules()[rmNum]
+        # replace this molecule
+        repMol.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
+        if (0): #todo: replace atoms (does not work)
+            repMol.getAtoms().allocate(size=random.randint(30,60))
+            for a in m.getAtoms():
+                a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
+                a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
+                a.getProperties().getTopology().setVelocity((24,5,77)*u.m/u.s)
+                struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
+                a.getProperties().getTopology().setStructure(struct)
+                atomCounter+=1
+        t1=time.time()
+        print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
     def getCriticalTimeStep(self):
         return 1.*mp.U.s
