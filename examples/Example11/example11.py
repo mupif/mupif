@@ -202,8 +202,8 @@ class Model2 (mp.Model):
         # select random grain and molecule
         t0=time.time()
         atomCounter = 0
-        rgNum = random.randint(0,len(inGrains))
-        rmNum = random.randint(0,len(inGrains[rgNum].getMolecules()))
+        rgNum = random.randint(0,len(inGrains)-1)
+        rmNum = random.randint(0,len(inGrains[rgNum].getMolecules())-1)
         repMol = inGrains[rgNum].getMolecules()[rmNum]
         # replace this molecule
         repMol.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
