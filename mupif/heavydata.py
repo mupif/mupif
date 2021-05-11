@@ -1,114 +1,3 @@
-'''
-
-Sample schema documentation
-----------------------------
-
-schema atom
-~~~~~~~~~~~~~~
-
-* ``identity``
-
-   * ``element``: dtype: ``bytes16``
-   * ``atomicNumber``: dtype: ``int64``, read-only: table look-up by ``identity.element``
-   * ``atomicMass``: dtype: ``float32``, unit: ``u``, read-only: table look-up by ``identity.element``
-* ``properties``
-
-   * ``physical``
-
-      * ``partialCharge``
-
-         * ``neutral``: dtype: ``float64``, unit: ``e``, default: ``nan``
-         * ``anion``: dtype: ``float64``, unit: ``e``, default: ``nan``
-         * ``cation``: dtype: ``float64``, unit: ``e``, default: ``nan``
-      * ``polarizability``
-
-         * ``neutral``: dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
-         * ``anion``: dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
-         * ``cation``: dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
-   * ``topology``
-
-      * ``parent``: dtype: ``int64``, default: ``0``
-      * ``type``: shape: dynamic, dtype: string (utf-8 encoded)
-      * ``name``: shape: dynamic, dtype: string (utf-8 encoded)
-      * ``position``: shape: [3], dtype: ``float64``, unit: ``Angstrom``, default: ``nan``
-      * ``velocity``: shape: [3], dtype: ``float64``, unit: ``Angstrom / ps``, default: ``nan``
-      * ``structure``: shape: dynamic, dtype: ``[int64,…]``
-
-schema molecule
-~~~~~~~~~~~~~~~~~~
-
-* ``identity``
-
-   * ``chemicalName``: shape: dynamic, dtype: string (utf-8 encoded)
-   * ``molecularWeight``: dtype: ``float64``, unit: ``u``, default: ``nan``
-* ``properties``
-
-   * ``electrical``
-
-      * ``HOMO``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-      * ``LUMO``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-      * ``siteEnergy``
-
-         * ``orbital``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-         * ``electrostatic``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-         * ``polarization``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-      * ``transferIntegrals``: shape: dynamic, dtype: ``[float64,…]``
-      * ``reorganizationEnergyInternal``
-
-         * ``anion``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-         * ``cation``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-   * ``physical``
-
-      * ``polarizability``
-
-         * ``neutral``: shape: [3×3], dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
-         * ``anion``: shape: [3×3], dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
-         * ``cation``: shape: [3×3], dtype: ``float64``, unit: ``Angstrom2 s4 / kg``, default: ``nan``
-   * ``chemical``
-
-* ``topology``
-
-   * ``parent``: dtype: ``int64``, unit: ``none``, default: ``0``
-   * ``centerOfMass``: shape: [3], dtype: ``float64``, unit: ``Angstrom``, default: ``nan``
-   * ``symmetryAxis``: shape: [3], dtype: ``float64``, unit: ``Angstrom``, default: ``nan``
-   * ``structureNeighbors``: shape: dynamic, dtype: ``[int64,…]``
-* ``implementation``
-
-   * ``forceFieldType``: shape: dynamic, dtype: string (utf-8 encoded)
-* ``atoms``: nested data at ``molecule_{ROW}/atoms``, schema ``atom``.
-
-schema grain
-~~~~~~~~~~~~~~~
-
-* ``identity``
-
-   * ``material``: shape: dynamic, dtype: string (utf-8 encoded)
-* ``properties``
-
-   * ``eletrical``
-
-      * ``freeElectrons``: dtype: ``int64``, unit: ``none``, default: ``0``
-      * ``freeHoles``: dtype: ``int64``, unit: ``none``, default: ``0``
-   * ``physical``
-
-      * ``reorganizationEnergyExternal``: dtype: ``float64``, unit: ``eV``, default: ``nan``
-   * ``chemical``
-
-* ``topology``
-
-   * ``parent``: dtype: ``int64``, default: ``0``
-   * ``cellSize``: shape: [3], dtype: ``float64``, unit: ``m``, default: ``nan``
-* ``implementation``
-
-   * ``boundaryCondition``: dtype: string (utf-8 encoded), shape: dynamic
-* ``molecules``: nested data at ``grain_{ROW}/molecules``, schema ``molecule``.
-
-
-
-'''
-
-
-
 
 
 sampleSchemas_json='''
@@ -428,7 +317,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             self.defaults.update(other.defaults)
             self.doc+=other.doc
 
-            
+
     def dtypeUnitDefaultDoc(v):
         'Parse dictionary *v* (part of the schema) and return (dtype,unit,default,doc) tuple'
         shape=v['shape'] if 'shape' in v else ()
@@ -450,9 +339,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             ddoc['shape']='dynamic'
         else:
             dtype=np.dtype((dtype,shape))
-            log.warning(f'{fq}: defaults for non-scalar quantities (dtype.subdtype) not yet supported.')
-            # basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
-            basedtype=dtype # workaround
+            # log.warning(f'{fq}: defaults for non-scalar quantities (dtype.subdtype) not yet supported.')
+            basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
+            #basedtype=dtype # workaround
             if basedtype.kind=='f': default=np.nan
             elif basedtype.kind in 'iu': default=0 
             ddoc['dtype']=f'`{basedtype.name}`'
@@ -466,7 +355,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     def capitalize(k):
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]  
-    
+
     ret=CookedSchemaFragment(dtypes=[],defaults={})
     meth={} # accumulate attribute access methods
     docLevel=(0 if not schemaName else prefix.count('.')+1)
@@ -481,13 +370,13 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         h=hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
         fakeModule=types.ModuleType('_mupif_heavydata_'+h.hexdigest(),'Synthetically generated module for mupif.HeavyDataHandle schemas')
-        #if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
-        #sys.modules[fakeModule.__name__]=fakeModule
-        ret.doc+=[f'## schema {schemaName}','']
+        # this somehow breaks imports, so better to avoid it until understood
+        # if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
+        # sys.modules[fakeModule.__name__]=fakeModule
+        ret.doc+=[f'**schema {schemaName}**','']
     else:
         T_name='Context_'+schemaName+'_'+prefix.replace('.','_')
 
-    
     for key,val in desc.items():
         # fully-qualified name: for messages and compound field name in h5py
         fq=(f"{prefix}.{key}" if prefix else key)
@@ -565,7 +454,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             meth['set'+capitalize(key)]=(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct)
         elif 'path' in val:
             path,schema=val['path'],val['schema']
-            if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{s}'.")
+            if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
             if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
             # path=path[:-1] # remove trailing slash
             def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
@@ -634,11 +523,16 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'allocates the backing dataset, setting them to default values.'
         if self.ctx.dataset: raise RuntimeError(f'Dataset already exists (shape {self._values.shape}), re-allocation not supported.')
         self.ctx.dataset=self.ctx.h5group.create_dataset(self.__class__.datasetName,shape=(size,),dtype=ret.dtypes,compression='gzip')
-        # FIXME: default scalar should broadcast to all rows, but does not (see subdtype above)
-        for fq,val in ret.defaults.items():
-            # sys.stderr.write(f'{fq}: setting default value of {val}\n')
-            self.ctx.dataset[fq]=val
-        # TODO: store schema JSON into dataset attributes
+        assert size>0
+        if 0:
+            # broadcast over all rows; does not work for subarrays dim>1
+            for fq,val in ret.defaults.items(): self.ctx.dataset[fq]=val
+        else:
+            # use first row as template, assign all defaults into it and then copy into all rows explicitly
+            defrow=self.ctx.dataset[0]
+            for fq,val in ret.defaults.items(): defrow[fq]=val
+            # copy over all rows; use ... to avoid expensive explicit loop
+            self.ctx.dataset[...]=defrow
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')
         for row in range(self.ctx.dataset.shape[0]): yield self[row]
