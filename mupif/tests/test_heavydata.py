@@ -37,7 +37,7 @@ class Heavydata_TestCase(unittest.TestCase):
         t0=time.time()
         atomCounter=0
         # precompiled schemas
-        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='grains')
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
         grains=handle.makeRoot(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         grains.allocate(size=C.numGrains)
         sys.stderr.write(f"There is {len(grains)} grains.\n")
@@ -47,6 +47,7 @@ class Heavydata_TestCase(unittest.TestCase):
             sys.stderr.write(f"Grain #{ig} has {len(g.getMolecules())} molecules\n")
             for m in g.getMolecules():
                 m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
+                m.getProperties().getPhysical().getPolarizability().setNeutral(np.array([[1,2,3],[4,5,6],[7,8,9]])*mp.U['Angstrom2 s4 / kg'])
                 m.getAtoms().allocate(size=random.randint(10,30))
                 for a in m.getAtoms():
                     a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
@@ -62,7 +63,7 @@ class Heavydata_TestCase(unittest.TestCase):
 
     def test_02_read(self):
         C=self.__class__
-        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='grains')
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
         grains=handle.readRoot()
         t0=time.time()
         atomCounter=0
@@ -88,9 +89,9 @@ class Heavydata_TestCase(unittest.TestCase):
         C.daemonThread.start()
     def test_04_publish(self):
         C=self.__class__
-        C.uri=C.daemon.register(handle:=mp.HeavyDataHandle(h5path=C.h5path,h5group='grains'))
+        C.uri=C.daemon.register(handle:=mp.HeavyDataHandle(h5path=C.h5path,h5group='test'))
         handle.exposeData()
-        C.uri2=C.daemon.register(mp.HeavyDataHandle(h5path=C.h5path2,h5group='grains'))
+        C.uri2=C.daemon.register(mp.HeavyDataHandle(h5path=C.h5path2,h5group='test'))
         sys.stderr.write(f'Handle URI is {C.uri}, HDF5 URI is {handle.h5uri}\n')
     def test_05_read_local_copy(self):
         C=self.__class__

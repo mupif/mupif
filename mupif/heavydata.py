@@ -115,6 +115,7 @@ sampleSchemas_json='''
 [
     {
         "_schema": "atom",
+        "_datasetName": "atoms",
         "identity": {
             "element": {
                 "dtype": "a2"
@@ -211,6 +212,7 @@ sampleSchemas_json='''
     },
     {
         "_schema": "molecule",
+        "_datasetName": "molecules",
         "identity": {
             "chemicalName": {
                 "dtype": "a",
@@ -321,12 +323,13 @@ sampleSchemas_json='''
             }
         },
         "atoms": {
-            "path": "molecule_{ROW}/atoms",
+            "path": "molecule/{ROW}/",
             "schema": "atom"
         }
     },
     {
         "_schema": "grain",
+        "_datasetName": "grains",
         "identity": {
             "material": {
                 "dtype": "a",
@@ -370,7 +373,7 @@ sampleSchemas_json='''
             }
         },
         "molecules": {
-            "path": "grain_{ROW}/molecules",
+            "path": "grain/{ROW}/",
             "schema": "molecule"
         }
     }
@@ -396,8 +399,8 @@ import logging
 import os
 log=logging.getLogger(__name__)
 
-def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
-    '''
+def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
+    __doc0__='''
     Transform dictionary-structured data schema into context access types.
     The access types are created using the "type" builtin and only stored
     in closures of the functions returning them. The top-level context is
@@ -412,7 +415,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     in the last iteration step). Therefore local variables are captured via
     local function defaults, which makes some of the code less readable.
     '''
-    
+
     @dataclass
     class CookedSchemaFragment:
         'Internal data used when cookSchema is called recursively'
@@ -447,7 +450,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
             ddoc['shape']='dynamic'
         else:
             dtype=np.dtype((dtype,shape))
-            log.warning('defaults for non-scalar quantities (dtype.subdtype) not yet supported.')
+            log.warning(f'{fq}: defaults for non-scalar quantities (dtype.subdtype) not yet supported.')
             # basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
             basedtype=dtype # workaround
             if basedtype.kind=='f': default=np.nan
@@ -471,17 +474,18 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     # top-level only
     if not schemaName:
         schemaName=desc['_schema']
+        datasetName=desc['_datasetName']
         assert len(prefix)==0
         T_name='Context_'+schemaName
         import hashlib
         h=hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
         fakeModule=types.ModuleType('_mupif_heavydata_'+h.hexdigest(),'Synthetically generated module for mupif.HeavyDataHandle schemas')
-        if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
-        sys.modules[fakeModule.__name__]=fakeModule
+        #if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
+        #sys.modules[fakeModule.__name__]=fakeModule
         ret.doc+=[f'## schema {schemaName}','']
     else:
-        T_name='Context_'+schemaName+prefix.replace('.','_')
+        T_name='Context_'+schemaName+'_'+prefix.replace('.','_')
 
     
     for key,val in desc.items():
@@ -491,6 +495,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         # special keys start with underscore, so far only _schema is used
         if key.startswith('_'):
             if key=='_schema': continue
+            elif key=='_datasetName': continue
             else: raise ValueError(f"Unrecognized special key '{key}' in prefix '{prefix}'.")
         if not isinstance(val,dict): raise TypeError("{fq}: value is not a dictionary.")
         # attribute defined via lookup, not stored
@@ -517,6 +522,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         # normal data attribute
         elif 'dtype' in val:
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
+            basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
             ret.doc+=[docHead+': '+doc]
             if default is not None: ret.defaults[fq]=default # add to the defaults
@@ -527,31 +533,41 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
                 if isinstance(value,bytes): value=value.decode('utf-8')
                 if unit is None: return value
                 return units.Quantity(value=value,unit=unit)
-            def setter(self,val,*,fq=fq,unit=unit,dtype=dtype):
-                # print(f'{fq}: setter')
-                _T_assertDataset(self,f"when setting the value of '{fq}'")
+            def _cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype):
+                'Unit conversion, type conversion before assignment'
                 if unit: val=(units.Quantity(val).to(unit)).value
                 if isinstance(val,str): val=val.encode('utf-8')
-                casting='safe'
-                if not np.can_cast(np.array(val),dtype,casting=casting): raise ValueError(f'Unable to cast the value {val} to {str(dtype)} (using "{casting}" casting).')
-                # print(f'{fq}: casting {val} to {str(dtype)} is okay.')
+                #sys.stderr.write(f"{fq}: {basedtype}\n")
+                ret=np.array(val).astype(basedtype,casting='safe',copy=False)
+                # for object (variable-length) types, convertibility was checked but the result is discarded
+                if basedtype.kind=='O': return val 
+                #sys.stderr.write(f"{fq}: cook {val} → {ret}\n")
+                return ret
+            def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype):
+                _T_assertDataset(self,f"when setting the value of '{fq}'")
+                val=_cookValue(val)
+                # sys.stderr.write(f'{fq}: direct setting {val}\n')
                 if self.row is None: self.ctx.dataset[fq]=val
-                else:
-                    # this should cover h5py.vlen_dtype and h5py.string_dtype (with variable length only)
-                    if dtype.kind=='O': 
-                        # workaround for a bug in h5py: for variable-length fields, read the row, modify, write back
-                        # see https://stackoverflow.com/q/67192725/761090
-                        rowdata=self.ctx.dataset[self.row]
-                        rowdata[self.ctx.dataset.dtype.names.index(fq)]=val
-                        self.ctx.dataset[self.row]=rowdata
-                    else: self.ctx.dataset[self.row,fq]=val   
+                else: self.ctx.dataset[self.row,fq]=val
+            def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype):
+                _T_assertDataset(self,f"when setting the value of '{fq}'")
+                val=_cookValue(val)
+                #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
+                # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
+                # direct assignment does not work; must read the whole row, modify, write it back
+                # see https://stackoverflow.com/q/67192725/761090 and https://stackoverflow.com/q/67451714/761090
+                # kind=='O' covers h5py.vlen_dtype and strings (h5py.string_dtype) with variable length
+                if self.row is None: raise NotImplementedError('Broadcasting to variable-length fields or multidimensional subarrays not yet implemented.')
+                rowdata=self.ctx.dataset[self.row]
+                rowdata[self.ctx.dataset.dtype.names.index(fq)]=val
+                self.ctx.dataset[self.row]=rowdata
             meth['get'+capitalize(key)]=getter
-            meth['set'+capitalize(key)]=setter
+            meth['set'+capitalize(key)]=(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct)
         elif 'path' in val:
             path,schema=val['path'],val['schema']
-            for s in ('{ROW}','/'):
-                if s not in path:
-                    raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{s}'.")
+            if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{s}'.")
+            if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
+            # path=path[:-1] # remove trailing slash
             def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
                 rr=[self.row is None,row is None]
                 if sum(rr)==2: raise AttributeError(f"'{fq}': row index not set (or given as arg), unable to follow schema ref.")
@@ -561,10 +577,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
                 #self.ctx.dataset[self.row] # catch invalid row index, data unused
                 #print(f"{fq}: getting {path}")
                 path=path.replace('{ROW}',str(row))
-                dir,name=path.rsplit('/',1)
-                subgrp=self.ctx.h5group.require_group(dir)
+                subgrp=self.ctx.h5group.require_group(path)
                 SchemaT=self.ctx.schemaRegistry[schema]
-                ret=SchemaT(RootContext(h5group=subgrp,h5name=name,schemaRegistry=self.ctx.schemaRegistry),row=None)
+                ret=SchemaT(RootContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry),row=None)
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return ret
@@ -573,7 +588,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         else:
             # recurse
             ret.doc+=[docHead,''] # empty line for nesting in restructured text
-            cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule)
+            cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule,datasetName=datasetName)
             ret.append(cooked)
             def nestedGetter(self,*,T=cooked.T):
                 ret=T(self)
@@ -583,11 +598,12 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     # define common methods for the context type
     def T_init(self,other=None,row=None,baseClass=None,**kw):
         'Context constructor; copies h5 context and row from *other*, optionally sets *row* as well'
-        # print(self.__class__.__bases__)
-        for B in self.__class__.__bases__: B.__init__(self,**kw)
+        #print(self.__class__.__bases__)
+        #for B in self.__class__.__bases__: B.__init__(self,**kw)
+        # print(type(other),id(type(other)),id(RootContext))
         if isinstance(other,RootContext):
             self.ctx,self.row=other,row
-            # print(f"[ROOT] {self}, other={other}")
+            #print(f"[ROOT] {self}, other={other}")
         else:
             if other.row is not None and row is not None: raise IndexError(f'Context already indexed, with row={row}.')
             self.ctx,self.row=other.ctx,(other.row if row is None else row)
@@ -609,15 +625,15 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
         _T_assertDataset(self,msg=f'querying dataset length')
         if self.row is not None: return IndexError('Row index already set, not behaving as sequence.')
         return self.ctx.dataset.shape[0]
-    def _T_assertDataset(T,msg=''):
+    def _T_assertDataset(self,msg=''):
         'checks that the backing dataset it present/open. Raises exception otherwise.'
-        if T.ctx.dataset is None:
-            if T.ctx.h5name in T.ctx.h5group: T.ctx.dataset=T.ctx.h5group[T.ctx.h5name]
-            else: raise RuntimeError(f'Dataset not yet initialized, use _allocate first{" ("+msg+")" if msg else ""}.')
+        if self.ctx.dataset is None:
+            if self.__class__.datasetName in self.ctx.h5group: self.ctx.dataset=self.ctx.h5group[self.__class__.datasetName]
+            else: raise RuntimeError(f'Dataset not yet initialized, use allocate first{" ("+msg+")" if msg else ""}: {self.ctx.h5group.name}/{self.__class__.datasetName}.')
     def T_allocate(self,size):
         'allocates the backing dataset, setting them to default values.'
         if self.ctx.dataset: raise RuntimeError(f'Dataset already exists (shape {self._values.shape}), re-allocation not supported.')
-        self.ctx.dataset=self.ctx.h5group.create_dataset(self.ctx.h5name,shape=(size,),dtype=ret.dtypes,compression='gzip')
+        self.ctx.dataset=self.ctx.h5group.create_dataset(self.__class__.datasetName,shape=(size,),dtype=ret.dtypes,compression='gzip')
         # FIXME: default scalar should broadcast to all rows, but does not (see subdtype above)
         for fq,val in ret.defaults.items():
             # sys.stderr.write(f'{fq}: setting default value of {val}\n')
@@ -633,10 +649,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
     meth['__len__']=T_len
     meth['row']=None
     meth['ctx']=None
-    # pydantic needs this
-    #meth['__annotations__']=dict(row=typing.Optional[int],ctx=typing.Any)
-    #meth['__fields_set__']=set()
-
 
     # those are defined only for the "root" context
     if not prefix:
@@ -648,18 +660,13 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
 
     T=type(T_name,T_bases,meth)
     T.__module__=fakeModule.__name__ ## make the (T.__module__,T.__name__) tuple used in serialization unique
+    T.datasetName=datasetName
     T=Pyro5.api.expose(T)
     setattr(fakeModule,T_name,T)
-
-    # FIXME: this is misplaced
-    # Pyro5.api.register_class_to_dict(T,dumpable.Dumpable.to_dict)
-    # Pyro5.api.register_dict_to_class(T.__module__+'.'+T.__name__,dumpable.Dumpable.from_dict_with_name)
 
     if not prefix:
         T.name=schemaName # schema knows its own name, for convenience of creating schema registry
         T.__doc__='\n'.join(ret.doc)+'\n'
-        # pydantic defines __iter__; it cannot be deleted, thus we have to redefine instead
-        # T.__iter__=T_iter
         return T
     else:
         ret.T=T
@@ -669,7 +676,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule=''):
 @Pyro5.api.expose
 class RootContext():
     h5group: Any
-    h5name: str
     schemaRegistry: dict
     dataset: Any=None
 
@@ -685,10 +691,11 @@ def _make_grains(h5name):
     # precompiled schemas
     schemaRegistry=makeSchemaRegistry(json.loads(sampleSchemas_json))
     with h5py.File(h5name,'w') as h5:
-        grp=h5.require_group('grains')
+        grp=h5.require_group('test')
+        schemaT=schemaRegistry['grain']
         grp.attrs['schemas']=sampleSchemas_json
-        grp.attrs['schema']='grain'
-        grains=schemaRegistry['grain'](RootContext(h5group=grp,h5name='grains',schemaRegistry=schemaRegistry))
+        grp.attrs['schema']=schemaT.name
+        grains=schemaT(RootContext(h5group=grp,schemaRegistry=schemaRegistry))
         grains.allocate(size=5)
         print(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
@@ -721,9 +728,9 @@ def _read_grains(h5name):
     t0=time.time()
     atomCounter=0
     with h5py.File(h5name,'r') as h5:
-        grp=h5['grains']
+        grp=h5['test']
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        grains=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name='grains',schemaRegistry=schemaRegistry))
+        grains=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,schemaRegistry=schemaRegistry))
         for g in grains:
             # print(g)
             print(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
@@ -739,11 +746,31 @@ def _read_grains(h5name):
     print(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
+
 @Pyro5.api.expose
 class HeavyDataHandle(MupifObject):
     h5path: str
     h5group: str
     h5uri: typing.Optional[str]=None
+
+    # __doc__ is a computed property which will add documentation for the sample JSON schemas
+    __doc0__='''This will be the normal documentation of HeavyDataHandle.
+
+    '''
+
+    # from https://stackoverflow.com/a/3203659/761090
+    class _classproperty(object):
+        def __init__(self, getter): self.getter=getter
+        def __get__(self, instance, owner): return self.getter(owner)
+
+    @_classproperty
+    def __doc__(cls):
+        ret=cls.__doc0__
+        reg=makeSchemaRegistry(json.loads(sampleSchemas_json))
+        for key,val in reg.items():
+            ret+='\n\n'+val.__doc__.replace('`','``')
+        return ret
+
     def getSchemaRegistry(self,compile=False):
         'Return schema registry as JSON string'
         self._openRead()
@@ -758,8 +785,7 @@ class HeavyDataHandle(MupifObject):
         self._openRead()
         grp=self._h5obj[self.h5group]
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        h5name=self.h5group.rsplit('/',1)[-1]
-        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
+        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,schemaRegistry=schemaRegistry))
         # sys.stderr.write(f'root: {root}\n')
         return self._returnProxy(root)
     def makeRoot(self,*,schema,schemasJson):
@@ -768,9 +794,8 @@ class HeavyDataHandle(MupifObject):
         grp=self._h5obj.require_group(self.h5group)
         grp.attrs['schemas']=schemasJson
         grp.attrs['schema']=schema
-        h5name=self.h5group.rsplit('/',1)[-1]
         schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
-        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,h5name=h5name,schemaRegistry=schemaRegistry))
+        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,schemaRegistry=schemaRegistry))
         return self._returnProxy(root)
     def exposeData(self):
         if (daemon:=getattr(self,'_pyroDaemon',None)) is None: raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
@@ -797,8 +822,6 @@ class HeavyDataHandle(MupifObject):
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
 
-import h5py
-h5py.Group.__getstate__=lambda *args, **kw: None
 
 '''
 future ideas:
@@ -813,12 +836,13 @@ future ideas:
 #
 if __name__=='__main__':
     import json, pprint
+    print(HeavyDataHandle.__doc__)
     # print(json.dumps(json.loads(sampleSchemas_json),indent=2))
-    #_make_grains('/tmp/grains.h5')
-    #_read_grains('/tmp/grains.h5')
+    _make_grains('/tmp/grains.h5')
+    _read_grains('/tmp/grains.h5')
 
     # this won't work through Pyro yet
-    pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='grains')
+    pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='test')
     for key,val in pp.getSchemaRegistry(compile=True).items():
         print(val.__doc__.replace('`','``'))
     root=pp.readRoot()
