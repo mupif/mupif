@@ -74,16 +74,15 @@ class Model1 (mp.Model):
     
         t0=time.time()
         atomCounter=0
-        # todo: can we have HeavyDataHandle constructor with empty h5path = create new one
-        self.grainState=mp.heavydata.HeavyDataHandle(h5path=path, h5group='grains')
-        grains=self.grainState.makeRoot(schemasJson=mp.heavydata.sampleSchemas_json, schema='grain')
-        grains.allocate(size=2)
+        self.grainState=mp.heavydata.HeavyDataHandle()
+        grains=self.grainState.getDataNew(schemasJson=mp.heavydata.sampleSchemas_json, schema='grain')
+        grains.resize(size=2)
         for ig,g in enumerate(grains):
-            g.getMolecules().allocate(size=random.randint(5,10))
+            g.getMolecules().resize(size=random.randint(5,10))
             print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-                m.getAtoms().allocate(size=random.randint(30,60))
+                m.getAtoms().resize(size=random.randint(30,60))
                 for a in m.getAtoms():
                     a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
                     a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
@@ -91,8 +90,7 @@ class Model1 (mp.Model):
                     struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
-        self.grainState._h5obj.close() #todo: method needed here
-        self.grainState._h5obj=None
+        self.grainState.closeData()
         t1=time.time()
         print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         md = {
@@ -179,21 +177,19 @@ class Model2 (mp.Model):
         t0=time.time()
         atomCounter = 0
         print(self.inputGrainState)
-        # new grain state
-        fd,path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
-        log.warning(f'Created temporary {path}')
-        self.outputGrainState=mp.HeavyDataHandle(h5path=path,h5group='grains')
-        outGrains = self.outputGrainState.makeRoot(schemasJson=mp.heavydata.sampleSchemas_json, schema='grain')
+        self.outputGrainState=mp.HeavyDataHandle()
+        log.warning(f'Created temporary {self.outputGrainState.h5path}')
+        outGrains = self.outputGrainState.getDataNew(schemasJson=mp.heavydata.sampleSchemas_json, schema='grain')
         # readRoot fails if still open
-        inGrains = self.inputGrainState.readRoot()
-        outGrains.allocate(size=len(inGrains))
+        inGrains = self.inputGrainState.getDataReadonly()
+        outGrains.resize(size=len(inGrains))
         #todo: copy inGrains to outGrains (check for more elegant way)
         for igNum,ig in enumerate(inGrains):
-            outGrains[igNum].getMolecules().allocate(size=len(ig.getMolecules()))
+            outGrains[igNum].getMolecules().resize(size=len(ig.getMolecules()))
             for imNum, im in enumerate(ig.getMolecules()):
                 om = outGrains[igNum].getMolecules()[imNum]
                 om.getIdentity().setMolecularWeight(im.getIdentity().getMolecularWeight())
-                om.getAtoms().allocate(size=len(im.getAtoms()))
+                om.getAtoms().resize(size=len(im.getAtoms()))
                 for iaNum, ia in enumerate(im.getAtoms()):
                     oa = om.getAtoms()[iaNum]
                     oa.getIdentity().setElement(ia.getIdentity().getElement())
@@ -215,10 +211,10 @@ class Model2 (mp.Model):
         if (1): 
             print(repMol.getAtoms()[0]) # call _T_assertDataset()
             print (repMol.getAtoms())
-            print("Deleting "+repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName)
-            #todo: make a method to solve this
-            del self.outputGrainState._h5obj[repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName]
-            repMol.getAtoms().allocate(size=random.randint(30,60))
+            #print("Deleting "+repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName)
+            ##todo: make a method to solve this
+            #del self.outputGrainState._h5obj[repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName]
+            repMol.getAtoms().resize(size=random.randint(30,60),reset=True)
             print (repMol.getAtoms()[0])
             for a in repMol.getAtoms():
                 a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
@@ -229,8 +225,7 @@ class Model2 (mp.Model):
                 atomCounter+=1
         t1=time.time()
         print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
-        #todo: improve
-        self.outputGrainState._h5obj.close()
+        self.outputGrainState.closeData()
 
     def getCriticalTimeStep(self):
         return 1.*mp.U.s

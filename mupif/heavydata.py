@@ -285,6 +285,8 @@ import types
 import json
 import tempfile
 import logging
+import deprecated
+import weakref
 import os
 log=logging.getLogger(__name__)
 
@@ -310,12 +312,14 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'Internal data used when cookSchema is called recursively'
         dtypes: list   # accumulates numpy dtypes for compound datatype 
         defaults: dict # default values, nan for floats and 0 for integers
+        subpaths: list # accumulates nested paths (for deletion when resizing)
         T: Any=None    # nested context type
         doc: typing.List[str]=dataclasses.field(default_factory=list) # accumulates documentation (as markdown nested list)
         def append(self,other):
             self.dtypes+=other.dtypes
             self.defaults.update(other.defaults)
             self.doc+=other.doc
+            self.subpaths+=other.subpaths
 
 
     def dtypeUnitDefaultDoc(v):
@@ -356,7 +360,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]  
 
-    ret=CookedSchemaFragment(dtypes=[],defaults={})
+    ret=CookedSchemaFragment(dtypes=[],defaults={},subpaths=[])
     meth={} # accumulate attribute access methods
     docLevel=(0 if not schemaName else prefix.count('.')+1)
 
@@ -456,6 +460,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             path,schema=val['path'],val['schema']
             if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
             if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
+            ret.subpaths.append(path)
             # path=path[:-1] # remove trailing slash
             def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
                 rr=[self.row is None,row is None]
@@ -468,7 +473,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 path=path.replace('{ROW}',str(row))
                 subgrp=self.ctx.h5group.require_group(path)
                 SchemaT=self.ctx.schemaRegistry[schema]
-                ret=SchemaT(RootContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry),row=None)
+                ret=SchemaT(HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry),row=None)
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return ret
@@ -489,8 +494,8 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'Context constructor; copies h5 context and row from *other*, optionally sets *row* as well'
         #print(self.__class__.__bases__)
         #for B in self.__class__.__bases__: B.__init__(self,**kw)
-        # print(type(other),id(type(other)),id(RootContext))
-        if isinstance(other,RootContext):
+        # print(type(other),id(type(other)),id(HeavyDataHandle.TopContext))
+        if isinstance(other,HeavyDataHandle.TopContext):
             self.ctx,self.row=other,row
             #print(f"[ROOT] {self}, other={other}")
         else:
@@ -499,7 +504,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             # print(f"[LEAF] {self}, other={other}")
     def T_str(self):
         'Context string representation'
-        return F"<{self.__class__.__name__}, row={self.row}, ctx={self.ctx}>"
+        return F"<{self.__class__.__name__}, row={self.row}, ctx={self.ctx}{', _pyroId='+self._pyroId if hasattr(self,'_pyroDaemon') else ''}>"
     def T_getitem(self,row):
         'Indexing access; checks index validity and returns new context with the row set'
         _T_assertDataset(self,msg=f'when trying to index row {row}')
@@ -507,7 +512,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         # self.ctx.dataset[row] # this would raise ValueError but iteration protocol needs IndexError
         # print(f'Item #{row}: returning {self.__class__(self,row=row)}')
         ret=self.__class__(self,row=row)
-        if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
+        if hasattr(self,'_pyroDaemon'):
+            self._pyroDaemon.register(ret)
+            # self._finalizer=weakref.finalize(self,self._pyroDaemon.unregister,self)
         return ret
     def T_len(self):
         'Return sequence length'
@@ -518,21 +525,38 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'checks that the backing dataset it present/open. Raises exception otherwise.'
         if self.ctx.dataset is None:
             if self.__class__.datasetName in self.ctx.h5group: self.ctx.dataset=self.ctx.h5group[self.__class__.datasetName]
-            else: raise RuntimeError(f'Dataset not yet initialized, use allocate first{" ("+msg+")" if msg else ""}: {self.ctx.h5group.name}/{self.__class__.datasetName}.')
-    def T_allocate(self,size):
-        'allocates the backing dataset, setting them to default values.'
-        if self.ctx.dataset: raise RuntimeError(f'Dataset already exists (shape {self._values.shape}), re-allocation not supported.')
-        self.ctx.dataset=self.ctx.h5group.create_dataset(self.__class__.datasetName,shape=(size,),dtype=ret.dtypes,compression='gzip')
-        assert size>0
-        if 0:
-            # broadcast over all rows; does not work for subarrays dim>1
-            for fq,val in ret.defaults.items(): self.ctx.dataset[fq]=val
-        else:
-            # use first row as template, assign all defaults into it and then copy into all rows explicitly
-            defrow=self.ctx.dataset[0]
+            else: raise RuntimeError(f'Dataset not yet initialized, use resize first{" ("+msg+")" if msg else ""}: {self.ctx.h5group.name}/{self.__class__.datasetName}.')
+
+    def T_resize(self,size,reset=False,*,ret=ret):
+        'Resizes the backing dataset; this will, as necessary, create a new dataset, or grow/shrink size of an existing dataset. New records are always default-initialized.'
+        def _initrows(ds,rowmin,rowmax):
+            'default-initialize contiguous range of rows rmin…rmax (inclusive)'
+            defrow=ds[rowmin] # use first row as storage, assign all defaults into it, then copy over all other rows
             for fq,val in ret.defaults.items(): defrow[fq]=val
-            # copy over all rows; use ... to avoid expensive explicit loop
-            self.ctx.dataset[...]=defrow
+            self.ctx.dataset[rowmin+1:rowmax+1]=defrow
+        if reset: self.resize(size=0)
+        assert size>=0
+        dsname=self.__class__.datasetName
+        if self.ctx.dataset is None:
+            if dsname not in self.ctx.h5group:
+                self.ctx.dataset=self.ctx.h5group.create_dataset(dsname,shape=(size,),maxshape=(None,),dtype=ret.dtypes,compression='gzip')
+                _initrows(self.ctx.dataset,rowmin=0,rowmax=size-1)
+                return
+            else: self.ctx.dataset=self.ctx.h5group[dsname]
+        oldSize=self.ctx.dataset.shape[0]
+        self.ctx.dataset.resize((size,))
+        if oldSize<size: _initrows(self.ctx.dataset,rowmin=oldSize,rowmax=size-1)
+        else:
+            # sys.stderr.write(f'Removing stale subpaths {str(ret.subpaths)}, {oldSize} → {size}…\n')
+            # remove stale subpaths
+            for subpath in ret.subpaths:
+                for r in range(size,oldSize):
+                    p=subpath.replace('{ROW}',str(r))
+                    # sys.stderr.write(f'Resizing {self.ctx.dataset}, {oldSize} → {size}: deleting {p}\n')
+                    if p in self.ctx.h5group: del self.ctx.h5group[p]
+                    else: pass # sys.stderr.write(f'{self.ctx.h5group}: does not contain {p}, not deleted')
+
+            # log.warning('Deleting nested data not yet done when shrinking datasets')
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')
         for row in range(self.ctx.dataset.shape[0]): yield self[row]
@@ -543,10 +567,13 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     meth['__len__']=T_len
     meth['row']=None
     meth['ctx']=None
+    # __del__ note: it would be nice to use context destructor to unregister contexts from Pyro
+    # (those which registered automatically). Since the daemon is holding one reference, however,
+    # the dtor will never be called, unfortunately
 
     # those are defined only for the "root" context
     if not prefix:
-        meth['allocate']=T_allocate
+        meth['resize']=T_resize
         ret.dtypes=np.dtype(ret.dtypes)
         T_bases=()
     else:
@@ -566,12 +593,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         ret.T=T
         return ret
 
-@dataclass
-@Pyro5.api.expose
-class RootContext():
-    h5group: Any
-    schemaRegistry: dict
-    dataset: Any=None
 
 def makeSchemaRegistry(dd):
     return dict([((T:=_cookSchema(d)).name,T) for d in dd])
@@ -589,20 +610,20 @@ def _make_grains(h5name):
         schemaT=schemaRegistry['grain']
         grp.attrs['schemas']=sampleSchemas_json
         grp.attrs['schema']=schemaT.name
-        grains=schemaT(RootContext(h5group=grp,schemaRegistry=schemaRegistry))
-        grains.allocate(size=5)
+        grains=schemaT(HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
+        grains.resize(size=5)
         print(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
             #g=grains[ig]
             print('grain',ig,g)
-            g.getMolecules().allocate(size=random.randint(5,50))
+            g.getMolecules().resize(size=random.randint(5,50))
             print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 #for im in range(len(g.getMolecules())):
                 #m=g.getMolecules()[im]
                 # print('molecule: ',m)
                 m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-                m.getAtoms().allocate(size=random.randint(30,60))
+                m.getAtoms().resize(size=random.randint(30,60))
                 for a in m.getAtoms():
                     #for ia in range(len(m.getAtoms())):
                     #a=m.getAtoms()[ia]
@@ -624,7 +645,7 @@ def _read_grains(h5name):
     with h5py.File(h5name,'r') as h5:
         grp=h5['test']
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        grains=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,schemaRegistry=schemaRegistry))
+        grains=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
         for g in grains:
             # print(g)
             print(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
@@ -643,8 +664,8 @@ def _read_grains(h5name):
 
 @Pyro5.api.expose
 class HeavyDataHandle(MupifObject):
-    h5path: str
-    h5group: str
+    h5path: str=''
+    h5group: str='/'
     h5uri: typing.Optional[str]=None
 
     # __doc__ is a computed property which will add documentation for the sample JSON schemas
@@ -665,32 +686,68 @@ class HeavyDataHandle(MupifObject):
             ret+='\n\n'+val.__doc__.replace('`','``')
         return ret
 
+    @dataclass
+    @Pyro5.api.expose
+    class TopContext():
+        h5group: Any
+        schemaRegistry: dict
+        dataset: Any=None
+        def __str__(self):
+            return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
+
+
     def getSchemaRegistry(self,compile=False):
         'Return schema registry as JSON string'
         self._openRead()
         ssh=self._h5obj[self.h5group].attrs['schemas']
         return ssh if not compile else makeSchemaRegistry(json.loads(ssh))
+
     def _returnProxy(self,v):
         if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(v)
         return v
+
     def _openRead(self):
+        #if self.h5path==':memory:': raise ValueError('Impossible to open in-memory HDF5 for reading')
         if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r')
-    def readRoot(self):
+    def _openReadWrite(self):
+        #if self.h5path==':memory:': raise ValueError('Impossible to open in-memory HDF5 for reading/writing')
+        if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r+')
+        elif self._h5obj.mode=='r': raise RuntimeError(f'Backing storage {self._h5obj} already open as read-only.')
+
+    @deprecated.deprecated
+    def readRoot(self): return self.getDataReadonly()
+    @deprecated.deprecated
+    def makeRoot(self,**kw): return self.getDataNew(**kw)
+
+    def getDataReadonly(self):
         self._openRead()
         grp=self._h5obj[self.h5group]
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,schemaRegistry=schemaRegistry))
+        root=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
         # sys.stderr.write(f'root: {root}\n')
         return self._returnProxy(root)
-    def makeRoot(self,*,schema,schemasJson):
+    def getDataNew(self,*,schema,schemasJson):
         if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
+        #if self.h5path==':memory:': self._h5obj=h5py.File('',driver='core',backing_store=False)
+        #else:
         self._h5obj=h5py.File(self.h5path,'w')
         grp=self._h5obj.require_group(self.h5group)
         grp.attrs['schemas']=schemasJson
         grp.attrs['schema']=schema
         schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
-        root=schemaRegistry[grp.attrs['schema']](RootContext(h5group=grp,schemaRegistry=schemaRegistry))
+        root=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
         return self._returnProxy(root)
+    def getDataReadWrite(self):
+        self._openReadWrite()
+        grp=self._h5obj[self.h5group]
+        schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
+        root=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
+        return self._returnProxy(root)
+
+    def closeData(self):
+        if self._h5obj:
+            self._h5obj.close()
+            self._h5obj=None
     def exposeData(self):
         if (daemon:=getattr(self,'_pyroDaemon',None)) is None: raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
         if self.h5uri: return # already exposed
@@ -715,6 +772,10 @@ class HeavyDataHandle(MupifObject):
             sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
+        if not self.h5path:
+            # self.h5path=':memory:'
+            # sys.stderr.write('Creating temporary HDF5 file')
+            fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
 
 
 '''
@@ -739,9 +800,11 @@ if __name__=='__main__':
     pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='test')
     for key,val in pp.getSchemaRegistry(compile=True).items():
         print(val.__doc__.replace('`','``'))
-    root=pp.readRoot()
+    root=pp.getDataReadonly()
     print(pp.readRoot()[0].getMolecules())
     print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
     print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
+    pp.closeData()
+    pp.getDataReadWrite()
 
 

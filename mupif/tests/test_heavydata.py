@@ -38,17 +38,17 @@ class Heavydata_TestCase(unittest.TestCase):
         atomCounter=0
         # precompiled schemas
         handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
-        grains=handle.makeRoot(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
-        grains.allocate(size=C.numGrains)
+        grains=handle.getDataNew(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        grains.resize(size=C.numGrains)
         sys.stderr.write(f"There is {len(grains)} grains.\n")
         for ig,g in enumerate(grains):
             if ig==0: C.grain_class=g.__class__
-            g.getMolecules().allocate(size=random.randint(5,15))
+            g.getMolecules().resize(size=random.randint(5,15))
             sys.stderr.write(f"Grain #{ig} has {len(g.getMolecules())} molecules\n")
             for m in g.getMolecules():
                 m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
                 m.getProperties().getPhysical().getPolarizability().setNeutral(np.array([[1,2,3],[4,5,6],[7,8,9]])*mp.U['Angstrom2 s4 / kg'])
-                m.getAtoms().allocate(size=random.randint(10,30))
+                m.getAtoms().resize(size=random.randint(10,30))
                 for a in m.getAtoms():
                     a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
                     a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
@@ -60,11 +60,10 @@ class Heavydata_TestCase(unittest.TestCase):
         grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('Q')
         t1=time.time()
         sys.stderr.write(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
-
     def test_02_read(self):
         C=self.__class__
         handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
-        grains=handle.readRoot()
+        grains=handle.getDataReadonly()
         t0=time.time()
         atomCounter=0
         for g in grains:
@@ -81,19 +80,25 @@ class Heavydata_TestCase(unittest.TestCase):
                     atomCounter+=1
         t1=time.time()
         sys.stderr.write(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
-    def test_03_daemon_start(self):
+    def test_03_delete(self):
+        C=self.__class__
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
+        grains=handle.getDataReadWrite()
+        nmol=grains[0].getMolecules()
+        nmol.resize(len(nmol)-4)
+    def test_20_daemon_start(self):
         C=self.__class__
         C.daemon=Pyro5.api.Daemon()
-        C.daemonRun=True
-        C.daemonThread=threading.Thread(target=C.daemon.requestLoop,kwargs=dict(loopCondition=lambda: C.daemonRun))
-        C.daemonThread.start()
-    def test_04_publish(self):
+        #C.daemonRun=True
+        th=threading.Thread(target=C.daemon.requestLoop) # ,kwargs=dict(loopCondition=lambda: C.daemonRun))
+        th.start()
+    def test_21_publish(self):
         C=self.__class__
         C.uri=C.daemon.register(handle:=mp.HeavyDataHandle(h5path=C.h5path,h5group='test'))
         handle.exposeData()
         C.uri2=C.daemon.register(mp.HeavyDataHandle(h5path=C.h5path2,h5group='test'))
         sys.stderr.write(f'Handle URI is {C.uri}, HDF5 URI is {handle.h5uri}\n')
-    def test_05_read_local_copy(self):
+    def test_22_read_local_copy(self):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
@@ -102,7 +107,7 @@ class Heavydata_TestCase(unittest.TestCase):
             local=proxy.copyRemote()
             self.assertEqual(local.__class__,mp.heavydata.HeavyDataHandle)
             sys.stderr.write(f'Local handle is a {local.__class__.__name__}\n')
-            root=local.readRoot()
+            root=local.getDataReadonly()
             # sys.stderr.write(f'Local root has {len(root)} grains, {root.__class__}\n')
             self.assertEqual(C.numGrains,len(root))
             self.assertEqual(root[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
@@ -110,11 +115,11 @@ class Heavydata_TestCase(unittest.TestCase):
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
             raise
-    def test_06_read_remote_proxy(self):
+    def test_23_read_remote_proxy(self):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
-            root=proxy.readRoot()
+            root=proxy.getDataReadonly()
             self.assertEqual(root.__class__,Pyro5.api.Proxy)
             # special methods don't currently work with Pyro5, use __getitem__ instead of [] for now
             self.assertEqual(root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
@@ -128,27 +133,27 @@ class Heavydata_TestCase(unittest.TestCase):
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
             raise
-    def test_07_write_remote_proxy(self):
+    def test_24_write_remote_proxy(self):
         C=self.__class__
         try:
             t0=time.time()
             atomCounter=0
             # precompiled schemas
             handle=Pyro5.api.Proxy(C.uri2)
-            grains=handle.makeRoot(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
-            grains.allocate(size=C.numGrains)
+            grains=handle.getDataNew(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            grains.resize(size=C.numGrains)
             sys.stderr.write(f"There is {grains.__len__()} grains.\n")
             #for ig,g in enumerate(grains):
             for ig in range(grains.__len__()):
                 g=grains.__getitem__(ig)
                 if ig==0: C.grain_class=g.__class__
-                (molecules:=g.getMolecules()).allocate(size=random.randint(5,10))
+                (molecules:=g.getMolecules()).resize(size=random.randint(5,10))
                 sys.stderr.write(f"Grain #{ig} has {g.getMolecules().__len__()} molecules\n")
                 #for m in g.getMolecules():
                 for im in range(molecules.__len__()):
                     m=molecules.__getitem__(im)
                     m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-                    (atoms:=m.getAtoms()).allocate(size=random.randint(5,10))
+                    (atoms:=m.getAtoms()).resize(size=random.randint(5,10))
                     #for a in m.getAtoms():
                     for ia in range(atoms.__len__()):
                         a=atoms.__getitem__(ia)
@@ -167,10 +172,29 @@ class Heavydata_TestCase(unittest.TestCase):
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
             raise
+    def test_24_daemon_auto_register_unregister(self):
+        C=self.__class__
+        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
+        # register the handle with daemon
+        # if the parent object is registered, all nested objects should register automatically with the same daemon
+        uri0=C.daemon.register(handle)
+        grains=handle.getDataReadonly()
+        mol0=grains.getMolecules(0)
+        atom0=mol0.getAtoms(0)
+        atom0id=atom0.getIdentity()
+        objs=(handle,grains,mol0,atom0,atom0id)
+        for o in objs: self.assertEqual(C.daemon,o._pyroDaemon)
+        ids=[o._pyroId for o in objs]
+        ##  this does not work yet
+        handle.closeData()
+        #for i in ids: self.assertRaises(KeyError,lambda i=i: C.daemon.uriFor(i))
+
+        
     def test_99_daemon_stop(self):
         C=self.__class__
         sys.stderr.write('Stopping daemon\n')
-        C.daemonRun=False
-        C.daemonThread.join()
+        C.daemon.shutdown()
+        #C.daemonRun=False
+        #C.daemonThread.join()
 
 
