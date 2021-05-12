@@ -3,6 +3,7 @@ sys.path.extend(['..', '../..'])
 import tempfile
 import time, random
 import numpy as np
+import os
 
 import mupif as mp
 from mupif.units import U as u
@@ -90,6 +91,8 @@ class Model1 (mp.Model):
                     struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
+        self.grainState._h5obj.close() #todo: method needed here
+        self.grainState._h5obj=None
         t1=time.time()
         print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         md = {
@@ -175,11 +178,13 @@ class Model2 (mp.Model):
         # read source grain state, into new state, then replace random molecule with dopant
         t0=time.time()
         atomCounter = 0
+        print(self.inputGrainState)
         # new grain state
         fd,path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
         log.warning(f'Created temporary {path}')
         self.outputGrainState=mp.HeavyDataHandle(h5path=path,h5group='grains')
         outGrains = self.outputGrainState.makeRoot(schemasJson=mp.heavydata.sampleSchemas_json, schema='grain')
+        # readRoot fails if still open
         inGrains = self.inputGrainState.readRoot()
         outGrains.allocate(size=len(inGrains))
         #todo: copy inGrains to outGrains (check for more elegant way)
@@ -202,13 +207,19 @@ class Model2 (mp.Model):
         # select random grain and molecule
         t0=time.time()
         atomCounter = 0
-        rgNum = random.randint(0,len(inGrains)-1)
-        rmNum = random.randint(0,len(inGrains[rgNum].getMolecules())-1)
-        repMol = inGrains[rgNum].getMolecules()[rmNum]
+        rgNum = random.randint(0,len(outGrains)-1)
+        rmNum = random.randint(0,len(outGrains[rgNum].getMolecules())-1)
+        repMol = outGrains[rgNum].getMolecules()[rmNum]
         # replace this molecule
         repMol.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-        if (0): #todo: replace atoms (does not work)
+        if (1): 
+            print(repMol.getAtoms()[0]) # call _T_assertDataset()
+            print (repMol.getAtoms())
+            print("Deleting "+repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName)
+            #todo: make a method to solve this
+            del self.outputGrainState._h5obj[repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName]
             repMol.getAtoms().allocate(size=random.randint(30,60))
+            print (repMol.getAtoms()[0])
             for a in repMol.getAtoms():
                 a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
                 a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
@@ -218,6 +229,8 @@ class Model2 (mp.Model):
                 atomCounter+=1
         t1=time.time()
         print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+        #todo: improve
+        self.outputGrainState._h5obj.close()
 
     def getCriticalTimeStep(self):
         return 1.*mp.U.s
