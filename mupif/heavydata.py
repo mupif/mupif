@@ -396,7 +396,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         # attribute defined via lookup, not stored
         if 'lookup' in val:
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
-            ret.doc+=[docHead+': '+doc]
+            ret.doc+=[docHead+f': `get{capitalize(key)}()`: '+doc]
             lKey,lDict=val['key'],val['lookup']
             if isinstance(lKey,bytes): lKey=lKey.decode('utf8')
             # bind local values via default args (closure)
@@ -419,7 +419,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
             basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
-            ret.doc+=[docHead+': '+doc]
+            ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: '+doc]
             if default is not None: ret.defaults[fq]=default # add to the defaults
             def getter(self,*,fq=fq,unit=unit):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
@@ -481,11 +481,11 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 #    self.ctx.pyroIds.append(ret._pyroId)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return _registeredWithDaemon(self,ret)
-            ret.doc+=[docHead+f': nested data at `{path}`, schema `{schema}`.']
+            ret.doc+=[docHead+f': `get{capitalize(key)}()`: nested data at `{path}`, schema `{schema}`.']
             meth['get'+capitalize(key)]=subschemaGetter
         else:
             # recurse
-            ret.doc+=[docHead,''] # empty line for nesting in restructured text
+            ret.doc+=[docHead+f': `get{capitalize(key)}()`',''] # empty line for nesting in restructured text
             cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule,datasetName=datasetName)
             ret.append(cooked)
             def nestedGetter(self,*,T=cooked.T):
