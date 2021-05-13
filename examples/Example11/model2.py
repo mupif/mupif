@@ -42,12 +42,12 @@ class Model2 (mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.PropertyID.PID_GrainState', 'Name': 'Grain state',
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.MiscID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Initial grain state', 'Units': 'None',
                  'Origin': 'Simulated', 'Required': True}
             ],
             'Outputs': [
-                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.PropertyID.PID_GrainState', 'Name': 'Grain state',
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.MiscID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Updated grain state with dopant', 'Units': 'None', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
@@ -66,7 +66,8 @@ class Model2 (mp.Model):
 
     def set(self, prop, objectID=0):
         if (type(prop) == mp.heavydata.HeavyDataHandle): #todo: test some ID as well
-            self.inputGrainState = prop
+            if prop.id == mp.dataid.MiscID.ID_GrainState:
+                self.inputGrainState = prop
         else:
             raise mp.APIError('Unknown property ID')
 
@@ -75,7 +76,7 @@ class Model2 (mp.Model):
         t0=time.time()
         atomCounter = 0
         print(self.inputGrainState)
-        self.outputGrainState=mp.HeavyDataHandle()
+        self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
         log.warning(f'Created temporary {self.outputGrainState.h5path}')
         outGrains = self.outputGrainState.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         # readRoot fails if still open

@@ -44,7 +44,7 @@ class Model1 (mp.Model):
             },
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.PropertyID.PID_GrainState', 'Name': 'Grain state',
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.MiscID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Sample Random grain state', 'Units': 'None', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
@@ -70,7 +70,7 @@ class Model1 (mp.Model):
         # generate random grain state
         t0=time.time()
         atomCounter=0
-        self.grainState=mp.heavydata.HeavyDataHandle()
+        self.grainState=mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
         grains=self.grainState.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         grains.resize(size=2)
         for ig,g in enumerate(grains):
