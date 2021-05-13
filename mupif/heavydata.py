@@ -740,7 +740,7 @@ class HeavyDataHandle(MupifObject):
         elif self._h5obj.mode=='r': raise RuntimeError(f'Backing storage {self._h5obj} already open as read-only.')
 
     @pydantic.validate_arguments
-    def getData(self, mode: typing.Literal['readonly','readwrite','overwrite','create'], schemaName: typing.Optional[str]=None, schemasJson: typing.Optional[str]=None):
+    def getData(self, mode: typing.Literal['readonly','readwrite','overwrite','create','create-memory'], schemaName: typing.Optional[str]=None, schemasJson: typing.Optional[str]=None):
         if mode in ('readonly','readwrite'):
             if mode=='readonly':
                 if self._h5obj:
@@ -757,16 +757,23 @@ class HeavyDataHandle(MupifObject):
             schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
             return self._returnProxy(top)
-        elif mode in ('overwrite','create'):
+        elif mode in ('overwrite','create','create-memory'):
             if not schemaName or not schemasJson: raise ValueError(f'Both *schema* abd *schemaJson* must be given (opening {self.h5path} in mode {mode})')
             if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} already open.')
-            if useTemp:=(not self.h5path):
-                fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
-                log.info(f'Using new temporary file {self.h5path}')
-            if mode=='overwrite' or useTemp: self._h5obj=h5py.File(self.h5path,'w')
-            # 'create' mode should fail if file exists already
-            # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
-            else: self._h5obj=h5py.File(self.h5path,'x') 
+            if mode=='create-memory':
+                import uuid
+                p=(self.h5path if self.h5path else str(uuid.uuid4()))
+                # hdf5 uses filename for lock management (even if the file is memory block only)
+                # therefore pass if something unique if filename is not given
+                self._h5obj=h5py.File(p,mode='x',driver='core',backing_store=(self.h5path is not None))
+            else:
+                if useTemp:=(not self.h5path):
+                    fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
+                    log.info('Using new temporary file {self.h5path}')
+                if mode=='overwrite' or useTemp: self._h5obj=h5py.File(self.h5path,'w')
+                # 'create' mode should fail if file exists already
+                # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
+                else: self._h5obj=h5py.File(self.h5path,'x')
             grp=self._h5obj.require_group(self.h5group)
             grp.attrs['schemas']=schemasJson
             grp.attrs['schema']=schemaName
