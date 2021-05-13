@@ -29,6 +29,7 @@ from .dataid import PropertyID
 from .dataid import FieldID
 from .dataid import FunctionID
 from .dataid import ParticleSetID
+from .dataid import MiscID
 from . import property
 from . import field
 from . import function
@@ -47,6 +48,7 @@ type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, PropertyID)))
 type_ids.extend(prefix+s for s in list(map(str, FieldID)))
 type_ids.extend(prefix+s for s in list(map(str, ParticleSetID)))
+type_ids.extend(prefix+s for s in list(map(str, MiscID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
