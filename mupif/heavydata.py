@@ -758,8 +758,13 @@ class HeavyDataHandle(MupifObject):
         elif mode in ('overwrite','create'):
             if not schemaName or not schemasJson: raise ValueError(f'Both *schema* abd *schemaJson* must be given (opening {self.h5path} in mode {mode})')
             if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} already open.')
-            if mode=='overwrite': self._h5obj=h5py.File(self.h5path,'w')
-            else: self._h5obj=h5py.File(self.h5path,'x') # fails if file exists
+            if useTemp:=(not self.h5path):
+                fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
+                log.info('Using new temporary file {self.h5path}')
+            if mode=='overwrite' or useTemp: self._h5obj=h5py.File(self.h5path,'w')
+            # 'create' mode should fail if file exists already
+            # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
+            else: self._h5obj=h5py.File(self.h5path,'x') 
             grp=self._h5obj.require_group(self.h5group)
             grp.attrs['schemas']=schemasJson
             grp.attrs['schema']=schemaName
@@ -824,10 +829,6 @@ class HeavyDataHandle(MupifObject):
             sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
-        if not self.h5path:
-            # self.h5path=':memory:'
-            # sys.stderr.write('Creating temporary HDF5 file')
-            fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
 
 
 '''

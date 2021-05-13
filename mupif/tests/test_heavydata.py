@@ -90,6 +90,10 @@ class Heavydata_TestCase(unittest.TestCase):
         self.assertEqual(len(mols),nmols-4)
         # this will trigger repacking
         handle.closeData(repack=True)
+    def test_04_create_temp(self):
+        handle=mp.HeavyDataHandle()
+        handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        handle.closeData()
     def test_20_daemon_start(self):
         C=self.__class__
         C.daemon=Pyro5.api.Daemon()

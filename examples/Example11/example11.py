@@ -75,8 +75,7 @@ class Model1 (mp.Model):
         t0=time.time()
         atomCounter=0
         self.grainState=mp.heavydata.HeavyDataHandle()
-        # TODO: mode='create' does not work with temporary (the file exists already), use 'overwrite' meanwhile
-        grains=self.grainState.getData(mode='overwrite',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        grains=self.grainState.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         grains.resize(size=2)
         for ig,g in enumerate(grains):
             g.getMolecules().resize(size=random.randint(5,10))
@@ -180,8 +179,7 @@ class Model2 (mp.Model):
         print(self.inputGrainState)
         self.outputGrainState=mp.HeavyDataHandle()
         log.warning(f'Created temporary {self.outputGrainState.h5path}')
-        # TODO: mode='create' does not work with temporary (the file exists already), use 'overwrite' meanwhile
-        outGrains = self.outputGrainState.getData(mode='overwrite',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        outGrains = self.outputGrainState.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         # readRoot fails if still open
         inGrains = self.inputGrainState.getData(mode='readonly')
         outGrains.resize(size=len(inGrains))
