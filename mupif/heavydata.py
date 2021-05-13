@@ -286,8 +286,10 @@ import json
 import tempfile
 import logging
 import deprecated
-import weakref
 import os
+import pydantic
+import subprocess
+import shutil
 log=logging.getLogger(__name__)
 
 def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
@@ -473,10 +475,12 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 path=path.replace('{ROW}',str(row))
                 subgrp=self.ctx.h5group.require_group(path)
                 SchemaT=self.ctx.schemaRegistry[schema]
-                ret=SchemaT(HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry),row=None)
-                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
+                ret=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=None)
+                # if hasattr(self,'_pyroDaemon'):
+                #    self._pyroDaemon.register(ret)
+                #    self.ctx.pyroIds.append(ret._pyroId)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
-                return ret
+                return _registeredWithDaemon(self,ret)
             ret.doc+=[docHead+f': nested data at `{path}`, schema `{schema}`.']
             meth['get'+capitalize(key)]=subschemaGetter
         else:
@@ -485,23 +489,36 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule,datasetName=datasetName)
             ret.append(cooked)
             def nestedGetter(self,*,T=cooked.T):
-                ret=T(self)
-                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(ret)
-                return ret
+                #print('nestedGetter',T)
+                ret=T(other=self)
+                # if hasattr(self,'_pyroDaemon'):
+                #    self._pyroDaemon.register(ret)
+                #    self.ctx.pyroIds.append(ret._pyroId)
+                return _registeredWithDaemon(self,ret)
             meth['get'+capitalize(key)]=nestedGetter # lambda self, T=cooked.T: T(self)
-    # define common methods for the context type
-    def T_init(self,other=None,row=None,baseClass=None,**kw):
-        'Context constructor; copies h5 context and row from *other*, optionally sets *row* as well'
-        #print(self.__class__.__bases__)
-        #for B in self.__class__.__bases__: B.__init__(self,**kw)
-        # print(type(other),id(type(other)),id(HeavyDataHandle.TopContext))
-        if isinstance(other,HeavyDataHandle.TopContext):
-            self.ctx,self.row=other,row
-            #print(f"[ROOT] {self}, other={other}")
-        else:
-            if other.row is not None and row is not None: raise IndexError(f'Context already indexed, with row={row}.')
+    def _registeredWithDaemon(context,obj):
+        if not hasattr(context,'_pyroDaemon'): return obj
+        context._pyroDaemon.register(obj)
+        context.ctx.pyroIds.append(obj._pyroId)
+        return obj
+    def T_init(self,*,top=None,other=None,row=None):
+        '''
+        The constructor is a bit hairy, as the new context either:
+        (1) nests inside TopContext (think of dataset);
+        (2) nests inside an already nested context (think of sub-dataset);
+        (3) adds row information, not changing location (row in (sub)dataset)
+        (4) nests & adds row, such as in getMolecules(0) which is a shorthand for getMolecules()[0]
+        '''
+        if top is not None:
+            assert isinstance(top,HeavyDataHandle.TopContext)
+            self.ctx,self.row=top,row
+        elif other is not None:
+            assert not isinstance(other,HeavyDataHandle.TopContext)
+            # print(f'other.row={other.row}, row={row}')
+            if (other.row is not None) and (row is not None): raise IndexError(f'Context already indexed, with row={row}.')
             self.ctx,self.row=other.ctx,(other.row if row is None else row)
-            # print(f"[LEAF] {self}, other={other}")
+           # print(f"[LEAF] {self}, other={other}")
+        else: raise ValueError('One of *top* or *other* must be given.')
     def T_str(self):
         'Context string representation'
         return F"<{self.__class__.__name__}, row={self.row}, ctx={self.ctx}{', _pyroId='+self._pyroId if hasattr(self,'_pyroDaemon') else ''}>"
@@ -511,10 +528,11 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         if(row<0 or row>=self.ctx.dataset.shape[0]): raise IndexError(f"{fq}: row index {row} out of range 0…{self.ctx.dataset.shape[0]}.")
         # self.ctx.dataset[row] # this would raise ValueError but iteration protocol needs IndexError
         # print(f'Item #{row}: returning {self.__class__(self,row=row)}')
-        ret=self.__class__(self,row=row)
-        if hasattr(self,'_pyroDaemon'):
-            self._pyroDaemon.register(ret)
-            # self._finalizer=weakref.finalize(self,self._pyroDaemon.unregister,self)
+        ret=self.__class__(other=self,row=row)
+        return _registeredWithDaemon(self,ret)
+        #if hasattr(self,'_pyroDaemon'):
+        #    self._pyroDaemon.register(ret)
+        #    self.ctx.pyroIds.append(ret._pyroId)
         return ret
     def T_len(self):
         'Return sequence length'
@@ -574,6 +592,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     # those are defined only for the "root" context
     if not prefix:
         meth['resize']=T_resize
+        # meth['pyroIds']=[]
         ret.dtypes=np.dtype(ret.dtypes)
         T_bases=()
     else:
@@ -610,7 +629,8 @@ def _make_grains(h5name):
         schemaT=schemaRegistry['grain']
         grp.attrs['schemas']=sampleSchemas_json
         grp.attrs['schema']=schemaT.name
-        grains=schemaT(HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
+        grains=schemaT(top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
+        print(f"{grains}")
         grains.resize(size=5)
         print(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
@@ -645,7 +665,7 @@ def _read_grains(h5name):
     with h5py.File(h5name,'r') as h5:
         grp=h5['test']
         schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        grains=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
+        grains=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
         for g in grains:
             # print(g)
             print(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
@@ -690,6 +710,7 @@ class HeavyDataHandle(MupifObject):
     @Pyro5.api.expose
     class TopContext():
         h5group: Any
+        pyroIds: list
         schemaRegistry: dict
         dataset: Any=None
         def __str__(self):
@@ -703,7 +724,9 @@ class HeavyDataHandle(MupifObject):
         return ssh if not compile else makeSchemaRegistry(json.loads(ssh))
 
     def _returnProxy(self,v):
-        if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(v)
+        if hasattr(self,'_pyroDaemon'):
+            self._pyroDaemon.register(v)
+            self.pyroIds.append(v._pyroId)
         return v
 
     def _openRead(self):
@@ -714,53 +737,82 @@ class HeavyDataHandle(MupifObject):
         if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r+')
         elif self._h5obj.mode=='r': raise RuntimeError(f'Backing storage {self._h5obj} already open as read-only.')
 
-    @deprecated.deprecated
-    def readRoot(self): return self.getDataReadonly()
-    @deprecated.deprecated
-    def makeRoot(self,**kw): return self.getDataNew(**kw)
+    @pydantic.validate_arguments
+    def getData(self, mode: typing.Literal['readonly','readwrite','overwrite','create'], schemaName: typing.Optional[str]=None, schemasJson: typing.Optional[str]=None):
+        if mode in ('readonly','readwrite'):
+            if mode=='readonly':
+                if self._h5obj:
+                    if self._h5obj.mode!='r': raise RuntimeError(f'HDF5 file {self.h5path} already open for writing.')
+                else: self._h5obj=h5py.File(self.h5path,'r')
+            elif mode=='readwrite':
+                if self._h5obj:
+                    if self._h5obj.mode!='r+': raise RuntimeError(f'HDF5 file {self.h5path} already open read-only.')
+                else:
+                    if not os.path.exists(self.h5path): raise RuntimeError(f'HDF5 file {self.h5path} does not exist (use mode="create" to create a new file.')
+                    self._h5obj=h5py.File(self.h5path,'r+')
+            assert self._h5obj
+            grp=self._h5obj[self.h5group]
+            schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
+            top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
+            return self._returnProxy(top)
+        elif mode in ('overwrite','create'):
+            if not schemaName or not schemasJson: raise ValueError(f'Both *schema* abd *schemaJson* must be given (opening {self.h5path} in mode {mode})')
+            if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} already open.')
+            if mode=='overwrite': self._h5obj=h5py.File(self.h5path,'w')
+            else: self._h5obj=h5py.File(self.h5path,'x') # fails if file exists
+            grp=self._h5obj.require_group(self.h5group)
+            grp.attrs['schemas']=schemasJson
+            grp.attrs['schema']=schemaName
+            schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
+            top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
+            return self._returnProxy(top)
 
-    def getDataReadonly(self):
-        self._openRead()
-        grp=self._h5obj[self.h5group]
-        schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        root=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
-        # sys.stderr.write(f'root: {root}\n')
-        return self._returnProxy(root)
-    def getDataNew(self,*,schema,schemasJson):
-        if self._h5obj: raise RuntimeError(f'Backing storage {self._h5obj} already open.')
-        #if self.h5path==':memory:': self._h5obj=h5py.File('',driver='core',backing_store=False)
-        #else:
-        self._h5obj=h5py.File(self.h5path,'w')
-        grp=self._h5obj.require_group(self.h5group)
-        grp.attrs['schemas']=schemasJson
-        grp.attrs['schema']=schema
-        schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
-        root=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
-        return self._returnProxy(root)
-    def getDataReadWrite(self):
-        self._openReadWrite()
-        grp=self._h5obj[self.h5group]
-        schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        root=schemaRegistry[grp.attrs['schema']](HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry))
-        return self._returnProxy(root)
+    @deprecated.deprecated
+    def getDataReadonly(self): return self.getData(mode='readonly')
+    @deprecated.deprecated
+    def getDataReadWrite(self): return self.getData(mode='readwrite')
+    @deprecated.deprecated
+    def getDataNew(self,schema,schemasJson): return self.getData(mode='overwrite',schemaName=schema,schemasJson=schemasJson)
 
-    def closeData(self):
+    def closeData(self,repack=False):
+        '''
+        * Flush and close the backing HDF5 file;
+        * unregister all contexts from Pyro (if registered)
+        * optionally repack the HDF5 file if it was open for writing and *repack* is `True`.
+        '''
         if self._h5obj:
+            rw=self._h5obj.mode=='r+'
             self._h5obj.close()
             self._h5obj=None
+            if rw and repack:
+                try:
+                    log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
+                    out=self.h5path+'.~repacked~'
+                    subprocess.run(['h5repack',self.h5path,out],check=True)
+                    shutil.copy(out,self.h5path)
+                except subprocess.CalledProcessError:
+                    log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
+
+        daemon=getattr(self,'_pyroDaemon',None)
+        if daemon:
+            for i in self.pyroIds:
+                # sys.stderr.write(f'Unregistering {i}\n')
+                daemon.unregister(i)
     def exposeData(self):
         if (daemon:=getattr(self,'_pyroDaemon',None)) is None: raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
         if self.h5uri: return # already exposed
         # binary mode is necessary!
         # otherwise: remote UnicodeDecodeError somewhere, and then 
         # TypeError: a bytes-like object is required, not 'dict'
-        self.h5uri=str(daemon.register(pyrofile.PyroFile(self.h5path,mode='rb')))
+        self.h5uri=str(daemon.register(pf:=pyrofile.PyroFile(self.h5path,mode='rb')))
+        self.pyroIds.append(pf._pyroId)
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
         #sys.stderr.write(f'{self.__class__.__name__}.__init__(**kw={str(kw)})\n')
         #import traceback
         #traceback.print_stack(file=sys.stderr)
         self._h5obj=None
+        self.pyroIds=[]
         if self.h5uri is not None:
             sys.stderr.write(f'HDF5 transfer: starting…\n')
             uri=Pyro5.api.URI(self.h5uri)
@@ -800,11 +852,11 @@ if __name__=='__main__':
     pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='test')
     for key,val in pp.getSchemaRegistry(compile=True).items():
         print(val.__doc__.replace('`','``'))
-    root=pp.getDataReadonly()
-    print(pp.readRoot()[0].getMolecules())
+    root=pp.getData('readonly')
+    print(pp.getData(mode='readonly')[0].getMolecules())
     print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
     print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
     pp.closeData()
-    pp.getDataReadWrite()
+    pp.getData('readwrite')
 
 

@@ -38,7 +38,7 @@ class Heavydata_TestCase(unittest.TestCase):
         atomCounter=0
         # precompiled schemas
         handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
-        grains=handle.getDataNew(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        grains=handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         grains.resize(size=C.numGrains)
         sys.stderr.write(f"There is {len(grains)} grains.\n")
         for ig,g in enumerate(grains):
@@ -63,7 +63,7 @@ class Heavydata_TestCase(unittest.TestCase):
     def test_02_read(self):
         C=self.__class__
         handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
-        grains=handle.getDataReadonly()
+        grains=handle.getData('readonly')
         t0=time.time()
         atomCounter=0
         for g in grains:
@@ -83,9 +83,13 @@ class Heavydata_TestCase(unittest.TestCase):
     def test_03_delete(self):
         C=self.__class__
         handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
-        grains=handle.getDataReadWrite()
-        nmol=grains[0].getMolecules()
-        nmol.resize(len(nmol)-4)
+        grains=handle.getData('readwrite')
+        mols=grains[0].getMolecules()
+        nmols=len(mols)
+        mols.resize(nmols-4)
+        self.assertEqual(len(mols),nmols-4)
+        # this will trigger repacking
+        handle.closeData(repack=True)
     def test_20_daemon_start(self):
         C=self.__class__
         C.daemon=Pyro5.api.Daemon()
@@ -107,7 +111,7 @@ class Heavydata_TestCase(unittest.TestCase):
             local=proxy.copyRemote()
             self.assertEqual(local.__class__,mp.heavydata.HeavyDataHandle)
             sys.stderr.write(f'Local handle is a {local.__class__.__name__}\n')
-            root=local.getDataReadonly()
+            root=local.getData('readonly')
             # sys.stderr.write(f'Local root has {len(root)} grains, {root.__class__}\n')
             self.assertEqual(C.numGrains,len(root))
             self.assertEqual(root[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
@@ -119,7 +123,7 @@ class Heavydata_TestCase(unittest.TestCase):
         C=self.__class__
         try:
             proxy=Pyro5.api.Proxy(C.uri)
-            root=proxy.getDataReadonly()
+            root=proxy.getData('readonly')
             self.assertEqual(root.__class__,Pyro5.api.Proxy)
             # special methods don't currently work with Pyro5, use __getitem__ instead of [] for now
             self.assertEqual(root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
@@ -140,7 +144,7 @@ class Heavydata_TestCase(unittest.TestCase):
             atomCounter=0
             # precompiled schemas
             handle=Pyro5.api.Proxy(C.uri2)
-            grains=handle.getDataNew(schema='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            grains=handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
             grains.resize(size=C.numGrains)
             sys.stderr.write(f"There is {grains.__len__()} grains.\n")
             #for ig,g in enumerate(grains):
@@ -178,16 +182,19 @@ class Heavydata_TestCase(unittest.TestCase):
         # register the handle with daemon
         # if the parent object is registered, all nested objects should register automatically with the same daemon
         uri0=C.daemon.register(handle)
-        grains=handle.getDataReadonly()
+        grains=handle.getData('readonly')
         mol0=grains.getMolecules(0)
         atom0=mol0.getAtoms(0)
         atom0id=atom0.getIdentity()
         objs=(handle,grains,mol0,atom0,atom0id)
-        for o in objs: self.assertEqual(C.daemon,o._pyroDaemon)
         ids=[o._pyroId for o in objs]
-        ##  this does not work yet
+        for o in objs: self.assertEqual(C.daemon,o._pyroDaemon)
+        # check object ids are found in the daemon
+        for i in ids: C.daemon.proxyFor(i)
+        # closing the data should unregister those
         handle.closeData()
-        #for i in ids: self.assertRaises(KeyError,lambda i=i: C.daemon.uriFor(i))
+        # so check that here; note however that the handle does *not* unregister itself
+        for i in ids[1:]: self.assertRaises(Pyro5.errors.DaemonError,lambda i=i: C.daemon.proxyFor(i))
 
         
     def test_99_daemon_stop(self):
