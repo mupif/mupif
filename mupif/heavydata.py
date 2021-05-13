@@ -688,7 +688,7 @@ class HeavyDataHandle(MupifObject):
     h5path: str=''
     h5group: str='/'
     h5uri: typing.Optional[str]=None
-    id:dataid.MiscID
+    id:dataid.MiscID=dataid.MiscID.ID_None
 
     # __doc__ is a computed property which will add documentation for the sample JSON schemas
     __doc0__='''This will be the normal documentation of HeavyDataHandle.

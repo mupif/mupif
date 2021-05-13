@@ -79,6 +79,7 @@ class FunctionID(IntEnum):
     FuncID_ProbabilityDistribution = 1
 
 class MiscID(IntEnum):
+    ID_None = 0
     ID_GrainState = 1
 
 class PropertyID(IntEnum):
