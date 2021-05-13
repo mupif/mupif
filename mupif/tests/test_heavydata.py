@@ -88,8 +88,8 @@ class Heavydata_TestCase(unittest.TestCase):
         nmols=len(mols)
         mols.resize(nmols-4)
         self.assertEqual(len(mols),nmols-4)
-        # this will trigger repacking
-        handle.closeData(repack=True)
+        # repacking needs h5repack installed (package h5utils), don't test that
+        handle.closeData(repack=False)
     def test_04_create_temp(self):
         handle=mp.HeavyDataHandle()
         handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
