@@ -34,32 +34,36 @@ class Heavydata_TestCase(unittest.TestCase):
         C=self.__class__
         C.h5path=C.tmp+'/grain.h5'
         C.h5path2=C.tmp+'/grain2.h5'
-        t0=time.time()
-        atomCounter=0
         # precompiled schemas
-        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
-        grains=handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
-        grains.resize(size=C.numGrains)
-        sys.stderr.write(f"There is {len(grains)} grains.\n")
-        for ig,g in enumerate(grains):
-            if ig==0: C.grain_class=g.__class__
-            g.getMolecules().resize(size=random.randint(5,15))
-            sys.stderr.write(f"Grain #{ig} has {len(g.getMolecules())} molecules\n")
-            for m in g.getMolecules():
-                m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-                m.getProperties().getPhysical().getPolarizability().setNeutral(np.array([[1,2,3],[4,5,6],[7,8,9]])*mp.U['Angstrom2 s4 / kg'])
-                m.getAtoms().resize(size=random.randint(10,30))
-                for a in m.getAtoms():
-                    a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
-                    a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
-                    a.getProperties().getTopology().setVelocity((24,5,77)*u.m/u.s)
-                    struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
-                    a.getProperties().getTopology().setStructure(struct)
-                    atomCounter+=1
-        # this is for checking the value later
-        grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('Q')
-        t1=time.time()
-        sys.stderr.write(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
+        def _write(handle,mode):
+            t0=time.time()
+            atomCounter=0
+            grains=handle.getData(mode=mode,schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            grains.resize(size=C.numGrains)
+            sys.stderr.write(f"There is {len(grains)} grains.\n")
+            for ig,g in enumerate(grains):
+                if ig==0: C.grain_class=g.__class__
+                g.getMolecules().resize(size=random.randint(5,15))
+                sys.stderr.write(f"Grain #{ig} has {len(g.getMolecules())} molecules\n")
+                for m in g.getMolecules():
+                    m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
+                    m.getProperties().getPhysical().getPolarizability().setNeutral(np.array([[1,2,3],[4,5,6],[7,8,9]])*mp.U['Angstrom2 s4 / kg'])
+                    m.getAtoms().resize(size=random.randint(10,30))
+                    for a in m.getAtoms():
+                        a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
+                        a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
+                        a.getProperties().getTopology().setVelocity((24,5,77)*u.m/u.s)
+                        struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
+                        a.getProperties().getTopology().setStructure(struct)
+                        atomCounter+=1
+            # this is for checking the value later
+            grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('Q')
+            t1=time.time()
+            return atomCounter,atomCounter/(t1-t0)
+        for h,m in [(mp.HeavyDataHandle(h5path=C.h5path,h5group='test'),'create'),(mp.HeavyDataHandle(),'create-memory')]:
+            a,aps=_write(handle=h,mode=m)
+            sys.stderr.write(f'{m}: created {a} atoms at {aps:g}/sec.\n')
+            h.closeData()
     def test_02_read(self):
         C=self.__class__
         handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')

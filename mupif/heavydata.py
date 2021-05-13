@@ -769,7 +769,7 @@ class HeavyDataHandle(MupifObject):
             else:
                 if useTemp:=(not self.h5path):
                     fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
-                    log.info('Using new temporary file {self.h5path}')
+                    log.info(f'Using new temporary file {self.h5path}')
                 if mode=='overwrite' or useTemp: self._h5obj=h5py.File(self.h5path,'w')
                 # 'create' mode should fail if file exists already
                 # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
