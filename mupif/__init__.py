@@ -160,9 +160,20 @@ def _registerOther():
     #Pyro5.api.register_dict_to_class('h5py.Group',lambda _,d: None)
     #Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
+def _pyroMonkeyPatch():
+    import Pyro5.api
+    # workaround for https://github.com/irmen/Pyro5/issues/44
+    if not hasattr(Pyro5.api.Proxy,'__len__'):
+        Pyro5.api.Proxy.__len__=lambda self: self.__getattr__('__len__')()
+        Pyro5.api.Proxy.__getitem__=lambda self, index: self.__getattr__('__getitem__')(index)
+        Pyro5.api.Proxy.__setitem__=lambda self, index, val: self.__getattr__('__setitem__')(index,val)
+        Pyro5.api.Proxy.__delitem__=lambda self, index: self.__getattr__('__delitem__')(index)
+    
+
 # register all dumpable types
 _registerDumpable()
 _registerOther()
+_pyroMonkeyPatch()
 
 # this is for pydantic
 from . import field

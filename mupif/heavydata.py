@@ -477,9 +477,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 subgrp=self.ctx.h5group.require_group(path)
                 SchemaT=self.ctx.schemaRegistry[schema]
                 ret=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=None)
-                # if hasattr(self,'_pyroDaemon'):
-                #    self._pyroDaemon.register(ret)
-                #    self.ctx.pyroIds.append(ret._pyroId)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return _registeredWithDaemon(self,ret)
             ret.doc+=[docHead+f': `get{capitalize(key)}()`: nested data at `{path}`, schema `{schema}`.']
@@ -492,9 +489,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             def nestedGetter(self,*,T=cooked.T):
                 #print('nestedGetter',T)
                 ret=T(other=self)
-                # if hasattr(self,'_pyroDaemon'):
-                #    self._pyroDaemon.register(ret)
-                #    self.ctx.pyroIds.append(ret._pyroId)
                 return _registeredWithDaemon(self,ret)
             meth['get'+capitalize(key)]=nestedGetter # lambda self, T=cooked.T: T(self)
     def _registeredWithDaemon(context,obj):
@@ -531,9 +525,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         # print(f'Item #{row}: returning {self.__class__(self,row=row)}')
         ret=self.__class__(other=self,row=row)
         return _registeredWithDaemon(self,ret)
-        #if hasattr(self,'_pyroDaemon'):
-        #    self._pyroDaemon.register(ret)
-        #    self.ctx.pyroIds.append(ret._pyroId)
         return ret
     def T_len(self):
         'Return sequence length'
@@ -758,7 +749,7 @@ class HeavyDataHandle(MupifObject):
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
             return self._returnProxy(top)
         elif mode in ('overwrite','create','create-memory'):
-            if not schemaName or not schemasJson: raise ValueError(f'Both *schema* abd *schemaJson* must be given (opening {self.h5path} in mode {mode})')
+            if not schemaName or not schemasJson: raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
             if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} already open.')
             if mode=='create-memory':
                 import uuid
@@ -780,13 +771,6 @@ class HeavyDataHandle(MupifObject):
             schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
             return self._returnProxy(top)
-
-    @deprecated.deprecated
-    def getDataReadonly(self): return self.getData(mode='readonly')
-    @deprecated.deprecated
-    def getDataReadWrite(self): return self.getData(mode='readwrite')
-    @deprecated.deprecated
-    def getDataNew(self,schema,schemasJson): return self.getData(mode='overwrite',schemaName=schema,schemasJson=schemasJson)
 
     def closeData(self,repack=False):
         '''

@@ -134,8 +134,8 @@ class Heavydata_TestCase(unittest.TestCase):
             root=proxy.getData('readonly')
             self.assertEqual(root.__class__,Pyro5.api.Proxy)
             # special methods don't currently work with Pyro5, use __getitem__ instead of [] for now
-            self.assertEqual(root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
-            a0id=root.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity()
+            self.assertEqual(root[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
+            a0id=root[0].getMolecules()[0].getAtoms()[0].getIdentity()
             self.assertRaises(KeyError,a0id.getAtomicMass) # Q is not a valid element
             # HDF5 is open read-only: "Unable to create group (no write intent on file)"
             # exceptiion type varies (h5py version?)
@@ -154,21 +154,15 @@ class Heavydata_TestCase(unittest.TestCase):
             handle=Pyro5.api.Proxy(C.uri2)
             grains=handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
             grains.resize(size=C.numGrains)
-            sys.stderr.write(f"There is {grains.__len__()} grains.\n")
-            #for ig,g in enumerate(grains):
-            for ig in range(grains.__len__()):
-                g=grains.__getitem__(ig)
+            sys.stderr.write(f"There is {len(grains)} grains.\n")
+            for ig,g in enumerate(grains):
                 if ig==0: C.grain_class=g.__class__
                 (molecules:=g.getMolecules()).resize(size=random.randint(5,10))
-                sys.stderr.write(f"Grain #{ig} has {g.getMolecules().__len__()} molecules\n")
-                #for m in g.getMolecules():
-                for im in range(molecules.__len__()):
-                    m=molecules.__getitem__(im)
+                sys.stderr.write(f"Grain #{ig} has {len(g.getMolecules())} molecules\n")
+                for m in g.getMolecules():
                     m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
                     (atoms:=m.getAtoms()).resize(size=random.randint(5,10))
-                    #for a in m.getAtoms():
-                    for ia in range(atoms.__len__()):
-                        a=atoms.__getitem__(ia)
+                    for a in m.getAtoms():
                         a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
                         a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
                         a.getProperties().getTopology().setVelocity((24,5,77)*u.m/u.s)
@@ -178,8 +172,8 @@ class Heavydata_TestCase(unittest.TestCase):
             t1=time.time()
             sys.stderr.write(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
             # write and read back a single value
-            grains.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().setElement('Q')
-            self.assertEqual(grains.__getitem__(0).getMolecules().__getitem__(0).getAtoms().__getitem__(0).getIdentity().getElement(),'Q')
+            grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('Q')
+            self.assertEqual(grains[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
             self.test_99_daemon_stop()
