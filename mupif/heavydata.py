@@ -315,14 +315,16 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'Internal data used when cookSchema is called recursively'
         dtypes: list   # accumulates numpy dtypes for compound datatype 
         defaults: dict # default values, nan for floats and 0 for integers
-        subpaths: list # accumulates nested paths (for deletion when resizing)
+        subpaths: dict # accumulates nested paths (for deletion when resizing), as (path,schema) tuple, keyed by FQ
+        units: dict    # accumulates units for normal values types (for dict export), keyed by FQ
         T: Any=None    # nested context type
         doc: typing.List[str]=dataclasses.field(default_factory=list) # accumulates documentation (as markdown nested list)
         def append(self,other):
             self.dtypes+=other.dtypes
             self.defaults.update(other.defaults)
             self.doc+=other.doc
-            self.subpaths+=other.subpaths
+            self.subpaths.update(other.subpaths)
+            self.units.update(other.units)
 
 
     def dtypeUnitDefaultDoc(v):
@@ -363,7 +365,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]  
 
-    ret=CookedSchemaFragment(dtypes=[],defaults={},subpaths=[])
+    ret=CookedSchemaFragment(dtypes=[],defaults={},subpaths={},units={})
     meth={} # accumulate attribute access methods
     docLevel=(0 if not schemaName else prefix.count('.')+1)
 
@@ -421,6 +423,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
             ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: '+doc]
+            ret.units[fq]=unit
             if default is not None: ret.defaults[fq]=default # add to the defaults
             def getter(self,*,fq=fq,unit=unit):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
@@ -441,12 +444,14 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 return ret
             def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
+                #_T_assertWritable(self,f"when setting the value of '{fq}'")
                 val=_cookValue(val)
                 # sys.stderr.write(f'{fq}: direct setting {val}\n')
                 if self.row is None: self.ctx.dataset[fq]=val
                 else: self.ctx.dataset[self.row,fq]=val
             def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
+                #_T_assertWritable(self,f"when setting the value of '{fq}'")
                 val=_cookValue(val)
                 #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
                 # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
@@ -463,7 +468,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             path,schema=val['path'],val['schema']
             if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
             if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
-            ret.subpaths.append(path)
+            ret.subpaths[fq]=(path,schema)
             # path=path[:-1] # remove trailing slash
             def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
                 rr=[self.row is None,row is None]
@@ -528,45 +533,99 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         return ret
     def T_len(self):
         'Return sequence length'
+        if not _T_hasDataset(self): return 0
         _T_assertDataset(self,msg=f'querying dataset length')
         if self.row is not None: return IndexError('Row index already set, not behaving as sequence.')
         return self.ctx.dataset.shape[0]
+    def _T_hasDataset(self): return self.ctx.dataset or (self.__class__.datasetName in self.ctx.h5group)
     def _T_assertDataset(self,msg=''):
         'checks that the backing dataset it present/open. Raises exception otherwise.'
         if self.ctx.dataset is None:
             if self.__class__.datasetName in self.ctx.h5group: self.ctx.dataset=self.ctx.h5group[self.__class__.datasetName]
             else: raise RuntimeError(f'Dataset not yet initialized, use resize first{" ("+msg+")" if msg else ""}: {self.ctx.h5group.name}/{self.__class__.datasetName}.')
-
+    def _T_assertWritable(self,msg):
+        if self.ctx.h5group.file.mode!='r+': raise RuntimeError(f'Underlying HDF5 file was not open for writing ({msg}).')
     def T_resize(self,size,reset=False,*,ret=ret):
         'Resizes the backing dataset; this will, as necessary, create a new dataset, or grow/shrink size of an existing dataset. New records are always default-initialized.'
         def _initrows(ds,rowmin,rowmax):
-            'default-initialize contiguous range of rows rmin…rmax (inclusive)'
+            'default-initialize contiguous range of rows rmin…rmax (inclusive), create groups for subpaths'
             defrow=ds[rowmin] # use first row as storage, assign all defaults into it, then copy over all other rows
             for fq,val in ret.defaults.items(): defrow[fq]=val
-            self.ctx.dataset[rowmin+1:rowmax+1]=defrow
-        if reset: self.resize(size=0)
+            ds[rowmin+1:rowmax+1]=defrow
         assert size>=0
-        dsname=self.__class__.datasetName
+        _T_assertWritable(self,msg=f'when resizing to {size}.')
+        if reset: self.resize(size=0)
         if self.ctx.dataset is None:
-            if dsname not in self.ctx.h5group:
+            dsname=self.__class__.datasetName
+            if dsname not in self.ctx.h5group: # create new dataset, initialize, return
+                if size==0: return # request to reset but nothing is here
                 self.ctx.dataset=self.ctx.h5group.create_dataset(dsname,shape=(size,),maxshape=(None,),dtype=ret.dtypes,compression='gzip')
-                _initrows(self.ctx.dataset,rowmin=0,rowmax=size-1)
+                _initrows(ds=self.ctx.dataset,rowmin=0,rowmax=size-1)
                 return
-            else: self.ctx.dataset=self.ctx.h5group[dsname]
-        oldSize=self.ctx.dataset.shape[0]
-        self.ctx.dataset.resize((size,))
-        if oldSize<size: _initrows(self.ctx.dataset,rowmin=oldSize,rowmax=size-1)
+            else: # open existing dataset
+                self.ctx.dataset=self.ctx.h5group[dsname]
+        size0=self.ctx.dataset.shape[0]
+        if size==size0: return
+        self.ctx.dataset.resize((size,)) # this changes size of the underlying HDF5 data
+        # default-initialize added rows
+        if size0<size: _initrows(ds=self.ctx.dataset,rowmin=size0,rowmax=size-1)
         else:
-            # sys.stderr.write(f'Removing stale subpaths {str(ret.subpaths)}, {oldSize} → {size}…\n')
             # remove stale subpaths
-            for subpath in ret.subpaths:
-                for r in range(size,oldSize):
+            # sys.stderr.write(f'Removing stale subpaths {str(ret.subpaths)}, {size0} → {size}…\n')
+            for fq,(subpath,schema) in ret.subpaths.items():
+                for r in range(size,size0):
                     p=subpath.replace('{ROW}',str(r))
-                    # sys.stderr.write(f'Resizing {self.ctx.dataset}, {oldSize} → {size}: deleting {p}\n')
+                    # sys.stderr.write(f'Resizing {self.ctx.dataset}, {prevSize} → {size}: deleting {p}\n')
                     if p in self.ctx.h5group: del self.ctx.h5group[p]
                     else: pass # sys.stderr.write(f'{self.ctx.h5group}: does not contain {p}, not deleted')
+    def T_inject(self,other):
+        self.from_dump(other.to_dump())
+    def T_to_dump(self,*,ret=ret):
+        _T_assertDataset(self,msg=f'when dumping')
+        def _onerow(row):
+            d={}
+            for fq,unit in ret.units.items(): #
+                d[fq]=(self.ctx.dataset[row,fq],unit)
+            for fq,(subpath,schema) in ret.subpaths.items():
+                SchemaT=self.ctx.schemaRegistry[schema]
+                subpath=subpath.replace('{ROW}',str(row))
+                print(f'{fq}: {subpath}')
+                if subpath not in self.ctx.h5group: continue
+                subgrp=self.ctx.h5group[subpath]
+                subcontext=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=[]),row=None)
+                d[fq]=subcontext.to_dump()
+            return d
+        if self.row is not None: return _onerow(self.row)
+        else: return [_onerow(r) for r in range(self.ctx.dataset.shape[0])]
+    def T_from_dump(self,dump,*,ret=ret):
+        _T_assertWritable(self,msg=f'when applying dump')
+        def _onerow(row,di):
+            rowdata=self.ctx.dataset[row]
+            for fq,valUnit in di.items():
+                if fq in ret.units: # value field
+                    rowdata[fq]=valUnit[0] if (valUnit[1] is None) else units.Quantity(value=valUnit[0],unit=valUnit[1]).to(ret.units[fq]).value
+                elif fq in ret.subpaths: # subpath
+                    assert isinstance(valUnit,list)
+                    subpath,schema=ret.subpaths[fq]
+                    SchemaT=self.ctx.schemaRegistry[schema]
+                    subpath=subpath.replace('{ROW}',str(row))
+                    subgrp=self.ctx.h5group.require_group(subpath)
+                    subcontext=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=[]),row=None)
+                    subcontext.from_dump(valUnit)
+                else:
+                    raise ValueError(f'Key {fq} not in target schema {schemaName}, in {self.ctx.h5group}.')
+                    # key not in target schema
+            self.ctx.dataset[row]=rowdata
+        if self.row is not None:
+            assert isinstance(dump,dict)
+            _T_assertDataset(self,msg=f'when applying dump with row={self.row}')
+            _onerow(self.row,dump)
+        else:
+            assert isinstance(dump,list)
+            self.resize(len(dump),reset=True)
+            _T_assertDataset(self,msg=f'when applying dump')
+            for row,di in enumerate(dump): _onerow(row,di)
 
-            # log.warning('Deleting nested data not yet done when shrinking datasets')
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')
         for row in range(self.ctx.dataset.shape[0]): yield self[row]
@@ -584,6 +643,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     # those are defined only for the "root" context
     if not prefix:
         meth['resize']=T_resize
+        meth['to_dump']=T_to_dump
+        meth['from_dump']=T_from_dump
+        meth['inject']=T_inject
         # meth['pyroIds']=[]
         ret.dtypes=np.dtype(ret.dtypes)
         T_bases=()
@@ -623,12 +685,12 @@ def _make_grains(h5name):
         grp.attrs['schema']=schemaT.name
         grains=schemaT(top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
         print(f"{grains}")
-        grains.resize(size=5)
+        grains.resize(size=2)
         print(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
             #g=grains[ig]
             print('grain',ig,g)
-            g.getMolecules().resize(size=random.randint(5,50))
+            g.getMolecules().resize(size=random.randint(5,20))
             print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 #for im in range(len(g.getMolecules())):
@@ -846,11 +908,20 @@ if __name__=='__main__':
     pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='test')
     for key,val in pp.getSchemaRegistry(compile=True).items():
         print(val.__doc__.replace('`','``'))
-    root=pp.getData('readonly')
+    grains=pp.getData('readonly')
     print(pp.getData(mode='readonly')[0].getMolecules())
-    print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
-    print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
+    print(grains.getMolecules(0).getAtoms(5).getIdentity().getElement())
+    print(grains[0].getMolecules()[5].getAtoms().getIdentity().getElement())
+    import pprint
+    mol5dump=grains[0].getMolecules()[5].to_dump()
     pp.closeData()
-    pp.getData('readwrite')
+    grains=pp.getData('readwrite')
+    grains[0].getMolecules()[4].from_dump(mol5dump)
+    mol4dump=grains[0].getMolecules()[4].to_dump()
+    #pprint.pprint(mol4dump)
+    pprint.pprint(mol4dump,stream=open('/tmp/m4.txt','w'))
+    pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
+    print(mol4dump==mol5dump)
+    pp.closeData()
 
 

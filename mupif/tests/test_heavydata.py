@@ -98,6 +98,52 @@ class Heavydata_TestCase(unittest.TestCase):
         handle=mp.HeavyDataHandle()
         handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
         handle.closeData()
+    def test_05_resize(self):
+        handle=mp.HeavyDataHandle()
+        gg=handle.getData(mode='create-memory',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        self.assertEqual(len(gg),0)
+        gg.resize(10)
+        self.assertEqual(len(gg),10)
+        gg.resize(20)
+        self.assertEqual(len(gg),20)
+    def test_06_dump_inject(self):
+        handle=mp.HeavyDataHandle()
+        mols=handle.getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols.resize(2)
+        mols[0].getIdentity().setMolecularWeight(1*u.g)
+        mols[0].getIdentity().setMolecularWeight(1*u.g)
+        m0a=mols[0].getAtoms()
+        m0a.resize(2)
+        m0a.getIdentity()[0].setElement('AA')
+        m0a.getIdentity()[1].setElement('BB')
+
+        # manipulate the dump by hand, to check
+        dmp=mols.to_dump()
+        dmp[0]['identity.molecularWeight']=(1000.,'u') # change mass of mol0 to 1000 u
+        dmp[1]['identity.molecularWeight']=(1,u.kg)  # change mass of mol1 to 1 kg
+
+        # create from scratch
+        handle2=mp.HeavyDataHandle()
+        mols2=handle2.getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        # use modified dump
+        mols2.from_dump(dmp)
+        self.assertEqual(mols2[0].getIdentity().getMolecularWeight(),1000*u.Unit('u'))
+        self.assertEqual(mols2[1].getIdentity().getMolecularWeight(),1*u.Unit('kg'))
+        self.assertEqual(mols2[0].getAtoms()[0].getIdentity().getElement(),'AA')
+        self.assertEqual(mols2[0].getAtoms()[1].getIdentity().getElement(),'BB')
+
+        # inject only a part of data
+        handle3=mp.HeavyDataHandle()
+        mols3=handle3.getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols3.resize(2)
+        mols3[0].getAtoms().inject(mols[0].getAtoms())
+        self.assertEqual(len(mols3[0].getAtoms()),2)
+        self.assertEqual(mols3[0].getAtoms()[0].getIdentity().getElement(),'AA')
+        mols3[1].getAtoms().resize(5)
+        # self.assertEqual(mols3[1]
+        mols3[1].getAtoms()[4].inject(mols[0].getAtoms()[1])
+        self.assertEqual(mols3[1].getAtoms()[4].getIdentity().getElement(),'BB')
+
     def test_20_daemon_start(self):
         C=self.__class__
         C.daemon=Pyro5.api.Daemon()
