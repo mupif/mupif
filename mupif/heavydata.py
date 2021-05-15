@@ -589,7 +589,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             for fq,(subpath,schema) in ret.subpaths.items():
                 SchemaT=self.ctx.schemaRegistry[schema]
                 subpath=subpath.replace('{ROW}',str(row))
-                print(f'{fq}: {subpath}')
                 if subpath not in self.ctx.h5group: continue
                 subgrp=self.ctx.h5group[subpath]
                 subcontext=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=[]),row=None)

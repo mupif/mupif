@@ -117,30 +117,31 @@ class Heavydata_TestCase(unittest.TestCase):
         m0a.getIdentity()[0].setElement('AA')
         m0a.getIdentity()[1].setElement('BB')
 
-        # manipulate the dump by hand, to check
         dmp=mols.to_dump()
+        mols_=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols_.inject(mols)
+        # compare string representation
+        self.assertEqual(str(mols.to_dump()),str(mols_.to_dump()))
+
+
+        # manipulate the dump by hand and assign it
         dmp[0]['identity.molecularWeight']=(1000.,'u') # change mass of mol0 to 1000 u
         dmp[1]['identity.molecularWeight']=(1,u.kg)  # change mass of mol1 to 1 kg
-
-        # create from scratch
-        handle2=mp.HeavyDataHandle()
-        mols2=handle2.getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
-        # use modified dump
+        mols2=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
         mols2.from_dump(dmp)
-        self.assertEqual(mols2[0].getIdentity().getMolecularWeight(),1000*u.Unit('u'))
-        self.assertEqual(mols2[1].getIdentity().getMolecularWeight(),1*u.Unit('kg'))
         self.assertEqual(mols2[0].getAtoms()[0].getIdentity().getElement(),'AA')
         self.assertEqual(mols2[0].getAtoms()[1].getIdentity().getElement(),'BB')
+        # this are the modified parts
+        self.assertEqual(mols2[0].getIdentity().getMolecularWeight(),1000*u.Unit('u'))
+        self.assertEqual(mols2[1].getIdentity().getMolecularWeight(),1000*u.Unit('g'))
 
-        # inject only a part of data
-        handle3=mp.HeavyDataHandle()
-        mols3=handle3.getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        # inject fragments of data
+        mols3=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
         mols3.resize(2)
         mols3[0].getAtoms().inject(mols[0].getAtoms())
         self.assertEqual(len(mols3[0].getAtoms()),2)
         self.assertEqual(mols3[0].getAtoms()[0].getIdentity().getElement(),'AA')
         mols3[1].getAtoms().resize(5)
-        # self.assertEqual(mols3[1]
         mols3[1].getAtoms()[4].inject(mols[0].getAtoms()[1])
         self.assertEqual(mols3[1].getAtoms()[4].getIdentity().getElement(),'BB')
 
