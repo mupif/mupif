@@ -562,7 +562,7 @@ class RemoteModel (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
-        if self._decoratee:
+        if self._decoratee is not None:
             self._decoratee.terminate()
             self._decoratee = None
         

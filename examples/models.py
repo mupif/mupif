@@ -1258,7 +1258,7 @@ class MechanicalModel(mupif.model.Model):
                         A_e[i, j] += K[i, j] * dv
 
                         # temperature load if temperature field registered
-                if self.temperatureField:
+                if self.temperatureField is not None:
                     t = self.temperatureField.evaluate(x)
                     et = np.zeros((3, 1))
                     et[0] = self.alpha * t.getValue()[0]

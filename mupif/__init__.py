@@ -164,6 +164,7 @@ def _pyroMonkeyPatch():
     import Pyro5.api
     # workaround for https://github.com/irmen/Pyro5/issues/44
     if not hasattr(Pyro5.api.Proxy,'__len__'):
+        Pyro5.api.Proxy.__bool__: lambda self: True
         Pyro5.api.Proxy.__len__=lambda self: self.__getattr__('__len__')()
         Pyro5.api.Proxy.__getitem__=lambda self, index: self.__getattr__('__getitem__')(index)
         Pyro5.api.Proxy.__setitem__=lambda self, index, val: self.__getattr__('__setitem__')(index,val)
