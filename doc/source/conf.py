@@ -43,7 +43,7 @@ thisDir=os.path.dirname(os.path.abspath(__file__))
 apidoc_module_dir=thisDir+'/../../mupif'
 apidoc_output_dir='api/'
 apidoc_toc_file='api'
-apidoc_excluded_paths=['simple.py']
+apidoc_excluded_paths=[]
 apidoc_module_first=True
 
 
