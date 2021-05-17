@@ -831,7 +831,7 @@ class HeavyDataHandle(MupifObject):
                 p=(self.h5path if self.h5path else str(uuid.uuid4()))
                 # hdf5 uses filename for lock management (even if the file is memory block only)
                 # therefore pass if something unique if filename is not given
-                self._h5obj=h5py.File(p,mode='x',driver='core',backing_store=(self.h5path is not None))
+                self._h5obj=h5py.File(p,mode='x',driver='core',backing_store=bool(self.h5path))
             else:
                 if useTemp:=(not self.h5path):
                     fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
