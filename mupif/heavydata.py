@@ -3,7 +3,10 @@
 sampleSchemas_json='''
 [
     {
-        "_schema": "atom",
+        "_schema": {
+            "name": "org.mupif.sample.atom",
+            "version": "1.0"
+        },
         "_datasetName": "atoms",
         "identity": {
             "element": {
@@ -100,7 +103,10 @@ sampleSchemas_json='''
         }
     },
     {
-        "_schema": "molecule",
+        "_schema": {
+            "name": "org.mupif.sample.molecule",
+            "version": "1.0"
+        },
         "_datasetName": "molecules",
         "identity": {
             "chemicalName": {
@@ -213,11 +219,14 @@ sampleSchemas_json='''
         },
         "atoms": {
             "path": "molecule/{ROW}/",
-            "schema": "atom"
+            "schema": "org.mupif.sample.atom"
         }
     },
     {
-        "_schema": "grain",
+        "_schema": {
+            "name": "org.mupif.sample.grain",
+            "version": "1.0"
+        },
         "_datasetName": "grains",
         "identity": {
             "material": {
@@ -263,7 +272,7 @@ sampleSchemas_json='''
         },
         "molecules": {
             "path": "grain/{ROW}/",
-            "schema": "molecule"
+            "schema": "org.mupif.sample.molecule"
         }
     }
 ]
@@ -371,10 +380,11 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
 
     # top-level only
     if not schemaName:
-        schemaName=desc['_schema']
+        schemaName=desc['_schema']['name']
+        schemaVersion=desc['_schema']['version']
         datasetName=desc['_datasetName']
         assert len(prefix)==0
-        T_name='Context_'+schemaName
+        T_name='Context_'+schemaName.replace('.','_')
         import hashlib
         h=hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
@@ -583,7 +593,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     def T_to_dump(self,*,ret=ret):
         _T_assertDataset(self,msg=f'when dumping')
         def _onerow(row):
-            d={}
+            d={'_schema':{"name":schemaName,"version":schemaVersion}}
             for fq,unit in ret.units.items(): #
                 d[fq]=(self.ctx.dataset[row,fq],unit)
             for fq,(subpath,schema) in ret.subpaths.items():
@@ -600,7 +610,11 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         _T_assertWritable(self,msg=f'when applying dump')
         def _onerow(row,di):
             rowdata=self.ctx.dataset[row]
+            s2n,s2v=di['_schema']['name'],di['_schema']['version']
+            if s2n!=self.schemaName: raise ValueError(f'Schema mismatch: source {s2n}, target {self.schemaName}')
+            if s2v!=self.schemaVersion: warnings.warn('Schema {s2n} version mismatch: source {s2v}, target {self.schemaVersion}')
             for fq,valUnit in di.items():
+                if fq=='_schema': continue
                 if fq in ret.units: # value field
                     rowdata[fq]=valUnit[0] if (valUnit[1] is None) else units.Quantity(value=valUnit[0],unit=valUnit[1]).to(ret.units[fq]).value
                 elif fq in ret.subpaths: # subpath
@@ -612,7 +626,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                     subcontext=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=[]),row=None)
                     subcontext.from_dump(valUnit)
                 else:
-                    raise ValueError(f'Key {fq} not in target schema {schemaName}, in {self.ctx.h5group}.')
+                    raise ValueError(f'Key {fq} not in target schema {self.schemaName}, in {self.ctx.h5group}.')
                     # key not in target schema
             self.ctx.dataset[row]=rowdata
         if self.row is not None:
@@ -645,7 +659,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         meth['to_dump']=T_to_dump
         meth['from_dump']=T_from_dump
         meth['inject']=T_inject
-        # meth['pyroIds']=[]
         ret.dtypes=np.dtype(ret.dtypes)
         T_bases=()
     else:
@@ -658,7 +671,8 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     setattr(fakeModule,T_name,T)
 
     if not prefix:
-        T.name=schemaName # schema knows its own name, for convenience of creating schema registry
+        T.schemaName=schemaName # schema knows its own name, for convenience of creating schema registry
+        T.schemaVersion=schemaVersion
         T.__doc__='\n'.join(ret.doc)+'\n'
         return T
     else:
@@ -667,7 +681,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
 
 
 def makeSchemaRegistry(dd):
-    return dict([((T:=_cookSchema(d)).name,T) for d in dd])
+    return dict([((T:=_cookSchema(d)).schemaName,T) for d in dd])
 
 
 def _make_grains(h5name):
@@ -679,9 +693,9 @@ def _make_grains(h5name):
     schemaRegistry=makeSchemaRegistry(json.loads(sampleSchemas_json))
     with h5py.File(h5name,'w') as h5:
         grp=h5.require_group('test')
-        schemaT=schemaRegistry['grain']
+        schemaT=schemaRegistry['org.mupif.sample.grain']
         grp.attrs['schemas']=sampleSchemas_json
-        grp.attrs['schema']=schemaT.name
+        grp.attrs['schema']=schemaT.schemaName
         grains=schemaT(top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
         print(f"{grains}")
         grains.resize(size=2)
@@ -918,9 +932,9 @@ if __name__=='__main__':
     grains[0].getMolecules()[4].from_dump(mol5dump)
     mol4dump=grains[0].getMolecules()[4].to_dump()
     #pprint.pprint(mol4dump)
-    pprint.pprint(mol4dump,stream=open('/tmp/m4.txt','w'))
-    pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
-    print(mol4dump==mol5dump)
+    #pprint.pprint(mol4dump,stream=open('/tmp/m4.txt','w'))
+    #pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
+    print(str(mol4dump)==str(mol5dump))
     pp.closeData()
 
 

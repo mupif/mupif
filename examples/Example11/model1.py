@@ -71,7 +71,7 @@ class Model1 (mp.Model):
         t0=time.time()
         atomCounter=0
         self.grainState=mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
-        grains=self.grainState.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        grains=self.grainState.getData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
         grains.resize(size=2)
         for ig,g in enumerate(grains):
             g.getMolecules().resize(size=random.randint(5,10))

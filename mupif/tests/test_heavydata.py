@@ -38,7 +38,7 @@ class Heavydata_TestCase(unittest.TestCase):
         def _write(handle,mode):
             t0=time.time()
             atomCounter=0
-            grains=handle.getData(mode=mode,schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            grains=handle.getData(mode=mode,schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
             grains.resize(size=C.numGrains)
             sys.stderr.write(f"There is {len(grains)} grains.\n")
             for ig,g in enumerate(grains):
@@ -96,11 +96,11 @@ class Heavydata_TestCase(unittest.TestCase):
         handle.closeData(repack=False)
     def test_04_create_temp(self):
         handle=mp.HeavyDataHandle()
-        handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        handle.getData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
         handle.closeData()
     def test_05_resize(self):
         handle=mp.HeavyDataHandle()
-        gg=handle.getData(mode='create-memory',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        gg=handle.getData(mode='create-memory',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
         self.assertEqual(len(gg),0)
         gg.resize(10)
         self.assertEqual(len(gg),10)
@@ -108,7 +108,7 @@ class Heavydata_TestCase(unittest.TestCase):
         self.assertEqual(len(gg),20)
     def test_06_dump_inject(self):
         handle=mp.HeavyDataHandle()
-        mols=handle.getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols=handle.getData(mode='create-memory',schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json)
         mols.resize(2)
         mols[0].getIdentity().setMolecularWeight(1*u.g)
         mols[0].getIdentity().setMolecularWeight(1*u.g)
@@ -118,7 +118,7 @@ class Heavydata_TestCase(unittest.TestCase):
         m0a.getIdentity()[1].setElement('BB')
 
         dmp=mols.to_dump()
-        mols_=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols_=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json)
         mols_.inject(mols)
         # compare string representation
         self.assertEqual(str(mols.to_dump()),str(mols_.to_dump()))
@@ -127,7 +127,7 @@ class Heavydata_TestCase(unittest.TestCase):
         # manipulate the dump by hand and assign it
         dmp[0]['identity.molecularWeight']=(1000.,'u') # change mass of mol0 to 1000 u
         dmp[1]['identity.molecularWeight']=(1,u.kg)  # change mass of mol1 to 1 kg
-        mols2=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols2=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json)
         mols2.from_dump(dmp)
         self.assertEqual(mols2[0].getAtoms()[0].getIdentity().getElement(),'AA')
         self.assertEqual(mols2[0].getAtoms()[1].getIdentity().getElement(),'BB')
@@ -136,7 +136,7 @@ class Heavydata_TestCase(unittest.TestCase):
         self.assertEqual(mols2[1].getIdentity().getMolecularWeight(),1000*u.Unit('g'))
 
         # inject fragments of data
-        mols3=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        mols3=mp.HeavyDataHandle().getData(mode='create-memory',schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json)
         mols3.resize(2)
         mols3[0].getAtoms().inject(mols[0].getAtoms())
         self.assertEqual(len(mols3[0].getAtoms()),2)
@@ -199,7 +199,7 @@ class Heavydata_TestCase(unittest.TestCase):
             atomCounter=0
             # precompiled schemas
             handle=Pyro5.api.Proxy(C.uri2)
-            grains=handle.getData(mode='create',schemaName='grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            grains=handle.getData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
             grains.resize(size=C.numGrains)
             sys.stderr.write(f"There is {len(grains)} grains.\n")
             for ig,g in enumerate(grains):
