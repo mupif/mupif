@@ -612,7 +612,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             rowdata=self.ctx.dataset[row]
             s2n,s2v=di['_schema']['name'],di['_schema']['version']
             if s2n!=self.schemaName: raise ValueError(f'Schema mismatch: source {s2n}, target {self.schemaName}')
-            if s2v!=self.schemaVersion: warnings.warn('Schema {s2n} version mismatch: source {s2v}, target {self.schemaVersion}')
+            if s2v!=self.schemaVersion: log.warning('Schema {s2n} version mismatch: source {s2v}, target {self.schemaVersion}')
             for fq,valUnit in di.items():
                 if fq=='_schema': continue
                 if fq in ret.units: # value field
