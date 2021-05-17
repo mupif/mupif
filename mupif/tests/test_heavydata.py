@@ -145,6 +145,9 @@ class Heavydata_TestCase(unittest.TestCase):
         mols3[1].getAtoms()[4].inject(mols[0].getAtoms()[1])
         self.assertEqual(mols3[1].getAtoms()[4].getIdentity().getElement(),'BB')
 
+        # inject mismatched schema
+        self.assertRaises(ValueError,lambda:mols3.inject(mols[0].getAtoms()))
+
     def test_20_daemon_start(self):
         C=self.__class__
         C.daemon=Pyro5.api.Daemon()
