@@ -916,6 +916,7 @@ class HeavyDataHandle(MupifObject):
             grp=self._h5obj[self.h5group]
             schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
+            self.updateMetadata(json.loads(grp.attrs['metadata']))
             return self._returnProxy(top)
         elif mode in ('overwrite','create','create-memory'):
             if not self.schemaName or not self.schemasJson: raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
@@ -939,6 +940,7 @@ class HeavyDataHandle(MupifObject):
             grp=self._h5obj.require_group(self.h5group)
             grp.attrs['schemas']=self.schemasJson
             grp.attrs['schema']=self.schemaName
+            grp.attrs['metadata']=json.dumps(self.getAllMetadata())
             schemaRegistry=makeSchemaRegistry(json.loads(self.schemasJson))
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
             return self._returnProxy(top)
