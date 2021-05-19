@@ -167,6 +167,8 @@ def _pyroMonkeyPatch():
         Pyro5.api.Proxy.__getitem__=lambda self, index: self.__getattr__('__getitem__')(index)
         Pyro5.api.Proxy.__setitem__=lambda self, index, val: self.__getattr__('__setitem__')(index,val)
         Pyro5.api.Proxy.__delitem__=lambda self, index: self.__getattr__('__delitem__')(index)
+        # Pyro5.api.Proxy.__enter__=lambda self: self.__getattr__('__enter__')()
+        # Pyro5.api.Proxy.__exit__=lambda self,exc_type,exc_value,traceback: self.__getattr__('__exit__')(exc_type,exc_value,traceback)
     
 
 # register all dumpable types

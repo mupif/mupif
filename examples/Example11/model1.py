@@ -70,8 +70,8 @@ class Model1 (mp.Model):
         # generate random grain state
         t0=time.time()
         atomCounter=0
-        self.grainState=mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
-        grains=self.grainState.getData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        self.grainState=mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState,schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        grains=self.grainState.openData(mode='create')
         grains.resize(size=2)
         for ig,g in enumerate(grains):
             g.getMolecules().resize(size=random.randint(5,10))

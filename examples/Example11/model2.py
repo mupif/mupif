@@ -79,25 +79,23 @@ class Model2 (mp.Model):
         # (1) copy old state into a new one
         #
         if 1:
-            # transfer via file copy of the underlying storage, very fast (local access only!)
-            fd,h5=tempfile.mkstemp(prefix='mupif-example11-',suffix='.h5')
-            shutil.copy(self.inputGrainState.h5path,h5)
-            self.outputGrainState=mp.HeavyDataHandle(h5path=h5,id=mp.dataid.MiscID.ID_GrainState)
-            inGrains = self.inputGrainState.getData(mode='readonly')
-            outGrains=self.outputGrainState.getData(mode='readwrite')
+            # transfer with cloneHandle which copies underlying storage
+            self.outputGrainState=self.inputGrainState.cloneHandle()
+            inGrains=self.inputGrainState.openData(mode='readonly')
+            outGrains=self.outputGrainState.openData(mode='readwrite')
         elif 1:
             # transfer via inject (serializes into RAM, network-transparent)
-            inGrains = self.inputGrainState.getData(mode='readonly')
+            inGrains = self.inputGrainState.openData(mode='readonly')
             self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
-            outGrains = self.outputGrainState.getData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
             outGrains.inject(inGrains)
         else:
             # transfer via explicit loop over data
-            inGrains = self.inputGrainState.getData(mode='readonly')
+            inGrains = self.inputGrainState.openData(mode='readonly')
             self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
-            outGrains = self.outputGrainState.getData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
             t0=time.time()
             atomCounter=0
             outGrains.resize(size=len(inGrains))
@@ -150,7 +148,7 @@ class Model2 (mp.Model):
                     atomCounter+=1
             t1=time.time()
             print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
-        self.outputGrainState.closeData()
+        # self.outputGrainState.closeData()
 
     def getCriticalTimeStep(self):
         return 1.*mp.U.s

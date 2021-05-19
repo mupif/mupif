@@ -50,7 +50,7 @@ Entries specifying ``unit`` (which is any string `astropy.units.Unit <https://do
 Subschema
 """""""""""
 
-Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyDataHandle.getData`) and ``path``. Path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
+Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyDataHandle.openData`) and ``path``. Path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
 
 Accessing data
 ----------------
@@ -817,15 +817,34 @@ def _read_grains(h5name):
 
 
 
+_HeavyDataHandle_ModeChoice=typing.Literal['readonly','readwrite','overwrite','create','create-memory']
+
 @Pyro5.api.expose
 class HeavyDataHandle(MupifObject):
     h5path: str=''
     h5group: str='/'
+    mode: _HeavyDataHandle_ModeChoice='readonly' # mode is used only by the context manager
+    schemaName: typing.Optional[str]=None
+    schemasJson: typing.Optional[str]=None
     h5uri: typing.Optional[str]=None
-    id:dataid.MiscID=dataid.MiscID.ID_None
+    id: dataid.MiscID=dataid.MiscID.ID_None
 
     # __doc__ is a computed property which will add documentation for the sample JSON schemas
-    __doc0__='''This will be the normal documentation of HeavyDataHandle.
+    __doc0__='''
+
+    *mode* specifies how the underlying HDF5 file (:obj:`h5path`) is to be opened:
+
+    * ``readonly`` only allows reading;
+    * ``readwrite`` alows reading and writing;
+    * ``create`` creates new HDF5 file, raising an exception if the file exists already; if :obj:`h5path` is empty, a temporary file will be created automatically; 
+    * ``overwrite`` create new HDF5 file, allowing overwriting an existing file;
+    * ``create-memory`` create HDF5 file in RAM only; if :obj:`h5path` is non-empty, it will be written out when data is closed via :obj:`closeData` (and discarded otherwise);
+    * ``copy-readwrite``: copies the underlying HDF5 file to a temporary storage first, then opens that for writing.
+
+
+    *schemaName* and *schemasJson* must be provided when creating new data (``overwrite``, ``create``, ``create-memory``) and are ignored otherwise.
+
+    This class can be used as context manager, in which case the :obj:`openData` and :obj:`closeData` will be called automatically.
 
     '''
 
@@ -845,7 +864,7 @@ class HeavyDataHandle(MupifObject):
     @dataclass
     @Pyro5.api.expose
     class TopContext():
-        'This class is for internal use only.'
+        'This class is for internal use only. It is the return type of :obj:`HeavyDataHandle.openData` and others.'
         h5group: Any
         pyroIds: list
         schemaRegistry: dict
@@ -853,12 +872,10 @@ class HeavyDataHandle(MupifObject):
         def __str__(self):
             return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
 
-
-    def getSchemaRegistry(self,compile=False):
-        'Return schema registry as JSON string (with ``compile=False``) or as dictionary representation (with ``compile=True``)'
-        self._openRead()
-        ssh=self._h5obj[self.h5group].attrs['schemas']
-        return ssh if not compile else makeSchemaRegistry(json.loads(ssh))
+    # Pyro5.api.Proxy itself defines __enter__ and __exit__, those cannot be used remotely
+    # so we might just as well consider removing them altogether
+    def __enter__(self): return self.openData(mode=self.mode)
+    def __exit__(self,exc_type,exc_value,traceback): self.closeData()
 
     def _returnProxy(self,v):
         if hasattr(self,'_pyroDaemon'):
@@ -866,28 +883,22 @@ class HeavyDataHandle(MupifObject):
             self.pyroIds.append(v._pyroId)
         return v
 
-    def _openRead(self):
-        #if self.h5path==':memory:': raise ValueError('Impossible to open in-memory HDF5 for reading')
-        if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r')
-    def _openReadWrite(self):
-        #if self.h5path==':memory:': raise ValueError('Impossible to open in-memory HDF5 for reading/writing')
-        if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r+')
-        elif self._h5obj.mode=='r': raise RuntimeError(f'Backing storage {self._h5obj} already open as read-only.')
+    @pydantic.validate_arguments
+    def cloneHandle(self,newPath: str=''): # -> HeavyDataHandle:
+        '''Return clone of the handle; the underlying storage is copied into *newPath* (or a temporary file, if not given). All handle attributes (besides :obj:`h5path`) are preserved.'''
+        if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} is open (call closeData() first).')
+        if not newPath: _fd,newPath=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
+        shutil.copy(self.h5path,newPath)
+        ret=self.copy(deep=True) # this is provided by pydantic
+        ret.h5path=newPath
+        return ret
 
     @pydantic.validate_arguments
-    def getData(self, mode: typing.Literal['readonly','readwrite','overwrite','create','create-memory'], schemaName: typing.Optional[str]=None, schemasJson: typing.Optional[str]=None):
+    def openData(self, mode: _HeavyDataHandle_ModeChoice):
         '''
-        Get top context for the underlying HDF5 data.
+        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyDataHandle` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyDataHandle.closeData` is called (directly or via context manager).
 
-        Mode specified how the underlying HDF5 file (:obj:`~HeavyDataHandle.h5path`) is to be opened:
-
-        * ``readonly`` only allows reading;
-        * ``readwrite`` alows reading and writing;
-        * ``create`` creates new HDF5 file, raising an exception if the file exists already; if :obj:`h5path` is empty, a temporary file will be created automatically; 
-        * ``overwrite`` create new HDF5 file, allowing overwriting an existing file;
-        * ``create-memory`` create HDF5 file in RAM only; if :obj:`h5path` is non-empty, it will be written out when data is closed via :obj:`closeData`.
-
-        *schemaName* and *schemasJson* must be provided when creating new data (``overwrite``, ``create``, ``create-memory``) and is ignored otherwise.
+        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyDataHandle.mode`.
 
         '''
         if mode in ('readonly','readwrite'):
@@ -907,14 +918,16 @@ class HeavyDataHandle(MupifObject):
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
             return self._returnProxy(top)
         elif mode in ('overwrite','create','create-memory'):
-            if not schemaName or not schemasJson: raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
+            if not self.schemaName or not self.schemasJson: raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
             if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} already open.')
             if mode=='create-memory':
                 import uuid
-                p=(self.h5path if self.h5path else str(uuid.uuid4()))
+                doSave=bool(self.h5path)
+                p=(self.h5path if doSave else str(uuid.uuid4()))
+                if not doSave: log.warning(f'Data will eventually disappear with mode="create-memory" and h5path="" (empty).')
                 # hdf5 uses filename for lock management (even if the file is memory block only)
                 # therefore pass if something unique if filename is not given
-                self._h5obj=h5py.File(p,mode='x',driver='core',backing_store=bool(self.h5path))
+                self._h5obj=h5py.File(p,mode='x',driver='core',backing_store=doSave)
             else:
                 if useTemp:=(not self.h5path):
                     fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
@@ -924,36 +937,35 @@ class HeavyDataHandle(MupifObject):
                 # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
                 else: self._h5obj=h5py.File(self.h5path,'x')
             grp=self._h5obj.require_group(self.h5group)
-            grp.attrs['schemas']=schemasJson
-            grp.attrs['schema']=schemaName
-            schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
+            grp.attrs['schemas']=self.schemasJson
+            grp.attrs['schema']=self.schemaName
+            schemaRegistry=makeSchemaRegistry(json.loads(self.schemasJson))
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
             return self._returnProxy(top)
 
-    def closeData(self,repack=False):
+    def closeData(self):
         '''
         * Flush and close the backing HDF5 file;
         * unregister all contexts from Pyro (if registered)
-        * optionally repack the HDF5 file if it was open for writing and *repack* is `True`.
         '''
         if self._h5obj:
-            rw=self._h5obj.mode=='r+'
             self._h5obj.close()
             self._h5obj=None
-            if rw and repack:
-                try:
-                    log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
-                    out=self.h5path+'.~repacked~'
-                    subprocess.run(['h5repack',self.h5path,out],check=True)
-                    shutil.copy(out,self.h5path)
-                except subprocess.CalledProcessError:
-                    log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
-
-        daemon=getattr(self,'_pyroDaemon',None)
-        if daemon:
+        if daemon:=getattr(self,'_pyroDaemon',None):
             for i in self.pyroIds:
                 # sys.stderr.write(f'Unregistering {i}\n')
                 daemon.unregister(i)
+    def repack(self):
+        '''Repack the underlying storage (experimental, untested). Data must not be open.'''
+        if self._h5obj: raise RuntimeError(f'Cannot repack while {self._h5obj} is open (call closeData first).')
+        try:
+            log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
+            out=self.h5path+'.~repacked~'
+            subprocess.run(['h5repack',self.h5path,out],check=True)
+            shutil.copy(out,self.h5path)
+        except subprocess.CalledProcessError:
+            log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
+
     def exposeData(self):
         '''
         If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataHandle` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
@@ -1007,14 +1019,14 @@ if __name__=='__main__':
     pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='test')
     for key,val in pp.getSchemaRegistry(compile=True).items():
         print(val.__doc__.replace('`','``'))
-    grains=pp.getData('readonly')
-    print(pp.getData(mode='readonly')[0].getMolecules())
+    grains=pp.openData('readonly')
+    print(pp.openData(mode='readonly')[0].getMolecules())
     print(grains.getMolecules(0).getAtoms(5).getIdentity().getElement())
     print(grains[0].getMolecules()[5].getAtoms().getIdentity().getElement())
     import pprint
     mol5dump=grains[0].getMolecules()[5].to_dump()
     pp.closeData()
-    grains=pp.getData('readwrite')
+    grains=pp.openData('readwrite')
     grains[0].getMolecules()[4].from_dump(mol5dump)
     mol4dump=grains[0].getMolecules()[4].to_dump()
     #pprint.pprint(mol4dump)
