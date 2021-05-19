@@ -61,8 +61,6 @@ def autoImports():
             raise
         # direct submodules created as mupif.submodule
         if len(modsplit)==2:
-            # globals()[modsplit[1]]=mod
-            # __all__.append(modsplit[1])
             aa.append(modsplit[1])
         # contents of those does not need to be exposed as mupif.Class etc
         #if modsplit[1] in ('tests','maybe-something-more'): continue

@@ -33,23 +33,36 @@ release = '3.x'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinxcontrib.apidoc'
+    # 'sphinxcontrib.apidoc'
 ]
 
 import sys, os.path
 
 thisDir=os.path.dirname(os.path.abspath(__file__))
 
-apidoc_module_dir=thisDir+'/../../mupif'
-apidoc_output_dir='api/'
-apidoc_toc_file='api'
-apidoc_excluded_paths=[]
-apidoc_module_first=True
+#apidoc_module_dir=thisDir+'/../../mupif'
+#apidoc_output_dir='api/'
+#apidoc_toc_file='api'
+#apidoc_excluded_paths=[]
+#apidoc_module_first=True
 
 
 sys.path.append(thisDir+'/../..')
 import mupif
 import mupif.tests
+import importlib
+
+
+# HACK: pretend everything is in mupif.* directly
+# so that cross-references in autodoc work
+for a in mupif.__all__:
+    try:
+        # if it is a module, do nothing
+        importlib.import_module('mupif.'+a)
+    except ImportError:
+        # otherwise put it into the mupif module directly
+        o=getattr(mupif,a)
+        o.__module__='mupif'
 
 
 # Add any paths that contain templates here, relative to this directory.
