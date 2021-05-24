@@ -57,7 +57,7 @@ class Model1 (mp.Model):
     def get(self, propID, time, objectID=0):
         
 
-        if propID == mp.PropertyID.PID_GrainState:
+        if propID == mp.dataid.MiscID.ID_GrainState:
             return self.grainState
         else:
             raise mp.APIError('Unknown property ID')

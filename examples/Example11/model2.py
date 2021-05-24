@@ -59,7 +59,7 @@ class Model2 (mp.Model):
         super().initialize(file=file, workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
     def get(self, propID, time, objectID=0):
-        if propID == mp.PropertyID.PID_GrainState:
+        if propID == mp.dataid.MiscID.ID_GrainState:
             return self.outputGrainState
         else:
             raise mp.APIError('Unknown property ID')
