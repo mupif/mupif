@@ -84,7 +84,10 @@ class SimpleJobManager_TestCase(unittest.TestCase):
             ns=cls.ns,
             appName="app", 
             jobManWorkDir=cls.tmp,
-            serverConfig=serverConfig,
+            appClass=serverConfig.applicationClass,
+            server=serverConfig.server,
+            nshost=serverConfig.nshost,
+            nsport=serverConfig.nsport,
             maxJobs=2
         )
         # test jobManager

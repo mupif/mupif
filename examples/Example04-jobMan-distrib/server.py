@@ -7,15 +7,15 @@ from exconfig import ExConfig
 cfg=ExConfig()
 import application2
 
-# extend the configuration
-cfg.applicationClass=application2.Application2
-
 # locate nameserver
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
-    serverConfig=cfg,
+    appClass=application2.Application2,
+    server=cfg.server,
+    nshost=cfg.nshost,
+    nsport=cfg.nsport,
     ns=ns,
     appName=cfg.jobManName,
     jobManWorkDir=cfg.jobManWorkDir,

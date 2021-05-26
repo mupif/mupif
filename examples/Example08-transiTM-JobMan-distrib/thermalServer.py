@@ -10,7 +10,6 @@ import models
 
 from exconfig import ExConfig
 cfg=ExConfig()
-cfg.applicationClass=models.ThermalNonstatModel
 cfg.applicationInitialFile='inputT10.in' # used?
 
 #util.changeRootLogger('thermal.log')
@@ -24,7 +23,10 @@ ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
-    serverConfig=cfg,
+    appClass=models.ThermalNonstatModel,
+    server=cfg.server,
+    nshost=cfg.nshost,
+    nsport=cfg.nsport,
     ns=ns,
     appName='thermal-nonstat-ex08',
     jobManWorkDir=cfg.jobManWorkDir,

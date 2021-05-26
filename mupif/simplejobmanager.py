@@ -25,7 +25,6 @@ from __future__ import annotations
 import threading
 import subprocess
 import multiprocessing
-import socket
 import time as timeTime
 import Pyro5
 import logging
@@ -36,9 +35,7 @@ from . import jobmanager
 from . import pyroutil
 from . import pyrofile
 import os
-import atexit
 import typing
-import importlib
 
 sys.excepthook=Pyro5.errors.excepthook
 Pyro5.config.DETAILED_TRACEBACK=False
@@ -79,61 +76,66 @@ class SimpleJobManager (jobmanager.JobManager):
 
     ticketExpireTimeout=10
 
-    def __init__(self, *, ns, appName,
-        jobManWorkDir, # perhaps rename to cwd
-        maxJobs=1,
-        serverConfig=None,
-        daemon=None,
-        overrideNsPort=0):
+    def __init__(
+            self,
+            *,
+            ns,
+            appName,
+            appClass,
+            server,
+            nshost,
+            nsport,
+            jobManWorkDir, # perhaps rename to cwd
+            maxJobs=1,
+            daemon=None,
+            overrideNsPort=0
+    ):
         """
         Constructor.
 
         See :func:`SimpleJobManager.__init__`
-        :param tuple portRange: start and end ports for jobs which will be allocated by a job manager
-        :param str serverConfigFile: path to serverConfig file
         """
         super().__init__(appName=appName, jobManWorkDir=jobManWorkDir, maxJobs=maxJobs)
         self.ns = ns
 
         self.tickets = [] # list of tickets issued when pre-allocating resources; tickets generated using uuid 
         self.jobCounter = 0
-        self.serverConfig = serverConfig
         self.overrideNsPort = overrideNsPort
         self.lock = threading.Lock()
+        self.applicationClass = appClass
+        self.server = server
+        self.nshost = nshost
+        self.nsport = nsport
 
         log.debug('SimpleJobManager: initialization done for application name %s' % self.applicationName)
 
     @staticmethod
-    def _spawnProcess(*,pipe,ns,appName,jobID,cwd,overrideNsPort=None,mode=None,moduleDir=None,configFile=None,conf=None):
+    def _spawnProcess(*, pipe, ns, appName, jobID, cwd, nshost, nsport, server, appClass):
         '''
         This function is called 
         '''
         # this is all run in the subprocess
         # log.info('Changing directory to %s',cwd)
         os.chdir(cwd)
-        import sys, Pyro5.errors
         import mupif.pyroutil
         # sys.excepthook=Pyro5.errors.excepthook
-        #Pyro5.config.DETAILED_TRACEBACK=True
-        if overrideNsPort:
-            log.info('Overriding config-specified nameserver port %d with --override-nsport=%d'%(conf.nsport,overrideNsPort))
-            conf.nsport=overrideNsPort
-        app=conf.applicationClass()
+        # Pyro5.config.DETAILED_TRACEBACK=True
+        app = appClass()
         app.setJobID(jobID)
         uri=mupif.pyroutil.runAppServer(
             app=app,
             appName=jobID,
-            server=conf.server,
-            nshost=conf.nshost,nsport=conf.nsport
+            server=server,
+            nshost=nshost,
+            nsport=nsport
         )
         pipe.send(uri) # as bytes
-
 
 
     def __checkTicket (self, ticket):
         """ Returns true, if ticket is valid, false otherwise"""
         currentTime = time.time()
-        if (ticket in self.tickets):
+        if ticket in self.tickets:
             if (currentTime-ticket.time) < SimpleJobManager.ticketExpireTimeout:
                 return True
         return False
@@ -209,13 +211,17 @@ class SimpleJobManager (jobmanager.JobManager):
                 # return JOBMAN_ERR, None
             try:
                 parentPipe,childPipe=multiprocessing.Pipe()
+
                 kwargs=dict(
                     pipe=childPipe,
                     ns=self.ns,
                     jobID=jobID,
                     cwd=targetWorkDir,
                     appName=self.applicationName,
-                    conf=self.serverConfig
+                    appClass=self.applicationClass,
+                    nshost=self.nshost,
+                    nsport=self.nsport,
+                    server=self.server
                 )
                 proc=multiprocessing.Process(
                     target=SimpleJobManager._spawnProcess,

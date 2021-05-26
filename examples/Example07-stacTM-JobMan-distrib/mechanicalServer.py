@@ -7,18 +7,20 @@ import mupif as mp
 from exconfig import ExConfig
 cfg=ExConfig()
 import models
-cfg.applicationClass=models.MechanicalModel
 
 # locate nameserver
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
-    serverConfig=cfg,
+    appClass=models.MechanicalModel,
+    server=cfg.server,
+    nshost=cfg.nshost,
+    nsport=cfg.nsport,
     ns=ns,
     appName='Mupif.JobManager@MechanicalSolver-ex07',
     maxJobs=cfg.maxJobs,
-    jobManWorkDir=cfg.jobManWorkDir,
+    jobManWorkDir=cfg.jobManWorkDir
 )
 
 mp.pyroutil.runJobManagerServer(

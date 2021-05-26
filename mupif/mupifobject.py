@@ -50,7 +50,6 @@ class MupifObject(dumpable.Dumpable):
         Returns metadata associated to given key
         :param key: unique metadataID
         :return: metadata associated to key, throws TypeError if key does not exist
-        :raises: TypeError
         """
         keys=key.split('.')
         d=copy.deepcopy(self.metadata)
@@ -61,28 +60,6 @@ class MupifObject(dumpable.Dumpable):
             d=d[keys[0]]
             if len(keys)==1: return d
             keys=keys[1:]
-
-        # what the heck was this?
-
-        if self.hasMetadata(key):
-            keys = key.split('.')
-            elem = self.getAllMetadata()
-            i = 0
-            i_last = len(keys)-1
-            for keyword in keys:
-                if i == i_last:
-                    last = True
-                else:
-                    last = False
-
-                if not last:
-                    if keyword in elem:
-                        elem = elem[keyword]
-                else:
-                    return elem[keyword]
-                i += 1
-        else:
-            raise TypeError("Searched key %s does not exist." % key)
 
     def getAllMetadata(self):
         """

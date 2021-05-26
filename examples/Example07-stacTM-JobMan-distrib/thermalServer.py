@@ -5,14 +5,16 @@ import models
 import mupif as mp
 
 cfg=ExConfig()
-cfg.applicationClass=models.ThermalModel
 
 # locate nameserver
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
-    serverConfig=cfg,
+    appClass=models.ThermalModel,
+    server=cfg.server,
+    nshost=cfg.nshost,
+    nsport=cfg.nsport,
     ns=ns,
     appName='Mupif.JobManager@ThermalSolver-ex07',
     jobManWorkDir=cfg.jobManWorkDir,
