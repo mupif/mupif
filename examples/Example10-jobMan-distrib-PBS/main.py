@@ -1,4 +1,5 @@
 import sys
+import Pyro5
 sys.path.extend(['..', '../..'])
 from mupif import *
 import logging
@@ -13,6 +14,7 @@ import mupif as mp
 threading.current_thread().setName('ex02-main')
 
 
+@Pyro5.api.expose
 class Example10(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
@@ -67,8 +69,7 @@ class Example10(mp.Model):
         }
 
         if propID == mp.PropertyID.PID_Time_step:
-            return property.ConstantProperty(
-                value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+            return property.ConstantProperty(value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise apierror.APIError('Unknown property ID')
 
@@ -121,44 +122,41 @@ app2.initialize(metadata=executionMetadata)
 prop = None
 istep = None
 
-if True:  # one step
-    # determine critical time step
-    dt2 = app2.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue()
-    dt = min(app1.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue(), dt2)
-    # update time
-    time = time+dt
-    if time > targetTime:
-        # make sure we reach targetTime at the end
-        time = targetTime
-    timestepnumber = timestepnumber+1
-    log.debug("Step: %d %f %f" % (timestepnumber, time, dt))
-    # create a time step
-    istep = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
+# determine critical time step
+dt2 = app2.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue()
+dt = min(app1.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue(), dt2)
+# update time
+time = time+dt
+if time > targetTime:
+    # make sure we reach targetTime at the end
+    time = targetTime
+timestepnumber = timestepnumber+1
+log.debug("Step: %d %f %f" % (timestepnumber, time, dt))
+# create a time step
+istep = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
 
-    try:
-        # solve problem 1
-        app1.solveStep(istep)
-        # handshake the data
-        c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
-        app2.setProperty(c)
-        app2.solveStep(istep)
+try:
+    # solve problem 1
+    app1.solveStep(tstep=istep)
+    # handshake the data
+    c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
+    app2.setProperty(c)
+    app2.solveStep(tstep=istep)
 
-        prop = app2.getProperty(mp.PropertyID.PID_Time, istep.getTime())
+    prop = app2.getProperty(mp.PropertyID.PID_Time, istep.getTime())
 
-        atime = app2.getAssemblyTime(istep)
-        log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
-            atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
+except apierror.APIError as e:
+    log.error("Following API error occurred: %s" % e)
 
-    except apierror.APIError as e:
-        log.error("Following API error occurred: %s" % e)
-
-print(prop.getValue(istep.getTime())[0])
-if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())[0]-8.) <= 1.e-4:
+checkval = prop.getValue(istep.getTime())[0]
+print(checkval)
+if abs(checkval - 8.) <= 1.e-4:
+    print("Test OK")
     log.info("Test OK")
 else:
+    print("Test FAILED")
     log.error("Test FAILED")
-    sys.exit(1)
 
 # terminate
-app1.terminate()
-app2.terminate()
+# app1.terminate()
+# app2.terminate()

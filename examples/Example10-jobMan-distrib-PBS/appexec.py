@@ -29,3 +29,7 @@ if __name__ == "__main__":
             f = open(outfile, 'w')
             f.write("%f" % res)
             f.close()
+        else:
+            print("The input file does not exist.")
+    else:
+        print("Number of arguments does not fit. (%d)" % len(sys.argv))

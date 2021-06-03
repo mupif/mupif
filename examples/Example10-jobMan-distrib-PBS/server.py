@@ -1,6 +1,5 @@
 import os
 import sys
-import argparse
 import logging
 rp = os.path.realpath(__file__)
 dirname = os.path.dirname(rp)

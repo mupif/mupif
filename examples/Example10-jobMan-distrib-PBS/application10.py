@@ -4,10 +4,9 @@ import Pyro5
 import logging
 sys.path.extend(['..', '../..'])
 import mupif as mp
-from simple_slurm import Slurm
 import time as timemod
 import uuid
-import pbs_tool_slurm
+import pbs_tool
 
 log = logging.getLogger()
 
@@ -101,8 +100,9 @@ class Application10(mp.Model):
         # submit the job
         rp = os.path.realpath(__file__)
         dirname = os.path.dirname(rp)
-        jobid = pbs_tool_slurm.submit_job(
-            command='python %s/appexec.py %s %s' % (dirname, inpfile, outfile),
+        jobid = pbs_tool.submit_job(
+            # command="%s/appexec.sh -v inpfile=%s -v outfile=%s" % (dirname, inpfile, outfile),
+            command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\" %s/appexec.sh" % (inpfile, outfile, dirname, dirname),
             job_name='MupifExample10',
             output=dirname + '/%A_%a.out',
             cpus_per_task=1
@@ -115,12 +115,12 @@ class Application10(mp.Model):
         status = ''
         job_finished = False
         while job_finished is False:
-            status = pbs_tool_slurm.get_job_status(jobid=jobid)
-            print("Job %d status is %s" % (jobid, status))
+            status = pbs_tool.get_job_status(jobid=jobid)
+            print("Job %s status is %s" % (str(jobid), status))
             if status == 'Completed' or status == 'Unknown':
                 job_finished = True
             if job_finished is False:
-                timemod.sleep(10.)
+                timemod.sleep(3.)
 
         # process the results
         if os.path.exists(outfile):
@@ -132,6 +132,7 @@ class Application10(mp.Model):
             else:
                 raise mp.apierror.APIError("A problem occured in the solver.")
         else:
+            print("File '%s' does not exist." % outfile)
             raise mp.apierror.APIError("The output file does not exist.")
 
         self.count = self.count+1
