@@ -77,6 +77,14 @@ jobs:
         # skip test 7, somehow fails under wine
         cd examples; ./runex.py --wenv=all 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
 
+  test-docker-VPN:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Distributed example on Docker containers in VPN
+      run:
+        make -C tools/vpn/wireguard default
+
   test-windows:
     runs-on: windows-latest
     strategy:
