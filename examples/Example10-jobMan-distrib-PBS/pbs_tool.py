@@ -2,7 +2,7 @@ import subprocess
 import os
 
 
-def submit_job(command, job_name, output, cpus_per_task=1):
+def submit_job(command):
     result = ''
     try:
         cmmnd = 'qsub %s' % command

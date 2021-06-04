@@ -85,10 +85,13 @@ class Application10(mp.Model):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # this function is designed to run the executable in Slurm PBS and process the output when the job is finished.
 
+        rp = os.path.realpath(__file__)
+        dirname = os.path.dirname(rp)
+
         # create unique input and output file names
         step_id = uuid.uuid4()
-        inpfile = "inp_%s.txt" % step_id
-        outfile = "out_%s.txt" % step_id
+        inpfile = "%s/inp_%s.txt" % (dirname, step_id)
+        outfile = "%s/out_%s.txt" % (dirname, step_id)
 
         inputvalue = self.contrib.inUnitsOf(mp.U.s).getValue(tstep.getTime())[0]
 
@@ -98,15 +101,7 @@ class Application10(mp.Model):
         f.close()
 
         # submit the job
-        rp = os.path.realpath(__file__)
-        dirname = os.path.dirname(rp)
-        jobid = pbs_tool.submit_job(
-            # command="%s/appexec.sh -v inpfile=%s -v outfile=%s" % (dirname, inpfile, outfile),
-            command=" -v inpfile=\"%s/%s\",outfile=\"%s/%s\",script=\"%s/appexec.py\" %s/appexec.sh" % (dirname, inpfile, dirname, outfile, dirname, dirname),
-            job_name='MupifExample10',
-            output=dirname + '/%A_%a.out',
-            cpus_per_task=1
-        )
+        jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
 
         # wait until the job is finished
         # After its completion, the job stays in the list of jobs with 'Completed' status for a while.

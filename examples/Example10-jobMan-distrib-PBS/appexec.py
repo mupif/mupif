@@ -31,5 +31,8 @@ if __name__ == "__main__":
             f.close()
         else:
             print("The input file does not exist.")
+            exit(1)
     else:
         print("Number of arguments does not fit. (%d)" % len(sys.argv))
+        exit(1)
+    exit(0)
