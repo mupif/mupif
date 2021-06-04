@@ -81,6 +81,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+    # this should somehow enable persistent docker layer cache
+    # so that we don't have to build the full image from scratch (ubuntu:20.04)
+    # every time
+    # see https://github.com/marketplace/actions/docker-layer-caching
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
     - name: Distributed example on Docker containers in VPN
       run:
         make -C tools/vpn/wireguard default
