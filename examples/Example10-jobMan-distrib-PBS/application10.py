@@ -102,7 +102,7 @@ class Application10(mp.Model):
         dirname = os.path.dirname(rp)
         jobid = pbs_tool.submit_job(
             # command="%s/appexec.sh -v inpfile=%s -v outfile=%s" % (dirname, inpfile, outfile),
-            command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\" %s/appexec.sh" % (inpfile, outfile, dirname, dirname),
+            command=" -v inpfile=\"%s/%s\",outfile=\"%s/%s\",script=\"%s/appexec.py\" %s/appexec.sh" % (dirname, inpfile, dirname, outfile, dirname, dirname),
             job_name='MupifExample10',
             output=dirname + '/%A_%a.out',
             cpus_per_task=1
