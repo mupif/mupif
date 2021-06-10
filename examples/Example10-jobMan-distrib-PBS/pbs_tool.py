@@ -1,12 +1,24 @@
 import subprocess
 import os
+import time as timemod
+
+
+def wait_until_job_is_done(jobid, checking_frequency=10.):
+    status = ''
+    job_finished = False
+    while job_finished is False:
+        status = get_job_status(jobid=jobid)
+        print("Job %s status is %s" % (str(jobid), status))
+        if status == 'Completed' or status == 'Unknown':
+            job_finished = True
+        if job_finished is False:
+            timemod.sleep(checking_frequency)
 
 
 def submit_job(command):
     result = ''
     try:
         cmmnd = 'qsub %s' % command
-        print(cmmnd)
         stream = os.popen(cmmnd)
         result = str(stream.read())
     except Exception as e:

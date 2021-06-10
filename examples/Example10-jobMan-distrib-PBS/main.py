@@ -1,7 +1,6 @@
 import sys
 import Pyro5
 sys.path.extend(['..', '../..'])
-from mupif import *
 import logging
 log = logging.getLogger()
 
@@ -10,101 +9,20 @@ import threading
 cfg = ExConfig()
 import mupif as mp
 
+threading.current_thread().setName('ex10-main')
 
-threading.current_thread().setName('ex02-main')
-
-
-@Pyro5.api.expose
-class Example10(mp.Model):
-    """
-    Simple application that generates a property with a value equal to actual time
-    """
-    def __init__(self, metadata={}):
-        MD = {
-            'Name': 'Simple application example',
-            'ID': 'N/A',
-            'Description': 'Cummulates time steps^3',
-            'Physics': {
-                'Type': 'Other',
-                'Entity': 'Other'
-            },
-            'Solver': {
-                'Software': 'Python script',
-                'Language': 'Python3',
-                'License': 'LGPL',
-                'Creator': 'Borek',
-                'Version_date': '02/2019',
-                'Type': 'Summator',
-                'Documentation': 'Nowhere',
-                'Estim_time_step_s': 1,
-                'Estim_comp_time_s': 0.01,
-                'Estim_execution_cost_EUR': 0.01,
-                'Estim_personnel_cost_EUR': 0.01,
-                'Required_expertise': 'None',
-                'Accuracy': 'High',
-                'Sensitivity': 'High',
-                'Complexity': 'Low',
-                'Robustness': 'High'
-            },
-            'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True}],
-            'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated'}]
-        }
-        super().__init__(metadata=MD)
-        self.updateMetadata(metadata)
-        self.value = 0.
-
-    def getProperty(self, propID, time, objectID=0):
-        md = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        if propID == mp.PropertyID.PID_Time_step:
-            return property.ConstantProperty(value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
-        else:
-            raise apierror.APIError('Unknown property ID')
-
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
-
-    def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf('s').getValue()
-        self.value = 1.0*time
-
-    def getCriticalTimeStep(self):
-        return 2.*mp.U.s
-
-    def getAsssemblyTime(self, tstep):
-        return tstep.getTime()
-
-# Example10 is local, create its instance
-app1 = Example10()
-
-
-time = 0.
-timestepnumber = 0
-targetTime = 2.0
-
+#
 
 # locate nameserver
-ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport)
+ns = mp.pyroutil.connectNameServer(cfg.nshost, cfg.nsport)
 # connect to JobManager running on (remote) server and create a tunnel to it
 jobMan = mp.pyroutil.connectJobManager(ns, cfg.jobManName)
 log.info('Connected to JobManager')
-app2 = None
+model1 = None
 
 try:
-    app2 = mp.pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=jobMan)
-    log.info(app2)
+    model1 = mp.pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=jobMan)
+    log.info(model1)
 except Exception as e:
     log.exception(e)
 
@@ -116,47 +34,52 @@ executionMetadata = {
     }
 }
 
-app1.initialize(metadata=executionMetadata)
-app2.initialize(metadata=executionMetadata)
+model1.initialize(metadata=executionMetadata)
 
-prop = None
-istep = None
+checkval = None
 
-# determine critical time step
-dt2 = app2.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue()
-dt = min(app1.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue(), dt2)
-# update time
-time = time+dt
-if time > targetTime:
-    # make sure we reach targetTime at the end
-    time = targetTime
-timestepnumber = timestepnumber+1
-log.debug("Step: %d %f %f" % (timestepnumber, time, dt))
-# create a time step
-istep = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
+var_time = 0.*mp.U.s
+target_time = 2.*mp.U.s
 
-try:
-    # solve problem 1
-    app1.solveStep(tstep=istep)
-    # handshake the data
-    c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
-    app2.setProperty(c)
-    app2.solveStep(tstep=istep)
+compute = True
+timestep_number = 0
 
-    prop = app2.getProperty(mp.PropertyID.PID_Time, istep.getTime())
+while compute:
+    timestep_number += 1
 
-except apierror.APIError as e:
-    log.error("Following API error occurred: %s" % e)
+    dt = min([1. * mp.U.s, model1.getCriticalTimeStep()])
+    var_time = min([var_time.inUnitsOf('s').getValue() + dt.inUnitsOf('s').getValue(), target_time.inUnitsOf('s').getValue()]) * mp.U.s
 
-checkval = prop.getValue(istep.getTime())[0]
+    if var_time.inUnitsOf('s').getValue() + 1.e-6 > target_time.inUnitsOf('s').getValue():
+        compute = False
+
+    timestep = mp.timestep.TimeStep(time=var_time, dt=dt, targetTime=target_time, number=timestep_number)
+
+    # prepare the input value as ConstantProperty
+    time_param = mp.ConstantProperty(value=(var_time.inUnitsOf(mp.U.s).getValue(),), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None, objectID=0)
+    # set the input value to the model
+    model1.setProperty(time_param)
+    # the model solves a computational step
+    model1.solveStep(tstep=timestep)
+    # get the output value of the model
+    time_result = model1.getProperty(mp.PropertyID.PID_Time, timestep.getTime())
+
+    #
+
+    # testing purposes
+    checkval = time_result.getValue(timestep.getTime())[0]
+
+# terminate
+model1.terminate()
+
+#
+
+# testing part
 print(checkval)
-if abs(checkval - 8.) <= 1.e-4:
+if checkval is not None and abs(checkval - 6.) <= 1.e-4:
     print("Test OK")
     log.info("Test OK")
 else:
     print("Test FAILED")
     log.error("Test FAILED")
 
-# terminate
-# app1.terminate()
-# app2.terminate()

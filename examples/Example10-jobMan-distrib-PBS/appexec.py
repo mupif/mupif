@@ -7,7 +7,7 @@ import os
 
 if __name__ == "__main__":
     # for some 'computational' time
-    time.sleep(3.)
+    time.sleep(1.5)
 
     if len(sys.argv) >= 3:
         inpfile = sys.argv[1]
@@ -22,7 +22,7 @@ if __name__ == "__main__":
             f.close()
 
             # calculate the result
-            res = val*val*val
+            res = val*2
             print("result = %f" % res)
 
             # write it to output file
