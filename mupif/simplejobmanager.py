@@ -30,6 +30,7 @@ import Pyro5
 import logging
 import sys
 import time
+import collections
 import uuid 
 from . import jobmanager
 from . import pyroutil
@@ -329,10 +330,11 @@ class SimpleJobManager (jobmanager.JobManager):
         """
         See :func:`JobManager.getStatus`
         """
+        JobManagerStatus=collections.namedtuple('JobManagerStatus',['key','running','user'])
         status = []
         tnow = timeTime.time()
         for key in self.activeJobs:
-            status.append((key, tnow-self.activeJobs[key].starttime, self.activeJobs[key].user))
+            status.append(JobManagerStatus(key=key,running=tnow-self.activeJobs[key].starttime,user=self.activeJobs[key].user))
         return status
 
     def uploadFile(self, jobID, filename, pyroFile, hkey):
