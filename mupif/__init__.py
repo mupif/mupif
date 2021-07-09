@@ -130,6 +130,10 @@ import io
 # make flake8 happy
 from . import dumpable, util
 
+# can be set to expose PyroFile automatically during serialization, passing the URI to the remote
+# (currently unused)
+defaultPyroDaemon=None
+
 ##
 ## register all types deriving (directly or indirectly) from Dumpable to Pyro5
 ##
@@ -151,6 +155,15 @@ def _registerOther():
     # don't use numpy.ndarray.tobytes as it is not cross-plaform; npy files are
     Pyro5.api.register_class_to_dict(numpy.ndarray,lambda arr: {'__class__':'numpy.ndarray','npy':(numpy.save(buf:=io.BytesIO(),arr,allow_pickle=False),buf.getvalue())[1]})
     Pyro5.api.register_dict_to_class('numpy.ndarray',lambda name,dic: numpy.load(io.BytesIO(serpent.tobytes(buf) if isinstance(buf:=dic['npy'],dict) else buf),allow_pickle=False))
+
+    def _tryExpose(f):
+        if daemon:=getattr(f,'_pyroDaemon'): return daemon.uriFor(f)
+        if defaultPyroDaemon: return defaultPyroDaemon.register(f)
+        raise RuntimeError(f'{f:s} has no Pyro Damon attached and mupif.defaultPyroDaemon is not defined.')
+
+    # does not work, as explained in https://github.com/mupif/mupif/issues/32
+    #Pyro5.api.register_class_to_dict(PyroFile,lambda f: {'__class__':'mupif.PyroFile','URI':str(_tryExpose(f))})
+    #Pyro5.api.register_dict_to_class('mupif.PyroFile',lambda name,dic: Pyro5.api.Proxy(dic['URI']))
 
     # workaround for msgpack (?)
     #Pyro5.api.register_class_to_dict(tuple,lambda i: dict(val=i))
