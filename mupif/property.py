@@ -10,6 +10,7 @@ from . import mupifquantity
 from . import units
 from .units import Quantity,Unit,findUnit
 
+
 @Pyro5.api.expose
 class Property(mupifquantity.MupifQuantity):
     """
@@ -21,18 +22,19 @@ class Property(mupifquantity.MupifQuantity):
     """
 
     propID: dataid.PropertyID
-    objectID: int=0 #: Optional ID of problem object/subdomain to which property is related
+    objectID: int = 0  #: Optional ID of problem object/subdomain to which property is related
 
-    def __init__(self,*,metadata={},**kw):
-        super().__init__(metadata=metadata,**kw)
-        defaults=dict([
+    def __init__(self, *, metadata={}, **kw):
+        super().__init__(metadata=metadata, **kw)
+        defaults = dict([
             ('Type', 'mupif.property.Property'),
             ('Type_ID', str(self.propID)),
             ('Units', self.getUnit().to_string()),
             ('ValueType', str(self.valueType))
         ])
-        for k,v in defaults.items():
-            if k not in metadata: self.updateMetadata(dict(k=v))
+        for k, v in defaults.items():
+            if k not in metadata:
+                self.updateMetadata(dict(k=v))
 
     def getPropertyID(self):
         """
@@ -78,7 +80,8 @@ class ConstantProperty(Property):
                 ')')
 
     def getQuantity(self, time=None):
-        if self._timeIsValid(time): return self.quantity
+        if self._timeIsValid(time):
+            return self.quantity
         raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
 
     def getValue(self, time=None):
@@ -89,11 +92,12 @@ class ConstantProperty(Property):
         :return: Property value as an array
         :rtype: tuple
         """
-        if self._timeIsValid(time): return self.value
+        if self._timeIsValid(time):
+            return self.value
         raise ValueError(f'Time out of range (time requested {time}; Property propID {self.propID}, defined at time {self.time})')
 
-    def _timeIsValid(self,time=None):
-        return ((self.time is None) or (time is None) or (self.time == time))
+    def _timeIsValid(self, time=None):
+        return (self.time is None) or (time is None) or (self.time == time)
 
     def getTime(self):
         """
@@ -106,14 +110,13 @@ class ConstantProperty(Property):
         """
         Override of Quantity._sum method
         """
-        if not isinstance(other,Quantity):
+        if not isinstance(other, Quantity):
             raise TypeError('Incompatible types')
         factor = other.unit.conversionFactorTo(self.unit)
         new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
         # new_value = sign1*self.value + \
         #            sign2*other.value*other.unit.conversionFactorTo(self.unit)
         return self.__class__(new_value, self.propID, self.valueType, self.time, self.unit)
-
 
     def _old_convertToUnit(self, unit):
         """
@@ -161,7 +164,7 @@ class ConstantProperty(Property):
         """
         return ConstantProperty(quantity=self.quantity.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time, objectID=self.objectID)
 
-    #def _convertValue(self, value, src_unit, target_unit):
+    # def _convertValue(self, value, src_unit, target_unit):
     #    """
     #    Helper function to evaluate value+offset*factor, where
     #    factor and offset are obtained from

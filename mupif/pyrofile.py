@@ -58,15 +58,16 @@ class PyroFile (object):
         if data:
             # some data read, not yet EOF
             if self.compressFlag:
-                if not self.compressor: self.compressor = zlib.compressobj()
+                if not self.compressor:
+                    self.compressor = zlib.compressobj()
                 data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
             yield data
         else:
             # no data read: EOF
             # flush compressor if necessary (used to be the terminal chunk)
             if self.compressor:
-                ret=self.compressor.flush(zlib.Z_FINISH)
-                compressor=None # perhaps not necessary
+                ret = self.compressor.flush(zlib.Z_FINISH)
+                compressor = None  # perhaps not necessary
                 yield ret
 
     def setChunk(self, buffer):
@@ -76,9 +77,9 @@ class PyroFile (object):
         :param str buffer: data chunk to append
         """
         # https://pyro5.readthedocs.io/en/stable/tipstricks.html#binary-data-transfer-file-transfer
-        if type(buffer)==dict:
+        if type(buffer) == dict:
             import serpent
-            buffer=serpent.tobytes(buffer)
+            buffer = serpent.tobytes(buffer)
         if self.compressFlag:
             if not self.decompressor:
                 self.decompressor = zlib.decompressobj()

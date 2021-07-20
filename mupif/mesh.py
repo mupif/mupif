@@ -191,7 +191,7 @@ class Mesh(dumpable.Dumpable):
         .. note:: This method has not been tested yet.
         """
         nv = self.getNumberOfVertices()
-        ret = numpy.empty((nv, 3), dtype=numpy.float32)
+        ret = numpy.empty((nv, 3), dtype=numpy.float64)
         for i in range(0, nv):
             ret[i] = numpy.array(self.getVertex(i).getCoordinates())
         return ret

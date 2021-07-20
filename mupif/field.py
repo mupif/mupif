@@ -44,11 +44,10 @@ import numpy as np
 import copy
 import Pyro5
 from enum import IntEnum
+import pydantic
+import pickle
 import logging
 log = logging.getLogger()
-import pydantic
-
-import pickle
 
 # debug flag
 debug = 0
@@ -60,6 +59,7 @@ class FieldType(IntEnum):
     """
     FT_vertexBased = 1
     FT_cellBased = 2
+
 
 @Pyro5.api.expose
 class Field(mupifquantity.MupifQuantity):
@@ -82,28 +82,28 @@ class Field(mupifquantity.MupifQuantity):
     #: Time associated with field values
     time: Quantity
     #: whether the field is vertex-based or cell-based
-    fieldType: FieldType=FieldType.FT_vertexBased
+    fieldType: FieldType = FieldType.FT_vertexBased
     #: Optional ID of problem object/subdomain to which field is related, default = 0
-    objectID: int=0
+    objectID: int = 0
 
-    def __init__(self,**kw):
-        super().__init__(**kw) # this calls the real ctor
+    def __init__(self, **kw):
+        super().__init__(**kw)  # this calls the real ctor
         # fix zero values
         if 1:
-            if len(self.quantity)==0:
-                if self.fieldType==FieldType.FT_vertexBased: ncomp=self.mesh.getNumberOfVertices()
-                else: ncomp=self.mesh.getNumberOfCells()
-                self.quantity=Quantity(value=np.zeros((ncomp,self.valueType.getNumberOfComponents())),unit=self.quantity.unit)
+            if len(self.quantity) == 0:
+                if self.fieldType == FieldType.FT_vertexBased:
+                    ncomp = self.mesh.getNumberOfVertices()
+                else:
+                    ncomp = self.mesh.getNumberOfCells()
+                self.quantity = Quantity(value=np.zeros((ncomp, self.valueType.getNumberOfComponents())), unit=self.quantity.unit)
         # add some extra metadata
         self.updateMetadata({
-            'Units':self.getUnit().to_string(),
-            'Type':'mupif.field.Field',
-            'Type_ID':str(self.fieldID),
-            'FieldType':str(self.fieldType),
-            'ValueType':str(self.valueType)
+            'Units': self.getUnit().to_string(),
+            'Type': 'mupif.field.Field',
+            'Type_ID': str(self.fieldID),
+            'FieldType': str(self.fieldType),
+            'ValueType': str(self.valueType)
         })
-
-
 
     def getMesh(self):
         """
@@ -153,12 +153,12 @@ class Field(mupifquantity.MupifQuantity):
     @pydantic.validate_arguments
     def evaluate(self,
         positions: typing.Union[
-            typing.List[typing.Tuple[float,float,float]], # list of 3d coords
-            typing.List[typing.Tuple[float,float]], # list of 2d coords
-            typing.Tuple[float,float,float], # single 3d coords
-            typing.Tuple[float,float] # single 2d coord
+            typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
+            typing.List[typing.Tuple[float, float]],  # list of 2d coords
+            typing.Tuple[float, float, float],  # single 3d coords
+            typing.Tuple[float, float]  # single 2d coord
         ],
-        eps: float=0.0):
+        eps: float = 0.0):
         """
         Evaluates the receiver at given spatial position(s).
 
@@ -263,7 +263,7 @@ class Field(mupifquantity.MupifQuantity):
         :rtype: Physics.Quantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
-            return  Quantity(value=self.getRecord(vertexID), unit=self.getUnit())
+            return Quantity(value=self.getRecord(vertexID), unit=self.getUnit())
         else:
             raise TypeError('Attempt to acces vertex value of cell based field, use evaluate instead')
         
@@ -303,15 +303,16 @@ class Field(mupifquantity.MupifQuantity):
         # some type checking first
         if self.fieldType != field.fieldType:
             raise TypeError("Field::merge: fieldType of receiver and parameter is different")
-        if self.unit!=field.unit: raise ValueError('fields have different units (merge is currently not unit-aware; this limitation will be remove with astropy.units)')
+        if self.unit != field.unit:
+            raise ValueError('fields have different units (merge is currently not unit-aware; this limitation will be remove with astropy.units)')
         if self.fieldType == FieldType.FT_vertexBased:
-            vv=np.zeros_like(self.value,shape=(mesh.getNumberOfVertices(),self.getRecordSize()))
-            for f in self,field:
+            vv = np.zeros_like(self.value, shape=(mesh.getNumberOfVertices(), self.getRecordSize()))
+            for f in self, field:
                 for v in range(f.mesh.getNumberOfVertices()):
                     vv[mesh.vertexLabel2Number(f.mesh.getVertex(v).label)] = f.getRecord(v)
         else:
-            vv=np.zeros_like(self.value,shape=(mesh.getNumberOfCells(),self.getRecordSize()))
-            for f in self,field:
+            vv = np.zeros_like(self.value, shape=(mesh.getNumberOfCells(), self.getRecordSize()))
+            for f in self, field:
                 for v in range(f.mesh.getNumberOfCells()):
                     vv[mesh.cellLabel2Number(f.mesh.giveCell(v).label)] = f.getRecord(v)
 
@@ -385,16 +386,16 @@ class Field(mupifquantity.MupifQuantity):
             elev = 0
         
         # find eligible vertex points and values
-        vx=[]
-        vy=[]
+        vx = []
+        vy = []
         vertexValue = []
         for i in range(0, numVertices):
             coords = mesh.getVertex(i).getCoordinates()
-            if (warpField):
-                #coords+=warpField.evaluate(coords).getValue()*warpScale
-                warpVec =  (warpScale * s for s in warpField.evaluate(coords).getValue())
-                coords = tuple(map(lambda x, y: x + y, coords,warpVec))
-            #print(coords)
+            if warpField:
+                # coords+=warpField.evaluate(coords).getValue()*warpScale
+                warpVec = (warpScale * s for s in warpField.evaluate(coords).getValue())
+                coords = tuple(map(lambda x, y: x + y, coords, warpVec))
+            # print(coords)
             value = self.getRecord(i)[fieldComponent]
             vx.append(coords[indX])
             vy.append(coords[indY])
@@ -410,15 +411,15 @@ class Field(mupifquantity.MupifQuantity):
         # for i in range (0, len(vertexPoints)):
         #     print (vertexPoints[i], vertexValue[i])
 
-        #v = np.array(vertexPoints)
-        #vertexValueArr = np.array(vertexValue)
+        # v = np.array(vertexPoints)
+        # vertexValueArr = np.array(vertexValue)
         
         xMin = min(vx)
         xMax = max(vx)
         yMin = min(vy)
         yMax = max(vy)
         
-        #print(xMin, xMax, yMin, yMax)
+        # print(xMin, xMax, yMin, yMax)
         
         # Create the Triangulation; no triangles so Delaunay triangulation created.
         triang = matplotlib.tri.Triangulation(vx, vy)
@@ -426,7 +427,7 @@ class Field(mupifquantity.MupifQuantity):
         plt.figure()
         plt.gca().set_aspect('equal')
         plt.tricontourf(triang, vertexValue)
-        if (colorbar):
+        if colorbar:
             plt.colorbar(orientation=colorbar)
         plt.tricontour(triang, vertexValue, colors='k')
         plt.scatter(vx, vy, marker='o', c='k', s=1, zorder=10)
@@ -434,9 +435,9 @@ class Field(mupifquantity.MupifQuantity):
             plt.title(title)    
         if fileName:
             plt.savefig(fileName, bbox_inches='tight')
-        #if show:
-        #    matPlotFig.canvas.draw()
-        #return plt
+        # if show:
+        #     matPlotFig.canvas.draw()
+        # return plt
 
     def field2Image2DBlock(self):
         """
@@ -504,7 +505,7 @@ class Field(mupifquantity.MupifQuantity):
         newgrp = lowestUnused(trsf=lambda i: 'mesh_%02d' % i, predicate=lambda t: t in gg)
         mh5 = self.getMesh().asHdf5Object(parentgroup=gg, newgroup=newgrp)
 
-        if len(self.value)>0:
+        if len(self.value) > 0:
             fieldGrp = hdf.create_group(lowestUnused(trsf=lambda i, group=group: group+'/field_%02d' % i, predicate=lambda t: t in hdf))
             fieldGrp['mesh'] = mh5
             fieldGrp.attrs['fieldID'] = self.fieldID
@@ -515,19 +516,19 @@ class Field(mupifquantity.MupifQuantity):
             fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.getUnit()))
             fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time))
             if self.fieldType == FieldType.FT_vertexBased:
-                val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float)
+                val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float64)
                 for vert in range(self.getMesh().getNumberOfVertices()):
                     val[vert] = self.getVertexValue(vert).getValue()
                 fieldGrp['vertex_values'] = val
             elif self.fieldType == FieldType.FT_cellBased:
                 # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
-                val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float)
+                val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
                 for cell in range(self.getMesh().getNumberOfCells()):
                     val[cell] = self.getCellValue(cell)
                 fieldGrp['cell_values'] = val
             else:
                 raise RuntimeError("Unknown fieldType %d." % self.fieldType)
-        hdf.close() # necessary for windows
+        hdf.close()  # necessary for windows
 
     @staticmethod
     def makeFromHdf5(fileName, group='component1/part1'):
@@ -571,9 +572,8 @@ class Field(mupifquantity.MupifQuantity):
            
             meshIndex = meshObjs.index(f['mesh'])  # find which mesh object this field refers to
             ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values.tolist(), fieldType=fieldType))
-        hdf.close() # necessary for windows
+        hdf.close()  # necessary for windows
         return ret
-
 
     def toMeshioMesh(self):
         return Field.manyToMeshioMesh([self])
@@ -584,40 +584,43 @@ class Field(mupifquantity.MupifQuantity):
         fields: typing.Sequence[Field]
     ) -> typing.List[Field]:
         import meshio
-        if len(fields)==0: raise ValueError('fields must not be enpty.')
-        if len(set([f.getMesh() for f in fields]))!=1: raise RuntimeError('All fields must share the same mupif.Mesh.')
-        msh=fields[0].getMesh()
-        points=msh.getVertices()
-        cell_data,point_data={},{}
+        if len(fields) == 0:
+            raise ValueError('fields must not be enpty.')
+        if len(set([f.getMesh() for f in fields])) != 1:
+            raise RuntimeError('All fields must share the same mupif.Mesh.')
+        msh = fields[0].getMesh()
+        points = msh.getVertices()
+        cell_data, point_data = {}, {}
         # defined here: https://github.com/nschloe/meshio/blob/6a1b8c4c3db24ea788a8cac00e46c7f9d562e4d0/meshio/_common.py#L189
-        points,cells_list=msh.toMeshioPointsCells()
+        points, cells_list = msh.toMeshioPointsCells()
         for f in fields:
             assert f.getFieldType() in (FieldType.FT_vertexBased, FieldType.FT_cellBased)
-            ptData=(f.getFieldType()==FieldType.FT_vertexBased)
-            rows=(msh.getNumberOfVertices() if ptData else msh.getNumberOfCells())
-            cols=f.getRecordSize()
+            ptData = (f.getFieldType() == FieldType.FT_vertexBased)
+            rows = (msh.getNumberOfVertices() if ptData else msh.getNumberOfCells())
+            cols = f.getRecordSize()
             # sys.stderr.write(f'each record has {cols} components\n')
             # dta=np.ndarray((rows,cols),dtype='float32')
             dta=np.array([f.getRecord(row) for row in range(rows)])
-            (point_data if ptData else cell_data)[f.getFieldIDName()]=(dta if ptData else dta.T)
-            #print(f.getFieldIDName())
-            #print('Is point data?',ptData)
-            #print(f.getFieldIDName(),dta.shape)
-        return meshio.Mesh(points,cells_list,point_data,cell_data)
+            (point_data if ptData else cell_data)[f.getFieldIDName()] = (dta if ptData else dta.T)
+            # print(f.getFieldIDName())
+            # print('Is point data?',ptData)
+            # print(f.getFieldIDName(),dta.shape)
+        return meshio.Mesh(points, cells_list, point_data, cell_data)
 
     def makeFromMeshioMesh(
-            input: typing.Union[str,meshio.Mesh], # could also be buffer, is that useful?
-            unit: dict[str,Unit], # maps field name to Unit
-            time: Quantity=Quantity(value=0,unit='s')
+            input: typing.Union[str,meshio.Mesh],  # could also be buffer, is that useful?
+            unit: dict[str, Unit],  # maps field name to Unit
+            time: Quantity = Quantity(value=0, unit='s')
         ) -> typing.List[Field]:
-        if isinstance(input,str):
-            input=meshio.read(input)
-        msh=mesh.Mesh.makeFromMeshioPointsCells(input.points,input.cells)
-        ret=[]
-        for data,fieldType in (input.point_data,FieldType.FT_vertexBased),(input.cell_data,FieldType.FT_cellBased):
-            for fname,values in data.items():
+        if isinstance(input, str):
+            input = meshio.read(input)
+        msh = mesh.Mesh.makeFromMeshioPointsCells(input.points, input.cells)
+        ret = []
+        for data, fieldType in (input.point_data, FieldType.FT_vertexBased), (input.cell_data, FieldType.FT_cellBased):
+            for fname, values in data.items():
                 # reshape scalar array saved as 1D
-                if len(values.shape)==1: values=np.reshape(values,(-1,1))
+                if len(values.shape) == 1:
+                    values = np.reshape(values, (-1, 1))
                 ret.append(Field(
                     mesh=msh,
                     fieldID=FieldID[fname],
@@ -631,7 +634,6 @@ class Field(mupifquantity.MupifQuantity):
 
     @staticmethod
     def fromMeshioMesh(m): raise NotImplementedError('maybe later')
-
 
     def _sum(self, other, sign1, sign2):
         """

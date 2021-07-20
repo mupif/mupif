@@ -26,6 +26,7 @@ from . import mupifobject
 import typing
 import pydantic
 
+
 @Pyro5.api.expose
 class Particle(mupifobject.MupifObject):
     """
@@ -33,22 +34,24 @@ class Particle(mupifobject.MupifObject):
     Particles are typically managed by ParticleSet. Particle class is convinience mapping to ParticleSet.
     """
     
-    set: 'ParticleSet' #: master particle set
-    num: int #: particle index
+    set: 'ParticleSet'  #: master particle set
+    num: int  #: particle index
 
-    def getPosition (self):
+    def getPosition(self):
         """
         Returns particle position
         """
-        return (self.set.xc[self.num], self.set.yc[self.num], self.set.zc[self.num])
-    def setPosition (self, position):
+        return self.set.xc[self.num], self.set.yc[self.num], self.set.zc[self.num]
+
+    def setPosition(self, position):
         """
         Sets particle position
         @param tuple position: position vector (x,y,z)
         """
-        self.set.xc[self.num]=position[0]
-        self.set.yc[self.num]=position[1]
-        self.set.zc[self.num]=position[2]
+        self.set.xc[self.num] = position[0]
+        self.set.yc[self.num] = position[1]
+        self.set.zc[self.num] = position[2]
+
     def getAttributes(self):
         """
         Returns attributes attached to particle
@@ -56,8 +59,9 @@ class Particle(mupifobject.MupifObject):
         """
         ans = {}
         for key in self.set.attributes:
-            ans[key]=self.set.attributes[key][self.num]
+            ans[key] = self.set.attributes[key][self.num]
         return ans
+
     def getAttribute(self, key):
         """
         Returns attribute identified by key
@@ -67,7 +71,7 @@ class Particle(mupifobject.MupifObject):
         if key in self.set.attributes:
             return self.set.attributes[key][self.num]
         else:
-            raise KeyError ("No such attribute available")
+            raise KeyError("No such attribute available")
     
 
 @Pyro5.api.expose
@@ -78,16 +82,15 @@ class ParticleSet(mupifobject.MupifObject):
     """
 
     id: int
-    size: int                   #: number of particles in the set
-    xc: typing.List[float]=[]   #: array of particle x coordinates
-    yc: typing.List[float]=[]   #: array of particle y coordinates
-    zc: typing.List[float]=[]   #: array of particle z coordinates
-    rvesize: float=0
-    inclusionsize: float=0
-    attributes: dict=pydantic.Field(default_factory=dict) #: optional keyword arguments to define additional particle attributes, if type of values should be arrays with attribute values for each particle
+    size: int                    #: number of particles in the set
+    xc: typing.List[float] = []  #: array of particle x coordinates
+    yc: typing.List[float] = []  #: array of particle y coordinates
+    zc: typing.List[float] = []  #: array of particle z coordinates
+    rvesize: float = 0
+    inclusionsize: float = 0
+    attributes: dict = pydantic.Field(default_factory=dict)  #: optional keyword arguments to define additional particle attributes, if type of values should be arrays with attribute values for each particle
 
-
-    def getParticle (self, i):
+    def getParticle(self, i):
         """
         Returns representation of i-th particle in the set
         """
@@ -96,19 +99,21 @@ class ParticleSet(mupifobject.MupifObject):
         else:
             raise IndexError("Particle index out of range")
 
-    def getID (self):
+    def getID(self):
         return self.id
 
     def getParticlePositions(self):
         """
         Returns tuple containing position vectors of particles.
         """
-        return (self.xc, self.yc, self.zc)
+        return self.xc, self.yc, self.zc
+
     def getParticleAttributes(self):
         """
         Returns dictionary of set attributes
         """
         return self.attributes
+
     def getParticleAttribute(self, key):
         """
         Returns array (tuple) of values corresponding to attribute identified by key
@@ -116,13 +121,14 @@ class ParticleSet(mupifobject.MupifObject):
         if key in self.attributes:
             return self.attributes[key]
         else:
-            raise KeyError ("No such attribute available")
+            raise KeyError("No such attribute available")
 
     def getRveSize(self):
         """
         Returns RVE size of particle set
         """
         return self.rvesize
+
     def getInclusionSize(self):
         """
         Returns inclusion size of particle set
@@ -130,15 +136,11 @@ class ParticleSet(mupifobject.MupifObject):
         return self.inclusionsize
     
 
-
 Particle.update_forward_refs()
 
 
 if __name__ == "__main__":
-    ps = ParticleSet (1, 5, (0,1,2,3,4), (1,2,3,4,5), (2,3,4,5,6), alpha=(10,11,12,13,14))
+    ps = ParticleSet(1, 5, (0, 1, 2, 3, 4), (1, 2, 3, 4, 5), (2, 3, 4, 5, 6), alpha=(10, 11, 12, 13, 14))
     p2 = ps.getParticle(2)
-    print (p2.getPosition())
-    print (p2.getAttribute('alpha'))
-
-
-
+    print(p2.getPosition())
+    print(p2.getAttribute('alpha'))
