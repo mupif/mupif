@@ -51,15 +51,16 @@ class MupifObject(dumpable.Dumpable):
         :param key: unique metadataID
         :return: metadata associated to key, throws TypeError if key does not exist
         """
-        keys=key.split('.')
-        d=copy.deepcopy(self.metadata)
+        keys = key.split('.')
+        d = copy.deepcopy(self.metadata)
         while True:
             # import pprint
             # pprint.pprint(d)
             # print('KEYS ARE: ',str(keys))
-            d=d[keys[0]]
-            if len(keys)==1: return d
-            keys=keys[1:]
+            d = d[keys[0]]
+            if len(keys) == 1:
+                return d
+            keys = keys[1:]
 
     def getAllMetadata(self):
         """
@@ -180,4 +181,3 @@ class MupifObject(dumpable.Dumpable):
     def toJSONFile(self, filename, indent=4):
         with open(filename, "w") as f:
             json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
-

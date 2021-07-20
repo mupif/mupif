@@ -13,13 +13,17 @@ import Pyro5
 import pydantic
 # from pydantic.dataclasses import dataclass
 
-try: import astropy.units
-except: astropy=None
+try:
+    import astropy.units
+except:
+    astropy = None
 
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
 DType = TypeVar('DType')
+
+
 class NumpyArray(np.ndarray, Generic[DType]):
     """Wrapper class for numpy arrays that stores and validates type information.
     This can be used in place of a numpy array, but when used in a pydantic BaseModel
@@ -38,7 +42,8 @@ class NumpyArray(np.ndarray, Generic[DType]):
         np_array = np.array(val, dtype=actual_dtype)
         return np_array
 
-NumpyArrayFloat64=NumpyArray[typing.Literal['float64']]
+
+NumpyArrayFloat64 = NumpyArray[typing.Literal['float64']]
 
 if 0:
     # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
@@ -196,49 +201,57 @@ class Dumpable(pydantic.BaseModel):
         #        # handles frozen dataclasses as well, hopefully
         #        if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
         # recurse into base classes
-        if clss!=Dumpable:
+        if clss != Dumpable:
             for base in clss.__bases__:
-                obj.from_dict(dic,clss=base,obj=obj)
+                obj.from_dict(dic, clss=base, obj=obj)
         else:
-            if len(dic)>0: raise RuntimeError('%d attributes left after deserialization: %s'%(len(dic),', '.join(dic.keys())))
+            if len(dic) > 0:
+                raise RuntimeError('%d attributes left after deserialization: %s' % (len(dic), ', '.join(dic.keys())))
         return obj
 
     @staticmethod
-    def from_dict_with_name(classname,dic):
-        assert classname==dic['__class__']
+    def from_dict_with_name(classname, dic):
+        assert classname == dic['__class__']
         # print(f'@@@ {classname} ###')
         return Dumpable.from_dict(dic)
 
-    def dumpToLocalFile(self,filename):
-        pickle.dump(self,open(filename,'wb'))
+    def dumpToLocalFile(self, filename):
+        pickle.dump(self, open(filename, 'wb'))
+
     @staticmethod
     def loadFromLocalFile(filename):
-        return pickle.load(open(filename,'rb'))
+        return pickle.load(open(filename, 'rb'))
 
 
-def enum_to_dict(e): return {'__class__':e.__class__.__module__+'.'+e.__class__.__name__,'value':e.value}
-def enum_from_dict(clss,dic): return clss(dic.pop('value'))
-def enum_from_dict_with_name(modClassName,dic):
-    mod,className=modClassName.rsplit('.',1)
-    clss=getattr(importlib.import_module(mod),className)
+def enum_to_dict(e): return {'__class__': e.__class__.__module__+'.'+e.__class__.__name__, 'value': e.value}
+
+
+def enum_from_dict(clss, dic): return clss(dic.pop('value'))
+
+
+def enum_from_dict_with_name(modClassName, dic):
+    mod, className = modClassName.rsplit('.', 1)
+    clss = getattr(importlib.import_module(mod), className)
     return clss(dic.pop('value'))
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     import typing
+
     class TestDumpable(Dumpable):
-        num: int=0
+        num: int = 0
         dic: dict
-        recurse: typing.Optional['TestDumpable']=None
-        def __init__(self,**kw):
+        recurse: typing.Optional['TestDumpable'] = None
+
+        def __init__(self, **kw):
             print('This is my custom constructor')
             super().__init__(**kw)
-            self._myextra=1
+            self._myextra = 1
     TestDumpable.update_forward_refs()
-    td0=TestDumpable(num=0,dic=dict(a=1,b=2,c=[1,2,3]))
-    td1=TestDumpable(num=1,dic=dict(),recurse=td0)
+    td0 = TestDumpable(num=0, dic=dict(a=1, b=2, c=[1, 2, 3]))
+    td1 = TestDumpable(num=1, dic=dict(), recurse=td0)
     import pprint
-    d1=td1.dict()
+    d1 = td1.dict()
     pprint.pprint(d1)
-    td1a=TestDumpable.construct(**d1)
+    td1a = TestDumpable.construct(**d1)
     pprint.pprint(td1a.dict())
-    

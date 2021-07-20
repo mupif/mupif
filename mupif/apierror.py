@@ -23,6 +23,7 @@
 
 from .dumpable import Dumpable
 
+
 class APIError(Exception):
     """
     This class serves as a base class for exceptions thrown by the framework.

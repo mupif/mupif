@@ -20,7 +20,7 @@ class ValueType(IntEnum):
     Tensor = 3
 
     def getNumberOfComponents(self):
-        return {ValueType.Scalar:1,ValueType.Vector:3,ValueType.Tensor:9}[self]
+        return {ValueType.Scalar: 1, ValueType.Vector: 3, ValueType.Tensor: 9}[self]
 
     @staticmethod
     def fromNumberOfComponents(i):
@@ -40,9 +40,8 @@ class ValueType(IntEnum):
             raise RuntimeError('No ValueType with %i components' % i)
 
 
-
 class MupifQuantity(mupifobject.MupifObject):
-    '''
+    """
     Abstract base class for representing a quantity, common parent class for
     :obj:`Field` and :obj:`Property` classes. Quantity means value and an
     associated unit.
@@ -51,10 +50,10 @@ class MupifQuantity(mupifobject.MupifObject):
     shorthand) and can be used for unit-aware arithmetics.
 
     Value and unit can be accessed separately as `value` and `unit`.
-    '''
+    """
 
     quantity: units.Quantity
-    valueType: ValueType=ValueType.Scalar
+    valueType: ValueType = ValueType.Scalar
 
     # shorthand accessor for quantity (less typing)
     @property
@@ -65,13 +64,14 @@ class MupifQuantity(mupifobject.MupifObject):
     @property
     def unit(self): return self.quantity.unit
 
-    def __init__(self,value=None,unit=None,**kw):
+    def __init__(self, value=None, unit=None, **kw):
         if value is not None or unit is not None:
-            given=(['value'] if value is not None else [])+(['unit'] if unit is not None else [])+(['quantity'] if 'quantity' in kw else [])
-            if value is None or unit is None or 'quantity' in kw: raise ValueError(f'Must specify only either quantity=, or both value= and unit= (given: {", ".join(given)})')
-            #warnings.warn("Field(value=...) is deprecated, use Field(quantity=...) instead.")
-            kw['quantity']=units.Quantity(value=value,unit=unit)
-        super().__init__(**kw) # this calls the real ctor
+            given = (['value'] if value is not None else [])+(['unit'] if unit is not None else [])+(['quantity'] if 'quantity' in kw else [])
+            if value is None or unit is None or 'quantity' in kw:
+                raise ValueError(f'Must specify only either quantity=, or both value= and unit= (given: {", ".join(given)})')
+            # warnings.warn("Field(value=...) is deprecated, use Field(quantity=...) instead.")
+            kw['quantity'] = units.Quantity(value=value, unit=unit)
+        super().__init__(**kw)  # this calls the real ctor
 
     def getValue(self): return self.quantity.value
 
@@ -96,13 +96,12 @@ class MupifQuantity(mupifobject.MupifObject):
         self.quantity.value[componentID] = value
 
     def getRecord(self, componentID):
-        "Return value in one point (cell, vertex or similar)"
+        """Return value in one point (cell, vertex or similar)"""
         return self.quantity.value[componentID]
 
     def getRecordQuantity(self, componentID):
-        "Return value in one point (cell, vertex or similar)"
+        """Return value in one point (cell, vertex or similar)"""
         return self.quantity[componentID]
-
 
     def getRecordSize(self):
         """

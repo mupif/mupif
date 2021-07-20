@@ -28,7 +28,6 @@ from . import bbox
 from . import dumpable
 from . import vertex
 from . import cell
-from . import mupifobject
 import copy
 import time
 import sys
@@ -192,7 +191,7 @@ class Mesh(dumpable.Dumpable):
         .. note:: This method has not been tested yet.
         """
         nv = self.getNumberOfVertices()
-        ret = numpy.empty((nv, 3), dtype=numpy.float)
+        ret = numpy.empty((nv, 3), dtype=numpy.float32)
         for i in range(0, nv):
             ret[i] = numpy.array(self.getVertex(i).getCoordinates())
         return ret
@@ -222,11 +221,11 @@ class Mesh(dumpable.Dumpable):
         nc = self.getNumberOfCells()
         for i in range(nc):
             mnv = max(mnv, self.getCell(i).getNumberOfVertices())
-        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int)
+        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int64), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int)
         for i in range(nc):
             c = self.getCell(i)
             tt[i] = c.getGeometryType()
-            vv = numpy.array([v.getNumber() for v in c.getVertices()], dtype=numpy.int)
+            vv = numpy.array([v.getNumber() for v in c.getVertices()], dtype=numpy.int64)
             cc[i, :len(vv)] = vv  # excess elements in the row stay at -1
         return tt, cc
 
@@ -298,7 +297,7 @@ class Mesh(dumpable.Dumpable):
             ids=[v.getNumber() for v in c.getVertices()]
             if t in ret: ret[t].append(ids)
             else: ret[t]=[ids]
-        return self.getVertices(),[(type,np.array(ids)) for type,ids in ret.items()]
+        return self.getVertices(),[(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
 
     @staticmethod
     def makeFromMeshioPointsCells(points,cells):

@@ -30,8 +30,6 @@ from . import mupifquantity
 from . import units
 from pydantic.dataclasses import dataclass
 
-import pickle
-
 # debug flag
 debug = 0
 

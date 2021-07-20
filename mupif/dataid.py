@@ -34,6 +34,7 @@ DataSchema = {
     ]
 }
 
+
 class FieldID(IntEnum):
     """
     This class represents the supported values of field IDs, e.g. displacement, strain, temperature.
@@ -66,11 +67,13 @@ class FieldID(IntEnum):
     FID_MidPrincipal_Strain = 2000005
     FID_MinPrincipal_Strain = 2000006
 
+
 class ParticleSetID(IntEnum):
     """
     This class represents supported values of ParticleSetID, an unique ID identifier for ParticleSet type.
     """
     PSID_ParticlePositions = 1
+
 
 class FunctionID(IntEnum):
     """
@@ -78,9 +81,11 @@ class FunctionID(IntEnum):
     """
     FuncID_ProbabilityDistribution = 1
 
+
 class MiscID(IntEnum):
     ID_None = 0
     ID_GrainState = 1
+
 
 class PropertyID(IntEnum):
     """
@@ -142,7 +147,7 @@ class PropertyID(IntEnum):
     PID_ShearInPlaneStiffness = 51
     PID_ShearOutOfPlaneStiffness = 52
     PID_LocalBendingStiffness = 53
-    PID_CriticalForce  = 54
+    PID_CriticalForce = 54
     PID_CriticalMoment = 55
     # Digimat Properties
     PID_MatrixYoung = 8000
@@ -151,9 +156,9 @@ class PropertyID(IntEnum):
     PID_InclusionPoisson = 8003
     PID_InclusionVolumeFraction = 8004
     PID_InclusionAspectRatio = 8005
-    PID_MatrixOgdenModulus          = 8006
-    PID_MatrixOgdenExponent         = 8007
-    PID_InclusionSizeNormalized     = 8012
+    PID_MatrixOgdenModulus = 8006
+    PID_MatrixOgdenExponent = 8007
+    PID_InclusionSizeNormalized = 8012
     
     PID_CompositeAxialYoung = 9000
     PID_CompositeInPlaneYoung = 9001
@@ -161,13 +166,12 @@ class PropertyID(IntEnum):
     PID_CompositeTransverseShear = 9003
     PID_CompositeInPlanePoisson = 9004
     PID_CompositeTransversePoisson = 9005
-    PID_CompositeStrain11Tensor     = 9006
-    PID_CompositeStrain22Tensor     = 9007
-    PID_CompositeStress11Tensor     = 9008
+    PID_CompositeStrain11Tensor = 9006
+    PID_CompositeStrain22Tensor = 9007
+    PID_CompositeStress11Tensor = 9008
     PID_MatrixDensity = 8008
     PID_CompositeDensity = 9009
     PID_InclusionDensity = 8009
-
 
     # CUBA keywords from Jun 6, 2017 - https://github.com/simphony/simphony-common/blob/master/ontology/cuba.yml
     PID_Position = 1000
@@ -359,10 +363,9 @@ class PropertyID(IntEnum):
     # GY user-case property IDs
     PID_HyperelasticPotential = 92200
     PID_ForceCurve = 92201
-    PID_DisplacementCurve= 92202
-    PID_CorneringAngle= 92203
-    PID_CorneringStiffness= 92204
-    
+    PID_DisplacementCurve = 92202
+    PID_CorneringAngle = 92203
+    PID_CorneringStiffness = 92204
 
     # Demo properties
     PID_dirichletBC = 97000
