@@ -88,7 +88,8 @@ class Octant(object):
         """
         Divides the receiver locally, creating child octants.
         """
-        if debug: print ("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
+        if debug:
+            print("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
         if not self.isTerminal():
             assert "Could not divide non terminal octant"
         self.children = []
@@ -170,15 +171,12 @@ class Octant(object):
                     self.children[i][j][k].remove(item, itemBBox)
 
     @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
-    def giveItemsInBBox(self,
-        itemSet: set,
-        bbox: bbox.BBox
-    ):
+    def giveItemsInBBox(self, itemSet: set, bbox: bbox.BBox):
         """ 
         Returns the list of objects inside the given bounding box. 
         Note: an object can be included several times, as can be assigned to several octants.
 
-        :param list itemList: list containing the objects matching the criteria
+        :param list itemSet: list containing the objects matching the criteria
         :param bbox.BBox bbox: target bounding box
         """ 
         # if debug: tab = '  '*int(math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0)))
@@ -187,10 +185,11 @@ class Octant(object):
                 # if debug: print(tab, "Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data))
                 for i in self.data:
                     # if debug: print(tab, "checking ... \n   %s %s"%(str(i.getBBox()), str(bbox)))
-                    if i.getBBox().intersects(bbox): itemSet.add(i)
-                        #if isinstance(itemList, set):
+                    if i.getBBox().intersects(bbox):
+                        itemSet.add(i)
+                        # if isinstance(itemList, set):
                         #    itemList.add(i)
-                        #else:
+                        # else:
                         #    itemList.append(i)
             else:
                 # if debug: print(tab, "Parent containing bbox found ....", self.giveMyBBox())

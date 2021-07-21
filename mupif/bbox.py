@@ -29,6 +29,7 @@ from typing import Union, Tuple
 from . import dumpable
 import pydantic
 
+
 @Pyro5.api.expose
 class BBox(pydantic.BaseModel):
     """
@@ -123,4 +124,3 @@ class BBox(pydantic.BaseModel):
             # Merge with given coordinates
             self.coords_ll = tuple([min(self.coords_ll[i], entity[i]) for i in range(nsd)])
             self.coords_ur = tuple([max(self.coords_ur[i], entity[i]) for i in range(nsd)])
-

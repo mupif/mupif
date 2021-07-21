@@ -42,19 +42,20 @@ sys.excepthook=Pyro5.errors.excepthook
 Pyro5.config.DETAILED_TRACEBACK=False
 
 # spawn is safe for windows; this is a global setting
-if multiprocessing.get_start_method()!='spawn': multiprocessing.set_start_method('spawn',force=True)
+if multiprocessing.get_start_method() != 'spawn':
+    multiprocessing.set_start_method('spawn', force=True)
 
 log=logging.getLogger(__name__)
 
 try:
     import colorlog
-    log.propagate=False
-    handler=colorlog.StreamHandler()
+    log.propagate = False
+    handler = colorlog.StreamHandler()
     handler.setLevel(logging.DEBUG)
-    handler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s',datefmt='%Y-%m-%d %H:%M:%S'))
+    handler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
     log.addHandler(handler)
-except ImportError: pass
-
+except ImportError:
+    pass
 
 
 @Pyro5.api.expose
@@ -86,7 +87,7 @@ class SimpleJobManager (jobmanager.JobManager):
             server,
             nshost,
             nsport,
-            jobManWorkDir, # perhaps rename to cwd
+            jobManWorkDir,  # perhaps rename to cwd
             maxJobs=1,
             daemon=None,
             overrideNsPort=0
@@ -99,7 +100,7 @@ class SimpleJobManager (jobmanager.JobManager):
         super().__init__(appName=appName, jobManWorkDir=jobManWorkDir, maxJobs=maxJobs)
         self.ns = ns
 
-        self.tickets = [] # list of tickets issued when pre-allocating resources; tickets generated using uuid 
+        self.tickets = []  # list of tickets issued when pre-allocating resources; tickets generated using uuid
         self.jobCounter = 0
         self.overrideNsPort = overrideNsPort
         self.lock = threading.Lock()
@@ -132,7 +133,6 @@ class SimpleJobManager (jobmanager.JobManager):
         )
         pipe.send(uri) # as bytes
 
-
     def __checkTicket (self, ticket):
         """ Returns true, if ticket is valid, false otherwise"""
         currentTime = time.time()
@@ -153,7 +153,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 del(self.tickets[i])
         return len(self.tickets)
 
-    def preAllocate (self, requirements=None): 
+    def preAllocate(self, requirements=None):
         """
             Allows to pre-allocate(reserve) the resource. 
             Returns ticket id (as promise) to finally allocate resource. 
@@ -173,7 +173,6 @@ class SimpleJobManager (jobmanager.JobManager):
             self.lock.release()
             return ticket
 
-
     def allocateJob(self, user, natPort=0, ticket=None): 
         """
         Allocates a new job.
@@ -191,9 +190,9 @@ class SimpleJobManager (jobmanager.JobManager):
         # allocate job if valid ticket given or available resource exist
         ntickets = self.__getNumberOfActiveTickets()
         validTicket = ticket and self.__checkTicket(ticket)
-        if (validTicket) or ((len(self.activeJobs)+ntickets) < self.maxJobs):
-            if (validTicket):
-                self.tickets.remove(ticket) #remove ticket
+        if validTicket or ((len(self.activeJobs)+ntickets) < self.maxJobs):
+            if validTicket:
+                self.tickets.remove(ticket)  # remove ticket
             # update job counter
             self.jobCounter = self.jobCounter+1
             jobID = str(self.jobCounter)+"@"+self.applicationName
@@ -211,7 +210,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 raise
                 # return JOBMAN_ERR, None
             try:
-                parentPipe,childPipe=multiprocessing.Pipe()
+                parentPipe, childPipe = multiprocessing.Pipe()
 
                 kwargs=dict(
                     pipe=childPipe,
@@ -230,10 +229,11 @@ class SimpleJobManager (jobmanager.JobManager):
                     kwargs=kwargs
                 )
                 proc.start()
-                if not parentPipe.poll(timeout=10): raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
-                uri=parentPipe.recv()
-                log.info('Received URI: %s'%uri)
-                jobPort=int(uri.location.split(':')[-1])
+                if not parentPipe.poll(timeout=10):
+                    raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
+                uri = parentPipe.recv()
+                log.info('Received URI: %s' % uri)
+                jobPort = int(uri.location.split(':')[-1])
                 log.info(f'Job runs on port {jobPort}')
             except Exception as e:
                 log.exception(e)
@@ -242,7 +242,7 @@ class SimpleJobManager (jobmanager.JobManager):
             # check if uri is ok
             # either by doing some sort of regexp or query ns for it
             start = timeTime.time()
-            self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc,starttime=start,user=user,uri=uri,port=jobPort)
+            self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, user=user, uri=uri, port=jobPort)
             log.debug('SimpleJobManager: new process ')
             log.debug(self.activeJobs[jobID])
 
@@ -256,7 +256,6 @@ class SimpleJobManager (jobmanager.JobManager):
             raise jobmanager.JobManNoResourcesException("SimpleJobManager: no more resources")
             # return (JOBMAN_NO_RESOURCES,None)
 
-
     def terminateJob(self, jobID):
         """
         Terminates the given job, frees the associated recources.
@@ -269,14 +268,15 @@ class SimpleJobManager (jobmanager.JobManager):
         self.ns.remove(jobID)
         # terminate the process
         if jobID in self.activeJobs:
-            job=self.activeJobs[jobID]
+            job = self.activeJobs[jobID]
             try:
                 job.proc.terminate()
                 job.proc.join(2)
-                if job.proc.exitcode is None: log.debug(f'{jobID} still running after 2s timeout, killing.')
+                if job.proc.exitcode is None:
+                    log.debug(f'{jobID} still running after 2s timeout, killing.')
                 job.proc.kill()
                 # delete entry in the list of active jobs
-                log.debug('SimpleJobManager:terminateJob: job %s terminated' % (jobID))
+                log.debug('SimpleJobManager:terminateJob: job %s terminated' % jobID)
                 del self.activeJobs[jobID]
             except KeyError:
                 log.debug('SimpleJobManager:terminateJob: jobID error, job %s already terminated?' % jobID)
@@ -317,8 +317,8 @@ class SimpleJobManager (jobmanager.JobManager):
                 except:
                     pass
             self.pyroDaemon = None
-        else: log.warn('Not terminating daemon since none assigned.')
-
+        else:
+            log.warning('Not terminating daemon since none assigned.')
 
     def getApplicationSignature(self):
         """
@@ -330,11 +330,11 @@ class SimpleJobManager (jobmanager.JobManager):
         """
         See :func:`JobManager.getStatus`
         """
-        JobManagerStatus=collections.namedtuple('JobManagerStatus',['key','running','user'])
+        JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user'])
         status = []
         tnow = timeTime.time()
         for key in self.activeJobs:
-            status.append(JobManagerStatus(key=key,running=tnow-self.activeJobs[key].starttime,user=self.activeJobs[key].user))
+            status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
         return status
 
     def uploadFile(self, jobID, filename, pyroFile, hkey):

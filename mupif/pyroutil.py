@@ -34,6 +34,7 @@ from . import jobmanager
 from . import util
 from . import apierror
 from . import pyrofile
+import pydantic
 log = util.setupLogger(fileName=None)
 
 Pyro5.config.SERIALIZER = "serpent"
@@ -50,41 +51,41 @@ except ImportError:
     import importlib_resources as imp_res  # for older Python versions
 
 
-#import Pyro5.api
-#Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: object.__getattr__(pr,'_pyroConnection').sock.getsockname())
+# import Pyro5.api
+# Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: object.__getattr__(pr,'_pyroConnection').sock.getsockname())
 
 from contextlib import ExitStack
-tmpfile=ExitStack()
+tmpfile = ExitStack()
 import itertools
-testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
+testSSL = dict([((who, what), str(tmpfile.enter_context(imp_res.path('mupif.data.certs', f'{who}.mupif.{what}')))) for who, what in itertools.product(('rootCA', 'server', 'client'), ('cert', 'key'))])
 
 
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Optional
 @dataclass
 class PyroNetConf:
-    nshost: Optional[str]=None
-    nsport: int=0
-    ns: Optional[Pyro5.api.Proxy]=None
-    host: Optional[str]=None
-    port: int=0
+    nshost: Optional[str] = None
+    nsport: int = 0
+    ns: Optional[Pyro5.api.Proxy] = None
+    host: Optional[str] = None
+    port: int = 0
 
     def getNS(self):
-        if self.ns is not None: return self.ns
+        if self.ns is not None:
+            return self.ns
         # self.ns=Pyro5.api.locate_ns(host=self.nshost, port=self.nsport)
-        self.ns=connectNameServer(nshost=self.nshost, nsport=self.nsport)
+        self.ns = connectNameServer(nshost=self.nshost, nsport=self.nsport)
         return self.ns
 
 
 # pyro5 nameserver metadata
 NS_METADATA_jobmanager = "type:jobmanager"
 NS_METADATA_appserver = "type:appserver"
-NS_METADATA_network="network:" # plus JSON
+NS_METADATA_network = "network:"  # plus JSON
 
-import pydantic
 
 @pydantic.validate_arguments
-def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=3.0) -> Pyro5.client.Proxy :
+def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: float = 3.0) -> Pyro5.client.Proxy:
     """
     Connects to a NameServer.
 
@@ -99,9 +100,10 @@ def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=
     # the configuration is the same for nameserver and the clients
     # for the server, 0.0.0.0 binds all local interfaces
     # for the client, 0.0.0.0 is meaningless
-    if nshost=='0.0.0.0' or nshost=='::': nshost=None
+    if nshost == '0.0.0.0' or nshost == '::':
+        nshost = None
     
-    if nshost is not None and nsport!=0:
+    if nshost is not None and nsport != 0:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(timeOut)
@@ -144,10 +146,12 @@ def getNSConnectionInfo(ns, name):
     """
     mdata = getNSmetadata(ns, name)
     for md in mdata:
-        if not md.startswith(NS_METADATA_network): continue
-        d=json.loads(md[len(NS_METADATA_network):])
-        return (d.get('host',None),d.get('port',None))
-    return (None,None,None,None)
+        if not md.startswith(NS_METADATA_network):
+            continue
+        d = json.loads(md[len(NS_METADATA_network):])
+        return d.get('host', None), d.get('port', None)
+    return None, None, None, None
+
 
 def _connectApp(ns, name, connectionTestTimeOut = 10. ):
     """
@@ -170,7 +174,7 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
         raise
 
     try:
-        log.info("Connecting to application %s with %s"%(name, app2))
+        log.info("Connecting to application %s with %s" % (name, app2))
         # By default, Pyro waits an indefinite amount of time for the call to return. 
         # When testing connection to an remote object via _connectApp, the object getSignature method is called.
         # The connection timeout is set for this call. after this, the timeout is reset to default.
@@ -190,7 +194,8 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
 
     return app2
 
-def connectApp(ns, name, connectionTestTimeOut = 10.):
+
+def connectApp(ns, name, connectionTestTimeOut=10.):
     return _connectApp(ns, name, connectionTestTimeOut)
 
 
@@ -210,6 +215,7 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     """
     Runs a simple application server
 
+    :param net:
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
@@ -219,19 +225,19 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     :returns: URI
     """
 
-    ns=net.getNS()
+    ns = net.getNS()
     # server, port, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
 
     externalDaemon = False
     if not daemon:
-        host=net.host
-        if host in ('0.0.0.0','::'):
-            ns._pyroBind() # connect so that _pyroConnection exists
-            host=ns._pyroConnection.sock.getsockname()[0]
+        host = net.host
+        if host in ('0.0.0.0', '::'):
+            ns._pyroBind()  # connect so that _pyroConnection exists
+            host = ns._pyroConnection.sock.getsockname()[0]
             log.warning(f"Adjusted INADDR_ANY {net.host} → {host} as per NS socket")
         try:
-            daemon = Pyro5.api.Daemon(host=host,port=net.port)
+            daemon = Pyro5.api.Daemon(host=host, port=net.port)
             log.info(f'Pyro5 daemon runs on {host}:{net.port}')
         except Exception:
             log.exception(f'Can not run Pyro5 daemon on {host}:{net.port}')
@@ -251,7 +257,7 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     try:
         # the same interface shared by both Model and JobManager
         app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
-    #except AttributeError as e:
+    # except AttributeError as e:
     #    # catch attribute error (thrown when method not defined)
     #    log.warning(f'Can not register daemon for application {appName}')
     except:
@@ -262,16 +268,17 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     threading.current_thread().setName(appName)
 
     # generate connection metadata entry
-    _host,_port=daemon.locationStr.split(':')
+    _host, _port = daemon.locationStr.split(':')
 
-    if metadata is None: metadata=set()
-    metadata.add(NS_METADATA_network+json.dumps({'host':_host,'port':_port}))
+    if metadata is None:
+        metadata = set()
+    metadata.add(NS_METADATA_network+json.dumps({'host': _host, 'port': _port}))
 
     ns.register(appName, uri, metadata=metadata)
 
     log.debug(f'NameServer {appName} has registered uri {uri}')
     log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
-    threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
+    threading.Thread(target=daemon.requestLoop).start()  # run daemon request loop in separate thread
     return uri
 
 
@@ -285,12 +292,11 @@ def runAppServer(*, server, nshost, nsport, appName, app, port=0):
     :param int nsport: Nameserver port
     :param str appName: Name of registered application
     :param instance app: Application instance
-    :param daemon: Reference to already running daemon, if available. Optional parameter.
 
     :raises Exception: if can not run Pyro5 daemon
     """
     return runServer(
-        net=PyroNetConf(host=server,nshost=nshost,nsport=nsport),
+        net=PyroNetConf(host=server, nshost=nshost, nsport=nsport),
         appName=appName,
         app=app,
         # daemon=daemon,
@@ -306,12 +312,10 @@ def runJobManagerServer(*, server, nshost, nsport, jobman, port=0):
     :param int port: Port number on the server where daemon will listen (internal port number)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
-    :param str appName: Name of job manager to be registered at nameserver
     :param jobman: Jobmanager
-    :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
     return runServer(
-        net=PyroNetConf(host=server,nshost=nshost,nsport=nsport),
+        net=PyroNetConf(host=server, nshost=nshost, nsport=nsport),
         appName=jobman.getNSName(),
         app=jobman,
         # daemon=daemon,
@@ -371,6 +375,7 @@ def connectJobManager(ns, jobManName):
 
     return jobmanager.RemoteJobManager(_connectApp(ns, jobManName))
 
+
 def allocateApplicationWithJobManager(ns, jobMan):
     """
     Request new application instance to be spawned by  given jobManager.
@@ -386,13 +391,13 @@ def allocateApplicationWithJobManager(ns, jobMan):
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        status,jobid,jobport = jobMan.allocateJob(username+"@"+hostname)
+        status, jobid, jobport = jobMan.allocateJob(username+"@"+hostname)
         log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
     except Exception:
         log.exception("JobManager allocateJob() failed")
         print("".join(Pyro5.errors.get_pyro_traceback()))
         raise
-    return model.RemoteModel(_connectApp(ns, jobid),jobMan=jobMan,jobID=jobid)
+    return model.RemoteModel(_connectApp(ns, jobid), jobMan=jobMan, jobID=jobid)
 
 
 def allocateNextApplication(ns, jobMan):
@@ -464,7 +469,6 @@ def uploadPyroFileOnServer(clientFileName, pyroFile, size=1024*1024, compressFla
     uploadPyroFile(clientFileName, pyroFile, size, compressFlag)
 
 
-
 @deprecated.deprecated
 @dataclass
 class SSHContext(object):
@@ -474,10 +478,10 @@ class SSHContext(object):
     When provided, the corresponding ssh tunnel connection is established and associated to proxy using decorator class
     to make sure it can be terminated properly.
     """
-    userName: str=''
-    sshClient: str='manual'
-    options: str=''
-    sshHost: str=''
+    userName: str = ''
+    sshClient: str = 'manual'
+    options: str = ''
+    sshHost: str = ''
         
 
 class SshTunnel(object):
@@ -486,15 +490,17 @@ class SshTunnel(object):
     to ensure correct tunnel termination.
     """
 
-    async def runAsyncSSH(self,fwd,**kw):
+    async def runAsyncSSH(self, fwd, **kw):
         'Async function which just creates background asyncssh task (tunnel) and returns'
         async def _go():
             'Create asyncssh connection and local/remote forwarding tunnel'
             import asyncssh
             async with asyncssh.connect(**kw) as conn:
-                direction,localPort,remoteHost,remotePort=fwd
-                if direction=='L': listener=await conn.forward_local_port('',localPort,remoteHost,remotePort)
-                else: listener=await conn.forward_remote_port('',remotePort,'localhost',localPort)
+                direction, localPort, remoteHost, remotePort = fwd
+                if direction == 'L':
+                    listener = await conn.forward_local_port('', localPort, remoteHost, remotePort)
+                else:
+                    listener = await conn.forward_remote_port('', remotePort, 'localhost', localPort)
                 await listener.wait_closed()
         import asyncio
         asyncio.create_task(_go())
@@ -524,27 +530,27 @@ class SshTunnel(object):
         if Reverse is True:
             direction = 'R'
 
-        self.sshClient=sshClient
-        self.tunnel=None
+        self.sshClient = sshClient
+        self.tunnel = None
 
         if sshClient == 'asyncssh':
             # try to convert OpenSSH arguments to asyncssh options
             import argparse
-            parser=argparse.ArgumentParser(add_help=False)
-            parser.add_argument('-F',dest='config')
-            parser.add_argument('-p',type=int,dest='ssh_port')
-            parser.add_argument('-oIdentityFile',type=str,action='append',dest='client_keys')
-            parser.add_argument('-oUserKnownHostsFile',type=str,dest='known_hosts')
-            parser.add_argument('-N',action='store_true')
-            kwopts=vars(parser.parse_args(options.split()))
-            port=kwopts.pop('ssh_port',22)
+            parser = argparse.ArgumentParser(add_help=False)
+            parser.add_argument('-F', dest='config')
+            parser.add_argument('-p', type=int, dest='ssh_port')
+            parser.add_argument('-oIdentityFile', type=str, action='append', dest='client_keys')
+            parser.add_argument('-oUserKnownHostsFile', type=str, dest='known_hosts')
+            parser.add_argument('-N', action='store_true')
+            kwopts = vars(parser.parse_args(options.split()))
+            port = kwopts.pop('ssh_port', 22)
             log.info('Options extracted from OpenSSH command-line: '+str(kwopts))
-            kwopts.pop('N',None) # not useful
+            kwopts.pop('N', None)  # not useful
             import asyncio
-            asyncio.run(self.runAsyncSSH(fwd=(direction,localPort,remoteHost,remotePort),host=remoteHost,port=remotePort,**kwopts))
+            asyncio.run(self.runAsyncSSH(fwd=(direction, localPort, remoteHost, remotePort), host=remoteHost, port=remotePort, **kwopts))
         elif sshClient == 'manual':
             # You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-            print('sshClient==manual: ',direction, localPort, remoteHost, remotePort, userName, sshHost, options)
+            print('sshClient==manual: ', direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
                 direction, localPort, remoteHost, remotePort, userName, sshHost, options)
             cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (
@@ -557,15 +563,19 @@ class SshTunnel(object):
             # use direct system command. Paramiko or sshtunnel do not work.
             # put ssh public key on a server - interaction with a keyboard
             # for password will not work here (password goes through TTY, not stdin)
-            if sshClient == 'ssh': cmd0 = 'ssh'
-            elif sshClient == 'autossh': cmd0 = 'autossh'
-            elif 'putty' in sshClient.lower(): cmd0=sshClient
-            else: raise ValueError('Unknown ssh client {sshClient}.')
+            if sshClient == 'ssh':
+                cmd0 = 'ssh'
+            elif sshClient == 'autossh':
+                cmd0 = 'autossh'
+            elif 'putty' in sshClient.lower():
+                cmd0 = sshClient
+            else:
+                raise ValueError('Unknown ssh client {sshClient}.')
             # for putty:
             # need to create a public key *.ppk using puttygen.
             # It can be created by importing Linux private key.
             # The path to that key is given as -i option
-            cmd = [cmd0,f'-{direction}',f'{localPort}:{remoteHost}:{remotePort}',f'{userName}@{sshHost}','-N',options]
+            cmd = [cmd0, f'-{direction}', f'{localPort}:{remoteHost}:{remotePort}', f'{userName}@{sshHost}', '-N', options]
 
             try:
                 log.debug("Creating ssh tunnel via command: " + str(cmd))
@@ -581,14 +591,12 @@ class SshTunnel(object):
         Terminate the connection.
         """
         if self.tunnel is not None:
-            if self.sshClient=='python':  # TODO 'sshClient' variable is not anywhere else in this project
+            if self.sshClient == 'python':  # TODO 'sshClient' variable is not anywhere else in this project
                 self.tunnel.cancel()
-                self.tunnel=None
+                self.tunnel = None
             else:
                 self.tunnel.terminate()
                 self.tunnel = None
 
     def __del__(self):
         self.terminate()
-
-

@@ -123,8 +123,8 @@ class Mesh(dumpable.Dumpable):
 
     mapping: typing.Any=None
 
-    def __init__(self,*a,**kw):
-        super().__init__(*a,**kw)
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
         self._postDump()
 
     def _postDump(self):
@@ -221,7 +221,7 @@ class Mesh(dumpable.Dumpable):
         nc = self.getNumberOfCells()
         for i in range(nc):
             mnv = max(mnv, self.getCell(i).getNumberOfVertices())
-        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int64), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int)
+        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int64), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int64)
         for i in range(nc):
             c = self.getCell(i)
             tt[i] = c.getGeometryType()
@@ -290,28 +290,30 @@ class Mesh(dumpable.Dumpable):
 
     def toMeshioPointsCells(self):
         import numpy as np
-        ret={}
+        ret = {}
         for ic in range(self.getNumberOfCells()):
-            c=self.getCell(ic)
-            t=c.getMeshioGeometryStr()
-            ids=[v.getNumber() for v in c.getVertices()]
-            if t in ret: ret[t].append(ids)
-            else: ret[t]=[ids]
-        return self.getVertices(),[(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
+            c = self.getCell(ic)
+            t = c.getMeshioGeometryStr()
+            ids = [v.getNumber() for v in c.getVertices()]
+            if t in ret:
+                ret[t].append(ids)
+            else:
+                ret[t] = [ids]
+        return self.getVertices(), [(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
 
     @staticmethod
-    def makeFromMeshioPointsCells(points,cells):
-        ret=UnstructuredMesh()
-        vv=[vertex.Vertex(number=row,label=None,coords=tuple(points[row])) for row in range(points.shape[0])]
-        cc=[]
-        cgt=cellgeometrytype
-        c0=0
+    def makeFromMeshioPointsCells(points, cells):
+        ret = UnstructuredMesh()
+        vv = [vertex.Vertex(number=row, label=None, coords=tuple(points[row])) for row in range(points.shape[0])]
+        cc = []
+        cgt = cellgeometrytype
+        c0 = 0
         from . import cell
         for block in cells:
-            klass=cell.Cell.getClassForCellGeometryType({'triangle':cgt.CGT_TRIANGLE_1,'quad':cgt.CGT_QUAD,'tetra':cgt.CGT_TETRA,'hexahedron':cgt.CGT_HEXAHEDRON,'triangle6':cgt.CGT_TRIANGLE_2}[block.type])
-            cc+=[klass(mesh=ret,number=c0+row,label=None,vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
-            c0+=block.data.shape[0]
-        ret.setup(vertexList=vv,cellList=cc)
+            klass = cell.Cell.getClassForCellGeometryType({'triangle': cgt.CGT_TRIANGLE_1, 'quad': cgt.CGT_QUAD, 'tetra': cgt.CGT_TETRA, 'hexahedron': cgt.CGT_HEXAHEDRON, 'triangle6': cgt.CGT_TRIANGLE_2}[block.type])
+            cc += [klass(mesh=ret, number=c0+row, label=None, vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
+            c0 += block.data.shape[0]
+        ret.setup(vertexList=vv, cellList=cc)
         return ret
 
     def asVtkUnstructuredGrid(self):
@@ -409,8 +411,9 @@ class Mesh(dumpable.Dumpable):
         """
         pickle.dump(self, open(fileName, 'wb'), protocol)
 
+
 @Pyro5.api.expose
-#@dataclasses.dataclass
+# @dataclasses.dataclass
 class UnstructuredMesh(Mesh):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
@@ -432,16 +435,15 @@ class UnstructuredMesh(Mesh):
     vertexList: typing.List[vertex.Vertex]=pydantic.Field(default_factory=lambda: [])
     cellList: typing.List[cell.Cell]=pydantic.Field(default_factory=lambda: [])
 
-    def __init__(self,**kw):
+    def __init__(self, **kw):
         super().__init__(**kw)
-        self._vertexOctree=None
-        self._cellOctree=None
-        self._vertexDict=None
-        self._cellDict=None
+        self._vertexOctree = None
+        self._cellOctree = None
+        self._vertexDict = None
+        self._cellDict = None
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
-
 
     def setup(self, vertexList, cellList):
         """
@@ -642,10 +644,10 @@ class UnstructuredMesh(Mesh):
 
         # renumber _vertexDict verices 
         n = 0
-        #self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
+        # self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
         for v in self.vertexList:
             v.number = n
-            n+=1
+            n += 1
         #
         # now merge cell lists
         #
@@ -756,7 +758,7 @@ class UnstructuredMesh(Mesh):
             # create new cell and append to mupifCells
             mupifCells.append(
                 cell.Cell.getClassForCellGeometryType(cgt)(
-                    #mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
+                    # mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
                     mesh=ret, number=ic, label=None, vertices=pts
                 )
             )
