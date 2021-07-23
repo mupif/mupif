@@ -1,14 +1,14 @@
 import sys
 sys.path.extend(['..', '../..'])
-import time, random
-import tempfile, shutil
+import time
+import random
 import numpy as np
-import os
 
 import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
+
 
 class Model2 (mp.Model):
     """
@@ -53,20 +53,20 @@ class Model2 (mp.Model):
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.inputGrainState=None
-        self.outputGrainState=None
+        self.inputGrainState = None
+        self.outputGrainState = None
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(file=file, workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
-    def get(self, propID, time, objectID=0):
-        if propID == mp.PropertyID.PID_GrainState:
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == mp.PropertyID.PID_GrainState:
             return self.outputGrainState
         else:
             raise mp.APIError('Unknown property ID')
 
     def set(self, prop, objectID=0):
-        if (type(prop) == mp.heavydata.HeavyDataHandle): #todo: test some ID as well
+        if type(prop) == mp.heavydata.HeavyDataHandle:  # todo: test some ID as well
             if prop.id == mp.dataid.MiscID.ID_GrainState:
                 self.inputGrainState = prop
         else:
@@ -80,9 +80,9 @@ class Model2 (mp.Model):
         #
         if 1:
             # transfer with cloneHandle which copies underlying storage
-            self.outputGrainState=self.inputGrainState.cloneHandle()
-            inGrains=self.inputGrainState.openData(mode='readonly')
-            outGrains=self.outputGrainState.openData(mode='readwrite')
+            self.outputGrainState = self.inputGrainState.cloneHandle()
+            inGrains = self.inputGrainState.openData(mode='readonly')
+            outGrains = self.outputGrainState.openData(mode='readwrite')
         elif 1:
             # transfer via inject (serializes into RAM, network-transparent)
             inGrains = self.inputGrainState.openData(mode='readonly')
@@ -157,4 +157,4 @@ class Model2 (mp.Model):
         return tstep.getTime()
 
     def getApplicationSignature(self):
-        return "Application1"
+        return "Model2"

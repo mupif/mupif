@@ -8,7 +8,7 @@ from mupif.tests import demo
 
 class TestApp(unittest.TestCase):
     def setUp(self):
-        self.app1,self.app2=demo.AppCurrTime(file=None),demo.AppPropAvg(file=None)
+        self.app1,self.app2=demo.AppCurrTime(),demo.AppPropAvg()
     def test_app(self):
         app1,app2=self.app1,self.app2
         time  = 0

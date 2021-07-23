@@ -19,8 +19,8 @@ class EmailAPI(model.Model):
     """
     Simple application API that involves operator interaction
     """
-    def __init__(self, file):
-        super().__init__(file=file)
+    def __init__(self):
+        super().__init__()
         # note: "From" should correspond to destination e-mail
         # where the response is received (Operator can reply to the message)
         self.operator = operatorutil.OperatorEMailInteraction(From='appAPI@gmail.com',
@@ -32,7 +32,7 @@ class EmailAPI(model.Model):
         self.outputs = {}
         self.key = 'Operator-results'
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True):
         MD = {
             'Name': 'Email operator application',
             'ID': 'N/A',
@@ -66,7 +66,7 @@ class EmailAPI(model.Model):
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
         }
         self.updateMetadata(MD)
-        super().initialize(file, workdir, metadata, validateMetaData)
+        super().initialize(workdir, metadata, validateMetaData)
 
     def setProperty(self, property, objectID=0):
         # remember the mapped value
@@ -120,7 +120,7 @@ class EmailAPI(model.Model):
 # demo code
 #################################################
 # create instance of application API
-app = EmailAPI(None)
+app = EmailAPI()
 try:
     executionMetadata = {
         'Execution': {

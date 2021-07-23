@@ -1,3 +1,4 @@
+import os
 import mupif
 import mupif as mp
 import Pyro5
@@ -5,7 +6,6 @@ import meshgen
 import math
 import numpy as np
 import time as timeTime
-import os
 import logging
 
 log = logging.getLogger('ex01_models')
@@ -123,24 +123,29 @@ class ThermalModel(mupif.model.Model):
         self.b = None
         self.bp = None
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
-        super().initialize(file, workdir, metadata, validateMetaData)
+        self.input_file = None
 
-        if self.file != "":
-            self.readInput()
+    def initialize(self, workdir='', metadata={}, validateMetaData=False):
+        super().initialize(workdir, metadata, validateMetaData)
 
-    def readInput(self, tria=False):
+    def setFile(self, f, objectID=0):
+        print("   Downloading the input file..")
+        mp.PyroFile.copy(f, self.workDir + os.path.sep + 'tmin.in')
+        print("   Download finished.")
+        self.readInput(self.workDir + os.path.sep + 'tmin.in')
+
+    def readInput(self, filename, tria=False):
         self.tria = tria
         self.dirichletModelEdges = []
         self.convectionModelEdges = []
 
         lines = []
         try:
-            for line in open(self.workDir + os.path.sep + self.file, 'r'):
+            for line in open(filename, 'r'):
                 if not line.startswith('#'):
                     lines.append(line)
         except Exception as e:
-            log.info('Current working directory is %s, file is %s' % (self.workDir, self.file))
+            log.info('Current working directory is %s' % self.workDir)
             log.exception(e)
             raise
 
@@ -709,11 +714,14 @@ class ThermalNonstatModel(ThermalModel):
         self.P = None
         self.Tp = None
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
-        super().initialize(file, workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=False):
+        super().initialize(workdir, metadata, validateMetaData)
 
-        if self.file != "":
-            self.readInput(tria=True)
+    def setFile(self, f, objectID=0):
+        print("   Downloading the input file..")
+        mupif.PyroFile.copy(f, self.workDir + os.path.sep + 'tmin.in')
+        print("   Download finished.")
+        self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"
@@ -1028,11 +1036,16 @@ class MechanicalModel(mupif.model.Model):
         self.integral = 0.0
         self.T = None
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=False):
-        super().initialize(file, workdir, metadata, validateMetaData)
+        self.input_file = None
 
-        if self.file != "":
-            self.readInput()
+    def initialize(self, workdir='', metadata={}, validateMetaData=False):
+        super().initialize(workdir, metadata, validateMetaData)
+
+    def setFile(self, f, objectID=0):
+        print("   Downloading the input file..")
+        mupif.PyroFile.copy(f, self.workDir + os.path.sep + 'smin.in')
+        print("   Download finished.")
+        self.readInput(self.workDir + os.path.sep + 'smin.in')
 
     def getCriticalTimeStep(self):
         return .4*mp.U.s
@@ -1040,12 +1053,12 @@ class MechanicalModel(mupif.model.Model):
     def getAssemblyTime(self, tstep):
         return tstep.getTime()
 
-    def readInput(self):
+    def readInput(self, filename):
 
         self.dirichletModelEdges = []
         self.loadModelEdges = []
         try:
-            f = open(self.workDir + os.path.sep + self.file, 'r')
+            f = open(filename, 'r')
             # size
             line = getline(f)
             size = line.split()
@@ -1182,7 +1195,6 @@ class MechanicalModel(mupif.model.Model):
             self.temperatureField = field
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        # self.readInput()
         self.prepareTask()
         mesh = self.mesh
         if tstep and tstep.getNumber() == 0:  # assign mesh only for 0th time step

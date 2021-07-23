@@ -1,11 +1,7 @@
 import sys
-sys.path.extend(['.','..', '../..'])
-import time, random
-import numpy as np
-import os
+sys.path.extend(['.', '..', '../..'])
 
 import mupif as mp
-from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
@@ -37,9 +33,9 @@ class Example11(mp.workflow.Workflow):
         self.m1 = None
         self.m2 = None
     
-    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
     
-        super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
         self.m1 = Model1()
         self.m2 = Model2()
 
@@ -54,13 +50,11 @@ class Example11(mp.workflow.Workflow):
 
         self.m1.initialize(metadata=passingMD)
         self.m2.initialize(metadata=passingMD)
-        
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
         log.info("Solving workflow")    
         log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
-        
 
         try:
             # solve problem 1

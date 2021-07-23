@@ -18,7 +18,7 @@ ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 # daemon = pyroutil.runDaemon(host=cfg.server3, port=cfg.serverPort3)
 
 mechanical = models.MechanicalModel()
-# mechanical.initialize('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputM10.in', '.')
+# mechanical.initialize('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputM.in', '.')
 
 pyroutil.runAppServer(
     server=cfg.server3,

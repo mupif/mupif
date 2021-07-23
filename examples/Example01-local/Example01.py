@@ -1,11 +1,13 @@
-import sys, os.path
+import sys
+import os.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../..')
 
 import mupif as mp
 
 import logging
-log=mp.util.setupLogger(None)
+log = mp.util.setupLogger(None)
 # log.setLevel(logging.DEBUG)
+
 
 class Application1(mp.Model):
     """
@@ -50,8 +52,8 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True):
+        super().initialize(workdir, metadata, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         md = {
@@ -124,8 +126,8 @@ class Application2(mp.Model):
         self.contrib = mp.ConstantProperty(
             value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True):
+        super().initialize(workdir, metadata, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         md = {

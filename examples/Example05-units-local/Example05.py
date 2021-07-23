@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from builtins import str
 import sys
 import logging
 sys.path.append('../..')
@@ -48,8 +47,8 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True):
+        super().initialize(workdir, metadata, validateMetaData)
 
     def getProperty(self, propID, time, objectID=0):
         if propID == mp.PropertyID.PID_Time:
@@ -114,7 +113,7 @@ while abs(time - targetTime) > 1.e-6:
     log.debug(V.isCompatible('m'))
     
     # convert to min
-    V2=V.inUnitsOf('min')
+    V2 = V.inUnitsOf('min')
     log.debug(V2)
 
     # give only the value
@@ -129,5 +128,3 @@ else:
 
 # terminate
 app1.terminate()
-
-

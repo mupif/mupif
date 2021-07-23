@@ -74,8 +74,8 @@ class AppGridAvg(model.Model):
     #nx: int=50
     #nt: int=50
 
-    def __init__(self, file):
-        super().__init__(file=file)
+    def __init__(self):
+        super().__init__()
         self.value = 0.0
         self.count = 0.0
         self.contrib = 0.0
@@ -86,8 +86,8 @@ class AppGridAvg(model.Model):
         self.yl = 10.0
         self.nx = 50 # number of elements in x direction
         self.ny = 50 # number of elements in y direction 
-        self.dx = self.xl/self.nx;
-        self.dy = self.yl/self.ny;
+        self.dx = self.xl/self.nx
+        self.dy = self.yl/self.ny
         self.mesh = meshgen_grid2d((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
 
     def getField(self, fieldID, time):
@@ -162,8 +162,8 @@ class AppIntegrateField(model.Model):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         mesh = self.extField.getMesh()
         rule = integrationrule.GaussIntegrationRule()
-        self.volume = 0.0;
-        self.integral = 0.0;
+        self.volume = 0.0
+        self.integral = 0.0
         for c in mesh.cells():
             ngp  = rule.getRequiredNumberOfPoints(c.getGeometryType(), 2)
             pnts = rule.getIntegrationPoints(c.getGeometryType(), ngp)

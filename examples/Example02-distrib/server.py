@@ -7,9 +7,8 @@
 # sudo iptables -A INPUT -p tcp -d 0/0 -s 0/0 --dport 44382 -j ACCEPT
 
 import sys
-import argparse
 import logging
-sys.path.extend(['.','..', '../..'])
+sys.path.extend(['.', '..', '../..'])
 import mupif as mp
 log = logging.getLogger()
 mp.util.changeRootLogger('server.log')
@@ -20,7 +19,9 @@ cfg=ExConfig()
 import application2
 app2 = application2.Application2()
 
-mp.pyroutil.runAppServer(server=cfg.server, port=cfg.serverPort,
-    # cfg.serverNathost, cfg.serverNatport,
+mp.pyroutil.runAppServer(
+    server=cfg.server, port=cfg.serverPort,
     nshost=cfg.nshost, nsport=cfg.nsport,
-    appName=cfg.appName, app=app2)
+    appName=cfg.appName,
+    app=app2
+)
