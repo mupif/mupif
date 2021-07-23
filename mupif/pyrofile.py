@@ -21,11 +21,17 @@
 # Boston, MA  02110-1301  USA
 #
 
+from __future__ import annotations
+
 import zlib
 import Pyro5
+import serpent
+import sys
+import pathlib
+import typing
+import shutil
 
 
-@Pyro5.api.expose
 class PyroFile (object):
     """
     Helper Pyro class providing an access to local file. It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.
@@ -40,6 +46,7 @@ class PyroFile (object):
         :param int buffsize: optional size of file byte chunk that is to be transferred
         :param bool compressFlag: whether set to True the chunks given/set are compressed uzing zlib module, default is False
         """
+        if not mode.endswith('b'): raise ValueError("mode must be binary, ending with 'b' (not '{mode}').")
         self.filename = filename
         self.myfile = open(filename, mode)
         self.buffsize = buffsize
@@ -47,6 +54,11 @@ class PyroFile (object):
         self.compressor = None
         self.decompressor = None
 
+    @Pyro5.api.expose
+    def rewind(self):
+        self.myfile.seek(0)
+
+    @Pyro5.api.expose
     def getChunk(self):
         """
         Reads and returns next buffsize bytes from open (should be opened in read mode).
@@ -58,18 +70,18 @@ class PyroFile (object):
         if data:
             # some data read, not yet EOF
             if self.compressFlag:
-                if not self.compressor:
-                    self.compressor = zlib.compressobj()
+                if not self.compressor: self.compressor = zlib.compressobj()
                 data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
             yield data
         else:
             # no data read: EOF
             # flush compressor if necessary (used to be the terminal chunk)
             if self.compressor:
-                ret = self.compressor.flush(zlib.Z_FINISH)
-                compressor = None  # perhaps not necessary
+                ret=self.compressor.flush(zlib.Z_FINISH)
+                compressor=None # perhaps not necessary
                 yield ret
 
+    @Pyro5.api.expose
     def setChunk(self, buffer):
         """
         Writes the given chunk of data into the file, which should be opened in write mode.
@@ -77,9 +89,7 @@ class PyroFile (object):
         :param str buffer: data chunk to append
         """
         # https://pyro5.readthedocs.io/en/stable/tipstricks.html#binary-data-transfer-file-transfer
-        if type(buffer) == dict:
-            import serpent
-            buffer = serpent.tobytes(buffer)
+        if type(buffer)==dict: buffer=serpent.tobytes(buffer)
         if self.compressFlag:
             if not self.decompressor:
                 self.decompressor = zlib.decompressobj()
@@ -87,6 +97,7 @@ class PyroFile (object):
         else:
             self.myfile.write(buffer)
 
+    @Pyro5.api.expose
     def setBuffSize(self, buffSize):
         """
         Allows to set the receiver buffer size.
@@ -94,14 +105,42 @@ class PyroFile (object):
         """
         self.buffsize = buffSize
 
-    def setCompressionFlag(self):
+    @Pyro5.api.expose
+    def setCompressionFlag(self,value=True):
         """
         Sets the compressionFlag to True
         """
-        self.compressFlag = True
+        self.compressFlag = value
 
+    @Pyro5.api.expose
     def close(self):
         """
         Closes the associated file handle.
         """
         self.myfile.close()
+
+    # MUST be called as mp.PyroFile.copyTo(src,dst)
+    @staticmethod
+    def copyTo(
+            src: typing.Union[PyroFile,Pyro5.api.Proxy,str,pathlib.Path],
+            dst: typing.Union[PyroFile,Pyro5.api.Proxy,str,pathlib.Path],
+            compress=True
+        ):
+        '''
+        Copy the content of *src* to *dst*; any of them might be local instance of PyroFile,
+        Pyro5.api.Proxy to remote PyroFile, or *str* or *pathlib.Path*. If both are local
+        paths, fast-copy is done (without compression), otherwise the tranfer is done by
+        chunks.
+        '''
+        # fast-path if both are local files
+        if isinstance(src,(str,pathlib.Path)) and isinstance(dst,(str,pathlib.Path)):
+            shutil.copy(src,dst)
+            return
+        if isinstance(src,(str,pathlib.Path)): src=PyroFile(src,mode='rb')
+        else: src.rewind() # necessary if the file was used already
+        if isinstance(dst,(str,pathlib.Path)): dst=PyroFile(dst,mode='wb')
+        # both ends must have the same compression options
+        src.setCompressionFlag(compress)
+        dst.setCompressionFlag(compress)
+        for data in src.getChunk(): dst.setChunk(data)
+        dst.close()
