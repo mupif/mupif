@@ -55,8 +55,6 @@ class ExConfig(object):
         sys.excepthook=Pyro5.errors.excepthook
 
         # commmon attributes
-        # Password for accessing nameServer and applications
-        # self.hkey = 'mupif-secret-key'
         Pyro5.config.SSL=False
 
         # Name of job manager

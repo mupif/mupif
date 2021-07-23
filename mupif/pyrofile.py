@@ -119,9 +119,9 @@ class PyroFile (object):
         """
         self.myfile.close()
 
-    # MUST be called as mp.PyroFile.copyTo(src,dst)
+    # MUST be called as mp.PyroFile.copy(src,dst)
     @staticmethod
-    def copyTo(
+    def copy(
             src: typing.Union[PyroFile,Pyro5.api.Proxy,str,pathlib.Path],
             dst: typing.Union[PyroFile,Pyro5.api.Proxy,str,pathlib.Path],
             compress=True

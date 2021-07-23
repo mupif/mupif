@@ -34,7 +34,7 @@ import collections
 import uuid 
 from . import jobmanager
 from . import pyroutil
-from . import pyrofile
+from .pyrofile import PyroFile
 import os
 import typing
 
@@ -337,12 +337,13 @@ class SimpleJobManager (jobmanager.JobManager):
             status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
         return status
 
-    def uploadFile(self, jobID, filename, pyroFile, hkey):
+    def uploadFile(self, jobID, filename, pyroFile):
         """
         See :func:`JobManager.uploadFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
-        pyroutil.uploadPyroFile(targetFileName, pyroFile)
+        PyroFile.copy(targetFileName,pyroFile)
+        # pyroutil.uploadPyroFile(targetFileName, pyroFile)
 
     def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):
         """
@@ -350,7 +351,7 @@ class SimpleJobManager (jobmanager.JobManager):
         """
         targetFileName = self.getJobWorkDir(jobID)+os.path.sep+filename
         log.info('SimpleJobManager:getPyroFile ' + targetFileName)
-        pfile = pyrofile.PyroFile(targetFileName, mode, buffSize)
+        pfile = PyroFile(targetFileName, mode, buffSize)
         self.pyroDaemon.register(pfile)
 
         return pfile

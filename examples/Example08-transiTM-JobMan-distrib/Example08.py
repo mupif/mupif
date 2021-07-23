@@ -86,7 +86,7 @@ class Example08(workflow.Workflow):
         }
 
         pf = self.thermalJobMan.getPyroFile(self.thermal.getJobID(), "inputT.in", 'wb')
-        pyroutil.uploadPyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in', pf)
+        mp.PyroFile.copy('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in',pf)
 
         self.thermal.initialize(
             file='inputT.in',

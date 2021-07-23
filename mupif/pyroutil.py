@@ -33,7 +33,7 @@ from . import model
 from . import jobmanager
 from . import util
 from . import apierror
-from . import pyrofile
+from .pyrofile import PyroFile
 import pydantic
 log = util.setupLogger(fileName=None)
 
@@ -413,26 +413,18 @@ def allocateNextApplication(ns, jobMan):
     """
     return allocateApplicationWithJobManager(ns, jobMan)
 
-
+@deprecated.deprecated
 def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
     """
     Allows to download remote file (pyro file handle) to a local file.
 
     :param str newLocalFileName: path to a new local file on a client.
-    :param pyrofile.PyroFile pyroFile: representation of existing remote server's file
+    :param PyroFile pyroFile: representation of existing remote server's file
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    import sys
-    file = pyrofile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
-    if compressFlag:
-        pyroFile.setCompressionFlag()
-        file.setCompressionFlag()
-    for data in pyroFile.getChunk():
-        file.setChunk(data)
-    pyroFile.close()
-    file.close()
+    PyroFile.copy(pyroFile,newLocalFileName)
 
-
+@deprecated.deprecated
 def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=True):
     """
     See :func:'downloadPyroFileFromServer'
@@ -440,28 +432,20 @@ def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=True):
     downloadPyroFile(newLocalFileName, pyroFile, compressFlag)
 
 
+@deprecated.deprecated
 def uploadPyroFile(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
     """
     Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
 
     :param str clientFileName: path to existing local file on a client where we are
-    :param pyrofile.PyroFile pyroFile: represenation of remote file, this file will be created
+    :param PyroFile pyroFile: represenation of remote file, this file will be created
     :param int size: optional chunk size. The data are read and written in byte chunks of this size
     :param bool compressFlag: will activate compression during data transfer (zlib)
     """
-    file = pyrofile.PyroFile(clientFileName, 'rb', buffsize=size, compressFlag=compressFlag)
-    log.info("Uploading %s", clientFileName)
-    if compressFlag:
-        file.setCompressionFlag()
-        pyroFile.setCompressionFlag()
-        log.info("Setting compression flag on")
-    for data in file.getChunk():
-        pyroFile.setChunk(data)  # this is where the data are sent over net via Pyro
-    log.info("File transfer finished")
-    file.close()
-    pyroFile.close()
+    PyroFile.copy(clientFileName,pyroFile)
 
 
+@deprecated.deprecated
 def uploadPyroFileOnServer(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
     """
     See :func:'downloadPyroFile'

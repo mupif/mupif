@@ -35,7 +35,7 @@ class PyroFile_TestCase(unittest.TestCase):
         C=self.__class__
         pf=mp.PyroFile(C.A,'rb')
         a1=C.tmp+'/A01'
-        mp.pyroutil.downloadPyroFile(a1,pf)
+        mp.PyroFile.copy(pf,a1)
         self.assertEqual(C.Adata,open(a1,'rb').read())
     def test_pyroFile_proxied(self):
         'Fetch PyroFile content through Pyro'
@@ -44,7 +44,7 @@ class PyroFile_TestCase(unittest.TestCase):
         a2=C.tmp+'/A02'
         uri=C.daemon.register(pf)
         pfp=Pyro5.api.Proxy(uri)
-        mp.pyroutil.downloadPyroFile(a2,pfp)
+        mp.PyroFile.copy(pfp,a2)
         self.assertEqual(C.Adata,open(a2,'rb').read())
     def test_pyroFile_already_proxied(self):
         'Passing PyroFile through Pyro (autoproxy)'
@@ -56,7 +56,7 @@ class PyroFile_TestCase(unittest.TestCase):
         r=ser.loads(ser.dumps(pf))
         self.assertEqual(type(r),Pyro5.api.Proxy)
         self.assertEqual(str(r._pyroUri),str(uri))
-    def test_pyroFile_copyTo(self):
+    def test_pyroFile_copy(self):
         'Copy file between proxies'
         C=self.__class__
         a3=C.tmp+'/A03'
@@ -67,10 +67,10 @@ class PyroFile_TestCase(unittest.TestCase):
         dst=C.daemon.register(mp.PyroFile(a3,'wb'))
         dst6=C.daemon.register(mp.PyroFile(a6,'wb'))
         srcP,dstP,dstP6=Pyro5.api.Proxy(src),Pyro5.api.Proxy(dst),Pyro5.api.Proxy(dst6)
-        mp.PyroFile.copyTo(srcP,dstP,compress=True) # use existing PyroFile (via Proxy); with compression
-        mp.PyroFile.copyTo(srcP,a4,compress=False) # creates temporary ProxyFile (local); test without compression
-        mp.PyroFile.copyTo(C.A,a5) # should do a direct copy (without PyroFile)
-        mp.PyroFile.copyTo(C.A,dstP6) # copy local to remote PyroFile ("upload")
+        mp.PyroFile.copy(srcP,dstP,compress=True) # use existing PyroFile (via Proxy); with compression
+        mp.PyroFile.copy(srcP,a4,compress=False) # creates temporary ProxyFile (local); test without compression
+        mp.PyroFile.copy(C.A,a5) # should do a direct copy (without PyroFile)
+        mp.PyroFile.copy(C.A,dstP6) # copy local to remote PyroFile ("upload")
         self.assertEqual(C.Adata,open(a3,'rb').read())
         self.assertEqual(C.Adata,open(a4,'rb').read())
         self.assertEqual(C.Adata,open(a5,'rb').read())

@@ -79,9 +79,9 @@ class Example07(workflow.Workflow):
 
                 log.info("Uploading input files to servers")
                 pf = self.thermalJobMan.getPyroFile(self.thermalSolver.getJobID(), "input.in", 'wb')
-                pyroutil.uploadPyroFile("inputT.in", pf)
+                mp.PyroFile.copy("inputT.in", pf)
                 mf = self.mechanicalJobMan.getPyroFile(self.mechanicalSolver.getJobID(), "input.in", 'wb')
-                pyroutil.uploadPyroFile("inputM.in", mf)
+                mp.PyroFile.copy("inputM.in", mf)
 
                 # To be sure update only required passed metadata in models
                 passingMD = {

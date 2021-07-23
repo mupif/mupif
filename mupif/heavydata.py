@@ -354,8 +354,9 @@ import h5py
 import Pyro5.api
 # metadata support
 from .mupifobject import MupifObject
-from . import units, pyroutil, dumpable, pyrofile
+from . import units, pyroutil, dumpable
 from . import dataid
+from .pyrofile import PyroFile
 import types
 import json
 import tempfile
@@ -977,7 +978,7 @@ class HeavyDataHandle(MupifObject):
         # binary mode is necessary!
         # otherwise: remote UnicodeDecodeError somewhere, and then 
         # TypeError: a bytes-like object is required, not 'dict'
-        self.h5uri=str(daemon.register(pf:=pyrofile.PyroFile(self.h5path,mode='rb')))
+        self.h5uri=str(daemon.register(pf:=PyroFile(self.h5path,mode='rb')))
         self.pyroIds.append(pf._pyroId)
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
@@ -993,7 +994,7 @@ class HeavyDataHandle(MupifObject):
             #sys.stderr.write(f'Remote is {remote}\n')
             fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
             log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
-            pyroutil.downloadPyroFile(self.h5path,remote)
+            PyroFile.copy(remote,self.h5path)
             sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
             # local copy is not the original, the URI is no longer valid
             self.h5uri=None
