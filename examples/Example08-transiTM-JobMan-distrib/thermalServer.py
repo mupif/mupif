@@ -10,7 +10,7 @@ import models
 
 from exconfig import ExConfig
 cfg=ExConfig()
-cfg.applicationInitialFile='inputT10.in' # used?
+cfg.applicationInitialFile='inputT.in' # used?
 
 #util.changeRootLogger('thermal.log')
 

@@ -77,8 +77,8 @@ class Application1(mp.Model):
         else:
             raise apierror.APIError('Unknown property ID')
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True):
+        super().initialize(workdir, metadata, validateMetaData)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()

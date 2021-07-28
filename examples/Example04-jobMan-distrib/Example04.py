@@ -60,9 +60,8 @@ class Example04(mp.Workflow):
 
         self.registerModel(self.app1, 'app1')
 
-    def initialize(self, file='', workdir='', targetTime=1*mp.U.s, metadata={}, validateMetaData=False):
-        # FIXME: validate metadata
-        super().initialize(targetTime=targetTime, metadata=metadata,validateMetaData=validateMetaData)
+    def initialize(self, workdir='', targetTime=1*mp.U.s, metadata={}, validateMetaData=True):
+        super().initialize(targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
 
         passingMD = {
             'Execution': {

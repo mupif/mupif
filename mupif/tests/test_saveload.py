@@ -19,7 +19,7 @@ except ImportError:
 
 class TestSaveLoad(unittest.TestCase):
     def setUp(self):
-        self.app1=demo.AppGridAvg(None)
+        self.app1=demo.AppGridAvg()
         #register assertEqual operation for physicalquantities
         # self.addTypeEqualityFunc(PQ.PhysicalQuantity, self.assertphysicalquantitiesEqual)
 

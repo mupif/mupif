@@ -25,7 +25,7 @@ class TestModel1(model.Model):
         self.updateMetadata(metadata)
         
        
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
 
@@ -68,8 +68,8 @@ class TestModel2(model.Model):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(file, workdir, metadata, validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir, metadata, validateMetaData, **kwargs)
 
     def getProperty(self, propID, timestep, objectID=0):
         md = {

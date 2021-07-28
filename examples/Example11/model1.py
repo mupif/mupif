@@ -1,8 +1,8 @@
 import sys
 sys.path.extend(['..', '../..'])
-import time, random
+import time
+import random
 import numpy as np
-import os
 
 import mupif as mp
 from mupif.units import U as u
@@ -49,15 +49,13 @@ class Model1 (mp.Model):
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.grainState=None
+        self.grainState = None
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(file=file, workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
-    def get(self, propID, time, objectID=0):
-        
-
-        if propID == mp.PropertyID.PID_GrainState:
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == mp.PropertyID.PID_GrainState:
             return self.grainState
         else:
             raise mp.APIError('Unknown property ID')
@@ -68,26 +66,26 @@ class Model1 (mp.Model):
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 
         # generate random grain state
-        t0=time.time()
-        atomCounter=0
-        self.grainState=mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState,schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
-        grains=self.grainState.openData(mode='create')
+        t0 = time.time()
+        atomCounter = 0
+        self.grainState = mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavydata.sampleSchemas_json)
+        grains = self.grainState.openData(mode='create')
         grains.resize(size=2)
-        for ig,g in enumerate(grains):
-            g.getMolecules().resize(size=random.randint(5,10))
+        for ig, g in enumerate(grains):
+            g.getMolecules().resize(size=random.randint(5, 10))
             print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
-                m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-                m.getAtoms().resize(size=random.randint(30,60))
+                m.getIdentity().setMolecularWeight(random.randint(1, 10)*u.yg)
+                m.getAtoms().resize(size=random.randint(30, 60))
                 for a in m.getAtoms():
-                    a.getIdentity().setElement(random.choice(['H','N','Cl','Na','Fe']))
-                    a.getProperties().getTopology().setPosition((1,2,3)*u.nm)
-                    a.getProperties().getTopology().setVelocity((24,5,77)*u.m/u.s)
-                    struct=np.array([random.randint(1,20) for i in range(random.randint(5,20))],dtype='l')
+                    a.getIdentity().setElement(random.choice(['H', 'N', 'Cl', 'Na', 'Fe']))
+                    a.getProperties().getTopology().setPosition((1, 2, 3)*u.nm)
+                    a.getProperties().getTopology().setVelocity((24, 5, 77)*u.m/u.s)
+                    struct = np.array([random.randint(1, 20) for i in range(random.randint(5, 20))], dtype='l')
                     a.getProperties().getTopology().setStructure(struct)
-                    atomCounter+=1
+                    atomCounter += 1
         self.grainState.closeData()
-        t1=time.time()
+        t1 = time.time()
         print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         md = {
                 'Execution': {
@@ -105,5 +103,4 @@ class Model1 (mp.Model):
         return tstep.getTime()
 
     def getApplicationSignature(self):
-        return "Application1"
-
+        return "Model1"

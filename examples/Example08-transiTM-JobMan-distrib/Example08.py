@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import Pyro5
+import threading
+import time as timeT
 import sys
 import os
 sys.path.extend(['..', '../..'])
@@ -8,8 +11,7 @@ cfg=ExConfig()
 import logging
 log = logging.getLogger()
 
-import time as timeTime
-start = timeTime.time()
+start = timeT.time()
 log.info('Timer started')
 import mupif as mp
 
@@ -44,8 +46,11 @@ class Example08(workflow.Workflow):
         self.thermal = None
         self.mechanical = None
         self.thermalJobMan = None
+
+        self.daemon = Pyro5.api.Daemon()
+        threading.Thread(target=self.daemon.requestLoop).start()
     
-    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
@@ -53,9 +58,7 @@ class Example08(workflow.Workflow):
         
         try:
             self.thermal = pyroutil.allocateApplicationWithJobManager(
-                ns, self.thermalJobMan,
-                #cfg.jobNatPorts[0],
-                #pyroutil.SSHContext(sshClient=cfg.sshClient, options=cfg.options, sshHost=cfg.sshHost)
+                ns, self.thermalJobMan
             )
             log.info('Created thermal job')
         except Exception as e:
@@ -74,7 +77,7 @@ class Example08(workflow.Workflow):
         self.registerModel(self.thermal, 'thermal_8')
         self.registerModel(self.mechanical, 'mechanical_8')
 
-        super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -85,19 +88,21 @@ class Example08(workflow.Workflow):
             }
         }
 
-        pf = self.thermalJobMan.getPyroFile(self.thermal.getJobID(), "inputT.in", 'wb')
-        mp.PyroFile.copy('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT10.in',pf)
-
         self.thermal.initialize(
-            file='inputT.in',
             workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
             metadata=passingMD
         )
+        thermalInputFile = mp.PyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
+        self.daemon.register(thermalInputFile)
+        self.thermal.setFile(thermalInputFile)
+
         self.mechanical.initialize(
-            file='..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM10.in',
             workdir='.',
             metadata=passingMD
         )
+        mechanicalInputFile = mp.PyroFile('..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
+        self.daemon.register(mechanicalInputFile)
+        self.mechanical.setFile(mechanicalInputFile)
 
         # self.thermal.printMetadata()
         # self.mechanical.printMetadata()
@@ -116,12 +121,12 @@ class Example08(workflow.Workflow):
 
         self.thermal.solveStep(istep)
         f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
-        data = f.toMeshioMesh().write('T_%02d.vtk'%istep.getNumber(),binary=False)
+        data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=False)
 
         self.mechanical.setField(f)
         sol = self.mechanical.solveStep(istep) 
         f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
-        data = f.toMeshioMesh().write('M_%02d.vtk'%istep.getNumber(),binary=False)
+        data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=False)
 
         logging.getLogger().setLevel(level0)
 
@@ -133,6 +138,7 @@ class Example08(workflow.Workflow):
         return min(self.thermal.getCriticalTimeStep(), self.mechanical.getCriticalTimeStep())
 
     def terminate(self):
+        self.daemon.shutdown()
         if self.thermal is not None:
             self.thermal.terminate()
         if self.thermalJobMan is not None:
@@ -165,4 +171,3 @@ if __name__ == '__main__':
     demo.solve()
     demo.printMetadata()
     demo.terminate()
-

@@ -1,10 +1,10 @@
+import Pyro5
 import sys
 sys.path.append('../..')
 sys.path.append('..')
 import models
 from mupif import *
 import mupif as mp
-import time
 import logging
 
 log = logging.getLogger()
@@ -39,9 +39,8 @@ class Example06(workflow.Workflow):
         self.registerModel(self.thermalSolver, 'thermal')
         self.registerModel(self.mechanicalSolver, 'mechanical')
 
-    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
-        super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata,
-                                          validateMetaData=validateMetaData)
+    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+        super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
 
         passingMD = {
             'Execution': {
@@ -51,9 +50,21 @@ class Example06(workflow.Workflow):
             }
         }
 
-        self.thermalSolver.initialize('inputT10.in', '.', metadata=passingMD)
-        self.mechanicalSolver.initialize('inputM10.in', '.', metadata=passingMD)
-        #self.mechanicalSolver.printMetadata(nonEmpty=False)
+        self.thermalSolver.initialize(
+            workdir='.',
+            metadata=passingMD
+        )
+        thermalInputFile = mp.PyroFile('inputT.in', mode="rb")
+        # self.daemon.register(thermalInputFile)
+        self.thermalSolver.setFile(thermalInputFile)
+
+        self.mechanicalSolver.initialize(
+            workdir='.',
+            metadata=passingMD
+        )
+        mechanicalInputFile = mp.PyroFile('inputM.in', mode="rb")
+        # self.daemon.register(mechanicalInputFile)
+        self.mechanicalSolver.setFile(mechanicalInputFile)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.thermalSolver.solveStep(istep, stageID, runInBackground)

@@ -1,10 +1,10 @@
-import os, sys
-sys.path+=['..']
+import sys
+sys.path += ['..', '../..']
 from exconfig import ExConfig
 import models
 import mupif as mp
 
-cfg=ExConfig()
+cfg = ExConfig()
 
 # locate nameserver
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
