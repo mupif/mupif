@@ -29,7 +29,7 @@ __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
 _branch = 'dev'
 
-import os, sys
+import os, sys, importlib
 
 #
 # import everything recursively, inject into this module
@@ -93,7 +93,7 @@ from .bbox import BBox
 from .cell import Dumpable, Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahedron_3d_lin, Brick_3d_lin
 from .constantfield import ConstantField
 from .dataid import FieldID, ParticleSetID, FunctionID, PropertyID
-from .dumpable import NumpyArray, Dumpable
+from .dumpable import NumpyArray, MupifBaseModel, Dumpable
 from .field import FieldID, FieldType, Field
 from .function import Function
 from .heavydata import HeavyDataHandle
@@ -102,14 +102,14 @@ from .jobmanager import JobManException, JobManNoResourcesException, JobManager,
 from .localizer import Localizer
 from .mesh import MeshIterator, Mesh, UnstructuredMesh
 from .model import PropertyID, FieldID, FunctionID, ParticleSetID, Model, RemoteModel
-from .mupifobject import MupifObject
+from .mupifobject import MupifObjectBase, MupifObject
 from .mupifquantity import ValueType, MupifQuantity
 from .octree import Octant, Octree
 from .operatorutil import OperatorInteraction, OperatorEMailInteraction
 from .particle import Particle, ParticleSet
 from .property import Property, ConstantProperty
 from .pyrofile import PyroFile
-from .pyroutil import PyroNetConf, SSHContext, SshTunnel
+from .pyroutil import PyroNetConf
 from .remoteapprecord import RemoteAppRecord
 from .simplejobmanager import SimpleJobManager
 from .timer import Timer
@@ -118,7 +118,7 @@ from .units import UnitProxy
 from .vertex import Dumpable, Vertex
 from .workflow import Workflow
 from .workflowmonitor import WorkflowMonitor
-__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','FieldID','ParticleSetID','FunctionID','PropertyID','dumpable','NumpyArray','Dumpable','field','FieldID','FieldType','Field','function','Function','heavydata','HeavyDataHandle','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','PropertyID','FieldID','FunctionID','ParticleSetID','Model','RemoteModel','mupifobject','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','SSHContext','SshTunnel','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
+__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','FieldID','ParticleSetID','FunctionID','PropertyID','dumpable','NumpyArray','MupifBaseModel','Dumpable','field','FieldID','FieldType','Field','function','Function','heavydata','HeavyDataHandle','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','PropertyID','FieldID','FunctionID','ParticleSetID','Model','RemoteModel','mupifobject','MupifObjectBase','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
 
 
 
@@ -160,6 +160,9 @@ def _registerOther():
         if daemon:=getattr(f,'_pyroDaemon'): return daemon.uriFor(f)
         if defaultPyroDaemon: return defaultPyroDaemon.register(f)
         raise RuntimeError(f'{f:s} has no Pyro Damon attached and mupif.defaultPyroDaemon is not defined.')
+
+    Pyro5.api.register_class_to_dict(type,lambda t: {'__class__':'type','__module__':t.__module__,'__name__':t.__name__})
+    Pyro5.api.register_dict_to_class('type',lambda name,dic: getattr(importlib.import_module(dic['__module__']),dic['__name__']))
 
     # does not work, as explained in https://github.com/mupif/mupif/issues/32
     #Pyro5.api.register_class_to_dict(PyroFile,lambda f: {'__class__':'mupif.PyroFile','URI':str(_tryExpose(f))})

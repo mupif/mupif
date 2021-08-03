@@ -66,8 +66,30 @@ if 0:
             return super().__init__(**kwargs)
 
 
+
+class MupifBaseModel(pydantic.BaseModel):
+    '''Basic configuration of pydantic.BaseModel, common to Dumpable and also MupifObjectBase'''
+    class Config:
+        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
+        # see https://github.com/samuelcolvin/pydantic/discussions/2457
+        copy_on_model_validation = False
+        # this unfortunately also allows arbitrary **kw passed to the ctor
+        # but we filter that in the custom __init__ function just below
+        # see https://github.com/samuelcolvin/pydantic/discussions/2459
+        extra='allow'
+
+    def __init__(self,*args,**kw):
+        # print('### __init__ with '+str(kw))
+        if args: raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
+        # print(kw.keys())
+        for k in kw.keys():
+            if k not in self.__class__.__fields__:
+                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
+        super().__init__(*args,**kw)
+
+
 @Pyro5.api.expose
-class Dumpable(pydantic.BaseModel):
+class Dumpable(MupifBaseModel):
     '''
     Base class for all serializable (dumpable) objects; all objects which are sent over the wire via python must be recursively dumpable, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
 
@@ -93,15 +115,6 @@ class Dumpable(pydantic.BaseModel):
         # see https://github.com/samuelcolvin/pydantic/discussions/2459
         extra='allow'
 
-    def __init__(self,*args,**kw):
-        # print('### __init__ with '+str(kw))
-        if args: raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
-        # print(kw.keys())
-        for k in kw.keys():
-            if k not in self.__class__.__fields__:
-                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
-        super().__init__(*args,**kw)
-
     # don't pickle attributes starting with underscore
     def __getstate__(self):
         s=super().__getstate__()
@@ -109,7 +122,6 @@ class Dumpable(pydantic.BaseModel):
         for k in list(sd.keys()):
             if k.startswith('_'): sd[k]=None # del sd[k]
         return s
-
 
     def to_dict(self,clss=None):
         def _handle_attr(attr,val,clssName):

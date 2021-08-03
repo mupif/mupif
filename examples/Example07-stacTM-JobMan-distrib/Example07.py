@@ -93,7 +93,7 @@ class Example07(workflow.Workflow):
                     workdir=self.thermalJobMan.getJobWorkDir(self.thermalSolver.getJobID()),
                     metadata=passingMD
                 )
-                thermalInputFile = mp.PyroFile('./inputT.in', mode="rb")
+                thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
                 self.daemon.register(thermalInputFile)
                 self.thermalSolver.setFile(thermalInputFile)
 
@@ -101,7 +101,7 @@ class Example07(workflow.Workflow):
                     workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
                     metadata=passingMD
                 )
-                mechanicalInputFile = mp.PyroFile('./inputM.in', mode="rb")
+                mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
                 self.daemon.register(mechanicalInputFile)
                 self.mechanicalSolver.setFile(mechanicalInputFile)
 

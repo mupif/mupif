@@ -92,7 +92,7 @@ class Example08(workflow.Workflow):
             workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
             metadata=passingMD
         )
-        thermalInputFile = mp.PyroFile('..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
+        thermalInputFile = mp.PyroFile(filename = '..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.thermal.setFile(thermalInputFile)
 
@@ -100,7 +100,7 @@ class Example08(workflow.Workflow):
             workdir='.',
             metadata=passingMD
         )
-        mechanicalInputFile = mp.PyroFile('..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
+        mechanicalInputFile = mp.PyroFile(filename = '..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.mechanical.setFile(mechanicalInputFile)
 

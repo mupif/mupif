@@ -30,27 +30,22 @@ import sys
 import pathlib
 import typing
 import shutil
+from .mupifobject import MupifObjectBase
 
 
-class PyroFile (object):
+class PyroFile (MupifObjectBase):
     """
-    Helper Pyro class providing an access to local file. It allows to receive/send the file content from/to remote site (using Pyro) in chunks of configured size.
+    Helper class wrapping file functionality, allowing copying files (both remote and local).
     """
+    filename: str
+    mode: str
+    buffsize: int=2**20
+    compressFlag: bool=False
 
-    def __init__(self, filename, mode, buffsize=2**20, compressFlag=False):
-        """
-        Constructor. Opens the corresponding file handle.
-
-        :param str filename: file name to open
-        :param str mode: file mode ("r" opens for reading, "w" opens for writting, "rb" read binary, "wb" write binary)
-        :param int buffsize: optional size of file byte chunk that is to be transferred
-        :param bool compressFlag: whether set to True the chunks given/set are compressed uzing zlib module, default is False
-        """
-        if not mode.endswith('b'): raise ValueError("mode must be binary, ending with 'b' (not '{mode}').")
-        self.filename = filename
-        self.myfile = open(filename, mode)
-        self.buffsize = buffsize
-        self.compressFlag = compressFlag
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        if self.mode not in ('rb','wb'): raise ValueError(f"mode must be 'rb' or 'wb' (not '{self.mode}').")
+        self.myfile = open(self.filename, self.mode)
         self.compressor = None
         self.decompressor = None
 
@@ -136,9 +131,9 @@ class PyroFile (object):
         if isinstance(src,(str,pathlib.Path)) and isinstance(dst,(str,pathlib.Path)):
             shutil.copy(src,dst)
             return
-        if isinstance(src,(str,pathlib.Path)): src=PyroFile(src,mode='rb')
+        if isinstance(src,(str,pathlib.Path)): src=PyroFile(filename=src,mode='rb')
         else: src.rewind() # necessary if the file was used already
-        if isinstance(dst,(str,pathlib.Path)): dst=PyroFile(dst,mode='wb')
+        if isinstance(dst,(str,pathlib.Path)): dst=PyroFile(filename=dst,mode='wb')
         # both ends must have the same compression options
         src.setCompressionFlag(compress)
         dst.setCompressionFlag(compress)

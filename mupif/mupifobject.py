@@ -27,23 +27,24 @@ import json
 import jsonschema
 import pprint
 import copy
-from . import dumpable
+import typing
+from .dumpable import Dumpable, MupifBaseModel
 
 import pydantic
 
 
 @Pyro5.api.expose
-class MupifObject(dumpable.Dumpable):
+class MupifObjectBase(MupifBaseModel):
     """
-    An abstract class representing a base Mupif object.
-
-    The purpose of this class is to represent any mupif object;
-    it introduce basic methods for getting and setting object metatdata.
-
-    .. automethod:: __init__
+    Class representing a base Mupif object, with metadata.
     """
 
     metadata: dict = pydantic.Field(default_factory=dict)
+
+
+    @pydantic.validate_arguments
+    def isInstance(self,classinfo: typing.Union[type,typing.Tuple[type,...]]):
+        return isinstance(self,classinfo)
 
     def getMetadata(self, key):
         """
@@ -181,3 +182,11 @@ class MupifObject(dumpable.Dumpable):
     def toJSONFile(self, filename, indent=4):
         with open(filename, "w") as f:
             json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
+
+
+@Pyro5.api.expose
+class MupifObject(MupifObjectBase,Dumpable):
+    '''Base class for objects which have metadata and are dumpable (serializable).'''
+    pass
+
+

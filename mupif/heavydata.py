@@ -978,7 +978,7 @@ class HeavyDataHandle(MupifObject):
         # binary mode is necessary!
         # otherwise: remote UnicodeDecodeError somewhere, and then 
         # TypeError: a bytes-like object is required, not 'dict'
-        self.h5uri=str(daemon.register(pf:=PyroFile(self.h5path,mode='rb')))
+        self.h5uri=str(daemon.register(pf:=PyroFile(filename=self.h5path,mode='rb')))
         self.pyroIds.append(pf._pyroId)
     def __init__(self,**kw):
         super().__init__(**kw) # this calls the real ctor
