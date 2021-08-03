@@ -34,9 +34,9 @@ class Field_TestCase(unittest.TestCase):
         self.mesh4.setup([mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(2.,0.,2.)), mkVertex(2,2,(0.,5.,3.)),mkVertex(3,3,(3.,3.,2.)),mkVertex(4,4,(8.,15.,0.))], [cell.Tetrahedron_3d_lin(mesh=self.mesh4,number=1,label=1,vertices=(0,1,2,3)),cell.Tetrahedron_3d_lin(mesh=self.mesh4,number=2,label=2,vertices=(1,2,3,4))])
         
         self.f1=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=13*mupif.Q.s,quantity=[(0,),(12,),(175,),(94,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
-        self.f2=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Strain,valueType=ValueType.Vector,time=128*mupif.Q.s,quantity=[(3,6),(2,8),(2,3)]*mupif.U['kg/m/s**2'],fieldType=FieldType.FT_vertexBased)
+        self.f2=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Strain,valueType=ValueType.Vector,time=128*mupif.Q.s,quantity=[(3,6),(2,8),(2,3)]*mupif.U['kg/(m*s**2)'],fieldType=FieldType.FT_vertexBased)
 
-        self.f3=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Stress,valueType=ValueType.Tensor,time=66*mupif.Q.s,quantity=[(3,6,4),(2,8,5),(2,3,6)]*mupif.U['kg/m/s**2'],fieldType=FieldType.FT_vertexBased)
+        self.f3=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Stress,valueType=ValueType.Tensor,time=66*mupif.Q.s,quantity=[(3,6,4),(2,8,5),(2,3,6)]*mupif.U['kg/(m*s**2)'],fieldType=FieldType.FT_vertexBased)
 
         self.f4=field.Field(mesh=self.mesh4,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(6,),(16,),(36,),(33,),(32,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
         self.f5=field.Field(mesh=self.mesh3,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=13*mupif.Q.s,quantity=[(3,),(5,),(4,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
@@ -121,7 +121,7 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getVertexValue(3).getValue(),(5,))
     def test_getUnit(self):
         self.assertEqual(self.f1.getUnit(),mupif.U.m)
-        self.assertEqual(self.f2.getUnit(),mupif.U['kg/m/s**2'])
+        self.assertEqual(self.f2.getUnit(),mupif.U['kg/(m*s**2)'])
         
     def test_merge(self):
         self.f5.merge(self.f1)

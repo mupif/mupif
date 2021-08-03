@@ -17,7 +17,7 @@ class Property_TestCase(unittest.TestCase):
         
         self.p1=property.ConstantProperty(value=16.,propID=PropertyID.PID_Concentration,valueType=ValueType.Scalar,unit=mp.U['m'],time=self.t1,objectID=1)
         self.p2=property.ConstantProperty(value=7.,propID=PropertyID.PID_Velocity,valueType=ValueType.Vector,unit=mp.U['m/s'],time=self.t2,objectID=16)
-        self.p3=property.ConstantProperty(value=9.,propID=PropertyID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=mp.U['kg/m/s**2'],time=self.t3, objectID=8)
+        self.p3=property.ConstantProperty(value=9.,propID=PropertyID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=mp.U['kg/(m*s**2)'],time=self.t3, objectID=8)
 
     def test_getValue(self):
         res=self.p1.getValue(6*mp.U.s)
@@ -53,7 +53,7 @@ class Property_TestCase(unittest.TestCase):
     def test_getUnit(self):
         self.assertTrue(self.p1.getUnit().isCompatible(mp.U['m']))
         self.assertTrue(self.p2.getUnit().isCompatible(mp.U['m/s']))
-        self.assertTrue(self.p3.getUnit().isCompatible(mp.U['kg/m/s**2']))
+        self.assertTrue(self.p3.getUnit().isCompatible(mp.U['kg/(m*s**2)']))
         
     def test_dumpToLocalFile(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -75,7 +75,7 @@ class Property_TestCase(unittest.TestCase):
             self.assertEqual(self.res.getTime(),9*mp.U.s)
             self.assertEqual(self.res.getPropertyID(),PropertyID.PID_ParticleSigma)
             self.assertEqual(self.res.getObjectID(),8)
-            self.assertTrue(self.p3.getUnit().isCompatible(mp.U['kg/m/s**2']))
+            self.assertTrue(self.p3.getUnit().isCompatible(mp.U['kg/(m*s**2)']))
         
 # python test_Property.py for stand-alone test being run
 if __name__=='__main__': unittest.main()
