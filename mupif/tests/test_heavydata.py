@@ -155,10 +155,7 @@ class Heavydata_TestCase(unittest.TestCase):
 
     def test_20_daemon_start(self):
         C=self.__class__
-        C.daemon=Pyro5.api.Daemon()
-        #C.daemonRun=True
-        th=threading.Thread(target=C.daemon.requestLoop) # ,kwargs=dict(loopCondition=lambda: C.daemonRun))
-        th.start()
+        C.daemon=mp.pyroutil.getDaemon()
     def test_21_publish(self):
         C=self.__class__
         C.uri=C.daemon.register(handle:=mp.HeavyDataHandle(h5path=C.h5path,h5group='test',mode='readonly'))
@@ -255,13 +252,5 @@ class Heavydata_TestCase(unittest.TestCase):
         handle.closeData()
         # so check that here; note however that the handle does *not* unregister itself
         for i in ids[1:]: self.assertRaises(Pyro5.errors.DaemonError,lambda i=i: C.daemon.proxyFor(i))
-
-        
-    def test_99_daemon_stop(self):
-        C=self.__class__
-        sys.stderr.write('Stopping daemon\n')
-        C.daemon.shutdown()
-        #C.daemonRun=False
-        #C.daemonThread.join()
 
 

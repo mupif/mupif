@@ -128,6 +128,26 @@ def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     return ns
 
 
+_daemon=None
+def getDaemon() -> Pyro5.api.Daemon:
+    '''
+    Returns a daemon which is bound to this process lifetime (running in a separate thread). The daemon
+    is cached, i.e. the first call will construct the daemon and subsequent calls will only return
+    the already running daemon.
+
+    Do *not* call ``shutdown`` on the daemon returned (unless you also set ``pyroutil._daemon=None``)
+    as this would break the caching involved.
+    '''
+    global _daemon
+    if _daemon is not None: return _daemon
+    _daemon=Pyro5.api.Daemon()
+    # daemon=True will kill the thread when the process (non-daemon threads) exit
+    # thus daemon thread will not shutdown gracefully, but that is okay for us
+    th=threading.Thread(target=_daemon.requestLoop,daemon=True)
+    th.start()
+    return _daemon
+
+
 def getNSmetadata(ns, name):
     """
     Returns name server metadata for given entry identified by name

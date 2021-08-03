@@ -15,9 +15,7 @@ import astropy.units as u
 class PyroFile_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.daemon=Pyro5.api.Daemon()
-        th=threading.Thread(target=cls.daemon.requestLoop)
-        th.start()
+        cls.daemon=mp.pyroutil.getDaemon()
         cls.tmpdir=tempfile.TemporaryDirectory()
         cls.tmp=cls.tmpdir.name
         cls.A=cls.tmp+'/A'
@@ -25,11 +23,6 @@ class PyroFile_TestCase(unittest.TestCase):
         f=open(cls.A,'wb')
         f.write(cls.Adata)
         f.close()
-    @classmethod
-    def tearDownClass(cls):
-        cls.daemon.shutdown()
-        try: cls.tmpdir.cleanup()
-        except: pass # this is for windows
     def test_pyroFile_local(self):
         'Fetch PyroFile content directly'
         C=self.__class__
@@ -81,14 +74,7 @@ class PyroFile_TestCase(unittest.TestCase):
 class MupifObject_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.daemon=Pyro5.api.Daemon()
-        th=threading.Thread(target=cls.daemon.requestLoop)
-        th.start()
-    @classmethod
-    def tearDownClass(cls):
-        cls.daemon.shutdown()
-        try: cls.tmpdir.cleanup()
-        except: pass # this is for windows
+        cls.daemon=mp.pyroutil.getDaemon() # Pyro5.api.Daemon()
     def test_isInstance(self):
         'Remote/local call of MupifObjectBase.isInstance'
         C=self.__class__
@@ -101,4 +87,3 @@ class MupifObject_TestCase(unittest.TestCase):
         self.assertFalse(obj.isInstance(str))
         self.assertTrue(obj.isInstance(mp.MupifObjectBase))
         self.assertTrue(obj.isInstance((mp.MupifObjectBase,int)))
-
