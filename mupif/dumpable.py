@@ -235,16 +235,16 @@ class Dumpable(MupifBaseModel):
         return pickle.load(open(filename, 'rb'))
 
 
-def enum_to_dict(e): return {'__class__': e.__class__.__module__+'.'+e.__class__.__name__, 'value': e.value}
+def enum_to_dict(e): return {'__class__': e.__class__.__module__+'.'+e.__class__.__name__, 'name': e.name}
 
 
-def enum_from_dict(clss, dic): return clss(dic.pop('value'))
+def enum_from_dict(clss, dic): return clss(getattr(clss,dic.pop('name')))
 
 
 def enum_from_dict_with_name(modClassName, dic):
     mod, className = modClassName.rsplit('.', 1)
     clss = getattr(importlib.import_module(mod), className)
-    return clss(dic.pop('value'))
+    return clss(getattr(clss,dic.pop('name')))
 
 
 if __name__ == '__main__':
