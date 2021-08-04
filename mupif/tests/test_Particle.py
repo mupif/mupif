@@ -4,8 +4,8 @@ from mupif import *
 
 class ParticleSet_TestCase(unittest.TestCase):
     def setUp(self):
-        self.ps = particle.ParticleSet (id=ParticleSetID.PSID_ParticlePositions, size=5, xc=(0,1,2,3,4), yc=(1,2,3,4,5), zc=(2,3,4,5,6),attributes=dict(code=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta")))
-        self.ps1 = particle.ParticleSet (id=ParticleSetID.PSID_ParticlePositions, size=5, xc=(0,1,2,3,4), yc=(1,2,3,4,5), zc=(2,3,4,5,6), rvesize = 4, inclusionsize=0.5, attributes=dict(code=(10,11,12,13,14),colour=("red", "green", "gray", "black", "magenta")))
+        self.ps = particle.ParticleSet (id=DataID.PSID_ParticlePositions, size=5, xc=(0,1,2,3,4), yc=(1,2,3,4,5), zc=(2,3,4,5,6),attributes=dict(code=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta")))
+        self.ps1 = particle.ParticleSet (id=DataID.PSID_ParticlePositions, size=5, xc=(0,1,2,3,4), yc=(1,2,3,4,5), zc=(2,3,4,5,6), rvesize = 4, inclusionsize=0.5, attributes=dict(code=(10,11,12,13,14),colour=("red", "green", "gray", "black", "magenta")))
 
     def tearDown(self):
         self.ps=None
@@ -34,7 +34,7 @@ class ParticleSet_TestCase(unittest.TestCase):
     
 class Particle_TestCase(unittest.TestCase):
     def setUp(self):
-        self.ps = particle.ParticleSet (id=ParticleSetID.PSID_ParticlePositions, size=5, xc=(0,1,2,3,4), yc=(1,2,3,4,5), zc=(2,3,4,5,6), attributes=dict(code=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta")))
+        self.ps = particle.ParticleSet (id=DataID.PSID_ParticlePositions, size=5, xc=(0,1,2,3,4), yc=(1,2,3,4,5), zc=(2,3,4,5,6), attributes=dict(code=(10,11,12,13,14), colour=("red", "green", "gray", "black", "magenta")))
 
     def tearDown(self):
         self.ps=None

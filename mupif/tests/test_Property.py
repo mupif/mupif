@@ -15,9 +15,9 @@ class Property_TestCase(unittest.TestCase):
         self.t3 = 9*mp.U.s
 
         
-        self.p1=property.ConstantProperty(value=16.,propID=PropertyID.PID_Concentration,valueType=ValueType.Scalar,unit=mp.U['m'],time=self.t1,objectID=1)
-        self.p2=property.ConstantProperty(value=7.,propID=PropertyID.PID_Velocity,valueType=ValueType.Vector,unit=mp.U['m/s'],time=self.t2,objectID=16)
-        self.p3=property.ConstantProperty(value=9.,propID=PropertyID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=mp.U['kg/(m*s**2)'],time=self.t3, objectID=8)
+        self.p1=property.ConstantProperty(value=16.,propID=DataID.PID_Concentration,valueType=ValueType.Scalar,unit=mp.U['m'],time=self.t1,objectID=1)
+        self.p2=property.ConstantProperty(value=7.,propID=DataID.PID_Velocity,valueType=ValueType.Vector,unit=mp.U['m/s'],time=self.t2,objectID=16)
+        self.p3=property.ConstantProperty(value=9.,propID=DataID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=mp.U['kg/(m*s**2)'],time=self.t3, objectID=8)
 
     def test_getValue(self):
         res=self.p1.getValue(6*mp.U.s)
@@ -41,9 +41,9 @@ class Property_TestCase(unittest.TestCase):
         self.assertEqual(self.p3.getTime().inUnitsOf('s').getValue(),9)  
         
     def test_getPropertyID(self):
-        self.assertEqual(self.p1.getPropertyID(),PropertyID.PID_Concentration)
-        self.assertEqual(self.p2.getPropertyID(),PropertyID.PID_Velocity)
-        self.assertEqual(self.p3.getPropertyID(),PropertyID.PID_ParticleSigma)
+        self.assertEqual(self.p1.getPropertyID(),DataID.PID_Concentration)
+        self.assertEqual(self.p2.getPropertyID(),DataID.PID_Velocity)
+        self.assertEqual(self.p3.getPropertyID(),DataID.PID_ParticleSigma)
         
     def test_getObjectID(self):
         self.assertEqual(self.p1.getObjectID(),1)
@@ -63,7 +63,7 @@ class Property_TestCase(unittest.TestCase):
             self.assertEqual(self.res.getValue(self.t1),16.)
             self.assertEqual(self.res.getValueType(),ValueType.Scalar)
             self.assertEqual(self.res.getTime(),6*mp.U.s)
-            self.assertEqual(self.res.getPropertyID(),PropertyID.PID_Concentration)
+            self.assertEqual(self.res.getPropertyID(),DataID.PID_Concentration)
             self.assertEqual(self.res.getObjectID(),1)
             self.assertTrue(self.res.getUnit().isCompatible(mp.U['m']))
             
@@ -73,7 +73,7 @@ class Property_TestCase(unittest.TestCase):
             self.assertEqual(self.res.getValue(self.t3),9.)
             self.assertEqual(self.res.getValueType(),ValueType.Tensor)
             self.assertEqual(self.res.getTime(),9*mp.U.s)
-            self.assertEqual(self.res.getPropertyID(),PropertyID.PID_ParticleSigma)
+            self.assertEqual(self.res.getPropertyID(),DataID.PID_ParticleSigma)
             self.assertEqual(self.res.getObjectID(),8)
             self.assertTrue(self.p3.getUnit().isCompatible(mp.U['kg/(m*s**2)']))
         

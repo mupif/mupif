@@ -31,7 +31,7 @@ class Example07(workflow.Workflow):
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
+                {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
         super().__init__(metadata=MD)
@@ -117,17 +117,17 @@ class Example07(workflow.Workflow):
         
         self.thermalSolver.solveStep(istep)
         log.info("Thermal problem solved")
-        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
+        uri = self.thermalSolver.getFieldURI(DataID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri))
         field = pyroutil.getObjectFromURI(uri)
-        self.mechanicalSolver.setField(field)
+        self.mechanicalSolver.set(field)
         log.info("Solving mechanical problem")
         self.mechanicalSolver.solveStep(istep)
-        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTargetTime())))
-        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTime())
+        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(DataID.FID_Displacement, istep.getTargetTime())))
+        displacementField = self.mechanicalSolver.get(DataID.FID_Displacement, istep.getTime())
 
         # save results as vtk
-        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
+        temperatureField = self.thermalSolver.get(DataID.FID_Temperature, istep.getTime())
         temperatureField.toMeshioMesh().write('temperatureField.vtk')
         displacementField.toMeshioMesh().write('displacementField.vtk')
         log.info("Time consumed %f s" % (timeT.time()-start))

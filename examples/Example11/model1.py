@@ -44,7 +44,7 @@ class Model1 (mp.Model):
             },
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.MiscID.ID_GrainState', 'Name': 'Grain state',
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Sample Random grain state', 'Units': 'None', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
@@ -55,20 +55,20 @@ class Model1 (mp.Model):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
     def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.PropertyID.PID_GrainState:
+        if objectTypeID == mp.DataID.PID_GrainState:
             return self.grainState
         else:
             raise mp.APIError('Unknown property ID')
 
-    def setProperty(self, prop, objectID=0):
-        raise mp.APIError('Unknown property ID')
+    def set(self, obj, objectID=0):
+        raise mp.APIError('Unknown DataID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 
         # generate random grain state
         t0 = time.time()
         atomCounter = 0
-        self.grainState = mp.heavydata.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavydata.sampleSchemas_json)
+        self.grainState = mp.heavydata.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavydata.sampleSchemas_json)
         grains = self.grainState.openData(mode='create')
         grains.resize(size=2)
         for ig, g in enumerate(grains):

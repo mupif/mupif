@@ -43,12 +43,12 @@ class Model2 (mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.MiscID.ID_GrainState', 'Name': 'Grain state',
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Initial grain state', 'Units': 'None',
                  'Origin': 'Simulated', 'Required': True}
             ],
             'Outputs': [
-                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.MiscID.ID_GrainState', 'Name': 'Grain state',
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Updated grain state with dopant', 'Units': 'None', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
@@ -60,14 +60,14 @@ class Model2 (mp.Model):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
     def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.PropertyID.PID_GrainState:
+        if objectTypeID == mp.DataID.PID_GrainState:
             return self.outputGrainState
         else:
             raise mp.APIError('Unknown property ID')
 
     def set(self, prop, objectID=0):
         if type(prop) == mp.heavydata.HeavyDataHandle:  # todo: test some ID as well
-            if prop.id == mp.dataid.MiscID.ID_GrainState:
+            if prop.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = prop
         else:
             raise mp.APIError('Unknown property ID')
@@ -86,14 +86,14 @@ class Model2 (mp.Model):
         elif 1:
             # transfer via inject (serializes into RAM, network-transparent)
             inGrains = self.inputGrainState.openData(mode='readonly')
-            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
+            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
             outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
             outGrains.inject(inGrains)
         else:
             # transfer via explicit loop over data
             inGrains = self.inputGrainState.openData(mode='readonly')
-            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.MiscID.ID_GrainState)
+            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
             outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
             t0=time.time()

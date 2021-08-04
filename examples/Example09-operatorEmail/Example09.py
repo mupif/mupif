@@ -60,20 +60,21 @@ class EmailAPI(model.Model):
                 'Robustness': 'Unknown'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True}],
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Demo_Value', 'Name': 'Demo value',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Demo_Value', 'Name': 'Demo value',
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
         }
         self.updateMetadata(MD)
         super().initialize(workdir, metadata, validateMetaData)
 
-    def setProperty(self, property, objectID=0):
-        # remember the mapped value
-        self.inputs[str(property.propID)] = property
-        self.inputs[self.key] = 0.0
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.Property):
+            # remember the mapped value
+            self.inputs[str(obj.propID)] = property
+            self.inputs[self.key] = 0.0
 
-    def getProperty(self, propID, time, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -83,12 +84,12 @@ class EmailAPI(model.Model):
         }
         if self.outputs:
             # unpack & process outputs (expected json encoded data)
-            if propID == PropertyID.PID_Demo_Value:
+            if objectTypeID == DataID.PID_Demo_Value:
                 if self.key in self.outputs:
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' % (self.key, value))
                     return property.ConstantProperty(
-                        value=value, propID=propID, valueType=ValueType.Scalar, unit=mp.U.none, time=time, objectID=0, metadata=md)
+                        value=value, propID=objectTypeID, valueType=ValueType.Scalar, unit=mp.U.none, time=time, objectID=0, metadata=md)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None
@@ -133,14 +134,14 @@ try:
     app.initialize(metadata=executionMetadata)
 
     # CumulativeConcentration property on input
-    p = property.ConstantProperty(value=0.1, propID=PropertyID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mp.U['kg/m**3'])
+    p = property.ConstantProperty(value=0.1, propID=DataID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mp.U['kg/m**3'])
     # set concentration as input
-    app.setProperty(p)
+    app.set(p)
     # solve (involves operator interaction)
     tstep = timestep.TimeStep(time=0.0, dt=0.1, targetTime=1.0, unit=mp.U.s, number=1)
     app.solveStep (tstep)
     # get result of the simulation
-    r = app.getProperty(PropertyID.PID_Demo_Value, tstep.getTime())
+    r = app.get(DataID.PID_Demo_Value, tstep.getTime())
     log.info("Application API return value is %f", r.getValue())
     # terminate app
 

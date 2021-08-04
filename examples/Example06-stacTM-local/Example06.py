@@ -24,9 +24,9 @@ class Example06(workflow.Workflow):
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Temperature', 'Name': 'Temperature field',
+                {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Temperature', 'Name': 'Temperature field',
                  'Description': 'Temperature field on 2D domain', 'Units': 'degC'},
-                {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
+                {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}
             ]
         }
@@ -68,14 +68,14 @@ class Example06(workflow.Workflow):
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.thermalSolver.solveStep(istep, stageID, runInBackground)
-        self.mechanicalSolver.setField(self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime()))
+        self.mechanicalSolver.set(self.thermalSolver.get(DataID.FID_Temperature, istep.getTime()))
         self.mechanicalSolver.solveStep(istep, stageID, runInBackground)
 
-    def getField(self, fieldID, time, objectID=0):
-        if fieldID == FieldID.FID_Temperature:
-            return self.thermalSolver.getField(fieldID, time, objectID)
-        elif fieldID == FieldID.FID_Displacement:
-            return self.mechanicalSolver.getField(fieldID, time, objectID)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == DataID.FID_Temperature:
+            return self.thermalSolver.get(objectTypeID, time, objectID)
+        elif objectTypeID == DataID.FID_Displacement:
+            return self.mechanicalSolver.get(objectTypeID, time, objectID)
         else:
             raise apierror.APIError('Unknown field ID')
 
@@ -109,13 +109,13 @@ tstep = timestep.TimeStep(time=1*mp.U.s,dt=1*mp.U.s,targetTime=10*mp.U.s)
 
 demo.solveStep(tstep)
 
-tf = demo.getField(FieldID.FID_Temperature, tstep.getTime())
+tf = demo.get(DataID.FID_Temperature, tstep.getTime())
 # tf.toMeshioMesh.write('thermal10.vtk')
 # tf.field2Image2D(title='Thermal', fileName='thermal.png')
 # time.sleep(1)
 t_val = tf.evaluate((4.1, 0.9, 0.0))
 
-mf = demo.getField(FieldID.FID_Displacement, tstep.getTime())
+mf = demo.get(DataID.FID_Displacement, tstep.getTime())
 # mf.toMeshioMesh.write('mechanical10')
 # mf.field2Image2D(fieldComponent=1, title='Mechanical', fileName='mechanical.png')
 # time.sleep(1)

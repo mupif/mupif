@@ -26,7 +26,7 @@ from . import cell
 from . import bbox
 from . import apierror
 from . import mupifobject
-from .dataid import FieldID
+from .dataid import DataID
 from . import cellgeometrytype
 from . import mesh
 from . import mupifquantity
@@ -78,7 +78,7 @@ class Field(mupifquantity.MupifQuantity):
     #: Instance of a Mesh class representing the underlying discretization.
     mesh: mesh.Mesh 
     #: Field type (displacement, strain, temperature ...)
-    fieldID: FieldID
+    fieldID: DataID
     #: Time associated with field values
     time: Quantity
     #: whether the field is vertex-based or cell-based
@@ -116,10 +116,10 @@ class Field(mupifquantity.MupifQuantity):
 
     def getFieldID(self):
         """
-        Returns FieldID, e.g. FID_Displacement, FID_Temperature.
+        Returns DataID, e.g. FID_Displacement, FID_Temperature.
 
         :return: Returns field ID
-        :rtype: FieldID
+        :rtype: DataID
         """
         return self.fieldID
 
@@ -560,7 +560,7 @@ class Field(mupifquantity.MupifQuantity):
                 fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
             else:
                 raise ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID, valueType, unit, time = FieldID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tostring(), f.attrs['time'].tostring()
+            fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tostring(), f.attrs['time'].tostring()
             if unit == '':
                 unit = None  # special case, handled at saving time
             else:
@@ -623,7 +623,7 @@ class Field(mupifquantity.MupifQuantity):
                     values = np.reshape(values, (-1, 1))
                 ret.append(Field(
                     mesh=msh,
-                    fieldID=FieldID[fname],
+                    fieldID=DataID[fname],
                     unit=unit.get(fname,None),
                     time=time,
                     valueType=mupifquantity.ValueType.fromNumberOfComponents(values.shape[1]),

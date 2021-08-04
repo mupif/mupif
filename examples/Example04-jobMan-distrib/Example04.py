@@ -23,11 +23,11 @@ class Example04(mp.Workflow):
             'Dependencies': ['SimulationTimer-1'],
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
 
@@ -41,9 +41,9 @@ class Example04(mp.Workflow):
         log.info('Connected to JobManager')
         self.app1 = None
         self.contrib = mp.ConstantProperty(
-            value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
+            value=(0.,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
         self.retprop = mp.ConstantProperty(
-            value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
+            value=(0.,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
         try:
             self.app1 = mp.pyroutil.allocateApplicationWithJobManager(
@@ -73,10 +73,10 @@ class Example04(mp.Workflow):
         self.app1.initialize(metadata=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = mp.ConstantProperty(value=(1000,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)
-        self.app1.setProperty(val)
+        val = mp.ConstantProperty(value=(1000,), propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)
+        self.app1.set(val)
         self.app1.solveStep(istep)
-        self.retprop = self.app1.getProperty(mp.PropertyID.PID_Time, istep.getTime())
+        self.retprop = self.app1.get(mp.DataID.PID_Time, istep.getTime())
         log.info("Sucessfully received " + str(self.retprop.getValue(istep.getTime())))
         
     def terminate(self):    
@@ -85,18 +85,19 @@ class Example04(mp.Workflow):
         super().terminate()
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
-    def getProperty(self, propID, time, objectID=0):
-        if propID == mp.PropertyID.PID_Time:
-            return mp.ConstantProperty(value=self.retprop.getValue(time), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == mp.DataID.PID_Time:
+            return mp.ConstantProperty(value=self.retprop.getValue(time), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
         else:
             raise mp.APIError('Unknown property ID')
         
-    def setProperty(self, prop, objectID=0):
-        if prop.getPropertyID() == mp.PropertyID.PID_Time_step:
-            # remember the mapped value
-            self.contrib = prop
-        else:
-            raise mp.APIError('Unknown property ID')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mp.DataID.PID_Time_step:
+                # remember the mapped value
+                self.contrib = obj
+            else:
+                raise mp.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
         return 1*mp.U.s
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     demo.initialize(targetTime=targetTime, metadata=executionMetadata)
 
     demo.solve()
-    kpi = demo.getProperty(mp.PropertyID.PID_Time, targetTime)
+    kpi = demo.get(mp.DataID.PID_Time, targetTime)
     demo.terminate()
     if kpi.getValue(targetTime)[0] == 1000.:
         log.info("Test OK")

@@ -38,7 +38,7 @@ class ThermalModel(mupif.model.Model):
                         'Name': 'edge temperature',
                         'Type': 'mupif.Property',
                         'Required': False,
-                        'Type_ID': 'mupif.PropertyID.PID_Temperature',
+                        'Type_ID': 'mupif.DataID.PID_Temperature',
                         'Obj_ID': [
                             'Cauchy top',
                             'Cauchy bottom',
@@ -54,7 +54,7 @@ class ThermalModel(mupif.model.Model):
                 'Outputs': [
                     {
                         'Name': 'temperature',
-                        'Type_ID': 'mupif.FieldID.FID_Temperature',
+                        'Type_ID': 'mupif.DataID.FID_Temperature',
                         'Type': 'mupif.Field',
                         'Required': False
                     }
@@ -92,7 +92,7 @@ class ThermalModel(mupif.model.Model):
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
             value=(1.,),
-            propID=mupif.PropertyID.PID_effective_conductivity,
+            propID=mupif.DataID.PID_effective_conductivity,
             valueType=mupif.ValueType.Scalar,
             unit=mupif.U['W/m/K']
         )
@@ -127,12 +127,6 @@ class ThermalModel(mupif.model.Model):
 
     def initialize(self, workdir='', metadata={}, validateMetaData=False):
         super().initialize(workdir, metadata, validateMetaData)
-
-    def setFile(self, file, objectID=0):
-        print("Downloading the input file..")
-        mp.PyroFile.copy(file, self.workDir + os.path.sep + 'tmin.in')
-        print("Download finished.")
-        self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
     def readInput(self, filename, tria=False):
         self.tria = tria
@@ -271,8 +265,10 @@ class ThermalModel(mupif.model.Model):
                 ineq += 1
         # print (self.loc)
 
-    def getField(self, fieldID, time, objectID=0):
-        if fieldID == mupif.FieldID.FID_Temperature:
+    def get(self, objectTypeID, time=None, objectID=0):
+
+        # Field
+        if objectTypeID == mupif.DataID.FID_Temperature:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
@@ -281,13 +277,15 @@ class ThermalModel(mupif.model.Model):
                     values.append((self.T[self.loc[i]],))
             return mupif.field.Field(
                 mesh=self.mesh,
-                fieldID=mupif.FieldID.FID_Temperature,
+                fieldID=mupif.DataID.FID_Temperature,
                 valueType=mupif.ValueType.Scalar,
                 unit=mupif.U.C,
                 time=time,
                 value=values
             )
-        elif fieldID == mupif.FieldID.FID_Material_number:
+
+        # Field
+        elif objectTypeID == mupif.DataID.FID_Material_number:
             values = []
             for e in self.mesh.cells():
                 if self.isInclusion(e) and self.morphologyType == 'Inclusion':
@@ -297,15 +295,37 @@ class ThermalModel(mupif.model.Model):
             # print (values)
             return mupif.field.Field(
                 mesh=self.mesh,
-                fieldID=mupif.FieldID.FID_Material_number,
+                fieldID=mupif.DataID.FID_Material_number,
                 valueType=mupif.ValueType.Scalar,
                 unit=mp.U.none,
                 time=time,
                 value=values,
                 fieldType=mupif.field.FieldType.FT_cellBased
             )
+
+        # Property
+        elif objectTypeID == mupif.DataID.PID_effective_conductivity:
+            # average reactions from solution - use nodes on edge 4 (coordinate x==0.)
+            sumQ = 0.
+            for i in range(self.mesh.getNumberOfVertices()):
+                coord = (self.mesh.getVertex(i).getCoordinates())
+                if coord[0] < 1.e-6:
+                    ipneq = self.loc[i]
+                    if ipneq >= self.neq:
+                        sumQ -= self.r[ipneq - self.neq]
+            eff_conductivity = sumQ / self.yl * self.xl / (
+                        self.dirichletBCs[(self.ny + 1) * (self.nx + 1) - 1] - self.dirichletBCs[0])
+            return mupif.property.ConstantProperty(
+                value=eff_conductivity,
+                propID=mupif.DataID.PID_effective_conductivity,
+                valueType=mupif.ValueType.Scalar,
+                unit=mp.U['W/m/K'],
+                time=time,
+                objectID=0
+            )
+
         else:
-            raise mupif.APIError('Unknown field ID')
+            raise mupif.APIError('Unknown DataID')
 
     def isInclusion(self, e):
         vertices = e.getVertices()
@@ -563,67 +583,51 @@ class ThermalModel(mupif.model.Model):
                     A_e[i, j] += K[i, j]
         return A_e
 
-    def getProperty(self, propID, time, objectID=0):
-        if propID == mupif.PropertyID.PID_effective_conductivity:
-            # average reactions from solution - use nodes on edge 4 (coordinate x==0.)
-            sumQ = 0.
-            for i in range(self.mesh.getNumberOfVertices()):
-                coord = (self.mesh.getVertex(i).getCoordinates())
-                if coord[0] < 1.e-6:
-                    ipneq = self.loc[i]
-                    if ipneq >= self.neq:
-                        sumQ -= self.r[ipneq - self.neq]
-            eff_conductivity = sumQ / self.yl * self.xl / (
-                        self.dirichletBCs[(self.ny + 1) * (self.nx + 1) - 1] - self.dirichletBCs[0])
-            return mupif.property.ConstantProperty(
-                value=eff_conductivity,
-                propID=mupif.PropertyID.PID_effective_conductivity,
-                valueType=mupif.ValueType.Scalar,
-                unit=mp.U['W/m/K'],
-                time=time,
-                objectID=0
-            )
-        else:
-            raise mupif.APIError('Unknown property ID')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.PyroFile):
+            print("Downloading the input file..")
+            mp.PyroFile.copy(obj, self.workDir + os.path.sep + 'tmin.in')
+            print("Download finished.")
+            self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
-    def setProperty(self, property, objectID=0):
-        if property.getPropertyID() == mupif.PropertyID.PID_effective_conductivity:
-            # remember the mapped value
-            self.conductivity = property.inUnitsOf('W/m/K')
-            # log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mupif.DataID.PID_effective_conductivity:
+                # remember the mapped value
+                self.conductivity = obj.inUnitsOf('W/m/K')
+                # log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
 
-        elif property.getPropertyID() == mupif.PropertyID.PID_Temperature:
+            elif obj.getPropertyID() == mupif.DataID.PID_Temperature:
 
-            # convection
-            edge_ids = ['Cauchy bottom', 'Cauchy right', 'Cauchy top', 'Cauchy left']
-            for edge_id in edge_ids:
-                if objectID == edge_id:
-                    edge_index = edge_ids.index(edge_id)+1
-                    edge_found = False
-                    for edge in self.convectionModelEdges:
-                        if edge[0] == edge_index:
-                            idx = self.convectionModelEdges.index(edge)
-                            self.convectionModelEdges[idx] = (edge_index, property.getValue()[0], edge[2])
-                            edge_found = True
-                    if not edge_found:
-                        self.convectionModelEdges.append((edge_index, property.getValue()[0], 1.))
+                # convection
+                edge_ids = ['Cauchy bottom', 'Cauchy right', 'Cauchy top', 'Cauchy left']
+                for edge_id in edge_ids:
+                    if objectID == edge_id:
+                        edge_index = edge_ids.index(edge_id)+1
+                        edge_found = False
+                        for edge in self.convectionModelEdges:
+                            if edge[0] == edge_index:
+                                idx = self.convectionModelEdges.index(edge)
+                                self.convectionModelEdges[idx] = (edge_index, obj.getValue()[0], edge[2])
+                                edge_found = True
+                        if not edge_found:
+                            self.convectionModelEdges.append((edge_index, obj.getValue()[0], 1.))
 
-            # Dirichlet
-            edge_ids = ['Dirichlet bottom', 'Dirichlet right', 'Dirichlet top', 'Dirichlet left']
-            for edge_id in edge_ids:
-                if objectID == edge_id:
-                    edge_index = edge_ids.index(edge_id)+1
-                    edge_found = False
-                    for edge in self.dirichletModelEdges:
-                        if edge[0] == edge_index:
-                            idx = self.dirichletModelEdges.index(edge)
-                            self.dirichletModelEdges[idx] = (edge_index, property.getValue()[0])
-                            edge_found = True
-                    if not edge_found:
-                        self.dirichletModelEdges.append((edge_index, property.getValue()[0]))
+                # Dirichlet
+                edge_ids = ['Dirichlet bottom', 'Dirichlet right', 'Dirichlet top', 'Dirichlet left']
+                for edge_id in edge_ids:
+                    if objectID == edge_id:
+                        edge_index = edge_ids.index(edge_id)+1
+                        edge_found = False
+                        for edge in self.dirichletModelEdges:
+                            if edge[0] == edge_index:
+                                idx = self.dirichletModelEdges.index(edge)
+                                self.dirichletModelEdges[idx] = (edge_index, obj.getValue()[0])
+                                edge_found = True
+                        if not edge_found:
+                            self.dirichletModelEdges.append((edge_index, obj.getValue()[0]))
 
-        else:
-            raise mupif.apierror.APIError('Unknown property ID')
+            else:
+                raise mupif.apierror.APIError('Unknown property ID')
 
     def getCriticalTimeStep(self):
         return 100*mp.U.s
@@ -653,7 +657,7 @@ class ThermalNonstatModel(ThermalModel):
                     'Name': 'edge temperature',
                     'Type': 'mupif.Property',
                     'Required': False,
-                    'Type_ID': 'mupif.PropertyID.PID_Temperature',
+                    'Type_ID': 'mupif.DataID.PID_Temperature',
                     'Obj_ID': [
                         'Cauchy top',
                         'Cauchy bottom',
@@ -669,7 +673,7 @@ class ThermalNonstatModel(ThermalModel):
             'Outputs': [
                 {
                     'Name': 'temperature',
-                    'Type_ID': 'mupif.FieldID.FID_Temperature',
+                    'Type_ID': 'mupif.DataID.FID_Temperature',
                     'Type': 'mupif.Field',
                     'Required': False
                 }
@@ -716,12 +720,6 @@ class ThermalNonstatModel(ThermalModel):
 
     def initialize(self, workdir='', metadata={}, validateMetaData=False):
         super().initialize(workdir, metadata, validateMetaData)
-
-    def setFile(self, file, objectID=0):
-        print("Downloading the input file..")
-        mupif.PyroFile.copy(file, self.workDir + os.path.sep + 'tmin.in')
-        print("Download finished.")
-        self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"
@@ -969,7 +967,7 @@ class MechanicalModel(mupif.model.Model):
             'Inputs': [
                 {
                     'Name': 'temperature',
-                    'Type_ID': 'mupif.FieldID.FID_Temperature',
+                    'Type_ID': 'mupif.DataID.FID_Temperature',
                     'Type': 'mupif.Field',
                     'Required': True
                 }
@@ -977,7 +975,7 @@ class MechanicalModel(mupif.model.Model):
             'Outputs': [
                 {
                     'Name': 'displacement',
-                    'Type_ID': 'mupif.FieldID.FID_Displacement',
+                    'Type_ID': 'mupif.DataID.FID_Displacement',
                     'Type': 'mupif.Field',
                     'Required': False
                 }
@@ -1041,11 +1039,16 @@ class MechanicalModel(mupif.model.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=False):
         super().initialize(workdir, metadata, validateMetaData)
 
-    def setFile(self, file, objectID=0):
-        print("Downloading the input file..")
-        mupif.PyroFile.copy(file, self.workDir + os.path.sep + 'smin.in')
-        print("Download finished.")
-        self.readInput(self.workDir + os.path.sep + 'smin.in')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.PyroFile):
+            print("Downloading the input file..")
+            mupif.PyroFile.copy(obj, self.workDir + os.path.sep + 'smin.in')
+            print("Download finished.")
+            self.readInput(self.workDir + os.path.sep + 'smin.in')
+
+        if obj.isInstance(mp.Field):
+            if obj.getFieldID() == mupif.DataID.FID_Temperature:
+                self.temperatureField = obj
 
     def getCriticalTimeStep(self):
         return .4*mp.U.s
@@ -1167,8 +1170,8 @@ class MechanicalModel(mupif.model.Model):
 
         # print "loc:", self.loc
 
-    def getField(self, fieldID, time, objectID=0):
-        if fieldID == mupif.FieldID.FID_Displacement:
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == mupif.DataID.FID_Displacement:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
@@ -1181,7 +1184,7 @@ class MechanicalModel(mupif.model.Model):
 
             return mupif.field.Field(
                 mesh=self.mesh,
-                fieldID=mupif.FieldID.FID_Displacement,
+                fieldID=mupif.DataID.FID_Displacement,
                 valueType=mupif.ValueType.Vector,
                 unit=mp.U.m,
                 time=time,
@@ -1189,10 +1192,6 @@ class MechanicalModel(mupif.model.Model):
             )
         else:
             raise mupif.apierror.APIError('Unknown field ID')
-
-    def setField(self, field, fieldID=0):
-        if field.getFieldID() == mupif.FieldID.FID_Temperature:
-            self.temperatureField = field
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.prepareTask()

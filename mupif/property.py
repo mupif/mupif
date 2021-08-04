@@ -21,7 +21,7 @@ class Property(mupifquantity.MupifQuantity):
     .. automethod:: __init__
     """
 
-    propID: dataid.PropertyID
+    propID: dataid.DataID
     objectID: int = 0  #: Optional ID of problem object/subdomain to which property is related
 
     def __init__(self, *, metadata={}, **kw):
@@ -41,7 +41,7 @@ class Property(mupifquantity.MupifQuantity):
         Returns type of property.
 
         :return: Receiver's property ID
-        :rtype: PropertyID
+        :rtype: DataID
         """
         return self.propID
 
@@ -53,7 +53,6 @@ class Property(mupifquantity.MupifQuantity):
         :rtype: int
         """
         return self.objectID
-
 
 
 @Pyro5.api.expose

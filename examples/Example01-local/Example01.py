@@ -41,10 +41,10 @@ class Application1(mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
         }
         # calls constructor from Application module
@@ -55,7 +55,7 @@ class Application1(mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True):
         super().initialize(workdir, metadata, validateMetaData)
 
-    def getProperty(self, propID, time, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -64,9 +64,9 @@ class Application1(mp.Model):
             }
         }
 
-        if propID == mp.PropertyID.PID_Time_step:
+        if objectTypeID == mp.DataID.PID_Time_step:
             return mp.ConstantProperty(
-                value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+                value=(self.value,), propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise mp.APIError('Unknown property ID')
 
@@ -113,10 +113,10 @@ class Application2(mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulative time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
@@ -124,12 +124,12 @@ class Application2(mp.Model):
         self.value = 0.0
         self.count = 0.0
         self.contrib = mp.ConstantProperty(
-            value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
+            value=(0.,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True):
         super().initialize(workdir, metadata, validateMetaData)
 
-    def getProperty(self, propID, time, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -138,18 +138,19 @@ class Application2(mp.Model):
             }
         }
 
-        if propID == mp.PropertyID.PID_Time:
+        if objectTypeID == mp.DataID.PID_Time:
             return mp.ConstantProperty(
-                value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+                value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise mp.APIError('Unknown property ID')
 
-    def setProperty(self, property, objectID=0):
-        if property.getPropertyID() == mp.PropertyID.PID_Time_step:
-            # remember the mapped value
-            self.contrib = property
-        else:
-            raise mp.APIError('Unknown property ID')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mp.DataID.PID_Time_step:
+                # remember the mapped value
+                self.contrib = obj
+            else:
+                raise mp.APIError('Unknown DataID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
@@ -208,12 +209,12 @@ while abs(time - targetTime) > 1.e-6:
         # solve problem 1
         app1.solveStep(istep)
         # handshake the data
-        c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
-        app2.setProperty(c)
+        c = app1.get(mp.DataID.PID_Time_step, app2.getAssemblyTime(istep))
+        app2.set(c)
         # solve second sub-problem 
         app2.solveStep(istep)
 
-        prop = app2.getProperty(mp.PropertyID.PID_Time, app2.getAssemblyTime(istep))
+        prop = app2.get(mp.DataID.PID_Time, app2.getAssemblyTime(istep))
         # print (istep.getTime(), c, prop)
         atime = app2.getAssemblyTime(istep)
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (

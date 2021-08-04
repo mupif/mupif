@@ -37,7 +37,7 @@ class TestSaveLoad(unittest.TestCase):
 
     @unittest.skip('Does not work currently')
     def testFieldDictDump(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         dic=f.to_dict()
         if 1:
@@ -50,7 +50,7 @@ class TestSaveLoad(unittest.TestCase):
         self.assertEqual(f.unit,f2.unit)
 
     def _disabled_testFieldSerpent(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         import serpent
         dump=serpent.dumps(f)
@@ -66,7 +66,7 @@ class TestSaveLoad(unittest.TestCase):
 
     def testFieldPickle(self):
         # get field from the app
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         t22a=f.evaluate((2.0,2.0,0.)).getValue()[0] # temperature at (2,2)
         import pickle
         p=pickle.dumps(f)
@@ -75,7 +75,7 @@ class TestSaveLoad(unittest.TestCase):
         self.assertTrue(not id(f)==id(f2))
         self.assertAlmostEqual(t22a,t22b)
     def testFieldHdf5SaveLoad(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         v=self.tmp+'/aa2.h5'
         f.toHdf5(v)
         ff2=mupif.field.Field.makeFromHdf5(v)
@@ -86,7 +86,7 @@ class TestSaveLoad(unittest.TestCase):
     if 0:
         @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above
         def testFieldVtk3SaveLoad(self):
-            f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+            f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
             v=self.tmp+'/aa.vtu'
             f.toVTK3(v)
             ff2=mupif.field.Field.makeFromVTK3(v, f.getUnits())
@@ -98,7 +98,7 @@ class TestSaveLoad(unittest.TestCase):
             # as tried, however, saving to VTK again yields byte-to-byte identical .vtu
             ## self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
         def _testFieldVtk2SaveLoad(self,format):
-            f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+            f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
             v=self.tmp+'/aa.vtk'
             f.toVTK2(v,format=format)
             ff2=mupif.field.Field.makeFromVTK2(v, f.getUnits())
@@ -113,7 +113,7 @@ class TestSaveLoad(unittest.TestCase):
             self._testFieldVtk2SaveLoad(format='binary')
 
     def testOctreeNotPickled(self):
-        f=self.app1.getField(mupif.FieldID.FID_Temperature,tstep.getTime())
+        f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         import pickle
         m=f.getMesh()
         # this creates localizers on-request

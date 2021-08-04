@@ -92,16 +92,16 @@ from .apierror import Dumpable, APIError
 from .bbox import BBox
 from .cell import Dumpable, Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahedron_3d_lin, Brick_3d_lin
 from .constantfield import ConstantField
-from .dataid import FieldID, ParticleSetID, FunctionID, PropertyID
+from .dataid import DataID
 from .dumpable import NumpyArray, MupifBaseModel, Dumpable
-from .field import FieldID, FieldType, Field
+from .field import FieldType, Field
 from .function import Function
 from .heavydata import HeavyDataHandle
 from .integrationrule import IntegrationRule, GaussIntegrationRule
 from .jobmanager import JobManException, JobManNoResourcesException, JobManager, RemoteJobManager
 from .localizer import Localizer
 from .mesh import MeshIterator, Mesh, UnstructuredMesh
-from .model import PropertyID, FieldID, FunctionID, ParticleSetID, Model, RemoteModel
+from .model import Model, RemoteModel
 from .mupifobject import MupifObjectBase, MupifObject
 from .mupifquantity import ValueType, MupifQuantity
 from .octree import Octant, Octree
@@ -118,7 +118,7 @@ from .units import UnitProxy
 from .vertex import Dumpable, Vertex
 from .workflow import Workflow
 from .workflowmonitor import WorkflowMonitor
-__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','FieldID','ParticleSetID','FunctionID','PropertyID','dumpable','NumpyArray','MupifBaseModel','Dumpable','field','FieldID','FieldType','Field','function','Function','heavydata','HeavyDataHandle','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','PropertyID','FieldID','FunctionID','ParticleSetID','Model','RemoteModel','mupifobject','MupifObjectBase','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
+__all__=['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','dumpable','NumpyArray','MupifBaseModel','Dumpable','field','FieldType','Field','function','Function','heavydata','HeavyDataHandle','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','mupifobject','MupifObjectBase','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','pyrofile','PyroFile','pyroutil','PyroNetConf','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor']
 
 
 
@@ -149,9 +149,10 @@ def _registerOther():
     import Pyro5.api
     # serialize ids if they are sent as top-level objects via Pyro5
     from . import dataid
-    for c in dataid.FieldID,dataid.ParticleSetID,dataid.FunctionID,dataid.PropertyID:
-        Pyro5.api.register_class_to_dict(c,dumpable.enum_to_dict)
-        Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
+    c = dataid.DataID
+    Pyro5.api.register_class_to_dict(c,dumpable.enum_to_dict)
+    Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__,dumpable.enum_from_dict_with_name)
+
     # don't use numpy.ndarray.tobytes as it is not cross-plaform; npy files are
     Pyro5.api.register_class_to_dict(numpy.ndarray,lambda arr: {'__class__':'numpy.ndarray','npy':(numpy.save(buf:=io.BytesIO(),arr,allow_pickle=False),buf.getvalue())[1]})
     Pyro5.api.register_dict_to_class('numpy.ndarray',lambda name,dic: numpy.load(io.BytesIO(serpent.tobytes(buf) if isinstance(buf:=dic['npy'],dict) else buf),allow_pickle=False))

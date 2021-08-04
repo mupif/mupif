@@ -45,10 +45,10 @@ class Application10(mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Time value',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Time value',
                  'Description': 'Time', 'Units': 's', 'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Summed time value',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Summed time value',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
@@ -59,7 +59,7 @@ class Application10(mp.Model):
     def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(file=file, workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
-    def getProperty(self, propID, time, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -68,16 +68,17 @@ class Application10(mp.Model):
             }
         }
 
-        if propID == mp.PropertyID.PID_Time:
-            return mp.ConstantProperty(value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+        if objectTypeID == mp.DataID.PID_Time:
+            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise mp.APIError('Unknown property ID')
 
-    def setProperty(self, prop, objectID=0):
-        if prop.getPropertyID() == mp.PropertyID.PID_Time:
-            self.input = prop.inUnitsOf(mp.U.s).getValue()[0]
-        else:
-            raise mp.APIError('Unknown property ID')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mp.DataID.PID_Time:
+                self.input = obj.inUnitsOf(mp.U.s).getValue()[0]
+            else:
+                raise mp.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # this function is designed to run the executable in Torque or Slurm PBS and process the output when the job is finished.

@@ -36,7 +36,7 @@ class TestUnits(unittest.TestCase):
             # solve problem 1
             app1.solveStep(istep)
             # request Concentration property from app1
-            v = app1.getProperty(PropertyID.PID_Velocity, istep.getTime())
+            v = app1.get(DataID.PID_Velocity, istep.getTime())
           
             # Create a PhysicalQuantity object
             V = mupif.units.makeQuantity(v.getValue(istep.getTime()), v.getUnit())

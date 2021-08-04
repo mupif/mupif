@@ -65,14 +65,14 @@ class AppGridAvg(model.Model):
     Simple application that computes an arithmetical average of mapped property
     """
 
-    #value: float=0.0
-    #count: float=0.0
-    #contrib: float=0.0
-    #mesh: mupif.Mesh=pydantic.Field(default_factory=mupif.UnstructuredMesh)
-    #xl: float=10.0
-    #yl: float=10.0
-    #nx: int=50
-    #nt: int=50
+    # value: float=0.0
+    # count: float=0.0
+    # contrib: float=0.0
+    # mesh: mupif.Mesh=pydantic.Field(default_factory=mupif.UnstructuredMesh)
+    # xl: float=10.0
+    # yl: float=10.0
+    # nx: int=50
+    # nt: int=50
 
     def __init__(self):
         super().__init__()
@@ -82,29 +82,29 @@ class AppGridAvg(model.Model):
         self.mesh = mupif.UnstructuredMesh()
         self.field = None
         # generate a simple mesh here
-        self.xl = 10.0 # domain (0..xl)(0..yl)
+        self.xl = 10.0  # domain (0..xl)(0..yl)
         self.yl = 10.0
-        self.nx = 50 # number of elements in x direction
-        self.ny = 50 # number of elements in y direction 
+        self.nx = 50  # number of elements in x direction
+        self.ny = 50  # number of elements in y direction
         self.dx = self.xl/self.nx
         self.dy = self.yl/self.ny
-        self.mesh = meshgen_grid2d((0.,0.), (self.xl, self.yl), self.nx, self.ny) 
+        self.mesh = meshgen_grid2d((0., 0.), (self.xl, self.yl), self.nx, self.ny)
 
-    def getField(self, fieldID, time):
-        if (fieldID == FieldID.FID_Temperature):
-            if (self.field == None):
-                #generate sample field
-                values=[]
-                coeff=8*math.pi/self.xl
-                for ix in range (self.nx+1):
-                    for iy in range (self.ny+1):
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == DataID.FID_Temperature:
+            if self.field is None:
+                # generate sample field
+                values = []
+                coeff = 8*math.pi/self.xl
+                for ix in range(self.nx+1):
+                    for iy in range(self.ny+1):
                         x = ix*self.dx
                         y = iy*self.dy
                         
                         dist = math.sqrt((x-self.xl/2.)*(x-self.xl/2.)+(y-self.yl/2.)*(y-self.yl/2.))
                         val = math.cos(coeff*dist) * math.exp(-4.0*dist/self.xl)
                         values.append((val,))
-                self.field=field.Field(mesh=self.mesh, fieldID=FieldID.FID_Temperature, valueType=ValueType.Scalar, unit=mupif.U.K, time=time, value=values)
+                self.field = field.Field(mesh=self.mesh, fieldID=DataID.FID_Temperature, valueType=ValueType.Scalar, unit=mupif.U.K, time=time, value=values)
                 
             return self.field
         else:
@@ -124,27 +124,27 @@ class AppMinMax(model.Model):
     """
     Simple application that computes min and max values of the field
     """
-    extField: mupif.Field=None
+    extField: mupif.Field = None
     
-    def setField(self, field):
-        self.extField = field
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mupif.Field):
+            self.extField = obj
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        mesh= self.extField.getMesh()
+        mesh = self.extField.getMesh()
         self._min = self.extField.evaluate(mesh.getVertex(0).coords)
         self._max = min
         for v in mesh.vertices():
-            #print v.coords
+            # print v.coords
             val = self.extField.evaluate(v.coords)
             self._min=min(self._min, val)
             self._max=max(self._max, val)
 
-
-    def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_Demo_Min):
-            return property.ConstantProperty(self._min, PropertyID.PID_Demo_Min, ValueType.Scalar, propID, mupif.U.none, time=time)
-        elif (propID == PropertyID.PID_Demo_Max):
-            return property.ConstantProperty(self._max, PropertyID.PID_Demo_Max, ValueType.Scalar, propID, mupif.U.none, time=time)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == DataID.PID_Demo_Min:
+            return property.ConstantProperty(self._min, DataID.PID_Demo_Min, ValueType.Scalar, objectTypeID, mupif.U.none, time=time)
+        elif objectTypeID == DataID.PID_Demo_Max:
+            return property.ConstantProperty(self._max, DataID.PID_Demo_Max, ValueType.Scalar, objectTypeID, mupif.U.none, time=time)
         else:
             raise apierror.APIError ('Unknown property ID')
 
@@ -156,8 +156,9 @@ class AppIntegrateField(model.Model):
     """
     extField: mupif.Field=None
 
-    def setField(self, field):
-        self.extField = field
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mupif.Field):
+            self.extField = obj
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         mesh = self.extField.getMesh()
@@ -174,11 +175,11 @@ class AppIntegrateField(model.Model):
                 #print c.loc2glob(p[0])
                 self.integral=self.integral+self.extField.evaluate(c.loc2glob(p[0]))[0]*dv
 
-    def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_Demo_Integral):
-            return property.ConstantProperty(float(self.integral), PropertyID.PID_Demo_Integral, ValueType.Scalar, propID, mupif.U.none, time=time)
-        elif (propID == PropertyID.PID_Demo_Volume):
-            return property.ConstantProperty(float(self.volume), PropertyID.PID_Demo_Volume, ValueType.Scalar, propID, mupif.U.node,time=time)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == DataID.PID_Demo_Integral:
+            return property.ConstantProperty(float(self.integral), DataID.PID_Demo_Integral, ValueType.Scalar, objectTypeID, mupif.U.none, time=time)
+        elif objectTypeID == DataID.PID_Demo_Volume:
+            return property.ConstantProperty(float(self.volume), DataID.PID_Demo_Volume, ValueType.Scalar, objectTypeID, mupif.U.node, time=time)
         else:
             raise apierror.APIError ('Unknown property ID')
 
@@ -188,13 +189,13 @@ class AppCurrTime(model.Model):
     Simple application that generates a property (concentration or velocity) with a value equal to actual time
     """
 
-    def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_Concentration):
-            return property.ConstantProperty(value=self.value, propID=PropertyID.PID_Concentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
-        if (propID == PropertyID.PID_Velocity):
-            return property.ConstantProperty(value=self.value, propID=PropertyID.PID_Velocity, valueType=ValueType.Scalar, unit=mupif.U['m/s'], time=time)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == DataID.PID_Concentration:
+            return property.ConstantProperty(value=self.value, propID=DataID.PID_Concentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
+        if objectTypeID == DataID.PID_Velocity:
+            return property.ConstantProperty(value=self.value, propID=DataID.PID_Velocity, valueType=ValueType.Scalar, unit=mupif.U['m/s'], time=time)
         else:
-            raise apierror.APIError ('Unknown property ID')
+            raise apierror.APIError('Unknown DataID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf(mupif.U.s).getValue()
@@ -208,22 +209,24 @@ class AppPropAvg(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    value: float=0.0
-    count: float=0.0
-    contrib: float=0.0
+    value: float = 0.0
+    count: float = 0.0
+    contrib: mupif.Property = None
 
-    def getProperty(self, propID, time, objectID=0):
-        if (propID == PropertyID.PID_CumulativeConcentration):
-            return property.ConstantProperty(value=self.value/self.count, propID=PropertyID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == DataID.PID_CumulativeConcentration:
+            return property.ConstantProperty(value=self.value/self.count, propID=DataID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
         else:
-            raise apierror.APIError ('Unknown property ID')
+            raise apierror.APIError('Unknown DataID')
 
-    def setProperty(self, property, objectID=0):
-        if (property.getPropertyID() == PropertyID.PID_Concentration):
-            # remember the mapped value
-            self.contrib = property
-        else:
-            raise apierror.APIError ('Unknown property ID')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mupif.Property):
+            if obj.getPropertyID() == DataID.PID_Concentration:
+                # remember the mapped value
+                self.contrib = obj
+            else:
+                raise apierror.APIError ('Unknown property ID')
+
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
         self.value=self.value+self.contrib.getValue(tstep.getTime())

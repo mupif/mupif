@@ -25,11 +25,7 @@ import os
 import Pyro5
 from . import apierror
 from . import mupifobject
-from .dataid import PropertyID
-from .dataid import FieldID
-from .dataid import FunctionID
-from .dataid import ParticleSetID
-from .dataid import MiscID
+from .dataid import DataID
 from . import property
 from . import field
 from . import function
@@ -47,10 +43,7 @@ log = logging.getLogger()
 
 prefix = "mupif."
 type_ids = []
-type_ids.extend(prefix+s for s in list(map(str, PropertyID)))
-type_ids.extend(prefix+s for s in list(map(str, FieldID)))
-type_ids.extend(prefix+s for s in list(map(str, ParticleSetID)))
-type_ids.extend(prefix+s for s in list(map(str, MiscID)))
+type_ids.extend(prefix+s for s in list(map(str, DataID)))
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
@@ -156,7 +149,7 @@ ModelSchema = {
                 "type": "object",
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
-                    "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.FieldID.FID_Temperature
+                    "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                     "Obj_ID": {"type": "array"},  # optional parameter for additional info, list of int or str
                     "Name": {"type": "string"},
                     "Description": {"type": "string"},
@@ -261,19 +254,12 @@ class Model(mupifobject.MupifObject):
         """
         Returns the requested object at given time. Object is identified by id.
 
-        :param PropertyID or FieldID or FunctionID objectTypeID: Identifier of the object
+        :param DataID objectTypeID: Identifier of the object
         :param Physics.PhysicalQuantity time: Target time
         :param int objectID: Identifies object with objectID (optional, default 0)
 
         :return: Returns requested object.
         """
-        if isinstance(objectTypeID, PropertyID):
-            return self.getProperty(objectTypeID, time, objectID)
-        if isinstance(objectTypeID, FieldID):
-            return self.getField(objectTypeID, time, objectID)
-        if isinstance(objectTypeID, FunctionID):
-            return self.getFunction(objectTypeID, time, objectID)
-        return None
 
     def set(self, obj, objectID=0):
         """
@@ -282,32 +268,12 @@ class Model(mupifobject.MupifObject):
         :param property.Property or field.Field or function.Function or pyrofile.PyroFile obj: Remote object to be registered by the application
         :param int objectID: Identifies object with objectID (optional, default 0)
         """
-        if obj.isInstance(property.Property):
-            return self.setProperty(obj, objectID)
-        if obj.isInstance(field.Field):
-            return self.setField(obj, objectID)
-        if obj.isInstance(function.Function):
-            return self.setFunction(obj, objectID)
-        if obj.isInstance(pyrofile.PyroFile):
-            self.setFile(obj, objectID)
-
-    def getField(self, fieldID, time, objectID=0):
-        """
-        Returns the requested field at given time. Field is identified by fieldID.
-
-        :param FieldID fieldID: Identifier of the field
-        :param Physics.PhysicalQuantity time: Target time
-        :param int objectID: Identifies field with objectID (optional, default 0)
-
-        :return: Returns requested field.
-        :rtype: Field
-        """
 
     def getFieldURI(self, fieldID, time, objectID=0):
         """
         Returns the uri of requested field at given time. Field is identified by fieldID.
 
-        :param FieldID fieldID: Identifier of the field
+        :param DataID fieldID: Identifier of the field
         :param Physics.PhysicalQuantity time: Target time
         :param int objectID: Identifies field with objectID (optional, default 0)
 
@@ -317,7 +283,7 @@ class Model(mupifobject.MupifObject):
         if self.pyroDaemon is None:
             raise apierror.APIError('Error: getFieldURI requires to register pyroDaemon in application')
         try:
-            field = self.getField(fieldID, time, objectID=objectID)
+            field = self.get(fieldID, time, objectID=objectID)
         except:
             self.setMetadata('Status', 'Failed')
             raise apierror.APIError('Error: can not obtain field')
@@ -330,63 +296,6 @@ class Model(mupifobject.MupifObject):
             field._PyroURI = uri
             # self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
             return uri
-
-    def setField(self, field, objectID=0):
-        """
-        Registers the given (remote) field in application. 
-
-        :param field.Field field: Remote field to be registered by the application
-        :param int objectID: Identifies field with objectID (optional, default 0)
-        """
-
-    def getProperty(self, propID, time, objectID=0):
-        """
-        Returns property identified by its ID evaluated at given time.
-
-        :param PropertyID propID: property ID
-        :param Physics.PhysicalQuantity time: Time when property should to be evaluated
-        :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
-
-        :return: Returns representation of requested property 
-        :rtype: Property
-        """
-
-    def setProperty(self, property, objectID=0):
-        """
-        Register given property in the application
-
-        :param property.Property property: Setting property
-        :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
-        """
-
-    def getFunction(self, funcID, time, objectID=0):
-        """
-        Returns function identified by its ID
-
-        :param FunctionID funcID: function ID
-        :param Physics.PhysicalQuantity time: Time when function should to be evaluated
-        :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
-
-        :return: Returns requested function
-        :rtype: Function
-        """
-
-    def setFunction(self, func, objectID=0):
-        """
-        Register given function in the application.
-
-        :param function.Function func: Function to register
-        :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
-        """
-
-    def getMesh(self, tstep):
-        """
-        Returns the computational mesh for given solution step.
-
-        :param timestep.TimeStep tstep: Solution step
-        :return: Returns the representation of mesh
-        :rtype: Mesh
-        """
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         """ 

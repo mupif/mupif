@@ -30,13 +30,13 @@ class TestApp(unittest.TestCase):
             # solve problem 1
             app1.solveStep(istep)
             #request Concentration property from app1
-            c = app1.getProperty(PropertyID.PID_Concentration, app2.getAssemblyTime(istep))
+            c = app1.get(DataID.PID_Concentration, app2.getAssemblyTime(istep))
             # register Concentration property in app2
-            app2.setProperty (c)
+            app2.set(c)
             # solve second sub-problem 
             app2.solveStep(istep)
             # get the averaged concentration
-            prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, time*mupif.Q.s)
+            prop = app2.get(DataID.PID_CumulativeConcentration, time*mupif.Q.s)
             print (f"Time: {istep.getTime().getValue()} concentraion {c.getValue(istep.getTime())}, running average {prop.getValue(istep.getTime())}")
         self.assertAlmostEqual(prop.getValue(istep.getTime()),0.55)
     def tearDown(self):

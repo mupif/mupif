@@ -36,7 +36,7 @@ class Example08(workflow.Workflow):
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
+                {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
 
@@ -120,12 +120,12 @@ class Example08(workflow.Workflow):
         logging.getLogger().setLevel(logging.ERROR)
 
         self.thermal.solveStep(istep)
-        f = self.thermal.getField(FieldID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
+        f = self.thermal.get(DataID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
         data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=False)
 
-        self.mechanical.setField(f)
+        self.mechanical.set(f)
         sol = self.mechanical.solveStep(istep) 
-        f = self.mechanical.getField(FieldID.FID_Displacement, istep.getTime())
+        f = self.mechanical.get(DataID.FID_Displacement, istep.getTime())
         data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=False)
 
         logging.getLogger().setLevel(level0)

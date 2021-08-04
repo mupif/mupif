@@ -43,7 +43,7 @@ class Function(object):
             """
             Initializes the function.
             
-            :param FunctionID funcID: function ID, e.g. FuncID_ProbabilityDistribution
+            :param DataID funcID: function ID, e.g. FuncID_ProbabilityDistribution
             :param int objectID: Optional ID of associated subdomain, default 0
             """
 

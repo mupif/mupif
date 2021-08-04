@@ -50,11 +50,11 @@ class Application1(mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated', 'Required': True}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
                  'Origin': 'Simulated'}]
         }
@@ -62,7 +62,7 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def getProperty(self, propID, time, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -71,11 +71,11 @@ class Application1(mp.Model):
             }
         }
 
-        if propID == mp.PropertyID.PID_Time_step:
+        if objectTypeID == mp.DataID.PID_Time_step:
             return property.ConstantProperty(
-                value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+                value=(self.value,), propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
-            raise apierror.APIError('Unknown property ID')
+            raise apierror.APIError('Unknown DataID')
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True):
         super().initialize(workdir, metadata, validateMetaData)
@@ -148,13 +148,13 @@ while abs(time - targetTime) > 1.e-6:
         # solve problem 1
         app1.solveStep(istep)
         # handshake the data
-        c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
-        app2.setProperty(c)
-        # app2.setProperty(app1.getProperty(PropertyID.PID_Time, app2.getAssemblyTime(istep)))
+        c = app1.get(mp.DataID.PID_Time_step, app2.getAssemblyTime(istep))
+        app2.set(c)
+        # app2.set(app1.get(DataID.PID_Time, app2.getAssemblyTime(istep)))
         # solve second sub-problem 
         app2.solveStep(istep)
 
-        prop = app2.getProperty(mp.PropertyID.PID_Time, istep.getTime())
+        prop = app2.get(mp.DataID.PID_Time, istep.getTime())
 
         atime = app2.getAssemblyTime(istep)
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
@@ -164,7 +164,7 @@ while abs(time - targetTime) > 1.e-6:
         log.error("Following API error occurred: %s" % e)
         break
 
-# prop = app2.getProperty(PropertyID.PID_Time, istep.getTime())
+# prop = app2.get(DataID.PID_Time, istep.getTime())
 # log.debug("Result: %f" % prop.getValue(istep.getTime()))
 
 if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())[0]-5.5) <= 1.e-4:
