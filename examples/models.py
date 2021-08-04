@@ -128,10 +128,10 @@ class ThermalModel(mupif.model.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=False):
         super().initialize(workdir, metadata, validateMetaData)
 
-    def setFile(self, f, objectID=0):
-        print("   Downloading the input file..")
-        mp.PyroFile.copy(f, self.workDir + os.path.sep + 'tmin.in')
-        print("   Download finished.")
+    def setFile(self, file, objectID=0):
+        print("Downloading the input file..")
+        mp.PyroFile.copy(file, self.workDir + os.path.sep + 'tmin.in')
+        print("Download finished.")
         self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
     def readInput(self, filename, tria=False):
@@ -717,10 +717,10 @@ class ThermalNonstatModel(ThermalModel):
     def initialize(self, workdir='', metadata={}, validateMetaData=False):
         super().initialize(workdir, metadata, validateMetaData)
 
-    def setFile(self, f, objectID=0):
-        print("   Downloading the input file..")
-        mupif.PyroFile.copy(f, self.workDir + os.path.sep + 'tmin.in')
-        print("   Download finished.")
+    def setFile(self, file, objectID=0):
+        print("Downloading the input file..")
+        mupif.PyroFile.copy(file, self.workDir + os.path.sep + 'tmin.in')
+        print("Download finished.")
         self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
     def getApplicationSignature(self):
@@ -1041,10 +1041,10 @@ class MechanicalModel(mupif.model.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=False):
         super().initialize(workdir, metadata, validateMetaData)
 
-    def setFile(self, f, objectID=0):
-        print("   Downloading the input file..")
-        mupif.PyroFile.copy(f, self.workDir + os.path.sep + 'smin.in')
-        print("   Download finished.")
+    def setFile(self, file, objectID=0):
+        print("Downloading the input file..")
+        mupif.PyroFile.copy(file, self.workDir + os.path.sep + 'smin.in')
+        print("Download finished.")
         self.readInput(self.workDir + os.path.sep + 'smin.in')
 
     def getCriticalTimeStep(self):

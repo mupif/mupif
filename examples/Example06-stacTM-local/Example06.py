@@ -56,7 +56,7 @@ class Example06(workflow.Workflow):
         )
         thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
         # self.daemon.register(thermalInputFile)
-        self.thermalSolver.setFile(thermalInputFile)
+        self.thermalSolver.set(thermalInputFile)
 
         self.mechanicalSolver.initialize(
             workdir='.',
@@ -64,7 +64,7 @@ class Example06(workflow.Workflow):
         )
         mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
         # self.daemon.register(mechanicalInputFile)
-        self.mechanicalSolver.setFile(mechanicalInputFile)
+        self.mechanicalSolver.set(mechanicalInputFile)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.thermalSolver.solveStep(istep, stageID, runInBackground)

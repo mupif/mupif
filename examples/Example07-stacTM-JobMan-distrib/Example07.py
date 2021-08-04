@@ -95,7 +95,7 @@ class Example07(workflow.Workflow):
                 )
                 thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
                 self.daemon.register(thermalInputFile)
-                self.thermalSolver.setFile(thermalInputFile)
+                self.thermalSolver.set(thermalInputFile)
 
                 self.mechanicalSolver.initialize(
                     workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
@@ -103,7 +103,7 @@ class Example07(workflow.Workflow):
                 )
                 mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
                 self.daemon.register(mechanicalInputFile)
-                self.mechanicalSolver.setFile(mechanicalInputFile)
+                self.mechanicalSolver.set(mechanicalInputFile)
 
             else:
                 log.debug("Connection to server failed, exiting")

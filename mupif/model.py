@@ -249,11 +249,11 @@ class Model(mupifobject.MupifObject):
         self.appName = appName
         self.externalDaemon = externalDaemon
 
-    def setFile(self, f, objectID=0):
+    def setFile(self, file, objectID=0):
         """
         Registers the given (remote) file in application.
 
-        :param pyrofile.PyroFile f: Remote file to be registered by the application (input file)
+        :param pyrofile.PyroFile file: Remote file to be registered by the application (input file)
         :param int objectID: Identifies file with objectID (optional, default 0)
         """
 
@@ -279,16 +279,16 @@ class Model(mupifobject.MupifObject):
         """
         Registers the given (remote) object in application.
 
-        :param property.Property or field.Field or function.Function obj: Remote object to be registered by the application
+        :param property.Property or field.Field or function.Function or pyrofile.PyroFile obj: Remote object to be registered by the application
         :param int objectID: Identifies object with objectID (optional, default 0)
         """
-        if isinstance(obj, property.Property):
+        if obj.isInstance(property.Property):
             return self.setProperty(obj, objectID)
-        if isinstance(obj, field.Field):
+        if obj.isInstance(field.Field):
             return self.setField(obj, objectID)
-        if isinstance(obj, function.Function):
+        if obj.isInstance(function.Function):
             return self.setFunction(obj, objectID)
-        if isinstance(obj, pyrofile.PyroFile):
+        if obj.isInstance(pyrofile.PyroFile):
             self.setFile(obj, objectID)
 
     def getField(self, fieldID, time, objectID=0):

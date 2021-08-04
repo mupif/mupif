@@ -94,7 +94,7 @@ class Example08(workflow.Workflow):
         )
         thermalInputFile = mp.PyroFile(filename = '..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
-        self.thermal.setFile(thermalInputFile)
+        self.thermal.set(thermalInputFile)
 
         self.mechanical.initialize(
             workdir='.',
@@ -102,7 +102,7 @@ class Example08(workflow.Workflow):
         )
         mechanicalInputFile = mp.PyroFile(filename = '..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
-        self.mechanical.setFile(mechanicalInputFile)
+        self.mechanical.set(mechanicalInputFile)
 
         # self.thermal.printMetadata()
         # self.mechanical.printMetadata()
