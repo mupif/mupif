@@ -41,14 +41,19 @@ class Example07(workflow.Workflow):
         self.mechanicalJobMan = None
         self.thermalSolver = None
         self.mechanicalSolver = None
-        self.appsTunnel = None
+        self.daemon = None
 
-        self.daemon = Pyro5.api.Daemon()
-        threading.Thread(target=self.daemon.requestLoop).start()
 
     def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+
+        ### HACK begin: must specify host for daemon; use the one which connects to the ns
+        ns._pyroBind()
+        self.daemon = Pyro5.api.Daemon(host=ns._pyroConnection.sock.getsockname()[0])
+        threading.Thread(target=self.daemon.requestLoop,daemon=True).start()
+        ### HACK end
+
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@ThermalSolver-ex07')
         self.mechanicalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@MechanicalSolver-ex07')
@@ -137,11 +142,8 @@ class Example07(workflow.Workflow):
         return 1*mp.U.s
 
     def terminate(self):
-        self.daemon.shutdown()
         self.thermalSolver.terminate()
         self.mechanicalSolver.terminate()
-        if self.appsTunnel:
-            self.appsTunnel.terminate()
         super().terminate()
 
     def getApplicationSignature(self):
