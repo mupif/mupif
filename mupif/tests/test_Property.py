@@ -1,4 +1,5 @@
-import unittest,sys
+import unittest
+import sys
 sys.path.append('../..')
 
 from mupif import *
@@ -7,6 +8,7 @@ import tempfile
 import mupif as mp
 import numpy as np
 
+
 class Property_TestCase(unittest.TestCase):
     def setUp(self):
 
@@ -14,7 +16,6 @@ class Property_TestCase(unittest.TestCase):
         self.t2 = 15*mp.U.s
         self.t3 = 9*mp.U.s
 
-        
         self.p1=property.ConstantProperty(value=16.,propID=DataID.PID_Concentration,valueType=ValueType.Scalar,unit=mp.U['m'],time=self.t1,objectID=1)
         self.p2=property.ConstantProperty(value=7.,propID=DataID.PID_Velocity,valueType=ValueType.Vector,unit=mp.U['m/s'],time=self.t2,objectID=16)
         self.p3=property.ConstantProperty(value=9.,propID=DataID.PID_ParticleSigma,valueType=ValueType.Tensor,unit=mp.U['kg/(m*s**2)'],time=self.t3, objectID=8)
@@ -76,11 +77,8 @@ class Property_TestCase(unittest.TestCase):
             self.assertEqual(self.res.getPropertyID(),DataID.PID_ParticleSigma)
             self.assertEqual(self.res.getObjectID(),8)
             self.assertTrue(self.p3.getUnit().isCompatible(mp.U['kg/(m*s**2)']))
-        
-# python test_Property.py for stand-alone test being run
-if __name__=='__main__': unittest.main()
 
-        
-        
-    
-        
+
+# python test_Property.py for stand-alone test being run
+if __name__ == '__main__':
+    unittest.main()

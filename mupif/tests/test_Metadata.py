@@ -1,14 +1,9 @@
-import unittest,sys
+import unittest
+import sys
 sys.path.append('../..')
 from mupif import *
 import mupif
 import jsonschema
-
-
-
-
-
-
 
 
 class TestModel1(model.Model):
@@ -23,11 +18,9 @@ class TestModel1(model.Model):
         
         super().__init__(metadata=metadata1)
         self.updateMetadata(metadata)
-        
-       
+
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-
 
 
 class TestModel2(model.Model):

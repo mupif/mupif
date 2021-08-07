@@ -5,10 +5,8 @@ import os.path
 import Pyro5
 import logging
 log = logging.getLogger()
-#import testApp
+# import testApp
 from . import testApp
-
-
 
 
 class ServerConfig(object):
@@ -45,8 +43,7 @@ class ServerConfig(object):
         self.socketApps = 10000
         # Main directory for transmitting files
         self.jobManWorkDir = '.'
-        
-        
+
         # NAME SERVER
         # IP/name of a name server
         self.nshost = '127.0.0.1'
@@ -66,4 +63,3 @@ class ServerConfig(object):
 
         self.applicationClass = testApp.testApp
         self.applicationInitialFile = os.devnull  # dummy file
-

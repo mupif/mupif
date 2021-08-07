@@ -242,14 +242,6 @@ class Model(mupifobject.MupifObject):
         self.appName = appName
         self.externalDaemon = externalDaemon
 
-    def setFile(self, file, objectID=0):
-        """
-        Registers the given (remote) file in application.
-
-        :param pyrofile.PyroFile file: Remote file to be registered by the application (input file)
-        :param int objectID: Identifies file with objectID (optional, default 0)
-        """
-
     def get(self, objectTypeID, time=None, objectID=0):
         """
         Returns the requested object at given time. Object is identified by id.

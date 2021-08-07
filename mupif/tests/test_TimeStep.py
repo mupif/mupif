@@ -13,13 +13,13 @@ class TimeStep_TestCase(unittest.TestCase):
     # Testing getIntegrationPoints
     def test_Init(self):
 
-        time  = 0.0
+        time = 0.0
         dt = 0.5
         targetTime = 2.0
         timestepnumber = 0
 
         with self.assertRaises(pydantic.ValidationError): 
-            istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt,unit=None, number=timestepnumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=None, number=timestepnumber)
 
         time = 0.*mp.U.s
         with self.assertRaises(pydantic.ValidationError):
@@ -28,8 +28,7 @@ class TimeStep_TestCase(unittest.TestCase):
         dt = .5*mp.U.s
 
         with self.assertRaises(pydantic.ValidationError):
-            istep = timestep.TimeStep(time=time,dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
-
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=None, number=timestepnumber)
 
         time = 0.0
         dt = 0.5
@@ -38,8 +37,6 @@ class TimeStep_TestCase(unittest.TestCase):
 
         # @todo what sould this do?
         istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=mp.U.m, number=timestepnumber)
-
-
 
     def test_getTimeIncrement(self):
         time = 0.0
@@ -50,9 +47,8 @@ class TimeStep_TestCase(unittest.TestCase):
         istep = timestep.TimeStep(time=time, dt=dt, targetTime=time + dt, unit=mp.U.s, number=timestepnumber)
 
         dT = istep.getTimeIncrement()
-        self.assertEqual(dT.getValue(),dt)
-        self.assertEqual(dT.getUnitName(),'s')
-
+        self.assertEqual(dT.getValue(), dt)
+        self.assertEqual(dT.getUnitName(), 's')
 
     def test_getTargetTime(self):
         time = 0.0
@@ -77,11 +73,5 @@ class TimeStep_TestCase(unittest.TestCase):
         self.assertEqual(istep.getNumber(), 1)
 
 
-
-
-if __name__ == '__main__': unittest.main()
-
-
-
-
-
+if __name__ == '__main__':
+    unittest.main()

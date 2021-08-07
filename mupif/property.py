@@ -86,7 +86,7 @@ class ConstantProperty(Property):
     def getValue(self, time=None):
         """
         Returns the value of property in a tuple.
-        :param Physics.Quantity time: Time of property evaluation
+        :param units.Quantity time: Time of property evaluation
 
         :return: Property value as an array
         :rtype: tuple
@@ -101,7 +101,7 @@ class ConstantProperty(Property):
     def getTime(self):
         """
         :return: Receiver time
-        :rtype: Quantity or None
+        :rtype: units.Quantity or None
         """
         return self.time
 
@@ -117,7 +117,7 @@ class ConstantProperty(Property):
         #            sign2*other.value*other.unit.conversionFactorTo(self.unit)
         return self.__class__(new_value, self.propID, self.valueType, self.time, self.unit)
 
-    def _old_convertToUnit(self, unit):
+    def _old_convertToUnit(self, unit):  # TODO Should this function be deleted? Not used anywhere.
         """
         Change the unit and adjust the value such that
         the combination is equivalent to the original one. The new unit
@@ -127,7 +127,7 @@ class ConstantProperty(Property):
 
         :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
         """
-        unit = unit.findUnit(unit)
+        unit = units.findUnit(unit)
         self.value = self._convertValue(self.value, self.unit, unit)
         self.unit = unit
 

@@ -146,7 +146,7 @@ class Field(mupifquantity.MupifQuantity):
         Get time of the field.
 
         :return: Time of field data
-        :rtype: Physics.Quantity
+        :rtype: units.Quantity
         """
         return self.time
 
@@ -166,7 +166,7 @@ class Field(mupifquantity.MupifQuantity):
         :type positions: tuple, a list of tuples
         :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
         :return: field value(s)
-        :rtype: Physics.Quantity with given value or tuple of values
+        :rtype: units.Quantity with given value or tuple of values
         """
         # test if positions is a list of positions
         if isinstance(positions, list):
@@ -260,7 +260,7 @@ class Field(mupifquantity.MupifQuantity):
 
         :param int vertexID: Vertex identifier
         :return: The value
-        :rtype: Physics.Quantity
+        :rtype: units.Quantity
         """
         if self.fieldType == FieldType.FT_vertexBased:
             return Quantity(value=self.getRecord(vertexID), unit=self.getUnit())
@@ -273,7 +273,7 @@ class Field(mupifquantity.MupifQuantity):
 
         :param int cellID: Cell identifier
         :return: The value
-        :rtype: Physics.Quantity
+        :rtype: units.Quantity
         """
         if self.fieldType == FieldType.FT_cellBased:
             return Quantity(value=self.getRecord(cellID), unit=self.getUnit())
