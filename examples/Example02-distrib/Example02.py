@@ -52,7 +52,7 @@ class Application1(mp.Model):
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True}],
+                 'Origin': 'Simulated', 'Required': True, "Apply_at": "timestep"}],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',

@@ -27,64 +27,73 @@ class ThermalModel(mupif.model.Model):
     def __init__(self, metadata={}):
         if len(metadata) == 0:
             metadata = {
-                'Name': 'Stationary thermal problem',
-                'ID': 'Thermo-1',
-                'Description': 'Stationary heat conduction using finite elements on rectangular domain',
-                'Version_date': '1.0.0, Feb 2019',
-                'Geometry': '2D rectangle',
-                'Boundary_conditions': 'Dirichlet, Neumann',
-                'Inputs': [
+                "Name": "Stationary thermal problem",
+                "ID": "Thermo-1",
+                "Description": "Stationary heat conduction using finite elements on rectangular domain",
+                "Version_date": "1.0.0, Feb 2019",
+                "Geometry": "2D rectangle",
+                "Boundary_conditions": "Dirichlet, Neumann",
+                "Inputs": [
                     {
-                        'Name': 'edge temperature',
-                        'Type': 'mupif.Property',
-                        'Required': False,
-                        'Type_ID': 'mupif.DataID.PID_Temperature',
-                        'Obj_ID': [
-                            'Cauchy top',
-                            'Cauchy bottom',
-                            'Cauchy left',
-                            'Cauchy right',
-                            'Dirichlet top',
-                            'Dirichlet bottom',
-                            'Dirichlet left',
-                            'Dirichlet right'
-                        ]
+                        "Name": "edge temperature",
+                        "Type": "mupif.Property",
+                        "Required": False,
+                        "Type_ID": "mupif.DataID.PID_Temperature",
+                        "Obj_ID": [
+                            "Cauchy top",
+                            "Cauchy bottom",
+                            "Cauchy left",
+                            "Cauchy right",
+                            "Dirichlet top",
+                            "Dirichlet bottom",
+                            "Dirichlet left",
+                            "Dirichlet right"
+                        ],
+                        "Apply_at": "timestep"
+                    },
+                    {
+                        "Name": "Input file",
+                        "Type": "mupif.PyroFile",
+                        "Required": True,
+                        "Type_ID": "mupif.DataID.ID_InputFile",
+                        "Obj_ID": ["input_file_thermal"],
+                        "Apply_at": "initialization"
                     }
                 ],
-                'Outputs': [
+                "Outputs": [
                     {
-                        'Name': 'temperature',
-                        'Type_ID': 'mupif.DataID.FID_Temperature',
-                        'Type': 'mupif.Field',
-                        'Required': False
+                        "Name": "temperature",
+                        "Type_ID": "mupif.DataID.FID_Temperature",
+                        "Type": "mupif.Field",
+                        "Required": False
                     }
                 ],
-                'Solver': {
-                    'Software': 'own',
-                    'Type': 'Finite elements',
-                    'Accuracy': 'Medium',
-                    'Sensitivity': 'Low',
-                    'Complexity': 'Low',
-                    'Robustness': 'High',
-                    'Estim_time_step': 1,
-                    'Estim_comp_time': 1.e-3,
-                    'Estim_execution_cost': 0.01,
-                    'Estim_personnel_cost': 0.01,
-                    'Required_expertise': 'None',
-                    'Language': 'Python',
-                    'License': 'LGPL',
-                    'Creator': 'Borek Patzak',
-                    'Version_date': '1.0.0, Feb 2019',
-                    'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+                "Solver": {
+                    "Software": "own",
+                    "Type": "Finite elements",
+                    "Accuracy": "Medium",
+                    "Sensitivity": "Low",
+                    "Complexity": "Low",
+                    "Robustness": "High",
+                    "Estim_time_step": 1,
+                    "Estim_comp_time": 1.e-3,
+                    "Estim_execution_cost": 0.01,
+                    "Estim_personnel_cost": 0.01,
+                    "Required_expertise": "None",
+                    "Language": "Python",
+                    "License": "LGPL",
+                    "Creator": "Borek Patzak",
+                    "Version_date": "1.0.0, Feb 2019",
+                    "Documentation": "Felippa: Introduction to finite element methods, 2004",
                 },
-                'Physics': {
-                    'Type': 'Continuum',
-                    'Entity': ['Finite volume'],
-                    'Equation': ['Heat balance'],
-                    'Equation_quantities': ['Heat flow'],
-                    'Relation_description': ['Fick\'s first law'],
-                    'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
-                    'Representation': 'Finite volumes'
+                "Physics": {
+                    "Type": "Continuum",
+                    "Entity": ["Finite volume"],
+                    "Equation": ["Heat balance"],
+                    "Equation_quantities": ["Heat flow"],
+                    "Relation_description": ["Fick's first law"],
+                    "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
+                    "Representation": "Finite volumes"
                 }
             }
         super().__init__(metadata=metadata)
@@ -645,65 +654,74 @@ class ThermalNonstatModel(ThermalModel):
 
     def __init__(self):
         metadata = {
-            'Name': 'Non-stationary thermal problem',
-            'ID': 'NonStatThermo-1',
-            'Description': 'Non-stationary heat conduction using finite elements on a rectangular domain',
-            'Version_date': '1.0.0, Feb 2019',
-            'Representation': 'Finite volumes',
-            'Geometry': '2D rectangle',
-            'Boundary_conditions': 'Dirichlet, Neumann',
-            'Inputs': [
+            "Name": "Non-stationary thermal problem",
+            "ID": "NonStatThermo-1",
+            "Description": "Non-stationary heat conduction using finite elements on a rectangular domain",
+            "Version_date": "1.0.0, Feb 2019",
+            "Representation": "Finite volumes",
+            "Geometry": "2D rectangle",
+            "Boundary_conditions": "Dirichlet, Neumann",
+            "Inputs": [
                 {
-                    'Name': 'edge temperature',
-                    'Type': 'mupif.Property',
-                    'Required': False,
-                    'Type_ID': 'mupif.DataID.PID_Temperature',
-                    'Obj_ID': [
-                        'Cauchy top',
-                        'Cauchy bottom',
-                        'Cauchy left',
-                        'Cauchy right',
-                        'Dirichlet top',
-                        'Dirichlet bottom',
-                        'Dirichlet left',
-                        'Dirichlet right'
-                    ]
+                    "Name": "edge temperature",
+                    "Type": "mupif.Property",
+                    "Required": False,
+                    "Type_ID": "mupif.DataID.PID_Temperature",
+                    "Obj_ID": [
+                        "Cauchy top",
+                        "Cauchy bottom",
+                        "Cauchy left",
+                        "Cauchy right",
+                        "Dirichlet top",
+                        "Dirichlet bottom",
+                        "Dirichlet left",
+                        "Dirichlet right"
+                    ],
+                    "Apply_at": "timestep"
+                },
+                {
+                    "Name": "Input file",
+                    "Type": "mupif.PyroFile",
+                    "Required": True,
+                    "Type_ID": "mupif.DataID.ID_InputFile",
+                    "Obj_ID": ["input_file_thermal_nonstat"],
+                    "Apply_at": "initialization"
                 }
             ],
-            'Outputs': [
+            "Outputs": [
                 {
-                    'Name': 'temperature',
-                    'Type_ID': 'mupif.DataID.FID_Temperature',
-                    'Type': 'mupif.Field',
-                    'Required': False
+                    "Name": "temperature",
+                    "Type_ID": "mupif.DataID.FID_Temperature",
+                    "Type": "mupif.Field",
+                    "Required": False
                 }
             ],
-            'Solver': {
-                'Software': 'own',
-                'Type': 'Finite elements',
-                'Accuracy': 'Medium',
-                'Sensitivity': 'Low',
-                'Complexity': 'Low',
-                'Robustness': 'High',
-                'Estim_time_step': 1,
-                'Estim_comp_time': 1.e-3,
-                'Estim_execution_cost': 0.01,
-                'Estim_personnel_cost': 0.01,
-                'Required_expertise': 'None',
-                'Language': 'Python',
-                'License': 'LGPL',
-                'Creator': 'Borek Patzak',
-                'Version_date': '1.0.0, Feb 2019',
-                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+            "Solver": {
+                "Software": "own",
+                "Type": "Finite elements",
+                "Accuracy": "Medium",
+                "Sensitivity": "Low",
+                "Complexity": "Low",
+                "Robustness": "High",
+                "Estim_time_step": 1,
+                "Estim_comp_time": 1.e-3,
+                "Estim_execution_cost": 0.01,
+                "Estim_personnel_cost": 0.01,
+                "Required_expertise": "None",
+                "Language": "Python",
+                "License": "LGPL",
+                "Creator": "Borek Patzak",
+                "Version_date": "1.0.0, Feb 2019",
+                "Documentation": "Felippa: Introduction to finite element methods, 2004",
             },
-            'Physics': {
-                'Type': 'Continuum',
-                'Entity': ['Finite volume'],
-                'Equation': ['Heat balance'],
-                'Equation_quantities': ['Heat flow'],
-                'Relation_description': ['Fick\'s first law'],
-                'Relation_formulation': ['Flow induced by thermal gradient on isotropic material'],
-                'Representation': 'Finite volumes'
+            "Physics": {
+                "Type": "Continuum",
+                "Entity": ["Finite volume"],
+                "Equation": ["Heat balance"],
+                "Equation_quantities": ["Heat flow"],
+                "Relation_description": ["Fick's first law"],
+                "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
+                "Representation": "Finite volumes"
             }
         }
         super().__init__(metadata=metadata)
@@ -958,54 +976,63 @@ class MechanicalModel(mupif.model.Model):
 
     def __init__(self):
         metadata = {
-            'Name': 'Plane stress linear elastic',
-            'ID': 'Mechanical-1',
-            'Description': 'Plane stress problem with linear elastic thermo-elastic material',
-            'Version_date': '1.0.0, Feb 2019',
-            'Geometry': '2D rectangle',
-            'Boundary_conditions': 'Dirichlet',
-            'Inputs': [
+            "Name": "Plane stress linear elastic",
+            "ID": "Mechanical-1",
+            "Description": "Plane stress problem with linear elastic thermo-elastic material",
+            "Version_date": "1.0.0, Feb 2019",
+            "Geometry": "2D rectangle",
+            "Boundary_conditions": "Dirichlet",
+            "Inputs": [
                 {
-                    'Name': 'temperature',
-                    'Type_ID': 'mupif.DataID.FID_Temperature',
-                    'Type': 'mupif.Field',
-                    'Required': True
+                    "Name": "temperature",
+                    "Type_ID": "mupif.DataID.FID_Temperature",
+                    "Type": "mupif.Field",
+                    "Required": True,
+                    "Apply_at": "timestep"
+                },
+                {
+                    "Name": "Input file",
+                    "Type": "mupif.PyroFile",
+                    "Required": True,
+                    "Type_ID": "mupif.DataID.ID_InputFile",
+                    "Obj_ID": ["input_file_mechanical"],
+                    "Apply_at": "initialization"
                 }
             ],
-            'Outputs': [
+            "Outputs": [
                 {
-                    'Name': 'displacement',
-                    'Type_ID': 'mupif.DataID.FID_Displacement',
-                    'Type': 'mupif.Field',
-                    'Required': False
+                    "Name": "displacement",
+                    "Type_ID": "mupif.DataID.FID_Displacement",
+                    "Type": "mupif.Field",
+                    "Required": False
                 }
             ],
-            'Solver': {
-                'Software': 'own',
-                'Type': 'Finite elements',
-                'Accuracy': 'Medium',
-                'Sensitivity': 'Low',
-                'Complexity': 'Low',
-                'Robustness': 'High',
-                'Estim_time_step': 1,
-                'Estim_comp_time': 1.e-3,
-                'Estim_execution_cost': 0.01,
-                'Estim_personnel_cost': 0.01,
-                'Required_expertise': 'None',
-                'Language': 'Python',
-                'License': 'LGPL',
-                'Creator': 'Borek Patzak',
-                'Version_date': '1.0.0, Feb 2019',
-                'Documentation': 'Felippa: Introduction to finite element methods, 2004',
+            "Solver": {
+                "Software": "own",
+                "Type": "Finite elements",
+                "Accuracy": "Medium",
+                "Sensitivity": "Low",
+                "Complexity": "Low",
+                "Robustness": "High",
+                "Estim_time_step": 1,
+                "Estim_comp_time": 1.e-3,
+                "Estim_execution_cost": 0.01,
+                "Estim_personnel_cost": 0.01,
+                "Required_expertise": "None",
+                "Language": "Python",
+                "License": "LGPL",
+                "Creator": "Borek Patzak",
+                "Version_date": "1.0.0, Feb 2019",
+                "Documentation": "Felippa: Introduction to finite element methods, 2004",
             },
-            'Physics': {
-                'Type': 'Continuum',
-                'Entity': ['Finite volume'],
-                'Equation': ['Equilibrium'],
-                'Equation_quantities': ['Displacement'],
-                'Relation_description': ['Hooke\'s law'],
-                'Relation_formulation': ['Stress strain'],
-                'Representation': 'Finite volumes'
+            "Physics": {
+                "Type": "Continuum",
+                "Entity": ["Finite volume"],
+                "Equation": ["Equilibrium"],
+                "Equation_quantities": ["Displacement"],
+                "Relation_description": ["Hooke's law"],
+                "Relation_formulation": ["Stress strain"],
+                "Representation": "Finite volumes"
             }
         }
         super().__init__(metadata=metadata)

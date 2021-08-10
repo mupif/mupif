@@ -60,7 +60,7 @@ class EmailAPI(model.Model):
                 'Robustness': 'Unknown'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True}],
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True, "Apply_at": "timestep"}],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Demo_Value', 'Name': 'Demo value',
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]

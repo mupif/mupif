@@ -43,7 +43,6 @@ class Example07(workflow.Workflow):
         self.mechanicalSolver = None
         self.daemon = None
 
-
     def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)

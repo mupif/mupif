@@ -132,15 +132,16 @@ ModelSchema = {
             "items": {
                 "type": "object",  # Object supplies a dictionary
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.PyroFile"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                     "Obj_ID": {"type": "array"},  # optional parameter for additional info, list int or str
                     "Name": {"type": "string"},
                     "Description": {"type": "string"},
                     "Units": {"type": "string"},
-                    "Required": {"type": "boolean"}
+                    "Required": {"type": "boolean"},
+                    "Apply_at": {"type": "string", "enum": ["initialization", "timestep"]}
                 },
-                "required": ["Type", "Type_ID", "Name", "Units", "Required"]
+                "required": ["Type", "Type_ID", "Name", "Units", "Required", "Apply_at"]
             }
         },
         "Outputs": {
