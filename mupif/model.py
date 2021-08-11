@@ -139,9 +139,9 @@ ModelSchema = {
                     "Description": {"type": "string"},
                     "Units": {"type": "string"},
                     "Required": {"type": "boolean"},
-                    "Apply_at": {"type": "string", "enum": ["initialization", "timestep"]}
+                    "Set_at": {"type": "string", "enum": ["initialization", "timestep"]}
                 },
-                "required": ["Type", "Type_ID", "Name", "Units", "Required", "Apply_at"]
+                "required": ["Type", "Type_ID", "Name", "Units", "Required", "Set_at"]
             }
         },
         "Outputs": {

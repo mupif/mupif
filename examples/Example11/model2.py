@@ -45,7 +45,7 @@ class Model2 (mp.Model):
             'Inputs': [
                 {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Initial grain state', 'Units': 'None',
-                 'Origin': 'Simulated', 'Required': True, "Apply_at": "timestep"}
+                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}
             ],
             'Outputs': [
                 {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',

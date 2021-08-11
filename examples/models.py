@@ -49,7 +49,7 @@ class ThermalModel(mupif.model.Model):
                             "Dirichlet left",
                             "Dirichlet right"
                         ],
-                        "Apply_at": "timestep"
+                        "Set_at": "timestep"
                     },
                     {
                         "Name": "Input file",
@@ -57,7 +57,7 @@ class ThermalModel(mupif.model.Model):
                         "Required": True,
                         "Type_ID": "mupif.DataID.ID_InputFile",
                         "Obj_ID": ["input_file_thermal"],
-                        "Apply_at": "initialization"
+                        "Set_at": "initialization"
                     }
                 ],
                 "Outputs": [
@@ -677,7 +677,7 @@ class ThermalNonstatModel(ThermalModel):
                         "Dirichlet left",
                         "Dirichlet right"
                     ],
-                    "Apply_at": "timestep"
+                    "Set_at": "timestep"
                 },
                 {
                     "Name": "Input file",
@@ -685,7 +685,7 @@ class ThermalNonstatModel(ThermalModel):
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": ["input_file_thermal_nonstat"],
-                    "Apply_at": "initialization"
+                    "Set_at": "initialization"
                 }
             ],
             "Outputs": [
@@ -988,7 +988,7 @@ class MechanicalModel(mupif.model.Model):
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
                     "Required": True,
-                    "Apply_at": "timestep"
+                    "Set_at": "timestep"
                 },
                 {
                     "Name": "Input file",
@@ -996,7 +996,7 @@ class MechanicalModel(mupif.model.Model):
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": ["input_file_mechanical"],
-                    "Apply_at": "initialization"
+                    "Set_at": "initialization"
                 }
             ],
             "Outputs": [

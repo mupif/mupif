@@ -46,7 +46,7 @@ class Application10(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Time value',
-                 'Description': 'Time', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Apply_at": "timestep"}],
+                 'Description': 'Time', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Summed time value',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
