@@ -46,12 +46,7 @@ class Example07(workflow.Workflow):
     def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
-
-        ### HACK begin: must specify host for daemon; use the one which connects to the ns
-        ns._pyroBind()
-        self.daemon = Pyro5.api.Daemon(host=ns._pyroConnection.sock.getsockname()[0])
-        threading.Thread(target=self.daemon.requestLoop,daemon=True).start()
-        ### HACK end
+        self.daemon=pyroutil.getDaemon(ns)
 
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@ThermalSolver-ex07')

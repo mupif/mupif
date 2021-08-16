@@ -128,25 +128,27 @@ def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     return ns
 
 
-_daemon=None
-def getDaemon() -> Pyro5.api.Daemon:
-    '''
-    Returns a daemon which is bound to this process lifetime (running in a separate thread). The daemon
-    is cached, i.e. the first call will construct the daemon and subsequent calls will only return
-    the already running daemon.
+# global variable holding daemon objects, keyed by hostname (local IP address)
+_daemons={}
 
-    Do *not* call ``shutdown`` on the daemon returned (unless you also set ``pyroutil._daemon=None``)
-    as this would break the caching involved.
+def getDaemon(proxy: Pyro5.api.Proxy = None) -> Pyro5.api.Daemon:
     '''
-    global _daemon
-    if _daemon is not None: return _daemon
-    _daemon=Pyro5.api.Daemon()
-    # daemon=True will kill the thread when the process (non-daemon threads) exit
-    # thus daemon thread will not shutdown gracefully, but that is okay for us
-    th=threading.Thread(target=_daemon.requestLoop,daemon=True)
+    Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will lsiten on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
+
+    Passing *proxy=None* will return the (possibly cached) daemon listening on the IPv4 loopback interface.
+
+    Do *not* call ``shutdown`` on the daemon returned as this would break the caching involved.
+    '''
+    if proxy is not None:
+        proxy._pyroBind()
+        host=proxy._pyroConnection.sock.getsockname()[0]
+    else: host='127.0.0.1'
+    global _daemons
+    if (d:=_daemons.get(host,None)) is not None: return d
+    dNew=_daemons[host]=Pyro5.api.Daemon(host=host)
+    th=threading.Thread(target=dNew.requestLoop,daemon=True)
     th.start()
-    return _daemon
-
+    return dNew
 
 def getNSmetadata(ns, name):
     """
