@@ -24,15 +24,13 @@ from . import bbox
 from . import util
 import math
 from . import cellgeometrytype
-from .dumpable import Dumpable
 import numpy as np
-import Pyro5
+import Pyro5.api
 
 import numpy
 import numpy.linalg
 import typing
 from . import dumpable
-from . import mupifobject
 
 # debug flag
 debug = 0

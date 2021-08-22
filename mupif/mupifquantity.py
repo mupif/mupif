@@ -3,14 +3,11 @@ Enumeration defining supported types of field and property values, e.g. scalar, 
 """
 from enum import IntEnum
 
-from . import dumpable
 from . import units
 from . import mupifobject
 import typing
 import pydantic
-import numpy as np
 import warnings
-import pprint
 
 
 class ValueType(IntEnum):

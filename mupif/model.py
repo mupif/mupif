@@ -277,7 +277,7 @@ class Model(mupifobject.MupifObject):
             raise apierror.APIError('Error: getFieldURI requires to register pyroDaemon in application')
         try:
             var_field = self.get(fieldID, time, objectID=objectID)
-        except:
+        except Exception:
             self.setMetadata('Status', 'Failed')
             raise apierror.APIError('Error: can not obtain field')
         if hasattr(var_field, '_PyroURI'):

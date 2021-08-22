@@ -1,5 +1,5 @@
 from . import mupifobject
-import Pyro5
+import Pyro5.api
 import pickle
 import collections
 import typing

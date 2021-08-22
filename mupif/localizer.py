@@ -21,7 +21,7 @@
 # Boston, MA  02110-1301  USA
 #
 from builtins import object
-import Pyro5
+import Pyro5.api
 
 
 @Pyro5.api.expose

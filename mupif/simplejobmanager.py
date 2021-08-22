@@ -38,14 +38,14 @@ from .pyrofile import PyroFile
 import os
 import typing
 
-sys.excepthook=Pyro5.errors.excepthook
-Pyro5.config.DETAILED_TRACEBACK=False
+sys.excepthook = Pyro5.errors.excepthook
+Pyro5.config.DETAILED_TRACEBACK = False
 
 # spawn is safe for windows; this is a global setting
 if multiprocessing.get_start_method() != 'spawn':
     multiprocessing.set_start_method('spawn', force=True)
 
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 try:
     import colorlog
@@ -76,7 +76,7 @@ class SimpleJobManager (jobmanager.JobManager):
         user: str
         port: int
 
-    ticketExpireTimeout=10
+    ticketExpireTimeout = 10
 
     def __init__(
             self,
@@ -124,16 +124,16 @@ class SimpleJobManager (jobmanager.JobManager):
         # Pyro5.config.DETAILED_TRACEBACK=True
         app = appClass()
         app.setJobID(jobID)
-        uri=mupif.pyroutil.runAppServer(
+        uri = mupif.pyroutil.runAppServer(
             app=app,
             appName=jobID,
             server=server,
             nshost=nshost,
             nsport=nsport
         )
-        pipe.send(uri) # as bytes
+        pipe.send(uri)  # as bytes
 
-    def __checkTicket (self, ticket):
+    def __checkTicket(self, ticket):
         """ Returns true, if ticket is valid, false otherwise"""
         currentTime = time.time()
         if ticket in self.tickets:
@@ -212,7 +212,7 @@ class SimpleJobManager (jobmanager.JobManager):
             try:
                 parentPipe, childPipe = multiprocessing.Pipe()
 
-                kwargs=dict(
+                kwargs = dict(
                     pipe=childPipe,
                     ns=self.ns,
                     jobID=jobID,
@@ -223,7 +223,7 @@ class SimpleJobManager (jobmanager.JobManager):
                     nsport=self.nsport,
                     server=self.server
                 )
-                proc=multiprocessing.Process(
+                proc = multiprocessing.Process(
                     target=SimpleJobManager._spawnProcess,
                     name=self.applicationName,
                     kwargs=kwargs
@@ -308,13 +308,13 @@ class SimpleJobManager (jobmanager.JobManager):
         if self.pyroDaemon:
             try:
                 self.pyroDaemon.unregister(self)
-            except:
+            except Exception:
                 pass
             if not self.externalDaemon:
                 log.info("SimpleJobManager:terminate Shutting down daemon %s" % self.pyroDaemon)
                 try:
                     self.pyroDaemon.shutdown()
-                except:
+                except Exception:
                     pass
             self.pyroDaemon = None
         else:
@@ -342,7 +342,7 @@ class SimpleJobManager (jobmanager.JobManager):
         See :func:`JobManager.uploadFile`
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
-        PyroFile.copy(targetFileName,pyroFile)
+        PyroFile.copy(targetFileName, pyroFile)
         # pyroutil.uploadPyroFile(targetFileName, pyroFile)
 
     def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):

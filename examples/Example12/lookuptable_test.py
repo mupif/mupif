@@ -11,7 +11,7 @@ if __name__ == '__main__':
         [2., 3., 4., 5.]
     ])
 
-    print(lut.evaluate([3., 4., 5.]))
-    print(lut.evaluate([0., 1., 2.]))
-    print(lut.evaluate([1., 2., 3.]))
-    print(lut.evaluate([2., 3., 4.]))
+    print(lut.evaluate([3., 4., 5.]))  # produces 2.
+    print(lut.evaluate([0., 1., 2.]))  # produces None
+    print(lut.evaluate([1., 2., 3.]))  # produces 0.
+    print(lut.evaluate([2., 3., 4.]))  # produces 1.

@@ -101,8 +101,8 @@ class MupifObjectBase(MupifBaseModel):
         :rtype: None
         """
         print('ClassName:\'%s\'' % self.__class__.__name__)
+        d = {}
         if nonEmpty:
-            d = {}
             for k, v in self.getAllMetadata().items():
                 if v != '':
                     d[k] = v

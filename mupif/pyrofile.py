@@ -24,9 +24,8 @@
 from __future__ import annotations
 
 import zlib
-import Pyro5
+import Pyro5.api
 import serpent
-import sys
 import pathlib
 import typing
 import shutil
@@ -39,12 +38,13 @@ class PyroFile (MupifObjectBase):
     """
     filename: str
     mode: str
-    buffsize: int=2**20
-    compressFlag: bool=False
+    buffsize: int = 2**20
+    compressFlag: bool = False
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        if self.mode not in ('rb','wb'): raise ValueError(f"mode must be 'rb' or 'wb' (not '{self.mode}').")
+        if self.mode not in ('rb', 'wb'):
+            raise ValueError(f"mode must be 'rb' or 'wb' (not '{self.mode}').")
         self.myfile = open(self.filename, self.mode)
         self.compressor = None
         self.decompressor = None
@@ -65,15 +65,16 @@ class PyroFile (MupifObjectBase):
         if data:
             # some data read, not yet EOF
             if self.compressFlag:
-                if not self.compressor: self.compressor = zlib.compressobj()
+                if not self.compressor:
+                    self.compressor = zlib.compressobj()
                 data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
             yield data
         else:
             # no data read: EOF
             # flush compressor if necessary (used to be the terminal chunk)
             if self.compressor:
-                ret=self.compressor.flush(zlib.Z_FINISH)
-                compressor=None # perhaps not necessary
+                ret = self.compressor.flush(zlib.Z_FINISH)
+                compressor = None  # perhaps not necessary
                 yield ret
 
     @Pyro5.api.expose
@@ -84,7 +85,8 @@ class PyroFile (MupifObjectBase):
         :param str buffer: data chunk to append
         """
         # https://pyro5.readthedocs.io/en/stable/tipstricks.html#binary-data-transfer-file-transfer
-        if type(buffer)==dict: buffer=serpent.tobytes(buffer)
+        if type(buffer) == dict:
+            buffer = serpent.tobytes(buffer)
         if self.compressFlag:
             if not self.decompressor:
                 self.decompressor = zlib.decompressobj()
@@ -101,7 +103,7 @@ class PyroFile (MupifObjectBase):
         self.buffsize = buffSize
 
     @Pyro5.api.expose
-    def setCompressionFlag(self,value=True):
+    def setCompressionFlag(self, value=True):
         """
         Sets the compressionFlag to True
         """
@@ -116,26 +118,28 @@ class PyroFile (MupifObjectBase):
 
     # MUST be called as mp.PyroFile.copy(src,dst)
     @staticmethod
-    def copy(
-            src: typing.Union[PyroFile,Pyro5.api.Proxy,str,pathlib.Path],
-            dst: typing.Union[PyroFile,Pyro5.api.Proxy,str,pathlib.Path],
-            compress=True
-        ):
-        '''
+    def copy(src: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
+             dst: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
+             compress=True):
+        """
         Copy the content of *src* to *dst*; any of them might be local instance of PyroFile,
         Pyro5.api.Proxy to remote PyroFile, or *str* or *pathlib.Path*. If both are local
         paths, fast-copy is done (without compression), otherwise the tranfer is done by
         chunks.
-        '''
+        """
         # fast-path if both are local files
-        if isinstance(src,(str,pathlib.Path)) and isinstance(dst,(str,pathlib.Path)):
-            shutil.copy(src,dst)
+        if isinstance(src, (str, pathlib.Path)) and isinstance(dst, (str, pathlib.Path)):
+            shutil.copy(src, dst)
             return
-        if isinstance(src,(str,pathlib.Path)): src=PyroFile(filename=src,mode='rb')
-        else: src.rewind() # necessary if the file was used already
-        if isinstance(dst,(str,pathlib.Path)): dst=PyroFile(filename=dst,mode='wb')
+        if isinstance(src, (str, pathlib.Path)):
+            src = PyroFile(filename=src, mode='rb')
+        else:
+            src.rewind()  # necessary if the file was used already
+        if isinstance(dst, (str, pathlib.Path)):
+            dst = PyroFile(filename=dst, mode='wb')
         # both ends must have the same compression options
         src.setCompressionFlag(compress)
         dst.setCompressionFlag(compress)
-        for data in src.getChunk(): dst.setChunk(data)
+        for data in src.getChunk():
+            dst.setChunk(data)
         dst.close()

@@ -15,7 +15,7 @@ import pydantic
 
 try:
     import astropy.units
-except:
+except Exception:
     astropy = None
 
 from typing import Generic, TypeVar

@@ -281,7 +281,7 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     # except AttributeError as e:
     #    # catch attribute error (thrown when method not defined)
     #    log.warning(f'Can not register daemon for application {appName}')
-    except:
+    except Exception:
         log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
         raise
 

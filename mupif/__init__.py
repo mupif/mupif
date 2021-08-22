@@ -100,9 +100,9 @@ from .units import Q
 # this is the output from mupif.autoImports()
 # it must be refreshed by hand whne new class is added or removed
 #
-from .apierror import Dumpable, APIError
+from .apierror import APIError
 from .bbox import BBox
-from .cell import Dumpable, Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahedron_3d_lin, Brick_3d_lin
+from .cell import Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahedron_3d_lin, Brick_3d_lin
 from .constantfield import ConstantField
 from .dataid import DataID
 from .dumpable import NumpyArray, MupifBaseModel, Dumpable

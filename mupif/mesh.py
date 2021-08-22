@@ -121,17 +121,17 @@ class Mesh(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
-    mapping: typing.Any=None
+    mapping: typing.Any = None
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._postDump()
 
     def _postDump(self):
-        '''Called when the instance is being reconstructed.'''
+        """Called when the instance is being reconstructed."""
         # print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
-            object.__setattr__(self.getCell(i),'mesh',self)
+            object.__setattr__(self.getCell(i), 'mesh', self)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
