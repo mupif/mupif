@@ -28,7 +28,6 @@ import subprocess
 import threading
 import time
 import json
-import deprecated
 from . import model
 from . import jobmanager
 from . import util

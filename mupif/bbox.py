@@ -51,8 +51,8 @@ class BBox(pydantic.BaseModel):
         """
         Constructor.
 
-        :param tuple coords_ll: Tuple with coordinates of lower left corner
-        :param tuple coords_ur: Tuple with coordinates of uper right corner
+        :param tuple or list coords_ll: Tuple or list with coordinates of lower left corner
+        :param tuple or list coords_ur: Tuple or list with coordinates of uper right corner
         """
         super().__init__(coords_ll=coords_ll, coords_ur=coords_ur)
         

@@ -22,7 +22,7 @@
 #
 
 import os
-import Pyro5
+import Pyro5.api
 from . import apierror
 from . import mupifobject
 from .dataid import DataID
@@ -34,7 +34,6 @@ from . import pyroutil
 from . import pyrofile
 from typing import Optional, Any
 import time
-import deprecated
 
 from pydantic.dataclasses import dataclass
 
@@ -187,6 +186,7 @@ class Model(mupifobject.MupifObject):
     pyroURI: Optional[str] = None
     appName: str = None
     workDir: str = ''
+    _jobID: str = None
 
     def __init__(self, *, metadata={}, **kw):
         (username, hostname) = pyroutil.getUserInfo()
@@ -276,17 +276,17 @@ class Model(mupifobject.MupifObject):
         if self.pyroDaemon is None:
             raise apierror.APIError('Error: getFieldURI requires to register pyroDaemon in application')
         try:
-            field = self.get(fieldID, time, objectID=objectID)
+            var_field = self.get(fieldID, time, objectID=objectID)
         except:
             self.setMetadata('Status', 'Failed')
             raise apierror.APIError('Error: can not obtain field')
-        if hasattr(field, '_PyroURI'):
-            return field._PyroURI
+        if hasattr(var_field, '_PyroURI'):
+            return var_field._PyroURI
         else:
-            uri = self.pyroDaemon.register(field)
-            # inject uri into field attributes, note: _PyroURI is avoided
+            uri = self.pyroDaemon.register(var_field)
+            # inject uri into var_field attributes, note: _PyroURI is avoided
             # for deepcopy operation
-            field._PyroURI = uri
+            var_field._PyroURI = uri
             # self.pyroNS.register("MUPIF."+self.pyroName+"."+str(fieldID), uri)
             return uri
 

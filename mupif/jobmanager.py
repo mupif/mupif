@@ -29,7 +29,6 @@ import time as timeTime
 import logging
 import os
 import Pyro5
-import deprecated
 log = logging.getLogger()
 
 # error codes

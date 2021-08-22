@@ -7,7 +7,6 @@ from . import dumpable
 from . import units
 from . import mupifobject
 import typing
-import deprecated
 import pydantic
 import numpy as np
 import warnings

@@ -22,7 +22,6 @@
 #
 import Pyro5.api
 import logging
-log = logging.getLogger()
 from . import field
 from . import bbox
 from . import dataid
@@ -30,18 +29,20 @@ from . import mupifquantity
 from . import units
 from pydantic.dataclasses import dataclass
 
+log = logging.getLogger()
+
 # debug flag
 debug = 0
 
+
 @Pyro5.api.expose
-class ConstantField(field.Field):
+class ConstantField(field.Field):  # TODO implement all abstract methods
     """
     Representation of field with constant value. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. 
 
     .. automethod:: _evaluate
     """
-
 
     def evaluate(self, positions, eps=0.0):
         """
@@ -55,10 +56,10 @@ class ConstantField(field.Field):
         """
         # test if positions is a list of positions
         if isinstance(positions, list):
-            ans = []
+            answer = []
             for pos in positions:
-                ans.append(self._evaluate(pos, eps))
-            return units.Quantity(value=ans, unit=self.unit)
+                answer.append(self._evaluate(pos, eps))
+            return units.Quantity(value=answer, unit=self.unit)
         else:
             # single position passed
             return units.Quantity(value=self._evaluate(positions, eps), unit=self.unit)
@@ -74,17 +75,16 @@ class ConstantField(field.Field):
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
-        if (self.mesh): #if mesh provide, check if inside
-           cells = self.mesh.giveCellLocalizer().giveItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
-           # answer=None
-           if len(cells):
-              return self.value
-           else:
-              # no source cell found
-              log.error('Field::evaluate - no source cell found for position ' + str(position))
-              raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
+        if self.mesh:  # if mesh provide, check if inside
+            cells = self.mesh.giveCellLocalizer().giveItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
+            if len(cells):
+                return self.value
+            else:
+                # no source cell found
+                log.error('Field::evaluate - no source cell found for position ' + str(position))
+                raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
         else:
-           return self.value
+            return self.value
 
     def getVertexValue(self, vertexID):
         """
@@ -146,9 +146,6 @@ class ConstantField(field.Field):
 
 
 if __name__ == '__main__':
-    cf = ConstantField(
-        mesh=None,fieldID=dataid.DataID.FID_Temperature, valueType=mupifquantity.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,)
-    )
-    ans = cf.evaluate((10,0,0))
-    print (ans)
-   
+    cf = ConstantField(mesh=None, fieldID=dataid.DataID.FID_Temperature, valueType=mupifquantity.ValueType.Scalar, unit=units.U['degC'], time=0.0, values=(15.,))
+    ans = cf.evaluate((10, 0, 0))
+    print(ans)

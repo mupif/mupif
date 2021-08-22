@@ -21,7 +21,6 @@
 # Boston, MA  02110-1301  USA
 #
 
-from builtins import object
 import Pyro5.api
 import json
 import jsonschema
@@ -41,10 +40,9 @@ class MupifObjectBase(MupifBaseModel):
 
     metadata: dict = pydantic.Field(default_factory=dict)
 
-
     @pydantic.validate_arguments
-    def isInstance(self,classinfo: typing.Union[type,typing.Tuple[type,...]]):
-        return isinstance(self,classinfo)
+    def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
+        return isinstance(self, classinfo)
 
     def getMetadata(self, key):
         """
@@ -185,8 +183,6 @@ class MupifObjectBase(MupifBaseModel):
 
 
 @Pyro5.api.expose
-class MupifObject(MupifObjectBase,Dumpable):
-    '''Base class for objects which have metadata and are dumpable (serializable).'''
+class MupifObject(MupifObjectBase, Dumpable):
+    """Base class for objects which have metadata and are dumpable (serializable)."""
     pass
-
-
