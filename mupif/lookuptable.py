@@ -43,9 +43,9 @@ class MemoryLookupTable(LookupTable):
     .. automethod:: __init__
     """
 
-    data: typing.Optional[list[list[float]]] = []  # first column stores the values, the rest of the columns is used to store the parameters
-    default_value: typing.Optional[float] = None
-    tolerance: typing.Optional[float] = 0.0001
+    data: typing.List[typing.List[float]] = []  # first column stores the values, the rest of the columns is used to store the parameters
+    default_value: float = None
+    tolerance: float = 0.0001
 
     def __init__(self, *, metadata={}, **kw):
         super().__init__(metadata=metadata, **kw)
