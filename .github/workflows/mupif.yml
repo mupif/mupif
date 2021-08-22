@@ -47,35 +47,35 @@ jobs:
         set -euo pipefail
         cd examples; ./runex.py --codecov 2>&1 | ../tools/grcat-mupif
 
-  test-wine64:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python-version: [3.8]
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get install wine64 wine python3-pip dos2unix
-        python -m pip install -q wenv
-        echo '{"arch":"win64","pythonversion":"3.8.5"}' > ~/.wenv.json
-        wenv init
-        wenv pip install -q --only-binary=pyrsistent -r requirements.txt
-    - name: nosetests
-      timeout-minutes: 1
-      run: |
-        set -euo pipefail
-        wenv nosetests --rednose -v  2>&1 | dos2unix | tools/grcat-mupif
-    - name: examples
-      timeout-minutes: 2 # normally about 50s
-      run: |
-        set -euo pipefail
-        # skip test 7, somehow fails under wine
-        cd examples; ./runex.py --wenv=all 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
+#  test-wine64:
+#    runs-on: ubuntu-20.04
+#    strategy:
+#      matrix:
+#        python-version: [3.8]
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: Set up Python ${{ matrix.python-version }}
+#      uses: actions/setup-python@v2
+#      with:
+#        python-version: ${{ matrix.python-version }}
+#    - name: Install dependencies
+#      run: |
+#        sudo apt-get install wine64 wine python3-pip dos2unix
+#        python -m pip install -q wenv
+#        echo '{"arch":"win64","pythonversion":"3.8.5"}' > ~/.wenv.json
+#        wenv init
+#        wenv pip install -q --only-binary=pyrsistent -r requirements.txt
+#    - name: nosetests
+#      timeout-minutes: 1
+#      run: |
+#        set -euo pipefail
+#        wenv nosetests --rednose -v  2>&1 | dos2unix | tools/grcat-mupif
+#    - name: examples
+#      timeout-minutes: 2 # normally about 50s
+#      run: |
+#        set -euo pipefail
+#        # skip test 7, somehow fails under wine
+#        cd examples; ./runex.py --wenv=all 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
 
   test-docker-VPN:
     runs-on: ubuntu-20.04
