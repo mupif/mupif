@@ -56,8 +56,8 @@ class Application10(mp.Model):
         self.value = 0.
         self.input = 0.
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(file=file, workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
 
     def get(self, objectTypeID, time=None, objectID=0):
         md = {

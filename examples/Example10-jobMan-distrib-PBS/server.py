@@ -3,7 +3,7 @@ import sys
 import logging
 rp = os.path.realpath(__file__)
 dirname = os.path.dirname(rp)
-sys.path.extend([dirname+'/.',dirname+'/..', dirname+'/../..'])
+sys.path.extend([dirname+'/.', dirname+'/..', dirname+'/../..'])
 import mupif as mp
 log = logging.getLogger()
 mp.util.changeRootLogger('server.log')
