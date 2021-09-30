@@ -17,7 +17,7 @@ class Example11_1(mp.workflow.Workflow):
         """
 
         MD = {
-            'Name': 'Molecule replacement demo workflow',
+            'Name': 'Grain state generator demo workflow',
             'ID': 'RW1',
             'Description': 'Simple workflow to demonstrate molecule replacement in grain state',
             'Version_date': '1.0.0, May 2021',
