@@ -22,7 +22,9 @@ class Example11_1(mp.workflow.Workflow):
             'Description': 'Simple workflow to demonstrate molecule replacement in grain state',
             'Version_date': '1.0.0, May 2021',
             'Inputs': [],
-            'Outputs': []
+            'Outputs': [
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state', 'Description': 'Sample Random grain state', 'Units': 'None', 'Origin': 'Simulated'}
+            ]
         }
 
         super().__init__(metadata=MD)
@@ -54,13 +56,17 @@ class Example11_1(mp.workflow.Workflow):
 
         try:
             self.m1.solveStep(istep)
-            grainState_output = self.m1.get(mp.DataID.PID_GrainState, istep.getTime())
-            grainState_output.cloneHandle('./data1.h5')
 
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
 
         self.m1.finishStep(istep)
+
+    def get(self, objectTypeID, time=None, objectID=0):
+        return self.m1.get(objectTypeID, time, objectID)
+
+    def set(self, obj, objectID=0):
+        return self.m1.set(obj, objectID)
 
     def getCriticalTimeStep(self):
         return self.m1.getCriticalTimeStep()
@@ -88,4 +94,6 @@ if __name__ == '__main__':
     }
     workflow.initialize(targetTime=1*mp.U.s, metadata=workflowMD)
     workflow.solve()
+    gs = workflow.get(mp.DataID.PID_GrainState)
+    gs.cloneHandle('./data1.h5')
     workflow.terminate()

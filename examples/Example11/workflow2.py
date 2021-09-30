@@ -21,8 +21,12 @@ class Example11_2(mp.workflow.Workflow):
             'ID': 'RW1',
             'Description': 'Simple workflow to demonstrate molecule replacement in grain state',
             'Version_date': '1.0.0, May 2021',
-            'Inputs': [],
-            'Outputs': []
+            'Inputs': [
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state', 'Description': 'Initial grain state', 'Units': 'None', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}
+            ],
+            'Outputs': [
+                {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state', 'Description': 'Updated grain state with dopant', 'Units': 'None', 'Origin': 'Simulated'}
+            ]
         }
 
         super().__init__(metadata=MD)
@@ -53,17 +57,18 @@ class Example11_2(mp.workflow.Workflow):
         log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
 
         try:
-            grainState_input = mp.heavydata.HeavyDataHandle(h5path='./data1.h5', id=mp.dataid.DataID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavydata.sampleSchemas_json)
-            self.m1.set(grainState_input)
             self.m1.solveStep(istep)
-            grainState_output = self.m1.get(mp.DataID.PID_GrainState, istep.getTime())
-            grainState_output.closeData()
-            grainState_output.cloneHandle('./data2.h5')
 
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
 
         self.m1.finishStep(istep)
+
+    def get(self, objectTypeID, time=None, objectID=0):
+        return self.m1.get(objectTypeID, time, objectID)
+
+    def set(self, obj, objectID=0):
+        return self.m1.set(obj, objectID)
 
     def getCriticalTimeStep(self):
         return self.m1.getCriticalTimeStep()
@@ -90,5 +95,10 @@ if __name__ == '__main__':
         }
     }
     workflow.initialize(targetTime=1*mp.U.s, metadata=workflowMD)
+    gs_in = mp.heavydata.HeavyDataHandle(h5path='./data1.h5', id=mp.dataid.DataID.ID_GrainState)
+    workflow.set(gs_in)
     workflow.solve()
+    gs_out = workflow.get(mp.DataID.PID_GrainState)
+    gs_out.cloneHandle('./data2.h5')
+
     workflow.terminate()

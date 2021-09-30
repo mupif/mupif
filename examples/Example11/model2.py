@@ -148,7 +148,7 @@ class Model2 (mp.Model):
                     atomCounter+=1
             t1=time.time()
             print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
-        # self.outputGrainState.closeData()
+        self.outputGrainState.closeData()
 
     def getCriticalTimeStep(self):
         return 1.*mp.U.s
