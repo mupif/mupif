@@ -191,7 +191,7 @@ class Workflow(model.Model):
 
     def registerModel(self, mmodel, label=None):
         """
-        :param model.Model or model.RemoteModel or Workflow model:
+        :param model.Model or model.RemoteModel or Workflow mmodel:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
         """
         if isinstance(mmodel, (Workflow, model.Model, model.RemoteModel, Pyro5.api.Proxy)):

@@ -62,7 +62,8 @@ class Example11_2(mp.workflow.Workflow):
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
 
-        self.m1.finishStep(istep)
+    def finishStep(self, tstep):
+        self.m1.finishStep(tstep)
 
     def get(self, objectTypeID, time=None, objectID=0):
         return self.m1.get(objectTypeID, time, objectID)

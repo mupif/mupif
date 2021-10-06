@@ -68,8 +68,9 @@ class Example11(mp.workflow.Workflow):
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
 
-        self.m1.finishStep(istep)
-        self.m2.finishStep(istep)
+    def finishStep(self, tstep):
+        self.m1.finishStep(tstep)
+        self.m2.finishStep(tstep)
 
     def getCriticalTimeStep(self):
         # determine critical time step

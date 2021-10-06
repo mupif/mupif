@@ -130,8 +130,9 @@ class Example08(workflow.Workflow):
 
         logging.getLogger().setLevel(level0)
 
-        self.thermal.finishStep(istep)
-        self.mechanical.finishStep(istep)
+    def finishStep(self, tstep):
+        self.thermal.finishStep(tstep)
+        self.mechanical.finishStep(tstep)
 
     def getCriticalTimeStep(self):
         # determine critical time step
