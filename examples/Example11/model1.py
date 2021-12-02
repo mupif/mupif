@@ -52,7 +52,7 @@ class Model1 (mp.Model):
         self.grainState = None
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
         if objectTypeID == mp.DataID.PID_GrainState:

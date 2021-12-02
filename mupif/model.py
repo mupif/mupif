@@ -259,7 +259,7 @@ class Model(mupifobject.MupifObject):
         Registers the given (remote) object in application.
 
         :param property.Property or field.Field or function.Function or pyrofile.PyroFile obj: Remote object to be registered by the application
-        :param int objectID: Identifies object with objectID (optional, default 0)
+        :param int or str objectID: Identifies object with objectID (optional, default 0)
         """
 
     def getFieldURI(self, fieldID, time, objectID=0):

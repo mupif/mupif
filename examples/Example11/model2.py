@@ -57,7 +57,7 @@ class Model2 (mp.Model):
         self.outputGrainState = None
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
         if objectTypeID == mp.DataID.PID_GrainState:
@@ -65,10 +65,10 @@ class Model2 (mp.Model):
         else:
             raise mp.APIError('Unknown property ID')
 
-    def set(self, prop, objectID=0):
-        if type(prop) == mp.heavydata.HeavyDataHandle:  # todo: test some ID as well
-            if prop.id == mp.dataid.DataID.ID_GrainState:
-                self.inputGrainState = prop
+    def set(self, obj, objectID=0):
+        if type(obj) == mp.heavydata.HeavyDataHandle:  # todo: test some ID as well
+            if obj.id == mp.dataid.DataID.ID_GrainState:
+                self.inputGrainState = obj
         else:
             raise mp.APIError('Unknown property ID')
 

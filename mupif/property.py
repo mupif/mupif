@@ -105,32 +105,6 @@ class ConstantProperty(Property):
         """
         return self.time
 
-    def _old__sum(self, other, sign1, sign2):
-        """
-        Override of Quantity._sum method
-        """
-        if not isinstance(other, Quantity):
-            raise TypeError('Incompatible types')
-        factor = other.unit.conversionFactorTo(self.unit)
-        new_value = tuple(sign1*s+sign2*o*factor for (s, o) in zip(self.value, other.value))
-        # new_value = sign1*self.value + \
-        #            sign2*other.value*other.unit.conversionFactorTo(self.unit)
-        return self.__class__(new_value, self.propID, self.valueType, self.time, self.unit)
-
-    def _old_convertToUnit(self, unit):  # TODO Should this function be deleted? Not used anywhere.
-        """
-        Change the unit and adjust the value such that
-        the combination is equivalent to the original one. The new unit
-        must be compatible with the previous unit of the object.
-
-        :param C{str} unit: a unit
-
-        :raise TypeError: if the unit string is not a known unit or a unit incompatible with the current one
-        """
-        unit = units.findUnit(unit)
-        self.value = self._convertValue(self.value, self.unit, unit)
-        self.unit = unit
-
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
         Dump Property to a file using Pickle module

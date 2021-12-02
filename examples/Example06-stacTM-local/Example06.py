@@ -39,8 +39,8 @@ class Example06(workflow.Workflow):
         self.registerModel(self.thermalSolver, 'thermal')
         self.registerModel(self.mechanicalSolver, 'mechanical')
 
-    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
-        super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -103,9 +103,10 @@ md = {
 }
 
 demo = Example06()
-demo.initialize(targetTime=1*mp.U.s, metadata=md)
+demo.initialize(metadata=md)
+demo.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
 
-tstep = timestep.TimeStep(time=1*mp.U.s,dt=1*mp.U.s,targetTime=10*mp.U.s)
+tstep = timestep.TimeStep(time=1*mp.U.s, dt=1*mp.U.s, targetTime=10*mp.U.s)
 
 demo.solveStep(tstep)
 

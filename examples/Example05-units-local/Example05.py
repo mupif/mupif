@@ -47,8 +47,8 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True):
-        super().initialize(workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
         if objectTypeID == mp.DataID.PID_Time:

@@ -62,7 +62,7 @@ class TestModel2(model.Model):
         self.updateMetadata(metadata)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(workdir, metadata, validateMetaData, **kwargs)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
         md = {

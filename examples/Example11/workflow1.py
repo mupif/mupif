@@ -33,9 +33,9 @@ class Example11_1(mp.workflow.Workflow):
         # model references
         self.m1 = None
     
-    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
     
-        super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
         self.m1 = Model1()
 
         # To be sure update only required passed metadata in models
@@ -93,7 +93,8 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    workflow.initialize(targetTime=1*mp.U.s, metadata=workflowMD)
+    workflow.initialize(metadata=workflowMD)
+    workflow.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     workflow.solve()
     gs = workflow.get(mp.DataID.PID_GrainState)
     gs.cloneHandle('./data1.h5')

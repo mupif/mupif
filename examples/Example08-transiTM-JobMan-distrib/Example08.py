@@ -50,7 +50,7 @@ class Example08(workflow.Workflow):
         self.daemon = Pyro5.api.Daemon()
         threading.Thread(target=self.daemon.requestLoop).start()
     
-    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
         # connect to JobManager running on (remote) server
@@ -77,7 +77,7 @@ class Example08(workflow.Workflow):
         self.registerModel(self.thermal, 'thermal_8')
         self.registerModel(self.mechanical, 'mechanical_8')
 
-        super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -92,7 +92,7 @@ class Example08(workflow.Workflow):
             workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
             metadata=passingMD
         )
-        thermalInputFile = mp.PyroFile(filename = '..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
+        thermalInputFile = mp.PyroFile(filename='..'+os.path.sep+'Example06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.thermal.set(thermalInputFile)
 
@@ -100,7 +100,7 @@ class Example08(workflow.Workflow):
             workdir='.',
             metadata=passingMD
         )
-        mechanicalInputFile = mp.PyroFile(filename = '..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
+        mechanicalInputFile = mp.PyroFile(filename='..' + os.path.sep + 'Example06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.mechanical.set(mechanicalInputFile)
 
@@ -165,7 +165,8 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=10*mp.U.s, metadata=workflowMD)
+    demo.initialize(metadata=workflowMD)
+    demo.set(mp.ConstantProperty(value=(10. * mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     # demo.printMetadata()
     # print(demo.hasMetadata('Execution.ID'))
     # exit(0)

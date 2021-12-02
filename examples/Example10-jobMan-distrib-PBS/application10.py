@@ -57,7 +57,7 @@ class Application10(mp.Model):
         self.input = 0.
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
         md = {

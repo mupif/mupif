@@ -134,8 +134,8 @@ class ThermalModel(mupif.model.Model):
 
         self.input_file = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False):
-        super().initialize(workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def readInput(self, filename, tria=False):
         self.tria = tria
@@ -736,8 +736,8 @@ class ThermalNonstatModel(ThermalModel):
         self.P = None
         self.Tp = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False):
-        super().initialize(workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def getApplicationSignature(self):
         return "Nonstat-Thermal-demo-solver, ver 1.0"
@@ -1063,8 +1063,8 @@ class MechanicalModel(mupif.model.Model):
 
         self.input_file = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False):
-        super().initialize(workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=0):
         if obj.isInstance(mp.PyroFile):

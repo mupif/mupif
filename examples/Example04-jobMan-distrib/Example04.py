@@ -60,8 +60,8 @@ class Example04(mp.Workflow):
 
         self.registerModel(self.app1, 'app1')
 
-    def initialize(self, workdir='', targetTime=1*mp.U.s, metadata={}, validateMetaData=True):
-        super().initialize(targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -96,8 +96,7 @@ class Example04(mp.Workflow):
             if obj.getPropertyID() == mp.DataID.PID_Time_step:
                 # remember the mapped value
                 self.contrib = obj
-            else:
-                raise mp.APIError('Unknown property ID')
+        super().set(obj=obj, objectID=objectID)
 
     def getCriticalTimeStep(self):
         return 1*mp.U.s
@@ -110,7 +109,7 @@ class Example04(mp.Workflow):
 
 
 if __name__ == '__main__':
-    targetTime = 1*mp.U.s
+    targetTime = 1.*mp.U.s
 
     demo = Example04()
 
@@ -122,8 +121,8 @@ if __name__ == '__main__':
         }
     }
 
-    demo.initialize(targetTime=targetTime, metadata=executionMetadata)
-
+    demo.initialize(metadata=executionMetadata)
+    demo.set(mp.ConstantProperty(value=(targetTime,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     kpi = demo.get(mp.DataID.PID_Time, targetTime)
     demo.terminate()

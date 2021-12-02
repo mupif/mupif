@@ -43,10 +43,10 @@ class Example07(workflow.Workflow):
         self.mechanicalSolver = None
         self.daemon = None
 
-    def initialize(self, workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
         ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
-        self.daemon=pyroutil.getDaemon(ns)
+        self.daemon = pyroutil.getDaemon(ns)
 
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@ThermalSolver-ex07')
@@ -70,7 +70,7 @@ class Example07(workflow.Workflow):
             self.registerModel(self.thermalSolver, 'thermal')
             self.registerModel(self.mechanicalSolver, 'mechanical')
 
-            super().initialize(workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+            super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
             if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
 
                 thermalSolverSignature = self.thermalSolver.getApplicationSignature()
@@ -156,7 +156,8 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=1*mp.U.s, metadata=md)
+    demo.initialize(metadata=md)
+    demo.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     demo.printMetadata()
     demo.printListOfModels()
