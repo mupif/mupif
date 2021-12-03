@@ -3,8 +3,6 @@ import pickle
 import serpent
 import dataclasses
 import importlib
-import sys
-import pprint
 import typing
 import numpy
 import numpy as np
@@ -66,7 +64,6 @@ if 0:
             return super().__init__(**kwargs)
 
 
-
 class MupifBaseModel(pydantic.BaseModel):
     '''Basic configuration of pydantic.BaseModel, common to Dumpable and also MupifObjectBase'''
     class Config:
@@ -76,16 +73,17 @@ class MupifBaseModel(pydantic.BaseModel):
         # this unfortunately also allows arbitrary **kw passed to the ctor
         # but we filter that in the custom __init__ function just below
         # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra='allow'
+        extra = 'allow'
 
-    def __init__(self,*args,**kw):
+    def __init__(self, *args, **kw):
         # print('### __init__ with '+str(kw))
-        if args: raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
+        if args:
+            raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
         # print(kw.keys())
         for k in kw.keys():
             if k not in self.__class__.__fields__:
                 raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
-        super().__init__(*args,**kw)
+        super().__init__(*args, **kw)
 
 
 @Pyro5.api.expose
@@ -104,7 +102,7 @@ class Dumpable(MupifBaseModel):
     The ``(attr,val)`` form of ``dumpAttrs`` item can be (ab)used to create a post-processing function, e.g. by saying ``('_postprocess',lambda self: self._postDump())``. Put it at the end of ``dumpAttrs`` to have it called when the reconstruction is about to finish. See :obj:`~mupif.mesh.Mesh` for this usage.
 
     '''
-    _pickleInside=False
+    _pickleInside = False
 
     class Config:
         # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
@@ -117,48 +115,54 @@ class Dumpable(MupifBaseModel):
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):
-        s=super().__getstate__()
-        sd=s['__dict__']
+        s = super().__getstate__()
+        sd = s['__dict__']
         for k in list(sd.keys()):
-            if k.startswith('_'): sd[k]=None # del sd[k]
+            if k.startswith('_'):
+                sd[k] = None  # del sd[k]
         return s
 
-    def to_dict(self,clss=None):
-        def _handle_attr(attr,val,clssName):
-            if isinstance(val,list): return [_handle_attr('%s[%d]'%(attr,i),v,clssName) for i,v in enumerate(val)]
-            elif isinstance(val,tuple): return tuple([_handle_attr('%s[%d]'%(attr,i),v,clssName) for i,v in enumerate(val)])
-            elif isinstance(val,dict): return dict([(k,_handle_attr('%s[%s]'%(attr,k),v,clssName)) for k,v in val.items()])
-            elif isinstance(val,Dumpable): return val.to_dict()
-            elif isinstance(val,enum.Enum): return enum_to_dict(val)
+    def to_dict(self, clss=None):
+        def _handle_attr(attr, val, clssName):
+            if isinstance(val, list): return [_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)]
+            elif isinstance(val, tuple): return tuple([_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)])
+            elif isinstance(val, dict): return dict([(k, _handle_attr('%s[%s]' % (attr, k), v, clssName)) for k, v in val.items()])
+            elif isinstance(val, Dumpable): return val.to_dict()
+            elif isinstance(val, enum.Enum): return enum_to_dict(val)
             # explicitly don't handle subtypes
-            elif type(val)==numpy.ndarray: return {'__class__':'numpy.ndarray','arr':val.tolist(),'dtype':str(val.dtype)}
-            elif astropy and isinstance(val,astropy.units.UnitBase): return {'__class__':'astropy.units.Unit','unit':val.to_string()}
-            elif astropy and isinstance(val,astropy.units.Quantity):
+            elif type(val) == numpy.ndarray: return {'__class__': 'numpy.ndarray', 'arr': val.tolist(), 'dtype': str(val.dtype)}
+            elif astropy and isinstance(val, astropy.units.UnitBase): return {'__class__': 'astropy.units.Unit', 'unit': val.to_string()}
+            elif astropy and isinstance(val, astropy.units.Quantity):
                 return {
-                    '__class__':'astropy.units.Quantity',
-                    'value':_handle_attr('value',np.array(val.value),val.__class__.__name__),
-                    'unit':val.unit.to_string()
+                    '__class__': 'astropy.units.Quantity',
+                    'value': _handle_attr('value', np.array(val.value), val.__class__.__name__),
+                    'unit': val.unit.to_string()
                 }
-            elif val.__class__.__module__.startswith('mupif.'): raise RuntimeError('%s.%s: type %s does not derive from Dumpable.'%(clssName,attr,val.__class__.__name__))
-            else: return val
+            elif val.__class__.__module__.startswith('mupif.'):
+                raise RuntimeError('%s.%s: type %s does not derive from Dumpable.' % (clssName, attr, val.__class__.__name__))
+            else:
+                return val
         import enum
-        if not isinstance(self,Dumpable): raise RuntimeError("Not a Dumpable.");
-        ret={}
+        if not isinstance(self, Dumpable): raise RuntimeError("Not a Dumpable.");
+        ret = {}
         if clss is None:
-            ret['__class__']=self.__class__.__module__+'.'+self.__class__.__name__
+            ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
             if Dumpable._pickleInside:
-                ret['__pickle__']=pickle.dumps(self)
+                ret['__pickle__'] = pickle.dumps(self)
                 return ret
-            clss=self.__class__
-        if issubclass(clss,pydantic.BaseModel):
+            clss = self.__class__
+        if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
             for attr in clss.__fields__.keys():
-                ret[attr]=_handle_attr(attr,getattr(self,attr),clss.__name__)
-        else: raise RuntimeError('Class %s.%s is not a pydantic.BaseModel'%(clss.__module__,clss.__name__))
-        if clss!=Dumpable:
+                ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
+        else:
+            raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
+        if clss != Dumpable:
             for base in clss.__bases__:
-                if issubclass(base,Dumpable): ret.update(base.to_dict(self,clss=base))
-                else: pass
+                if issubclass(base, Dumpable):
+                    ret.update(base.to_dict(self, clss=base))
+                else:
+                    pass
         return ret
 
     def copyRemote(self):
@@ -169,46 +173,47 @@ class Dumpable(MupifBaseModel):
 
         This method does some check whether the object is exposed via Pyro (thus presumable accessed via a Proxy). This cannot be detected reliably, however, thus calling `copyRemote()` on local (unproxied) object will return dictionary rather than a copy of the object.
         '''
-        daemon=getattr(self,'_pyroDaemon',None)
-        if not daemon: raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
+        daemon = getattr(self, '_pyroDaemon', None)
+        if not daemon:
+            raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
         return self.to_dict()
 
     @staticmethod
-    def from_dict(dic,clss=None,obj=None):
+    def from_dict(dic, clss=None, obj=None):
         def _create(d):
-            if isinstance(d,dict) and '__class__' in d: return Dumpable.from_dict(d)
-            elif isinstance(d,list): return [_create(d_) for d_ in d]
-            elif isinstance(d,tuple): return tuple([_create(d_) for d_ in d])
-            elif isinstance(d,dict): return dict([(k,_create(v)) for k,v in d.items()])
+            if isinstance(d, dict) and '__class__' in d: return Dumpable.from_dict(d)
+            elif isinstance(d, list): return [_create(d_) for d_ in d]
+            elif isinstance(d, tuple): return tuple([_create(d_) for d_ in d])
+            elif isinstance(d, dict): return dict([(k, _create(v)) for k, v in d.items()])
             else: return d
         # we saved the inside with pickle, just unpickle here
         if '__pickle__' in dic:
-            data=dic['__pickle__']
-            if type(data)==dict: data=serpent.tobytes(data) # serpent serializes bytes in a funny way
+            data = dic['__pickle__']
+            if type(data) == dict: data = serpent.tobytes(data)  # serpent serializes bytes in a funny way
             return pickle.loads(data)
         if clss is None:
             import importlib
-            mod,classname=dic.pop('__class__').rsplit('.',1)
-            clss=getattr(importlib.import_module(mod),classname)
+            mod, classname = dic.pop('__class__').rsplit('.', 1)
+            clss = getattr(importlib.import_module(mod), classname)
             # some special cases here
-            if issubclass(clss,enum.Enum): return enum_from_dict(clss,dic)
-            if astropy and clss==astropy.units.Unit: return astropy.units.Unit(dic['unit'])
-            if astropy and clss==astropy.units.Quantity:
-                return astropy.units.Quantity(Dumpable.from_dict(dic['value']),astropy.units.Unit(dic['unit']))
-            if issubclass(clss,numpy.ndarray):
-                if clss!=numpy.ndarray: raise RuntimeError('Subclass of numpy.ndarray %s.%s not handled.'%(mod,classname))
-                return numpy.array(dic['arr'],dtype=dic['dtype'])
-            if issubclass(clss,pydantic.BaseModel): pass
-            #print('here D')
-            obj=clss.__new__(clss)
-        if issubclass(clss,pydantic.BaseModel):
-            #print(f'# constructing: {clss.__name__}')
-            #print(f'# kw are: {", ".join(dic.keys())}')
-            #import pprint
-            #pprint.pprint(dic)
-            return clss(**dict([(k,_create(v)) for k,v in dic.items()]))
+            if issubclass(clss, enum.Enum): return enum_from_dict(clss, dic)
+            if astropy and clss == astropy.units.Unit: return astropy.units.Unit(dic['unit'])
+            if astropy and clss == astropy.units.Quantity:
+                return astropy.units.Quantity(Dumpable.from_dict(dic['value']), astropy.units.Unit(dic['unit']))
+            if issubclass(clss, numpy.ndarray):
+                if clss != numpy.ndarray: raise RuntimeError('Subclass of numpy.ndarray %s.%s not handled.' % (mod, classname))
+                return numpy.array(dic['arr'], dtype=dic['dtype'])
+            if issubclass(clss, pydantic.BaseModel): pass
+            # print('here D')
+            obj = clss.__new__(clss)
+        if issubclass(clss, pydantic.BaseModel):
+            # print(f'# constructing: {clss.__name__}')
+            # print(f'# kw are: {", ".join(dic.keys())}')
+            # import pprint
+            # pprint.pprint(dic)
+            return clss(**dict([(k, _create(v)) for k, v in dic.items()]))
         # this will go
-        #if dataclasses.is_dataclass(clss):
+        # if dataclasses.is_dataclass(clss):
         #    for f in dataclasses.fields(clss):
         #        # handles frozen dataclasses as well, hopefully
         #        if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
@@ -238,13 +243,13 @@ class Dumpable(MupifBaseModel):
 def enum_to_dict(e): return {'__class__': e.__class__.__module__+'.'+e.__class__.__name__, 'name': e.name}
 
 
-def enum_from_dict(clss, dic): return clss(getattr(clss,dic.pop('name')))
+def enum_from_dict(clss, dic): return clss(getattr(clss, dic.pop('name')))
 
 
 def enum_from_dict_with_name(modClassName, dic):
     mod, className = modClassName.rsplit('.', 1)
     clss = getattr(importlib.import_module(mod), className)
-    return clss(getattr(clss,dic.pop('name')))
+    return clss(getattr(clss, dic.pop('name')))
 
 
 if __name__ == '__main__':
