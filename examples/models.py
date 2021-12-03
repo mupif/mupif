@@ -329,8 +329,7 @@ class ThermalModel(mupif.model.Model):
                 propID=mupif.DataID.PID_effective_conductivity,
                 valueType=mupif.ValueType.Scalar,
                 unit=mp.U['W/m/K'],
-                time=time,
-                objectID=0
+                time=time
             )
 
         else:

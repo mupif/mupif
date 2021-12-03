@@ -8,7 +8,7 @@ import pydantic
 from . import dataid
 from . import mupifquantity
 from . import units
-from .units import Quantity,Unit,findUnit
+from .units import Quantity, Unit, findUnit
 
 
 @Pyro5.api.expose
@@ -16,13 +16,12 @@ class Property(mupifquantity.MupifQuantity):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
-    Property value can be of scalar, vector, or tensorial type. Property keeps its value, objectID, time and type.
+    Property value can be of scalar, vector, or tensorial type. Property keeps its value, time and type.
 
     .. automethod:: __init__
     """
 
     propID: dataid.DataID
-    objectID: int = 0  #: Optional ID of problem object/subdomain to which property is related
 
     def __init__(self, *, metadata={}, **kw):
         super().__init__(metadata=metadata, **kw)
@@ -45,22 +44,13 @@ class Property(mupifquantity.MupifQuantity):
         """
         return self.propID
 
-    def getObjectID(self):
-        """
-        Returns property objectID.
-
-        :return: Object's ID
-        :rtype: int
-        """
-        return self.objectID
-
 
 @Pyro5.api.expose
 class ConstantProperty(Property):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
-    Property value can be of scalar, vector, or tensorial type. Property keeps its value, objectID, time and type.
+    Property value can be of scalar, vector, or tensorial type. Property keeps its value, time and type.
 
     .. automethod:: __init__
     """
@@ -135,7 +125,7 @@ class ConstantProperty(Property):
         """
         Express the quantity in different units.
         """
-        return ConstantProperty(quantity=self.quantity.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time, objectID=self.objectID)
+        return ConstantProperty(quantity=self.quantity.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time)
 
     # def _convertValue(self, value, src_unit, target_unit):
     #    """

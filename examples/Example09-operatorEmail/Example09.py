@@ -89,7 +89,7 @@ class EmailAPI(model.Model):
                     value = float(self.outputs[self.key])
                     log.info('Found key %s with value %f' % (self.key, value))
                     return property.ConstantProperty(
-                        value=value, propID=objectTypeID, valueType=ValueType.Scalar, unit=mp.U.none, time=time, objectID=0, metadata=md)
+                        value=value, propID=objectTypeID, valueType=ValueType.Scalar, unit=mp.U.none, time=time, metadata=md)
                 else:
                     log.error('Not found key %s in email' % self.key)
                     return None

@@ -52,7 +52,7 @@ class Application1(mp.Model):
 
     def get(self, objectTypeID, time=None, objectID=0):
         if objectTypeID == mp.DataID.PID_Time:
-            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, objectID=0)
+            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
         else:
             raise mp.APIError('Unknown property ID')
             
