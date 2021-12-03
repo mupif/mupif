@@ -83,8 +83,6 @@ class Field(mupifquantity.MupifQuantity):
     time: Quantity
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
-    #: Optional ID of problem object/subdomain to which field is related, default = 0
-    objectID: int = 0
 
     def __init__(self, **kw):
         super().__init__(**kw)  # this calls the real ctor
@@ -279,15 +277,6 @@ class Field(mupifquantity.MupifQuantity):
             return Quantity(value=self.getRecord(cellID), unit=self.getUnit())
         else:
             raise TypeError('Attempt to acces cell value of vertex based field, use evaluate instead')
-
-    def getObjectID(self):
-        """
-        Returns field objectID.
-
-        :return: Object's ID 
-        :rtype: int
-        """
-        return self.objectID
 
     def merge(self, field):
         """
