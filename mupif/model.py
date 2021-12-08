@@ -133,7 +133,7 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.PyroFile"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
-                    "Obj_ID": {"type": "array"},  # optional parameter for additional info, list int or str
+                    "Obj_ID": {"type": "array"},  # optional parameter for additional info, list of int or list of str
                     "Name": {"type": "string"},
                     "Description": {"type": "string"},
                     "Units": {"type": "string"},
@@ -150,7 +150,7 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
-                    "Obj_ID": {"type": "array"},  # optional parameter for additional info, list of int or str
+                    "Obj_ID": {"type": "array"},  # optional parameter for additional info, list of int or list of str
                     "Name": {"type": "string"},
                     "Description": {"type": "string"},
                     "Units": {"type": "string"}

@@ -89,7 +89,6 @@ class Workflow(model.Model):
         super().__init__(metadata=metadata)
 
         self.workflowMonitor = None  # No monitor by default
-        self.dt = None
         self._models = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
@@ -102,7 +101,7 @@ class Workflow(model.Model):
         :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
-        self.generateMetadataModelRefsID()
+        self.generateModelDependencies()
         self.updateMetadata(metadata)
 
         if workdir == '':
@@ -126,11 +125,11 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Running')
         self.setMetadata('Progress', 0.)
 
-        time = 0.*units.U.s
+        time = 0.*U.s
         timeStepNumber = 0
-        while abs(time.inUnitsOf('s').getValue()-self._exec_targetTime.inUnitsOf('s').getValue()) > 1.e-6:
-            if self.dt is not None:
-                dt = min(self.getCriticalTimeStep(), self.dt)
+        while abs(time.inUnitsOf(U.s).getValue()-self._exec_targetTime.inUnitsOf(U.s).getValue()) > 1.e-6:
+            if self._exec_dt is not None:
+                dt = min(self.getCriticalTimeStep(), self._exec_dt)
             else:
                 dt = self.getCriticalTimeStep()
             time = time+dt
@@ -139,18 +138,17 @@ class Workflow(model.Model):
             timeStepNumber = timeStepNumber+1
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
         
-            log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
-            print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
+            log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
+            print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
 
             # Estimate progress
-            self.setMetadata('Progress', 100*time.inUnitsOf('s').getValue()/self._exec_targetTime.inUnitsOf('s').getValue())
+            self.setMetadata('Progress', 100*time.inUnitsOf(U.s).getValue()/self._exec_targetTime.inUnitsOf(U.s).getValue())
             
             self.solveStep(istep)
             self.finishStep(istep)
 
         self.setMetadata('Status', 'Finished')
         self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
-        self.terminate()
 
     def set(self, obj, objectID=0):
         if obj.isInstance(Property):
@@ -260,7 +258,7 @@ class Workflow(model.Model):
         print("List of child models:")
         print([m.__class__.__name__ for m in self.getListOfModels()])
 
-    def generateMetadataModelRefsID(self):
+    def generateModelDependencies(self):
         dependencies = []
         for key_name, mmodel in self.getDictOfModels().items():
             if isinstance(mmodel, (model.Model, Workflow, model.RemoteModel)):
