@@ -1,3 +1,5 @@
+# This file should not be executed by users. Use server.py instead to run a local jobmanager with local nameserver.
+#
 import os
 import sys
 import logging
