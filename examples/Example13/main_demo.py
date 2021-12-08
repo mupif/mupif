@@ -53,7 +53,7 @@ if len(sys.argv) == 3:
             self.model_1_jobman = None
             self.model_1 = None
 
-        def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+        def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
 
             self.updateMetadata(dictionary=metadata)
 

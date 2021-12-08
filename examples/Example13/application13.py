@@ -58,7 +58,7 @@ class Application13(mp.Model):
         self.value_1 = 0.
         self.value_2 = 0.
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):

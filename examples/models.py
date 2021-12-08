@@ -134,7 +134,7 @@ class ThermalModel(mupif.model.Model):
 
         self.input_file = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def readInput(self, filename, tria=False):
@@ -735,7 +735,7 @@ class ThermalNonstatModel(ThermalModel):
         self.P = None
         self.Tp = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def getApplicationSignature(self):
@@ -1062,7 +1062,7 @@ class MechanicalModel(mupif.model.Model):
 
         self.input_file = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=0):
