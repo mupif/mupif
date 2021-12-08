@@ -39,6 +39,7 @@ class ThermalModel(mupif.model.Model):
                         "Type": "mupif.Property",
                         "Required": False,
                         "Type_ID": "mupif.DataID.PID_Temperature",
+                        "Units": "degC",
                         "Obj_ID": [
                             "Cauchy top",
                             "Cauchy bottom",
@@ -57,7 +58,8 @@ class ThermalModel(mupif.model.Model):
                         "Required": True,
                         "Type_ID": "mupif.DataID.ID_InputFile",
                         "Obj_ID": ["input_file_thermal"],
-                        "Set_at": "initialization"
+                        "Set_at": "initialization",
+                        "Units": "none"
                     }
                 ],
                 "Outputs": [
@@ -65,7 +67,8 @@ class ThermalModel(mupif.model.Model):
                         "Name": "temperature",
                         "Type_ID": "mupif.DataID.FID_Temperature",
                         "Type": "mupif.Field",
-                        "Required": False
+                        "Required": False,
+                        "Units": "degC"
                     }
                 ],
                 "Solver": {
@@ -75,10 +78,10 @@ class ThermalModel(mupif.model.Model):
                     "Sensitivity": "Low",
                     "Complexity": "Low",
                     "Robustness": "High",
-                    "Estim_time_step": 1,
-                    "Estim_comp_time": 1.e-3,
-                    "Estim_execution_cost": 0.01,
-                    "Estim_personnel_cost": 0.01,
+                    "Estim_time_step_s": 1,
+                    "Estim_comp_time_s": 1.e-3,
+                    "Estim_execution_cost_EUR": 0.01,
+                    "Estim_personnel_cost_EUR": 0.01,
                     "Required_expertise": "None",
                     "Language": "Python",
                     "License": "LGPL",
@@ -88,7 +91,7 @@ class ThermalModel(mupif.model.Model):
                 },
                 "Physics": {
                     "Type": "Continuum",
-                    "Entity": ["Finite volume"],
+                    "Entity": "Finite volume",
                     "Equation": ["Heat balance"],
                     "Equation_quantities": ["Heat flow"],
                     "Relation_description": ["Fick's first law"],
@@ -666,6 +669,7 @@ class ThermalNonstatModel(ThermalModel):
                     "Type": "mupif.Property",
                     "Required": False,
                     "Type_ID": "mupif.DataID.PID_Temperature",
+                    "Units": "degC",
                     "Obj_ID": [
                         "Cauchy top",
                         "Cauchy bottom",
@@ -684,7 +688,8 @@ class ThermalNonstatModel(ThermalModel):
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": ["input_file_thermal_nonstat"],
-                    "Set_at": "initialization"
+                    "Set_at": "initialization",
+                    "Units": "none"
                 }
             ],
             "Outputs": [
@@ -692,7 +697,8 @@ class ThermalNonstatModel(ThermalModel):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
-                    "Required": False
+                    "Required": False,
+                    "Units": "degC",
                 }
             ],
             "Solver": {
@@ -702,10 +708,10 @@ class ThermalNonstatModel(ThermalModel):
                 "Sensitivity": "Low",
                 "Complexity": "Low",
                 "Robustness": "High",
-                "Estim_time_step": 1,
-                "Estim_comp_time": 1.e-3,
-                "Estim_execution_cost": 0.01,
-                "Estim_personnel_cost": 0.01,
+                "Estim_time_step_s": 1,
+                "Estim_comp_time_s": 1.e-3,
+                "Estim_execution_cost_EUR": 0.01,
+                "Estim_personnel_cost_EUR": 0.01,
                 "Required_expertise": "None",
                 "Language": "Python",
                 "License": "LGPL",
@@ -715,7 +721,7 @@ class ThermalNonstatModel(ThermalModel):
             },
             "Physics": {
                 "Type": "Continuum",
-                "Entity": ["Finite volume"],
+                "Entity": "Finite volume",
                 "Equation": ["Heat balance"],
                 "Equation_quantities": ["Heat flow"],
                 "Relation_description": ["Fick's first law"],
@@ -986,6 +992,7 @@ class MechanicalModel(mupif.model.Model):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
+                    "Units": "degC",
                     "Required": True,
                     "Set_at": "timestep"
                 },
@@ -995,7 +1002,8 @@ class MechanicalModel(mupif.model.Model):
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": ["input_file_mechanical"],
-                    "Set_at": "initialization"
+                    "Set_at": "initialization",
+                    "Units": "none"
                 }
             ],
             "Outputs": [
@@ -1003,7 +1011,8 @@ class MechanicalModel(mupif.model.Model):
                     "Name": "displacement",
                     "Type_ID": "mupif.DataID.FID_Displacement",
                     "Type": "mupif.Field",
-                    "Required": False
+                    "Required": False,
+                    "Units": "m",
                 }
             ],
             "Solver": {
@@ -1013,10 +1022,10 @@ class MechanicalModel(mupif.model.Model):
                 "Sensitivity": "Low",
                 "Complexity": "Low",
                 "Robustness": "High",
-                "Estim_time_step": 1,
-                "Estim_comp_time": 1.e-3,
-                "Estim_execution_cost": 0.01,
-                "Estim_personnel_cost": 0.01,
+                "Estim_time_step_s": 1,
+                "Estim_comp_time_s": 1.e-3,
+                "Estim_execution_cost_EUR": 0.01,
+                "Estim_personnel_cost_EUR": 0.01,
                 "Required_expertise": "None",
                 "Language": "Python",
                 "License": "LGPL",
@@ -1026,7 +1035,7 @@ class MechanicalModel(mupif.model.Model):
             },
             "Physics": {
                 "Type": "Continuum",
-                "Entity": ["Finite volume"],
+                "Entity": "Finite volume",
                 "Equation": ["Equilibrium"],
                 "Equation_quantities": ["Displacement"],
                 "Relation_description": ["Hooke's law"],
