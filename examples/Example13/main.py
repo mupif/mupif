@@ -41,7 +41,7 @@ class Workflow13(mp.workflow.Workflow):
         self.model_1_jobman = None
         self.model_1 = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata={}, validateMetaData=False, **kwargs):
 
         self.updateMetadata(dictionary=metadata)
 
