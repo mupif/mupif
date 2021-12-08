@@ -128,6 +128,7 @@ class Workflow(model.Model):
         time = 0.*U.s
         timeStepNumber = 0
         while abs(time.inUnitsOf(U.s).getValue()-self._exec_targetTime.inUnitsOf(U.s).getValue()) > 1.e-6:
+            time_prev = time
             if self._exec_dt is not None:
                 dt = min(self.getCriticalTimeStep(), self._exec_dt)
             else:
@@ -135,6 +136,7 @@ class Workflow(model.Model):
             time = time+dt
             if time > self._exec_targetTime:
                 time = self._exec_targetTime
+                dt = time - time_prev
             timeStepNumber = timeStepNumber+1
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
         
