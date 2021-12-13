@@ -1,3 +1,4 @@
+# this script is made for a specific test cluster
 import os
 import sys
 import logging
@@ -11,25 +12,29 @@ from exconfig import ExConfig
 cfg = ExConfig()
 import application10
 
+nshost = '172.22.2.1'
+nsport = 10000
+ownaddress = '172.22.2.16'
+
 # locate nameserver
-ns = mp.pyroutil.connectNameServer(nshost='172.22.2.1', nsport=10000)
+ns = mp.pyroutil.connectNameServer(nshost=nshost, nsport=nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
     appClass=application10.Application10,
-    server='172.22.2.16',
-    nshost='172.22.2.1',
-    nsport=10000,
+    server=ownaddress,
+    nshost=nshost,
+    nsport=nsport,
     ns=ns,
-    appName='Mupif.JobManager@Example10',
+    appName='Mupif.JobManager@Example10_cluster',
     jobManWorkDir=cfg.jobManWorkDir,
     maxJobs=cfg.maxJobs
 )
 
 mp.pyroutil.runJobManagerServer(
-    server='172.22.2.16',
+    server=ownaddress,
     port=44382,
-    nshost='172.22.2.1',
-    nsport=10000,
+    nshost=nshost,
+    nsport=nsport,
     jobman=jobMan
 )
