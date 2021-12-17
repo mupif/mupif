@@ -28,6 +28,8 @@ import subprocess
 import threading
 import time
 import json
+import atexit
+import signal
 import urllib.parse
 from . import model
 from . import jobmanager
@@ -302,6 +304,13 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     if net is not None: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
     else: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameserver: {ns}, applicationName:{appName}, daemon URI {uri}')
     threading.Thread(target=daemon.requestLoop).start()  # run daemon request loop in separate thread
+
+    def _remove_from_ns(sig=None,stack=None):
+        log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
+        ns._pyroClaimOwnership()
+        ns.remove(appName)
+    atexit.register(_remove_from_ns) # regular process exit
+    signal.signal(signal.SIGTERM,_remove_from_ns) # terminate by signal
     return uri
 
 

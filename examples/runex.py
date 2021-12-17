@@ -85,7 +85,10 @@ def runEx(ex):
         failed=[]
         for b in bg:
             if b.returncode is not None: failed.append(b) # process died meanwhile
-            else: b.kill()
+            else: b.terminate()
+        time.sleep(.5)
+        for b in bg:
+            if b.returncode is None: b.kill()
         if failed: raise RuntimeError('Failed background processes:\n\n'+'\n * '.join([str(b.args) for b in failed]))
 
 # no examples means all examples
