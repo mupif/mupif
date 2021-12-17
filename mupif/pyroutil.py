@@ -262,7 +262,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
             daemon = Pyro5.api.Daemon(host=host, port=port)
             log.info(f'Pyro5 daemon runs on {host}:{port}')
         except Exception:
-            log.exception(f'Can not run Pyro5 daemon on {host}:{nort}')
+            log.exception(f'Can not run Pyro5 daemon on {host}:{port}')
             raise
     else:
         externalDaemon = True
