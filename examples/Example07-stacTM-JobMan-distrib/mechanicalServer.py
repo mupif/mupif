@@ -12,9 +12,9 @@ ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
     appClass=models.MechanicalModel,
-    server=cfg.server,
-    nshost=cfg.nshost,
-    nsport=cfg.nsport,
+    #server=cfg.server,
+    #nshost=cfg.nshost,
+    #nsport=cfg.nsport,
     ns=ns,
     appName='Mupif.JobManager@MechanicalSolver-ex07',
     maxJobs=cfg.maxJobs,
@@ -22,10 +22,11 @@ jobMan = mp.SimpleJobManager(
 )
 
 mp.pyroutil.runJobManagerServer(
-    server=cfg.server,
-    port=cfg.serverPort+1,
-    nshost=cfg.nshost,
-    nsport=cfg.nsport,
+    #server=cfg.server,
+    #port=cfg.serverPort+1,
+    #nshost=cfg.nshost,
+    #nsport=cfg.nsport,
     # appName=cfg.jobManName+'-ex07',
-    jobman=jobMan,
+    ns=ns,
+    jobman=jobMan
 )
