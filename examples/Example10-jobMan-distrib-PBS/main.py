@@ -17,11 +17,11 @@ class Workflow10(mp.workflow.Workflow):
 
     def __init__(self, metadata={}):
         MD = {
-            "ClassName": "Workflow13",
+            "ClassName": "Workflow10",
             "ModuleName": "main.py",
             "Name": "Example10 workflow",
             "ID": "workflow_10",
-            "Description": "",
+            "Description": "Calculates cummulative time times 2 using a simple PBS model",
             "Inputs": [
                 mp.workflow.workflow_input_targetTime_metadata,
                 mp.workflow.workflow_input_dt_metadata

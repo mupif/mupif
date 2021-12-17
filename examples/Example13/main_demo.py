@@ -31,10 +31,10 @@ if len(sys.argv) == 3:
         def __init__(self, metadata={}):
             MD = {
                 "ClassName": "Workflow13",
-                "ModuleName": "main.py",
+                "ModuleName": "main_demo.py",
                 "Name": "Example13 workflow",
                 "ID": "workflow_13",
-                "Description": "",
+                "Description": "Calculates multiplication of two given values using a simple model",
                 "Inputs": [
                     {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": 1,
                      'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep"},
