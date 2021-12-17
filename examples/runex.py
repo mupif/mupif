@@ -31,6 +31,7 @@ allEx=[
     ExCfg(8,'Example08-transiTM-JobMan-distrib',['Example08.py','thermalServer.py','mechanicalServer.py']),
     ExCfg(9,'Example09-operatorEmail',['Example09.py']),
     ExCfg(11,'Example11',['workflow.py']),
+    ExCfg(13,'Example13',['main.py','server.py','application13.py'])
 ]
 
 

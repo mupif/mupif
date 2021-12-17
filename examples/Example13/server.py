@@ -14,21 +14,10 @@ import application13
 ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
-jobMan = mp.SimpleJobManager(
-    appClass=application13.Application13,
-    server=cfg.server,
-    nshost=cfg.nshost,
-    nsport=cfg.nsport,
+mp.SimpleJobManager(
     ns=ns,
+    appClass=application13.Application13,
     appName=cfg.jobManName,
     jobManWorkDir=cfg.jobManWorkDir,
-    maxJobs=cfg.maxJobs
-)
-
-mp.pyroutil.runJobManagerServer(
-    server=cfg.server,
-    port=cfg.serverPort,
-    nshost=cfg.nshost,
-    nsport=cfg.nsport,
-    jobman=jobMan
-)
+    # maxJobs=cfg.maxJobs
+).runServer()
