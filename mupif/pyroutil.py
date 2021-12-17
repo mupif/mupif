@@ -31,6 +31,7 @@ import json
 import atexit
 import signal
 import urllib.parse
+import os.path
 from . import model
 from . import jobmanager
 from . import util
@@ -97,10 +98,18 @@ def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     if nshost == '0.0.0.0' or nshost == '::':
         nshost = None
 
+    # override nameserver from MUPIF_NS *file* in the mupif module directory
+    import mupif
+    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'):
+        s=urllib.parse.urlsplit('//'+open(nshp,'r').readlines()[0][:-1])
+        nshost,nsport=s.hostname,s.port
+        log.info(f'Using {nshp} → nameserver {nshost}:{nsport}')
+
+    # override nameserver from MUPIF_NS env
     if (nshp:=os.environ.get('MUPIF_NS',None)):
         s=urllib.parse.urlsplit('//'+nshp)
         nshost,nsport=s.hostname,s.port
-        log.info(f'Using MUPIF_NS environment variable: {nshost}:{nsport}')
+        log.info(f'Using MUPIF_NS environment variable → nameserver {nshost}:{nsport}')
 
     if nshost is not None and nsport != 0:
         try:
@@ -171,7 +180,7 @@ def getNSConnectionInfo(ns, name):
             continue
         d = json.loads(md[len(NS_METADATA_network):])
         return d.get('host', None), d.get('port', None)
-    return None, None, None, None
+    return None, None
 
 
 def _connectApp(ns, name, connectionTestTimeOut = 10. ):
@@ -187,15 +196,14 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
     """
     try:
         uri = ns.lookup(name)
-        log.debug("Application %s, found URI %s on %s from a nameServer %s" % (
-            name, uri, getNSConnectionInfo(ns, name), ns))
+        log.debug(f"Application {name}, found URI {uri} on {getNSConnectionInfo(ns,name)} from a nameServer {ns._pyroUri}")
         app2 = Pyro5.api.Proxy(uri)
     except Exception as e:
         log.error("Cannot find registered server %s on %s" % (name, ns) )
         raise
 
     try:
-        log.info("Connecting to application %s with %s" % (name, app2))
+        log.info(f"Connecting to application {name} with {app2._pyroUri}")
         # By default, Pyro waits an indefinite amount of time for the call to return. 
         # When testing connection to an remote object via _connectApp, the object getSignature method is called.
         # The connection timeout is set for this call. after this, the timeout is reset to default.
@@ -207,10 +215,10 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
         app2._pyroTimeout = None
         log.debug("Connected to " + sig + " with the application " + name)
     except Pyro5.core.errors.CommunicationError as e:
-        log.error("Communication error, perhaps SSL issue?")
+        log.exception("Communication error (network config?).")
         raise
     except Exception as e:
-        log.exception("Cannot connect to application " + name + ". Is the server running?")
+        log.exception(f"Cannot connect to application {name}. Is the server running?")
         raise
 
     return app2
@@ -302,7 +310,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
 
     log.debug(f'NameServer {appName} has registered uri {uri}')
     if net is not None: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
-    else: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameserver: {ns}, applicationName:{appName}, daemon URI {uri}')
+    else: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameserver: {ns._pyroUri}, applicationName:{appName}, daemon URI {uri}')
     threading.Thread(target=daemon.requestLoop).start()  # run daemon request loop in separate thread
 
     def _remove_from_ns(sig=None,stack=None):
