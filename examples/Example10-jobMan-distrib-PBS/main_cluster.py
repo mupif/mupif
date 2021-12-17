@@ -19,8 +19,8 @@ class Workflow10(mp.workflow.Workflow):
         MD = {
             "ClassName": "Workflow13",
             "ModuleName": "main.py",
-            "Name": "Example13 workflow",
-            "ID": "workflow_13",
+            "Name": "Example10 workflow",
+            "ID": "workflow_10",
             "Description": "",
             "Inputs": [
                 mp.workflow.workflow_input_targetTime_metadata,
