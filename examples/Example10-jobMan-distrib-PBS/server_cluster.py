@@ -33,7 +33,7 @@ jobMan = mp.SimpleJobManager(
 
 mp.pyroutil.runJobManagerServer(
     server=ownaddress,
-    port=44382,
+    port=cfg.serverPort,
     nshost=nshost,
     nsport=nsport,
     jobman=jobMan
