@@ -17,7 +17,7 @@ ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 mp.SimpleJobManager(
     ns=ns,
     appClass=application13.Application13,
-    appName=cfg.jobManName,
+    appName='Mupif.JobManager@Example13',
     jobManWorkDir=cfg.jobManWorkDir,
     # maxJobs=cfg.maxJobs
 ).runServer()

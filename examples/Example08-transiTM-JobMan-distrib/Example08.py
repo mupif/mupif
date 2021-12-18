@@ -167,9 +167,6 @@ if __name__ == '__main__':
     }
     demo.initialize(metadata=workflowMD)
     demo.set(mp.ConstantProperty(value=(10. * mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
-    # demo.printMetadata()
-    # print(demo.hasMetadata('Execution.ID'))
-    # exit(0)
     demo.solve()
     demo.printMetadata()
     demo.terminate()

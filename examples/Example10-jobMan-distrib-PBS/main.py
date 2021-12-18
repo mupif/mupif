@@ -55,7 +55,7 @@ class Workflow10(mp.workflow.Workflow):
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1
-        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, cfg.jobManName)
+        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'Mupif.JobManager@Example10')
         try:
             self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
             log.info(self.model_1)
