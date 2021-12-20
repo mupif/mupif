@@ -1,8 +1,7 @@
 import os
 import sys
 import logging
-rp = os.path.realpath(__file__)
-dirname = os.path.dirname(rp)
+dirname = os.path.dirname(os.path.realpath(__file__))
 sys.path.extend([dirname+'/.', dirname+'/..', dirname+'/../..'])
 import mupif as mp
 log = logging.getLogger()
@@ -16,20 +15,9 @@ ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
-    appClass=application10.Application10,
-    server=cfg.server,
-    nshost=cfg.nshost,
-    nsport=cfg.nsport,
     ns=ns,
-    appName=cfg.jobManName,
+    appClass=application10.Application10,
+    appName='Mupif.JobManager@Example10',
     jobManWorkDir=cfg.jobManWorkDir,
     maxJobs=cfg.maxJobs
-)
-
-mp.pyroutil.runJobManagerServer(
-    server=cfg.server,
-    port=cfg.serverPort,
-    nshost=cfg.nshost,
-    nsport=cfg.nsport,
-    jobman=jobMan
-)
+).runServer()

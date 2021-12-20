@@ -31,6 +31,7 @@ allEx=[
     ExCfg(8,'Example08-transiTM-JobMan-distrib',['Example08.py','thermalServer.py','mechanicalServer.py']),
     ExCfg(9,'Example09-operatorEmail',['Example09.py']),
     ExCfg(11,'Example11',['workflow.py']),
+    ExCfg(13,'Example13',['main.py','server.py','application13.py'])
 ]
 
 
@@ -84,7 +85,10 @@ def runEx(ex):
         failed=[]
         for b in bg:
             if b.returncode is not None: failed.append(b) # process died meanwhile
-            else: b.kill()
+            else: b.terminate()
+        time.sleep(.5)
+        for b in bg:
+            if b.returncode is None: b.kill()
         if failed: raise RuntimeError('Failed background processes:\n\n'+'\n * '.join([str(b.args) for b in failed]))
 
 # no examples means all examples

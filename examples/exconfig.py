@@ -9,7 +9,8 @@ import tempfile
 thisDir = os.path.dirname(os.path.abspath(__file__))
 sys.path += [thisDir+'/..']
 
-import mupif.pyroutil
+import mupif
+
 log = logging.getLogger()
 
 allModes = [
@@ -65,6 +66,7 @@ class ExConfig(object):
         self.jobManName = 'Mupif.JobManager@Example'
         # Name of first application
         self.appName = 'MuPIFServer'
+        self.appName2 = 'MuPIFServer2'
         self.monitorName = 'monitor.MuPIF'
 
         # Maximum number of jobs
@@ -80,129 +82,20 @@ class ExConfig(object):
         #    self.mode = 0
         
         if self.mode == 'localhost':  # localhost. Jobmanager uses NAT with ssh tunnels
-            # NAME SERVER
-            # IP/name of a name server
-            self.nshost = '127.0.0.1'
-            # self.nshost = '147.32.130.71'
-            # Port of name server
+            self.nshost = self.server = self.server2 = self.server3 = self.monitorServer = '127.0.0.1'
             self.nsport = 9090
-
-            self.monitorServer = '127.0.0.1'
             self.monitorPort = 9091
-
-            # SERVER for a single job or for JobManager
-            # IP/name of a server's daemon
-            self.server = '127.0.0.1'
-            # self.server = '147.32.130.71'
-            # Port of server's daemon
             self.serverPort = 44382
-            # Nat IP/name (necessary for ssh tunnel)
-            self.serverNathost = None
-            # Nat port (necessary for ssh tunnel)
-            self.serverNatport = None
-
-            # SECOND SERVER for another application on remote computer
-            self.server2 = self.server
             self.serverPort2 = 44385
-            self.appName2 = 'MuPIFServer2'
-
-            self.server3 = '127.0.0.1'
-            self.serverPort3 = 44386
-           
-        elif self.mode == 'ctu-ssh':  # ssh
-            # NAME SERVER
-            # IP/name of a name server
-            self.nshost = '147.32.130.71'
-            # Port of name server
-            self.nsport = 9090
-
-            self.monitorServer = '127.0.0.1'
-            self.monitorPort = 9091
-
-            # SERVER for a single job or for JobManager
-            # IP/name of a server's daemon
-            self.server = '147.32.130.71'
-            # Port of server's daemon
-            self.serverPort = 44382
-
-            # SECOND SERVER for another application (usually runs locally)
-            self.server2 = '127.0.0.1'
-            self.serverPort2 = 44385
-            self.appName2 = 'MuPIFServer2'
-        
-        elif self.mode == 'vpn':  # VPN, no ssh tunnels
-            # NAME SERVER
-            # IP/name of a name server
-            self.nshost = '172.30.0.1'
-            # self.nshost = '172.30.0.6'
-            # Port of name server
-            self.nsport = 9090
-
-            self.monitorServer = '172.30.0.1'
-            self.monitorPort = 9091
-
-            # SERVER for a single job or for JobManager
-            # IP/name of a server's daemon
-            # self.server = '172.30.0.1'
-            self.server = '172.30.0.74'
-            # Port of server's daemon
-            self.serverPort = 44382
-            # Nat IP/name
-            self.serverNathost = None
-
-            # SECOND SERVER for another application (usually runs locally)
-            self.server2 = '127.0.0.1'
-            self.serverPort2 = 44383
-           
-            # third SERVER - an application running on local computer in VPN
-            # this server can be accessed only from script from the same computer
-            # otherwise the server address has to be replaced by vpn local adress
-            self.server3 = '127.0.0.1'
-            self.serverPort3 = 44386
-
-        elif self.mode == 'wtf':  # VPN emulated as local, no ssh tunnels
-            # NAME SERVER
-            # IP/name of a name server
-            self.nshost = '127.0.0.1'
-            # Port of name server
-            self.nsport = 9090
-
-            self.monitorServer = '127.0.0.1'
-            self.monitorPort = 9091
-
-            # SERVER for a single job or for JobManager
-            # IP/name of a server's daemon
-            self.server = '127.0.0.1'
-            # Port of server's daemon
-            self.serverPort = 44382
-
-            # SECOND SERVER for another application (usually runs locally)
-            self.server2 = '127.0.0.1'
-            self.serverPort2 = 44383
-            # self.serverNathost2 = self.server2
-            # self.serverNatport2 = 5558
-            # self.appName2 = 'MuPIFServer2'
-           
-            # third SERVER - an application running on local computer in VPN
-            # this server can be accessed only from script from the same computer
-            # otherwise the server address has to be replaced by vpn local adress
-            self.server3 = '127.0.0.1'
             self.serverPort3 = 44386
 
         elif self.mode == 'local-noconf':
             # docker-compose
             # this is attempt at zero-config setup
             # Pyro NS is located via broadcast and is used for looking up all the other components
-            self.nshost = '0.0.0.0'
-            self.nsport = 0
+            self.nshost = self.server = self.server2 = self.server3 = '0.0.0.0'
+            self.nsport = self.monitorPort = self.serverPort = self.serverPort2 = self.serverPort3 = 0
             self.monitorServer = None
-            self.monitorPort = 0
-            self.server = '0.0.0.0'
-            self.serverPort = 0
-            self.server2 = '0.0.0.0'
-            self.serverPort2 = 0
-            self.server3 = '0.0.0.0'
-            self.serverPort3 = 0
 
         else:
             raise ValueError(f'Unhandled network mode "{mode}" for general setup (must be one of {", ".join(allModes)}).')

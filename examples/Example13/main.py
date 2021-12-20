@@ -22,7 +22,7 @@ class Workflow13(mp.workflow.Workflow):
             "ModuleName": "main.py",
             "Name": "Example13 workflow",
             "ID": "workflow_13",
-            "Description": "",
+            "Description": "Calculates multiplication of two given values using a simple model",
             "Inputs": [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": 1,
                  'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep"},
@@ -57,7 +57,7 @@ class Workflow13(mp.workflow.Workflow):
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)
-        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, cfg.jobManName)
+        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'Mupif.JobManager@Example13')
         try:
             self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
             log.info(self.model_1)
@@ -121,3 +121,9 @@ if __name__ == '__main__':
 
     print('Simulation has finished.')
     print('Calculated result of %f x %f = %f' % (value_1, value_2, value_result))
+
+    if abs(value_result - 6.) <= 1.e-8:
+        log.info("Test OK")
+    else:
+        log.error("Test FAILED")
+        sys.exit(1)

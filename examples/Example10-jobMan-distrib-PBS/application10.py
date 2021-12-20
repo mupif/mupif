@@ -16,12 +16,12 @@ class Application10(mp.Model):
     """
     Simple application which sums given time values times 2
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata={}, **kwargs):
         MD = {
             'Name': 'Simple time summator',
             'ID': 'N/A',
             'Description': 'Cummulates given time values times 2',
-            'Version_date': '02/2019',
+            'Version_date': '12/2021',
             'Physics': {
                 'Type': 'Other',
                 'Entity': 'Other'
@@ -30,8 +30,8 @@ class Application10(mp.Model):
                 'Software': 'Python script',
                 'Language': 'Python3',
                 'License': 'LGPL',
-                'Creator': 'Borek',
-                'Version_date': '02/2019',
+                'Creator': 'Stanislav',
+                'Version_date': '12/2021',
                 'Type': 'Summator',
                 'Documentation': 'Nowhere',
                 'Estim_time_step_s': 1,
@@ -46,12 +46,14 @@ class Application10(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Time value',
-                 'Description': 'Time', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}],
+                 'Description': 'Time', 'Units': 's', 'Required': True, "Set_at": "timestep", "Obj_ID": 1}
+            ],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Summed time value',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
+                 'Description': 'Cummulative time', 'Units': 's'}
+            ]
         }
-        super().__init__(metadata=MD)
+        super().__init__(metadata=MD, **kwargs)
         self.updateMetadata(metadata)
         self.value = 0.
         self.input = 0.
@@ -67,18 +69,13 @@ class Application10(mp.Model):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
-
         if objectTypeID == mp.DataID.PID_Time:
             return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
-        else:
-            raise mp.APIError('Unknown property ID')
 
     def set(self, obj, objectID=0):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time:
                 self.input = obj.inUnitsOf(mp.U.s).getValue()[0]
-            else:
-                raise mp.APIError('Unknown property ID')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # this function is designed to run the executable in Torque or Slurm PBS and process the output when the job is finished.
@@ -106,7 +103,7 @@ class Application10(mp.Model):
         # wait until the job is finished
         # After its completion, the job stays in the list of jobs with 'Completed' status for a while.
         # After that time it is not in the list any more, which results in 'Unknown' state.
-        # With 1 minute period of checking the job should be still available in the list.
+        # With 60-second period of checking the job should be still available in the list.
         pbs_tool.wait_until_job_is_done(jobid=jobid, checking_frequency=1.)
 
         #

@@ -69,11 +69,8 @@ class Application13(mp.Model):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
-
         if objectTypeID == mp.DataID.PID_Time:
             return mp.ConstantProperty(value=(self.result,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
-        else:
-            raise mp.APIError('Unknown property ID')
 
     def set(self, obj, objectID=0):
         if obj.isInstance(mp.Property):

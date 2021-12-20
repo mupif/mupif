@@ -20,11 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import object
 
 import logging
 import os
 import Pyro5
+from . import pyroutil
 log = logging.getLogger()
 
 # error codes
@@ -187,7 +187,7 @@ class JobManager(object):
         :rtype: str
         """
         return self.jobManWorkDir + os.path.sep + jobID
-        
+
 
 # @deprecated.deprecated
 class RemoteJobManager (object):

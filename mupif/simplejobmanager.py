@@ -84,13 +84,13 @@ class SimpleJobManager (jobmanager.JobManager):
             ns,
             appName,
             appClass,
-            server,
-            nshost,
-            nsport,
+            server=None,
+            nshost=None,
+            nsport=None,
             jobManWorkDir,  # perhaps rename to cwd
             maxJobs=1,
             daemon=None,
-            overrideNsPort=0
+            # overrideNsPort=0
     ):
         """
         Constructor.
@@ -102,7 +102,7 @@ class SimpleJobManager (jobmanager.JobManager):
 
         self.tickets = []  # list of tickets issued when pre-allocating resources; tickets generated using uuid
         self.jobCounter = 0
-        self.overrideNsPort = overrideNsPort
+        # self.overrideNsPort = overrideNsPort
         self.lock = threading.Lock()
         self.applicationClass = appClass
         self.server = server
@@ -111,8 +111,12 @@ class SimpleJobManager (jobmanager.JobManager):
 
         log.debug('SimpleJobManager: initialization done for application name %s' % self.applicationName)
 
+    def runServer(self):
+        return pyroutil.runJobManagerServer(jobman=self,ns=self.ns)
+
+
     @staticmethod
-    def _spawnProcess(*, pipe, ns, appName, jobID, cwd, nshost, nsport, server, appClass):
+    def _spawnProcess(*, pipe, ns, appName, jobID, cwd, appClass):
         '''
         This function is called 
         '''
@@ -127,9 +131,10 @@ class SimpleJobManager (jobmanager.JobManager):
         uri = mupif.pyroutil.runAppServer(
             app=app,
             appName=jobID,
-            server=server,
-            nshost=nshost,
-            nsport=nsport
+            ns=ns
+            #server=server,
+            #nshost=nshost,
+            #nsport=nsport
         )
         pipe.send(uri)  # as bytes
 
@@ -219,9 +224,9 @@ class SimpleJobManager (jobmanager.JobManager):
                     cwd=targetWorkDir,
                     appName=self.applicationName,
                     appClass=self.applicationClass,
-                    nshost=self.nshost,
-                    nsport=self.nsport,
-                    server=self.server
+                    #nshost=self.nshost,
+                    #nsport=self.nsport,
+                    #server=self.server
                 )
                 proc = multiprocessing.Process(
                     target=SimpleJobManager._spawnProcess,
