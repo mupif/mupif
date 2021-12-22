@@ -134,8 +134,8 @@ def locateNameserver(nshost=None,nsport=0,server=False):
     except ImportError:
         log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
     if server:
-        log.warning('Falling back to localhost:9090 for nameserver (server).')
-        return 'localhost',9090
+        log.warning('Falling back to 127.0.0.1:9090 for nameserver (server).')
+        return '127.0.0.1',9090
     else:
         log.warning('Falling back to 0.0.0.0:0 for nameserver (client).')
         return None,0
