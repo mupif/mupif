@@ -9,8 +9,6 @@ from mupif import *
 import logging
 log = logging.getLogger()
 
-from exconfig import ExConfig
-cfg = ExConfig()
 import mupif as mp
 
 
@@ -95,17 +93,13 @@ time = 0
 timestepnumber = 0
 targetTime = 1.0
 
-sshContext = None
-if cfg.mode == 'ctu-ssh':  # just print out how to set up a SSH tunnel
-    sshContext = pyroutil.SSHContext(userName=cfg.serverUserName, sshClient=cfg.sshClient, options=cfg.options)
-
 # locate nameserver
-ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport)
+ns = pyroutil.connectNameServer()
 
 # application1 is local, create its instance
 app1 = Application1()
 # locate (remote) application2, request remote proxy
-app2 = pyroutil.connectApp(ns, cfg.appName, sshContext)
+app2 = pyroutil.connectApp(ns, 'mupif/example02/app2')
 
 try:
     appsig = app2.getApplicationSignature()

@@ -13,15 +13,12 @@ import mupif as mp
 log = logging.getLogger()
 mp.util.changeRootLogger('server.log')
 
-from exconfig import ExConfig
-cfg=ExConfig()
-
 import application2
 app2 = application2.Application2()
+ns=mp.pyroutil.connectNameServer()
 
 mp.pyroutil.runAppServer(
-    server=cfg.server, port=cfg.serverPort,
-    nshost=cfg.nshost, nsport=cfg.nsport,
-    appName=cfg.appName,
+    ns=ns,
+    appName='mupif/example02/app2',
     app=app2
 )

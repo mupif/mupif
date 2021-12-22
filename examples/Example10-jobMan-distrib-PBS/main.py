@@ -4,13 +4,10 @@ sys.path.extend(['..', '../..'])
 import logging
 log = logging.getLogger()
 
-from exconfig import ExConfig
 import threading
-cfg = ExConfig()
 import mupif as mp
 
 threading.current_thread().setName('ex10-main')
-
 
 @Pyro5.api.expose
 class Workflow10(mp.workflow.Workflow):
@@ -51,7 +48,7 @@ class Workflow10(mp.workflow.Workflow):
             }
         }
 
-        self.ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+        self.ns = mp.pyroutil.connectNameServer()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1

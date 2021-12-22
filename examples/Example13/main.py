@@ -1,8 +1,6 @@
 import sys
 sys.path.extend(['..', '../..'])
-from exconfig import ExConfig
 import threading
-cfg = ExConfig()
 
 threading.current_thread().setName('ex13-main')
 
@@ -53,7 +51,7 @@ class Workflow13(mp.workflow.Workflow):
             }
         }
 
-        self.ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+        self.ns = mp.pyroutil.connectNameServer()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)

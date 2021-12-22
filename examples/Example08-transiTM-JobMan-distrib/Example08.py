@@ -6,8 +6,6 @@ import sys
 import os
 sys.path.extend(['..', '../..'])
 from mupif import *
-from exconfig import ExConfig
-cfg=ExConfig()
 import logging
 log = logging.getLogger()
 
@@ -15,10 +13,6 @@ start = timeT.time()
 log.info('Timer started')
 import mupif as mp
 
-
-# localize JobManager running on (remote) server and create a tunnel to it
-# allocate the thermal server
-# solverJobManRecNoSSH = (cfg.serverPort, cfg.serverPort, cfg.server, '', cfg.jobManName)
 
 class Example08(workflow.Workflow):
    
@@ -52,7 +46,7 @@ class Example08(workflow.Workflow):
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)    
+        ns = pyroutil.connectNameServer()
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'thermal-nonstat-ex08')
         
