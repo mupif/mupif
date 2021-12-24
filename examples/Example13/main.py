@@ -29,7 +29,7 @@ class Workflow13(mp.workflow.Workflow):
             ],
             "Outputs": [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
-                 'Description': 'Result of multiplication', 'Units': 's'}
+                 'Description': 'Result of multiplication', 'Units': 's^2'}
             ],
         }
         mp.workflow.Workflow.__init__(self, metadata=MD)
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
     workflow.solve()
     res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)
-    value_result = res_property.inUnitsOf(mp.U.s).getValue()[0]
+    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()[0]
     workflow.terminate()
 
     print('Simulation has finished.')
