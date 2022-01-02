@@ -7,6 +7,7 @@ import typing
 import numpy
 import numpy as np
 import Pyro5
+import sys
 
 import pydantic
 # from pydantic.dataclasses import dataclass
@@ -40,8 +41,12 @@ class NumpyArray(np.ndarray, Generic[DType]):
         np_array = np.array(val, dtype=actual_dtype)
         return np_array
 
+if sys.version_info>=(3,9):
+    NumpyArrayFloat64 = NumpyArray[typing.Literal['float64']]
+else:
+    # python 3.8, just use the generic form
+    NumpyArrayFloat64 = NumpyArray
 
-NumpyArrayFloat64 = NumpyArray[typing.Literal['float64']]
 
 if 0:
     # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
