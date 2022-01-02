@@ -69,13 +69,13 @@ jobs:
       timeout-minutes: 1
       run: |
         set -euo pipefail
-        wenv python3 -m nose -v --rednose --traverse-namespace 2>&1 | dos2unix | tools/grcat-mupif
+        wenv python -m nose -v --rednose --traverse-namespace 2>&1 | dos2unix | tools/grcat-mupif
     - name: examples
       timeout-minutes: 2 # normally about 50s
       run: |
         set -euo pipefail
         # skip test 7, somehow fails under wine
-        cd examples; wenv python3 runex.py --wenv=all 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
+        cd examples; wenv python runex.py --wenv=all 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
 
   test-docker-VPN:
     runs-on: ubuntu-20.04
