@@ -61,10 +61,10 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update && sudo apt-get install wine64 wine python3-pip dos2unix
-        python -m pip install -q wenv
+        python -m pip install wenv
         echo '{"arch":"win64","pythonversion":"3.8.5"}' > ~/.wenv.json
         wenv init
-        wenv pip install -q --only-binary=pyrsistent -r requirements.txt
+        wenv pip install --only-binary=pyrsistent -r requirements.txt
     - name: nosetests
       timeout-minutes: 1
       run: |
