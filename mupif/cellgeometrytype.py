@@ -30,3 +30,8 @@ CGT_QUAD = 9  # linear quad
 CGT_TETRA = 10  # linear terahedra
 CGT_HEXAHEDRON = 12  # linear hexahedron
 CGT_TRIANGLE_2 = 22  # Quadratic triangle
+
+cgt2numVerts={CGT_TRIANGLE_1:3,CGT_QUAD:4,CGT_TETRA:4,CGT_HEXAHEDRON:8,CGT_TRIANGLE_2:6}
+# from: https://github.com/nschloe/meshio/blob/a6175e0d9dfb2aa274392d1cd396e991f0487cbc/src/meshio/xdmf/common.py#L71
+cgt2xdmfIndex={CGT_TRIANGLE_1:0x04,CGT_QUAD:0x05,CGT_TETRA:0x06,CGT_HEXAHEDRON:0x09,CGT_TRIANGLE_2:0x24}
+xdmfIndex2cgt={v:k for k,v in cgt2xdmfIndex.items()}
