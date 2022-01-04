@@ -195,8 +195,8 @@ class Field_TestCase(unittest.TestCase):
     def test_ioMeshio(self):
         m = self.f1.toMeshioMesh()
         for ext in 'vtu', 'vtk', 'xdmf':
-            # out = self.tmp+'/meshio.'+ext
-            out = '/tmp/meshio.'+ext
+            out = self.tmp+'/meshio.'+ext
+            # out = '/tmp/meshio.'+ext
             m.write(out)
             res = field.Field.makeFromMeshioMesh(out, unit={self.f1.getFieldIDName(): self.f1.getUnit()}, time=self.f1.getTime())[0]
             self._compareFields(self.f1, res)
