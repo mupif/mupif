@@ -51,7 +51,7 @@ class Mesh_TestCase(unittest.TestCase):
         self.assertEqual(self.mesh2.getNumberOfVertices(),self.res2.getNumberOfVertices(),'error in copy for mesh1')
         self.assertEqual(self.mesh2.getNumberOfCells(),self.res2.getNumberOfCells(),'error in copy for mesh1')
 
-#Testing getNumberOfVertices
+    #Testing getNumberOfVertices
     def test_getNumberOfVertices(self):
         self.assertEqual(self.mesh1.getNumberOfVertices(),3,'error in getNumberofVertices for mesh1')
         self.assertEqual(self.mesh2.getNumberOfVertices(),4,'error in getNumberofVertices for mesh2')
@@ -90,46 +90,46 @@ class Mesh_TestCase(unittest.TestCase):
         self.res=self.mesh3.getCell(0)
         self.assertEqual(self.res.getNumberOfVertices(),3,'error in getCell(getNumberOfVertices),mesh3_Cell(0)')
         self.assertEqual(self.res.getVertices(),mkCell(self.mesh3,5,22,(0,1,2)).getVertices(),'error in getCell(getVertices),mesh3_Cell(0)')        
-#Testing giveVertexLocalizer
-    def test_giveVertexLocalizer(self):
-        self.res=self.mesh2.giveVertexLocalizer()
-        s=self.res.giveItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
-        self.assertEqual(self.mesh2.getVertex(1) in s,True,'error in giveVertexLocalizer mesh2')
-        self.assertEqual(self.mesh2.getVertex(0) in s,True,'error in giveVertexLocalizer mesh2')
-        self.assertEqual(self.mesh2.getVertex(2) in s,True,'error in giveVertexLocalizer mesh2')
-        self.assertEqual(self.mesh2.getVertex(3) in s,True,'error in giveVertexLocalizer mesh2')
-        
-        self.res=self.mesh5.giveVertexLocalizer()
-        s=self.res.giveItemsInBBox(bbox.BBox((3.,1.,0.),(545.,72.,0.)))
-        self.assertEqual(self.mesh5.getVertex(1) in s,True,'error in giveVertexLocalizer mesh5')
-        self.assertEqual(self.mesh5.getVertex(0) in s,True,'error in giveVertexLocalizer mesh5')
-        self.assertEqual(self.mesh5.getVertex(2) in s,True,'error in giveVertexLocalizer mesh5')
-        self.assertEqual(self.mesh5.getVertex(3) in s,True,'error in giveVertexLocalizer mesh5')
-        
-#Testing giveVertexLocalizer
-    def test_giveCellLocalizer(self):
-        self.res=self.mesh2.giveCellLocalizer()
-        s=self.res.giveItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
-        self.assertEqual(self.mesh2.getCell(1) in s,True,'error in giveCellLocalizer mesh2')
-        self.assertEqual(self.mesh2.getCell(0) in s,True,'error in giveCellLocalizer mesh2')
-        
-        self.res=self.mesh5.giveCellLocalizer()
-        s=self.res.giveItemsInBBox(bbox.BBox((3.,1.,0.),(545.,72.,0.)))
-        self.assertEqual(self.mesh5.getCell(1) in s,True,'error in giveCellLocalizer mesh5')
-        self.assertEqual(self.mesh5.getCell(0) in s,True,'error in giveCellLocalizer mesh5')
+#Testing getVertexLocalizer
+    def test_getVertexLocalizer(self):
+        self.res=self.mesh2.getVertexLocalizer()
+        s=self.res.getItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
+        self.assertEqual(self.mesh2.getVertex(1) in s,True,'error in getVertexLocalizer mesh2')
+        self.assertEqual(self.mesh2.getVertex(0) in s,True,'error in getVertexLocalizer mesh2')
+        self.assertEqual(self.mesh2.getVertex(2) in s,True,'error in getVertexLocalizer mesh2')
+        self.assertEqual(self.mesh2.getVertex(3) in s,True,'error in getVertexLocalizer mesh2')
+
+        self.res=self.mesh5.getVertexLocalizer()
+        s=self.res.getItemsInBBox(bbox.BBox((3.,1.,0.),(545.,72.,0.)))
+        self.assertEqual(self.mesh5.getVertex(1) in s,True,'error in getVertexLocalizer mesh5')
+        self.assertEqual(self.mesh5.getVertex(0) in s,True,'error in getVertexLocalizer mesh5')
+        self.assertEqual(self.mesh5.getVertex(2) in s,True,'error in getVertexLocalizer mesh5')
+        self.assertEqual(self.mesh5.getVertex(3) in s,True,'error in getVertexLocalizer mesh5')
+
+#Testing getVertexLocalizer
+    def test_getCellLocalizer(self):
+        self.res=self.mesh2.getCellLocalizer()
+        s=self.res.getItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
+        self.assertEqual(self.mesh2.getCell(1) in s,True,'error in getCellLocalizer mesh2')
+        self.assertEqual(self.mesh2.getCell(0) in s,True,'error in getCellLocalizer mesh2')
+
+        self.res=self.mesh5.getCellLocalizer()
+        s=self.res.getItemsInBBox(bbox.BBox((3.,1.,0.),(545.,72.,0.)))
+        self.assertEqual(self.mesh5.getCell(1) in s,True,'error in getCellLocalizer mesh5')
+        self.assertEqual(self.mesh5.getCell(0) in s,True,'error in getCellLocalizer mesh5')
 
 #Testing vertexLabel2Number
     def test_vertexLabel2Number(self):
         self.assertEqual(self.mesh4.vertexLabel2Number(4),0,'error in vertexLabel2Number for mesh4(4)')
         self.assertEqual(self.mesh4.vertexLabel2Number(16),2,'error in vertexLabel2Number for mesh4(16)')
         self.assertEqual(self.mesh3.vertexLabel2Number(4),0,'error in vertexLabel2Number for mesh3(4)')
-        
+
 #Testing vertexLabel2Number
     def test_cellLabel2Number(self):
         self.assertEqual(self.mesh4.cellLabel2Number(16),0,'error in cellLabel2Number for mesh4(16)')
         self.assertEqual(self.mesh4.cellLabel2Number(18),1,'error in cellLabel2Number for mesh4(18)')
         self.assertEqual(self.mesh3.cellLabel2Number(22),0,'error in cellLabel2Number for mesh4(1)')
-        
+
 #Testing merge (AttributeError: 'Triangle_2d_lin' object has no attribute 'giveVertices')
     def test_merge(self):
         self.mesh3.merge(self.mesh5)
@@ -137,7 +137,7 @@ class Mesh_TestCase(unittest.TestCase):
         self.assertEqual(self.mesh3.getCell(0).getVertices()[2].label, 6, 'error in merge')
         self.assertEqual(self.mesh3.getCell(2).getVertices()[0].label, 16, 'error in merge')
         self.assertEqual(self.mesh3.getCell(2).getVertices()[1].label, 5, 'error in merge')
-    
+
     @unittest.skipIf(vtk is None,'vtk not importable')
     def test_asVtkUnstructuredGrid(self):
         # @todo: not working with mesh1 because points have only two coordinates
