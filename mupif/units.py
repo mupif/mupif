@@ -45,32 +45,19 @@ class UnitProxy(object):
 
 U = Q = UnitProxy()
 
+import h5py
+from .dumpable import addPydanticInstanceValidator
+addPydanticInstanceValidator(h5py.Dataset)
+addPydanticInstanceValidator(Quantity)
+addPydanticInstanceValidator(astropy.units.UnitBase,makeKlass=astropy.units.Unit)
 
-# pydantic typechecking
-def Quantity_validate(cls, v):
-    if not isinstance(v, Quantity):
-        raise TypeError(f'Quantity instance required (not a {v.__class__.__name__})')
-    return v
+from .dumpable import MupifBaseModel
+class HeavyQuantity(MupifBaseModel):
+    'Alternative to Quantity which does not store its values in RAM.'
+    value: h5py.Dataset
+    unit: astropy.units.UnitBase
+    def __len__(self): return self.value.shape[0]
 
-
-@classmethod
-def Quantity_get_validators(cls): yield Quantity_validate
-
-
-Quantity.__get_validators__ = Quantity_get_validators
-
-
-def Unit_validate(cls, v):
-    if not isinstance(v, au.UnitBase):
-        raise TypeError(f'Unit instance required (not a {v.__class__.__name__})')
-    return v
-
-
-@classmethod
-def Unit_get_validators(cls): yield Unit_validate
-
-
-Unit.__get_validators__ = Unit_get_validators
 
 # pyro serialization (this is for single-value type only)
 # embedding within a dumpable is handled in dumpable.py

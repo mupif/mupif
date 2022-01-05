@@ -51,7 +51,7 @@ class Mesh_TestCase(unittest.TestCase):
         self.assertEqual(self.mesh2.getNumberOfVertices(),self.res2.getNumberOfVertices(),'error in copy for mesh1')
         self.assertEqual(self.mesh2.getNumberOfCells(),self.res2.getNumberOfCells(),'error in copy for mesh1')
 
-#Testing getNumberOfVertices
+    #Testing getNumberOfVertices
     def test_getNumberOfVertices(self):
         self.assertEqual(self.mesh1.getNumberOfVertices(),3,'error in getNumberofVertices for mesh1')
         self.assertEqual(self.mesh2.getNumberOfVertices(),4,'error in getNumberofVertices for mesh2')
@@ -110,7 +110,7 @@ class Mesh_TestCase(unittest.TestCase):
     def test_getCellLocalizer(self):
         self.res=self.mesh2.getCellLocalizer()
         s=self.res.getItemsInBBox(bbox.BBox((0.,0.,2.),(3.,5.,2.)))
-        self.assertEqual(self.mesh2.getCell(1) in s,True,'error in getCellLocalizer mesh2'/give
+        self.assertEqual(self.mesh2.getCell(1) in s,True,'error in getCellLocalizer mesh2')
         self.assertEqual(self.mesh2.getCell(0) in s,True,'error in getCellLocalizer mesh2')
 
         self.res=self.mesh5.getCellLocalizer()

@@ -19,10 +19,10 @@ except Exception:
 
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
+
+
 # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
 DType = TypeVar('DType')
-
-
 class NumpyArray(np.ndarray, Generic[DType]):
     """Wrapper class for numpy arrays that stores and validates type information.
     This can be used in place of a numpy array, but when used in a pydantic BaseModel
@@ -49,25 +49,14 @@ else:
     NumpyArrayFloat64 = NumpyArray
 
 
-if 0:
-    # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
-    class BaseModelWithPositionalArgs(pydantic.BaseModel):
-
-        def __init__(self, *args, **kwargs):
-            pos_args = list(self.__fields__.keys())
-            # sys.stderr.write(str(self.__class__.__name__)+':'+str(args)+" | "+str(kwargs)+'\n')
-
-            for i in range(len(args)):
-                if i >= len(pos_args):
-                    raise TypeError(f'__init__ takes {len(pos_args)} '
-                                    'positional arguments but 2 were given.')
-                name = pos_args[i]
-                if name in kwargs:
-                    raise TypeError(f'{name} cannot be both a keyword and '
-                                    'positional argument.')
-                kwargs[name] = args[i]
-            # sys.stderr.write('\n\n'+str(super())+': '+pprint.pformat(kwargs)+'\n\n')
-            return super().__init__(**kwargs)
+def addPydanticInstanceValidator(klass,makeKlass=None):
+    def klass_validate(cls,v):
+        if isinstance(v,klass): return v
+        if makeKlass: return makeKlass(v)
+        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__}')
+    @classmethod
+    def klass_get_validators(cls): yield klass_validate
+    klass.__get_validators__=klass_get_validators
 
 
 class MupifBaseModel(pydantic.BaseModel):
