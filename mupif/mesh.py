@@ -37,6 +37,7 @@ import dataclasses
 import typing
 from . import cellgeometrytype
 import pickle
+import deprecated
 
 import pydantic
 
@@ -125,6 +126,8 @@ class Mesh(dumpable.Dumpable):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+        self._vertexOctree = None
+        self._cellOctree = None
         self._postDump()
 
     def _postDump(self):
@@ -411,6 +414,78 @@ class Mesh(dumpable.Dumpable):
         """
         pickle.dump(self, open(fileName, 'wb'), protocol)
 
+    @deprecated.deprecated('use getVertexLocalizer instead')
+    def giveVertexLocalizer(self): return self.getVertexLocalizer()
+
+    def getVertexLocalizer(self):
+        """
+        :return: Returns the vertex localizer.
+        :rtype: Octree
+        """
+        if self._vertexOctree: 
+            return self._vertexOctree
+        else:
+            vvv = self.vertices()
+            c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
+            bb = bbox.BBox(c0, c0)  # ope-pointed bbox
+            for vert in vvv:
+                bb.merge(vert.getCoordinates())  # extend it with all other cells
+            minc, maxc = bb.coords_ll, bb.coords_ur
+
+            # setup vertex localizer
+            size = max(y-x for x, y in zip(minc, maxc))
+            mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
+            self._vertexOctree = octree.Octree(minc, size, tuple(mask))
+            if debug: 
+                t0 = time.clock()
+                print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
+            # add mesh vertices into octree
+            for vertex in self.vertices():
+                self._vertexOctree.insert(vertex)
+            if debug:
+                print("done in ", time.clock() - t0, "[s]")
+
+            return self._vertexOctree
+
+    @deprecated.deprecated('use getCellLocalizer instead')
+    def giveCellLocalizer(self): return self.getCellLocalizer()
+
+    def getCellLocalizer(self):
+        """
+        Get the cell localizer.
+
+        :return: Returns the cell localizer.
+        :rtype: Octree
+        """
+        if debug:
+            t0 = time.clock()
+        if self._cellOctree: 
+            return self._cellOctree
+        else:
+            if debug:
+                print('Start at: ', time.clock()-t0)
+
+            ccc = self.cells()
+            bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
+            for cell in ccc:
+                bb.merge(cell.getBBox())  # extend it with all other cells
+            minc, maxc = bb.coords_ll, bb.coords_ur
+
+            if debug:
+                print('Cell bbox: ', time.clock()-t0)
+
+        # setup vertex localizer
+        size = max(y-x for x, y in zip(minc, maxc))
+        mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
+        self._cellOctree = octree.Octree(minc, size, tuple(mask))
+        if debug:
+            print('Octree ctor: ', time.clock()-t0)
+            print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
+        for cell in self.cells():
+            self._cellOctree.insert(cell)
+        if debug:
+            print("done in ", time.clock() - t0, "[s]")
+        return self._cellOctree
 
 @Pyro5.api.expose
 # @dataclasses.dataclass
@@ -437,8 +512,6 @@ class UnstructuredMesh(Mesh):
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        self._vertexOctree = None
-        self._cellOctree = None
         self._vertexDict = None
         self._cellDict = None
 
@@ -504,72 +577,7 @@ class UnstructuredMesh(Mesh):
         """
         return self.cellList[i]
 
-    def giveVertexLocalizer(self):
-        """
-        :return: Returns the vertex localizer.
-        :rtype: Octree
-        """
-        if self._vertexOctree: 
-            return self._vertexOctree
-        else:
-            vvv = self.vertices()
-            c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
-            bb = bbox.BBox(c0, c0)  # ope-pointed bbox
-            for vert in vvv:
-                bb.merge(vert.getCoordinates())  # extend it with all other cells
-            minc, maxc = bb.coords_ll, bb.coords_ur
 
-            # setup vertex localizer
-            size = max(y-x for x, y in zip(minc, maxc))
-            mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-            self._vertexOctree = octree.Octree(minc, size, tuple(mask))
-            if debug: 
-                t0 = time.clock()
-                print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
-            # add mesh vertices into octree
-            for vertex in self.vertices():
-                self._vertexOctree.insert(vertex)
-            if debug:
-                print("done in ", time.clock() - t0, "[s]")
-
-            return self._vertexOctree
-
-    def giveCellLocalizer(self):
-        """
-        Get the cell localizer.
-
-        :return: Returns the cell localizer.
-        :rtype: Octree
-        """
-        if debug:
-            t0 = time.clock()
-        if self._cellOctree: 
-            return self._cellOctree
-        else:
-            if debug:
-                print('Start at: ', time.clock()-t0)
-
-            ccc = self.cells()
-            bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
-            for cell in ccc:
-                bb.merge(cell.getBBox())  # extend it with all other cells
-            minc, maxc = bb.coords_ll, bb.coords_ur
-
-            if debug:
-                print('Cell bbox: ', time.clock()-t0)
-
-        # setup vertex localizer
-        size = max(y-x for x, y in zip(minc, maxc))
-        mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-        self._cellOctree = octree.Octree(minc, size, tuple(mask))
-        if debug:
-            print('Octree ctor: ', time.clock()-t0)
-            print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
-        for cell in self.cells():
-            self._cellOctree.insert(cell)
-        if debug:
-            print("done in ", time.clock() - t0, "[s]")
-        return self._cellOctree
 
     def __buildVertexLabelMap__(self):
         """

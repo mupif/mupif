@@ -187,7 +187,7 @@ class Field(mupifquantity.MupifQuantity):
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
-        cells = self.mesh.giveCellLocalizer().giveItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
+        cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:

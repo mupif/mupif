@@ -117,8 +117,8 @@ class TestSaveLoad(unittest.TestCase):
         import pickle
         m=f.getMesh()
         # this creates localizers on-request
-        m.giveVertexLocalizer()
-        m.giveCellLocalizer()
+        m.getVertexLocalizer()
+        m.getCellLocalizer()
         # check localizers are there (break encapsulation, sorry)
         self.assertTrue(m._vertexOctree is not None)
         self.assertTrue(m._cellOctree is not None)
