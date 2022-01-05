@@ -17,7 +17,7 @@ class LookupTable(mupifobject.MupifObject):
     def __init__(self, *, metadata={}, **kw):
         super().__init__(metadata=metadata, **kw)
         defaults = dict([
-            ('Type', 'mupif.lookuptable.LookUpTable'),
+            ('Type', 'mupif.LookUpTable'),
         ])
         for k, v in defaults.items():
             if k not in metadata:
