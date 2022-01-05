@@ -15,5 +15,5 @@ ns = mp.pyroutil.connectNameServer()
 mp.SimpleJobManager(
     ns=ns,
     appClass=application13.Application13,
-    appName='Mupif.JobManager@Example13',
+    appName='CVUT.demo01',
 ).runServer()

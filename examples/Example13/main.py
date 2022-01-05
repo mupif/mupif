@@ -55,7 +55,7 @@ class Workflow13(mp.workflow.Workflow):
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)
-        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'Mupif.JobManager@Example13')
+        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'CVUT.demo01')
         try:
             self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
             log.info(self.model_1)
