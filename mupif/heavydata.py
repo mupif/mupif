@@ -867,6 +867,8 @@ class HeavyDataBase(MupifObject):
             # local copy is not the original, the URI is no longer valid
             self.h5uri = None
 
+
+
     def _returnProxy(self, v):
         if hasattr(self, '_pyroDaemon'):
             self._pyroDaemon.register(v)
@@ -1010,6 +1012,10 @@ class HeavyDataHandle(HeavyDataBase):
             ret += '\n\n'+val.__doc__.replace('`', '``')
         return ret
 
+    # this is not useful over Pyro (the Proxy defines its own context manager) but handy for local testing
+    def __enter__(self): return self.openData(mode=self.mode)
+    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
+
     @dataclass
     @Pyro5.api.expose
     class TopContext:
@@ -1021,9 +1027,6 @@ class HeavyDataHandle(HeavyDataBase):
 
         def __str__(self):
             return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
-
-    def __enter__(self): return self.openData(mode=self.mode)
-    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
 
     def __init__(self, **kw):
         super().__init__(**kw)

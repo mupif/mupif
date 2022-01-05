@@ -313,7 +313,7 @@ class Mesh(dumpable.Dumpable):
         c0 = 0
         from . import cell
         for block in cells:
-            klass = cell.Cell.getClassForCellGeometryType({'triangle': cgt.CGT_TRIANGLE_1, 'quad': cgt.CGT_QUAD, 'tetra': cgt.CGT_TETRA, 'hexahedron': cgt.CGT_HEXAHEDRON, 'triangle6': cgt.CGT_TRIANGLE_2}[block.type])
+            klass = cell.Cell.getClassForCellGeometryType(cgt.meshioName2cgt[block.type])
             cc += [klass(mesh=ret, number=c0+row, label=None, vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
             c0 += block.data.shape[0]
         ret.setup(vertexList=vv, cellList=cc)
