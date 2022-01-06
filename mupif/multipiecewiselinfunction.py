@@ -12,7 +12,7 @@ from .mupifquantity import ValueType
 
 
 @Pyro5.api.expose
-class MultiDimPropertyDataStore(mupifobject.MupifObject):
+class MultiPiecewiseLinFunction(mupifobject.MupifObject):
     """
 
     .. automethod:: __init__
@@ -28,7 +28,7 @@ class MultiDimPropertyDataStore(mupifobject.MupifObject):
     def __init__(self, *, metadata={}, **kw):
         super().__init__(metadata=metadata, **kw)
         defaults = dict([
-            ('Type', 'mupif.MultiDimPropertyDataStore'),
+            ('Type', 'mupif.MultiPiecewiseLinFunction'),
         ])
         for k, v in defaults.items():
             if k not in metadata:
