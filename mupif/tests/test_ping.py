@@ -29,10 +29,10 @@ class LocalApp(AnyApp):
 # https://github.com/pahaz/sshtunnel
 #import sshtunnel
 
-from nose.tools import nottest
 
-@nottest
-class TestLocalApp(unittest.TestCase):
+
+# disabled
+class __TestLocalApp(): # unittest.TestCase):
     jobname='TestLocalApp'
     # hkey='mupif-secret-key'
     sshpwd='ssh-secret-key'

@@ -40,7 +40,7 @@ jobs:
       timeout-minutes: 1
       run: |
         set -euo pipefail
-        pytest-3 -v --cov=./ --cov-report=xml 2>&1 | tools/grcat-mupif
+        python -m pytest -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: examples (native)
       timeout-minutes: 2 # normally about 35s
@@ -71,7 +71,7 @@ jobs:
       run: |
         set -euo pipefail
         # wenv python -m nose -v --rednose --traverse-namespace 2>&1 | dos2unix | tools/grcat-mupif
-        wenv python -m pytest 2>&1 | dos2unix | tools/grcat-mupif
+        wenv python -m pytest -v mupif/tests 2>&1 | dos2unix | tools/grcat-mupif
     - name: examples
       timeout-minutes: 2 # normally about 50s
       run: |
@@ -112,7 +112,7 @@ jobs:
     - name: unit tests
       timeout-minutes: 1
       # --traverse-namespace necessary for windows, see https://github.com/Pyomo/pyomo/issues/1257
-      run: python3 -m pytest -v
+      run: python3 -m pytest -v mupif/tests
       # 2>&1 | python3 -u tools/grcat-mupif
     - name: examples
       timeout-minutes: 2
