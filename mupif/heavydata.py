@@ -838,17 +838,146 @@ def _read_grains(h5name):
     print(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
-_HeavyDataHandle_ModeChoice = typing.Literal['readonly', 'readwrite', 'overwrite', 'create', 'create-memory']
+_HeavyDataBase_ModeChoice = typing.Literal['readonly', 'readwrite', 'overwrite', 'create', 'create-memory']
 
 
 @Pyro5.api.expose
-class HeavyDataHandle(MupifObject):
+class HeavyDataBase(MupifObject):
+    '''
+    Base class for various HDF5-backed objects with automatic HDF5 transfer when copied to remote location. This class is to be used internally only.
+    '''
     h5path: str = ''
     h5group: str = '/'
-    mode: _HeavyDataHandle_ModeChoice = 'readonly'  # mode is used only by the context manager
+    h5uri: typing.Optional[str] = None
+    mode: _HeavyDataBase_ModeChoice = 'readonly'  # mode is used only by the context manager
+
+    def __init__(self,**kw):
+        super().__init__(**kw)  # calls the real ctor
+        self._h5obj = None      # assigned in openStorage
+        self.pyroIds = []
+        if self.h5uri is not None:
+            sys.stderr.write(f'HDF5 transfer: starting…\n')
+            uri = Pyro5.api.URI(self.h5uri)
+            remote = Pyro5.api.Proxy(uri)
+            # sys.stderr.write(f'Remote is {remote}\n')
+            fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
+            log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
+            PyroFile.copy(remote, self.h5path)
+            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
+            # local copy is not the original, the URI is no longer valid
+            self.h5uri = None
+
+
+
+    def _returnProxy(self, v):
+        if hasattr(self, '_pyroDaemon'):
+            self._pyroDaemon.register(v)
+            self.pyroIds.append(v._pyroId)
+        return v
+
+    @pydantic.validate_arguments
+    def openStorage(self, *, mode: _HeavyDataBase_ModeChoice):
+        '''
+        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyDataHandle` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyDataHandle.closeData` is called (directly or via context manager).
+
+        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyDataHandle.mode`.
+
+        '''
+        if mode in ('readonly', 'readwrite'):
+            if mode == 'readonly':
+                if self._h5obj:
+                    if self._h5obj.mode != 'r':
+                        raise RuntimeError(f'HDF5 file {self.h5path} already open for writing.')
+                else:
+                    self._h5obj = h5py.File(self.h5path, 'r')
+            elif mode == 'readwrite':
+                if self._h5obj:
+                    if self._h5obj.mode != 'r+':
+                        raise RuntimeError(f'HDF5 file {self.h5path} already open read-only.')
+                else:
+                    if not os.path.exists(self.h5path):
+                        raise RuntimeError(f'HDF5 file {self.h5path} does not exist (use mode="create" to create a new file.')
+                    self._h5obj = h5py.File(self.h5path, 'r+')
+        elif mode in ('overwrite', 'create', 'create-memory'):
+            if self._h5obj:
+                raise RuntimeError(f'HDF5 file {self.h5path} already open.')
+            if mode == 'create-memory':
+                import uuid
+                doSave = bool(self.h5path)
+                p = (self.h5path if doSave else str(uuid.uuid4()))
+                if not doSave:
+                    log.warning(f'Data will eventually disappear with mode="create-memory" and h5path="" (empty).')
+                # hdf5 uses filename for lock management (even if the file is memory block only)
+                # therefore pass if something unique if filename is not given
+                self._h5obj = h5py.File(p, mode='x', driver='core', backing_store=doSave)
+            else:
+                if useTemp := (not self.h5path):
+                    fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
+                    log.info(f'Using new temporary file {self.h5path}')
+                if mode == 'overwrite' or useTemp:
+                    self._h5obj = h5py.File(self.h5path, 'w')
+                # 'create' mode should fail if file exists already
+                # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
+                else:
+                    self._h5obj = h5py.File(self.h5path, 'x')
+        return self._h5obj
+
+    def exposeData(self):
+        '''
+        If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataHandle` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
+        '''
+        if (daemon := getattr(self, '_pyroDaemon', None)) is None:
+            raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
+        if self.h5uri:
+            return  # already exposed
+        # binary mode is necessary!
+        # otherwise: remote UnicodeDecodeError somewhere, and then 
+        # TypeError: a bytes-like object is required, not 'dict'
+        self.h5uri = str(daemon.register(pf := PyroFile(filename=self.h5path, mode='rb')))
+        self.pyroIds.append(pf._pyroId)
+
+    def closeData(self):
+        '''
+        * Flush and close the backing HDF5 file;
+        * unregister all contexts from Pyro (if registered)
+        '''
+        if self._h5obj:
+            self._h5obj.close()
+            self._h5obj = None
+        if daemon := getattr(self, '_pyroDaemon', None):
+            for i in self.pyroIds:
+                # sys.stderr.write(f'Unregistering {i}\n')
+                daemon.unregister(i)
+
+    @pydantic.validate_arguments
+    def cloneHandle(self, newPath: str=''):  # -> HeavyDataHandle:
+        '''Return clone of the handle; the underlying storage is copied into *newPath* (or a temporary file, if not given). All handle attributes (besides :obj:`h5path`) are preserved.'''
+        if self._h5obj:
+            raise RuntimeError(f'HDF5 file {self.h5path} is open (call closeData() first).')
+        if not newPath:
+            _fd, newPath = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
+        shutil.copy(self.h5path, newPath)
+        ret = self.copy(deep=True)  # this is provided by pydantic
+        ret.h5path = newPath
+        return ret
+
+    def repack(self):
+        '''Repack the underlying storage (experimental, untested). Data must not be open.'''
+        if self._h5obj:
+            raise RuntimeError(f'Cannot repack while {self._h5obj} is open (call closeData first).')
+        try:
+            log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
+            out = self.h5path+'.~repacked~'
+            subprocess.run(['h5repack', self.h5path, out], check=True)
+            shutil.copy(out, self.h5path)
+        except subprocess.CalledProcessError:
+            log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
+
+
+@Pyro5.api.expose
+class HeavyDataHandle(HeavyDataBase):
     schemaName: typing.Optional[str] = None
     schemasJson: typing.Optional[str] = None
-    h5uri: typing.Optional[str] = None
     id: dataid.DataID = dataid.DataID.ID_None
 
     # __doc__ is a computed property which will add documentation for the sample JSON schemas
@@ -883,6 +1012,10 @@ class HeavyDataHandle(MupifObject):
             ret += '\n\n'+val.__doc__.replace('`', '``')
         return ret
 
+    # this is not useful over Pyro (the Proxy defines its own context manager) but handy for local testing
+    def __enter__(self): return self.openData(mode=self.mode)
+    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
+
     @dataclass
     @Pyro5.api.expose
     class TopContext:
@@ -895,82 +1028,30 @@ class HeavyDataHandle(MupifObject):
         def __str__(self):
             return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
 
-    # Pyro5.api.Proxy itself defines __enter__ and __exit__, those cannot be used remotely
-    # so we might just as well consider removing them altogether
-    def __enter__(self): return self.openData(mode=self.mode)
-    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
-
-    def _returnProxy(self, v):
-        if hasattr(self, '_pyroDaemon'):
-            self._pyroDaemon.register(v)
-            self.pyroIds.append(v._pyroId)
-        return v
+    def __init__(self, **kw):
+        super().__init__(**kw)
 
     @pydantic.validate_arguments
-    def cloneHandle(self, newPath: str=''):  # -> HeavyDataHandle:
-        '''Return clone of the handle; the underlying storage is copied into *newPath* (or a temporary file, if not given). All handle attributes (besides :obj:`h5path`) are preserved.'''
-        if self._h5obj:
-            raise RuntimeError(f'HDF5 file {self.h5path} is open (call closeData() first).')
-        if not newPath:
-            _fd, newPath = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
-        shutil.copy(self.h5path, newPath)
-        ret = self.copy(deep=True)  # this is provided by pydantic
-        ret.h5path = newPath
-        return ret
-
-    @pydantic.validate_arguments
-    def openData(self, mode: _HeavyDataHandle_ModeChoice):
+    def openData(self, mode: _HeavyDataBase_ModeChoice):
         '''
         Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyDataHandle` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyDataHandle.closeData` is called (directly or via context manager).
 
         If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyDataHandle.mode`.
 
         '''
-        if mode in ('readonly', 'readwrite'):
-            if mode == 'readonly':
-                if self._h5obj:
-                    if self._h5obj.mode != 'r':
-                        raise RuntimeError(f'HDF5 file {self.h5path} already open for writing.')
-                else:
-                    self._h5obj = h5py.File(self.h5path, 'r')
-            elif mode == 'readwrite':
-                if self._h5obj:
-                    if self._h5obj.mode != 'r+':
-                        raise RuntimeError(f'HDF5 file {self.h5path} already open read-only.')
-                else:
-                    if not os.path.exists(self.h5path):
-                        raise RuntimeError(f'HDF5 file {self.h5path} does not exist (use mode="create" to create a new file.')
-                    self._h5obj = h5py.File(self.h5path, 'r+')
-            assert self._h5obj
+        self.openStorage(mode=mode)
+        extant=(self.h5group in self._h5obj and 'schema' in self._h5obj[self.h5group].attrs)
+        if extant:
+            # for modes readonly, readwrite
             grp = self._h5obj[self.h5group]
             schemaRegistry = makeSchemaRegistry(json.loads(grp.attrs['schemas']))
             top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
             self.updateMetadata(json.loads(grp.attrs['metadata']))
             return self._returnProxy(top)
-        elif mode in ('overwrite', 'create', 'create-memory'):
+        else:
             if not self.schemaName or not self.schemasJson:
                 raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
-            if self._h5obj:
-                raise RuntimeError(f'HDF5 file {self.h5path} already open.')
-            if mode == 'create-memory':
-                import uuid
-                doSave = bool(self.h5path)
-                p = (self.h5path if doSave else str(uuid.uuid4()))
-                if not doSave:
-                    log.warning(f'Data will eventually disappear with mode="create-memory" and h5path="" (empty).')
-                # hdf5 uses filename for lock management (even if the file is memory block only)
-                # therefore pass if something unique if filename is not given
-                self._h5obj = h5py.File(p, mode='x', driver='core', backing_store=doSave)
-            else:
-                if useTemp := (not self.h5path):
-                    fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
-                    log.info(f'Using new temporary file {self.h5path}')
-                if mode == 'overwrite' or useTemp:
-                    self._h5obj = h5py.File(self.h5path, 'w')
-                # 'create' mode should fail if file exists already
-                # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
-                else:
-                    self._h5obj = h5py.File(self.h5path, 'x')
+            # modes: overwrite, create, create-memory
             grp = self._h5obj.require_group(self.h5group)
             grp.attrs['schemas'] = self.schemasJson
             grp.attrs['schema'] = self.schemaName
@@ -978,64 +1059,6 @@ class HeavyDataHandle(MupifObject):
             schemaRegistry = makeSchemaRegistry(json.loads(self.schemasJson))
             top = schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
             return self._returnProxy(top)
-
-    def closeData(self):
-        '''
-        * Flush and close the backing HDF5 file;
-        * unregister all contexts from Pyro (if registered)
-        '''
-        if self._h5obj:
-            self._h5obj.close()
-            self._h5obj = None
-        if daemon := getattr(self, '_pyroDaemon', None):
-            for i in self.pyroIds:
-                # sys.stderr.write(f'Unregistering {i}\n')
-                daemon.unregister(i)
-
-    def repack(self):
-        '''Repack the underlying storage (experimental, untested). Data must not be open.'''
-        if self._h5obj:
-            raise RuntimeError(f'Cannot repack while {self._h5obj} is open (call closeData first).')
-        try:
-            log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
-            out = self.h5path+'.~repacked~'
-            subprocess.run(['h5repack', self.h5path, out], check=True)
-            shutil.copy(out, self.h5path)
-        except subprocess.CalledProcessError:
-            log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
-
-    def exposeData(self):
-        '''
-        If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataHandle` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
-        '''
-        if (daemon := getattr(self, '_pyroDaemon', None)) is None:
-            raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
-        if self.h5uri:
-            return  # already exposed
-        # binary mode is necessary!
-        # otherwise: remote UnicodeDecodeError somewhere, and then 
-        # TypeError: a bytes-like object is required, not 'dict'
-        self.h5uri = str(daemon.register(pf := PyroFile(filename=self.h5path, mode='rb')))
-        self.pyroIds.append(pf._pyroId)
-
-    def __init__(self, **kw):
-        super().__init__(**kw)  # this calls the real ctor
-        # sys.stderr.write(f'{self.__class__.__name__}.__init__(**kw={str(kw)})\n')
-        # import traceback
-        # traceback.print_stack(file=sys.stderr)
-        self._h5obj = None
-        self.pyroIds = []
-        if self.h5uri is not None:
-            sys.stderr.write(f'HDF5 transfer: starting…\n')
-            uri = Pyro5.api.URI(self.h5uri)
-            remote = Pyro5.api.Proxy(uri)
-            # sys.stderr.write(f'Remote is {remote}\n')
-            fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
-            log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
-            PyroFile.copy(remote, self.h5path)
-            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
-            # local copy is not the original, the URI is no longer valid
-            self.h5uri = None
 
 
 '''

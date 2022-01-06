@@ -24,6 +24,7 @@
 import logging
 import os
 import Pyro5
+import tempfile
 from . import pyroutil
 log = logging.getLogger()
 
@@ -69,18 +70,22 @@ class JobManager(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, *, appName, jobManWorkDir, maxJobs=1):
+    def __init__(self, *, appName, workDir=None, maxJobs=1):
         """
         Constructor. Initializes the receiver.
 
         :param str appName: Name of receiver (used also by NS)
-        :param str jobManWorkDir: Absolute path for storing data, if necessary
+        :param str workDir: Absolute path for storing data, if necessary (if None, temporary directory will be created)
         :param int maxJobs: Maximum number of jobs to run simultaneously
         """
         self.applicationName = appName
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
-        self.jobManWorkDir = jobManWorkDir
+        if workDir is None:
+            self.workDirTemp=tempfile.TemporaryDirectory(prefix='mupif-')
+            self.workDir=self.workDirTemp.name
+        else:
+            self.workDir=workDir
 
         # XXX: this is the same as in Model.registerPyro
         # there should be a common base for things exposed over Pyro
@@ -186,7 +191,7 @@ class JobManager(object):
         :return: job working directory
         :rtype: str
         """
-        return self.jobManWorkDir + os.path.sep + jobID
+        return self.workDir + os.path.sep + jobID
 
 
 # @deprecated.deprecated

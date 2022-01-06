@@ -1,8 +1,6 @@
 import sys
 sys.path.extend(['..', '../..'])
 import mupif as mp
-from exconfig import ExConfig
-cfg=ExConfig()
 
 import logging
 log = logging.getLogger()
@@ -35,9 +33,9 @@ class Example04(mp.Workflow):
         self.updateMetadata(metadata)
         
         # locate nameserver
-        ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+        ns = mp.pyroutil.connectNameServer()
         # connect to JobManager running on (remote) server and create a tunnel to it
-        self.jobMan = mp.pyroutil.connectJobManager(ns, cfg.jobManName)
+        self.jobMan = mp.pyroutil.connectJobManager(ns, 'mupif/example04/jobMan')
         log.info('Connected to JobManager')
         self.app1 = None
         self.contrib = mp.ConstantProperty(

@@ -5,15 +5,8 @@ import sys
 sys.path.extend(['.', '..', '../..'])
 from mupif import *
 import mupif as mp
-# import thermalServerConfig, mechanicalServerConfig
-# cfg=thermalServerConfig.ServerConfig()
-# mCfg=mechanicalServerConfig.ServerConfig()
 import logging
 log = logging.getLogger()
-
-# this is only needed for nshost/nsport
-import exconfig
-cfg = exconfig.ExConfig()
 
 
 class Example07(workflow.Workflow):
@@ -45,7 +38,7 @@ class Example07(workflow.Workflow):
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+        ns = pyroutil.connectNameServer()
         self.daemon = pyroutil.getDaemon(ns)
 
         # connect to JobManager running on (remote) server

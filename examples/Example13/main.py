@@ -1,8 +1,6 @@
 import sys
 sys.path.extend(['..', '../..'])
-from exconfig import ExConfig
 import threading
-cfg = ExConfig()
 
 threading.current_thread().setName('ex13-main')
 
@@ -31,7 +29,7 @@ class Workflow13(mp.workflow.Workflow):
             ],
             "Outputs": [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
-                 'Description': 'Result of multiplication', 'Units': 's'}
+                 'Description': 'Result of multiplication', 'Units': 's^2'}
             ],
         }
         mp.workflow.Workflow.__init__(self, metadata=MD)
@@ -53,11 +51,11 @@ class Workflow13(mp.workflow.Workflow):
             }
         }
 
-        self.ns = mp.pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+        self.ns = mp.pyroutil.connectNameServer()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)
-        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'Mupif.JobManager@Example13')
+        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'CVUT.demo01')
         try:
             self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
             log.info(self.model_1)
@@ -116,7 +114,7 @@ if __name__ == '__main__':
 
     workflow.solve()
     res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)
-    value_result = res_property.inUnitsOf(mp.U.s).getValue()[0]
+    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()[0]
     workflow.terminate()
 
     print('Simulation has finished.')

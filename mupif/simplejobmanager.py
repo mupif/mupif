@@ -87,7 +87,7 @@ class SimpleJobManager (jobmanager.JobManager):
             server=None,
             nshost=None,
             nsport=None,
-            jobManWorkDir,  # perhaps rename to cwd
+            workDir=None,
             maxJobs=1,
             daemon=None,
             # overrideNsPort=0
@@ -97,7 +97,7 @@ class SimpleJobManager (jobmanager.JobManager):
 
         See :func:`SimpleJobManager.__init__`
         """
-        super().__init__(appName=appName, jobManWorkDir=jobManWorkDir, maxJobs=maxJobs)
+        super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs)
         self.ns = ns
 
         self.tickets = []  # list of tickets issued when pre-allocating resources; tickets generated using uuid

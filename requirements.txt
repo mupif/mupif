@@ -10,6 +10,8 @@ jsonschema
 h5py
 matplotlib
 astropy
+deprecated
+appdirs
 pydantic>=1.7.3
 # for documentation
 sphinxcontrib-apidoc

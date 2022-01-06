@@ -83,11 +83,8 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         cls.jobMan = mupif.simplejobmanager.SimpleJobManager(
             ns=cls.ns,
             appName="app", 
-            jobManWorkDir=cls.tmp,
+            workDir=cls.tmp,
             appClass=serverConfig.applicationClass,
-            server=serverConfig.server,
-            nshost=serverConfig.nshost,
-            nsport=serverConfig.nsport,
             maxJobs=2
         )
         # test jobManager

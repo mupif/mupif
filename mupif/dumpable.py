@@ -7,6 +7,7 @@ import typing
 import numpy
 import numpy as np
 import Pyro5
+import sys
 
 import pydantic
 # from pydantic.dataclasses import dataclass
@@ -18,10 +19,10 @@ except Exception:
 
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
+
+
 # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
 DType = TypeVar('DType')
-
-
 class NumpyArray(np.ndarray, Generic[DType]):
     """Wrapper class for numpy arrays that stores and validates type information.
     This can be used in place of a numpy array, but when used in a pydantic BaseModel
@@ -40,28 +41,22 @@ class NumpyArray(np.ndarray, Generic[DType]):
         np_array = np.array(val, dtype=actual_dtype)
         return np_array
 
+if sys.version_info>=(3,9):
+    # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
+    NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
+else:
+    # python 3.8, just use the generic form
+    NumpyArrayFloat64 = NumpyArray
 
-NumpyArrayFloat64 = NumpyArray[typing.Literal['float64']]
 
-if 0:
-    # https://github.com/samuelcolvin/pydantic/issues/116#issue-287220036
-    class BaseModelWithPositionalArgs(pydantic.BaseModel):
-
-        def __init__(self, *args, **kwargs):
-            pos_args = list(self.__fields__.keys())
-            # sys.stderr.write(str(self.__class__.__name__)+':'+str(args)+" | "+str(kwargs)+'\n')
-
-            for i in range(len(args)):
-                if i >= len(pos_args):
-                    raise TypeError(f'__init__ takes {len(pos_args)} '
-                                    'positional arguments but 2 were given.')
-                name = pos_args[i]
-                if name in kwargs:
-                    raise TypeError(f'{name} cannot be both a keyword and '
-                                    'positional argument.')
-                kwargs[name] = args[i]
-            # sys.stderr.write('\n\n'+str(super())+': '+pprint.pformat(kwargs)+'\n\n')
-            return super().__init__(**kwargs)
+def addPydanticInstanceValidator(klass,makeKlass=None):
+    def klass_validate(cls,v):
+        if isinstance(v,klass): return v
+        if makeKlass: return makeKlass(v)
+        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__}')
+    @classmethod
+    def klass_get_validators(cls): yield klass_validate
+    klass.__get_validators__=klass_get_validators
 
 
 class MupifBaseModel(pydantic.BaseModel):

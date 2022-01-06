@@ -32,6 +32,7 @@ import atexit
 import signal
 import urllib.parse
 import os.path
+import deprecated
 from . import model
 from . import jobmanager
 from . import util
@@ -79,8 +80,72 @@ NS_METADATA_appserver = "type:appserver"
 NS_METADATA_network = "network:"  # plus JSON
 
 
+def runNameserverBg(nshost=None,nsport=None):
+    import threading
+    threading.current_thread().setName('mupif-nameserver')
+    import Pyro5.configure
+    Pyro5.configure.SERIALIZER='serpent'
+    Pyro5.configure.PYRO_SERVERTYPE='multiplex'
+    Pyro5.configure.PYRO_SSL=0
+    log.debug(Pyro5.configure.global_config.dump())
+    nshost,nsport=locateNameserver(nshost,nsport,server=True)
+    import Pyro5.nameserver
+    log.info(f"Starting nameserver on {nshost}:{nsport}")
+    nsUri,nsDaemon,nsBroadcast=Pyro5.nameserver.start_ns(nshost,nsport)
+    def _nsBg():
+        try: nsDaemon.requestLoop()
+        finally:
+            nsDaemon.close()
+            if nsBroadcast is not None: nsBroadcast.close()
+    threading.Thread(target=_nsBg,daemon=True).start()
+    h,p=nsDaemon.locationStr.split(':')
+    log.info(f'Nameserver up at {h}:{p}')
+    return h,p
+
+
+def locateNameserver(nshost=None,nsport=0,server=False):
+    def fromFile(f):
+        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0][:-1])
+        log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
+        return s.hostname,s.port
+    # 1. set from arguments passed
+
+    # for the server, 0.0.0.0 binds all local interfaces
+    # for the client, 0.0.0.0 is meaningless
+    #if nshost=='0.0.0.0' or nshost=='::':
+    #    if server: return nshost,nsport
+    #    else: return None,nsport
+    if nshost is not None:
+        log.info(f'Using nameserver arguments {nshost}:{nsport}')
+        return nshost,nsport
+
+    # 2. set from MUPIF_NS env var
+    if (nshp:=os.environ.get('MUPIF_NS',None)):
+        s=urllib.parse.urlsplit('//'+nshp)
+        log.info(f'Using MUPIF_NS environment variable → nameserver {s.hostname}:{s.port}')
+        return s.hostname,s.port
+    # 3. set from MUPIF_NS *file* in mupif module directory
+    import mupif
+    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
+    # 4. set from XDG user-config file (~/.config/mupif/MUPIF_NS on linux)
+    try:
+        import appdirs
+        if os.path.exists(nshp:=(appdirs.user_config_dir('mupif')+'/MUPIF_NS')): return fromFile(nshp)
+    except ImportError:
+        log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
+    if server:
+        log.warning('Falling back to 127.0.0.1:9090 for nameserver (server).')
+        return '127.0.0.1',9090
+    else:
+        log.warning('Falling back to 0.0.0.0:0 for nameserver (client).')
+        return None,0
+
+
+@deprecated.deprecated('renamed to connectNameserver')
+def connectNameServer(*args,**kw): return connectNameserver(*args,**kw)
+
 @pydantic.validate_arguments
-def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: float = 3.0) -> Pyro5.client.Proxy:
+def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: float = 3.0) -> Pyro5.client.Proxy:
     """
     Connects to a NameServer.
 
@@ -92,24 +157,10 @@ def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     :raises Exception: When can not connect to a LISTENING port of nameserver
     """
 
-    # the configuration is the same for nameserver and the clients
-    # for the server, 0.0.0.0 binds all local interfaces
-    # for the client, 0.0.0.0 is meaningless
     if nshost == '0.0.0.0' or nshost == '::':
         nshost = None
 
-    # override nameserver from MUPIF_NS *file* in the mupif module directory
-    import mupif
-    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'):
-        s=urllib.parse.urlsplit('//'+open(nshp,'r').readlines()[0][:-1])
-        nshost,nsport=s.hostname,s.port
-        log.info(f'Using {nshp} → nameserver {nshost}:{nsport}')
-
-    # override nameserver from MUPIF_NS env
-    if (nshp:=os.environ.get('MUPIF_NS',None)):
-        s=urllib.parse.urlsplit('//'+nshp)
-        nshost,nsport=s.hostname,s.port
-        log.info(f'Using MUPIF_NS environment variable → nameserver {nshost}:{nsport}')
+    nshost,nsport=locateNameserver(nshost,nsport)
 
     if nshost is not None and nsport != 0:
         try:
@@ -121,7 +172,7 @@ def connectNameServer(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
                 log.exception(msg)
                 raise Exception('Socket connection error to nameServer')
             s.close()
-            log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
+            log.debug(f'Connection to {nshost}:{nsport} is possible.')
         except Exception:
             log.exception(f'Socket pre-check failed: can not connect to a LISTENING port of nameserver on {nshost}:{nsport}. Does a firewall block INPUT or OUTPUT on the port?')
             raise
