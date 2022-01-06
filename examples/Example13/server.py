@@ -16,4 +16,5 @@ mp.SimpleJobManager(
     ns=ns,
     appClass=application13.Application13,
     appName='CVUT.demo01',
+    maxJobs=100, # can run simultaneously
 ).runServer()
