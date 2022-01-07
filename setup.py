@@ -74,8 +74,9 @@ setup(
     # 'examples/Workshop02/*.py', 'doc/refManual/MuPIF.pdf', 'doc/userGuide/MuPIF-userGuide.pdf' ]},
     # 'scipy' fails due to missing compiler for Lapack etc.
     install_requires=[
-        'numpy', 'scipy', 'setuptools', 'config', 'nose', 'rednose', 'Pyro5', 'jsonpickle',
-        'jsonschema', 'matplotlib', 'pydantic', 'serpent', 'meshio', 'h5py', 'asyncssh', 'astropy'
+        'numpy', 'scipy', 'setuptools', 'config', 'pytest', 'pytest-cov', 'Pyro5', 'jsonpickle',
+        'jsonschema', 'matplotlib', 'pydantic', 'serpent', 'meshio', 'h5py', 'asyncssh', 'astropy',
+        'appdirs', 'setproctitle', 'deprecated'
     ],
     include_package_data=True,
     zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)

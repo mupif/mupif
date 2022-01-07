@@ -437,7 +437,7 @@ class Field(mupifquantity.MupifQuantity):
         plt.show(block=True)
 
     def toHdf5(self, fileName, group='component1/part1'):
-        """
+        r"""
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
 
         :param str fileName: HDF5 file
@@ -549,7 +549,7 @@ class Field(mupifquantity.MupifQuantity):
                 fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
             else:
                 raise ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tostring(), f.attrs['time'].tostring()
+            fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tobytes(), f.attrs['time'].tobytes()
             if unit == '':
                 unit = None  # special case, handled at saving time
             else:

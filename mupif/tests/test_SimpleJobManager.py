@@ -77,7 +77,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         except:
             cls.nsloop.kill()
             raise
-        cls.ns = mupif.pyroutil.connectNameServer(nshost='localhost', nsport=nsPort)
+        cls.ns = mupif.pyroutil.connectNameserver(nshost='localhost', nsport=nsPort)
         serverConfig.nsport=nsPort
 
         cls.jobMan = mupif.simplejobmanager.SimpleJobManager(

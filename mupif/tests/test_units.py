@@ -44,10 +44,10 @@ class TestUnits(unittest.TestCase):
             velocity = V.inBaseUnits()
             print(istep.getTime())
             print(time)
-            self.assert_(v.getValue(istep.getTime()) == time)
+            self.assertTrue(v.getValue(istep.getTime()) == time)
 
             # can be converted in km/s?
-            self.assert_(V.isCompatible('km/s'))
+            self.assertTrue(V.isCompatible('km/s'))
 
             # can be converted in km?
             self.assertFalse(V.isCompatible('km'))
