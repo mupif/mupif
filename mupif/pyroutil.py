@@ -436,7 +436,7 @@ def getIPfromUri(uri):
     :return: IP address 
     :rtype: string
     """
-    match = re.search('\@([\w\.]+)\:\d+$', str(uri))
+    match = re.search(r'@([\w\.]+)\:\d+$', str(uri))
     if match:
         return match.group(1)
     else:
