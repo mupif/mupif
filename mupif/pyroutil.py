@@ -164,15 +164,9 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
 
     if nshost is not None and nsport != 0:
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(timeOut)
-            try:  # Treat socket connection problems separately
-                s.connect((nshost, nsport))
-            except socket.error as msg:
-                log.exception(msg)
-                raise Exception('Socket connection error to nameServer')
-            s.close()
+            conn=socket.create_connection((nshost,nsport),timeout=timeOut)
             log.debug(f'Connection to {nshost}:{nsport} is possible.')
+            conn.close()
         except Exception:
             log.exception(f'Socket pre-check failed: can not connect to a LISTENING port of nameserver on {nshost}:{nsport}. Does a firewall block INPUT or OUTPUT on the port?')
             raise
