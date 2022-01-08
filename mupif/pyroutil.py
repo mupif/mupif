@@ -98,7 +98,7 @@ def runNameserverBg(nshost=None,nsport=None):
             nsDaemon.close()
             if nsBroadcast is not None: nsBroadcast.close()
     threading.Thread(target=_nsBg,daemon=True).start()
-    h,p=nsDaemon.locationStr.split(':')
+    h,p=nsDaemon.locationStr.rsplit(':',1) # handles both ipv4 and ipv6
     log.info(f'Nameserver up at {h}:{p}')
     return h,p
 
@@ -345,7 +345,9 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     threading.current_thread().setName(appName)
 
     # generate connection metadata entry
-    _host, _port = daemon.locationStr.split(':')
+    _host, _port = daemon.locationStr.rsplit(':',1)
+    # for ipv6, remove braces
+    if _host.startswith('[') and _host.endswith(']'): _host=_host[1:-1]
 
     if metadata is None:
         metadata = set()
