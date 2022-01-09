@@ -105,7 +105,7 @@ def runNameserverBg(nshost=None,nsport=None):
 
 def locateNameserver(nshost=None,nsport=0,server=False):
     def fromFile(f):
-        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0][:-1])
+        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0].strip())
         log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
         return s.hostname,s.port
     # 1. set from arguments passed
@@ -130,7 +130,7 @@ def locateNameserver(nshost=None,nsport=0,server=False):
     # 4. set from XDG user-config file (~/.config/mupif/MUPIF_NS on linux)
     try:
         import appdirs
-        if os.path.exists(nshp:=(appdirs.user_config_dir('mupif')+'/MUPIF_NS')): return fromFile(nshp)
+        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
     except ImportError:
         log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
     if server:
@@ -299,7 +299,9 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
-    if ns is None: ns = net.getNS()
+    if ns is None:
+        log.error('ns not specified (this is deprecated)')
+        ns = net.getNS()
     else: 
         if net is not None: raise ValueError(f'When *ns* is specified, *net* must be None (not {net})')
     # server, port, nshost, nsport, 
