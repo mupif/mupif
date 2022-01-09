@@ -11,6 +11,52 @@ import time, random
 import tempfile
 import string
 import astropy.units as u
+import logging
+import os.path
+import appdirs
+
+srcNsFile=os.path.dirname(os.path.abspath(mp.__file__))+'/MUPIF_NS'
+cfgNsFile=appdirs.user_config_dir()+'/MUPIF_NS'
+
+class PyroNS(unittest.TestCase):
+    @unittest.skipIf(os.path.exists(srcNsFile) or os.path.exists(cfgNsFile),f'Pre-existing {srcNsFile} or {cfgNsFile}.')
+    def test_mupifns_precedence(self):
+        # first create all MUPIF_NS and then take away starting from the highest precedence
+        # if user-config MUPIF_NS exists or module-level MUPIF_NS exists, skip the test
+        # as we don't want to overwrite someone's config.
+        # The test will not be skipped in the CI as there is no pre-existing config there.
+
+        # 1. args passed to locateNameserver
+        pass
+        # 2. env var
+        os.environ['MUPIF_NS']='2.2.2.2:2222'
+        # 3. MUPIF_NS in mupif module directory
+        assert not os.path.exists(srcNsFile)
+        srcNs=('3.3.3.3',3333)
+        open(srcNsFile,'w').write(f'3.3.3.3:3333')
+        # 4. XDG config directory
+        assert not os.path.exists(cfgNsFile)
+        open(cfgNsFile,'w').write('4.4.4.4:4444')
+        # 5. fallback values
+
+        # 1. args
+        self.assertEqual(mp.pyroutil.locateNameserver('1.1.1.1',1111),('1.1.1.1',1111))
+        # 2. env var
+        self.assertEqual(mp.pyroutil.locateNameserver(),('2.2.2.2',2222))
+        del os.environ['MUPIF_NS']
+        # 3. module dir
+        self.assertEqual(mp.pyroutil.locateNameserver(),srcNs)
+        os.remove(srcNsFile)
+        # 4. user config
+        self.assertEqual(mp.pyroutil.locateNameserver(),('4.4.4.4',4444))
+        os.remove(cfgNsFile)
+        # 5. fallback values
+        # broadcast lookup for client
+        self.assertEqual(mp.pyroutil.locateNameserver(),(None,0))
+        # bind localhost for server
+        self.assertEqual(mp.pyroutil.locateNameserver(server=True),('127.0.0.1',9090))
+
+
 
 class PyroFile_TestCase(unittest.TestCase):
     @classmethod
