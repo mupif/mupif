@@ -132,9 +132,6 @@ class SimpleJobManager (jobmanager.JobManager):
             app=app,
             appName=jobID,
             ns=ns
-            #server=server,
-            #nshost=nshost,
-            #nsport=nsport
         )
         pipe.send(uri)  # as bytes
 
@@ -167,18 +164,16 @@ class SimpleJobManager (jobmanager.JobManager):
             The returned ticket is valid only for fixed time period (suggest 10[s]), then should expire.
             Thread safe
         """
-        self.lock.acquire()
-        prealocatedJobs = self.__getNumberOfActiveTickets()
-        if (len(self.activeJobs) + prealocatedJobs) >= self.maxJobs:
-            self.lock.release()
-            return None
-        else:
-            ticket = uuid.uuid1()
-            self.tickets.append(ticket)
-            self.lock.release()
-            return ticket
+        with self.lock:
+            prealocatedJobs = self.__getNumberOfActiveTickets()
+            if (len(self.activeJobs) + prealocatedJobs) >= self.maxJobs:
+                return None
+            else:
+                ticket = uuid.uuid1()
+                self.tickets.append(ticket)
+                return ticket
 
-    def allocateJob(self, user, natPort=0, ticket=None): 
+    def allocateJob(self, user, ticket=None): 
         """
         Allocates a new job.
 
@@ -190,76 +185,71 @@ class SimpleJobManager (jobmanager.JobManager):
         :except: unable to start a thread, no more resources
 
         """
-        self.lock.acquire()
-        log.info('SimpleJobManager: allocateJob...')
-        # allocate job if valid ticket given or available resource exist
-        ntickets = self.__getNumberOfActiveTickets()
-        validTicket = ticket and self.__checkTicket(ticket)
-        if validTicket or ((len(self.activeJobs)+ntickets) < self.maxJobs):
-            if validTicket:
-                self.tickets.remove(ticket)  # remove ticket
-            # update job counter
-            self.jobCounter = self.jobCounter+1
-            jobID = str(self.jobCounter)+"@"+self.applicationName
-            log.debug('SimpleJobManager: trying to allocate '+jobID)
-            # run the new application instance served by corresponding pyro daemon in a new process
+        with self.lock:
+            log.info('allocateJob...')
+            # allocate job if valid ticket given or available resource exist
+            ntickets = self.__getNumberOfActiveTickets()
+            validTicket = ticket and self.__checkTicket(ticket)
+            if validTicket or ((len(self.activeJobs)+ntickets) < self.maxJobs):
+                if validTicket:
+                    self.tickets.remove(ticket)  # remove ticket
+                # update job counter
+                self.jobCounter = self.jobCounter+1
+                jobID = str(self.jobCounter)+"@"+self.applicationName
+                log.debug('trying to allocate '+jobID)
+                # run the new application instance served by corresponding pyro daemon in a new process
 
-            try:
-                targetWorkDir = self.getJobWorkDir(jobID)
-                log.info('SimpleJobManager: Checking target workdir %s', targetWorkDir)
-                if not os.path.exists(targetWorkDir):
-                    os.makedirs(targetWorkDir)
-                    log.info('SimpleJobManager: creating target workdir %s', targetWorkDir)
-            except Exception as e:
-                log.exception(e)
-                raise
-                # return JOBMAN_ERR, None
-            try:
-                parentPipe, childPipe = multiprocessing.Pipe()
+                try:
+                    targetWorkDir = self.getJobWorkDir(jobID)
+                    log.info('checking target workdir %s', targetWorkDir)
+                    if not os.path.exists(targetWorkDir):
+                        os.makedirs(targetWorkDir)
+                        log.info('creating target workdir %s', targetWorkDir)
+                except Exception as e:
+                    log.exception(e)
+                    raise
+                    # return JOBMAN_ERR, None
+                try:
+                    parentPipe, childPipe = multiprocessing.Pipe()
 
-                kwargs = dict(
-                    pipe=childPipe,
-                    ns=self.ns,
-                    jobID=jobID,
-                    cwd=targetWorkDir,
-                    appName=self.applicationName,
-                    appClass=self.applicationClass,
-                    #nshost=self.nshost,
-                    #nsport=self.nsport,
-                    #server=self.server
-                )
-                proc = multiprocessing.Process(
-                    target=SimpleJobManager._spawnProcess,
-                    name=self.applicationName,
-                    kwargs=kwargs
-                )
-                proc.start()
-                if not parentPipe.poll(timeout=10):
-                    raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
-                uri = parentPipe.recv()
-                log.info('Received URI: %s' % uri)
-                jobPort = int(uri.location.split(':')[-1])
-                log.info(f'Job runs on port {jobPort}')
-            except Exception as e:
-                log.exception(e)
-                raise
+                    kwargs = dict(
+                        pipe=childPipe,
+                        ns=self.ns,
+                        jobID=jobID,
+                        cwd=targetWorkDir,
+                        appName=self.applicationName,
+                        appClass=self.applicationClass,
+                    )
+                    proc = multiprocessing.Process(
+                        target=SimpleJobManager._spawnProcess,
+                        name=self.applicationName,
+                        kwargs=kwargs
+                    )
+                    proc.start()
+                    if not parentPipe.poll(timeout=10):
+                        raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
+                    uri = parentPipe.recv()
+                    log.info('Received URI: %s' % uri)
+                    jobPort = int(uri.location.split(':')[-1])
+                    log.info(f'Job runs on port {jobPort}')
+                except Exception as e:
+                    log.exception(e)
+                    raise
 
-            # check if uri is ok
-            # either by doing some sort of regexp or query ns for it
-            start = timeTime.time()
-            self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, user=user, uri=uri, port=jobPort)
-            log.debug('SimpleJobManager: new process ')
-            log.debug(self.activeJobs[jobID])
+                # check if uri is ok
+                # either by doing some sort of regexp or query ns for it
+                start = timeTime.time()
+                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, user=user, uri=uri, port=jobPort)
+                log.debug('SimpleJobManager: new process ')
+                log.debug(self.activeJobs[jobID])
 
-            log.info('SimpleJobManager:allocateJob: allocated ' + jobID)
-            self.lock.release()
-            return jobmanager.JOBMAN_OK, jobID, jobPort
-        
-        else:
-            log.error('SimpleJobManager: no more resources, activeJobs:%d >= maxJobs:%d' % (len(self.activeJobs), self.maxJobs))
-            self.lock.release()
-            raise jobmanager.JobManNoResourcesException("SimpleJobManager: no more resources")
-            # return (JOBMAN_NO_RESOURCES,None)
+                log.info('SimpleJobManager:allocateJob: allocated ' + jobID)
+                return jobmanager.JOBMAN_OK, jobID, jobPort
+            
+            else:
+                log.error(f'SimpleJobManager: no more resources, activeJobs:{len(self.activeJobs)} + nTickets:{self.__getNumberOfActiveTickets()} >= maxJobs:{self.maxJobs}')
+                raise jobmanager.JobManNoResourcesException("SimpleJobManager: no more resources")
+                # return (JOBMAN_NO_RESOURCES,None)
 
     def terminateJob(self, jobID):
         """
@@ -267,25 +257,24 @@ class SimpleJobManager (jobmanager.JobManager):
 
         See :func:`JobManager.terminateJob`
         """
-        self.lock.acquire()
-        # unregister the application from ns
-        self.ns._pyroClaimOwnership()
-        self.ns.remove(jobID)
-        # terminate the process
-        if jobID in self.activeJobs:
-            job = self.activeJobs[jobID]
-            try:
-                job.proc.terminate()
-                job.proc.join(2)
-                if job.proc.exitcode is None:
-                    log.debug(f'{jobID} still running after 2s timeout, killing.')
-                job.proc.kill()
-                # delete entry in the list of active jobs
-                log.debug('SimpleJobManager:terminateJob: job %s terminated' % jobID)
-                del self.activeJobs[jobID]
-            except KeyError:
-                log.debug('SimpleJobManager:terminateJob: jobID error, job %s already terminated?' % jobID)
-        self.lock.release()
+        with self.lock:
+            # unregister the application from ns
+            self.ns._pyroClaimOwnership()
+            self.ns.remove(jobID)
+            # terminate the process
+            if jobID in self.activeJobs:
+                job = self.activeJobs[jobID]
+                try:
+                    job.proc.terminate()
+                    job.proc.join(2)
+                    if job.proc.exitcode is None:
+                        log.debug(f'{jobID} still running after 2s timeout, killing.')
+                    job.proc.kill()
+                    # delete entry in the list of active jobs
+                    log.debug('SimpleJobManager:terminateJob: job %s terminated' % jobID)
+                    del self.activeJobs[jobID]
+                except KeyError:
+                    log.debug('SimpleJobManager:terminateJob: jobID error, job %s already terminated?' % jobID)
    
     def terminateAllJobs(self):
         """

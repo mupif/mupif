@@ -4,13 +4,10 @@ thisDir=os.path.dirname(os.path.abspath(__file__))
 sys.path+=[thisDir+'/..',thisDir+'../..']
 
 
-import mupif.tests.serverConfig as sc
-serverConfig=sc.ServerConfig(mode='localhost')
-
+from mupif.tests import testApp
 
 import unittest
 import time
-import os
 import mupif
 import mupif.tests.testApp as testApp
 import multiprocessing
@@ -39,7 +36,7 @@ def availablePort(p0,p1,host='127.0.0.1'):
         except: pass
     raise RuntimeError(f'No free port at {host}:{p0}…{p1}')
 
-def waitPort(hostPort,timeout=10,dt=.5):
+def waitPort(hostPort,timeout=10,dt=.1):
     import socket,time
     s=socket.socket()
     t0=time.time()
@@ -70,25 +67,26 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         # it seems that 0.0.0.0 (INADDR_ANY) does not bind local interfaces on windows (?)
         # use straight localhost instead
         try:
-            cls.nsloop=multiprocessing.Process(target=Pyro5.nameserver.start_ns_loop,kwargs=dict(host='localhost',port=nsPort))
+            cls.nsloop=multiprocessing.Process(target=Pyro5.nameserver.start_ns_loop,kwargs=dict(host='127.0.0.1',port=nsPort))
             cls.nsloop.start()
             log.info("nameserver started")
-            waitPort(('localhost',nsPort))
+            waitPort(('127.0.0.1',nsPort))
         except:
             cls.nsloop.kill()
             raise
         cls.ns = mupif.pyroutil.connectNameserver(nshost='localhost', nsport=nsPort)
-        serverConfig.nsport=nsPort
 
         cls.jobMan = mupif.simplejobmanager.SimpleJobManager(
             ns=cls.ns,
-            appName="app", 
+            appName="app",
             workDir=cls.tmp,
-            appClass=serverConfig.applicationClass,
+            appClass=testApp.testApp,
             maxJobs=2
         )
         # test jobManager
         cls.jobMan.getApplicationSignature()
+
+        cls.daemon=Pyro5.api.Daemon(host='127.0.0.1')
 
     @classmethod
     def tearDownClass(cls):
@@ -106,19 +104,19 @@ class SimpleJobManager_TestCase(unittest.TestCase):
     
     def test_allocateJob(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
-        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
+        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
         self.assertTrue(retCode == mupif.jobmanager.JOBMAN_OK)
     
     def test_getStatus(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
-        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
+        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
         retCode2 = self.jobMan.getStatus() 
         print(retCode2)
         self.assertTrue(len(retCode2) == 1)
     
     def test_terminateJob(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
-        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
+        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
         retCode2 = self.jobMan.getStatus() 
         self.assertTrue(len(retCode2) == 1)
         self.jobMan.terminateJob(jobId)
@@ -127,9 +125,9 @@ class SimpleJobManager_TestCase(unittest.TestCase):
 
     def test_terminateAllJobs(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
-        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
+        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
         self.assertTrue(len(self.jobMan.getStatus()) == 1)
-        (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
+        (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user", ticket=None)
 
         self.assertTrue(len(self.jobMan.getStatus()) == 2)
         self.jobMan.terminateAllJobs()
@@ -138,11 +136,11 @@ class SimpleJobManager_TestCase(unittest.TestCase):
     def test_preallocate(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
         ticket = self.jobMan.preAllocate(requirements=None)
-        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", natPort=None, ticket=None)
+        (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
         print ("Retcode "+str(retCode))
         with self.assertRaises(mupif.jobmanager.JobManNoResourcesException) as cm:
-            self.jobMan.allocateJob(user="user", natPort=None, ticket=None)    
-        (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user", natPort=None, ticket=ticket)
+            self.jobMan.allocateJob(user="user", ticket=None)
+        (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user",ticket=ticket)
         print("Retcode2 "+str(retCode2))
 
 
