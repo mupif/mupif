@@ -364,6 +364,14 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
         ns._pyroClaimOwnership()
         ns.remove(appName)
+        log.warning('done')
+        # important: when handling a signal, reset the handler and re-emit it
+        # otherwise e.g. TERM would not cause the process to terminate
+        if sig is not None:
+           signal.signal(sig,signal.SIG_DFL)
+           log.warning(f'Re-emiting signal {sig}')
+           os.kill(os.getpid(),sig)
+           # os._exit(0)
     atexit.register(_remove_from_ns) # regular process exit
     signal.signal(signal.SIGTERM,_remove_from_ns) # terminate by signal
     return uri
