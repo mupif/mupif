@@ -31,8 +31,6 @@ This is a MuPIF module (Multi-Physics Integration Framework)
 __version__ = '2.3.0'
 __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
-_branch = 'master'
-
 
 #
 # import everything recursively, inject into this module
