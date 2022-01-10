@@ -1,18 +1,12 @@
+import Pyro5
+import threading
+import time as timeT
 import sys
-import os
-sys.path.extend(['.','..', '../..'])
+sys.path.extend(['.', '..', '../..'])
 from mupif import *
 import mupif as mp
-# import thermalServerConfig, mechanicalServerConfig
-#cfg=thermalServerConfig.ServerConfig()
-#mCfg=mechanicalServerConfig.ServerConfig()
 import logging
 log = logging.getLogger()
-import time as timeT
-
-# this is only needed for nshost/nsport
-import exconfig
-cfg=exconfig.ExConfig()
 
 
 class Example07(workflow.Workflow):
@@ -30,7 +24,7 @@ class Example07(workflow.Workflow):
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.Field', 'Type_ID': 'mupif.FieldID.FID_Displacement', 'Name': 'Displacement field',
+                {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
         }
         super().__init__(metadata=MD)
@@ -40,11 +34,13 @@ class Example07(workflow.Workflow):
         self.mechanicalJobMan = None
         self.thermalSolver = None
         self.mechanicalSolver = None
-        self.appsTunnel = None
+        self.daemon = None
 
-    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer(nshost=cfg.nshost, nsport=cfg.nsport)
+        ns = pyroutil.connectNameServer()
+        self.daemon = pyroutil.getDaemon(ns)
+
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@ThermalSolver-ex07')
         self.mechanicalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@MechanicalSolver-ex07')
@@ -67,8 +63,7 @@ class Example07(workflow.Workflow):
             self.registerModel(self.thermalSolver, 'thermal')
             self.registerModel(self.mechanicalSolver, 'mechanical')
 
-            super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata,
-                                              validateMetaData=validateMetaData)
+            super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
             if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
 
                 thermalSolverSignature = self.thermalSolver.getApplicationSignature()
@@ -76,12 +71,6 @@ class Example07(workflow.Workflow):
 
                 mechanicalSolverSignature = self.mechanicalSolver.getApplicationSignature()
                 log.info("Working mechanical solver on server " + mechanicalSolverSignature)
-
-                log.info("Uploading input files to servers")
-                pf = self.thermalJobMan.getPyroFile(self.thermalSolver.getJobID(), "input.in", 'wb')
-                pyroutil.uploadPyroFile("inputT.in", pf)
-                mf = self.mechanicalJobMan.getPyroFile(self.mechanicalSolver.getJobID(), "input.in", 'wb')
-                pyroutil.uploadPyroFile("inputM.in", mf)
 
                 # To be sure update only required passed metadata in models
                 passingMD = {
@@ -92,18 +81,21 @@ class Example07(workflow.Workflow):
                     }
                 }
 
-                self.thermalSolver.updateMetadata(passingMD)
-                self.mechanicalSolver.updateMetadata(passingMD)
                 self.thermalSolver.initialize(
-                    file="./input.in",
                     workdir=self.thermalJobMan.getJobWorkDir(self.thermalSolver.getJobID()),
                     metadata=passingMD
                 )
+                thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
+                self.daemon.register(thermalInputFile)
+                self.thermalSolver.set(thermalInputFile)
+
                 self.mechanicalSolver.initialize(
-                    file="./input.in",
                     workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
                     metadata=passingMD
                 )
+                mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
+                self.daemon.register(mechanicalInputFile)
+                self.mechanicalSolver.set(mechanicalInputFile)
 
             else:
                 log.debug("Connection to server failed, exiting")
@@ -117,18 +109,17 @@ class Example07(workflow.Workflow):
         
         self.thermalSolver.solveStep(istep)
         log.info("Thermal problem solved")
-        uri = self.thermalSolver.getFieldURI(FieldID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
+        uri = self.thermalSolver.getFieldURI(DataID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri))
         field = pyroutil.getObjectFromURI(uri)
-        self.mechanicalSolver.setField(field)
+        self.mechanicalSolver.set(field)
         log.info("Solving mechanical problem")
         self.mechanicalSolver.solveStep(istep)
-        log.info("URI of mechanical problem's field is " +
-                 str(self.mechanicalSolver.getFieldURI(FieldID.FID_Displacement, istep.getTargetTime())))
-        displacementField = self.mechanicalSolver.getField(FieldID.FID_Displacement, istep.getTime())
+        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(DataID.FID_Displacement, istep.getTargetTime())))
+        displacementField = self.mechanicalSolver.get(DataID.FID_Displacement, istep.getTime())
 
         # save results as vtk
-        temperatureField = self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime())
+        temperatureField = self.thermalSolver.get(DataID.FID_Temperature, istep.getTime())
         temperatureField.toMeshioMesh().write('temperatureField.vtk')
         displacementField.toMeshioMesh().write('displacementField.vtk')
         log.info("Time consumed %f s" % (timeT.time()-start))
@@ -140,7 +131,6 @@ class Example07(workflow.Workflow):
     def terminate(self):
         self.thermalSolver.terminate()
         self.mechanicalSolver.terminate()
-        if self.appsTunnel: self.appsTunnel.terminate()
         super().terminate()
 
     def getApplicationSignature(self):
@@ -159,7 +149,8 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    demo.initialize(targetTime=1*mp.U.s, metadata=md)
+    demo.initialize(metadata=md)
+    demo.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     demo.printMetadata()
     demo.printListOfModels()

@@ -21,7 +21,6 @@
 # Boston, MA  02110-1301  USA
 #
 
-from .dumpable import Dumpable
 
 class APIError(Exception):
     """
@@ -37,4 +36,3 @@ class APIError(Exception):
     Exception handlers are declared with the keyword "except", which must be placed immediately after the try block.
 
     """
-

@@ -24,26 +24,25 @@ from . import bbox
 from . import util
 import math
 from . import cellgeometrytype
-from .dumpable import Dumpable
 import numpy as np
-import Pyro5
+import Pyro5.api
 
 import numpy
 import numpy.linalg
+import typing
+from . import dumpable
+
 # debug flag
 debug = 0
 
 # in element tolerance
 tolerance = 0.001
 
-import typing
-from . import dumpable
-from . import mupifobject
 
 @Pyro5.api.expose
 class Cell(dumpable.Dumpable):
-    #class Config:
-    #    frozen=True
+    # class Config:
+    #     frozen=True
     """
     Representation of a computational cell.
 
@@ -61,10 +60,10 @@ class Cell(dumpable.Dumpable):
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
-    def __init__(self,*,mesh=None,**kw):
+    def __init__(self, *, mesh=None, **kw):
         super().__init__(**kw)
         #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized
-        self.mesh=mesh
+        self.mesh = mesh
 
     def __hash__(self): return id(self)
 
@@ -150,7 +149,8 @@ class Cell(dumpable.Dumpable):
         :rtype: BBox
         """
 
-        if hasattr(self,'bbox') and self.bbox is not None: return self.bbox
+        if hasattr(self, 'bbox') and self.bbox is not None:
+            return self.bbox
 
         # This piece should be rewritten
         init = True
@@ -189,15 +189,14 @@ class Cell(dumpable.Dumpable):
         # raise apierror.APIError("getTransformationJacobian not implemented")
 
     def getMeshioGeometryStr(self):
-        meshioTypeMap={
-            cellgeometrytype.CGT_TRIANGLE_1:'triangle',
-            cellgeometrytype.CGT_QUAD:'quad',
-            cellgeometrytype.CGT_TETRA:'tetra',
-            cellgeometrytype.CGT_HEXAHEDRON:'hexahedron',
-            cellgeometrytype.CGT_TRIANGLE_2:'triangle6'
+        meshioTypeMap = {
+            cellgeometrytype.CGT_TRIANGLE_1: 'triangle',
+            cellgeometrytype.CGT_QUAD: 'quad',
+            cellgeometrytype.CGT_TETRA: 'tetra',
+            cellgeometrytype.CGT_HEXAHEDRON: 'hexahedron',
+            cellgeometrytype.CGT_TRIANGLE_2: 'triangle6'
         }
         return meshioTypeMap[self.getGeometryType()]
-
 
 
 ##############################################################
@@ -634,7 +633,7 @@ class Quad_2d_lin(Cell):
         # solve quadratic equation
         ksi = util.quadratic_real(a, b, c)
         if debug:
-            print ("quadratic_real returned ", ksi, "for a,b,c ", a, b, c)
+            print("quadratic_real returned ", ksi, "for a,b,c ", a, b, c)
         if len(ksi) == 0:
             return 0, (0., 0.)
         else:
@@ -763,9 +762,9 @@ class Quad_2d_lin(Cell):
         ksi = coords[0]
         eta = coords[1]
         # dN/dksi
-        dnk = (0.25 * (1. + eta ), -0.25 * (1. + eta), -0.25 * (1. - eta), 0.25 * (1. - eta))
+        dnk = (0.25 * (1. + eta), -0.25 * (1. + eta), -0.25 * (1. - eta), 0.25 * (1. - eta))
         # dN/deta
-        dne = (0.25 * (1. + ksi ), 0.25 * (1. - ksi), -0.25 * (1. - ksi), -0.25 * (1. + ksi))
+        dne = (0.25 * (1. + ksi), 0.25 * (1. - ksi), -0.25 * (1. - ksi), -0.25 * (1. + ksi))
 
         j11 = 0
         j12 = 0

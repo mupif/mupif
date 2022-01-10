@@ -23,28 +23,39 @@ class Field_TestCase(unittest.TestCase):
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name
         # self.tmpdir,self.tmp=None,'/tmp/mupif'; os.makedirs(self.tmp,exist_ok=True) # for debugging
-        
+
         self.mesh = mesh.UnstructuredMesh()
-        self.mesh.setup([mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(2.,0.,0.)), mkVertex(2,2,(0.,5.,0.)), mkVertex(3,3,(4.,2.,0.))], [cell.Triangle_2d_lin(mesh=self.mesh,number=1,label=1,vertices=(0,1,2)),cell.Triangle_2d_lin(mesh=self.mesh,number=2,label=2,vertices=(1,2,3))])
+        self.mesh.setup([
+            mkVertex(0,0,(0.,0.,0.)),
+            mkVertex(1,1,(2.,0.,0.)),
+            mkVertex(2,2,(0.,5.,0.)),
+            mkVertex(3,3,(4.,2.,0.)),
+            mkVertex(4,4,(5.,4.,0.)),
+            mkVertex(5,5,(.5,5.5,0)),
+        ],[
+            cell.Triangle_2d_lin(mesh=self.mesh,number=1,label=1,vertices=(0,1,2)),
+            cell.Triangle_2d_lin(mesh=self.mesh,number=2,label=2,vertices=(1,2,3)),
+            cell.Quad_2d_lin(mesh=self.mesh,number=3,label=3,vertices=(2,3,4,5))
+        ])
 
         self.mesh3 = mesh.UnstructuredMesh()
         self.mesh3.setup([mkVertex(0,16,(5.,6.,0.)), mkVertex(1,5,(8.,8.,0.)), mkVertex(2,8,(6.,10.,0.))], [cell.Triangle_2d_lin(mesh=self.mesh3,number=3,label=8,vertices=(0,1,2))])
-        
+
         self.mesh4 = mesh.UnstructuredMesh()
         self.mesh4.setup([mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(2.,0.,2.)), mkVertex(2,2,(0.,5.,3.)),mkVertex(3,3,(3.,3.,2.)),mkVertex(4,4,(8.,15.,0.))], [cell.Tetrahedron_3d_lin(mesh=self.mesh4,number=1,label=1,vertices=(0,1,2,3)),cell.Tetrahedron_3d_lin(mesh=self.mesh4,number=2,label=2,vertices=(1,2,3,4))])
-        
-        self.f1=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=13*mupif.Q.s,quantity=[(0,),(12,),(175,),(94,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
-        self.f2=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Strain,valueType=ValueType.Vector,time=128*mupif.Q.s,quantity=[(3,6),(2,8),(2,3)]*mupif.U['kg/m/s**2'],fieldType=FieldType.FT_vertexBased)
 
-        self.f3=field.Field(mesh=self.mesh,fieldID=FieldID.FID_Stress,valueType=ValueType.Tensor,time=66*mupif.Q.s,quantity=[(3,6,4),(2,8,5),(2,3,6)]*mupif.U['kg/m/s**2'],fieldType=FieldType.FT_vertexBased)
+        self.f1=field.Field(mesh=self.mesh,fieldID=DataID.FID_Displacement,valueType=ValueType.Scalar,time=13*mupif.Q.s,quantity=[(0,),(12,),(175,),(94,),(100,),(101,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
+        self.f2=field.Field(mesh=self.mesh,fieldID=DataID.FID_Strain,valueType=ValueType.Vector,time=128*mupif.Q.s,quantity=[(3,6),(2,8),(2,3)]*mupif.U['kg/(m*s**2)'],fieldType=FieldType.FT_vertexBased)
 
-        self.f4=field.Field(mesh=self.mesh4,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(6,),(16,),(36,),(33,),(32,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
-        self.f5=field.Field(mesh=self.mesh3,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=13*mupif.Q.s,quantity=[(3,),(5,),(4,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
-        self.f6=field.Field(mesh=self.mesh4,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(0,),(12,),(39,),(33,),(114,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
-        self.f7=field.Field(mesh=self.mesh4,fieldID=FieldID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(2,),(16,)]*mupif.U.m,fieldType=FieldType.FT_cellBased)
-        self.f8 = field.Field(mesh=self.mesh, fieldID=FieldID.FID_Displacement, valueType=ValueType.Scalar,
+        self.f3=field.Field(mesh=self.mesh,fieldID=DataID.FID_Stress,valueType=ValueType.Tensor,time=66*mupif.Q.s,quantity=[(3,6,4),(2,8,5),(2,3,6)]*mupif.U['kg/(m*s**2)'],fieldType=FieldType.FT_vertexBased)
+
+        self.f4=field.Field(mesh=self.mesh4,fieldID=DataID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(6,),(16,),(36,),(33,),(32,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
+        self.f5=field.Field(mesh=self.mesh3,fieldID=DataID.FID_Displacement,valueType=ValueType.Scalar,time=13*mupif.Q.s,quantity=[(3,),(5,),(4,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
+        self.f6=field.Field(mesh=self.mesh4,fieldID=DataID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(0,),(12,),(39,),(33,),(114,)]*mupif.U.m,fieldType=FieldType.FT_vertexBased)
+        self.f7=field.Field(mesh=self.mesh4,fieldID=DataID.FID_Displacement,valueType=ValueType.Scalar,time=16*mupif.Q.s,quantity=[(2,),(16,)]*mupif.U.m,fieldType=FieldType.FT_cellBased)
+        self.f8 = field.Field(mesh=self.mesh, fieldID=DataID.FID_Displacement, valueType=ValueType.Scalar,
                               time=13*mupif.Q.s, quantity=[]*mupif.U.m, fieldType=FieldType.FT_vertexBased)
-        self.f9 = field.Field(mesh=self.mesh, fieldID=FieldID.FID_Displacement, valueType=ValueType.Scalar,
+        self.f9 = field.Field(mesh=self.mesh, fieldID=DataID.FID_Displacement, valueType=ValueType.Scalar,
                               time=13*mupif.Q.s, quantity=[]*mupif.U.m,
                               fieldType=FieldType.FT_cellBased)
 
@@ -78,10 +89,10 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getValueType(),ValueType.Scalar)
         
     def test_getFieldID(self):
-        self.assertEqual(self.f1.getFieldID(),FieldID.FID_Displacement)
-        self.assertEqual(self.f2.getFieldID(),FieldID.FID_Strain      )
-        self.assertEqual(self.f3.getFieldID(),FieldID.FID_Stress      )
-        self.assertEqual(self.f4.getFieldID(),FieldID.FID_Displacement)
+        self.assertEqual(self.f1.getFieldID(),DataID.FID_Displacement)
+        self.assertEqual(self.f2.getFieldID(),DataID.FID_Strain      )
+        self.assertEqual(self.f3.getFieldID(),DataID.FID_Stress      )
+        self.assertEqual(self.f4.getFieldID(),DataID.FID_Displacement)
         
     def test_getFieldIDName(self):
         self.assertEqual(self.f1.getFieldIDName(),'FID_Displacement')
@@ -121,7 +132,7 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getVertexValue(3).getValue(),(5,))
     def test_getUnit(self):
         self.assertEqual(self.f1.getUnit(),mupif.U.m)
-        self.assertEqual(self.f2.getUnit(),mupif.U['kg/m/s**2'])
+        self.assertEqual(self.f2.getUnit(),mupif.U['kg/(m*s**2)'])
         
     def test_merge(self):
         self.f5.merge(self.f1)
@@ -180,15 +191,17 @@ class Field_TestCase(unittest.TestCase):
     #    self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnit(),time=self.f1.getTime())[0]
     #    self._compareFields(self.f1,self.res)
 
-    @unittest.skipIf(meshio is None,'meshio not importable')
+    @unittest.skipIf(meshio is None, 'meshio not importable')
     def test_ioMeshio(self):
-        m=self.f1.toMeshioMesh()
-        for ext in 'vtu','vtk':
-            out=self.tmp+'/meshio.'+ext
+        m = self.f1.toMeshioMesh()
+        for ext in 'vtu', 'vtk', 'xdmf':
+            out = self.tmp+'/meshio.'+ext
+            # out = '/tmp/meshio.'+ext
             m.write(out)
-            res=field.Field.makeFromMeshioMesh(out,unit={self.f1.getFieldIDName():self.f1.getUnit()},time=self.f1.getTime())[0]
-            self._compareFields(self.f1,res)
+            res = field.Field.makeFromMeshioMesh(out, unit={self.f1.getFieldIDName(): self.f1.getUnit()}, time=self.f1.getTime())[0]
+            self._compareFields(self.f1, res)
 
 
 # python test_Field.py for stand-alone test being run
-if __name__=='__main__': unittest.main()
+if __name__=='__main__':
+    unittest.main()

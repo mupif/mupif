@@ -23,6 +23,7 @@
 import sys
 sys.path.append('../../..')
 from mupif import *
+import mupif as mp
 import mupif.physics.physicalquantities as PQ
 import liboofem
 
@@ -39,15 +40,15 @@ elementTypeMap={
 }
 # mapping from mupif field ID to oofem field type
 fieldTypeMap={
-    FieldID.FID_Displacement:  (_FT.FT_Displacements,0),
-    FieldID.FID_Stress: None,
-    FieldID.FID_Strain: None,
-    FieldID.FID_Temperature:   (_FT.FT_Temperature,0),
-    FieldID.FID_Humidity:      (_FT.FT_HumidityConcentration,0),
-    FieldID.FID_Concentration: (_FT.FT_HumidityConcentration,1),
+    DataID.FID_Displacement:  (_FT.FT_Displacements,0),
+    DataID.FID_Stress: None,
+    DataID.FID_Strain: None,
+    DataID.FID_Temperature:   (_FT.FT_Temperature,0),
+    DataID.FID_Humidity:      (_FT.FT_HumidityConcentration,0),
+    DataID.FID_Concentration: (_FT.FT_HumidityConcentration,1),
 }
 
-
+# TODO Update this API.
 
 
 class OOFEM(model.Model):
@@ -77,7 +78,7 @@ class OOFEM(model.Model):
         """
         Returns the requested field at given time. Field is identified by fieldID.
 
-        :param FieldID fieldID: Identifier of the field
+        :param DataID fieldID: Identifier of the field
         :param float time: Target time
 
         :return: Returns requested field.
@@ -110,54 +111,54 @@ class OOFEM(model.Model):
         else:
             raise apierror.APIError ('Can\'t return field for other than current time step')
 
-    def setField(self, field):
-        """
-        Registers the given (remote) field in application.
-
-        :param Field field: Remote field to be registered by the application
-        """
-        if not isinstance(field, field.Field): raise ValueError("field must be a field.Field.")
-        # convert field.Field into liboofem.UnstructredGridField first
-        mesh = field.getMesh()
-        target = liboofem.UnstructuredGridField(mesh.getNumberOfVertices(), mesh.getNumberOfCells())
-        # convert vertices first
-        for node in mesh.vertices():
-            c = node.getCoordinates() # tuple -> FloatArray conversion
-            cc = liboofem.FloatArray(len(c))
-            for i in range(len(c)):
-                cc[i]=c[i]
-            target.addVertex(node.getNumber(), cc)
-        for cell in mesh.cells():
-            v = cell.getVertices()  
-            vv = liboofem.IntArray(len(v))
-            for i in range(len(v)):
-                vv[i]=v[i].getNumber()
-            target.addCell(cell.number, elementTypeMap.get(cell.getGeometryType()), vv)
-        # set values
-        if (field.getFieldType() == field.FieldType.FT_vertexBased):
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.Field):
+            """
+            Registers the given (remote) object or parameter in application.
+    
+            :param Field obj: Remote object or parameter to be registered by the application
+            """
+            # convert field.Field into liboofem.UnstructredGridField first
+            mesh = obj.getMesh()
+            target = liboofem.UnstructuredGridField(mesh.getNumberOfVertices(), mesh.getNumberOfCells())
+            # convert vertices first
             for node in mesh.vertices():
-                target.setVertexValue(node.getNumber(), field.getVertexValue(node.getNumber()))
-        else:
-            for node in mesh.vertices():
-                target.setVertexValue(node.getNumber(), field.evaluate(node.getCoordinates()))
-        # register converted field in oofem
-        ft = fieldTypeMap.get((field.getFieldID()))[0]
-        if ft == None: raise ValueError ("Field type not recognized")
-        print ("oofem: registering extermal field ", field, "as ...", target)
-        #print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+                c = node.getCoordinates()  # tuple -> FloatArray conversion
+                cc = liboofem.FloatArray(len(c))
+                for i in range(len(c)):
+                    cc[i] = c[i]
+                target.addVertex(node.getNumber(), cc)
+            for cell in mesh.cells():
+                v = cell.getVertices()
+                vv = liboofem.IntArray(len(v))
+                for i in range(len(v)):
+                    vv[i]=v[i].getNumber()
+                target.addCell(cell.number, elementTypeMap.get(cell.getGeometryType()), vv)
+            # set values
+            if obj.getFieldType() == field.FieldType.FT_vertexBased:
+                for node in mesh.vertices():
+                    target.setVertexValue(node.getNumber(), obj.getVertexValue(node.getNumber()))
+            else:
+                for node in mesh.vertices():
+                    target.setVertexValue(node.getNumber(), obj.evaluate(node.getCoordinates()))
+            # register converted field in oofem
+            ft = fieldTypeMap.get((obj.getFieldID()))[0]
+            if ft is None:
+                raise ValueError("Field type not recognized")
+            print("oofem: registering extermal field ", field, "as ...", target)
+            # print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
 
-        self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
-        # internal check
-        #checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(liboofem.FieldType.FT_Temperature)
-        #print checkf
-        #print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
-        
+            self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
+            # internal check
+            # checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(liboofem.FieldType.FT_Temperature)
+            # print checkf
+            # print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
 
     def getProperty(self, propID, time, objectID=0):
         """
         Returns property identified by its ID evaluated at given time.
 
-        :param PropertyID propID: property ID
+        :param DataID propID: property ID
         :param float time: Time when property should to be evaluated
         :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
 
@@ -165,36 +166,20 @@ class OOFEM(model.Model):
         :rtype: Property
         """
         raise apierror.APIError ('Unknown propertyID')
-    def setProperty(self, property, objectID=0):
-        """
-        Register given property in the application
 
-        :param Property property: Setting property
-        :param int objectID: Identifies object/submesh on which property is evaluated (optional, default 0)
-        """
-        raise apierror.APIError ('Unknown propertyID')
     def getFunction(self, funcID, objectID=0):
         """
         Returns function identified by its ID
 
-        :param FunctionID funcID: function ID
+        :param DataID funcID: function ID
         :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
 
         :return: Returns requested function
         :rtype: Function
         """
         raise apierror.APIError ('Unknown funcID')
-    def setFunction(self, func, objectID=0):
-        """
-        Register given function in the application.
 
-        :param Function func: Function to register
-        :param int objectID: Identifies optional object/submesh on which property is evaluated (optional, default 0)
-        """
-        raise apierror.APIError ('Unknown funcID')
-
-
-    def getMesh (self, tstep):
+    def getMesh(self, tstep):
         """
         Returns the computational mesh for given solution step.
 
@@ -258,7 +243,6 @@ class OOFEM(model.Model):
         ts.setTimeIncrement(tstep.getTimeIncrement().getValue())
         self.oofem_pb.initializeYourself(ts)
         self.oofem_pb.solveYourselfAt(ts)
-
 
     def wait(self):
         """
@@ -342,7 +326,7 @@ class OOFEM(model.Model):
 
 
     def getOOFEMFieldName (self, fieldID):
-        if (fieldID == FieldID.FID_Temperature):
+        if (fieldID == DataID.FID_Temperature):
             return liboofem.FieldType.FT_Temperature
         else:
             raise apierror.APIError ('Unknown fieldID')            
@@ -404,11 +388,11 @@ if __name__ == "__main__":
             ot.solveStep (ts)
             ot.finishStep (ts)
             
-            f = ot.getField(FieldID.FID_Temperature, ts.getTime())
+            f = ot.getField(DataID.FID_Temperature, ts.getTime())
             f.toVTK2("temp%d"%(i))
             #print f.evaluate ((2.5, 0.9, 0.0))
             #print "Got field ", f
-            om.setField(f)
+            om.set(f)
             om.solveStep (ts)
             om.finishStep (ts)
 
@@ -426,7 +410,7 @@ if __name__ == "__main__":
     #     o.solveStep (ts)
     #     o.finishStep (ts)
         
-    # f = o.getField(FieldID.FID_Temperature, ts.getTime())
+    # f = o.getField(DataID.FID_Temperature, ts.getTime())
     # print "Got field ", f
 
     # #print f.evaluate ((-7.75, -6.1, 0.0))
@@ -434,5 +418,5 @@ if __name__ == "__main__":
 
 
     # o2 = OOFEM ("test.oofem.in")
-    # o2.setField(f)
+    # o2.set(f)
     

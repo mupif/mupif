@@ -27,6 +27,7 @@ import Pyro5
 
 debug = False
 
+
 def setupLogger(fileName, level=logging.DEBUG):
     """
     Set up a logger which prints messages on the screen and simultaneously saves them to a file.
@@ -38,10 +39,11 @@ def setupLogger(fileName, level=logging.DEBUG):
     """
     lg = logging.getLogger('mupif')
     lg.setLevel(level)
-    if lg.hasHandlers(): return lg
+    if lg.hasHandlers():
+        return lg
     # lg = logging.getLogger(loggerName)
     formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
-    formatTime = '%H:%M:%S' # '%Y-%m-%d %H:%M:%S'
+    formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
     formatter = logging.Formatter(formatLog, formatTime)
 
     if fileName is not None:
@@ -51,13 +53,12 @@ def setupLogger(fileName, level=logging.DEBUG):
 
     try:
         import colorlog
-        streamHandler=colorlog.StreamHandler()
-        streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s',datefmt='%Y-%m-%d %H:%M:%S'))
+        streamHandler = colorlog.StreamHandler()
+        streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
     except ImportError:
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(formatter)
 
-    
     lg.addHandler(streamHandler)
     
     return lg
@@ -100,9 +101,7 @@ def quadratic_real(a, b, c):
         else:  # complex roots
             return ()
         y2 = -y1 
-        return (y1 - t, y2 - t)
-
-
+        return y1 - t, y2 - t
 
 
 def NoneOrInt(arg):

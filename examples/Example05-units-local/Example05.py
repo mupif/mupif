@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from builtins import str
 import sys
 import logging
 sys.path.append('../..')
@@ -41,19 +40,19 @@ class Application1(mp.Model):
             },
             'Inputs': [],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Simulation time',
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Simulation time',
                  'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def getProperty(self, propID, time, objectID=0):
-        if propID == mp.PropertyID.PID_Time:
-            return mp.ConstantProperty(value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, objectID=0)
+    def get(self, objectTypeID, time=None, objectID=0):
+        if objectTypeID == mp.DataID.PID_Time:
+            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
         else:
             raise mp.APIError('Unknown property ID')
             
@@ -99,7 +98,7 @@ while abs(time - targetTime) > 1.e-6:
     # solve problem 1
     app1.solveStep(istep)
     # request Concentration property from app1
-    v = app1.getProperty(mp.PropertyID.PID_Time, istep.getTime())
+    v = app1.get(mp.DataID.PID_Time, istep.getTime())
     
     # Create a PhysicalQuantity object
     V = mp.units.Quantity(value=v.getValue(istep.getTime())[0], unit=v.getUnit())
@@ -114,7 +113,7 @@ while abs(time - targetTime) > 1.e-6:
     log.debug(V.isCompatible('m'))
     
     # convert to min
-    V2=V.inUnitsOf('min')
+    V2 = V.inUnitsOf('min')
     log.debug(V2)
 
     # give only the value
@@ -129,5 +128,3 @@ else:
 
 # terminate
 app1.terminate()
-
-

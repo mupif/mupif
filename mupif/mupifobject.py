@@ -21,68 +21,45 @@
 # Boston, MA  02110-1301  USA
 #
 
-from builtins import object
 import Pyro5.api
 import json
 import jsonschema
 import pprint
 import copy
-from . import dumpable
+import typing
+from .dumpable import Dumpable, MupifBaseModel
 
 import pydantic
 
 
 @Pyro5.api.expose
-class MupifObject(dumpable.Dumpable):
+class MupifObjectBase(MupifBaseModel):
     """
-    An abstract class representing a base Mupif object.
-
-    The purpose of this class is to represent any mupif object;
-    it introduce basic methods for getting and setting object metatdata.
-
-    .. automethod:: __init__
+    Class representing a base Mupif object, with metadata.
     """
 
     metadata: dict = pydantic.Field(default_factory=dict)
+
+    @pydantic.validate_arguments
+    def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
+        return isinstance(self, classinfo)
 
     def getMetadata(self, key):
         """
         Returns metadata associated to given key
         :param key: unique metadataID
         :return: metadata associated to key, throws TypeError if key does not exist
-        :raises: TypeError
         """
-        keys=key.split('.')
-        d=copy.deepcopy(self.metadata)
+        keys = key.split('.')
+        d = copy.deepcopy(self.metadata)
         while True:
             # import pprint
             # pprint.pprint(d)
             # print('KEYS ARE: ',str(keys))
-            d=d[keys[0]]
-            if len(keys)==1: return d
-            keys=keys[1:]
-
-        # what the heck was this?
-
-        if self.hasMetadata(key):
-            keys = key.split('.')
-            elem = self.getAllMetadata()
-            i = 0
-            i_last = len(keys)-1
-            for keyword in keys:
-                if i == i_last:
-                    last = True
-                else:
-                    last = False
-
-                if not last:
-                    if keyword in elem:
-                        elem = elem[keyword]
-                else:
-                    return elem[keyword]
-                i += 1
-        else:
-            raise TypeError("Searched key %s does not exist." % key)
+            d = d[keys[0]]
+            if len(keys) == 1:
+                return d
+            keys = keys[1:]
 
     def getAllMetadata(self):
         """
@@ -124,8 +101,8 @@ class MupifObject(dumpable.Dumpable):
         :rtype: None
         """
         print('ClassName:\'%s\'' % self.__class__.__name__)
+        d = {}
         if nonEmpty:
-            d = {}
             for k, v in self.getAllMetadata().items():
                 if v != '':
                     d[k] = v
@@ -204,3 +181,8 @@ class MupifObject(dumpable.Dumpable):
         with open(filename, "w") as f:
             json.dump(self.metadata, f, default=lambda o: o.__dict__, sort_keys=True, indent=indent)
 
+
+@Pyro5.api.expose
+class MupifObject(MupifObjectBase, Dumpable):
+    """Base class for objects which have metadata and are dumpable (serializable)."""
+    pass

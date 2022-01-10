@@ -1,64 +1,46 @@
 import sys
+import Pyro5
 sys.path.extend(['..', '../..'])
-from mupif import *
 import logging
 log = logging.getLogger()
 
-from exconfig import ExConfig
 import threading
-cfg = ExConfig()
 import mupif as mp
 
+threading.current_thread().setName('ex10-main')
 
-threading.current_thread().setName('ex02-main')
+@Pyro5.api.expose
+class Workflow10(mp.workflow.Workflow):
 
-
-class Example10(mp.Model):
-    """
-    Simple application that generates a property with a value equal to actual time
-    """
     def __init__(self, metadata={}):
         MD = {
-            'Name': 'Simple application example',
-            'ID': 'N/A',
-            'Description': 'Cummulates time steps^3',
-            'Physics': {
-                'Type': 'Other',
-                'Entity': 'Other'
-            },
-            'Solver': {
-                'Software': 'Python script',
-                'Language': 'Python3',
-                'License': 'LGPL',
-                'Creator': 'Borek',
-                'Version_date': '02/2019',
-                'Type': 'Summator',
-                'Documentation': 'Nowhere',
-                'Estim_time_step_s': 1,
-                'Estim_comp_time_s': 0.01,
-                'Estim_execution_cost_EUR': 0.01,
-                'Estim_personnel_cost_EUR': 0.01,
-                'Required_expertise': 'None',
-                'Accuracy': 'High',
-                'Sensitivity': 'High',
-                'Complexity': 'Low',
-                'Robustness': 'High'
-            },
-            'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True}],
-            'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated'}]
+            "ClassName": "Workflow10",
+            "ModuleName": "main.py",
+            "Name": "Example10 workflow",
+            "ID": "workflow_10",
+            "Description": "Calculates cummulative time times 2 using a simple PBS model",
+            "Inputs": [
+                mp.workflow.workflow_input_targetTime_metadata,
+                mp.workflow.workflow_input_dt_metadata
+            ],
+            "Outputs": [
+                # duplicates outputs of the contained model
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
+                 'Description': 'Cummulative time', 'Units': 's'}
+            ],
         }
-        super().__init__(metadata=MD)
+        mp.workflow.Workflow.__init__(self, metadata=MD)
         self.updateMetadata(metadata)
-        self.value = 0.
+        self.daemon = None
+        self.ns = None
+        self.model_1_jobman = None
+        self.model_1 = None
 
-    def getProperty(self, propID, time, objectID=0):
-        md = {
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+
+        self.updateMetadata(dictionary=metadata)
+
+        execMD = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
                 'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
@@ -66,99 +48,82 @@ class Example10(mp.Model):
             }
         }
 
-        if propID == mp.PropertyID.PID_Time_step:
-            return property.ConstantProperty(
-                value=(self.value,), propID=mp.PropertyID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
-        else:
-            raise apierror.APIError('Unknown property ID')
+        self.ns = mp.pyroutil.connectNameServer()
+        self.daemon = mp.pyroutil.getDaemon(self.ns)
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True):
-        super().initialize(file, workdir, metadata, validateMetaData)
+        # initialization code of model_1
+        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'Mupif.JobManager@Example10')
+        try:
+            self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
+            log.info(self.model_1)
+        except Exception as e:
+            log.exception(e)
+        self.model_1.initialize(workdir='', metadata=execMD)
+        self.registerModel(self.model_1, "model_1")
+
+        mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
+
+    def get(self, objectTypeID, time=None, objectID=0):
+        return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
+
+    def set(self, obj, objectID=0):
+        super().set(obj=obj, objectID=objectID)
+
+    def terminate(self):
+        self.model_1.terminate()
+
+    def finishStep(self, tstep):
+        self.model_1.finishStep(tstep)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time = tstep.getTime().inUnitsOf('s').getValue()
-        self.value = 1.0*time
+        time_property = mp.ConstantProperty(value=(tstep.getTime().inUnitsOf(mp.U.s),), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+        self.model_1.set(obj=time_property, objectID=1)
+        self.model_1.solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
 
     def getCriticalTimeStep(self):
-        return 2.*mp.U.s
-
-    def getAsssemblyTime(self, tstep):
-        return tstep.getTime()
-
-# Example10 is local, create its instance
-app1 = Example10()
+        return self.model_1.getCriticalTimeStep()
 
 
-time = 0.
-timestepnumber = 0
-targetTime = 2.0
+if __name__ == '__main__':
 
+    # inputs
+    targetTime = 2.
+    dt = 1.
 
-# locate nameserver
-ns = pyroutil.connectNameServer(cfg.nshost, cfg.nsport)
-# connect to JobManager running on (remote) server and create a tunnel to it
-jobMan = mp.pyroutil.connectJobManager(ns, cfg.jobManName)
-log.info('Connected to JobManager')
-app2 = None
+    # input properties
+    param_targetTime = mp.ConstantProperty(value=(targetTime,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_dt = mp.ConstantProperty(value=(dt,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
 
-try:
-    app2 = mp.pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=jobMan)
-    log.info(app2)
-except Exception as e:
-    log.exception(e)
+    workflow = Workflow10()
 
-executionMetadata = {
-    'Execution': {
-        'ID': '1',
-        'Use_case_ID': '1_1',
-        'Task_ID': '1'
+    # these metadata are supposed to be filled before execution
+    md = {
+        'Execution': {
+            'ID': 'N/A',
+            'Use_case_ID': 'N/A',
+            'Task_ID': 'N/A'
+        }
     }
-}
+    workflow.initialize(metadata=md)
 
-app1.initialize(metadata=executionMetadata)
-app2.initialize(metadata=executionMetadata)
+    # set the input values defining targetTime and dt of the simulation
+    workflow.set(param_targetTime, 'targetTime')
+    workflow.set(param_dt, 'dt')
 
-prop = None
-istep = None
+    workflow.solve()
 
-if True:  # one step
-    # determine critical time step
-    dt2 = app2.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue()
-    dt = min(app1.getCriticalTimeStep().inUnitsOf(mp.U.s).getValue(), dt2)
-    # update time
-    time = time+dt
-    if time > targetTime:
-        # make sure we reach targetTime at the end
-        time = targetTime
-    timestepnumber = timestepnumber+1
-    log.debug("Step: %d %f %f" % (timestepnumber, time, dt))
-    # create a time step
-    istep = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=timestepnumber)
+    res_property = workflow.get(mp.DataID.PID_Time)
+    value_result = res_property.inUnitsOf(mp.U.s).getValue()[0]
 
-    try:
-        # solve problem 1
-        app1.solveStep(istep)
-        # handshake the data
-        c = app1.getProperty(mp.PropertyID.PID_Time_step, app2.getAssemblyTime(istep))
-        app2.setProperty(c)
-        app2.solveStep(istep)
+    workflow.terminate()
 
-        prop = app2.getProperty(mp.PropertyID.PID_Time, istep.getTime())
+    print('Simulation has finished.')
 
-        atime = app2.getAssemblyTime(istep)
-        log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
-            atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
-
-    except apierror.APIError as e:
-        log.error("Following API error occurred: %s" % e)
-
-print(prop.getValue(istep.getTime())[0])
-if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())[0]-8.) <= 1.e-4:
-    log.info("Test OK")
-else:
-    log.error("Test FAILED")
-    sys.exit(1)
-
-# terminate
-app1.terminate()
-app2.terminate()
+    # testing part
+    print(value_result)
+    if value_result is not None and abs(value_result - 6.) <= 1.e-4:
+        print("Test OK")
+        log.info("Test OK")
+    else:
+        print("Test FAILED")
+        log.error("Test FAILED")

@@ -28,7 +28,6 @@ from . import bbox
 from . import dumpable
 from . import vertex
 from . import cell
-from . import mupifobject
 import copy
 import time
 import sys
@@ -38,6 +37,7 @@ import dataclasses
 import typing
 from . import cellgeometrytype
 import pickle
+import deprecated
 
 import pydantic
 
@@ -122,17 +122,19 @@ class Mesh(dumpable.Dumpable):
     .. automethod:: __init__
     """
 
-    mapping: typing.Any=None
+    mapping: typing.Any = None
 
-    def __init__(self,*a,**kw):
-        super().__init__(*a,**kw)
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self._vertexOctree = None
+        self._cellOctree = None
         self._postDump()
 
     def _postDump(self):
-        '''Called when the instance is being reconstructed.'''
+        """Called when the instance is being reconstructed."""
         # print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
-            object.__setattr__(self.getCell(i),'mesh',self)
+            object.__setattr__(self.getCell(i), 'mesh', self)
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
@@ -192,7 +194,7 @@ class Mesh(dumpable.Dumpable):
         .. note:: This method has not been tested yet.
         """
         nv = self.getNumberOfVertices()
-        ret = numpy.empty((nv, 3), dtype=numpy.float)
+        ret = numpy.empty((nv, 3), dtype=numpy.float64)
         for i in range(0, nv):
             ret[i] = numpy.array(self.getVertex(i).getCoordinates())
         return ret
@@ -222,11 +224,11 @@ class Mesh(dumpable.Dumpable):
         nc = self.getNumberOfCells()
         for i in range(nc):
             mnv = max(mnv, self.getCell(i).getNumberOfVertices())
-        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int)
+        tt, cc = numpy.empty(shape=(nc,), dtype=numpy.int64), numpy.full(shape=(nc, mnv), fill_value=-1, dtype=numpy.int64)
         for i in range(nc):
             c = self.getCell(i)
             tt[i] = c.getGeometryType()
-            vv = numpy.array([v.getNumber() for v in c.getVertices()], dtype=numpy.int)
+            vv = numpy.array([v.getNumber() for v in c.getVertices()], dtype=numpy.int64)
             cc[i, :len(vv)] = vv  # excess elements in the row stay at -1
         return tt, cc
 
@@ -291,28 +293,30 @@ class Mesh(dumpable.Dumpable):
 
     def toMeshioPointsCells(self):
         import numpy as np
-        ret={}
+        ret = {}
         for ic in range(self.getNumberOfCells()):
-            c=self.getCell(ic)
-            t=c.getMeshioGeometryStr()
-            ids=[v.getNumber() for v in c.getVertices()]
-            if t in ret: ret[t].append(ids)
-            else: ret[t]=[ids]
-        return self.getVertices(),[(type,np.array(ids)) for type,ids in ret.items()]
+            c = self.getCell(ic)
+            t = c.getMeshioGeometryStr()
+            ids = [v.getNumber() for v in c.getVertices()]
+            if t in ret:
+                ret[t].append(ids)
+            else:
+                ret[t] = [ids]
+        return self.getVertices(), [(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
 
     @staticmethod
-    def makeFromMeshioPointsCells(points,cells):
-        ret=UnstructuredMesh()
-        vv=[vertex.Vertex(number=row,label=None,coords=tuple(points[row])) for row in range(points.shape[0])]
-        cc=[]
-        cgt=cellgeometrytype
-        c0=0
+    def makeFromMeshioPointsCells(points, cells):
+        ret = UnstructuredMesh()
+        vv = [vertex.Vertex(number=row, label=None, coords=tuple(points[row])) for row in range(points.shape[0])]
+        cc = []
+        cgt = cellgeometrytype
+        c0 = 0
         from . import cell
         for block in cells:
-            klass=cell.Cell.getClassForCellGeometryType({'triangle':cgt.CGT_TRIANGLE_1,'quad':cgt.CGT_QUAD,'tetra':cgt.CGT_TETRA,'hexahedron':cgt.CGT_HEXAHEDRON,'triangle6':cgt.CGT_TRIANGLE_2}[block.type])
-            cc+=[klass(mesh=ret,number=c0+row,label=None,vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
-            c0+=block.data.shape[0]
-        ret.setup(vertexList=vv,cellList=cc)
+            klass = cell.Cell.getClassForCellGeometryType(cgt.meshioName2cgt[block.type])
+            cc += [klass(mesh=ret, number=c0+row, label=None, vertices=tuple(block.data[row])) for row in range(block.data.shape[0])]
+            c0 += block.data.shape[0]
+        ret.setup(vertexList=vv, cellList=cc)
         return ret
 
     def asVtkUnstructuredGrid(self):
@@ -410,8 +414,81 @@ class Mesh(dumpable.Dumpable):
         """
         pickle.dump(self, open(fileName, 'wb'), protocol)
 
+    @deprecated.deprecated('use getVertexLocalizer instead')
+    def giveVertexLocalizer(self): return self.getVertexLocalizer()
+
+    def getVertexLocalizer(self):
+        """
+        :return: Returns the vertex localizer.
+        :rtype: Octree
+        """
+        if self._vertexOctree: 
+            return self._vertexOctree
+        else:
+            vvv = self.vertices()
+            c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
+            bb = bbox.BBox(c0, c0)  # ope-pointed bbox
+            for vert in vvv:
+                bb.merge(vert.getCoordinates())  # extend it with all other cells
+            minc, maxc = bb.coords_ll, bb.coords_ur
+
+            # setup vertex localizer
+            size = max(y-x for x, y in zip(minc, maxc))
+            mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
+            self._vertexOctree = octree.Octree(minc, size, tuple(mask))
+            if debug: 
+                t0 = time.clock()
+                print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
+            # add mesh vertices into octree
+            for vertex in self.vertices():
+                self._vertexOctree.insert(vertex)
+            if debug:
+                print("done in ", time.clock() - t0, "[s]")
+
+            return self._vertexOctree
+
+    @deprecated.deprecated('use getCellLocalizer instead')
+    def giveCellLocalizer(self): return self.getCellLocalizer()
+
+    def getCellLocalizer(self):
+        """
+        Get the cell localizer.
+
+        :return: Returns the cell localizer.
+        :rtype: Octree
+        """
+        if debug:
+            t0 = time.clock()
+        if self._cellOctree: 
+            return self._cellOctree
+        else:
+            if debug:
+                print('Start at: ', time.clock()-t0)
+
+            ccc = self.cells()
+            bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
+            for cell in ccc:
+                bb.merge(cell.getBBox())  # extend it with all other cells
+            minc, maxc = bb.coords_ll, bb.coords_ur
+
+            if debug:
+                print('Cell bbox: ', time.clock()-t0)
+
+        # setup vertex localizer
+        size = max(y-x for x, y in zip(minc, maxc))
+        mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
+        self._cellOctree = octree.Octree(minc, size, tuple(mask))
+        if debug:
+            print('Octree ctor: ', time.clock()-t0)
+            print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
+        for cell in self.cells():
+            self._cellOctree.insert(cell)
+        if debug:
+            print("done in ", time.clock() - t0, "[s]")
+        return self._cellOctree
+
 @Pyro5.api.expose
-#@dataclasses.dataclass
+# @dataclasses.dataclass
 class UnstructuredMesh(Mesh):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
@@ -433,16 +510,13 @@ class UnstructuredMesh(Mesh):
     vertexList: typing.List[vertex.Vertex]=pydantic.Field(default_factory=lambda: [])
     cellList: typing.List[cell.Cell]=pydantic.Field(default_factory=lambda: [])
 
-    def __init__(self,**kw):
+    def __init__(self, **kw):
         super().__init__(**kw)
-        self._vertexOctree=None
-        self._cellOctree=None
-        self._vertexDict=None
-        self._cellDict=None
+        self._vertexDict = None
+        self._cellDict = None
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
-
 
     def setup(self, vertexList, cellList):
         """
@@ -503,72 +577,7 @@ class UnstructuredMesh(Mesh):
         """
         return self.cellList[i]
 
-    def giveVertexLocalizer(self):
-        """
-        :return: Returns the vertex localizer.
-        :rtype: Octree
-        """
-        if self._vertexOctree: 
-            return self._vertexOctree
-        else:
-            vvv = self.vertices()
-            c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
-            bb = bbox.BBox(c0, c0)  # ope-pointed bbox
-            for vert in vvv:
-                bb.merge(vert.getCoordinates())  # extend it with all other cells
-            minc, maxc = bb.coords_ll, bb.coords_ur
 
-            # setup vertex localizer
-            size = max(y-x for x, y in zip(minc, maxc))
-            mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-            self._vertexOctree = octree.Octree(minc, size, tuple(mask))
-            if debug: 
-                t0 = time.clock()
-                print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
-            # add mesh vertices into octree
-            for vertex in self.vertices():
-                self._vertexOctree.insert(vertex)
-            if debug:
-                print("done in ", time.clock() - t0, "[s]")
-
-            return self._vertexOctree
-
-    def giveCellLocalizer(self):
-        """
-        Get the cell localizer.
-
-        :return: Returns the cell localizer.
-        :rtype: Octree
-        """
-        if debug:
-            t0 = time.clock()
-        if self._cellOctree: 
-            return self._cellOctree
-        else:
-            if debug:
-                print('Start at: ', time.clock()-t0)
-
-            ccc = self.cells()
-            bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
-            for cell in ccc:
-                bb.merge(cell.getBBox())  # extend it with all other cells
-            minc, maxc = bb.coords_ll, bb.coords_ur
-
-            if debug:
-                print('Cell bbox: ', time.clock()-t0)
-
-        # setup vertex localizer
-        size = max(y-x for x, y in zip(minc, maxc))
-        mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
-        self._cellOctree = octree.Octree(minc, size, tuple(mask))
-        if debug:
-            print('Octree ctor: ', time.clock()-t0)
-            print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
-        for cell in self.cells():
-            self._cellOctree.insert(cell)
-        if debug:
-            print("done in ", time.clock() - t0, "[s]")
-        return self._cellOctree
 
     def __buildVertexLabelMap__(self):
         """
@@ -643,10 +652,10 @@ class UnstructuredMesh(Mesh):
 
         # renumber _vertexDict verices 
         n = 0
-        #self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
+        # self.vertexList=[dataclasses.replace(v,number=i) for i,v in enumerate(self.vertexList)]
         for v in self.vertexList:
             v.number = n
-            n+=1
+            n += 1
         #
         # now merge cell lists
         #
@@ -757,7 +766,7 @@ class UnstructuredMesh(Mesh):
             # create new cell and append to mupifCells
             mupifCells.append(
                 cell.Cell.getClassForCellGeometryType(cgt)(
-                    #mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
+                    # mesh=ret, number=ic, label=None, vertices=[mupifVertices[i] for i in pts]
                     mesh=ret, number=ic, label=None, vertices=pts
                 )
             )

@@ -1,11 +1,7 @@
 import sys
-sys.path.extend(['.','..', '../..'])
-import time, random
-import numpy as np
-import os
+sys.path.extend(['.', '..', '../..'])
 
 import mupif as mp
-from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
@@ -37,9 +33,9 @@ class Example11(mp.workflow.Workflow):
         self.m1 = None
         self.m2 = None
     
-    def initialize(self, file='', workdir='', targetTime=0*mp.U.s, metadata={}, validateMetaData=True):
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
     
-        super().initialize(file=file, workdir=workdir, targetTime=targetTime, metadata=metadata, validateMetaData=validateMetaData)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
         self.m1 = Model1()
         self.m2 = Model2()
 
@@ -54,28 +50,27 @@ class Example11(mp.workflow.Workflow):
 
         self.m1.initialize(metadata=passingMD)
         self.m2.initialize(metadata=passingMD)
-        
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
         log.info("Solving workflow")    
         log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
-        
 
         try:
             # solve problem 1
             self.m1.solveStep(istep)
             # handshake the data
-            grainState = self.m1.get(mp.dataid.MiscID.ID_GrainState, self.m1.getAssemblyTime(istep))
+            grainState = self.m1.get(mp.DataID.PID_GrainState, self.m1.getAssemblyTime(istep))
             self.m2.set(grainState)
             self.m2.solveStep(istep)
-            grainState2 = self.m2.get(mp.dataid.MiscID.ID_GrainState, self.m1.getAssemblyTime(istep))
+            grainState2 = self.m2.get(mp.DataID.PID_GrainState, self.m1.getAssemblyTime(istep))
 
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
 
-        self.m1.finishStep(istep)
-        self.m2.finishStep(istep)
+    def finishStep(self, tstep):
+        self.m1.finishStep(tstep)
+        self.m2.finishStep(tstep)
 
     def getCriticalTimeStep(self):
         # determine critical time step
@@ -104,7 +99,7 @@ if __name__ == '__main__':
             'Task_ID': '1'
         }
     }
-    workflow.initialize(targetTime=1*mp.U.s, metadata=workflowMD)
+    workflow.initialize(metadata=workflowMD)
+    workflow.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     workflow.solve()
     workflow.terminate()
-

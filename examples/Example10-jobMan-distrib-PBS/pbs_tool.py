@@ -1,15 +1,38 @@
 import subprocess
-from simple_slurm import Slurm
+import os
+import time as timemod
 
 
-def submit_job(command, job_name, output, cpus_per_task=1):
-    slurm = Slurm(
-        job_name=job_name,
-        output=output,
-        cpus_per_task=cpus_per_task
-    )
-    jobid = slurm.sbatch(command)
-    return jobid
+def wait_until_job_is_done(jobid, checking_frequency=10.):
+    status = ''
+    job_finished = False
+    while job_finished is False:
+        status = get_job_status(jobid=jobid)
+        print("Job %s status is %s" % (str(jobid), status))
+        if status == 'Completed' or status == 'Unknown':
+            job_finished = True
+        if job_finished is False:
+            timemod.sleep(checking_frequency)
+
+
+def submit_job(command):
+    result = ''
+    try:
+        cmmnd = 'qsub %s' % command
+        stream = os.popen(cmmnd)
+        result = str(stream.read())
+    except Exception as e:
+        pass
+    # except subprocess.SubprocessError:
+    #     pass
+    #     print("Job submition has probably failed.")
+
+    result = result.strip()
+
+    print("'%s'" % result)
+    if result != '':
+        return result
+    return 'Unknown'
 
 
 # This function analyzes the output of 'qstat [jobid]' command, which has the form:

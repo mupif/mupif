@@ -27,8 +27,13 @@ import time as timeTime
 from . import model
 from . import timestep
 from . import units
+from . import Property
+from . import DataID
+from . import U
+import numpy
 import copy
 import logging
+from collections.abc import Iterable
 
 log = logging.getLogger()
 
@@ -54,6 +59,15 @@ WorkflowSchema["properties"].update({
 })
 WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs"]
 
+workflow_input_targetTime_metadata = {
+    'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['targetTime']
+}
+workflow_input_dt_metadata = {
+    'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'dt', 'Description': 'Timestep length',
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['dt']
+}
+
 
 @Pyro5.api.expose
 class Workflow(model.Model):
@@ -75,29 +89,21 @@ class Workflow(model.Model):
         super().__init__(metadata=metadata)
 
         self.workflowMonitor = None  # No monitor by default
-        self.targetTime = None
         self._models = {}
+        self._exec_targetTime = 1.*units.U.s
+        self._exec_dt = None
 
-    def initialize(self, file='', workdir='', targetTime=0.*units.Q.s, metadata={}, validateMetaData=True):
+    def initialize(self, *, workdir='', metadata={}, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
-        
-        :param str file: Name of file
+
         :param str workdir: Optional parameter for working directory
-        :param PhysicalQuantity targetTime: target simulation time
         :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
-        self.generateMetadataModelRefsID()
+        self.generateModelDependencies()
         self.updateMetadata(metadata)
 
-        # print (targetTime)
-        if isinstance(targetTime,units.Quantity):
-            self.targetTime = targetTime
-        else:
-            raise TypeError('targetTime is not Quantity')
-        
-        self.file = file
         if workdir == '':
             self.workDir = os.getcwd()
         else:
@@ -119,27 +125,48 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Running')
         self.setMetadata('Progress', 0.)
 
-        time = 0.*units.U.s
+        time = 0.*U.s
         timeStepNumber = 0
-        
-        while abs(time.inUnitsOf('s').getValue()-self.targetTime.inUnitsOf('s').getValue()) > 1.e-6:
-            dt = self.getCriticalTimeStep()
+        while abs(time.inUnitsOf(U.s).getValue()-self._exec_targetTime.inUnitsOf(U.s).getValue()) > 1.e-6:
+            time_prev = time
+            if self._exec_dt is not None:
+                dt = min(self.getCriticalTimeStep(), self._exec_dt)
+            else:
+                dt = self.getCriticalTimeStep()
             time = time+dt
-            if time > self.targetTime:
-                time = self.targetTime
+            if time > self._exec_targetTime:
+                time = self._exec_targetTime
+                dt = time - time_prev
             timeStepNumber = timeStepNumber+1
-            istep = timestep.TimeStep(time=time, dt=dt, targetTime=self.targetTime, number=timeStepNumber)
+            istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
         
-            log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf('s').getValue(), dt.inUnitsOf('s').getValue()))
+            log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
+            print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
 
             # Estimate progress
-            self.setMetadata('Progress', 100*time.inUnitsOf('s').getValue()/self.targetTime.inUnitsOf('s').getValue())
+            self.setMetadata('Progress', 100*time.inUnitsOf(U.s).getValue()/self._exec_targetTime.inUnitsOf(U.s).getValue())
             
             self.solveStep(istep)
             self.finishStep(istep)
+
         self.setMetadata('Status', 'Finished')
         self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
-        self.terminate()
+
+    def set(self, obj, objectID=0):
+        if obj.isInstance(Property):
+            if obj.getPropertyID() == DataID.PID_Time:
+                if objectID == "targetTime":
+                    val = obj.inUnitsOf(U.s).getValue(0.*U.s)
+                    if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, numpy.ndarray):
+                        self._exec_targetTime = val[0] * U.s
+                    else:
+                        self._exec_targetTime = val * U.s
+                if objectID == "dt":
+                    val = obj.inUnitsOf(U.s).getValue()
+                    if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, numpy.ndarray):
+                        self._exec_dt = val[0] * U.s
+                    else:
+                        self._exec_dt = val * U.s
 
     def getAPIVersion(self):
         """
@@ -194,7 +221,7 @@ class Workflow(model.Model):
 
     def registerModel(self, mmodel, label=None):
         """
-        :param model.Model or model.RemoteModel or Workflow model:
+        :param model.Model or model.RemoteModel or Workflow mmodel:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
         """
         if isinstance(mmodel, (Workflow, model.Model, model.RemoteModel, Pyro5.api.Proxy)):
@@ -230,12 +257,10 @@ class Workflow(model.Model):
         return iter(self.getDictOfModels().keys())
 
     def printListOfModels(self):
-        print()
         print("List of child models:")
         print([m.__class__.__name__ for m in self.getListOfModels()])
-        print()
 
-    def generateMetadataModelRefsID(self):
+    def generateModelDependencies(self):
         dependencies = []
         for key_name, mmodel in self.getDictOfModels().items():
             if isinstance(mmodel, (model.Model, Workflow, model.RemoteModel)):
@@ -260,3 +285,9 @@ class Workflow(model.Model):
                 dependencies.append(m_r_id)
 
         self.setMetadata('Dependencies', dependencies)
+
+    def getExecutionTargetTime(self):
+        return self._exec_targetTime
+
+    def getExecutionTimestepLength(self):
+        return self._exec_dt

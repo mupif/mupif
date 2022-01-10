@@ -28,6 +28,7 @@ from . import bbox
 from . import localizer
 import Pyro5
 import pydantic
+import deprecated
 
 debug = 0
 refineLimit = 400  # refine cell if number of items exceeds this treshold value
@@ -88,7 +89,8 @@ class Octant(object):
         """
         Divides the receiver locally, creating child octants.
         """
-        if debug: print ("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
+        if debug:
+            print("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
         if not self.isTerminal():
             assert "Could not divide non terminal octant"
         self.children = []
@@ -169,16 +171,16 @@ class Octant(object):
                 for i, j, k in self.childrenIJK():
                     self.children[i][j][k].remove(item, itemBBox)
 
+    @deprecated.deprecated('use getItemsInBBox instead')
+    def giveItemsInBBox(self,*args, **kw): return self.getItemsInBBox(*args,**kw)
+
     @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
-    def giveItemsInBBox(self,
-        itemSet: set,
-        bbox: bbox.BBox
-    ):
+    def getItemsInBBox(self, itemSet: set, bbox: bbox.BBox):
         """ 
         Returns the list of objects inside the given bounding box. 
         Note: an object can be included several times, as can be assigned to several octants.
 
-        :param list itemList: list containing the objects matching the criteria
+        :param list itemSet: list containing the objects matching the criteria
         :param bbox.BBox bbox: target bounding box
         """ 
         # if debug: tab = '  '*int(math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0)))
@@ -187,16 +189,17 @@ class Octant(object):
                 # if debug: print(tab, "Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data))
                 for i in self.data:
                     # if debug: print(tab, "checking ... \n   %s %s"%(str(i.getBBox()), str(bbox)))
-                    if i.getBBox().intersects(bbox): itemSet.add(i)
-                        #if isinstance(itemList, set):
+                    if i.getBBox().intersects(bbox):
+                        itemSet.add(i)
+                        # if isinstance(itemList, set):
                         #    itemList.add(i)
-                        #else:
+                        # else:
                         #    itemList.append(i)
             else:
                 # if debug: print(tab, "Parent containing bbox found ....", self.giveMyBBox())
                 for i, j, k in self.childrenIJK():
                     # if debug: print(tab, "  Checking child .....", self.children[i][j][k].giveMyBBox())
-                    self.children[i][j][k].giveItemsInBBox(itemSet, bbox)
+                    self.children[i][j][k].getItemsInBBox(itemSet, bbox)
 
     def evaluate(self, functor):
         """ 
@@ -260,16 +263,19 @@ class Octree(localizer.Localizer):
         """
         self.root.delete(item)
 
-    def giveItemsInBBox(self, bbox):
+    @deprecated.deprecated('use getItemsInBBox instead')
+    def giveItemsInBBox(self, bbox): return self.getItemsInBBox(bbox)
+
+    def getItemsInBBox(self, bbox):
         """
         Returns the set of objects inside the given bounding box. 
-        See :func:`Octant.giveItemsInBBox`
+        See :func:`Octant.getItemsInBBox`
         """
         answer = set()
         # answer = []
         if debug:
             print("Octree: Looking for items containing bbox:", bbox)
-        self.root.giveItemsInBBox(answer, bbox)
+        self.root.getItemsInBBox(answer, bbox)
         if debug:
             print("Octree: Items found:", answer)
         return answer

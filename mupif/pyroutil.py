@@ -28,12 +28,17 @@ import subprocess
 import threading
 import time
 import json
+import atexit
+import signal
+import urllib.parse
+import os.path
 import deprecated
 from . import model
 from . import jobmanager
 from . import util
 from . import apierror
-from . import pyrofile
+from .pyrofile import PyroFile
+import pydantic
 log = util.setupLogger(fileName=None)
 
 Pyro5.config.SERIALIZER = "serpent"
@@ -44,47 +49,103 @@ Pyro5.config.SERIALIZER = "serpent"
 # Pyro4.config.THREADPOOL_SIZE=100
 Pyro5.config.SERVERTYPE = "multiplex"
 
-try:
-    import importlib.resources as imp_res  # for newer Python versions
-except ImportError:
-    import importlib_resources as imp_res  # for older Python versions
+import importlib.resources
 
 
-#import Pyro5.api
-#Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: object.__getattr__(pr,'_pyroConnection').sock.getsockname())
-
-from contextlib import ExitStack
-tmpfile=ExitStack()
-import itertools
-testSSL=dict([((who,what),str(tmpfile.enter_context(imp_res.path('mupif.data.certs',f'{who}.mupif.{what}')))) for who,what in itertools.product(('rootCA','server','client'),('cert','key'))])
+# import Pyro5.api
+# Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: object.__getattr__(pr,'_pyroConnection').sock.getsockname())
 
 
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Optional
 @dataclass
 class PyroNetConf:
-    nshost: Optional[str]=None
-    nsport: int=0
-    ns: Optional[Pyro5.api.Proxy]=None
-    host: Optional[str]=None
-    port: int=0
+    nshost: Optional[str] = None
+    nsport: int = 0
+    ns: Optional[Pyro5.api.Proxy] = None
+    host: Optional[str] = None
+    port: int = 0
 
     def getNS(self):
-        if self.ns is not None: return self.ns
+        if self.ns is not None:
+            return self.ns
         # self.ns=Pyro5.api.locate_ns(host=self.nshost, port=self.nsport)
-        self.ns=connectNameServer(nshost=self.nshost, nsport=self.nsport)
+        self.ns = connectNameServer(nshost=self.nshost, nsport=self.nsport)
         return self.ns
 
 
 # pyro5 nameserver metadata
 NS_METADATA_jobmanager = "type:jobmanager"
 NS_METADATA_appserver = "type:appserver"
-NS_METADATA_network="network:" # plus JSON
+NS_METADATA_network = "network:"  # plus JSON
 
-import pydantic
+
+def runNameserverBg(nshost=None,nsport=None):
+    import threading
+    threading.current_thread().setName('mupif-nameserver')
+    import Pyro5.configure
+    Pyro5.configure.SERIALIZER='serpent'
+    Pyro5.configure.PYRO_SERVERTYPE='multiplex'
+    Pyro5.configure.PYRO_SSL=0
+    log.debug(Pyro5.configure.global_config.dump())
+    nshost,nsport=locateNameserver(nshost,nsport,server=True)
+    import Pyro5.nameserver
+    log.info(f"Starting nameserver on {nshost}:{nsport}")
+    nsUri,nsDaemon,nsBroadcast=Pyro5.nameserver.start_ns(nshost,nsport)
+    def _nsBg():
+        try: nsDaemon.requestLoop()
+        finally:
+            nsDaemon.close()
+            if nsBroadcast is not None: nsBroadcast.close()
+    threading.Thread(target=_nsBg,daemon=True).start()
+    h,p=nsDaemon.locationStr.rsplit(':',1) # handles both ipv4 and ipv6
+    log.info(f'Nameserver up at {h}:{p}')
+    return h,p
+
+
+def locateNameserver(nshost=None,nsport=0,server=False):
+    def fromFile(f):
+        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0].strip())
+        log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
+        return s.hostname,s.port
+    # 1. set from arguments passed
+
+    # for the server, 0.0.0.0 binds all local interfaces
+    # for the client, 0.0.0.0 is meaningless
+    #if nshost=='0.0.0.0' or nshost=='::':
+    #    if server: return nshost,nsport
+    #    else: return None,nsport
+    if nshost is not None:
+        log.info(f'Using nameserver arguments {nshost}:{nsport}')
+        return nshost,nsport
+
+    # 2. set from MUPIF_NS env var
+    if (nshp:=os.environ.get('MUPIF_NS',None)):
+        s=urllib.parse.urlsplit('//'+nshp)
+        log.info(f'Using MUPIF_NS environment variable → nameserver {s.hostname}:{s.port}')
+        return s.hostname,s.port
+    # 3. set from MUPIF_NS *file* in mupif module directory
+    import mupif
+    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
+    # 4. set from XDG user-config file (~/.config/mupif/MUPIF_NS on linux)
+    try:
+        import appdirs
+        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
+    except ImportError:
+        log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
+    if server:
+        log.warning('Falling back to 127.0.0.1:9090 for nameserver (server).')
+        return '127.0.0.1',9090
+    else:
+        log.warning('Falling back to 0.0.0.0:0 for nameserver (client).')
+        return None,0
+
+
+@deprecated.deprecated('renamed to connectNameserver')
+def connectNameServer(*args,**kw): return connectNameserver(*args,**kw)
 
 @pydantic.validate_arguments
-def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=3.0) -> Pyro5.client.Proxy :
+def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: float = 3.0) -> Pyro5.client.Proxy:
     """
     Connects to a NameServer.
 
@@ -96,22 +157,16 @@ def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=
     :raises Exception: When can not connect to a LISTENING port of nameserver
     """
 
-    # the configuration is the same for nameserver and the clients
-    # for the server, 0.0.0.0 binds all local interfaces
-    # for the client, 0.0.0.0 is meaningless
-    if nshost=='0.0.0.0' or nshost=='::': nshost=None
-    
-    if nshost is not None and nsport!=0:
+    if nshost == '0.0.0.0' or nshost == '::':
+        nshost = None
+
+    nshost,nsport=locateNameserver(nshost,nsport)
+
+    if nshost is not None and nsport != 0:
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(timeOut)
-            try:  # Treat socket connection problems separately
-                s.connect((nshost, nsport))
-            except socket.error as msg:
-                log.exception(msg)
-                raise Exception('Socket connection error to nameServer')
-            s.close()
-            log.debug("Can connect to a LISTENING port of nameserver on " + nshost + ":" + str(nsport))
+            conn=socket.create_connection((nshost,nsport),timeout=timeOut)
+            log.debug(f'Connection to {nshost}:{nsport} is possible.')
+            conn.close()
         except Exception:
             log.exception(f'Socket pre-check failed: can not connect to a LISTENING port of nameserver on {nshost}:{nsport}. Does a firewall block INPUT or OUTPUT on the port?')
             raise
@@ -125,6 +180,28 @@ def connectNameServer(nshost: Optional[str]=None, nsport: int=0, timeOut: float=
         raise
     return ns
 
+
+# global variable holding daemon objects, keyed by hostname (local IP address)
+_daemons={}
+
+def getDaemon(proxy: Pyro5.api.Proxy = None) -> Pyro5.api.Daemon:
+    '''
+    Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will lsiten on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
+
+    Passing *proxy=None* will return the (possibly cached) daemon listening on the IPv4 loopback interface.
+
+    Do *not* call ``shutdown`` on the daemon returned as this would break the caching involved.
+    '''
+    if proxy is not None:
+        proxy._pyroBind()
+        host=proxy._pyroConnection.sock.getsockname()[0]
+    else: host='127.0.0.1'
+    global _daemons
+    if (d:=_daemons.get(host,None)) is not None: return d
+    dNew=_daemons[host]=Pyro5.api.Daemon(host=host)
+    th=threading.Thread(target=dNew.requestLoop,daemon=True)
+    th.start()
+    return dNew
 
 def getNSmetadata(ns, name):
     """
@@ -144,10 +221,12 @@ def getNSConnectionInfo(ns, name):
     """
     mdata = getNSmetadata(ns, name)
     for md in mdata:
-        if not md.startswith(NS_METADATA_network): continue
-        d=json.loads(md[len(NS_METADATA_network):])
-        return (d.get('host',None),d.get('port',None))
-    return (None,None,None,None)
+        if not md.startswith(NS_METADATA_network):
+            continue
+        d = json.loads(md[len(NS_METADATA_network):])
+        return d.get('host', None), d.get('port', None)
+    return None, None
+
 
 def _connectApp(ns, name, connectionTestTimeOut = 10. ):
     """
@@ -162,15 +241,14 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
     """
     try:
         uri = ns.lookup(name)
-        log.debug("Application %s, found URI %s on %s from a nameServer %s" % (
-            name, uri, getNSConnectionInfo(ns, name), ns))
+        log.debug(f"Application {name}, found URI {uri} on {getNSConnectionInfo(ns,name)} from a nameServer {ns._pyroUri}")
         app2 = Pyro5.api.Proxy(uri)
     except Exception as e:
         log.error("Cannot find registered server %s on %s" % (name, ns) )
         raise
 
     try:
-        log.info("Connecting to application %s with %s"%(name, app2))
+        log.info(f"Connecting to application {name} with {app2._pyroUri}")
         # By default, Pyro waits an indefinite amount of time for the call to return. 
         # When testing connection to an remote object via _connectApp, the object getSignature method is called.
         # The connection timeout is set for this call. after this, the timeout is reset to default.
@@ -182,15 +260,16 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
         app2._pyroTimeout = None
         log.debug("Connected to " + sig + " with the application " + name)
     except Pyro5.core.errors.CommunicationError as e:
-        log.error("Communication error, perhaps SSL issue?")
+        log.exception("Communication error (network config?).")
         raise
     except Exception as e:
-        log.exception("Cannot connect to application " + name + ". Is the server running?")
+        log.exception(f"Cannot connect to application {name}. Is the server running?")
         raise
 
     return app2
 
-def connectApp(ns, name, connectionTestTimeOut = 10.):
+
+def connectApp(ns, name, connectionTestTimeOut=10.):
     return _connectApp(ns, name, connectionTestTimeOut)
 
 
@@ -206,10 +285,12 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
+def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional[PyroNetConf]=None, daemon=None, metadata=None):
     """
     Runs a simple application server
 
+    :param ns: nameserver Proxy
+    :param net: network configuration (deprecated)
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
@@ -218,23 +299,27 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
-
-    ns=net.getNS()
+    if ns is None:
+        log.error('ns not specified (this is deprecated)')
+        ns = net.getNS()
+    else: 
+        if net is not None: raise ValueError(f'When *ns* is specified, *net* must be None (not {net})')
     # server, port, nshost, nsport, 
     # fix the IP address published so that it is not 0.0.0.0
 
     externalDaemon = False
     if not daemon:
-        host=net.host
-        if host in ('0.0.0.0','::'):
-            ns._pyroBind() # connect so that _pyroConnection exists
-            host=ns._pyroConnection.sock.getsockname()[0]
-            log.warning(f"Adjusted INADDR_ANY {net.host} → {host} as per NS socket")
+        host = (net.host if net else '0.0.0.0')
+        port = (net.port if net else 0)
+        if host in ('0.0.0.0', '::'):
+            ns._pyroBind()  # connect so that _pyroConnection exists
+            host,port = ns._pyroConnection.sock.getsockname()[0:2]
+            if net is not None: log.warning(f"Adjusted INADDR_ANY {net.host}:{net.port} → {host}:{port} as per NS socket")
         try:
-            daemon = Pyro5.api.Daemon(host=host,port=net.port)
-            log.info(f'Pyro5 daemon runs on {host}:{net.port}')
+            daemon = Pyro5.api.Daemon(host=host, port=port)
+            log.info(f'Pyro5 daemon runs on {host}:{port}')
         except Exception:
-            log.exception(f'Can not run Pyro5 daemon on {host}:{net.port}')
+            log.exception(f'Can not run Pyro5 daemon on {host}:{port}')
             raise
     else:
         externalDaemon = True
@@ -251,10 +336,10 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     try:
         # the same interface shared by both Model and JobManager
         app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
-    #except AttributeError as e:
+    # except AttributeError as e:
     #    # catch attribute error (thrown when method not defined)
     #    log.warning(f'Can not register daemon for application {appName}')
-    except:
+    except Exception:
         log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
         raise
 
@@ -262,35 +347,60 @@ def runServer(net: PyroNetConf, appName, app, daemon=None, metadata=None):
     threading.current_thread().setName(appName)
 
     # generate connection metadata entry
-    _host,_port=daemon.locationStr.split(':')
+    _host, _port = daemon.locationStr.rsplit(':',1)
+    # for ipv6, remove braces
+    if _host.startswith('[') and _host.endswith(']'): _host=_host[1:-1]
 
-    if metadata is None: metadata=set()
-    metadata.add(NS_METADATA_network+json.dumps({'host':_host,'port':_port}))
+    if metadata is None:
+        metadata = set()
+    metadata.add(NS_METADATA_network+json.dumps({'host': _host, 'port': _port}))
 
     ns.register(appName, uri, metadata=metadata)
 
     log.debug(f'NameServer {appName} has registered uri {uri}')
-    log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
-    threading.Thread(target=daemon.requestLoop).start() # run daemon request loop in separate thread
+    if net is not None: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
+    else: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameserver: {ns._pyroUri}, applicationName:{appName}, daemon URI {uri}')
+    threading.Thread(target=daemon.requestLoop).start()  # run daemon request loop in separate thread
+
+    def _remove_from_ns(sig=None,stack=None):
+        log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
+        ns._pyroClaimOwnership()
+        ns.remove(appName)
+        log.warning('done')
+        # important: when handling a signal, reset the handler and re-emit it
+        # otherwise e.g. TERM would not cause the process to terminate
+        if sig is not None:
+           signal.signal(sig,signal.SIG_DFL)
+           log.warning(f'Re-emiting signal {sig}')
+           os.kill(os.getpid(),sig)
+           # os._exit(0)
+    atexit.register(_remove_from_ns) # regular process exit
+    signal.signal(signal.SIGTERM,_remove_from_ns) # terminate by signal
     return uri
 
 
-def runAppServer(*, server, nshost, nsport, appName, app, port=0):
+def runAppServer(*, appName, app, ns=None, server=None, nshost=None, nsport=0, port=0):
     """
     Runs a simple application server
 
-    :param str server: Host name of the server (internal host name)
-    :param int port: Port number on the server where daemon will listen (internal port number)
-    :param str nshost: Hostname of the computer running nameserver
-    :param int nsport: Nameserver port
+    :param Pyro5.api.Proxy ns: nameserver proxy
     :param str appName: Name of registered application
     :param instance app: Application instance
-    :param daemon: Reference to already running daemon, if available. Optional parameter.
+    :param int port: [deprecated] Port number on the server where daemon will listen (internal port number)
+    :param str server: [deprecated] Host name of the server (internal host name)
+    :param str nshost: [deprecated] Hostname of the computer running nameserver
+    :param int nsport: [deprecated] Nameserver port
 
     :raises Exception: if can not run Pyro5 daemon
     """
+    if ns is not None:
+        if server is not None or nshost is not None or nsport!=0: raise ValueError('When *ns* is specified, server, nshost, nsport must *not* be given')
+    else:
+        if server is None or nshost is None or nsport==0: raise ValueError('When *ns* is not specified, server, nshost, nsport *must* be given')
+
     return runServer(
-        net=PyroNetConf(host=server,nshost=nshost,nsport=nsport),
+        net=(PyroNetConf(host=server, nshost=nshost, nsport=nsport) if ns is None else None),
+        ns=ns,
         appName=appName,
         app=app,
         # daemon=daemon,
@@ -298,7 +408,7 @@ def runAppServer(*, server, nshost, nsport, appName, app, port=0):
     )
 
 
-def runJobManagerServer(*, server, nshost, nsport, jobman, port=0):
+def runJobManagerServer(*, ns=None, server=None, nshost=None, nsport=0, jobman, port=0):
     """
     Registers and runs given jobManager server
 
@@ -306,12 +416,16 @@ def runJobManagerServer(*, server, nshost, nsport, jobman, port=0):
     :param int port: Port number on the server where daemon will listen (internal port number)
     :param str nshost: Hostname of the computer running nameserver
     :param int nsport: Nameserver port
-    :param str appName: Name of job manager to be registered at nameserver
     :param jobman: Jobmanager
-    :param daemon: Reference to already running daemon, if available. Optional parameter.
     """
+    if ns is not None:
+        if server is not None or nshost is not None or nsport!=0: raise ValueError('When *ns* is specified, server, nshost, nsport must *not* be given')
+    else:
+        if server is None or nshost is None or nsport==0: raise ValueError('When *ns* is not specified, server, nshost, nsport *must* be given')
+
     return runServer(
-        net=PyroNetConf(host=server,nshost=nshost,nsport=nsport),
+        net=(PyroNetConf(host=server, nshost=nshost, nsport=nsport) if ns is None else None),
+        ns=ns,
         appName=jobman.getNSName(),
         app=jobman,
         # daemon=daemon,
@@ -328,7 +442,7 @@ def getIPfromUri(uri):
     :return: IP address 
     :rtype: string
     """
-    match = re.search('\@([\w\.]+)\:\d+$', str(uri))
+    match = re.search(r'@([\w\.]+)\:\d+$', str(uri))
     if match:
         return match.group(1)
     else:
@@ -371,6 +485,7 @@ def connectJobManager(ns, jobManName):
 
     return jobmanager.RemoteJobManager(_connectApp(ns, jobManName))
 
+
 def allocateApplicationWithJobManager(ns, jobMan):
     """
     Request new application instance to be spawned by  given jobManager.
@@ -386,13 +501,13 @@ def allocateApplicationWithJobManager(ns, jobMan):
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        status,jobid,jobport = jobMan.allocateJob(username+"@"+hostname)
+        status, jobid, jobport = jobMan.allocateJob(username+"@"+hostname)
         log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
     except Exception:
         log.exception("JobManager allocateJob() failed")
         print("".join(Pyro5.errors.get_pyro_traceback()))
         raise
-    return model.RemoteModel(_connectApp(ns, jobid),jobMan=jobMan,jobID=jobid)
+    return model.RemoteModel(_connectApp(ns, jobid), jobMan=jobMan, jobID=jobid)
 
 
 def allocateNextApplication(ns, jobMan):
@@ -407,188 +522,3 @@ def allocateNextApplication(ns, jobMan):
     :raises Exception: if allocation of job fails
     """
     return allocateApplicationWithJobManager(ns, jobMan)
-
-
-def downloadPyroFile(newLocalFileName, pyroFile, compressFlag=True):
-    """
-    Allows to download remote file (pyro file handle) to a local file.
-
-    :param str newLocalFileName: path to a new local file on a client.
-    :param pyrofile.PyroFile pyroFile: representation of existing remote server's file
-    :param bool compressFlag: will activate compression during data transfer (zlib)
-    """
-    import sys
-    file = pyrofile.PyroFile(newLocalFileName, 'wb', compressFlag=compressFlag)
-    if compressFlag:
-        pyroFile.setCompressionFlag()
-        file.setCompressionFlag()
-    for data in pyroFile.getChunk():
-        file.setChunk(data)
-    pyroFile.close()
-    file.close()
-
-
-def downloadPyroFileFromServer(newLocalFileName, pyroFile, compressFlag=True):
-    """
-    See :func:'downloadPyroFileFromServer'
-    """
-    downloadPyroFile(newLocalFileName, pyroFile, compressFlag)
-
-
-def uploadPyroFile(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
-    """
-    Allows to upload given local file to a remote location (represented by Pyro file hanfdle).
-
-    :param str clientFileName: path to existing local file on a client where we are
-    :param pyrofile.PyroFile pyroFile: represenation of remote file, this file will be created
-    :param int size: optional chunk size. The data are read and written in byte chunks of this size
-    :param bool compressFlag: will activate compression during data transfer (zlib)
-    """
-    file = pyrofile.PyroFile(clientFileName, 'rb', buffsize=size, compressFlag=compressFlag)
-    log.info("Uploading %s", clientFileName)
-    if compressFlag:
-        file.setCompressionFlag()
-        pyroFile.setCompressionFlag()
-        log.info("Setting compression flag on")
-    for data in file.getChunk():
-        pyroFile.setChunk(data)  # this is where the data are sent over net via Pyro
-    log.info("File transfer finished")
-    file.close()
-    pyroFile.close()
-
-
-def uploadPyroFileOnServer(clientFileName, pyroFile, size=1024*1024, compressFlag=True):
-    """
-    See :func:'downloadPyroFile'
-    """
-    uploadPyroFile(clientFileName, pyroFile, size, compressFlag)
-
-
-
-@deprecated.deprecated
-@dataclass
-class SSHContext(object):
-    """
-    Helper class to store ssh tunnel connection details. It is parameter to different methods (connectJobManager,
-    allocateApplicationWithJobManager, etc.).
-    When provided, the corresponding ssh tunnel connection is established and associated to proxy using decorator class
-    to make sure it can be terminated properly.
-    """
-    userName: str=''
-    sshClient: str='manual'
-    options: str=''
-    sshHost: str=''
-        
-
-class SshTunnel(object):
-    """
-    Helper class to represent established ssh tunnel. It defines terminate and __del__ method
-    to ensure correct tunnel termination.
-    """
-
-    async def runAsyncSSH(self,fwd,**kw):
-        'Async function which just creates background asyncssh task (tunnel) and returns'
-        async def _go():
-            'Create asyncssh connection and local/remote forwarding tunnel'
-            import asyncssh
-            async with asyncssh.connect(**kw) as conn:
-                direction,localPort,remoteHost,remotePort=fwd
-                if direction=='L': listener=await conn.forward_local_port('',localPort,remoteHost,remotePort)
-                else: listener=await conn.forward_remote_port('',remotePort,'localhost',localPort)
-                await listener.wait_closed()
-        import asyncio
-        asyncio.create_task(_go())
-
-    def __init__(self, remoteHost, userName, localPort, remotePort, sshClient='ssh', options='', sshHost='', Reverse=False):
-        """ 
-        Constructor. Automatic creation of ssh tunnel, using putty.exe for Windows and ssh for Linux.
-
-        :param str remoteHost: IP of remote host
-        :param str userName: User name, if empty, current user name is used
-        :param int localPort: Local port
-        :param int remotePort: Remote port
-        :param str sshClient: Path to executable ssh client (on Windows use double backslashes 'C:\\Program Files\\Putty\putty.exe')
-        :param str options: Arguments to ssh clinent, e.g. the location of private ssh keys
-        :param str sshHost: Computer used for tunelling, optional. If empty, equals to remoteHost
-        :param bool Reverse: True if reverse tunnel to be created (default is False)
-        
-        :raises Exception: if creation of a tunnel failed
-        """
-
-        if sshHost == '':
-            sshHost = remoteHost
-        if userName == '':
-            userName = os.getenv('USER')
-                
-        direction = 'L'
-        if Reverse is True:
-            direction = 'R'
-
-        self.sshClient=sshClient
-        self.tunnel=None
-
-        if sshClient == 'asyncssh':
-            # try to convert OpenSSH arguments to asyncssh options
-            import argparse
-            parser=argparse.ArgumentParser(add_help=False)
-            parser.add_argument('-F',dest='config')
-            parser.add_argument('-p',type=int,dest='ssh_port')
-            parser.add_argument('-oIdentityFile',type=str,action='append',dest='client_keys')
-            parser.add_argument('-oUserKnownHostsFile',type=str,dest='known_hosts')
-            parser.add_argument('-N',action='store_true')
-            kwopts=vars(parser.parse_args(options.split()))
-            port=kwopts.pop('ssh_port',22)
-            log.info('Options extracted from OpenSSH command-line: '+str(kwopts))
-            kwopts.pop('N',None) # not useful
-            import asyncio
-            asyncio.run(self.runAsyncSSH(fwd=(direction,localPort,remoteHost,remotePort),host=remoteHost,port=remotePort,**kwopts))
-        elif sshClient == 'manual':
-            # You need ssh server running, e.g. UNIX-sshd or WIN-freesshd
-            print('sshClient==manual: ',direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            cmd1 = 'ssh -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            cmd2 = 'putty.exe -%s %s:%s:%s %s@%s -N %s' % (
-                direction, localPort, remoteHost, remotePort, userName, sshHost, options)
-            log.info("If ssh tunnel does not exist and you need it, do it manually using a command e.g. " + cmd1 +
-                     " , or " + cmd2)
-        else:
-            # command-based clients, create self.tunnel as process which can be terminated
-
-            # use direct system command. Paramiko or sshtunnel do not work.
-            # put ssh public key on a server - interaction with a keyboard
-            # for password will not work here (password goes through TTY, not stdin)
-            if sshClient == 'ssh': cmd0 = 'ssh'
-            elif sshClient == 'autossh': cmd0 = 'autossh'
-            elif 'putty' in sshClient.lower(): cmd0=sshClient
-            else: raise ValueError('Unknown ssh client {sshClient}.')
-            # for putty:
-            # need to create a public key *.ppk using puttygen.
-            # It can be created by importing Linux private key.
-            # The path to that key is given as -i option
-            cmd = [cmd0,f'-{direction}',f'{localPort}:{remoteHost}:{remotePort}',f'{userName}@{sshHost}','-N',options]
-
-            try:
-                log.debug("Creating ssh tunnel via command: " + str(cmd))
-                self.tunnel = subprocess.Popen(cmd.split())  # TODO cmd is a list - AttributeError: 'list' object has no attribute 'split'
-            except Exception:
-                log.exception("Creation of a tunnel failed. Can not execute the command: %s " % str(cmd))
-                raise
-
-        time.sleep(1.0)
-
-    def terminate(self):
-        """
-        Terminate the connection.
-        """
-        if self.tunnel is not None:
-            if self.sshClient=='python':  # TODO 'sshClient' variable is not anywhere else in this project
-                self.tunnel.cancel()
-                self.tunnel=None
-            else:
-                self.tunnel.terminate()
-                self.tunnel = None
-
-    def __del__(self):
-        self.terminate()
-
-

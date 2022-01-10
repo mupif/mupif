@@ -167,9 +167,9 @@ The following example illustrates the so-called
 weak-coupling, where for each solution step, the first application
 (Application1) evaluates the value of concentration that is passed to
 the second application (Application2) which, based on provided
-concentration values (PropertyID.PID_Concentration), evaluates the
+concentration values (DataID.PID_Concentration), evaluates the
 average cumulative concentration
-(PropertyID.PID_CumulativeConcentration). This is repeated for each
+(DataID.PID_CumulativeConcentration). This is repeated for each
 solution step. The example also illustrates, how solution steps can be
 generated in order to satisfy time step stability requirements of
 individual applications.
@@ -212,12 +212,12 @@ individual applications.
          #solve problem 1
          app1.solveStep(istep)
          #request temperature field from app1
-         c = app1.getProperty(PropertyID.PID_Concentration, istep)
+         c = app1.getProperty(DataID.PID_Concentration, istep)
          # register temperature field in app2
          app2.setProperty (c)
          # solve second sub-problem
          app2.solveStep(istep)
-         prop = app2.getProperty(PropertyID.PID_CumulativeConcentration, istep)
+         prop = app2.getProperty(DataID.PID_CumulativeConcentration, istep)
          print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
 
       except APIError.APIError as e:
@@ -828,13 +828,13 @@ loaded.
 
         def solveStep(self, istep, stageID=0, runInBackground=False):
             self.thermalSolver.solveStep(istep, stageID, runInBackground)
-            self.mechanicalSolver.setField(self.thermalSolver.getField(FieldID.FID_Temperature, istep.getTime()))
+            self.mechanicalSolver.setField(self.thermalSolver.getField(DataID.FID_Temperature, istep.getTime()))
             self.mechanicalSolver.solveStep(istep, stageID, runInBackground)
 
         def getField(self, fieldID, time, objectID=0):
-            if fieldID == FieldID.FID_Temperature:
+            if fieldID == DataID.FID_Temperature:
                 return self.thermalSolver.getField(fieldID, time, objectID)
-            elif fieldID == FieldID.FID_Displacement:
+            elif fieldID == DataID.FID_Displacement:
                 return self.mechanicalSolver.getField(fieldID, time, objectID)
             else:
                 raise APIError.APIError('Unknown field ID')
@@ -1054,7 +1054,7 @@ object from URI. This is illustrated in the following code snippet:
 
 .. code-block:: python
 
-   field_uri = Solver.getFieldURI(FieldID.FID_Temperature, 0.0)
+   field_uri = Solver.getFieldURI(DataID.FID_Temperature, 0.0)
    field_proxy = Pyro4.Proxy(uri)
 
 Requirements for distributed computing

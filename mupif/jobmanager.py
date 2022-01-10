@@ -20,16 +20,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-from builtins import str, range, object
 
-import threading
-import subprocess
-import socket
-import time as timeTime
 import logging
 import os
 import Pyro5
-import deprecated
+import tempfile
+from . import pyroutil
 log = logging.getLogger()
 
 # error codes
@@ -74,18 +70,22 @@ class JobManager(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, *, appName, jobManWorkDir, maxJobs=1):
+    def __init__(self, *, appName, workDir=None, maxJobs=1):
         """
         Constructor. Initializes the receiver.
 
         :param str appName: Name of receiver (used also by NS)
-        :param str jobManWorkDir: Absolute path for storing data, if necessary
+        :param str workDir: Absolute path for storing data, if necessary (if None, temporary directory will be created)
         :param int maxJobs: Maximum number of jobs to run simultaneously
         """
         self.applicationName = appName
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
-        self.jobManWorkDir = jobManWorkDir
+        if workDir is None:
+            self.workDirTemp=tempfile.TemporaryDirectory(prefix='mupif-')
+            self.workDir=self.workDirTemp.name
+        else:
+            self.workDir=workDir
 
         # XXX: this is the same as in Model.registerPyro
         # there should be a common base for things exposed over Pyro
@@ -95,7 +95,7 @@ class JobManager(object):
         self.appName = None
         self.externalDaemon = None
 
-    def preAllocate (self, requirements=None): 
+    def preAllocate(self, requirements=None):
         """
             Allows to pre-allocate(reserve) the resource. 
             Returns ticket id (as promise) to finally allocate resource. 
@@ -104,13 +104,14 @@ class JobManager(object):
             The returned ticket is valid only for fixed time period), then should expire.
         """
         return False
+
     def allocateJob(self, user, natPort=0, ticket=None):
         """
         Allocates a new job.
 
         :param str user: user name
         :param int natPort: NAT port used in ssh tunnel
-        :ticket optional: ticket for preallocated resource.
+        :param ticket: ticket for preallocated resource, defaults to None
 
         :return: tuple (error code, None). errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES). JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23). JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)
         :rtype: tuple
@@ -144,13 +145,12 @@ class JobManager(object):
     def getNSName(self):
         return self.applicationName
 
-    def uploadFile(self, jobID, filename, pyroFile, hkey):
+    def uploadFile(self, jobID, filename, pyroFile):
         """
         Uploads the given file to application server, files are uploaded to dedicated jobID directory
         :param str jobID: jobID
         :param str filename: target file name
         :param PyroFile pyroFile: source pyroFile
-        :param str hkey: A password string
         """
 
     def getPyroFile(self, jobID, filename, buffSize=1024):
@@ -183,7 +183,6 @@ class JobManager(object):
         self.appName = appName
         self.externalDaemon = externalDaemon
 
-
     def getJobWorkDir(self, jobID):
         """
         Returns working directory of a job with given ID.
@@ -192,8 +191,8 @@ class JobManager(object):
         :return: job working directory
         :rtype: str
         """
-        return self.jobManWorkDir + os.path.sep + jobID
-        
+        return self.workDir + os.path.sep + jobID
+
 
 # @deprecated.deprecated
 class RemoteJobManager (object):
@@ -225,7 +224,7 @@ class RemoteJobManager (object):
         """
         Terminates the application. Terminates the allocated job at jobManager
         """
-        if self._decoratee:
+        if self._decoratee is not None:
             # self._decoratee.terminate() #so far, leave the jobManager registered on nameserver
             self._decoratee = None
 

@@ -1,9 +1,10 @@
-import Pyro5
+import Pyro5.api
 from pydantic.dataclasses import dataclass
 from . import dumpable
 from . import units
 import typing
 import pydantic
+
 
 # @dataclass(frozen=True)
 @Pyro5.api.expose
@@ -24,19 +25,21 @@ class TimeStep(dumpable.Dumpable):
     """
 
     class Config:
-        frozen=True
+        frozen = True
 
-    number: int=1
-    unit: typing.Optional[units.Unit]=None
-    time: units.Quantity #: Time(time at the end of time step)
-    dt: units.Quantity   #: Step length (time increment)
-    targetTime: units.Quantity #: target simulation time (time at the end of simulation, not of a single TimeStep)
+    number: int = 1
+    unit: typing.Optional[units.Unit] = None
+    time: units.Quantity  #: Time(time at the end of time step)
+    dt: units.Quantity  #: Step length (time increment)
+    targetTime: units.Quantity  #: target simulation time (time at the end of simulation, not of a single TimeStep)
 
-    @pydantic.validator('time','dt','targetTime',pre=True)
-    def conv_times(cls,t,values):
-        if isinstance(t,units.Quantity): return t
-        if 'unit' not in values or values['unit'] is None: raise ValueError(f'When giving time as {type(t).__name__} (not a Quantity), unit must be given.')
-        return units.Quantity(value=t,unit=values['unit'])
+    @pydantic.validator('time', 'dt', 'targetTime', pre=True)
+    def conv_times(cls, t, values):
+        if isinstance(t, units.Quantity):
+            return t
+        if 'unit' not in values or values['unit'] is None:
+            raise ValueError(f'When giving time as {type(t).__name__} (not a Quantity), unit must be given.')
+        return units.Quantity(value=t, unit=values['unit'])
 
     def getTime(self):
         """

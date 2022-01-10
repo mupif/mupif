@@ -5,6 +5,7 @@ import Pyro5
 from pydantic.dataclasses import dataclass
 import typing
 
+
 @Pyro5.api.expose
 class Vertex(Dumpable):
     """
@@ -13,12 +14,12 @@ class Vertex(Dumpable):
     .. automethod:: __init__
     .. automethod:: __repr__
     """
-    number: int #: Local vertex number
-    label: typing.Optional[int] #: Vertex label
-    coords: typing.Union[typing.Tuple[float,float],typing.Tuple[float,float,float]] #: 3D position vector of a vertex
+    number: int  #: Local vertex number
+    label: typing.Optional[int]  #: Vertex label
+    coords: typing.Union[typing.Tuple[float, float], typing.Tuple[float, float, float]]  #: 3D position vector of a vertex
 
-    #class Config:
-    #    frozen=True
+    # class Config:
+    #     frozen=True
 
     def __hash__(self): return id(self)
 

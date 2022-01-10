@@ -29,6 +29,7 @@ from typing import Union, Tuple
 from . import dumpable
 import pydantic
 
+
 @Pyro5.api.expose
 class BBox(pydantic.BaseModel):
     """
@@ -40,8 +41,8 @@ class BBox(pydantic.BaseModel):
     .. automethod:: __init__
     .. automethod:: __str__
     """
-    coords_ll: Union[Tuple[float,float],Tuple[float,float,float]]
-    coords_ur: Union[Tuple[float,float],Tuple[float,float,float]]
+    coords_ll: Union[Tuple[float, float], Tuple[float, float, float]]
+    coords_ur: Union[Tuple[float, float], Tuple[float, float, float]]
 
     def __hash__(self): return id(self)
 
@@ -50,10 +51,10 @@ class BBox(pydantic.BaseModel):
         """
         Constructor.
 
-        :param tuple coords_ll: Tuple with coordinates of lower left corner
-        :param tuple coords_ur: Tuple with coordinates of uper right corner
+        :param tuple or list coords_ll: Tuple or list with coordinates of lower left corner
+        :param tuple or list coords_ur: Tuple or list with coordinates of uper right corner
         """
-        super().__init__(coords_ll=coords_ll,coords_ur=coords_ur)
+        super().__init__(coords_ll=coords_ll, coords_ur=coords_ur)
         
     def __str__(self):
         """
@@ -83,19 +84,20 @@ class BBox(pydantic.BaseModel):
         :return: Returns True if receiver intersects given bounding box, otherwise False
         :rtype: bool
         """
-        nsd=len(self.coords_ll)
-        mnA,mxA,mnB,mxB=self.coords_ll,self.coords_ur,bbox.coords_ll,bbox.coords_ur
-        if nsd==3:
+        nsd = len(self.coords_ll)
+        mnA, mxA, mnB, mxB = self.coords_ll, self.coords_ur, bbox.coords_ll, bbox.coords_ur
+        if nsd == 3:
             return (
-                mnA[0]<=mxB[0] and mnA[1]<=mxB[1] and mnA[2]<=mxB[2] and
-                mnB[0]<=mxA[0] and mnB[1]<=mxA[1] and mnB[2]<=mxA[2]
+                mnA[0] <= mxB[0] and mnA[1] <= mxB[1] and mnA[2] <= mxB[2] and
+                mnB[0] <= mxA[0] and mnB[1] <= mxA[1] and mnB[2] <= mxA[2]
             )
-        elif nsd==2:
+        elif nsd == 2:
             return (
-                mnA[0]<=mxB[0] and mnA[1]<=mxB[1] and
-                mnB[0]<=mxA[0] and mnB[1]<=mxA[1]
+                mnA[0] <= mxB[0] and mnA[1] <= mxB[1] and
+                mnB[0] <= mxA[0] and mnB[1] <= mxA[1]
             )
-        else: raise ValueError(f'BBox dimension must be 2 or 3 (not {nsd}).')
+        else:
+            raise ValueError(f'BBox dimension must be 2 or 3 (not {nsd}).')
 
         if 0:
             nsd = len(self.coords_ll)
@@ -122,4 +124,3 @@ class BBox(pydantic.BaseModel):
             # Merge with given coordinates
             self.coords_ll = tuple([min(self.coords_ll[i], entity[i]) for i in range(nsd)])
             self.coords_ur = tuple([max(self.coords_ur[i], entity[i]) for i in range(nsd)])
-

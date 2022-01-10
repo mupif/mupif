@@ -1,8 +1,8 @@
 numpy
-scipy
+# scipy
 meshio
-nose
-rednose
+pytest
+pytest-cov
 Pyro5
 serpent
 jsonpickle
@@ -10,9 +10,10 @@ jsonschema
 h5py
 matplotlib
 astropy
+deprecated
+appdirs
 pydantic>=1.7.3
 # for documentation
 sphinxcontrib-apidoc
 asyncssh
 setproctitle
-deprecated

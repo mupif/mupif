@@ -22,7 +22,7 @@ Welcome to MuPIF's documentation!
    changelog.rst
    dev.rst
 
-   api/api.rst
+   ref.rst
 
 
 Indices and tables

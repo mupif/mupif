@@ -4,10 +4,9 @@ import Pyro5
 import logging
 sys.path.extend(['..', '../..'])
 import mupif as mp
-from simple_slurm import Slurm
 import time as timemod
 import uuid
-import pbs_tool_slurm
+import pbs_tool
 
 log = logging.getLogger()
 
@@ -15,14 +14,14 @@ log = logging.getLogger()
 @Pyro5.api.expose
 class Application10(mp.Model):
     """
-    Simple application that computes an arithmetical average of mapped property
+    Simple application which sums given time values times 2
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata={}, **kwargs):
         MD = {
-            'Name': 'Simple application cummulating time steps',
+            'Name': 'Simple time summator',
             'ID': 'N/A',
-            'Description': 'Cummulates time steps',
-            'Version_date': '02/2019',
+            'Description': 'Cummulates given time values times 2',
+            'Version_date': '12/2021',
             'Physics': {
                 'Type': 'Other',
                 'Entity': 'Other'
@@ -31,8 +30,8 @@ class Application10(mp.Model):
                 'Software': 'Python script',
                 'Language': 'Python3',
                 'License': 'LGPL',
-                'Creator': 'Borek',
-                'Version_date': '02/2019',
+                'Creator': 'Stanislav',
+                'Version_date': '12/2021',
                 'Type': 'Summator',
                 'Documentation': 'Nowhere',
                 'Estim_time_step_s': 1,
@@ -46,23 +45,23 @@ class Application10(mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True}],
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Time value',
+                 'Description': 'Time', 'Units': 's', 'Required': True, "Set_at": "timestep", "Obj_ID": 1}
+            ],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.PropertyID.PID_Time', 'Name': 'Cummulative time',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated'}]
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
+                 'Description': 'Cummulative time', 'Units': 's'}
+            ]
         }
-        super().__init__(metadata=MD)
+        super().__init__(metadata=MD, **kwargs)
         self.updateMetadata(metadata)
-        self.value = 0.0
-        self.count = 0
-        self.contrib = mp.ConstantProperty(value=(0.,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
+        self.value = 0.
+        self.input = 0.
 
-    def initialize(self, file='', workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(file=file, workdir=workdir, metadata=metadata, validateMetaData=validateMetaData)
+    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def getProperty(self, propID, time, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=0):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -70,80 +69,66 @@ class Application10(mp.Model):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
+        if objectTypeID == mp.DataID.PID_Time:
+            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
 
-        if propID == mp.PropertyID.PID_Time:
-            return mp.ConstantProperty(value=(self.value,), propID=mp.PropertyID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
-        else:
-            raise mp.APIError('Unknown property ID')
-
-    def setProperty(self, prop, objectID=0):
-        if prop.getPropertyID() == mp.PropertyID.PID_Time_step:
-            # remember the mapped value
-            self.contrib = prop
-        else:
-            raise mp.APIError('Unknown property ID')
+    def set(self, obj, objectID=0):
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mp.DataID.PID_Time:
+                self.input = obj.inUnitsOf(mp.U.s).getValue()[0]
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        # this function is designed to run the executable in Slurm PBS and process the output when the job is finished.
+        # this function is designed to run the executable in Torque or Slurm PBS and process the output when the job is finished.
 
-        # create unique input and output file names
-        step_id = uuid.uuid4()
-        inpfile = "inp_%s.txt" % step_id
-        outfile = "out_%s.txt" % step_id
-
-        inputvalue = self.contrib.inUnitsOf(mp.U.s).getValue(tstep.getTime())[0]
-
-        # prepare the input file
-        f = open(inpfile, 'w')
-        f.write("%f" % inputvalue)
-        f.close()
-
-        # submit the job
         rp = os.path.realpath(__file__)
         dirname = os.path.dirname(rp)
-        jobid = pbs_tool_slurm.submit_job(
-            command='python %s/appexec.py %s %s' % (dirname, inpfile, outfile),
-            job_name='MupifExample10',
-            output=dirname + '/%A_%a.out',
-            cpus_per_task=1
-        )
+
+        # create unique input and output file names (this is specific for each application/executable)
+        step_id = uuid.uuid4()
+        inpfile = "%s/inp_%s.txt" % (dirname, step_id)
+        outfile = "%s/out_%s.txt" % (dirname, step_id)
+        #
+        # create the input file
+        f = open(inpfile, 'w')
+        f.write("%f" % self.input)
+        f.close()
+
+        #
+
+        # submit the job
+        jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
+
+        #
 
         # wait until the job is finished
         # After its completion, the job stays in the list of jobs with 'Completed' status for a while.
         # After that time it is not in the list any more, which results in 'Unknown' state.
-        # With 1 minute period of checking the job should be still available in the list.
-        status = ''
-        job_finished = False
-        while job_finished is False:
-            status = pbs_tool_slurm.get_job_status(jobid=jobid)
-            print("Job %d status is %s" % (jobid, status))
-            if status == 'Completed' or status == 'Unknown':
-                job_finished = True
-            if job_finished is False:
-                timemod.sleep(10.)
+        # With 60-second period of checking the job should be still available in the list.
+        pbs_tool.wait_until_job_is_done(jobid=jobid, checking_frequency=1.)
 
-        # process the results
+        #
+
+        # process the results (this is specific for each application/executable)
         if os.path.exists(outfile):
             f = open(outfile, 'r')
             read_value = f.readline()
             f.close()
             if read_value != "error":
-                self.value = float(read_value)
+                self.value += float(read_value)
             else:
                 raise mp.apierror.APIError("A problem occured in the solver.")
         else:
+            print("File '%s' does not exist." % outfile)
             raise mp.apierror.APIError("The output file does not exist.")
 
-        self.count = self.count+1
-
-        # delete the files
+        # delete the temporary input and output files
         if os.path.exists(inpfile):
             os.remove(inpfile)
         if os.path.exists(outfile):
             os.remove(outfile)
 
     def getCriticalTimeStep(self):
-        return 3.*mp.U.s
+        return 1000.*mp.U.s
 
     def getAssemblyTime(self, tstep):
         return tstep.getTime()

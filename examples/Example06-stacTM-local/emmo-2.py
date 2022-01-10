@@ -11,23 +11,23 @@ import re
 owlready2.set_log_level(0)
 
 # Load EMMO
-#emmo = get_ontology() #Causes error in emmo-all-inferred
-#emmo = get_ontology("http://www.emmc.info/emmc-csa/emmo-core#")
-#emmo = owlready2.get_ontology("emmo-all-inferred.owl")
-#emmo = owlready2.get_ontology("emmo-all-inferred.owl").load()
-#emmo = get_ontology("http://test.org/onto.owl")
+# emmo = get_ontology() #Causes error in emmo-all-inferred
+# emmo = get_ontology("http://www.emmc.info/emmc-csa/emmo-core#")
+# emmo = owlready2.get_ontology("emmo-all-inferred.owl")
+# emmo = owlready2.get_ontology("emmo-all-inferred.owl").load()
+# emmo = get_ontology("http://test.org/onto.owl")
 emmo = em.get_ontology() #overloaded method
 emmo.load()
 # em.get_ontology("http://emmo.info/emmo/emmo-inferred#")
-#emmo = get_ontology("http://www.emmc.info/emmo-models#")
-#emmo = get_ontology("http://www.emmc.info/emmc-csa/properties")
-#emmo = get_ontology("emmo-all-inferred.owl")
-#emmo.load()
-#print(emmo.electron_cloud)
-#print(emmo.has_part)
-#emmo.sync_attributes()
+# emmo = get_ontology("http://www.emmc.info/emmo-models#")
+# emmo = get_ontology("http://www.emmc.info/emmc-csa/properties")
+# emmo = get_ontology("emmo-all-inferred.owl")
+# emmo.load()
+# print(emmo.electron_cloud)
+# print(emmo.has_part)
+# emmo.sync_attributes()
 
-#emmo.sync_reasoner(reasoner="Pellet")
+# emmo.sync_reasoner(reasoner="Pellet")
 
 # Create a new ontology based on emmo
 onto = owlready2.get_ontology('onto.owl')

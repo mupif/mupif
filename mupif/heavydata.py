@@ -1,9 +1,77 @@
+'''
+The *heavydata* module defines classes for sematic access to potentially large (that is, larger than RAM) structured data, both locally and over the network. The data structure is defined using *schemas* in JSON, where each schema defines table-like structure with rows of data, each row possibly further referencing another table with a different schema. The data is internally stored in a HDF5 file, which includes the schemas, making the file self-describing. JSON schema is thus only required when the data is being created, not for opening an already existing data.
+
+JSON schema specification
+--------------------------
+
+The schema is defined as dictionary (nesting is possible). The top-level dictionary of each schema
+
+#. **must** include ``_schema`` (which **must** define ``name`` and ``version``),
+#. **must** include ``_datasetName`` entries,
+#. **may** include other, regular entries, as described below; names **must not** be reserved names.
+
+Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``lookup`` and ``path``.
+
+Regular entries
+""""""""""""""""
+
+Regular entries are one of the following.
+
+#. Computed attribute (identified via the ``lookup`` keyword); computed attribute **must** define ``lookup``, which is a lookup table (key-value dictionary), **dtype** (datatype being returned from lookup) and **key** (descriptor of data attribute used for lookup); it **may** define ``unit``.
+#. Data attribute (identified via the ``dtype`` key, but not having ``lookup``); it **must** define ``dtype`` and **may** define ``unit``, ``shape``.
+#. subschema reference (identified by the ``path`` keyword); it **must** define ``path`` and ``schema``. ``path`` must contain the substring ``{ROW}`` (is replaced by row number to which the nested data structure belongs) and end with ``/`` (forward slash).
+#. dictionary possibly including other regular entries (directory, creating hierarchy).
+
+Data types
+^^^^^^^^^^^^
+
+``dtype`` specifies datatype for the entry value using the ``numpy.dtype`` notation (see `Data type objects <https://numpy.org/doc/stable/reference/arrays.dtypes.html>`__), for example ``f8`` for 8-byte (64-bit) floating-point number.
+
+Strings are stored as utf-8 encoded byte arrays (thus their storage length might be larger than number of characters). use ``"dtype":"a"`` for variable-length strings (``a`` implies ``"shape":"variable"``), and ``"dtype":"a10"`` for string of maximum 10 bytes.
+
+``shape`` is a tuple specifying fixed shape: e.g. ``"shape":(3)`` is rank-1 3-vector, ``"shape":(3,3)`` is rank-2 3×3 matrix and so on. The special value of ``"shape":"variable"`` denotes dynamic 1d array of given ``dtype``.
+
+.. note:: Variable-length data (both strings and numerical arrays) are handled in a special way by the HDF5 storage; each (non-empty) entry has about 30b overhead, plus necessitates allocationes. If your data can always fit into a fixed-size array (such as string of maximum 20 bytes, ``a20``), prefer that for both performance ans storage reasons.
+
+All data are initialized to the default when constructed, which is:
+
+* ``NaN`` (not-a-number) for floating-point types (scalars and arrays),
+* ``0`` (zero) for integer types (scalars and arrays),
+* empty array for dynamic arrays,
+* empty string for both static-sized (``"dtype":"a10"``) and dynamic-sized (``"dtype":"a"``) strings.
+
+Assignments of incompatible data (which cannot be converted to the underlying storage type), including mismatched shape of arrays, will raise exception.
+
+Units
+^^^^^^
+
+Entries specifying ``unit`` (which is any string `astropy.units.Unit <https://docs.astropy.org/en/stable/api/astropy.units.Unit.html>`__ can grok) **must** be assigned with quantities including compatible units; the value will be converted to the schema unit before being set. The field will be returned as a Quantity (including the unit) when read back.
+
+Subschema
+"""""""""""
+
+Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyDataHandle.openData`) and ``path``. Path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
+
+Accessing data
+----------------
+
+Data are accesse using *Contexts*, special classes abstracting away the underlying storage. They define getters (and setters) for each data level (the are called simply ``get``/``set`` followed by capitalized entry name). Rows are selected using the usual indexing operator ``[index]``, though a whole column can be returned when index is not specified.
+
+Top contexts (on the level of the schema) define a few special methods:
+
+* ``resize`` which will change the number of rows; new rows will be always set to the default values. When passing the argument ``reset=True`` to ``resize``, all rows will be default-initialized.
+* ``inject`` will replace the current context's data with data from another context (recursively); the routine will take care to resize structures as necessary. Schema names must be matching, and differences in schema versions will be reported as warning (it will be possible to user-define transformation for converting between different schema versions). The data exchange happens using serialized format which can be obtained and consumed using ``to_dump()`` and ``from_dump(…)`` methods.
 
 
-sampleSchemas_json='''
+'''
+
+sampleSchemas_json = '''
 [
     {
-        "_schema": "atom",
+        "_schema": {
+            "name": "org.mupif.sample.atom",
+            "version": "1.0"
+        },
         "_datasetName": "atoms",
         "identity": {
             "element": {
@@ -100,7 +168,10 @@ sampleSchemas_json='''
         }
     },
     {
-        "_schema": "molecule",
+        "_schema": {
+            "name": "org.mupif.sample.molecule",
+            "version": "1.0"
+        },
         "_datasetName": "molecules",
         "identity": {
             "chemicalName": {
@@ -213,11 +284,14 @@ sampleSchemas_json='''
         },
         "atoms": {
             "path": "molecule/{ROW}/",
-            "schema": "atom"
+            "schema": "org.mupif.sample.atom"
         }
     },
     {
-        "_schema": "grain",
+        "_schema": {
+            "name": "org.mupif.sample.grain",
+            "version": "1.0"
+        },
         "_datasetName": "grains",
         "identity": {
             "material": {
@@ -263,7 +337,7 @@ sampleSchemas_json='''
         },
         "molecules": {
             "path": "grain/{ROW}/",
-            "schema": "molecule"
+            "schema": "org.mupif.sample.molecule"
         }
     }
 ]
@@ -280,21 +354,22 @@ import h5py
 import Pyro5.api
 # metadata support
 from .mupifobject import MupifObject
-from . import units, pyroutil, dumpable, pyrofile
+from . import units, pyroutil, dumpable
 from . import dataid
+from .pyrofile import PyroFile
 import types
 import json
 import tempfile
 import logging
-import deprecated
 import os
 import pydantic
 import subprocess
 import shutil
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
-def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
-    __doc0__='''
+
+def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
+    __doc0__ = '''
     Transform dictionary-structured data schema into context access types.
     The access types are created using the "type" builtin and only stored
     in closures of the functions returning them. The top-level context is
@@ -313,114 +388,138 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     @dataclass
     class CookedSchemaFragment:
         'Internal data used when cookSchema is called recursively'
-        dtypes: list   # accumulates numpy dtypes for compound datatype 
-        defaults: dict # default values, nan for floats and 0 for integers
-        subpaths: list # accumulates nested paths (for deletion when resizing)
-        T: Any=None    # nested context type
-        doc: typing.List[str]=dataclasses.field(default_factory=list) # accumulates documentation (as markdown nested list)
-        def append(self,other):
-            self.dtypes+=other.dtypes
-            self.defaults.update(other.defaults)
-            self.doc+=other.doc
-            self.subpaths+=other.subpaths
+        dtypes: list    # accumulates numpy dtypes for compound datatype
+        defaults: dict  # default values, nan for floats and 0 for integers
+        subpaths: dict  # accumulates nested paths (for deletion when resizing), as (path,schema) tuple, keyed by FQ
+        units: dict     # accumulates units for normal values types (for dict export), keyed by FQ
+        T: Any = None   # nested context type
+        doc: typing.List[str] = dataclasses.field(default_factory=list)  # accumulates documentation (as markdown nested list)
 
+        def append(self, other):
+            self.dtypes += other.dtypes
+            self.defaults.update(other.defaults)
+            self.doc += other.doc
+            self.subpaths.update(other.subpaths)
+            self.units.update(other.units)
 
     def dtypeUnitDefaultDoc(v):
         'Parse dictionary *v* (part of the schema) and return (dtype,unit,default,doc) tuple'
-        shape=v['shape'] if 'shape' in v else ()
-        if isinstance(shape,list): shape=tuple(shape)
-        ddoc={}
-        if shape: ddoc['shape']=f'[{"×".join([str(s) for s in shape])}]'
-        unit=units.Unit(v['unit']) if 'unit' in v else None
-        dtype=v['dtype']
-        default=None
-        if dtype=='a':
-            dtype=h5py.string_dtype(encoding='utf-8')
-            shape=None
-            ddoc['dtype']='string (utf-8 encoded)'
-            ddoc['shape']='dynamic'
-        elif shape=='variable':
-            ddoc['dtype']=f'`[{np.dtype(dtype).name},…]`'
-            dtype=h5py.vlen_dtype(np.dtype(dtype))
-            shape=None
-            ddoc['shape']='dynamic'
+        shape = v['shape'] if 'shape' in v else ()
+        if isinstance(shape, list):
+            shape = tuple(shape)
+        ddoc = {}
+        if shape:
+            ddoc['shape'] = f'[{"×".join([str(s) for s in shape])}]'
+        unit = units.Unit(v['unit']) if 'unit' in v else None
+        dtype = v['dtype']
+        default = None
+        if dtype == 'a':
+            dtype = h5py.string_dtype(encoding='utf-8')
+            shape = None
+            ddoc['dtype'] = 'string (utf-8 encoded)'
+            ddoc['shape'] = 'dynamic'
+        elif shape == 'variable':
+            ddoc['dtype'] = f'`[{np.dtype(dtype).name},…]`'
+            dtype = h5py.vlen_dtype(np.dtype(dtype))
+            shape = None
+            ddoc['shape'] = 'dynamic'
         else:
-            dtype=np.dtype((dtype,shape))
+            dtype = np.dtype((dtype, shape))
             # log.warning(f'{fq}: defaults for non-scalar quantities (dtype.subdtype) not yet supported.')
-            basedtype=(dtype if (not hasattr(dtype,'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
-            #basedtype=dtype # workaround
-            if basedtype.kind=='f': default=np.nan
-            elif basedtype.kind in 'iu': default=0 
-            ddoc['dtype']=f'`{basedtype.name}`'
-        if unit: ddoc['unit']=f"`{str(unit)}`"
+            basedtype = (dtype if (not hasattr(dtype, 'subdtype') or dtype.subdtype is None) else dtype.subdtype[0])
+            # basedtype=dtype # workaround
+            if basedtype.kind == 'f':
+                default = np.nan
+            elif basedtype.kind in 'iu':
+                default = 0
+            ddoc['dtype'] = f'`{basedtype.name}`'
+        if unit:
+            ddoc['unit'] = f"`{str(unit)}`"
         if 'lookup' in v:
-            ddoc['read-only']=f'table look-up by `{v["key"]}`'
-            default=None
-        if default is not None: ddoc['default']=f"`{str(default)}`"
-        return dtype,unit,default,', '.join(f'{k}: {v}' for k,v in ddoc.items())
+            ddoc['read-only'] = f'table look-up by `{v["key"]}`'
+            default = None
+        if default is not None:
+            ddoc['default'] = f"`{str(default)}`"
+        return dtype, unit, default, ', '.join(f'{k}: {v}' for k, v in ddoc.items())
 
     def capitalize(k):
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]  
 
-    ret=CookedSchemaFragment(dtypes=[],defaults={},subpaths=[])
-    meth={} # accumulate attribute access methods
-    docLevel=(0 if not schemaName else prefix.count('.')+1)
+    ret = CookedSchemaFragment(dtypes=[], defaults={}, subpaths={}, units={})
+    meth = {} # accumulate attribute access methods
+    docLevel = (0 if not schemaName else prefix.count('.')+1)
 
     # top-level only
     if not schemaName:
-        schemaName=desc['_schema']
-        datasetName=desc['_datasetName']
-        assert len(prefix)==0
-        T_name='Context_'+schemaName
+        schemaName = desc['_schema']['name']
+        schemaVersion = desc['_schema']['version']
+        datasetName = desc['_datasetName']
+        assert len(prefix) == 0
+        T_name = 'Context_'+schemaName.replace('.', '_')
         import hashlib
-        h=hashlib.blake2b(digest_size=6)
+        h = hashlib.blake2b(digest_size=6)
         h.update(json.dumps(desc).encode('utf-8'))
-        fakeModule=types.ModuleType('_mupif_heavydata_'+h.hexdigest(),'Synthetically generated module for mupif.HeavyDataHandle schemas')
+        fakeModule = types.ModuleType('_mupif_heavydata_'+h.hexdigest(), 'Synthetically generated module for mupif.HeavyDataHandle schemas')
         # this somehow breaks imports, so better to avoid it until understood
         # if fakeModule.__name__ in sys.modules: return getattr(sys.modules[fakeModule.__name__],T_name)
         # sys.modules[fakeModule.__name__]=fakeModule
-        ret.doc+=[f'**schema {schemaName}**','']
+        ret.doc += [f'**schema {schemaName}**', '']
     else:
-        T_name='Context_'+schemaName+'_'+prefix.replace('.','_')
+        T_name = 'Context_'+schemaName+'_'+prefix.replace('.', '_')
 
-    for key,val in desc.items():
+    for key, val in desc.items():
         # fully-qualified name: for messages and compound field name in h5py
-        fq=(f"{prefix}.{key}" if prefix else key)
-        docHead=docLevel*3*' '+f'* `{key}`'
+        fq = (f"{prefix}.{key}" if prefix else key)
+        docHead = docLevel*3*' '+f'* `{key}`'
         # special keys start with underscore, so far only _schema is used
         if key.startswith('_'):
-            if key=='_schema': continue
-            elif key=='_datasetName': continue
-            else: raise ValueError(f"Unrecognized special key '{key}' in prefix '{prefix}'.")
-        if not isinstance(val,dict): raise TypeError("{fq}: value is not a dictionary.")
+            if key == '_schema':
+                continue
+            elif key == '_datasetName':
+                continue
+            else:
+                raise ValueError(f"Unrecognized special key '{key}' in prefix '{prefix}'.")
+        if not isinstance(val, dict):
+            raise TypeError("{fq}: value is not a dictionary.")
         # attribute defined via lookup, not stored
         if 'lookup' in val:
-            dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
-            ret.doc+=[docHead+f': `get{capitalize(key)}()`: '+doc]
-            lKey,lDict=val['key'],val['lookup']
-            if isinstance(lKey,bytes): lKey=lKey.decode('utf8')
+            dtype, unit, default, doc = dtypeUnitDefaultDoc(val)
+            ret.doc += [docHead+f': `get{capitalize(key)}()`: '+doc]
+            lKey, lDict = val['key'], val['lookup']
+            if isinstance(lKey, bytes):
+                lKey = lKey.decode('utf8')
+
             # bind local values via default args (closure)
-            def inherentGetter(self,*,fq=fq,dtype=dtype,unit=unit,lKey=lKey,lDict=lDict):
-                _T_assertDataset(self,f"when looking up '{fq}' based on '{lKey}'.")
+            def inherentGetter(self, *, fq=fq, dtype=dtype, unit=unit, lKey=lKey, lDict=lDict):
+                _T_assertDataset(self, f"when looking up '{fq}' based on '{lKey}'.")
+
                 def _lookup(row):
-                    k=self.ctx.dataset[lKey,row]
-                    if isinstance(k,bytes): k=k.decode('utf8')
-                    try: val=np.array(lDict[k],dtype=dtype)[()] # [()] unpacks rank-0 scalar
-                    except KeyError: raise KeyError(f"{fq}: key '{k}' ({lKey}) not found in the lookup table with keys {list(lDict.keys())}") from None
+                    k=self.ctx.dataset[lKey, row]
+                    if isinstance(k, bytes):
+                        k = k.decode('utf8')
+                    try:
+                        val = np.array(lDict[k], dtype=dtype)[()]  # [()] unpacks rank-0 scalar
+                    except KeyError:
+                        raise KeyError(f"{fq}: key '{k}' ({lKey}) not found in the lookup table with keys {list(lDict.keys())}") from None
                     return val
                 # fake broadcasting
-                if self.row is None: val=np.array([_lookup(r) for r in range(self.ctx.dataset.shape[0])])
-                else: val=_lookup(self.row)
-                if unit: return units.Quantity(value=val,unit=unit)
-                else: return val
-            meth['get'+capitalize(key)]=inherentGetter
+                if self.row is None:
+                    val = np.array([_lookup(r) for r in range(self.ctx.dataset.shape[0])])
+                else:
+                    val = _lookup(self.row)
+                if unit:
+                    return units.Quantity(value=val, unit=unit)
+                else:
+                    return val
+            meth['get'+capitalize(key)] = inherentGetter
         # normal data attribute
         elif 'dtype' in val:
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
             basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
             ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: '+doc]
+            ret.units[fq]=unit
             if default is not None: ret.defaults[fq]=default # add to the defaults
             def getter(self,*,fq=fq,unit=unit):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
@@ -441,12 +540,14 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 return ret
             def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
+                #_T_assertWritable(self,f"when setting the value of '{fq}'")
                 val=_cookValue(val)
                 # sys.stderr.write(f'{fq}: direct setting {val}\n')
                 if self.row is None: self.ctx.dataset[fq]=val
                 else: self.ctx.dataset[self.row,fq]=val
             def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
+                #_T_assertWritable(self,f"when setting the value of '{fq}'")
                 val=_cookValue(val)
                 #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
                 # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
@@ -463,7 +564,7 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             path,schema=val['path'],val['schema']
             if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
             if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
-            ret.subpaths.append(path)
+            ret.subpaths[fq]=(path,schema)
             # path=path[:-1] # remove trailing slash
             def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
                 rr=[self.row is None,row is None]
@@ -477,9 +578,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
                 subgrp=self.ctx.h5group.require_group(path)
                 SchemaT=self.ctx.schemaRegistry[schema]
                 ret=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=None)
-                # if hasattr(self,'_pyroDaemon'):
-                #    self._pyroDaemon.register(ret)
-                #    self.ctx.pyroIds.append(ret._pyroId)
                 # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
                 return _registeredWithDaemon(self,ret)
             ret.doc+=[docHead+f': `get{capitalize(key)}()`: nested data at `{path}`, schema `{schema}`.']
@@ -492,9 +590,6 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
             def nestedGetter(self,*,T=cooked.T):
                 #print('nestedGetter',T)
                 ret=T(other=self)
-                # if hasattr(self,'_pyroDaemon'):
-                #    self._pyroDaemon.register(ret)
-                #    self.ctx.pyroIds.append(ret._pyroId)
                 return _registeredWithDaemon(self,ret)
             meth['get'+capitalize(key)]=nestedGetter # lambda self, T=cooked.T: T(self)
     def _registeredWithDaemon(context,obj):
@@ -531,51 +626,105 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
         # print(f'Item #{row}: returning {self.__class__(self,row=row)}')
         ret=self.__class__(other=self,row=row)
         return _registeredWithDaemon(self,ret)
-        #if hasattr(self,'_pyroDaemon'):
-        #    self._pyroDaemon.register(ret)
-        #    self.ctx.pyroIds.append(ret._pyroId)
         return ret
     def T_len(self):
         'Return sequence length'
+        if not _T_hasDataset(self): return 0
         _T_assertDataset(self,msg=f'querying dataset length')
         if self.row is not None: return IndexError('Row index already set, not behaving as sequence.')
         return self.ctx.dataset.shape[0]
+    def _T_hasDataset(self): return self.ctx.dataset or (self.__class__.datasetName in self.ctx.h5group)
     def _T_assertDataset(self,msg=''):
         'checks that the backing dataset it present/open. Raises exception otherwise.'
         if self.ctx.dataset is None:
             if self.__class__.datasetName in self.ctx.h5group: self.ctx.dataset=self.ctx.h5group[self.__class__.datasetName]
             else: raise RuntimeError(f'Dataset not yet initialized, use resize first{" ("+msg+")" if msg else ""}: {self.ctx.h5group.name}/{self.__class__.datasetName}.')
-
+    def _T_assertWritable(self,msg):
+        if self.ctx.h5group.file.mode!='r+': raise RuntimeError(f'Underlying HDF5 file was not open for writing ({msg}).')
     def T_resize(self,size,reset=False,*,ret=ret):
         'Resizes the backing dataset; this will, as necessary, create a new dataset, or grow/shrink size of an existing dataset. New records are always default-initialized.'
         def _initrows(ds,rowmin,rowmax):
-            'default-initialize contiguous range of rows rmin…rmax (inclusive)'
+            'default-initialize contiguous range of rows rmin…rmax (inclusive), create groups for subpaths'
             defrow=ds[rowmin] # use first row as storage, assign all defaults into it, then copy over all other rows
             for fq,val in ret.defaults.items(): defrow[fq]=val
-            self.ctx.dataset[rowmin+1:rowmax+1]=defrow
-        if reset: self.resize(size=0)
+            ds[rowmin+1:rowmax+1]=defrow
         assert size>=0
-        dsname=self.__class__.datasetName
+        _T_assertWritable(self,msg=f'when resizing to {size}.')
+        if reset: self.resize(size=0)
         if self.ctx.dataset is None:
-            if dsname not in self.ctx.h5group:
+            dsname=self.__class__.datasetName
+            if dsname not in self.ctx.h5group: # create new dataset, initialize, return
+                if size==0: return # request to reset but nothing is here
                 self.ctx.dataset=self.ctx.h5group.create_dataset(dsname,shape=(size,),maxshape=(None,),dtype=ret.dtypes,compression='gzip')
-                _initrows(self.ctx.dataset,rowmin=0,rowmax=size-1)
+                _initrows(ds=self.ctx.dataset,rowmin=0,rowmax=size-1)
                 return
-            else: self.ctx.dataset=self.ctx.h5group[dsname]
-        oldSize=self.ctx.dataset.shape[0]
-        self.ctx.dataset.resize((size,))
-        if oldSize<size: _initrows(self.ctx.dataset,rowmin=oldSize,rowmax=size-1)
+            else: # open existing dataset
+                self.ctx.dataset=self.ctx.h5group[dsname]
+        size0=self.ctx.dataset.shape[0]
+        if size==size0: return
+        self.ctx.dataset.resize((size,)) # this changes size of the underlying HDF5 data
+        # default-initialize added rows
+        if size0<size: _initrows(ds=self.ctx.dataset,rowmin=size0,rowmax=size-1)
         else:
-            # sys.stderr.write(f'Removing stale subpaths {str(ret.subpaths)}, {oldSize} → {size}…\n')
             # remove stale subpaths
-            for subpath in ret.subpaths:
-                for r in range(size,oldSize):
+            # sys.stderr.write(f'Removing stale subpaths {str(ret.subpaths)}, {size0} → {size}…\n')
+            for fq,(subpath,schema) in ret.subpaths.items():
+                for r in range(size,size0):
                     p=subpath.replace('{ROW}',str(r))
-                    # sys.stderr.write(f'Resizing {self.ctx.dataset}, {oldSize} → {size}: deleting {p}\n')
+                    # sys.stderr.write(f'Resizing {self.ctx.dataset}, {prevSize} → {size}: deleting {p}\n')
                     if p in self.ctx.h5group: del self.ctx.h5group[p]
                     else: pass # sys.stderr.write(f'{self.ctx.h5group}: does not contain {p}, not deleted')
+    def T_inject(self,other):
+        self.from_dump(other.to_dump())
+    def T_to_dump(self,*,ret=ret):
+        _T_assertDataset(self,msg=f'when dumping')
+        def _onerow(row):
+            d={'_schema':{"name":schemaName,"version":schemaVersion}}
+            for fq,unit in ret.units.items(): #
+                d[fq]=(self.ctx.dataset[row,fq],unit)
+            for fq,(subpath,schema) in ret.subpaths.items():
+                SchemaT=self.ctx.schemaRegistry[schema]
+                subpath=subpath.replace('{ROW}',str(row))
+                if subpath not in self.ctx.h5group: continue
+                subgrp=self.ctx.h5group[subpath]
+                subcontext=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=[]),row=None)
+                d[fq]=subcontext.to_dump()
+            return d
+        if self.row is not None: return _onerow(self.row)
+        else: return [_onerow(r) for r in range(self.ctx.dataset.shape[0])]
+    def T_from_dump(self,dump,*,ret=ret):
+        _T_assertWritable(self,msg=f'when applying dump')
+        def _onerow(row,di):
+            rowdata=self.ctx.dataset[row]
+            s2n,s2v=di['_schema']['name'],di['_schema']['version']
+            if s2n!=self.schemaName: raise ValueError(f'Schema mismatch: source {s2n}, target {self.schemaName}')
+            if s2v!=self.schemaVersion: log.warning('Schema {s2n} version mismatch: source {s2v}, target {self.schemaVersion}')
+            for fq,valUnit in di.items():
+                if fq=='_schema': continue
+                if fq in ret.units: # value field
+                    rowdata[fq]=valUnit[0] if (valUnit[1] is None) else units.Quantity(value=valUnit[0],unit=valUnit[1]).to(ret.units[fq]).value
+                elif fq in ret.subpaths: # subpath
+                    assert isinstance(valUnit,list)
+                    subpath,schema=ret.subpaths[fq]
+                    SchemaT=self.ctx.schemaRegistry[schema]
+                    subpath=subpath.replace('{ROW}',str(row))
+                    subgrp=self.ctx.h5group.require_group(subpath)
+                    subcontext=SchemaT(top=HeavyDataHandle.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=[]),row=None)
+                    subcontext.from_dump(valUnit)
+                else:
+                    raise ValueError(f'Key {fq} not in target schema {self.schemaName}, in {self.ctx.h5group}.')
+                    # key not in target schema
+            self.ctx.dataset[row]=rowdata
+        if self.row is not None:
+            assert isinstance(dump,dict)
+            _T_assertDataset(self,msg=f'when applying dump with row={self.row}')
+            _onerow(self.row,dump)
+        else:
+            assert isinstance(dump,list)
+            self.resize(len(dump),reset=True)
+            _T_assertDataset(self,msg=f'when applying dump')
+            for row,di in enumerate(dump): _onerow(row,di)
 
-            # log.warning('Deleting nested data not yet done when shrinking datasets')
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')
         for row in range(self.ctx.dataset.shape[0]): yield self[row]
@@ -593,7 +742,9 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     # those are defined only for the "root" context
     if not prefix:
         meth['resize']=T_resize
-        # meth['pyroIds']=[]
+        meth['to_dump']=T_to_dump
+        meth['from_dump']=T_from_dump
+        meth['inject']=T_inject
         ret.dtypes=np.dtype(ret.dtypes)
         T_bases=()
     else:
@@ -606,7 +757,8 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
     setattr(fakeModule,T_name,T)
 
     if not prefix:
-        T.name=schemaName # schema knows its own name, for convenience of creating schema registry
+        T.schemaName=schemaName # schema knows its own name, for convenience of creating schema registry
+        T.schemaVersion=schemaVersion
         T.__doc__='\n'.join(ret.doc)+'\n'
         return T
     else:
@@ -615,7 +767,10 @@ def _cookSchema(desc,prefix='',schemaName='',fakeModule='',datasetName=''):
 
 
 def makeSchemaRegistry(dd):
-    return dict([((T:=_cookSchema(d)).name,T) for d in dd])
+    '''
+    Compile schema registry from dictionary representation; use ``json.loads`` to convert JSON schema to its dictionary representation.
+    '''
+    return dict([((T:=_cookSchema(d)).schemaName,T) for d in dd])
 
 
 def _make_grains(h5name):
@@ -627,17 +782,17 @@ def _make_grains(h5name):
     schemaRegistry=makeSchemaRegistry(json.loads(sampleSchemas_json))
     with h5py.File(h5name,'w') as h5:
         grp=h5.require_group('test')
-        schemaT=schemaRegistry['grain']
+        schemaT=schemaRegistry['org.mupif.sample.grain']
         grp.attrs['schemas']=sampleSchemas_json
-        grp.attrs['schema']=schemaT.name
+        grp.attrs['schema']=schemaT.schemaName
         grains=schemaT(top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
         print(f"{grains}")
-        grains.resize(size=5)
+        grains.resize(size=2)
         print(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
             #g=grains[ig]
             print('grain',ig,g)
-            g.getMolecules().resize(size=random.randint(5,50))
+            g.getMolecules().resize(size=random.randint(5,20))
             print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 #for im in range(len(g.getMolecules())):
@@ -658,15 +813,16 @@ def _make_grains(h5name):
     t1=time.time()
     print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
+
 def _read_grains(h5name):
     import time
     # note how this does NOT need any schemas defined, they are all pulled from the HDF5
-    t0=time.time()
-    atomCounter=0
-    with h5py.File(h5name,'r') as h5:
-        grp=h5['test']
-        schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-        grains=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
+    t0 = time.time()
+    atomCounter = 0
+    with h5py.File(h5name, 'r') as h5:
+        grp = h5['test']
+        schemaRegistry = makeSchemaRegistry(json.loads(grp.attrs['schemas']))
+        grains = schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=[]))
         for g in grains:
             # print(g)
             print(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
@@ -677,167 +833,232 @@ def _read_grains(h5name):
                     a.getProperties().getTopology().getPosition()
                     a.getProperties().getTopology().getVelocity()
                     a.getProperties().getTopology().getStructure()
-                    atomCounter+=1
-    t1=time.time()
+                    atomCounter += 1
+    t1 = time.time()
     print(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
+_HeavyDataBase_ModeChoice = typing.Literal['readonly', 'readwrite', 'overwrite', 'create', 'create-memory']
+
 
 @Pyro5.api.expose
-class HeavyDataHandle(MupifObject):
-    h5path: str=''
-    h5group: str='/'
-    h5uri: typing.Optional[str]=None
-    id:dataid.MiscID=dataid.MiscID.ID_None
+class HeavyDataBase(MupifObject):
+    '''
+    Base class for various HDF5-backed objects with automatic HDF5 transfer when copied to remote location. This class is to be used internally only.
+    '''
+    h5path: str = ''
+    h5group: str = '/'
+    h5uri: typing.Optional[str] = None
+    mode: _HeavyDataBase_ModeChoice = 'readonly'  # mode is used only by the context manager
+
+    def __init__(self,**kw):
+        super().__init__(**kw)  # calls the real ctor
+        self._h5obj = None      # assigned in openStorage
+        self.pyroIds = []
+        if self.h5uri is not None:
+            sys.stderr.write(f'HDF5 transfer: starting…\n')
+            uri = Pyro5.api.URI(self.h5uri)
+            remote = Pyro5.api.Proxy(uri)
+            # sys.stderr.write(f'Remote is {remote}\n')
+            fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
+            log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
+            PyroFile.copy(remote, self.h5path)
+            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
+            # local copy is not the original, the URI is no longer valid
+            self.h5uri = None
+
+
+
+    def _returnProxy(self, v):
+        if hasattr(self, '_pyroDaemon'):
+            self._pyroDaemon.register(v)
+            self.pyroIds.append(v._pyroId)
+        return v
+
+    @pydantic.validate_arguments
+    def openStorage(self, *, mode: _HeavyDataBase_ModeChoice):
+        '''
+        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyDataHandle` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyDataHandle.closeData` is called (directly or via context manager).
+
+        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyDataHandle.mode`.
+
+        '''
+        if mode in ('readonly', 'readwrite'):
+            if mode == 'readonly':
+                if self._h5obj:
+                    if self._h5obj.mode != 'r':
+                        raise RuntimeError(f'HDF5 file {self.h5path} already open for writing.')
+                else:
+                    self._h5obj = h5py.File(self.h5path, 'r')
+            elif mode == 'readwrite':
+                if self._h5obj:
+                    if self._h5obj.mode != 'r+':
+                        raise RuntimeError(f'HDF5 file {self.h5path} already open read-only.')
+                else:
+                    if not os.path.exists(self.h5path):
+                        raise RuntimeError(f'HDF5 file {self.h5path} does not exist (use mode="create" to create a new file.')
+                    self._h5obj = h5py.File(self.h5path, 'r+')
+        elif mode in ('overwrite', 'create', 'create-memory'):
+            if self._h5obj:
+                raise RuntimeError(f'HDF5 file {self.h5path} already open.')
+            if mode == 'create-memory':
+                import uuid
+                doSave = bool(self.h5path)
+                p = (self.h5path if doSave else str(uuid.uuid4()))
+                if not doSave:
+                    log.warning(f'Data will eventually disappear with mode="create-memory" and h5path="" (empty).')
+                # hdf5 uses filename for lock management (even if the file is memory block only)
+                # therefore pass if something unique if filename is not given
+                self._h5obj = h5py.File(p, mode='x', driver='core', backing_store=doSave)
+            else:
+                if useTemp := (not self.h5path):
+                    fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
+                    log.info(f'Using new temporary file {self.h5path}')
+                if mode == 'overwrite' or useTemp:
+                    self._h5obj = h5py.File(self.h5path, 'w')
+                # 'create' mode should fail if file exists already
+                # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
+                else:
+                    self._h5obj = h5py.File(self.h5path, 'x')
+        return self._h5obj
+
+    def exposeData(self):
+        '''
+        If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataHandle` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
+        '''
+        if (daemon := getattr(self, '_pyroDaemon', None)) is None:
+            raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
+        if self.h5uri:
+            return  # already exposed
+        # binary mode is necessary!
+        # otherwise: remote UnicodeDecodeError somewhere, and then 
+        # TypeError: a bytes-like object is required, not 'dict'
+        self.h5uri = str(daemon.register(pf := PyroFile(filename=self.h5path, mode='rb')))
+        self.pyroIds.append(pf._pyroId)
+
+    def closeData(self):
+        '''
+        * Flush and close the backing HDF5 file;
+        * unregister all contexts from Pyro (if registered)
+        '''
+        if self._h5obj:
+            self._h5obj.close()
+            self._h5obj = None
+        if daemon := getattr(self, '_pyroDaemon', None):
+            for i in self.pyroIds:
+                # sys.stderr.write(f'Unregistering {i}\n')
+                daemon.unregister(i)
+
+    @pydantic.validate_arguments
+    def cloneHandle(self, newPath: str=''):  # -> HeavyDataHandle:
+        '''Return clone of the handle; the underlying storage is copied into *newPath* (or a temporary file, if not given). All handle attributes (besides :obj:`h5path`) are preserved.'''
+        if self._h5obj:
+            raise RuntimeError(f'HDF5 file {self.h5path} is open (call closeData() first).')
+        if not newPath:
+            _fd, newPath = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
+        shutil.copy(self.h5path, newPath)
+        ret = self.copy(deep=True)  # this is provided by pydantic
+        ret.h5path = newPath
+        return ret
+
+    def repack(self):
+        '''Repack the underlying storage (experimental, untested). Data must not be open.'''
+        if self._h5obj:
+            raise RuntimeError(f'Cannot repack while {self._h5obj} is open (call closeData first).')
+        try:
+            log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
+            out = self.h5path+'.~repacked~'
+            subprocess.run(['h5repack', self.h5path, out], check=True)
+            shutil.copy(out, self.h5path)
+        except subprocess.CalledProcessError:
+            log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
+
+
+@Pyro5.api.expose
+class HeavyDataHandle(HeavyDataBase):
+    schemaName: typing.Optional[str] = None
+    schemasJson: typing.Optional[str] = None
+    id: dataid.DataID = dataid.DataID.ID_None
 
     # __doc__ is a computed property which will add documentation for the sample JSON schemas
-    __doc0__='''This will be the normal documentation of HeavyDataHandle.
+    __doc0__ = '''
+
+    *mode* specifies how the underlying HDF5 file (:obj:`h5path`) is to be opened:
+
+    * ``readonly`` only allows reading;
+    * ``readwrite`` alows reading and writing;
+    * ``create`` creates new HDF5 file, raising an exception if the file exists already; if :obj:`h5path` is empty, a temporary file will be created automatically; 
+    * ``overwrite`` create new HDF5 file, allowing overwriting an existing file;
+    * ``create-memory`` create HDF5 file in RAM only; if :obj:`h5path` is non-empty, it will be written out when data is closed via :obj:`closeData` (and discarded otherwise);
+    * ``copy-readwrite``: copies the underlying HDF5 file to a temporary storage first, then opens that for writing.
+
+
+    *schemaName* and *schemasJson* must be provided when creating new data (``overwrite``, ``create``, ``create-memory``) and are ignored otherwise.
+
+    This class can be used as context manager, in which case the :obj:`openData` and :obj:`closeData` will be called automatically.
 
     '''
 
     # from https://stackoverflow.com/a/3203659/761090
     class _classproperty(object):
-        def __init__(self, getter): self.getter=getter
+        def __init__(self, getter): self.getter = getter
         def __get__(self, instance, owner): return self.getter(owner)
 
     @_classproperty
     def __doc__(cls):
-        ret=cls.__doc0__
-        reg=makeSchemaRegistry(json.loads(sampleSchemas_json))
-        for key,val in reg.items():
-            ret+='\n\n'+val.__doc__.replace('`','``')
+        ret = cls.__doc0__
+        reg = makeSchemaRegistry(json.loads(sampleSchemas_json))
+        for key, val in reg.items():
+            ret += '\n\n'+val.__doc__.replace('`', '``')
         return ret
+
+    # this is not useful over Pyro (the Proxy defines its own context manager) but handy for local testing
+    def __enter__(self): return self.openData(mode=self.mode)
+    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
 
     @dataclass
     @Pyro5.api.expose
-    class TopContext():
+    class TopContext:
+        'This class is for internal use only. It is the return type of :obj:`HeavyDataHandle.openData` and others.'
         h5group: Any
         pyroIds: list
         schemaRegistry: dict
-        dataset: Any=None
+        dataset: Any = None
+
         def __str__(self):
             return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
 
-
-    def getSchemaRegistry(self,compile=False):
-        'Return schema registry as JSON string'
-        self._openRead()
-        ssh=self._h5obj[self.h5group].attrs['schemas']
-        return ssh if not compile else makeSchemaRegistry(json.loads(ssh))
-
-    def _returnProxy(self,v):
-        if hasattr(self,'_pyroDaemon'):
-            self._pyroDaemon.register(v)
-            self.pyroIds.append(v._pyroId)
-        return v
-
-    def _openRead(self):
-        #if self.h5path==':memory:': raise ValueError('Impossible to open in-memory HDF5 for reading')
-        if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r')
-    def _openReadWrite(self):
-        #if self.h5path==':memory:': raise ValueError('Impossible to open in-memory HDF5 for reading/writing')
-        if self._h5obj is None: self._h5obj=h5py.File(self.h5path,'r+')
-        elif self._h5obj.mode=='r': raise RuntimeError(f'Backing storage {self._h5obj} already open as read-only.')
+    def __init__(self, **kw):
+        super().__init__(**kw)
 
     @pydantic.validate_arguments
-    def getData(self, mode: typing.Literal['readonly','readwrite','overwrite','create','create-memory'], schemaName: typing.Optional[str]=None, schemasJson: typing.Optional[str]=None):
-        if mode in ('readonly','readwrite'):
-            if mode=='readonly':
-                if self._h5obj:
-                    if self._h5obj.mode!='r': raise RuntimeError(f'HDF5 file {self.h5path} already open for writing.')
-                else: self._h5obj=h5py.File(self.h5path,'r')
-            elif mode=='readwrite':
-                if self._h5obj:
-                    if self._h5obj.mode!='r+': raise RuntimeError(f'HDF5 file {self.h5path} already open read-only.')
-                else:
-                    if not os.path.exists(self.h5path): raise RuntimeError(f'HDF5 file {self.h5path} does not exist (use mode="create" to create a new file.')
-                    self._h5obj=h5py.File(self.h5path,'r+')
-            assert self._h5obj
-            grp=self._h5obj[self.h5group]
-            schemaRegistry=makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-            top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
-            return self._returnProxy(top)
-        elif mode in ('overwrite','create','create-memory'):
-            if not schemaName or not schemasJson: raise ValueError(f'Both *schema* abd *schemaJson* must be given (opening {self.h5path} in mode {mode})')
-            if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} already open.')
-            if mode=='create-memory':
-                import uuid
-                p=(self.h5path if self.h5path else str(uuid.uuid4()))
-                # hdf5 uses filename for lock management (even if the file is memory block only)
-                # therefore pass if something unique if filename is not given
-                self._h5obj=h5py.File(p,mode='x',driver='core',backing_store=(self.h5path is not None))
-            else:
-                if useTemp:=(not self.h5path):
-                    fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
-                    log.info(f'Using new temporary file {self.h5path}')
-                if mode=='overwrite' or useTemp: self._h5obj=h5py.File(self.h5path,'w')
-                # 'create' mode should fail if file exists already
-                # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
-                else: self._h5obj=h5py.File(self.h5path,'x')
-            grp=self._h5obj.require_group(self.h5group)
-            grp.attrs['schemas']=schemasJson
-            grp.attrs['schema']=schemaName
-            schemaRegistry=makeSchemaRegistry(json.loads(schemasJson))
-            top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=self.pyroIds))
-            return self._returnProxy(top)
-
-    @deprecated.deprecated
-    def getDataReadonly(self): return self.getData(mode='readonly')
-    @deprecated.deprecated
-    def getDataReadWrite(self): return self.getData(mode='readwrite')
-    @deprecated.deprecated
-    def getDataNew(self,schema,schemasJson): return self.getData(mode='overwrite',schemaName=schema,schemasJson=schemasJson)
-
-    def closeData(self,repack=False):
+    def openData(self, mode: _HeavyDataBase_ModeChoice):
         '''
-        * Flush and close the backing HDF5 file;
-        * unregister all contexts from Pyro (if registered)
-        * optionally repack the HDF5 file if it was open for writing and *repack* is `True`.
-        '''
-        if self._h5obj:
-            rw=self._h5obj.mode=='r+'
-            self._h5obj.close()
-            self._h5obj=None
-            if rw and repack:
-                try:
-                    log.warning(f'Repacking {self.h5path} via h5repack [experimental]')
-                    out=self.h5path+'.~repacked~'
-                    subprocess.run(['h5repack',self.h5path,out],check=True)
-                    shutil.copy(out,self.h5path)
-                except subprocess.CalledProcessError:
-                    log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
+        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyDataHandle` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyDataHandle.closeData` is called (directly or via context manager).
 
-        daemon=getattr(self,'_pyroDaemon',None)
-        if daemon:
-            for i in self.pyroIds:
-                # sys.stderr.write(f'Unregistering {i}\n')
-                daemon.unregister(i)
-    def exposeData(self):
-        if (daemon:=getattr(self,'_pyroDaemon',None)) is None: raise RuntimeError(f'{self.__class__.__name__} not registered in a Pyro5.api.Daemon.')
-        if self.h5uri: return # already exposed
-        # binary mode is necessary!
-        # otherwise: remote UnicodeDecodeError somewhere, and then 
-        # TypeError: a bytes-like object is required, not 'dict'
-        self.h5uri=str(daemon.register(pf:=pyrofile.PyroFile(self.h5path,mode='rb')))
-        self.pyroIds.append(pf._pyroId)
-    def __init__(self,**kw):
-        super().__init__(**kw) # this calls the real ctor
-        #sys.stderr.write(f'{self.__class__.__name__}.__init__(**kw={str(kw)})\n')
-        #import traceback
-        #traceback.print_stack(file=sys.stderr)
-        self._h5obj=None
-        self.pyroIds=[]
-        if self.h5uri is not None:
-            sys.stderr.write(f'HDF5 transfer: starting…\n')
-            uri=Pyro5.api.URI(self.h5uri)
-            remote=Pyro5.api.Proxy(uri)
-            #sys.stderr.write(f'Remote is {remote}\n')
-            fd,self.h5path=tempfile.mkstemp(suffix='.h5',prefix='mupif-tmp-',text=False)
-            log.warning(f'Cleanup of temporary {self.h5path} not yet implemented.')
-            pyroutil.downloadPyroFile(self.h5path,remote)
-            sys.stderr.write(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
-            # local copy is not the original, the URI is no longer valid
-            self.h5uri=None
+        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyDataHandle.mode`.
+
+        '''
+        self.openStorage(mode=mode)
+        extant=(self.h5group in self._h5obj and 'schema' in self._h5obj[self.h5group].attrs)
+        if extant:
+            # for modes readonly, readwrite
+            grp = self._h5obj[self.h5group]
+            schemaRegistry = makeSchemaRegistry(json.loads(grp.attrs['schemas']))
+            top=schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
+            self.updateMetadata(json.loads(grp.attrs['metadata']))
+            return self._returnProxy(top)
+        else:
+            if not self.schemaName or not self.schemasJson:
+                raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
+            # modes: overwrite, create, create-memory
+            grp = self._h5obj.require_group(self.h5group)
+            grp.attrs['schemas'] = self.schemasJson
+            grp.attrs['schema'] = self.schemaName
+            grp.attrs['metadata'] = json.dumps(self.getAllMetadata())
+            schemaRegistry = makeSchemaRegistry(json.loads(self.schemasJson))
+            top = schemaRegistry[grp.attrs['schema']](top=HeavyDataHandle.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
+            return self._returnProxy(top)
 
 
 '''
@@ -851,22 +1072,32 @@ future ideas:
 #
 # PYTHONPATH=.. python3 -m mupif.heavydata
 #
-if __name__=='__main__':
-    import json, pprint
+if __name__ == '__main__':
+    import json
+    import pprint
     print(HeavyDataHandle.__doc__)
     # print(json.dumps(json.loads(sampleSchemas_json),indent=2))
     _make_grains('/tmp/grains.h5')
     _read_grains('/tmp/grains.h5')
 
     # this won't work through Pyro yet
-    pp=HeavyDataHandle(h5path='/tmp/grains.h5',h5group='test')
-    for key,val in pp.getSchemaRegistry(compile=True).items():
-        print(val.__doc__.replace('`','``'))
-    root=pp.getData('readonly')
-    print(pp.getData(mode='readonly')[0].getMolecules())
-    print(root.getMolecules(0).getAtoms(5).getIdentity().getElement())
-    print(root[0].getMolecules()[5].getAtoms().getIdentity().getElement())
+    pp = HeavyDataHandle(h5path='/tmp/grains.h5', h5group='test')
+    for key, val in pp.getSchemaRegistry(compile=True).items():
+        print(val.__doc__.replace('`', '``'))
+    grains = pp.openData('readonly')
+    print(pp.openData(mode='readonly')[0].getMolecules())
+    print(grains.getMolecules(0).getAtoms(5).getIdentity().getElement())
+    print(grains[0].getMolecules()[5].getAtoms().getIdentity().getElement())
+    import pprint
+    mol5dump = grains[0].getMolecules()[5].to_dump()
     pp.closeData()
-    pp.getData('readwrite')
+    grains = pp.openData('readwrite')
+    grains[0].getMolecules()[4].from_dump(mol5dump)
+    mol4dump = grains[0].getMolecules()[4].to_dump()
+    # pprint.pprint(mol4dump)
+    # pprint.pprint(mol4dump,stream=open('/tmp/m4.txt','w'))
+    # pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
+    print(str(mol4dump) == str(mol5dump))
+    pp.closeData()
 
 

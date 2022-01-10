@@ -5,16 +5,17 @@ name: MuPIF
 
 on:
   push:
-    branches: [ master, dev, Musicode, pydantic ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ master, dev, Musicode, pydantic ]
+    branches: [ "**" ]
 
 jobs:
   test-linux:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ 3.8, 3.9 ]
+        # needs quotes so that float 3.10 does not get interpreted as 3.1
+        python-version: [ '3.8', '3.9', '3.10' ]
         # fail-fast: 0
       # max-parallel: 1 # avoid localhost conflicts
     steps:
@@ -25,7 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install python3-wheel python3-pip dos2unix
+        sudo apt-get update && sudo apt-get install python3-wheel python3-pip dos2unix
         python -m pip install -q codecov flake8
         pip install -q -r requirements.txt
     - name: Lint with flake8
@@ -35,11 +36,11 @@ jobs:
         # this is too verbose and is mostly just coding style
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=obsolete
-    - name: nosetests (native)
+    - name: pytest (native)
       timeout-minutes: 1
       run: |
         set -euo pipefail
-        nosetests --rednose --force-color -v --with-coverage 2>&1 | tools/grcat-mupif
+        python -m pytest -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: examples (native)
       timeout-minutes: 2 # normally about 35s
@@ -60,22 +61,37 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install wine64 wine python3-pip dos2unix
-        python -m pip install -q wenv
+        sudo apt-get update && sudo apt-get install wine64 wine python3-pip dos2unix
+        python -m pip install wenv
         echo '{"arch":"win64","pythonversion":"3.8.5"}' > ~/.wenv.json
         wenv init
-        wenv pip install -q --only-binary=pyrsistent -r requirements.txt
-    - name: nosetests
+        wenv pip install --only-binary=pyrsistent -r requirements.txt
+    - name: unit tests
       timeout-minutes: 1
       run: |
         set -euo pipefail
-        wenv nosetests --rednose -v  2>&1 | dos2unix | tools/grcat-mupif
+        # wenv python -m nose -v --rednose --traverse-namespace 2>&1 | dos2unix | tools/grcat-mupif
+        wenv python -m pytest -v mupif/tests 2>&1 | dos2unix | tools/grcat-mupif
     - name: examples
       timeout-minutes: 2 # normally about 50s
       run: |
         set -euo pipefail
         # skip test 7, somehow fails under wine
-        cd examples; ./runex.py --wenv=all 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
+        cd examples; wenv python runex.py 1 2 3 4 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
+
+  test-docker-VPN:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    # this should somehow enable persistent docker layer cache
+    # so that we don't have to build the full image from scratch (ubuntu:20.04)
+    # every time
+    # see https://github.com/marketplace/actions/docker-layer-caching
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
+    - name: Distributed example on Docker containers in VPN
+      run:
+        make -C tools/vpn/wireguard default
 
   test-windows:
     runs-on: windows-latest
@@ -93,10 +109,10 @@ jobs:
       run: |
         python3 -m pip install wheel
         python3 -m pip install -r requirements.txt
-    - name: nosetests
+    - name: unit tests
       timeout-minutes: 1
       # --traverse-namespace necessary for windows, see https://github.com/Pyomo/pyomo/issues/1257
-      run: python3 -m nose -v --rednose --traverse-namespace
+      run: python3 -m pytest -v mupif/tests
       # 2>&1 | python3 -u tools/grcat-mupif
     - name: examples
       timeout-minutes: 2

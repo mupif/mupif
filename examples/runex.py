@@ -1,9 +1,12 @@
 #!/usr/bin/env -S python3 -u
 import subprocess, argparse, os, os.path, sys, time, typing, atexit, logging
 thisDir=os.path.dirname(os.path.abspath(__file__))
-logging.basicConfig(format='%(message)s')
-log=logging.getLogger('run-ex')
-log.setLevel(logging.DEBUG)
+sys.path.append(thisDir+'/..')
+#logging.basicConfig(format='%(message)s')
+#log=logging.getLogger('run-ex')
+#log.setLevel(logging.DEBUG)
+import mupif as mp
+log=mp.util.setupLogger('runex')
 
 parser=argparse.ArgumentParser('Run some/all MuPIF examples')
 parser.add_argument('--codecov',action='store_true',help='Run with codecov')
@@ -11,7 +14,7 @@ parser.add_argument('--wenv',choices=['all','main','servers'],help='Run some com
 parser.add_argument('exnum',nargs='*',type=int,help='Example numbers to run (if not given, all examples will be run)',metavar='N')
 args=parser.parse_args(sys.argv[1:])
 
-netOpts=['--mode','localhost']
+netOpts=[]
 
 from dataclasses import dataclass
 @dataclass
@@ -31,6 +34,7 @@ allEx=[
     ExCfg(8,'Example08-transiTM-JobMan-distrib',['Example08.py','thermalServer.py','mechanicalServer.py']),
     ExCfg(9,'Example09-operatorEmail',['Example09.py']),
     ExCfg(11,'Example11',['workflow.py']),
+    ExCfg(13,'Example13',['main.py','server.py','application13.py'])
 ]
 
 
@@ -42,30 +46,15 @@ def getExec(main):
     if args.codecov and main: ret+=['-m','coverage','run']
     return tuple(ret)
 
-
-def runBg(sleep=1):
-    env=os.environ.copy()
-    env['PYTHONPATH']=os.pathsep.join([thisDir+'/..',thisDir])
-    bbg=[
-        subprocess.Popen([*getExec(main=False),thisDir+'/../tools/nameserver.py']+netOpts,bufsize=0,env=env),
-        #subprocess.Popen(['/bin/bash','ssh/test_ssh_server.sh'],bufsize=0,env=env)
-        subprocess.Popen([*getExec(main=False),thisDir+'/ssh/test_ssh_server.py'],bufsize=0,env=env),
-    ]
-    time.sleep(sleep)
-    def bbgTerminate():
-        for b in bbg: b.terminate()
-        time.sleep(.5)
-        for b in bbg:
-            if b.returncode is None: b.kill()
-
-    atexit.register(bbgTerminate)
-
+nshost,nsport=mp.pyroutil.runNameserverBg()
+import time
+time.sleep(.5)
 
 def runEx(ex):
     env=os.environ.copy()
     exDir=thisDir+'/'+ex.dir
     env['PYTHONPATH']=os.pathsep.join([thisDir+'/..',thisDir,exDir])
-    # env['TRAVIS']='1' # for correct network config
+    env['MUPIF_NS']=f'{nshost}:{nsport}'
     bg=[]
     try:
         for script in ex.scripts[1:]:
@@ -84,13 +73,14 @@ def runEx(ex):
         failed=[]
         for b in bg:
             if b.returncode is not None: failed.append(b) # process died meanwhile
-            else: b.kill()
+            else: b.terminate()
+        time.sleep(.5)
+        for b in bg:
+            if b.returncode is None: b.kill()
         if failed: raise RuntimeError('Failed background processes:\n\n'+'\n * '.join([str(b.args) for b in failed]))
 
 # no examples means all examples
 if not args.exnum: args.exnum=[e.num for e in allEx]
-
-runBg(sleep=1)
 
 runEex=[e for e in allEx if e.num in args.exnum]
 failed=[]

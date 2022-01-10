@@ -7,7 +7,7 @@ import os
 
 if __name__ == "__main__":
     # for some 'computational' time
-    time.sleep(3.)
+    time.sleep(1.5)
 
     if len(sys.argv) >= 3:
         inpfile = sys.argv[1]
@@ -22,10 +22,17 @@ if __name__ == "__main__":
             f.close()
 
             # calculate the result
-            res = val*val*val
+            res = val*2
             print("result = %f" % res)
 
             # write it to output file
             f = open(outfile, 'w')
             f.write("%f" % res)
             f.close()
+        else:
+            print("The input file does not exist.")
+            exit(1)
+    else:
+        print("Number of arguments does not fit. (%d)" % len(sys.argv))
+        exit(1)
+    exit(0)
