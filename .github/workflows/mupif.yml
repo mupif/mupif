@@ -14,7 +14,8 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ 3.8, 3.9 ]
+        # needs quotes so that float 3.10 does not get interpreted as 3.1
+        python-version: [ '3.8', '3.9', '3.10' ]
         # fail-fast: 0
       # max-parallel: 1 # avoid localhost conflicts
     steps:
@@ -35,11 +36,11 @@ jobs:
         # this is too verbose and is mostly just coding style
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=obsolete
-    - name: nosetests (native)
+    - name: pytest (native)
       timeout-minutes: 1
       run: |
         set -euo pipefail
-        nosetests --rednose --force-color -v --with-coverage 2>&1 | tools/grcat-mupif
+        python -m pytest -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: examples (native)
       timeout-minutes: 2 # normally about 35s
@@ -65,11 +66,12 @@ jobs:
         echo '{"arch":"win64","pythonversion":"3.8.5"}' > ~/.wenv.json
         wenv init
         wenv pip install --only-binary=pyrsistent -r requirements.txt
-    - name: nosetests
+    - name: unit tests
       timeout-minutes: 1
       run: |
         set -euo pipefail
-        wenv python -m nose -v --rednose --traverse-namespace 2>&1 | dos2unix | tools/grcat-mupif
+        # wenv python -m nose -v --rednose --traverse-namespace 2>&1 | dos2unix | tools/grcat-mupif
+        wenv python -m pytest -v mupif/tests 2>&1 | dos2unix | tools/grcat-mupif
     - name: examples
       timeout-minutes: 2 # normally about 50s
       run: |
@@ -107,10 +109,10 @@ jobs:
       run: |
         python3 -m pip install wheel
         python3 -m pip install -r requirements.txt
-    - name: nosetests
+    - name: unit tests
       timeout-minutes: 1
       # --traverse-namespace necessary for windows, see https://github.com/Pyomo/pyomo/issues/1257
-      run: python3 -m nose -v --rednose --traverse-namespace
+      run: python3 -m pytest -v mupif/tests
       # 2>&1 | python3 -u tools/grcat-mupif
     - name: examples
       timeout-minutes: 2

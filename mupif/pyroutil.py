@@ -98,14 +98,14 @@ def runNameserverBg(nshost=None,nsport=None):
             nsDaemon.close()
             if nsBroadcast is not None: nsBroadcast.close()
     threading.Thread(target=_nsBg,daemon=True).start()
-    h,p=nsDaemon.locationStr.split(':')
+    h,p=nsDaemon.locationStr.rsplit(':',1) # handles both ipv4 and ipv6
     log.info(f'Nameserver up at {h}:{p}')
     return h,p
 
 
 def locateNameserver(nshost=None,nsport=0,server=False):
     def fromFile(f):
-        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0][:-1])
+        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0].strip())
         log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
         return s.hostname,s.port
     # 1. set from arguments passed
@@ -130,7 +130,7 @@ def locateNameserver(nshost=None,nsport=0,server=False):
     # 4. set from XDG user-config file (~/.config/mupif/MUPIF_NS on linux)
     try:
         import appdirs
-        if os.path.exists(nshp:=(appdirs.user_config_dir('mupif')+'/MUPIF_NS')): return fromFile(nshp)
+        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
     except ImportError:
         log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
     if server:
@@ -164,15 +164,9 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
 
     if nshost is not None and nsport != 0:
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(timeOut)
-            try:  # Treat socket connection problems separately
-                s.connect((nshost, nsport))
-            except socket.error as msg:
-                log.exception(msg)
-                raise Exception('Socket connection error to nameServer')
-            s.close()
+            conn=socket.create_connection((nshost,nsport),timeout=timeOut)
             log.debug(f'Connection to {nshost}:{nsport} is possible.')
+            conn.close()
         except Exception:
             log.exception(f'Socket pre-check failed: can not connect to a LISTENING port of nameserver on {nshost}:{nsport}. Does a firewall block INPUT or OUTPUT on the port?')
             raise
@@ -305,7 +299,9 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
-    if ns is None: ns = net.getNS()
+    if ns is None:
+        log.error('ns not specified (this is deprecated)')
+        ns = net.getNS()
     else: 
         if net is not None: raise ValueError(f'When *ns* is specified, *net* must be None (not {net})')
     # server, port, nshost, nsport, 
@@ -351,7 +347,9 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     threading.current_thread().setName(appName)
 
     # generate connection metadata entry
-    _host, _port = daemon.locationStr.split(':')
+    _host, _port = daemon.locationStr.rsplit(':',1)
+    # for ipv6, remove braces
+    if _host.startswith('[') and _host.endswith(']'): _host=_host[1:-1]
 
     if metadata is None:
         metadata = set()
@@ -368,6 +366,14 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
         ns._pyroClaimOwnership()
         ns.remove(appName)
+        log.warning('done')
+        # important: when handling a signal, reset the handler and re-emit it
+        # otherwise e.g. TERM would not cause the process to terminate
+        if sig is not None:
+           signal.signal(sig,signal.SIG_DFL)
+           log.warning(f'Re-emiting signal {sig}')
+           os.kill(os.getpid(),sig)
+           # os._exit(0)
     atexit.register(_remove_from_ns) # regular process exit
     signal.signal(signal.SIGTERM,_remove_from_ns) # terminate by signal
     return uri
@@ -436,7 +442,7 @@ def getIPfromUri(uri):
     :return: IP address 
     :rtype: string
     """
-    match = re.search('\@([\w\.]+)\:\d+$', str(uri))
+    match = re.search(r'@([\w\.]+)\:\d+$', str(uri))
     if match:
         return match.group(1)
     else:

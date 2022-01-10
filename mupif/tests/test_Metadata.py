@@ -5,8 +5,8 @@ from mupif import *
 import mupif
 import jsonschema
 
-
-class TestModel1(model.Model):
+# undescored so that pytest does not see it as a test case
+class _TestModel1(model.Model):
     """ Empty model1(with missing required metadata) to test metadata setting"""
 
     def __init__(self, metadata={}):
@@ -23,7 +23,7 @@ class TestModel1(model.Model):
         super().initialize(metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
 
-class TestModel2(model.Model):
+class _TestModel2(model.Model):
     """ Empty model2 to test metadata setting"""
 
     def __init__(self, metadata={}):
@@ -86,8 +86,8 @@ class Metadata_TestCase(unittest.TestCase):
     }
 
     def setUp(self):
-        self.tm1 = TestModel1()
-        self.tm2 = TestModel2()
+        self.tm1 = _TestModel1()
+        self.tm2 = _TestModel2()
 
     def test_Init(self):
         with self.assertRaises(jsonschema.exceptions.ValidationError):
