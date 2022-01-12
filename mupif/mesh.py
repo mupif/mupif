@@ -101,13 +101,6 @@ class MeshIterator(object):
                 return item
             else:
                 raise StopIteration()
-    # in py3k, this would lead to infinite recursion since 2to3 renames to __next__ already
-    if sys.version_info[0] == 2:
-        def next(self):
-            """
-            Python 2.x compatibility, see :func:`MeshIterator.__next__`
-            """
-            return self.__next__()  # Python 2.x compatibility
 
 
 @Pyro5.api.expose
@@ -126,8 +119,7 @@ class Mesh(dumpable.Dumpable):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        self._vertexOctree = None
-        self._cellOctree = None
+        self._setDirty()
         self._postDump()
 
     def _postDump(self):
@@ -135,6 +127,11 @@ class Mesh(dumpable.Dumpable):
         # print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
             object.__setattr__(self.getCell(i), 'mesh', self)
+
+    def _setDirty(self):
+        'Invalidate (reset) cached data'
+        self._vertexOctree=None
+        self._cellOctree=None
 
     @classmethod
     def loadFromLocalFile(cls, fileName):
