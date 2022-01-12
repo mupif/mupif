@@ -7,7 +7,7 @@ import numpy as np
 from .units import Quantity
 from .units import Unit
 from .dataid import DataID
-from .property import ConstantProperty
+from .property import Property,ConstantProperty
 from .mupifquantity import ValueType
 
 
@@ -55,22 +55,38 @@ class MultiPiecewiseLinFunction(mupifobject.MupifObject):
             self.y_value_types.append(value_type)
 
     def evaluate(self, x, data_id):
-        if data_id in self.y_data_ids:
-            idx = None
-            i = 0
-            for did in self.y_data_ids:
-                if did == data_id:
-                    idx = i
-                    break
-                i += 1
+        if data_id not in self.y_data_ids: raise KeyError(f"DataID {data_id} not found in Y data.")
+        idx=self.y_data_ids.index(data_id)
+        x_float = x.inUnitsOf(self.x_unit).value
+        value_data = []
+        for i in range(len(self.y[idx][0])):
+            ydata = [a[i] for a in self.y[idx]]
+            value_data.append(np.interp(x=x_float, xp=self.x, fp=ydata))
+        return ConstantProperty(value=value_data, propID=self.y_data_ids[idx], valueType=self.y_value_types[idx], unit=self.y_units[idx])
 
-            if idx is not None:
-                x_float = x.inUnitsOf(self.x_unit).value
-                value_data = []
-                for i in range(0, len(self.y[idx][0])):
-                    ydata = [a[i] for a in self.y[idx]]
-                    value_data.append(np.interp(x=x_float, xp=self.x, fp=ydata))
-                return ConstantProperty(value=value_data, propID=self.y_data_ids[idx], valueType=self.y_value_types[idx], unit=self.y_units[idx])
 
-        else:
-            raise ValueError("DataID %s not found in Y data." % str(data_id))
+@Pyro5.api.expose
+class MultiPiecewiseLinFunction2(mupifobject.MupifObject):
+
+    x: Quantity
+    yy: typing.List[ConstantProperty]=pydantic.Field(default_factory=lambda: [])
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self._check_x(self.x.value)
+    def _check_x(self,x):
+        if not (x.ndim==1 and x.size>1 and np.all(np.diff(x)>0)): raise ValueError('x array must be 1D, with at least 2 elements and be strictly increasing.')
+    # x normally set in the ctor
+    #def setX(self, x: Quantity):
+    #    self._check_x(x.value)
+    #    if self.y and len(self.y[0])!=len(x): raise ValueError('X must have the same length as y (len(x)={len(x)}, len(y)={len(self.y)})')
+    #    self.x=x
+    def addY(self, y: Property):
+        if(y.getPropertyID() in set([p.getPropertyID() for p in self.yy])): raise ValueError(f'Property ID {y.getPropertyID()} already defined.')
+        self.yy.append(y)
+    def evaluate(self, x: Quantity, data_id):
+        assert self.x.value.size>1
+        if(len(y_:=[y for y in self.yy if y.getPropertyID()==data_id])!=1): raise KeyError(f'No data with id {data_id}.')
+        y=y_[0]
+        if x<self.x[0] or x>self.x[-1]: raise ValueError(f'x={x} not in range {self.x[0]}..{self.x[1]}')
+        return Property(quantity=np.interp(x=x,xp=self.x,fp=y.quantity,left=np.nan,right=np.nan),propID=data_id,valueType=y.valueType)
