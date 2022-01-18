@@ -215,6 +215,5 @@ _pyroMonkeyPatch()
 from . import field
 field.Field.update_forward_refs()
 
-
-# Create default logger
-log = util.setupLogger(fileName='mupif.log', level=logging.DEBUG)
+# configure logging
+util.setupLoggingAtStartup()
