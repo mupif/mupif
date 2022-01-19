@@ -2,11 +2,9 @@
 import subprocess, argparse, os, os.path, sys, time, typing, atexit, logging
 thisDir=os.path.dirname(os.path.abspath(__file__))
 sys.path.append(thisDir+'/..')
-#logging.basicConfig(format='%(message)s')
-#log=logging.getLogger('run-ex')
-#log.setLevel(logging.DEBUG)
 import mupif as mp
-log=mp.util.setupLogger('runex')
+log=logging.getLogger('runex')
+log.setLevel(logging.DEBUG)
 
 parser=argparse.ArgumentParser('Run some/all MuPIF examples')
 parser.add_argument('--codecov',action='store_true',help='Run with codecov')

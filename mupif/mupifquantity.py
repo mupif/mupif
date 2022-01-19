@@ -81,32 +81,6 @@ class MupifQuantity(mupifobject.MupifObject):
         """
         return self.valueType
 
-    def setRecord(self, componentID, value):
-        """
-        Sets the value associated with a given component (vertex or cell).
-
-        :param int componentID: An identifier of a component: vertexID or cellID
-        :param tuple value: Value to be set for a given component, should have the same units as receiver
-        """
-        self.quantity.value[componentID] = value
-
-    def getRecord(self, componentID):
-        """Return value in one point (cell, vertex or similar)"""
-        return self.quantity.value[componentID]
-
-    def getRecordQuantity(self, componentID):
-        """Return value in one point (cell, vertex or similar)"""
-        return self.quantity[componentID]
-
-    def getRecordSize(self):
-        """
-        Return the number of scalars per value, depending on :obj:`valueType` passed when constructing the instance.
-
-        :return: number of scalars (1,3,9 respectively for scalar, vector, tensor)
-        :rtype: int
-        """
-        return self.valueType.getNumberOfComponents()
-
     def getUnit(self) -> units.Unit:
         """
         Returns representation of property units.

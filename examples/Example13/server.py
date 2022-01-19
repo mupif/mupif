@@ -5,7 +5,7 @@ dirname = os.path.dirname(os.path.realpath(__file__))
 sys.path.extend([dirname+'/.', dirname+'/..', dirname+'/../..'])
 import mupif as mp
 log = logging.getLogger()
-mp.util.changeRootLogger('server.log')
+mp.util.redirectLog('server.log')
 import application13
 
 # locate nameserver

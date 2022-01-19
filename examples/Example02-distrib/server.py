@@ -11,7 +11,7 @@ import logging
 sys.path.extend(['.', '..', '../..'])
 import mupif as mp
 log = logging.getLogger()
-mp.util.changeRootLogger('server.log')
+mp.util.redirectLog('server.log')
 
 import application2
 app2 = application2.Application2()
