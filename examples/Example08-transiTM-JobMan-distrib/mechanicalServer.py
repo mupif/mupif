@@ -7,7 +7,7 @@ sys.path.extend(['..', '../..'])
 from mupif import *
 import models
 log = logging.getLogger()
-util.changeRootLogger('mechanical.log')
+util.redirectLog('mechanical.log')
 
 # locate nameserver
 ns = pyroutil.connectNameServer()

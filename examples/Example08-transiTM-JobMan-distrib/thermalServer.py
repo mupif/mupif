@@ -7,7 +7,7 @@ sys.path.extend(['..', '../..', '../Example06-stacTM-local'])
 import mupif as mp
 import models
 
-#util.changeRootLogger('thermal.log')
+#util.redirectLog('thermal.log')
 
 # locate nameserver
 ns = mp.pyroutil.connectNameServer()

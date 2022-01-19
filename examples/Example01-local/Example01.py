@@ -5,9 +5,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../..')
 import mupif as mp
 
 import logging
-log = mp.util.setupLogger(None)
-# log.setLevel(logging.DEBUG)
-
+log=logging.getLogger(__name__)
 
 class Application1(mp.Model):
     """

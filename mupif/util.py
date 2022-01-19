@@ -22,58 +22,66 @@
 #
 import logging
 import argparse
+import os
 
 import Pyro5
 
-debug = False
+_formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
+_formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
 
 
-def setupLogger(fileName, level=logging.DEBUG):
+def setupLoggingAtStartup():
     """
-    Set up a logger which prints messages on the screen and simultaneously saves them to a file.
-    The file has the suffix '.log' after a loggerName.
-    
-    :param str fileName: file name, the suffix '.log' is appended.
-    :param object level: logging level. Allowed values are CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-    :rtype: logger instance
-    """
-    lg = logging.getLogger('mupif')
-    lg.setLevel(level)
-    if lg.hasHandlers():
-        return lg
-    # lg = logging.getLogger(loggerName)
-    formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
-    formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
-    formatter = logging.Formatter(formatLog, formatTime)
+    Configure global python logging system at MuPIF import. As this happens automatically,
+    all parameters are passed via environment variables:
 
-    if fileName is not None:
-        fileHandler = logging.FileHandler(fileName, mode='w')
-        fileHandler.setFormatter(formatter)
-        lg.addHandler(fileHandler)
+    * **MUPIF_LOG_LEVEL**, if given, will set log level for the main (root) logger; the value must be one of
+      `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` (see [Logging levels](https://docs.python.org/3/library/logging.html#logging-levels));
+      nothing is done if this env var is not defined.
+
+    * **MUPIF_LOG_FILE**, if given, will (in addition to console output) write log messages to the file given.
+      The file will be overwritten if it exists. No redirection to file is done if this env var is not defined.
+
+    In addition, some formatting options will be changed for the whole Python logging system:
+
+    * `colorlog` will be used for formatting console messages (if importable).
+
+    """
+    root=logging.getLogger()
+
+    level=os.environ.get('MUPIF_LOG_LEVEL',None)
+    if level is not None:
+        root.setLevel(level)
+
+    out=os.environ.get('MUPIF_LOG_FILE',None)
+    if out is not None:
+        fileHandler=logging.FileHandler(out, mode='w')
+        fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
+        root.addHandler(fileHandler)
 
     try:
         import colorlog
-        streamHandler = colorlog.StreamHandler()
+        streamHandler=colorlog.StreamHandler()
         streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
     except ImportError:
-        streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(formatter)
+        streamHandler=logging.StreamHandler()
+        streamHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
 
-    lg.addHandler(streamHandler)
-    
-    return lg
+    root.addHandler(streamHandler)
 
 
-def changeRootLogger(newLoggerName):
+def redirectLog(out):
     """
     Change root logger by giving a new file name. Useful in parallel processes on a single machine.
     
     :return: Nothing
     """
-    l = logging.getLogger()  # root logger
-    for hdlr in l.handlers[:]:  # remove all old handlers
-        l.removeHandler(hdlr)
-    setupLogger(newLoggerName)  # set the new handler
+    root = logging.getLogger()  # root logger
+    # remove all old handlers
+    for hdlr in root.handlers[:]: root.removeHandler(hdlr)
+    h=logging.FileHandler(out,mode='w')
+    h.setFormatter(logging.Formatter(_formatLog,_formatTime))
+    root.addHandler(h)
 
 
 def quadratic_real(a, b, c):

@@ -21,8 +21,8 @@ Pyro5.config.SERIALIZER = "serpent"
 # Pyro5.config.SERIALIZERS_ACCEPTED = {'serpent'}
 Pyro5.config.SERVERTYPE = "multiplex"
 
-import mupif.util
-log=mupif.util.setupLogger(None)
+import logging
+log=logging.getLogger()
 
 # find free port so that previously hung test does not block us
 def availablePort(p0,p1,host='127.0.0.1'):

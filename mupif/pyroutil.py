@@ -18,7 +18,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
-from builtins import str
 import os
 import re
 import Pyro5
@@ -26,6 +25,7 @@ import socket
 import getpass
 import subprocess
 import threading
+import logging
 import time
 import json
 import atexit
@@ -39,21 +39,14 @@ from . import util
 from . import apierror
 from .pyrofile import PyroFile
 import pydantic
-log = util.setupLogger(fileName=None)
+log=logging.getLogger()
 
 Pyro5.config.SERIALIZER = "serpent"
-# some versions of Pyro don't have this attribute... (strange, is documented)
-# if hasattr(Pyro5.config, 'PICKLE_PROTOCOL_VERSION'):
-#     Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # use lower version for interoperability between python 2 and 3
-# Pyro5.config.SERIALIZERS_ACCEPTED = {'pickle'}
 # Pyro4.config.THREADPOOL_SIZE=100
 Pyro5.config.SERVERTYPE = "multiplex"
 
 import importlib.resources
 
-
-# import Pyro5.api
-# Pyro5.api.Proxy._pyroLocalSocket=property(lambda pr: object.__getattr__(pr,'_pyroConnection').sock.getsockname())
 
 
 from dataclasses import dataclass
@@ -75,9 +68,10 @@ class PyroNetConf:
 
 
 # pyro5 nameserver metadata
-NS_METADATA_jobmanager = "type:jobmanager"
-NS_METADATA_appserver = "type:appserver"
-NS_METADATA_network = "network:"  # plus JSON
+class _NS_METADATA:
+    jobmanager="type:jobmanager"
+    appserver = "type:appserver"
+    network = "network:"  # plus JSON
 
 
 def runNameserverBg(nshost=None,nsport=None):
@@ -221,9 +215,9 @@ def getNSConnectionInfo(ns, name):
     """
     mdata = getNSmetadata(ns, name)
     for md in mdata:
-        if not md.startswith(NS_METADATA_network):
+        if not md.startswith(_NS_METADATA.network):
             continue
-        d = json.loads(md[len(NS_METADATA_network):])
+        d = json.loads(md[len(_NS_METADATA.network):])
         return d.get('host', None), d.get('port', None)
     return None, None
 
@@ -353,7 +347,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
 
     if metadata is None:
         metadata = set()
-    metadata.add(NS_METADATA_network+json.dumps({'host': _host, 'port': _port}))
+    metadata.add(_NS_METADATA.network+json.dumps({'host': _host, 'port': _port}))
 
     ns.register(appName, uri, metadata=metadata)
 
@@ -404,7 +398,7 @@ def runAppServer(*, appName, app, ns=None, server=None, nshost=None, nsport=0, p
         appName=appName,
         app=app,
         # daemon=daemon,
-        metadata={NS_METADATA_appserver}
+        metadata={_NS_METADATA.appserver}
     )
 
 
@@ -429,7 +423,7 @@ def runJobManagerServer(*, ns=None, server=None, nshost=None, nsport=0, jobman, 
         appName=jobman.getNSName(),
         app=jobman,
         # daemon=daemon,
-        metadata={NS_METADATA_jobmanager}
+        metadata={_NS_METADATA.jobmanager}
     )
 
 

@@ -3,7 +3,7 @@ import os
 d=os.path.dirname(os.path.abspath(__file__))
 sys.path += [d+'/..', d+'/../Example02-distrib', d+'/../..']
 import mupif as mp
-mp.util.changeRootLogger('server.log')
+mp.util.redirectLog('server.log')
 import application2
 
 # locate nameserver
