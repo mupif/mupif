@@ -528,7 +528,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
                 if isinstance(value,bytes): value=value.decode('utf-8')
                 if unit is None: return value
                 return units.Quantity(value=value,unit=unit)
-            def _cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype):
+            def _cookValue(val,*,unit,dtype,basedtype):
                 'Unit conversion, type conversion before assignment'
                 if unit: val=(units.Quantity(val).to(unit)).value
                 if isinstance(val,str): val=val.encode('utf-8')
@@ -538,17 +538,17 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
                 if basedtype.kind=='O': return val 
                 #sys.stderr.write(f"{fq}: cook {val} → {ret}\n")
                 return ret
-            def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype):
+            def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
                 #_T_assertWritable(self,f"when setting the value of '{fq}'")
-                val=_cookValue(val)
+                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype)
                 # sys.stderr.write(f'{fq}: direct setting {val}\n')
                 if self.row is None: self.ctx.dataset[fq]=val
                 else: self.ctx.dataset[self.row,fq]=val
-            def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype):
+            def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
                 #_T_assertWritable(self,f"when setting the value of '{fq}'")
-                val=_cookValue(val)
+                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype)
                 #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
                 # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
                 # direct assignment does not work; must read the whole row, modify, write it back
