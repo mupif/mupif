@@ -81,7 +81,8 @@ class Field(mupifquantity.MupifQuantity):
     #: Field type (displacement, strain, temperature ...)
     fieldID: DataID
     #: Time associated with field values
-    time: Quantity = 0*Unit('s')
+    # (setting the default here results in pydatic trying __bool__ on Quantity, resulting in astropy warning... hence, leave it without the default)
+    time: Quantity 
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
 

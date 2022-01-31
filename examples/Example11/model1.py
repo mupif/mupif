@@ -68,7 +68,7 @@ class Model1 (mp.Model):
         # generate random grain state
         t0 = time.time()
         atomCounter = 0
-        self.grainState = mp.heavydata.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavydata.sampleSchemas_json)
+        self.grainState = mp.heavystruct.HeavyStruct(id=mp.dataid.DataID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavystruct.sampleSchemas_json)
         grains = self.grainState.openData(mode='create')
         grains.resize(size=2)
         for ig, g in enumerate(grains):

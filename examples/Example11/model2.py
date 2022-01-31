@@ -66,7 +66,7 @@ class Model2 (mp.Model):
             raise mp.APIError('Unknown property ID')
 
     def set(self, obj, objectID=0):
-        if type(obj) == mp.heavydata.HeavyDataHandle:  # todo: test some ID as well
+        if type(obj) == mp.heavystruct.HeavyStruct:  # todo: test some ID as well
             if obj.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = obj
         else:
@@ -86,16 +86,16 @@ class Model2 (mp.Model):
         elif 1:
             # transfer via inject (serializes into RAM, network-transparent)
             inGrains = self.inputGrainState.openData(mode='readonly')
-            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState)
+            self.outputGrainState=mp.HeavyStruct(id=mp.dataid.DataID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
-            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavystruct.sampleSchemas_json)
             outGrains.inject(inGrains)
         else:
             # transfer via explicit loop over data
             inGrains = self.inputGrainState.openData(mode='readonly')
-            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState)
+            self.outputGrainState=mp.HeavyStruct(id=mp.dataid.DataID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
-            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavystruct.sampleSchemas_json)
             t0=time.time()
             atomCounter=0
             outGrains.resize(size=len(inGrains))

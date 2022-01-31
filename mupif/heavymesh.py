@@ -1,6 +1,7 @@
 from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice, HeavyRefQuantity
 from .field import FieldType, Field
 from .mupifquantity import ValueType
+from .units import Unit
 from .cell import Cell
 from .vertex import Vertex
 from .mesh import Mesh
@@ -202,7 +203,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         kw=dict(chunks=True,compression='gzip',compression_opts=9)
         ds=self._h5grp.create_dataset(fieldID.name,shape=shape,**kw)
         hrq=HeavyRefQuantity(value=ds,unit=unit)
-        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hrq,fieldID=fieldID)
+        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hrq,fieldID=fieldID,time=0*Unit('s'))
 
 
 def _chunker(it,size):
