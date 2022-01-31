@@ -45,19 +45,13 @@ class UnitProxy(object):
 
 U = Q = UnitProxy()
 
-import h5py
 from .dumpable import addPydanticInstanceValidator
-addPydanticInstanceValidator(h5py.Dataset)
 addPydanticInstanceValidator(Quantity)
 addPydanticInstanceValidator(astropy.units.UnitBase,makeKlass=astropy.units.Unit)
 
 from .dumpable import MupifBaseModel
-class HeavyQuantity(MupifBaseModel):
-    'Alternative to Quantity which does not store its values in RAM.'
-    value: h5py.Dataset
-    unit: astropy.units.UnitBase
-    def __len__(self): return self.value.shape[0]
-
+class IndirectQuantity(MupifBaseModel):
+    'Quantity with data stored somewhere else. Abstract class, to be subclassed.'
 
 # pyro serialization (this is for single-value type only)
 # embedding within a dumpable is handled in dumpable.py

@@ -47,6 +47,7 @@ from enum import IntEnum
 import pydantic
 import pickle
 import logging
+from .units import Unit
 log = logging.getLogger()
 
 # debug flag
@@ -80,7 +81,7 @@ class Field(mupifquantity.MupifQuantity):
     #: Field type (displacement, strain, temperature ...)
     fieldID: DataID
     #: Time associated with field values
-    time: Quantity
+    time: Quantity = 0*Unit('s')
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
 
