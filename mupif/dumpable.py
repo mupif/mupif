@@ -41,10 +41,11 @@ class NumpyArray(np.ndarray, Generic[DType]):
         np_array = np.array(val, dtype=actual_dtype)
         return np_array
 
-if sys.version_info>=(3,9):
+try:
+    # this should work in python 3.9
     # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
     NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
-else:
+except TypeError:
     # python 3.8, just use the generic form
     NumpyArrayFloat64 = NumpyArray
 
