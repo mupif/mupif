@@ -3,13 +3,14 @@ sys.path.extend(['..', '../..'])
 import time
 import random
 import numpy as np
+import Pyro5.api
 
 import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
-
+@Pyro5.api.expose
 class Model2 (mp.Model):
     """
     Simple model that replaces random molecule in grain by another one (dopant)

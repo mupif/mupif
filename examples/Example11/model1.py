@@ -3,13 +3,14 @@ sys.path.extend(['..', '../..'])
 import time
 import random
 import numpy as np
+import Pyro5.api
 
 import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
-
+@Pyro5.api.expose
 class Model1 (mp.Model):
     """
     Simple model that generates random grain state
