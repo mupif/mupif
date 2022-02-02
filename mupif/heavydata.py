@@ -31,14 +31,20 @@ import astropy
 
 class Hdf5RefQuantity(RefQuantity):
     'Quantity stored in HDF5 dataset, the HDF5 file being managed somewhere else.'
-    dataset: typing.Optional[h5py.Dataset]=None
     unit: astropy.units.UnitBase
+
+    def _hasDataset(self): return (hasattr(self,'dataset') and self.dataset is not None)
+
+    # this will convert nicesly to arrays
     def __len__(self): return self.value_.shape[0]
     # make setting value more natural
     @property
-    def value(self): return self.value_
+    def value(self):
+        return self.dataset
     @value.setter
-    def value(self,val): self.value_[:]=val
+    def value(self,val):
+        print('VALUE SETTER',val)
+        self.value_[:]=val
 
     # accessing quantity (value + unit)
 
@@ -50,7 +56,7 @@ class Hdf5RefQuantity(RefQuantity):
             self.refq.dataset[row]=q.to(self.refq.unit)
 
     @property
-    def quantity(self): return Hdf5RefQuantity.Hdf5RowAccessor(self)
+    def quantity(self): return Hdf5RefQuantity.Hdf5DatasetRowAccessor(self)
     @quantity.setter
     def quantity(self,q): self.dataset[:]=q.to(self.unit)
 
@@ -71,6 +77,7 @@ class HeavyDataBase(MupifObject):
     def __init__(self,**kw):
         super().__init__(**kw)  # calls the real ctor
         self._h5obj = None      # assigned in openStorage
+        # self._h5grp = '/'      # assigned in openStorage
         self.pyroIds = []
         if self.h5uri is not None:
             sys.stderr.write(f'HDF5 transfer: starting…\n')
@@ -190,15 +197,18 @@ class HeavyDataBase(MupifObject):
 
 class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
     'Quantity stored in HDF5 dataset, managing the HDF5 file itself.'
-    def __len__(self): return self.dataset.shape[0]
-    # make setting value more natural
-    @property
-    def value(self): return self.dataset
-    @value.setter
-    def value(self,val): self.dataset[:]=val
 
+    #def __init__(self,unit,**kw):
+    #    #Hdf5RefQuantity.__init__(self,unit=unit)
+    #    #HeavyDataBase.__init__(self,**kw)
     def allocateDataset(self,name,shape,**kw):
-        if self.dataset: raise RuntimeError(f'dataset is already assigned (shape {"×".join(self.dataset.shape)})')
+        if self._hasDataset(): raise RuntimeError(f'dataset is already assigned (shape {"×".join(self.dataset.shape)})')
         if not self._h5obj: raise RuntimeError('Backing storage not open, call openStorage() first.')
-        self.dataset=self._h5grp.create_dataset(name,shape=shape,**kw)
+        grp=self._h5obj.require_group(self.h5group)
+        self.dataset=grp.create_dataset(name,shape=shape,**kw)
+
+    def makeRef(self):
+        ret=Hdf5RefQuantity(unit=self.unit)
+        ret.dataset=self.dataset
+        return ret
 
