@@ -26,14 +26,33 @@ log = logging.getLogger(__name__)
 from .dumpable import addPydanticInstanceValidator
 addPydanticInstanceValidator(h5py.Dataset)
 
-from .units import IndirectQuantity
+from .units import RefQuantity
 import astropy
 
-class HeavyRefQuantity(IndirectQuantity):
-    'Quantity stored in HDF5 dataset,, the HDF5 file being managed somewhere else.'
-    value: h5py.Dataset
+class Hdf5RefQuantity(RefQuantity):
+    'Quantity stored in HDF5 dataset, the HDF5 file being managed somewhere else.'
+    dataset: typing.Optional[h5py.Dataset]=None
     unit: astropy.units.UnitBase
-    def __len__(self): return self.value.shape[0]
+    def __len__(self): return self.value_.shape[0]
+    # make setting value more natural
+    @property
+    def value(self): return self.value_
+    @value.setter
+    def value(self,val): self.value_[:]=val
+
+    # accessing quantity (value + unit)
+
+    class Hdf5DatasetRowAccessor(object):
+        def __init__(self,refq): self.refq=refq
+        def __getitem__(self,row): return self.refq.dataset[row]*self.refq.unit
+        def __setitem__(self,row: int,q: units.Quantity):
+            if not isinstance(q,units.Quantity): raise ValueError('quantity must be an instance of mupif.units.Quantity (not a {q.__class__.__name__})')
+            self.refq.dataset[row]=q.to(self.refq.unit)
+
+    @property
+    def quantity(self): return Hdf5RefQuantity.Hdf5RowAccessor(self)
+    @quantity.setter
+    def quantity(self,q): self.dataset[:]=q.to(self.unit)
 
 
 HeavyDataBase_ModeChoice=typing.Literal['readonly', 'readwrite', 'overwrite', 'create', 'create-memory']
@@ -41,14 +60,13 @@ HeavyDataBase_ModeChoice=typing.Literal['readonly', 'readwrite', 'overwrite', 'c
 @Pyro5.api.expose
 class HeavyDataBase(MupifObject):
 
-
     '''
     Base class for various HDF5-backed objects with automatic HDF5 transfer when copied to remote location. This class is to be used internally only.
     '''
     h5path: str = ''
     h5group: str = '/'
     h5uri: typing.Optional[str] = None
-    mode: HeavyDataBase_ModeChoice = 'readonly'  # mode is used only by the context manager
+    mode: HeavyDataBase_ModeChoice='readonly'
 
     def __init__(self,**kw):
         super().__init__(**kw)  # calls the real ctor
@@ -75,21 +93,18 @@ class HeavyDataBase(MupifObject):
         return v
 
     @pydantic.validate_arguments
-    def openStorage(self, *, mode: HeavyDataBase_ModeChoice):
+    def openStorage(self):
         '''
-        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyDataBase` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyDataBase.closeData` is called (directly or via context manager).
-
-        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyDataBase.mode`.
 
         '''
-        if mode in ('readonly', 'readwrite'):
-            if mode == 'readonly':
+        if self.mode in ('readonly', 'readwrite'):
+            if self.mode == 'readonly':
                 if self._h5obj:
                     if self._h5obj.mode != 'r':
                         raise RuntimeError(f'HDF5 file {self.h5path} already open for writing.')
                 else:
                     self._h5obj = h5py.File(self.h5path, 'r')
-            elif mode == 'readwrite':
+            elif self.mode == 'readwrite':
                 if self._h5obj:
                     if self._h5obj.mode != 'r+':
                         raise RuntimeError(f'HDF5 file {self.h5path} already open read-only.')
@@ -97,10 +112,10 @@ class HeavyDataBase(MupifObject):
                     if not os.path.exists(self.h5path):
                         raise RuntimeError(f'HDF5 file {self.h5path} does not exist (use mode="create" to create a new file.')
                     self._h5obj = h5py.File(self.h5path, 'r+')
-        elif mode in ('overwrite', 'create', 'create-memory'):
+        elif self.mode in ('overwrite', 'create', 'create-memory'):
             if self._h5obj:
                 raise RuntimeError(f'HDF5 file {self.h5path} already open.')
-            if mode == 'create-memory':
+            if self.mode == 'create-memory':
                 import uuid
                 doSave = bool(self.h5path)
                 p = (self.h5path if doSave else str(uuid.uuid4()))
@@ -113,7 +128,7 @@ class HeavyDataBase(MupifObject):
                 if useTemp := (not self.h5path):
                     fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
                     log.info(f'Using new temporary file {self.h5path}')
-                if mode == 'overwrite' or useTemp:
+                if self.mode == 'overwrite' or useTemp:
                     self._h5obj = h5py.File(self.h5path, 'w')
                 # 'create' mode should fail if file exists already
                 # it would fail also with new temporary file; *useTemp* is therefore handled as overwrite
@@ -173,15 +188,17 @@ class HeavyDataBase(MupifObject):
             log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
 
 
-class HeavyQuantity(HeavyRefQuantity):
+class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
     'Quantity stored in HDF5 dataset, managing the HDF5 file itself.'
-    value_: h5py.Dataset
-    unit: astropy.units.UnitBase
-    def __len__(self): return self.value_.shape[0]
+    def __len__(self): return self.dataset.shape[0]
     # make setting value more natural
     @property
-    def value(self): return self.value_
+    def value(self): return self.dataset
     @value.setter
-    def value(self,val): self.value_[:]=val
+    def value(self,val): self.dataset[:]=val
 
+    def allocateDataset(self,name,shape,**kw):
+        if self.dataset: raise RuntimeError(f'dataset is already assigned (shape {"×".join(self.dataset.shape)})')
+        if not self._h5obj: raise RuntimeError('Backing storage not open, call openStorage() first.')
+        self.dataset=self._h5grp.create_dataset(name,shape=shape,**kw)
 

@@ -48,7 +48,7 @@ class MupifQuantity(mupifobject.MupifObject):
     Value and unit can be accessed separately as `value` and `unit`.
     """
 
-    quantity: typing.Union[units.Quantity,units.IndirectQuantity]
+    quantity: typing.Union[units.Quantity,units.RefQuantity]
     valueType: ValueType = ValueType.Scalar
 
     # shorthand accessor for quantity (less typing)

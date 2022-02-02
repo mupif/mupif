@@ -1,4 +1,4 @@
-from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice, HeavyRefQuantity
+from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice, Hdf5RefQuantity, Hdf5OwningRefQuantity
 from .field import FieldType, Field
 from .mupifquantity import ValueType
 from .units import Unit
@@ -42,9 +42,6 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         return self
     def __exit__(self, exc_type, exc_value, traceback): self.closeData()
 
-
-    def makeFieldStorage(self,*,fieldID,shape,dtype):
-        return self._h5grp.create_dataset(fieldID.name,shape=shape,dtype=dtype)
 
     def _hasData(self):
         return hasattr(self,'_h5grp') and self._h5grp is not None
@@ -175,7 +172,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             for cc in seq(block.data,what=' '+block.type):
                 self.appendCells(types=len(cc)*[cgt],conn=cc)
 
-    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,dtype='f8'):
+    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8'):
         '''
         Create preallocated :obj:`mupif.Field` object storing its data in the same HDF5 file as the mesh (*self*). The field dimensions are determined from fieldType (cell/vertex based, plus the number of cells/vertices of the mesh object) and valueType (size of one record). The field's values are not assigned but allocated in the HDF5 container as a dataset.
 
@@ -201,9 +198,13 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         if valueType.getNumberOfComponents()==1: shape=(n,)
         else: shape=(n,valueType.getNumberOfComponents())
         kw=dict(chunks=True,compression='gzip',compression_opts=9)
-        ds=self._h5grp.create_dataset(fieldID.name,shape=shape,**kw)
-        hrq=HeavyRefQuantity(value=ds,unit=unit)
-        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hrq,fieldID=fieldID,time=0*Unit('s'))
+        if not h5path:
+            ds=self._h5grp.create_dataset(fieldID.name,shape=shape,**kw)
+            hq=Hdf5RefQuantity(dataset=ds,unit=unit)
+        else:
+            hq=Hdf5OwningRefQuantity(mode='create',h5path=h5path,unit=unit)
+            hq.allocateDataset(fieldID.name,shape=shape,**kw)
+        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hq,fieldID=fieldID,time=0*Unit('s'))
 
 
 def _chunker(it,size):
