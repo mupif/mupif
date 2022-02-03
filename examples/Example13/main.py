@@ -51,7 +51,7 @@ class Workflow13(mp.workflow.Workflow):
             }
         }
 
-        self.ns = mp.pyroutil.connectNameServer()
+        self.ns = mp.pyroutil.connectNameserver()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)

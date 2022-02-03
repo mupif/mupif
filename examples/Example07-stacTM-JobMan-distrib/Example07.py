@@ -38,7 +38,7 @@ class Example07(workflow.Workflow):
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer()
+        ns = pyroutil.connectNameserver()
         self.daemon = pyroutil.getDaemon(ns)
 
         # connect to JobManager running on (remote) server

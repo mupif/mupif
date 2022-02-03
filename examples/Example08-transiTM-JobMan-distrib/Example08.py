@@ -46,7 +46,7 @@ class Example08(workflow.Workflow):
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer()
+        ns = pyroutil.connectNameserver()
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'thermal-nonstat-ex08')
         

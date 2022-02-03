@@ -33,7 +33,7 @@ class Example04(mp.Workflow):
         self.updateMetadata(metadata)
         
         # locate nameserver
-        ns = mp.pyroutil.connectNameServer()
+        ns = mp.pyroutil.connectNameserver()
         # connect to JobManager running on (remote) server and create a tunnel to it
         self.jobMan = mp.pyroutil.connectJobManager(ns, 'mupif/example04/jobMan')
         log.info('Connected to JobManager')

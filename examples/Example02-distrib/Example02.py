@@ -94,7 +94,7 @@ timestepnumber = 0
 targetTime = 1.0
 
 # locate nameserver
-ns = pyroutil.connectNameServer()
+ns = pyroutil.connectNameserver()
 
 # application1 is local, create its instance
 app1 = Application1()
