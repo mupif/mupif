@@ -20,34 +20,37 @@ except Exception:
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 
+# for now, disable numpy validation completely until we figure out what works in what python version reliably
+if 1:
+    NumpyArray=NumpyArrayFloat64=typing.Any
+else:
+    # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
+    DType = TypeVar('DType')
+    class NumpyArray(np.ndarray, Generic[DType]):
+        """Wrapper class for numpy arrays that stores and validates type information.
+        This can be used in place of a numpy array, but when used in a pydantic BaseModel
+        or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
+        declared type.
+        """
+        @classmethod
+        def __get_validators__(cls):
+            yield cls.validate
+        @classmethod
+        def validate(cls, val, field: ModelField):
+            dtype_field = field.sub_fields[0]
+            actual_dtype = dtype_field.type_.__args__[0]
+            # If numpy cannot create an array with the request dtype, an error will be raised
+            # and correctly bubbled up.
+            np_array = np.array(val, dtype=actual_dtype)
+            return np_array
 
-# from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
-DType = TypeVar('DType')
-class NumpyArray(np.ndarray, Generic[DType]):
-    """Wrapper class for numpy arrays that stores and validates type information.
-    This can be used in place of a numpy array, but when used in a pydantic BaseModel
-    or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
-    declared type.
-    """
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-    @classmethod
-    def validate(cls, val, field: ModelField):
-        dtype_field = field.sub_fields[0]
-        actual_dtype = dtype_field.type_.__args__[0]
-        # If numpy cannot create an array with the request dtype, an error will be raised
-        # and correctly bubbled up.
-        np_array = np.array(val, dtype=actual_dtype)
-        return np_array
-
-try:
-    # this should work in python 3.9
-    # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
-    NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
-except TypeError:
-    # python 3.8, just use the generic form
-    NumpyArrayFloat64 = NumpyArray
+    try:
+        # this should work in python 3.9
+        # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
+        NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
+    except TypeError:
+        # python 3.8, just use the generic form
+        NumpyArrayFloat64 = NumpyArray
 
 
 def addPydanticInstanceValidator(klass,makeKlass=None):
