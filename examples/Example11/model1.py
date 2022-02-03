@@ -74,7 +74,7 @@ class Model1 (mp.Model):
         grains.resize(size=2)
         for ig, g in enumerate(grains):
             g.getMolecules().resize(size=random.randint(5, 10))
-            print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
+            log.info(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 m.getIdentity().setMolecularWeight(random.randint(1, 10)*u.yg)
                 m.getAtoms().resize(size=random.randint(30, 60))
@@ -87,7 +87,7 @@ class Model1 (mp.Model):
                     atomCounter += 1
         self.grainState.closeData()
         t1 = time.time()
-        print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+        log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         md = {
                 'Execution': {
                     'ID': self.getMetadata('Execution.ID'),

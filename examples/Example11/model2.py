@@ -75,7 +75,7 @@ class Model2 (mp.Model):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # (1) read source grain state, into new state, then (2) replace a molecule with dopant (different molecule)
-        print(self.inputGrainState)
+        # log.info(str(self.inputGrainState))
         #
         # (1) copy old state into a new one
         #
@@ -115,7 +115,7 @@ class Model2 (mp.Model):
                         oa.getProperties().getTopology().setStructure(ia.getProperties().getTopology().getStructure())
                         atomCounter+=1
             t1=time.time()
-            print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+            log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         #
         # replace one molecule in outGrains with a different molecule
         #
@@ -148,7 +148,7 @@ class Model2 (mp.Model):
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
             t1=time.time()
-            print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+            log.info(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         self.outputGrainState.closeData()
 
     def getCriticalTimeStep(self):

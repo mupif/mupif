@@ -115,12 +115,12 @@ class Example08(workflow.Workflow):
 
         self.thermal.solveStep(istep)
         f = self.thermal.get(DataID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
-        data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=False)
+        data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=True)
 
         self.mechanical.set(f)
         sol = self.mechanical.solveStep(istep) 
         f = self.mechanical.get(DataID.FID_Displacement, istep.getTime())
-        data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=False)
+        data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=True)
 
         logging.getLogger().setLevel(level0)
 
