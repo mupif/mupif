@@ -96,6 +96,6 @@ if __name__ == '__main__':
     workflow.initialize(metadata=workflowMD)
     workflow.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     workflow.solve()
-    gs = workflow.get(mp.DataID.PID_GrainState)
+    gs = workflow.get(mp.DataID.ID_GrainState)
     gs.cloneHandle('./data1.h5')
     workflow.terminate()

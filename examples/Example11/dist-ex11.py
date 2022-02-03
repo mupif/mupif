@@ -39,9 +39,9 @@ class Example11_dist(mp.Workflow):
     def solveStep(self,istep,stageID=0,runInBackground=False):
         log.info('m1.solveStep…'); self.m1app.solveStep(istep); log.info('… m1 done')
         # connect m1 output to m2 input
-        self.m2app.set(self.m1app.get(mp.DataID.PID_GrainState))
+        self.m2app.set(self.m1app.get(mp.DataID.ID_GrainState))
         log.info('m2.solveStep…'); self.m2app.solveStep(istep); log.info('… m2 done')
-        log.info(f'm2 output data: {self.m2app.get(mp.DataID.PID_GrainState)}')
+        log.info(f'm2 output data: {self.m2app.get(mp.DataID.ID_GrainState)}')
     def terminate(self):
         for a in (self.m1app,self.m2app): a.terminate()
     def getApplicationSignature(self): return "Exmple 11 distributed"

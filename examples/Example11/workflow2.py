@@ -100,7 +100,7 @@ if __name__ == '__main__':
     gs_in = mp.heavystruct.HeavyStruct(h5path='./data1.h5', id=mp.dataid.DataID.ID_GrainState)
     workflow.set(gs_in)
     workflow.solve()
-    gs_out = workflow.get(mp.DataID.PID_GrainState)
+    gs_out = workflow.get(mp.DataID.ID_GrainState)
     gs_out.cloneHandle('./data2.h5')
 
     workflow.terminate()

@@ -61,17 +61,19 @@ class Model2 (mp.Model):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.DataID.PID_GrainState:
+        if objectTypeID == mp.DataID.ID_GrainState:
             return self.outputGrainState
         else:
             raise mp.APIError('Unknown property ID')
 
     def set(self, obj, objectID=0):
-        if type(obj) == mp.heavystruct.HeavyStruct:  # todo: test some ID as well
+        if type(obj) == mp.heavystruct.HeavyStruct:
             if obj.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = obj
+            else:
+                raise mp.APIError('Unknown property ID')
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown object type')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # (1) read source grain state, into new state, then (2) replace a molecule with dopant (different molecule)

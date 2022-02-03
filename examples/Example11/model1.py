@@ -56,7 +56,7 @@ class Model1 (mp.Model):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.DataID.PID_GrainState:
+        if objectTypeID == mp.DataID.ID_GrainState:
             return self.grainState
         else:
             raise mp.APIError('Unknown property ID')
