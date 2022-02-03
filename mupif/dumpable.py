@@ -149,7 +149,8 @@ class Dumpable(MupifBaseModel):
             clss = self.__class__
         if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
-            for attr in clss.__fields__.keys():
+            for attr,modelField in clss.__fields__.items():
+                if modelField.field_info.exclude: continue # skip excluded fields
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
