@@ -20,6 +20,7 @@ except Exception:
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 
+if pydantic.__version__.split('.')<(1,9): raise RuntimeError('Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar)')
 
 # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
 DType = TypeVar('DType')

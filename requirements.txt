@@ -12,7 +12,7 @@ matplotlib
 astropy
 deprecated
 appdirs
-pydantic>=1.7.3
+pydantic>=1.9.0
 # for documentation
 sphinxcontrib-apidoc
 asyncssh
