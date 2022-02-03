@@ -16,7 +16,73 @@ from mupif.heavystruct import sampleSchemas_json
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
 
-class Heavydata_TestCase(unittest.TestCase):
+class Hdf5Quantity_TestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.daemon=mp.pyroutil.getDaemon()
+    def setUp(self):
+        self.n=1000
+        self.hq=mp.Hdf5OwningRefQuantity(unit='m/s',mode='create',h5loc='/some/path')
+        self.hq.allocateDataset(shape=(self.n,3),dtype='f8') # creates HDF5 file *and* the dataset, all-zero data
+        self.hq.value[1]=1
+        self.hq.closeData()
+    def test_01_assign(self):
+        print(self.hq)
+        hq=self.hq
+        hq.openData(mode='readwrite') # open HDF5 (automatically) and the dataset itself
+        hq.value[:]=np.linspace(0,1,self.n)[:,None]
+        self.assertAlmostEqual(hq.value[2][0],2*1/(self.n-1))
+        hq.value[3]=[1,2,3]
+        self.assertEqual(list(hq.value[3]),[1,2,3])
+
+        hq.quantity[4]=(4,5,6)*mp.U['km/h']
+        self.assertAlmostEqual(hq.value[4][0],4/3.6) # m/s
+
+        def value00(v): hq.value[0][0]=v
+        def quantity00(q): hq.quantity[0][0]=q
+        self.assertRaises(ValueError,lambda: value00(10)) # this would assign to a copy, losing the data
+        self.assertRaises(ValueError,lambda: quantity00(10*mp.U['m/s'])) # this would assign to a copy, losing the data
+
+    def test_02_readonly(self):
+        self.hq.openData(mode='readonly')
+        self.assertRaises(OSError,lambda: self.hq.value.__setitem__(2,1))
+
+    def test_03_refQuantity(self):
+        print(self.hq)
+        self.hq.openData(mode='readwrite')
+        # Hdf5RefQuantity shares underlying dataset
+        hrq=self.hq.makeRef()
+        self.hq.quantity[5]=(1,2,3)*mp.U['m/s']
+        self.assertEqual(list(self.hq.quantity[5]),list(hrq.quantity[5]))
+
+    def test_10_transfer(self):
+        C=self.__class__
+        # 1. register the Hdf5OwningRefQuantity itself
+        uri=C.daemon.register(self.hq)
+
+        # test: exposing open data raises exception
+        self.hq.openData(mode='readonly')
+        v00=self.hq.value[0][0]
+        self.assertRaises(RuntimeError,self.hq.exposeData)
+        self.hq.closeData()
+
+        # 2. expose the data (uses the same daemon)
+        self.hq.exposeData()
+
+        p=Pyro5.api.Proxy(uri)
+        # copies backing HDF5 file automatically
+        hq2=p.copyRemote()
+
+        hq2.openData(mode='readwrite')
+        self.assertEqual(list(hq2.value[1]),[1.,1.,1.])
+        # test that backing storage is really different
+        self.assertNotEqual(self.hq.h5path,hq2.h5path)
+        hq2.value[0]=(100,0,0)
+        self.assertNotEqual(v00,hq2.value[0][0])
+        self.assertIsNone(hq2.h5uri)
+
+
+class HeavyStruct_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmpdir=tempfile.TemporaryDirectory()

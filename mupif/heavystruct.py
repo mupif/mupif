@@ -784,14 +784,14 @@ def _make_grains(h5name):
         grp.attrs['schemas']=sampleSchemas_json
         grp.attrs['schema']=schemaT.schemaName
         grains=schemaT(top=HeavyStruct.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
-        print(f"{grains}")
+        log.debug(f"{grains}")
         grains.resize(size=2)
-        print(f"There is {len(grains)} grains.")
+        log.info(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
             #g=grains[ig]
-            print('grain',ig,g)
+            log.debug(f'grain {ig} {g}')
             g.getMolecules().resize(size=random.randint(5,20))
-            print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
+            log.debug(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 #for im in range(len(g.getMolecules())):
                 #m=g.getMolecules()[im]
@@ -809,7 +809,7 @@ def _make_grains(h5name):
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
     t1=time.time()
-    print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+    log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
 def _read_grains(h5name):
@@ -823,7 +823,7 @@ def _read_grains(h5name):
         grains = schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=[]))
         for g in grains:
             # print(g)
-            print(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
+            log.info(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
             for m in g.getMolecules():
                 m.getIdentity().getMolecularWeight()
                 for a in m.getAtoms():
@@ -833,7 +833,7 @@ def _read_grains(h5name):
                     a.getProperties().getTopology().getStructure()
                     atomCounter += 1
     t1 = time.time()
-    print(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+    log.info(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
 def HeavyDataHandle(*args, **kwargs):
@@ -843,6 +843,7 @@ def HeavyDataHandle(*args, **kwargs):
 
 @Pyro5.api.expose
 class HeavyStruct(HeavyDataBase):
+    h5group: str='/'
     schemaName: typing.Optional[str] = None
     schemasJson: typing.Optional[str] = None
     id: dataid.DataID = dataid.DataID.ID_None
@@ -899,12 +900,11 @@ class HeavyStruct(HeavyDataBase):
         super().__init__(**kw)
 
     @pydantic.validate_arguments
-    def openData(self,mode=None):
+    def openData(self,mode=typing.Optional[HeavyDataBase_ModeChoice]):
         '''
         Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyStruct` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyStruct.closeData` is called (directly or via context manager).
         '''
-        if mode is not None: self.mode=mode
-        self.openStorage()
+        self.openStorage(mode=mode)
         extant=(self.h5group in self._h5obj and 'schema' in self._h5obj[self.h5group].attrs)
         if extant:
             # for modes readonly, readwrite
