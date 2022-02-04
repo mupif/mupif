@@ -52,7 +52,7 @@ class Application1(mp.Model):
 
     def get(self, objectTypeID, time=None, objectID=0):
         if objectTypeID == mp.DataID.PID_Time:
-            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
+            return mp.ConstantProperty(value=self.value, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
         else:
             raise mp.APIError('Unknown property ID')
             
@@ -101,7 +101,7 @@ while abs(time - targetTime) > 1.e-6:
     v = app1.get(mp.DataID.PID_Time, istep.getTime())
     
     # Create a PhysicalQuantity object
-    V = mp.units.Quantity(value=v.getValue(istep.getTime())[0], unit=v.getUnit())
+    V = mp.units.Quantity(value=v.getValue(istep.getTime()), unit=v.getUnit())
 
     val = V.inBaseUnits()
     log.debug(val)

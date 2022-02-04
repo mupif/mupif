@@ -3,13 +3,14 @@ sys.path.extend(['..', '../..'])
 import time
 import random
 import numpy as np
+import Pyro5.api
 
 import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
-
+@Pyro5.api.expose
 class Model2 (mp.Model):
     """
     Simple model that replaces random molecule in grain by another one (dopant)
@@ -60,21 +61,23 @@ class Model2 (mp.Model):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.DataID.PID_GrainState:
+        if objectTypeID == mp.DataID.ID_GrainState:
             return self.outputGrainState
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown DataID')
 
     def set(self, obj, objectID=0):
-        if type(obj) == mp.heavystruct.HeavyStruct:  # todo: test some ID as well
+        if type(obj) == mp.heavystruct.HeavyStruct:
             if obj.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = obj
+            else:
+                raise mp.APIError('Unknown DataID')
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown object type')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # (1) read source grain state, into new state, then (2) replace a molecule with dopant (different molecule)
-        print(self.inputGrainState)
+        # log.info(str(self.inputGrainState))
         #
         # (1) copy old state into a new one
         #
@@ -114,7 +117,7 @@ class Model2 (mp.Model):
                         oa.getProperties().getTopology().setStructure(ia.getProperties().getTopology().getStructure())
                         atomCounter+=1
             t1=time.time()
-            print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+            log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         #
         # replace one molecule in outGrains with a different molecule
         #
@@ -147,7 +150,7 @@ class Model2 (mp.Model):
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
             t1=time.time()
-            print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+            log.info(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         self.outputGrainState.closeData()
 
     def getCriticalTimeStep(self):

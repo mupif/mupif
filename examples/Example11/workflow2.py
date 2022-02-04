@@ -96,11 +96,11 @@ if __name__ == '__main__':
         }
     }
     workflow.initialize(metadata=workflowMD)
-    workflow.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    workflow.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     gs_in = mp.heavystruct.HeavyStruct(h5path='./data1.h5', id=mp.dataid.DataID.ID_GrainState)
     workflow.set(gs_in)
     workflow.solve()
-    gs_out = workflow.get(mp.DataID.PID_GrainState)
+    gs_out = workflow.get(mp.DataID.ID_GrainState)
     gs_out.cloneHandle('./data2.h5')
 
     workflow.terminate()

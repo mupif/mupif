@@ -784,14 +784,14 @@ def _make_grains(h5name):
         grp.attrs['schemas']=sampleSchemas_json
         grp.attrs['schema']=schemaT.schemaName
         grains=schemaT(top=HeavyStruct.TopContext(h5group=grp,schemaRegistry=schemaRegistry,pyroIds=[]))
-        print(f"{grains}")
+        log.debug(f"{grains}")
         grains.resize(size=2)
-        print(f"There is {len(grains)} grains.")
+        log.info(f"There is {len(grains)} grains.")
         for ig,g in enumerate(grains):
             #g=grains[ig]
-            print('grain',ig,g)
+            log.debug(f'grain {ig} {g}')
             g.getMolecules().resize(size=random.randint(5,20))
-            print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
+            log.debug(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 #for im in range(len(g.getMolecules())):
                 #m=g.getMolecules()[im]
@@ -809,7 +809,7 @@ def _make_grains(h5name):
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
     t1=time.time()
-    print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+    log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
 def _read_grains(h5name):
@@ -823,7 +823,7 @@ def _read_grains(h5name):
         grains = schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=[]))
         for g in grains:
             # print(g)
-            print(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
+            log.info(f'Grain #{g.row} has {len(g.getMolecules())} molecules.')
             for m in g.getMolecules():
                 m.getIdentity().getMolecularWeight()
                 for a in m.getAtoms():
@@ -833,7 +833,7 @@ def _read_grains(h5name):
                     a.getProperties().getTopology().getStructure()
                     atomCounter += 1
     t1 = time.time()
-    print(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+    log.info(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
 
 
 def HeavyDataHandle(*args, **kwargs):
@@ -843,6 +843,7 @@ def HeavyDataHandle(*args, **kwargs):
 
 @Pyro5.api.expose
 class HeavyStruct(HeavyDataBase):
+    h5group: str='/'
     schemaName: typing.Optional[str] = None
     schemasJson: typing.Optional[str] = None
     id: dataid.DataID = dataid.DataID.ID_None
@@ -899,12 +900,9 @@ class HeavyStruct(HeavyDataBase):
         super().__init__(**kw)
 
     @pydantic.validate_arguments
-    def openData(self, mode: HeavyDataBase_ModeChoice):
+    def openData(self,mode=typing.Optional[HeavyDataBase_ModeChoice]):
         '''
         Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyStruct` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyStruct.closeData` is called (directly or via context manager).
-
-        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyStruct.mode`.
-
         '''
         self.openStorage(mode=mode)
         extant=(self.h5group in self._h5obj and 'schema' in self._h5obj[self.h5group].attrs)
@@ -917,7 +915,7 @@ class HeavyStruct(HeavyDataBase):
             return self._returnProxy(top)
         else:
             if not self.schemaName or not self.schemasJson:
-                raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
+                raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {self.mode})')
             # modes: overwrite, create, create-memory
             grp = self._h5obj.require_group(self.h5group)
             grp.attrs['schemas'] = self.schemasJson
@@ -966,263 +964,3 @@ if __name__ == '__main__':
     # pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
     print(str(mol4dump) == str(mol5dump))
     pp.closeData()
-
-
-
-
-@Pyro5.api.expose
-class HeavyStruct(HeavyDataBase):
-    schemaName: typing.Optional[str] = None
-    schemasJson: typing.Optional[str] = None
-    id: dataid.DataID = dataid.DataID.ID_None
-
-    # __doc__ is a computed property which will add documentation for the sample JSON schemas
-    __doc0__ = '''
-
-    *mode* specifies how the underlying HDF5 file (:obj:`h5path`) is to be opened:
-
-    * ``readonly`` only allows reading;
-    * ``readwrite`` alows reading and writing;
-    * ``create`` creates new HDF5 file, raising an exception if the file exists already; if :obj:`h5path` is empty, a temporary file will be created automatically; 
-    * ``overwrite`` create new HDF5 file, allowing overwriting an existing file;
-    * ``create-memory`` create HDF5 file in RAM only; if :obj:`h5path` is non-empty, it will be written out when data is closed via :obj:`closeData` (and discarded otherwise);
-    * ``copy-readwrite``: copies the underlying HDF5 file to a temporary storage first, then opens that for writing.
-
-
-    *schemaName* and *schemasJson* must be provided when creating new data (``overwrite``, ``create``, ``create-memory``) and are ignored otherwise.
-
-    This class can be used as context manager, in which case the :obj:`openData` and :obj:`closeData` will be called automatically.
-
-    '''
-
-    # from https://stackoverflow.com/a/3203659/761090
-    class _classproperty(object):
-        def __init__(self, getter): self.getter = getter
-        def __get__(self, instance, owner): return self.getter(owner)
-
-    @_classproperty
-    def __doc__(cls):
-        ret = cls.__doc0__
-        reg = makeSchemaRegistry(json.loads(sampleSchemas_json))
-        for key, val in reg.items():
-            ret += '\n\n'+val.__doc__.replace('`', '``')
-        return ret
-
-    # this is not useful over Pyro (the Proxy defines its own context manager) but handy for local testing
-    def __enter__(self): return self.openData(mode=self.mode)
-    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
-
-    @dataclass
-    @Pyro5.api.expose
-    class TopContext:
-        'This class is for internal use only. It is the return type of :obj:`HeavyStruct.openData` and others.'
-        h5group: Any
-        pyroIds: list
-        schemaRegistry: dict
-        dataset: Any = None
-
-        def __str__(self):
-            return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
-
-    def __init__(self, **kw):
-        super().__init__(**kw)
-
-    @pydantic.validate_arguments
-    def openData(self, mode: HeavyDataBase_ModeChoice):
-        '''
-        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyStruct` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyStruct.closeData` is called (directly or via context manager).
-
-        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyStruct.mode`.
-
-        '''
-        self.openStorage(mode=mode)
-        extant=(self.h5group in self._h5obj and 'schema' in self._h5obj[self.h5group].attrs)
-        if extant:
-            # for modes readonly, readwrite
-            grp = self._h5obj[self.h5group]
-            schemaRegistry = makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-            top=schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
-            self.updateMetadata(json.loads(grp.attrs['metadata']))
-            return self._returnProxy(top)
-        else:
-            if not self.schemaName or not self.schemasJson:
-                raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
-            # modes: overwrite, create, create-memory
-            grp = self._h5obj.require_group(self.h5group)
-            grp.attrs['schemas'] = self.schemasJson
-            grp.attrs['schema'] = self.schemaName
-            grp.attrs['metadata'] = json.dumps(self.getAllMetadata())
-            schemaRegistry = makeSchemaRegistry(json.loads(self.schemasJson))
-            top = schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
-            return self._returnProxy(top)
-
-
-'''
-future ideas:
-* Create all context classes as Ctx_<md5 of the JSON schema> so that the name is unique.\
-* Register classes to Pyro when the schema is read
-* Register classes to remote Pyro when the heavy file is transferred?
-'''
-
-# uses relative imports, therefore run stand-alone as as:
-#
-# PYTHONPATH=.. python3 -m mupif.heavydata
-#
-if __name__ == '__main__':
-    import json
-    import pprint
-    print(HeavyStruct.__doc__)
-    # print(json.dumps(json.loads(sampleSchemas_json),indent=2))
-    _make_grains('/tmp/grains.h5')
-    _read_grains('/tmp/grains.h5')
-
-    # this won't work through Pyro yet
-    pp = HeavyStruct(h5path='/tmp/grains.h5', h5group='test')
-    for key, val in pp.getSchemaRegistry(compile=True).items():
-        print(val.__doc__.replace('`', '``'))
-    grains = pp.openData('readonly')
-    print(pp.openData(mode='readonly')[0].getMolecules())
-    print(grains.getMolecules(0).getAtoms(5).getIdentity().getElement())
-    print(grains[0].getMolecules()[5].getAtoms().getIdentity().getElement())
-    import pprint
-    mol5dump = grains[0].getMolecules()[5].to_dump()
-    pp.closeData()
-    grains = pp.openData('readwrite')
-    grains[0].getMolecules()[4].from_dump(mol5dump)
-    mol4dump = grains[0].getMolecules()[4].to_dump()
-    # pprint.pprint(mol4dump)
-    # pprint.pprint(mol4dump,stream=open('/tmp/m4.txt','w'))
-    # pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
-    print(str(mol4dump) == str(mol5dump))
-    pp.closeData()
-
-
-
-
-@Pyro5.api.expose
-class HeavyStruct(HeavyDataBase):
-    schemaName: typing.Optional[str] = None
-    schemasJson: typing.Optional[str] = None
-    id: dataid.DataID = dataid.DataID.ID_None
-
-    # __doc__ is a computed property which will add documentation for the sample JSON schemas
-    __doc0__ = '''
-
-    *mode* specifies how the underlying HDF5 file (:obj:`h5path`) is to be opened:
-
-    * ``readonly`` only allows reading;
-    * ``readwrite`` alows reading and writing;
-    * ``create`` creates new HDF5 file, raising an exception if the file exists already; if :obj:`h5path` is empty, a temporary file will be created automatically; 
-    * ``overwrite`` create new HDF5 file, allowing overwriting an existing file;
-    * ``create-memory`` create HDF5 file in RAM only; if :obj:`h5path` is non-empty, it will be written out when data is closed via :obj:`closeData` (and discarded otherwise);
-    * ``copy-readwrite``: copies the underlying HDF5 file to a temporary storage first, then opens that for writing.
-
-
-    *schemaName* and *schemasJson* must be provided when creating new data (``overwrite``, ``create``, ``create-memory``) and are ignored otherwise.
-
-    This class can be used as context manager, in which case the :obj:`openData` and :obj:`closeData` will be called automatically.
-
-    '''
-
-    # from https://stackoverflow.com/a/3203659/761090
-    class _classproperty(object):
-        def __init__(self, getter): self.getter = getter
-        def __get__(self, instance, owner): return self.getter(owner)
-
-    @_classproperty
-    def __doc__(cls):
-        ret = cls.__doc0__
-        reg = makeSchemaRegistry(json.loads(sampleSchemas_json))
-        for key, val in reg.items():
-            ret += '\n\n'+val.__doc__.replace('`', '``')
-        return ret
-
-    # this is not useful over Pyro (the Proxy defines its own context manager) but handy for local testing
-    def __enter__(self): return self.openData(mode=self.mode)
-    def __exit__(self, exc_type, exc_value, traceback): self.closeData()
-
-    @dataclass
-    @Pyro5.api.expose
-    class TopContext:
-        'This class is for internal use only. It is the return type of :obj:`HeavyStruct.openData` and others.'
-        h5group: Any
-        pyroIds: list
-        schemaRegistry: dict
-        dataset: Any = None
-
-        def __str__(self):
-            return f'{self.__module__}.{self.__class__.__name__}(h5group={str(self.h5group)},dataset={str(self.dataset)},schemaRegistry=<<{",".join(self.schemaRegistry.keys())}>>)'
-
-    def __init__(self, **kw):
-        super().__init__(**kw)
-
-    @pydantic.validate_arguments
-    def openData(self, mode: HeavyDataBase_ModeChoice):
-        '''
-        Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyStruct` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyStruct.closeData` is called (directly or via context manager).
-
-        If *mode* is given, it overrides (and sets) the instance's :obj:`HeavyStruct.mode`.
-
-        '''
-        self.openStorage(mode=mode)
-        extant=(self.h5group in self._h5obj and 'schema' in self._h5obj[self.h5group].attrs)
-        if extant:
-            # for modes readonly, readwrite
-            grp = self._h5obj[self.h5group]
-            schemaRegistry = makeSchemaRegistry(json.loads(grp.attrs['schemas']))
-            top=schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
-            self.updateMetadata(json.loads(grp.attrs['metadata']))
-            return self._returnProxy(top)
-        else:
-            if not self.schemaName or not self.schemasJson:
-                raise ValueError(f'Both *schema* and *schemaJson* must be given (opening {self.h5path} in mode {mode})')
-            # modes: overwrite, create, create-memory
-            grp = self._h5obj.require_group(self.h5group)
-            grp.attrs['schemas'] = self.schemasJson
-            grp.attrs['schema'] = self.schemaName
-            grp.attrs['metadata'] = json.dumps(self.getAllMetadata())
-            schemaRegistry = makeSchemaRegistry(json.loads(self.schemasJson))
-            top = schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
-            return self._returnProxy(top)
-
-
-'''
-future ideas:
-* Create all context classes as Ctx_<md5 of the JSON schema> so that the name is unique.\
-* Register classes to Pyro when the schema is read
-* Register classes to remote Pyro when the heavy file is transferred?
-'''
-
-# uses relative imports, therefore run stand-alone as as:
-#
-# PYTHONPATH=.. python3 -m mupif.heavydata
-#
-if __name__ == '__main__':
-    import json
-    import pprint
-    print(HeavyStruct.__doc__)
-    # print(json.dumps(json.loads(sampleSchemas_json),indent=2))
-    _make_grains('/tmp/grains.h5')
-    _read_grains('/tmp/grains.h5')
-
-    # this won't work through Pyro yet
-    pp = HeavyStruct(h5path='/tmp/grains.h5', h5group='test')
-    for key, val in pp.getSchemaRegistry(compile=True).items():
-        print(val.__doc__.replace('`', '``'))
-    grains = pp.openData('readonly')
-    print(pp.openData(mode='readonly')[0].getMolecules())
-    print(grains.getMolecules(0).getAtoms(5).getIdentity().getElement())
-    print(grains[0].getMolecules()[5].getAtoms().getIdentity().getElement())
-    import pprint
-    mol5dump = grains[0].getMolecules()[5].to_dump()
-    pp.closeData()
-    grains = pp.openData('readwrite')
-    grains[0].getMolecules()[4].from_dump(mol5dump)
-    mol4dump = grains[0].getMolecules()[4].to_dump()
-    # pprint.pprint(mol4dump)
-    # pprint.pprint(mol4dump,stream=open('/tmp/m4.txt','w'))
-    # pprint.pprint(mol5dump,stream=open('/tmp/m5.txt','w'))
-    print(str(mol4dump) == str(mol5dump))
-    pp.closeData()
-
-

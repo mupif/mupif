@@ -70,15 +70,15 @@ class Application13(mp.Model):
             }
         }
         if objectTypeID == mp.DataID.PID_Time:
-            return mp.ConstantProperty(value=(self.result,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s*mp.U.s, time=time, metadata=md)
+            return mp.ConstantProperty(value=self.result, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s*mp.U.s, time=time, metadata=md)
 
     def set(self, obj, objectID=0):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time:
                 if objectID == 1:
-                    self.value_1 = obj.inUnitsOf(mp.U.s).getValue()[0]
+                    self.value_1 = obj.inUnitsOf(mp.U.s).getValue()
                 if objectID == 2:
-                    self.value_2 = obj.inUnitsOf(mp.U.s).getValue()[0]
+                    self.value_2 = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.result = self.value_1 * self.value_2

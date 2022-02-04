@@ -51,7 +51,7 @@ class Workflow13(mp.workflow.Workflow):
             }
         }
 
-        self.ns = mp.pyroutil.connectNameServer()
+        self.ns = mp.pyroutil.connectNameserver()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)
@@ -93,8 +93,8 @@ if __name__ == '__main__':
     value_2 = 2.
 
     # inputs
-    param_1 = mp.ConstantProperty(value=(value_1,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
-    param_2 = mp.ConstantProperty(value=(value_2,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_1 = mp.ConstantProperty(value=value_1, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_2 = mp.ConstantProperty(value=value_2, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
 
     workflow = Workflow13()
 
@@ -108,13 +108,13 @@ if __name__ == '__main__':
     }
     workflow.initialize(metadata=md)
 
-    # set the input values to the workfow which passes it to the model
-    workflow.set(param_1, 1)
-    workflow.set(param_2, 2)
+    # set the input values to the workfow which passes it to the models
+    workflow.set(param_1, objectID=1)
+    workflow.set(param_2, objectID=2)
 
     workflow.solve()
     res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)
-    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()[0]
+    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()
     workflow.terminate()
 
     print('Simulation has finished.')
