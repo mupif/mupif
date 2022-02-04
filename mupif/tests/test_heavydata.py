@@ -128,8 +128,7 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertEqual(hq.value[1],44)
         hq.reopenData(mode='readwrite')
         self.assertEqual(hq.value[1],44)
-
-    def test_21_propertySwapQuantity(self):
+    def test_22_propertySwapQuantity(self):
         p1=mp.Property(propID=mp.DataID.PID_Concentration,quantity=mp.Quantity(value=np.array([[1,2,3]]),unit='mmol/l'),valueType=mp.ValueType.Vector)
         p2=p1.deepcopy()
         # replace p2's quantity by Hdf5OwningRefQuantity
