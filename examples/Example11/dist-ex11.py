@@ -5,7 +5,9 @@ import mupif as mp
 
 import logging
 log = logging.getLogger()
+log.setLevel(logging.INFO)
 
+log.setLevel(logging.INFO)
 class Example11_dist(mp.Workflow):
     def __init__(self,metadata={}):
         MD=dict(
@@ -41,7 +43,7 @@ class Example11_dist(mp.Workflow):
         # connect m1 output to m2 input
         self.m2app.set(self.m1app.get(mp.DataID.ID_GrainState))
         log.info('m2.solveStep…'); self.m2app.solveStep(istep); log.info('… m2 done')
-        log.info(f'm2 output data: {self.m2app.get(mp.DataID.ID_GrainState)}')
+        log.debug(f'm2 output data: {self.m2app.get(mp.DataID.ID_GrainState)}')
     def terminate(self):
         for a in (self.m1app,self.m2app): a.terminate()
     def getApplicationSignature(self): return "Exmple 11 distributed"

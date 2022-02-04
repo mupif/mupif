@@ -176,6 +176,9 @@ class Dumpable(MupifBaseModel):
             raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
         return self.to_dict()
 
+    def deepcopy(self):
+        return Dumpable.from_dict(self.to_dict())
+
     @staticmethod
     def from_dict(dic, clss=None, obj=None):
         def _create(d):

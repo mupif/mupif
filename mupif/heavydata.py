@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 import typing
 import sys
 import numpy as np
@@ -41,10 +41,8 @@ class Hdf5RefQuantity(RefQuantity):
     # this will convert nicesly to arrays
     def __len__(self): return self.value_.shape[0]
 
-    # accessing quantity (value + unit)
-
     class ValueRowAccessor(object):
-        def __init__(self,refq): self.refq=refq
+        def __init__(self,refq): self.refq,self.shape=refq,refq.dataset.shape
         def __getitem__(self,row):
             ret=self.refq.dataset[row]
             ret.flags.writeable=False
@@ -52,7 +50,7 @@ class Hdf5RefQuantity(RefQuantity):
         def __setitem__(self,row: int,val):
             self.refq.dataset[row]=val
     class QuantityRowAccessor(object):
-        def __init__(self,refq): self.refq=refq
+        def __init__(self,refq): self.refq,self.shape=refq,refq.dataset.shape
         def __getitem__(self,row):
             ret=self.refq.dataset[row]*self.refq.unit
             ret.flags.writeable=False
@@ -61,15 +59,24 @@ class Hdf5RefQuantity(RefQuantity):
             if not isinstance(q,units.Quantity): raise ValueError('quantity must be an instance of mupif.units.Quantity (not a {q.__class__.__name__})')
             self.refq.dataset[row]=q.to(self.refq.unit)
 
-    # make setting value more natural
-    #@property
-    #def value(self):
-    #    return self.dataset
+    @property
+    def value(self):
+        if len(self.dataset.shape)>1: return Hdf5RefQuantity.ValueRowAccessor(self)
+        return self.dataset
 
     @property
-    def value(self): return Hdf5RefQuantity.ValueRowAccessor(self)
-    @property
-    def quantity(self): return Hdf5RefQuantity.QuantityRowAccessor(self)
+    def quantity(self):
+        if len(self.dataset.shape)>1: return Hdf5RefQuantity.QuantityRowAccessor(self)
+        return self.dataset
+    
+    # properties setters don't work with pydantic
+    # thus the user can screw up easily
+    # there is not much we can do really
+
+    #@value.setter
+    #def value(self,val):
+    #    print('VALUE SETTER')
+    #    raise ValueError
 
     # this is apparently never called, see https://stackoverflow.com/q/70966128
     #@value.setter
@@ -234,6 +241,20 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
         ret=Hdf5RefQuantity(unit=self.unit,dataset=self.dataset)
         print('dataset',ret.dataset)
         return ret
+
+    @staticmethod
+    @pydantic.validate_arguments
+    def makeFromQuantity(q: units.Quantity, h5path: str='', h5loc: Optional[str]='/quantity'):
+        ret=Hdf5OwningRefQuantity(h5path=h5path,h5loc=h5loc,mode='create',unit=q.unit)
+        ret.allocateDataset(q.value.shape)
+        ret.value[:]=q.value
+        assert (q.value[:]==ret.value[:]).all()
+        assert q.unit==ret.unit
+        return ret
+
+    def reopenData(self, mode: typing.Optional[HeavyDataBase_ModeChoice]=None):
+        self.closeData()
+        self.openData(mode=mode)
 
     def openData(self,mode: typing.Optional[HeavyDataBase_ModeChoice]=None):
         self.openStorage(mode=mode)
