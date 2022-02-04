@@ -59,10 +59,10 @@ class Model1 (mp.Model):
         if objectTypeID == mp.DataID.ID_GrainState:
             return self.grainState
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown DataID')
 
     def set(self, obj, objectID=0):
-        raise mp.APIError('Unknown DataID')
+        raise mp.APIError('Model has no inputs')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 

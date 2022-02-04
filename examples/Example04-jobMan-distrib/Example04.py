@@ -39,9 +39,9 @@ class Example04(mp.Workflow):
         log.info('Connected to JobManager')
         self.app1 = None
         self.contrib = mp.ConstantProperty(
-            value=(0.,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
+            value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
         self.retprop = mp.ConstantProperty(
-            value=(0.,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
+            value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
         try:
             self.app1 = mp.pyroutil.allocateApplicationWithJobManager(
@@ -71,7 +71,7 @@ class Example04(mp.Workflow):
         self.app1.initialize(metadata=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        val = mp.ConstantProperty(value=(1000,), propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)
+        val = mp.ConstantProperty(value=1000, propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)
         self.app1.set(val)
         self.app1.solveStep(istep)
         self.retprop = self.app1.get(mp.DataID.PID_Time, istep.getTime())
@@ -120,11 +120,11 @@ if __name__ == '__main__':
     }
 
     demo.initialize(metadata=executionMetadata)
-    demo.set(mp.ConstantProperty(value=(targetTime,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    demo.set(mp.ConstantProperty(value=targetTime, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     kpi = demo.get(mp.DataID.PID_Time, targetTime)
     demo.terminate()
-    if kpi.getValue(targetTime)[0] == 1000.:
+    if kpi.getValue(targetTime) == 1000.:
         log.info("Test OK")
         kpi = 0
         sys.exit(0)

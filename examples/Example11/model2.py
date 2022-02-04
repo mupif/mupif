@@ -64,14 +64,14 @@ class Model2 (mp.Model):
         if objectTypeID == mp.DataID.ID_GrainState:
             return self.outputGrainState
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown DataID')
 
     def set(self, obj, objectID=0):
         if type(obj) == mp.heavystruct.HeavyStruct:
             if obj.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = obj
             else:
-                raise mp.APIError('Unknown property ID')
+                raise mp.APIError('Unknown DataID')
         else:
             raise mp.APIError('Unknown object type')
 

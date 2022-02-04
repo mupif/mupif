@@ -158,15 +158,15 @@ class Workflow(model.Model):
                 if objectID == "targetTime":
                     val = obj.inUnitsOf(U.s).getValue(0.*U.s)
                     if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, numpy.ndarray):
-                        self._exec_targetTime = val[0] * U.s
+                        self._exec_targetTime = val[0] * U.s  # should not happen anymore
                     else:
-                        self._exec_targetTime = val * U.s
+                        self._exec_targetTime = val * U.s  # this is correct
                 if objectID == "dt":
                     val = obj.inUnitsOf(U.s).getValue()
                     if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, numpy.ndarray):
-                        self._exec_dt = val[0] * U.s
+                        self._exec_dt = val[0] * U.s  # should not happen anymore
                     else:
-                        self._exec_dt = val * U.s
+                        self._exec_dt = val * U.s  # this is correct
 
     def getAPIVersion(self):
         """

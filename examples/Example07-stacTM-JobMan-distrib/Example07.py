@@ -150,7 +150,7 @@ if __name__ == '__main__':
         }
     }
     demo.initialize(metadata=md)
-    demo.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    demo.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     demo.printMetadata()
     demo.printListOfModels()

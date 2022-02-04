@@ -79,7 +79,7 @@ class ConstantProperty(Property):
         :param units.Quantity time: Time of property evaluation
 
         :return: Property value as an array
-        :rtype: tuple
+        :rtype: float or tuple
         """
         if self._timeIsValid(time):
             return self.value

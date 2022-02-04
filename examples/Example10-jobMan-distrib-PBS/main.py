@@ -76,7 +76,7 @@ class Workflow10(mp.workflow.Workflow):
         self.model_1.finishStep(tstep)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time_property = mp.ConstantProperty(value=(tstep.getTime().inUnitsOf(mp.U.s),), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+        time_property = mp.ConstantProperty(value=tstep.getTime().inUnitsOf(mp.U.s), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
         self.model_1.set(obj=time_property, objectID=1)
         self.model_1.solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
 
@@ -91,8 +91,8 @@ if __name__ == '__main__':
     dt = 1.
 
     # input properties
-    param_targetTime = mp.ConstantProperty(value=(targetTime,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
-    param_dt = mp.ConstantProperty(value=(dt,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_targetTime = mp.ConstantProperty(value=targetTime, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_dt = mp.ConstantProperty(value=dt, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
 
     workflow = Workflow10()
 
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     workflow.solve()
 
     res_property = workflow.get(mp.DataID.PID_Time)
-    value_result = res_property.inUnitsOf(mp.U.s).getValue()[0]
+    value_result = res_property.inUnitsOf(mp.U.s).getValue()
 
     workflow.terminate()
 
