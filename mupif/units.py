@@ -52,6 +52,7 @@ addPydanticInstanceValidator(astropy.units.UnitBase,makeKlass=astropy.units.Unit
 from .dumpable import MupifBaseModel
 class RefQuantity(MupifBaseModel):
     'Quantity with data stored somewhere else. Abstract class, to be subclassed.'
+    pass
 
 # pyro serialization (this is for single-value type only)
 # embedding within a dumpable is handled in dumpable.py

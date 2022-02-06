@@ -17,14 +17,28 @@ from mupif.heavystruct import sampleSchemas_json
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
 
+class Hdf5HeavyProperty_TestCase(unittest.TestCase):
+    def setUp(self): pass
+    def test_01_create(self):
+        hp=mp.Hdf5HeavyProperty.make(propID=mp.DataID.PID_Concentration,quantity=mp.Quantity(value=np.array([[1,2,3]]),unit='m/s'),valueType=mp.ValueType.Vector)
+        self.assertTrue(os.path.getsize(hp.h5path)>0)
+        self.assertTrue((hp.value[:]==[[1,2,3]]).all())
+        hp.closeData()
+        # re-open
+        hp2=mp.Hdf5HeavyProperty.loadFromHdf5(h5path=hp.h5path)
+        self.assertTrue((hp2.value[:]==[[1,2,3]]).all())
+        self.assertEqual(hp2.propID,mp.DataID.PID_Concentration)
+        self.assertEqual(hp2.unit,mp.units.Unit('m/s'))
+
+
 class Hdf5Quantity_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.daemon=mp.pyroutil.getDaemon()
     def setUp(self):
         self.n=1000
-        self.hq=mp.Hdf5OwningRefQuantity(unit='m/s',mode='create',h5loc='/some/path')
-        self.hq.allocateDataset(shape=(self.n,3),dtype='f8') # creates HDF5 file *and* the dataset, all-zero data
+        self.hq=mp.Hdf5OwningRefQuantity(mode='create',h5loc='/some/path')
+        self.hq.allocateDataset(shape=(self.n,3),dtype='f8',unit='m/s') # creates HDF5 file *and* the dataset, all-zero data
         self.hq.value[1]=1
         self.hq.closeData()
     def test_01_assign(self):
@@ -57,8 +71,8 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertEqual(list(self.hq.quantity[5]),list(hrq.quantity[5]))
 
     def test_04_hq_1d(self):
-        hq=mp.Hdf5OwningRefQuantity(unit='m/s',mode='create')
-        hq.allocateDataset(shape=(3,),dtype='f4')
+        hq=mp.Hdf5OwningRefQuantity(mode='create')
+        hq.allocateDataset(shape=(3,),dtype='f4',unit='m/s')
         hq.value[:]=[1,2,3]
         hq.reopenData('readwrite')
         hq.value[1]=44
@@ -71,8 +85,8 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertEqual(hq.value.shape,(3,))
         self.assertTrue((np.array(hq.value)==33).all())
     def test_05_hq_2d(self):
-        hq=mp.Hdf5OwningRefQuantity(unit='m/s',mode='create')
-        hq.allocateDataset(shape=(1,3),dtype='f4')
+        hq=mp.Hdf5OwningRefQuantity(mode='create')
+        hq.allocateDataset(shape=(1,3),dtype='f4',unit='m/s')
         hq.value[0]=[1,2,3]
         hq.reopenData('readwrite')
         hq.value[0]=[44,55,66]
@@ -128,7 +142,13 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertEqual(hq.value[1],44)
         hq.reopenData(mode='readwrite')
         self.assertEqual(hq.value[1],44)
-    def test_22_propertySwapQuantity(self):
+    def test_23_toQuantity(self):
+        self.hq.openData(mode='readonly')
+        q=self.hq.toQuantity()
+        self.assertEqual(self.hq.unit,q.unit)
+        self.assertEqual(self.hq.value.shape,q.shape)
+        self.assertEqual(list(self.hq.value[1]),list(q.value[1]))
+    def test_24_propertySwapQuantity(self):
         p1=mp.Property(propID=mp.DataID.PID_Concentration,quantity=mp.Quantity(value=np.array([[1,2,3]]),unit='mmol/l'),valueType=mp.ValueType.Vector)
         p2=p1.deepcopy()
         # replace p2's quantity by Hdf5OwningRefQuantity
@@ -138,6 +158,17 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertTrue((p1.value[:]==p2.value[:]).all())
         p2.value[0]=3
         self.assertTrue((p2.value[0]==3).all())
+
+        # re-load p2.quantity from closed HDF5 file
+        p2.quantity.closeData()
+        q2=mp.Hdf5OwningRefQuantity(h5path=p2.quantity.h5path,h5loc=p2.quantity.h5loc,mode='readonly')
+        q2.openData() # open so that we can assign to quantity
+        q2a=q2.toQuantity() # onvert to in-memory quantity
+        p3=mp.Property(propID=p2.propID,valueType=p2.valueType,quantity=q2.toQuantity())
+
+        self.assertEqual(p1.value.shape,p3.value.shape)
+        self.assertTrue((np.array([[3,3,3]])==p3.value[:]).all())
+        self.assertEqual(p1.getUnit(),p3.getUnit())
 
 class HeavyStruct_TestCase(unittest.TestCase):
     @classmethod

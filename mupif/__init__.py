@@ -106,7 +106,7 @@ from .dataid import DataID
 from .dumpable import NumpyArray, MupifBaseModel, Dumpable
 from .field import FieldType, Field
 from .function import Function
-from .heavydata import HeavyDataBase, Hdf5RefQuantity, Hdf5OwningRefQuantity
+from .heavydata import HeavyDataBase, Hdf5RefQuantity, Hdf5OwningRefQuantity, Hdf5HeavyProperty
 from .heavystruct import HeavyStruct
 from .heavymesh import HeavyUnstructuredMesh
 from .integrationrule import IntegrationRule, GaussIntegrationRule
