@@ -60,7 +60,7 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),

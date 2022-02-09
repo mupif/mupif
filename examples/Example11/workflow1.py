@@ -63,10 +63,10 @@ class Example11_1(mp.workflow.Workflow):
     def finishStep(self, tstep):
         self.m1.finishStep(tstep)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         return self.m1.get(objectTypeID, time, objectID)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         return self.m1.set(obj, objectID)
 
     def getCriticalTimeStep(self):

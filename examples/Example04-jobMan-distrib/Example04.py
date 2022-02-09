@@ -83,13 +83,13 @@ class Example04(mp.Workflow):
         super().terminate()
         log.info("Time elapsed %f s" % (timeT.time()-start))
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mp.DataID.PID_Time:
             return mp.ConstantProperty(value=self.retprop.getValue(time), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time)
         else:
             raise mp.APIError('Unknown property ID')
         
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time_step:
                 # remember the mapped value

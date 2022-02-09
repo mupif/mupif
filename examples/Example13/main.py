@@ -22,9 +22,9 @@ class Workflow13(mp.workflow.Workflow):
             "ID": "workflow_13",
             "Description": "Calculates multiplication of two given values using a simple model",
             "Inputs": [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": 1,
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
                  'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep"},
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": 2,
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
                  'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep"}
             ],
             "Outputs": [
@@ -66,10 +66,10 @@ class Workflow13(mp.workflow.Workflow):
 
         mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         self.model_1.set(obj=obj, objectID=objectID)
 
     def terminate(self):
@@ -109,8 +109,8 @@ if __name__ == '__main__':
     workflow.initialize(metadata=md)
 
     # set the input values to the workfow which passes it to the models
-    workflow.set(param_1, objectID=1)
-    workflow.set(param_2, objectID=2)
+    workflow.set(param_1, objectID='1')
+    workflow.set(param_2, objectID='2')
 
     workflow.solve()
     res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)

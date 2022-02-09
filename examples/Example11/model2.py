@@ -60,13 +60,13 @@ class Model2 (mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mp.DataID.ID_GrainState:
             return self.outputGrainState
         else:
             raise mp.APIError('Unknown DataID')
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if type(obj) == mp.heavystruct.HeavyStruct:
             if obj.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = obj

@@ -133,8 +133,9 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.PyroFile"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
-                    "Obj_ID": {"type": ["array", "integer", "string"]},  # optional parameter for additional info, int or string or list
+                    "Obj_ID": {"type": ["string", "array"]},  # optional parameter for additional info, string or list of string
                     "Name": {"type": "string"},
+                    "ValueType": {"type": "string", "enum": ["Scalar", "Vector", "Tensor", "ScalarArray", "VectorArray", "TensorArray"]},
                     "Description": {"type": "string"},
                     "Units": {"type": "string"},
                     "Required": {"type": "boolean"},
@@ -150,8 +151,9 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
-                    "Obj_ID": {"type": ["array", "integer", "string"]},  # optional parameter for additional info, int or string or list
+                    "Obj_ID": {"type": ["string", "array"]},  # optional parameter for additional info, string or list of string
                     "Name": {"type": "string"},
+                    "ValueType": {"type": "string", "enum": ["Scalar", "Vector", "Tensor", "ScalarArray", "VectorArray", "TensorArray"]},
                     "Description": {"type": "string"},
                     "Units": {"type": "string"}
                 },
@@ -243,7 +245,7 @@ class Model(mupifobject.MupifObject):
         self.appName = appName
         self.externalDaemon = externalDaemon
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         """
         Returns the requested object at given time. Object is identified by id.
 
@@ -254,7 +256,7 @@ class Model(mupifobject.MupifObject):
         :return: Returns requested object.
         """
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         """
         Registers the given (remote) object in application.
 
@@ -262,7 +264,7 @@ class Model(mupifobject.MupifObject):
         :param int or str objectID: Identifies object with objectID (optional, default 0)
         """
 
-    def getFieldURI(self, fieldID, time, objectID=0):
+    def getFieldURI(self, fieldID, time, objectID=""):
         """
         Returns the uri of requested field at given time. Field is identified by fieldID.
 

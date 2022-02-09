@@ -152,7 +152,7 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Finished')
         self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(Property):
             if obj.getPropertyID() == DataID.PID_Time:
                 if objectID == "targetTime":

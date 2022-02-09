@@ -71,7 +71,7 @@ class Example06(workflow.Workflow):
         self.mechanicalSolver.set(self.thermalSolver.get(DataID.FID_Temperature, istep.getTime()))
         self.mechanicalSolver.solveStep(istep, stageID, runInBackground)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.FID_Temperature:
             return self.thermalSolver.get(objectTypeID, time, objectID)
         elif objectTypeID == DataID.FID_Displacement:

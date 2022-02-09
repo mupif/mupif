@@ -63,10 +63,10 @@ class Workflow10(mp.workflow.Workflow):
 
         mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         super().set(obj=obj, objectID=objectID)
 
     def terminate(self):

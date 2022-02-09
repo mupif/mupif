@@ -68,13 +68,13 @@ class EmailAPI(model.Model):
         self.updateMetadata(MD)
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             # remember the mapped value
             self.inputs[str(obj.propID)] = property
             self.inputs[self.key] = 0.0
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),

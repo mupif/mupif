@@ -55,13 +55,13 @@ class Model1 (mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mp.DataID.ID_GrainState:
             return self.grainState
         else:
             raise mp.APIError('Unknown DataID')
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         raise mp.APIError('Model has no inputs')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):

@@ -61,7 +61,7 @@ class Application2(mp.Model):
         # sys.exit(1)
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -76,7 +76,7 @@ class Application2(mp.Model):
         else:
             raise mp.APIError('Unknown property ID')
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time_step:
                 # remember the mapped value

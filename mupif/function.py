@@ -39,7 +39,7 @@ class Function(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, funcID, objectID=0):
+    def __init__(self, funcID, objectID=""):
         """
         Initializes the function.
 
