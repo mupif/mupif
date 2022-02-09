@@ -20,6 +20,7 @@ except Exception:
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 
+
 if pydantic.__version__.split('.')<['1','9']: raise RuntimeError('Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar)')
 
 # for now, disable numpy validation completely until we figure out what works in what python version reliably
