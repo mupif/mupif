@@ -14,12 +14,16 @@ class ValueType(IntEnum):
     Scalar = 1
     Vector = 2
     Tensor = 3
+    # the following values should not be used in common cases
+    ScalarArray = 4
+    VectorArray = 5
+    TensorArray = 6
 
-    def getNumberOfComponents(self):
+    def getNumberOfComponents(self):  # this function is probably no longer valid
         return {ValueType.Scalar: 1, ValueType.Vector: 3, ValueType.Tensor: 9}[self]
 
     @staticmethod
-    def fromNumberOfComponents(i):
+    def fromNumberOfComponents(i):  # this function is probably no longer valid
         """
         :param int i: number of components
         :return: value type corresponding to the number of components
