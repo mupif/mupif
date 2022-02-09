@@ -1,14 +1,17 @@
-from .heavydata import HeavyDataBase, _HeavyDataBase_ModeChoice
-from .field import FieldType
+from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice, Hdf5RefQuantity, Hdf5OwningRefQuantity
+from .field import FieldType, Field
 from .mupifquantity import ValueType
+from .units import Unit
 from .cell import Cell
 from .vertex import Vertex
 from .mesh import Mesh
 from . import cellgeometrytype as CGT
-
+import logging
 import Pyro5.api
 import numpy as np
 import os.path
+
+log=logging.getLogger(__name__)
 
 
 @Pyro5.api.expose
@@ -66,7 +69,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         conn=self._h5grp[self.GRP_CELL_CONN][i+1:i+1+nVerts]
         return CellType(number=i,label=None,vertices=tuple(conn),mesh=self)
 
-    def openData(self,mode: _HeavyDataBase_ModeChoice):
+    def openData(self,mode: HeavyDataBase_ModeChoice):
         'Opens the backing storage (HDF5 file) and prepares'
         self.openStorage(mode=mode)
         extant=(self.h5group in self._h5obj and self.GRP_VERTS in self._h5obj[self.h5group])
@@ -83,6 +86,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         assert self.GRP_CELL_OFFSETS in self._h5grp
 
     def appendVertices(self,coords: np.ndarray):
+        'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
         self._ensureData()
         if coords.shape[1]!=self.dim: raise RuntimeError(f'Dimension mismatch: HeavyUnstructuredMesh.dim={self.dim}, coords.shape[1]={coords.shape[1]}.')
         _VERTS=self._h5grp[self.GRP_VERTS]
@@ -91,6 +95,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         self._h5grp[self.GRP_VERTS][l0:l1]=coords
 
     def appendCells(self,types,conn):
+        'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
         _OFF,_CONN=self._h5grp[self.GRP_CELL_OFFSETS],self._h5grp[self.GRP_CELL_CONN]
         self._ensureData()
         assert len(types)==len(conn)
@@ -167,6 +172,40 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             for cc in seq(block.data,what=' '+block.type):
                 self.appendCells(types=len(cc)*[cgt],conn=cc)
 
+    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8'):
+        '''
+        Create preallocated :obj:`mupif.Field` object storing its data in the same HDF5 file as the mesh (*self*). The field dimensions are determined from fieldType (cell/vertex based, plus the number of cells/vertices of the mesh object) and valueType (size of one record). The field's values are not assigned but allocated in the HDF5 container as a dataset.
+
+        The usage looks as follows:
+
+        >>> import mupif as mp
+        >>> with mp.HeavyUnstructuredMesh(h5path='/tmp/t3.h5',mode='overwrite') as hMesh:
+        >>>     # load mesh from somewhere
+        >>>     hMesh.fromMeshioMesh(meshio.read('...'),progress=True,chunk=1000)
+        >>>     # declare and allocate scalar field
+        >>>     pressure=hMesh.makeField(unit='Pa',fieldID=mp.DataID.FID_Pressure,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Scalar)
+        >>>     # fill field data
+        >>>     pressure.value=np.loadtxt('...',comments='%',usecols=(1,))
+        >>>     # create vector field
+        >>>     velocity=t3.makeField(unit='m/s',fieldID=mp.DataID.FID_Velocity,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Vector)
+        >>>     velocity.value=np.loadtxt('...',comments='%',usecols=(1,2,3))
+        >>>     # write XDMF (can be opened in Paraview)
+        >>>     t3.writeXDMF(xdmf='/tmp/t3.xdmf',fields=[pressure,velocity])
+
+
+        '''
+        n=(self.getNumberOfVertices() if fieldType==FieldType.FT_vertexBased else self.getNumberOfCells())
+        if valueType.getNumberOfComponents()==1: shape=(n,)
+        else: shape=(n,valueType.getNumberOfComponents())
+        kw=dict(chunks=True,compression='gzip',compression_opts=9)
+        if not h5path:
+            ds=self._h5grp.create_dataset(fieldID.name,shape=shape,**kw)
+            hq=Hdf5RefQuantity(dataset=ds,unit=unit)
+        else:
+            hq=Hdf5OwningRefQuantity(mode='create',h5path=h5path,unit=unit)
+            hq.allocateDataset(fieldID.name,shape=shape,**kw)
+        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hq,fieldID=fieldID,time=0*Unit('s'))
+
 
 def _chunker(it,size):
     rv = [] 
@@ -176,8 +215,6 @@ def _chunker(it,size):
             yield rv
             rv = []
     if rv : yield rv
-
-
 
 
 if __name__=='__main__':

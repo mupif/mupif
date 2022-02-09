@@ -15,7 +15,7 @@ mp.util.redirectLog('server.log')
 
 import application2
 app2 = application2.Application2()
-ns=mp.pyroutil.connectNameServer()
+ns=mp.pyroutil.connectNameserver()
 
 mp.pyroutil.runAppServer(
     ns=ns,

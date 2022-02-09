@@ -152,21 +152,21 @@ class Workflow(model.Model):
         self.setMetadata('Status', 'Finished')
         self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(Property):
             if obj.getPropertyID() == DataID.PID_Time:
                 if objectID == "targetTime":
                     val = obj.inUnitsOf(U.s).getValue(0.*U.s)
                     if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, numpy.ndarray):
-                        self._exec_targetTime = val[0] * U.s
+                        self._exec_targetTime = val[0] * U.s  # should not happen anymore
                     else:
-                        self._exec_targetTime = val * U.s
+                        self._exec_targetTime = val * U.s  # this is correct
                 if objectID == "dt":
                     val = obj.inUnitsOf(U.s).getValue()
                     if isinstance(val, list) or isinstance(val, tuple) or isinstance(val, numpy.ndarray):
-                        self._exec_dt = val[0] * U.s
+                        self._exec_dt = val[0] * U.s  # should not happen anymore
                     else:
-                        self._exec_dt = val * U.s
+                        self._exec_dt = val * U.s  # this is correct
 
     def getAPIVersion(self):
         """

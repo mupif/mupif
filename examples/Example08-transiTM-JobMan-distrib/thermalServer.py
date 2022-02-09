@@ -10,7 +10,7 @@ import models
 #util.redirectLog('thermal.log')
 
 # locate nameserver
-ns = mp.pyroutil.connectNameServer()
+ns = mp.pyroutil.connectNameserver()
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(

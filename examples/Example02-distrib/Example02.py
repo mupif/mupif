@@ -60,7 +60,7 @@ class Application1(mp.Model):
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -71,7 +71,7 @@ class Application1(mp.Model):
 
         if objectTypeID == mp.DataID.PID_Time_step:
             return property.ConstantProperty(
-                value=(self.value,), propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+                value=self.value, propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise apierror.APIError('Unknown DataID')
 
@@ -94,7 +94,7 @@ timestepnumber = 0
 targetTime = 1.0
 
 # locate nameserver
-ns = pyroutil.connectNameServer()
+ns = pyroutil.connectNameserver()
 
 # application1 is local, create its instance
 app1 = Application1()
@@ -151,7 +151,7 @@ while abs(time - targetTime) > 1.e-6:
 
         atime = app2.getAssemblyTime(istep)
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
-            atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
+            atime.getValue(), c.getValue(atime), prop.getValue(atime)))
 
     except apierror.APIError as e:
         log.error("Following API error occurred: %s" % e)
@@ -160,7 +160,7 @@ while abs(time - targetTime) > 1.e-6:
 # prop = app2.get(DataID.PID_Time, istep.getTime())
 # log.debug("Result: %f" % prop.getValue(istep.getTime()))
 
-if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())[0]-5.5) <= 1.e-4:
+if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())-5.5) <= 1.e-4:
     log.info("Test OK")
 else:
     log.error("Test FAILED")

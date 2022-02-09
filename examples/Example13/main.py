@@ -22,9 +22,9 @@ class Workflow13(mp.workflow.Workflow):
             "ID": "workflow_13",
             "Description": "Calculates multiplication of two given values using a simple model",
             "Inputs": [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": 1,
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
                  'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep"},
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": 2,
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
                  'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep"}
             ],
             "Outputs": [
@@ -51,7 +51,7 @@ class Workflow13(mp.workflow.Workflow):
             }
         }
 
-        self.ns = mp.pyroutil.connectNameServer()
+        self.ns = mp.pyroutil.connectNameserver()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
         # initialization code of model_1 (Non-stationary thermal problem)
@@ -66,10 +66,10 @@ class Workflow13(mp.workflow.Workflow):
 
         mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         self.model_1.set(obj=obj, objectID=objectID)
 
     def terminate(self):
@@ -93,8 +93,8 @@ if __name__ == '__main__':
     value_2 = 2.
 
     # inputs
-    param_1 = mp.ConstantProperty(value=(value_1,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
-    param_2 = mp.ConstantProperty(value=(value_2,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_1 = mp.ConstantProperty(value=value_1, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_2 = mp.ConstantProperty(value=value_2, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
 
     workflow = Workflow13()
 
@@ -108,13 +108,13 @@ if __name__ == '__main__':
     }
     workflow.initialize(metadata=md)
 
-    # set the input values to the workfow which passes it to the model
-    workflow.set(param_1, 1)
-    workflow.set(param_2, 2)
+    # set the input values to the workfow which passes it to the models
+    workflow.set(param_1, objectID='1')
+    workflow.set(param_2, objectID='2')
 
     workflow.solve()
     res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)
-    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()[0]
+    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()
     workflow.terminate()
 
     print('Simulation has finished.')
