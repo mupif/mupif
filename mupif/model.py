@@ -133,7 +133,9 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.PyroFile"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
-                    "Obj_ID": {"type": ["string", "array"]},  # optional parameter for additional info, string or list of string
+                    "Obj_ID": {  # optional parameter for additional info, string or list of string
+                        "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
+                    },
                     "Name": {"type": "string"},
                     "ValueType": {"type": "string", "enum": ["Scalar", "Vector", "Tensor", "ScalarArray", "VectorArray", "TensorArray"]},
                     "Description": {"type": "string"},
@@ -151,7 +153,9 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
-                    "Obj_ID": {"type": ["string", "array"]},  # optional parameter for additional info, string or list of string
+                    "Obj_ID": {  # optional parameter for additional info, string or list of string
+                        "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
+                    },
                     "Name": {"type": "string"},
                     "ValueType": {"type": "string", "enum": ["Scalar", "Vector", "Tensor", "ScalarArray", "VectorArray", "TensorArray"]},
                     "Description": {"type": "string"},
