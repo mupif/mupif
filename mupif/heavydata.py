@@ -22,8 +22,8 @@ import os
 import pydantic
 import subprocess
 import shutil
-import atexit
 
+import atexit
 log = logging.getLogger(__name__)
 
 

@@ -134,7 +134,7 @@ class Model2 (mp.Model):
             repMol = outGrains[rgNum].getMolecules()[rmNum]
             # replace this molecule
             repMol.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-            if (1): 
+            if (1):
                 #print(repMol.getAtoms()[0]) # call _T_assertDataset()
                 #print (repMol.getAtoms())
                 #print("Deleting "+repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName)
