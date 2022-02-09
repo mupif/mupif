@@ -7,7 +7,7 @@ mp.util.redirectLog('server.log')
 import application2
 
 # locate nameserver
-ns = mp.pyroutil.connectNameServer()
+ns = mp.pyroutil.connectNameserver()
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(

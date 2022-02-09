@@ -42,9 +42,9 @@ class Application13(mp.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": 1,
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
                  'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep"},
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": 2,
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
                  'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep"}
             ],
             'Outputs': [
@@ -61,7 +61,7 @@ class Application13(mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -70,15 +70,15 @@ class Application13(mp.Model):
             }
         }
         if objectTypeID == mp.DataID.PID_Time:
-            return mp.ConstantProperty(value=(self.result,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s*mp.U.s, time=time, metadata=md)
+            return mp.ConstantProperty(value=self.result, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s*mp.U.s, time=time, metadata=md)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time:
-                if objectID == 1:
-                    self.value_1 = obj.inUnitsOf(mp.U.s).getValue()[0]
-                if objectID == 2:
-                    self.value_2 = obj.inUnitsOf(mp.U.s).getValue()[0]
+                if objectID == '1':
+                    self.value_1 = obj.inUnitsOf(mp.U.s).getValue()
+                if objectID == '2':
+                    self.value_2 = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.result = self.value_1 * self.value_2

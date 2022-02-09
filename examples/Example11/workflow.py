@@ -60,10 +60,10 @@ class Example11(mp.workflow.Workflow):
             # solve problem 1
             self.m1.solveStep(istep)
             # handshake the data
-            grainState = self.m1.get(mp.DataID.PID_GrainState, self.m1.getAssemblyTime(istep))
+            grainState = self.m1.get(mp.DataID.ID_GrainState, self.m1.getAssemblyTime(istep))
             self.m2.set(grainState)
             self.m2.solveStep(istep)
-            grainState2 = self.m2.get(mp.DataID.PID_GrainState, self.m1.getAssemblyTime(istep))
+            grainState2 = self.m2.get(mp.DataID.ID_GrainState, self.m1.getAssemblyTime(istep))
 
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
@@ -100,6 +100,6 @@ if __name__ == '__main__':
         }
     }
     workflow.initialize(metadata=workflowMD)
-    workflow.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    workflow.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     workflow.solve()
     workflow.terminate()

@@ -21,32 +21,39 @@ from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 
 
-# from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
-DType = TypeVar('DType')
-class NumpyArray(np.ndarray, Generic[DType]):
-    """Wrapper class for numpy arrays that stores and validates type information.
-    This can be used in place of a numpy array, but when used in a pydantic BaseModel
-    or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
-    declared type.
-    """
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-    @classmethod
-    def validate(cls, val, field: ModelField):
-        dtype_field = field.sub_fields[0]
-        actual_dtype = dtype_field.type_.__args__[0]
-        # If numpy cannot create an array with the request dtype, an error will be raised
-        # and correctly bubbled up.
-        np_array = np.array(val, dtype=actual_dtype)
-        return np_array
+if pydantic.__version__.split('.')<['1','9']: raise RuntimeError('Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar)')
 
-if sys.version_info>=(3,9):
-    # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
-    NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
+# for now, disable numpy validation completely until we figure out what works in what python version reliably
+if 1:
+    NumpyArray=NumpyArrayFloat64=typing.Any
 else:
-    # python 3.8, just use the generic form
-    NumpyArrayFloat64 = NumpyArray
+    # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
+    DType = TypeVar('DType')
+    class NumpyArray(np.ndarray, Generic[DType]):
+        """Wrapper class for numpy arrays that stores and validates type information.
+        This can be used in place of a numpy array, but when used in a pydantic BaseModel
+        or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
+        declared type.
+        """
+        @classmethod
+        def __get_validators__(cls):
+            yield cls.validate
+        @classmethod
+        def validate(cls, val, field: ModelField):
+            dtype_field = field.sub_fields[0]
+            actual_dtype = dtype_field.type_.__args__[0]
+            # If numpy cannot create an array with the request dtype, an error will be raised
+            # and correctly bubbled up.
+            np_array = np.array(val, dtype=actual_dtype)
+            return np_array
+
+    try:
+        # this should work in python 3.9
+        # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
+        NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
+    except TypeError:
+        # python 3.8, just use the generic form
+        NumpyArrayFloat64 = NumpyArray
 
 
 def addPydanticInstanceValidator(klass,makeKlass=None):
@@ -148,7 +155,8 @@ class Dumpable(MupifBaseModel):
             clss = self.__class__
         if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
-            for attr in clss.__fields__.keys():
+            for attr,modelField in clss.__fields__.items():
+                if modelField.field_info.exclude: continue # skip excluded fields
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
@@ -172,6 +180,9 @@ class Dumpable(MupifBaseModel):
         if not daemon:
             raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
         return self.to_dict()
+
+    def deepcopy(self):
+        return Dumpable.from_dict(self.to_dict())
 
     @staticmethod
     def from_dict(dic, clss=None, obj=None):

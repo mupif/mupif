@@ -46,7 +46,7 @@ class Application10(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Time value',
-                 'Description': 'Time', 'Units': 's', 'Required': True, "Set_at": "timestep", "Obj_ID": 1}
+                 'Description': 'Time', 'Units': 's', 'Required': True, "Set_at": "timestep", "Obj_ID": '1'}
             ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
@@ -61,7 +61,7 @@ class Application10(mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -70,12 +70,12 @@ class Application10(mp.Model):
             }
         }
         if objectTypeID == mp.DataID.PID_Time:
-            return mp.ConstantProperty(value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+            return mp.ConstantProperty(value=self.value, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time:
-                self.input = obj.inUnitsOf(mp.U.s).getValue()[0]
+                self.input = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # this function is designed to run the executable in Torque or Slurm PBS and process the output when the job is finished.

@@ -38,7 +38,7 @@ class Example07(workflow.Workflow):
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer()
+        ns = pyroutil.connectNameserver()
         self.daemon = pyroutil.getDaemon(ns)
 
         # connect to JobManager running on (remote) server
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         }
     }
     demo.initialize(metadata=md)
-    demo.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    demo.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     demo.printMetadata()
     demo.printListOfModels()

@@ -65,10 +65,10 @@ class Example11_2(mp.workflow.Workflow):
     def finishStep(self, tstep):
         self.m1.finishStep(tstep)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         return self.m1.get(objectTypeID, time, objectID)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         return self.m1.set(obj, objectID)
 
     def getCriticalTimeStep(self):
@@ -96,11 +96,11 @@ if __name__ == '__main__':
         }
     }
     workflow.initialize(metadata=workflowMD)
-    workflow.set(mp.ConstantProperty(value=(1.*mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
-    gs_in = mp.heavydata.HeavyDataHandle(h5path='./data1.h5', id=mp.dataid.DataID.ID_GrainState)
+    workflow.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    gs_in = mp.heavystruct.HeavyStruct(h5path='./data1.h5', id=mp.dataid.DataID.ID_GrainState)
     workflow.set(gs_in)
     workflow.solve()
-    gs_out = workflow.get(mp.DataID.PID_GrainState)
+    gs_out = workflow.get(mp.DataID.ID_GrainState)
     gs_out.cloneHandle('./data2.h5')
 
     workflow.terminate()

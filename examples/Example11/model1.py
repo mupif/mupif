@@ -3,13 +3,14 @@ sys.path.extend(['..', '../..'])
 import time
 import random
 import numpy as np
+import Pyro5.api
 
 import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
-
+@Pyro5.api.expose
 class Model1 (mp.Model):
     """
     Simple model that generates random grain state
@@ -54,26 +55,26 @@ class Model1 (mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.DataID.PID_GrainState:
+    def get(self, objectTypeID, time=None, objectID=""):
+        if objectTypeID == mp.DataID.ID_GrainState:
             return self.grainState
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown DataID')
 
-    def set(self, obj, objectID=0):
-        raise mp.APIError('Unknown DataID')
+    def set(self, obj, objectID=""):
+        raise mp.APIError('Model has no inputs')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
 
         # generate random grain state
         t0 = time.time()
         atomCounter = 0
-        self.grainState = mp.heavydata.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavydata.sampleSchemas_json)
+        self.grainState = mp.heavystruct.HeavyStruct(id=mp.dataid.DataID.ID_GrainState, schemaName='org.mupif.sample.grain', schemasJson=mp.heavystruct.sampleSchemas_json)
         grains = self.grainState.openData(mode='create')
         grains.resize(size=2)
         for ig, g in enumerate(grains):
             g.getMolecules().resize(size=random.randint(5, 10))
-            print(f"Grain #{ig} has {len(g.getMolecules())} molecules")
+            log.info(f"Grain #{ig} has {len(g.getMolecules())} molecules")
             for m in g.getMolecules():
                 m.getIdentity().setMolecularWeight(random.randint(1, 10)*u.yg)
                 m.getAtoms().resize(size=random.randint(30, 60))
@@ -86,7 +87,7 @@ class Model1 (mp.Model):
                     atomCounter += 1
         self.grainState.closeData()
         t1 = time.time()
-        print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+        log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         md = {
                 'Execution': {
                     'ID': self.getMetadata('Execution.ID'),

@@ -64,7 +64,7 @@ class _TestModel2(model.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),

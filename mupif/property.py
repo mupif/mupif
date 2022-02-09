@@ -1,13 +1,14 @@
-from . import mupifobject
 import Pyro5.api
 import pickle
 import collections
 import typing
 import pydantic
+import numpy as np
 
 from . import dataid
 from . import mupifquantity
 from . import units
+from . import mupifobject
 from .units import Quantity, Unit, findUnit
 
 
@@ -79,7 +80,7 @@ class ConstantProperty(Property):
         :param units.Quantity time: Time of property evaluation
 
         :return: Property value as an array
-        :rtype: tuple
+        :rtype: float or tuple
         """
         if self._timeIsValid(time):
             return self.value
@@ -95,31 +96,43 @@ class ConstantProperty(Property):
         """
         return self.time
 
-    def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
-        """
-        Dump Property to a file using Pickle module
+    def saveHdf5(self,hdf5):
+        import h5py
+        h5=h5py.File(hdf5,'w')
+        h5.attrs['format']='mupif.Property.saveHdf5:1.0'
+        ds=h5.create_dataset(self.propID.name,shape=self.quantity.value.shape,dtype=self.quantity.value.dtype)
+        ds.attrs['unit']=str(self.quantity.unit)
+        ds.attrs['valueType']=self.valueType.name
+        if self.time is not None: ds.attrs['time']=str(self.time)
+        print('value',self.quantity.value)
+        print('dtype',self.quantity.value.dtype)
+        print('shape',self.quantity.value.shape)
+        print('unit',self.quantity.unit)
+        ds[()]=self.quantity.value
+        h5.close()
 
-        :param str fileName: File name
-        :param int protocol: Used protocol - 0=ASCII, 1=old binary, 2=new binary
-        """
-        file = open(fileName, 'wb')
-        pickle.dump(self, file, protocol)
-        file.close()
+    @staticmethod
+    def loadHdf5(hdf5):
+        import h5py
+        h5=h5py.File(hdf5,'r')
+        if 'format' not in h5.attrs: raise IOError('HDF5 root does not define "format" attribute.')
+        fmt=h5.attrs['format']
+        if fmt=='mupif.Property.saveHdf5:1.0':
+            if (l:=len(h5.keys()))!=1: raise IOError(f'{fmt}: HDF5 root must contain exactly one entity (not {l}).')
+            loc=list(h5.keys())[0]
+            ds=h5[loc]
+            ret=ConstantProperty(
+                quantity=units.Quantity(value=np.array(ds),unit=ds.attrs['unit']),
+                propID=dataid.DataID[loc],
+                valueType=mupifquantity.ValueType[ds.attrs['valueType']],
+                time=(units.Quantity(ds.attrs['time']) if 'time' in ds.attrs else None)
+            )
+            h5.close()
+            return ret
+        else:
+            raise IOError(f'Unhandled HDF5 format {fmt} (must be: mupif.Property.saveHdf5:1.0)')
 
-    @classmethod
-    def loadFromLocalFile(cls, fileName):
-        """
-        Alternative constructor from a Pickle module
 
-        :param str fileName: File name
-
-        :return: Returns Property instance
-        :rtype: Property
-        """
-        file = open(fileName, 'rb')
-        ans = pickle.load(file)
-        file.close()
-        return ans
 
     def inUnitsOf(self, unit):
         """

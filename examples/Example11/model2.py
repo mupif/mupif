@@ -3,13 +3,14 @@ sys.path.extend(['..', '../..'])
 import time
 import random
 import numpy as np
+import Pyro5.api
 
 import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
 
-
+@Pyro5.api.expose
 class Model2 (mp.Model):
     """
     Simple model that replaces random molecule in grain by another one (dopant)
@@ -59,22 +60,24 @@ class Model2 (mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
-        if objectTypeID == mp.DataID.PID_GrainState:
+    def get(self, objectTypeID, time=None, objectID=""):
+        if objectTypeID == mp.DataID.ID_GrainState:
             return self.outputGrainState
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown DataID')
 
-    def set(self, obj, objectID=0):
-        if type(obj) == mp.heavydata.HeavyDataHandle:  # todo: test some ID as well
+    def set(self, obj, objectID=""):
+        if type(obj) == mp.heavystruct.HeavyStruct:
             if obj.id == mp.dataid.DataID.ID_GrainState:
                 self.inputGrainState = obj
+            else:
+                raise mp.APIError('Unknown DataID')
         else:
-            raise mp.APIError('Unknown property ID')
+            raise mp.APIError('Unknown object type')
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # (1) read source grain state, into new state, then (2) replace a molecule with dopant (different molecule)
-        print(self.inputGrainState)
+        # log.info(str(self.inputGrainState))
         #
         # (1) copy old state into a new one
         #
@@ -86,16 +89,16 @@ class Model2 (mp.Model):
         elif 1:
             # transfer via inject (serializes into RAM, network-transparent)
             inGrains = self.inputGrainState.openData(mode='readonly')
-            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState)
+            self.outputGrainState=mp.HeavyStruct(id=mp.dataid.DataID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
-            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavystruct.sampleSchemas_json)
             outGrains.inject(inGrains)
         else:
             # transfer via explicit loop over data
             inGrains = self.inputGrainState.openData(mode='readonly')
-            self.outputGrainState=mp.HeavyDataHandle(id=mp.dataid.DataID.ID_GrainState)
+            self.outputGrainState=mp.HeavyStruct(id=mp.dataid.DataID.ID_GrainState)
             log.warning(f'Created temporary {self.outputGrainState.h5path}')
-            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+            outGrains = self.outputGrainState.openData(mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavystruct.sampleSchemas_json)
             t0=time.time()
             atomCounter=0
             outGrains.resize(size=len(inGrains))
@@ -114,7 +117,7 @@ class Model2 (mp.Model):
                         oa.getProperties().getTopology().setStructure(ia.getProperties().getTopology().getStructure())
                         atomCounter+=1
             t1=time.time()
-            print(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+            log.info(f'{atomCounter} atoms created in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         #
         # replace one molecule in outGrains with a different molecule
         #
@@ -131,7 +134,7 @@ class Model2 (mp.Model):
             repMol = outGrains[rgNum].getMolecules()[rmNum]
             # replace this molecule
             repMol.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
-            if (1): 
+            if (1):
                 #print(repMol.getAtoms()[0]) # call _T_assertDataset()
                 #print (repMol.getAtoms())
                 #print("Deleting "+repMol.getAtoms().ctx.h5group.name+'/'+repMol.getAtoms()[0].datasetName)
@@ -147,7 +150,7 @@ class Model2 (mp.Model):
                     a.getProperties().getTopology().setStructure(struct)
                     atomCounter+=1
             t1=time.time()
-            print(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
+            log.info(f'{atomCounter} atoms replaced in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).')
         self.outputGrainState.closeData()
 
     def getCriticalTimeStep(self):
