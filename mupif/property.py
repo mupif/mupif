@@ -104,10 +104,6 @@ class ConstantProperty(Property):
         ds.attrs['unit']=str(self.quantity.unit)
         ds.attrs['valueType']=self.valueType.name
         if self.time is not None: ds.attrs['time']=str(self.time)
-        print('value',self.quantity.value)
-        print('dtype',self.quantity.value.dtype)
-        print('shape',self.quantity.value.shape)
-        print('unit',self.quantity.unit)
         ds[()]=self.quantity.value
         h5.close()
 
