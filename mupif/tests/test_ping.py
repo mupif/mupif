@@ -66,7 +66,7 @@ class __TestLocalApp(): # unittest.TestCase):
 
     def test_testConnect(self):
         'Test connection through nameserver'
-        ns=pyroutil.connectNameServer('localhost',5000)
+        ns=pyroutil.connectNameserver('localhost',5000)
         print('Connected to nameserver')
         for i,app in enumerate(self.apps):
             # what is localport??

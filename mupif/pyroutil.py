@@ -63,7 +63,7 @@ class PyroNetConf:
         if self.ns is not None:
             return self.ns
         # self.ns=Pyro5.api.locate_ns(host=self.nshost, port=self.nsport)
-        self.ns = connectNameServer(nshost=self.nshost, nsport=self.nsport)
+        self.ns = connectNameserver(nshost=self.nshost, nsport=self.nsport)
         return self.ns
 
 

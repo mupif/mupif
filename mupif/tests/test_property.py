@@ -59,8 +59,8 @@ class Property_TestCase(unittest.TestCase):
                 self.assertEqual(p.getTime(),            res.getTime())
                 self.assertEqual(p.getPropertyID(),      res.getPropertyID())
                 self.assertEqual(p.getQuantity(),        res.getQuantity())
-                import shutil
-                shutil.copy(tmp+'/prop.h5',f'/tmp/mupif_prop_t_{p.getTime().value}.hdf5')
+                #import shutil
+                #shutil.copy(tmp+'/prop.h5',f'/tmp/mupif_prop_t_{p.getTime().value}.hdf5')
 
 # python test_Property.py for stand-alone test being run
 if __name__ == '__main__':
