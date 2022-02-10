@@ -19,7 +19,7 @@ MuPIF requires the python interpreter, version 3.8 or newer. It has been tested 
 
 There are two options for MuPIF installation:
 * The first, recommended one, relies on Python Package Index (run as pip3 or pip) 
-* For a system wide installation (needs admin privileges): `pip3 install mupif`
+* For a system wide installation (needs admin privileges): `pip3 install --upgrade git+https://github.com/mupif/mupif.git`
 * For a user space installation: `pip3 install mupif --user`
 
 The second option relies on the most advanced version on github:
