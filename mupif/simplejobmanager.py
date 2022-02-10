@@ -155,6 +155,19 @@ class SimpleJobManager (jobmanager.JobManager):
                 del(self.tickets[i])
         return len(self.tickets)
 
+
+    def _updateActiveJobs(self):
+        with self.lock:
+            dead=[]
+            for jobId,job in self.activeJobs.items():
+                if job.proc.is_alive(): continue
+                assert job.proc.exitcode is not None
+                log.debug(f'Job {jobId} already finished, exit status {job.proc.exitcode}.')
+                if job.proc.exitcode!=0: log.error('Job {jobID} has non-zero exit status {job.proc.exitcode}')
+                dead.append(jobId)
+            for d in dead: del self.activeJobs[dead]
+
+
     def preAllocate(self, requirements=None):
         """
             Allows to pre-allocate(reserve) the resource. 
@@ -164,6 +177,7 @@ class SimpleJobManager (jobmanager.JobManager):
             The returned ticket is valid only for fixed time period (suggest 10[s]), then should expire.
             Thread safe
         """
+        self._updateActiveJobs()
         with self.lock:
             prealocatedJobs = self.__getNumberOfActiveTickets()
             if (len(self.activeJobs) + prealocatedJobs) >= self.maxJobs:
@@ -185,6 +199,7 @@ class SimpleJobManager (jobmanager.JobManager):
         :except: unable to start a thread, no more resources
 
         """
+        self._updateActiveJobs()
         with self.lock:
             log.info('allocateJob...')
             # allocate job if valid ticket given or available resource exist
@@ -324,12 +339,14 @@ class SimpleJobManager (jobmanager.JobManager):
         """
         See :func:`JobManager.getStatus`
         """
-        JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user'])
-        status = []
-        tnow = timeTime.time()
-        for key in self.activeJobs:
-            status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
-        return status
+        self._updateActiveJobs()
+        with self.lock:
+            JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user'])
+            status = []
+            tnow = timeTime.time()
+            for key in self.activeJobs:
+                status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
+            return status
 
     def uploadFile(self, jobID, filename, pyroFile):
         """
