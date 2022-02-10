@@ -166,7 +166,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 log.debug(f'Job {jobId} already finished, exit status {job.proc.exitcode}.')
                 if job.proc.exitcode!=0: log.error('Job {jobID} has non-zero exit status {job.proc.exitcode}')
                 dead.append(jobId)
-            for d in dead: del self.activeJobs[dead]
+            for d in dead: del self.activeJobs[d]
 
 
     def preAllocate(self, requirements=None):
