@@ -123,6 +123,7 @@ class SimpleJobManager (jobmanager.JobManager):
         # this is all run in the subprocess
         # log.info('Changing directory to %s',cwd)
         os.chdir(cwd)
+        os.environ['MUPIF_LOG_LEVEL']='DEBUG'
         import mupif.pyroutil
         # sys.excepthook=Pyro5.errors.excepthook
         # Pyro5.config.DETAILED_TRACEBACK=True
