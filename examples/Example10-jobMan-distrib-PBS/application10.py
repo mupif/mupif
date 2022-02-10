@@ -46,11 +46,11 @@ class Application10(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Time value',
-                 'Description': 'Time', 'Units': 's', 'Required': True, "Set_at": "timestep", "Obj_ID": '1'}
+                 'Description': 'Time', 'Units': 's', 'Required': True, "Set_at": "timestep", "Obj_ID": '1', "ValueType": "Scalar"}
             ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
-                 'Description': 'Cummulative time', 'Units': 's'}
+                 'Description': 'Cummulative time', 'Units': 's', "ValueType": "Scalar"}
             ]
         }
         super().__init__(metadata=MD, **kwargs)

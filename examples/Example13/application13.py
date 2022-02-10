@@ -43,13 +43,13 @@ class Application13(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
-                 'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep"},
+                 'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"},
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
-                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep"}
+                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
             ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
-                 'Description': 'Result of multiplication', 'Units': 's^2'}
+                 'Description': 'Result of multiplication', 'Units': 's^2', "ValueType": "Scalar"}
             ]
         }
         super().__init__(metadata=MD, **kwargs)
