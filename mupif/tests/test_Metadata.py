@@ -54,9 +54,9 @@ class _TestModel2(model.Model):
                 'Robustness': 'High'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}],
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
             'Outputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step', 'Units': 's', 'Origin': 'Simulated'}]
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
