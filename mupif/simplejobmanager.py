@@ -341,13 +341,13 @@ class SimpleJobManager (jobmanager.JobManager):
         See :func:`JobManager.getStatus`
         """
         self._updateActiveJobs()
+        JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user'])
+        status = []
+        tnow = timeTime.time()
         with self.lock:
-            JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user'])
-            status = []
-            tnow = timeTime.time()
             for key in self.activeJobs:
                 status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
-            return status
+        return status
 
     def uploadFile(self, jobID, filename, pyroFile):
         """
