@@ -50,7 +50,8 @@ class ThermalModel(mupif.model.Model):
                             "Dirichlet left",
                             "Dirichlet right"
                         ],
-                        "Set_at": "timestep"
+                        "Set_at": "timestep",
+                        "ValueType": "Scalar"
                     },
                     {
                         "Name": "Input file",
@@ -680,7 +681,8 @@ class ThermalNonstatModel(ThermalModel):
                         "Dirichlet left",
                         "Dirichlet right"
                     ],
-                    "Set_at": "timestep"
+                    "Set_at": "timestep",
+                    "ValueType": "Scalar"
                 },
                 {
                     "Name": "Input file",

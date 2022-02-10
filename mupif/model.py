@@ -143,7 +143,21 @@ ModelSchema = {
                     "Required": {"type": "boolean"},
                     "Set_at": {"type": "string", "enum": ["initialization", "timestep"]}
                 },
-                "required": ["Type", "Type_ID", "Name", "Units", "Required", "Set_at"]
+                "required": ["Type", "Type_ID", "Name", "Units", "Required", "Set_at"],
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": {
+                                        "Type": {"const": "mupif.Property"}
+                                    }
+                                }
+                            },
+                            {"required": ["ValueType"]}
+                        ]
+                    }
+                ]
             }
         },
         "Outputs": {
@@ -161,7 +175,21 @@ ModelSchema = {
                     "Description": {"type": "string"},
                     "Units": {"type": "string"}
                 },
-                "required": ["Type", "Type_ID", "Name", "Units"]
+                "required": ["Type", "Type_ID", "Name", "Units"],
+                "allOf": [
+                    {
+                        "anyOf": [
+                            {
+                                "not": {
+                                    "properties": {
+                                        "Type": {"const": "mupif.Property"}
+                                    }
+                                }
+                            },
+                            {"required": ["ValueType"]}
+                        ]
+                    }
+                ]
             }
         }
     },
