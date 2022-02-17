@@ -145,6 +145,9 @@ class JobManager(object):
     def getNSName(self):
         return self.applicationName
 
+    # implemented in SimpleJobManager
+    def getModelMetadata(self): pass
+
     def uploadFile(self, jobID, filename, pyroFile):
         """
         Uploads the given file to application server, files are uploaded to dedicated jobID directory
