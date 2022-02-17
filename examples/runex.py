@@ -9,7 +9,7 @@ log.setLevel(logging.DEBUG)
 parser=argparse.ArgumentParser('Run some/all MuPIF examples')
 parser.add_argument('--codecov',action='store_true',help='Run with codecov')
 parser.add_argument('--wenv',choices=['all','main','servers'],help='Run some components under *wenv*: the main script, associated servers, or both (all).')
-parser.add_argument('exnum',nargs='*',type=int,help='Example numbers to run (if not given, all examples will be run)',metavar='N')
+parser.add_argument('exnum',nargs='*',type=str,help='Example numbers to run (if not given, all examples will be run)',metavar='N')
 args=parser.parse_args(sys.argv[1:])
 
 netOpts=[]
@@ -17,21 +17,23 @@ netOpts=[]
 from dataclasses import dataclass
 @dataclass
 class ExCfg():
-    num: int
+    num: str
     dir: str
     scripts: typing.List[str]
+    skip: bool=False
 
 allEx=[
-    ExCfg(1,'Example01-local',['Example01.py']),
-    ExCfg(2,'Example02-distrib',['Example02.py','server.py']),
-    ExCfg(3,'Example03-field-local',['Example03.py']),
-    ExCfg(4,'Example04-jobMan-distrib',['Example04.py','server.py']),
-    ExCfg(5,'Example05-units-local',['Example05.py']),
-    ExCfg(6,'Example06-stacTM-local',['Example06.py']),
-    ExCfg(7,'Example07-stacTM-JobMan-distrib',  ['Example07.py','thermalServer.py','mechanicalServer.py']),
-    ExCfg(8,'Example08-transiTM-JobMan-distrib',['Example08.py','thermalServer.py','mechanicalServer.py']),
-    ExCfg(9,'Example09-operatorEmail',['Example09.py']),
-    ExCfg(11,'Example11',['workflow.py']),
+    ExCfg('1','Example01-local',['Example01.py']),
+    ExCfg('2','Example02-distrib',['Example02.py','server.py']),
+    ExCfg('3','Example03-field-local',['Example03.py']),
+    ExCfg('4','Example04-jobMan-distrib',['Example04.py','server.py']),
+    ExCfg('5','Example05-units-local',['Example05.py']),
+    ExCfg('6','Example06-stacTM-local',['Example06.py']),
+    ExCfg('7','Example07-stacTM-JobMan-distrib',  ['Example07.py','thermalServer.py','mechanicalServer.py']),
+    ExCfg('8','Example08-transiTM-JobMan-distrib',['Example08.py','thermalServer.py','mechanicalServer.py']),
+    ExCfg('9','Example09-operatorEmail',['Example09.py'],skip=True),
+    ExCfg('11','Example11',['workflow.py']),
+    ExCfg('11d','Example11',['dist-ex11.py','dist-m1.py','dist-m2.py'],skip=True),
     ExCfg(13,'Example13',['main.py','server.py','application13.py'])
 ]
 
@@ -78,7 +80,7 @@ def runEx(ex):
         if failed: raise RuntimeError('Failed background processes:\n\n'+'\n * '.join([str(b.args) for b in failed]))
 
 # no examples means all examples
-if not args.exnum: args.exnum=[e.num for e in allEx]
+if not args.exnum: args.exnum=[e.num for e in allEx if not e.skip]
 
 runEex=[e for e in allEx if e.num in args.exnum]
 failed=[]

@@ -68,13 +68,13 @@ class EmailAPI(model.Model):
         self.updateMetadata(MD)
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             # remember the mapped value
             self.inputs[str(obj.propID)] = property
             self.inputs[self.key] = 0.0
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -122,30 +122,26 @@ class EmailAPI(model.Model):
 #################################################
 # create instance of application API
 app = EmailAPI()
-try:
-    executionMetadata = {
-        'Execution': {
-            'ID': '1',
-            'Use_case_ID': '1_1',
-            'Task_ID': '1'
-        }
+
+executionMetadata = {
+    'Execution': {
+        'ID': '1',
+        'Use_case_ID': '1_1',
+        'Task_ID': '1'
     }
-    
-    app.initialize(metadata=executionMetadata)
+}
 
-    # CumulativeConcentration property on input
-    p = property.ConstantProperty(value=0.1, propID=DataID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mp.U['kg/m**3'])
-    # set concentration as input
-    app.set(p)
-    # solve (involves operator interaction)
-    tstep = timestep.TimeStep(time=0.0, dt=0.1, targetTime=1.0, unit=mp.U.s, number=1)
-    app.solveStep (tstep)
-    # get result of the simulation
-    r = app.get(DataID.PID_Demo_Value, tstep.getTime())
-    log.info("Application API return value is %f", r.getValue())
-    # terminate app
+app.initialize(metadata=executionMetadata)
 
-except Exception as e:
-    log.error(e)
-finally:
-    app.terminate()
+# CumulativeConcentration property on input
+p = property.ConstantProperty(value=0.1, propID=DataID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mp.U['kg/m**3'])
+# set concentration as input
+app.set(p)
+# solve (involves operator interaction)
+tstep = timestep.TimeStep(time=0.0, dt=0.1, targetTime=1.0, unit=mp.U.s, number=1)
+app.solveStep (tstep)
+# get result of the simulation
+r = app.get(DataID.PID_Demo_Value, tstep.getTime())
+log.info("Application API return value is %f", r.getValue())
+# terminate app
+

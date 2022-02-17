@@ -277,7 +277,7 @@ class ThermalModel(mupif.model.Model):
                 ineq += 1
         # print (self.loc)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
 
         # Field
         if objectTypeID == mupif.DataID.FID_Temperature:
@@ -594,7 +594,7 @@ class ThermalModel(mupif.model.Model):
                     A_e[i, j] += K[i, j]
         return A_e
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.PyroFile):
             print("Downloading the input file..")
             mp.PyroFile.copy(obj, self.workDir + os.path.sep + 'tmin.in')
@@ -1074,7 +1074,7 @@ class MechanicalModel(mupif.model.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.PyroFile):
             print("Downloading the input file..")
             mupif.PyroFile.copy(obj, self.workDir + os.path.sep + 'smin.in')
@@ -1205,7 +1205,7 @@ class MechanicalModel(mupif.model.Model):
 
         # print "loc:", self.loc
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mupif.DataID.FID_Displacement:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):

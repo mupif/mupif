@@ -2,6 +2,7 @@ import unittest
 import mupif as mp
 import numpy as np
 import sys
+import os.path
 import multiprocessing
 import threading
 import time
@@ -11,10 +12,165 @@ import time, random
 import tempfile
 import astropy.units as u
 
+from mupif.heavystruct import sampleSchemas_json
+
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
 
-class Heavydata_TestCase(unittest.TestCase):
+class Hdf5HeavyProperty_TestCase(unittest.TestCase):
+    def setUp(self): pass
+    def test_01_create(self):
+        hp=mp.Hdf5HeavyProperty.make(propID=mp.DataID.PID_Concentration,quantity=mp.Quantity(value=np.array([[1,2,3]]),unit='m/s'),valueType=mp.ValueType.Vector)
+        self.assertTrue(os.path.getsize(hp.h5path)>0)
+        self.assertTrue((hp.value[:]==[[1,2,3]]).all())
+        hp.closeData()
+        # re-open
+        hp2=mp.Hdf5HeavyProperty.loadFromHdf5(h5path=hp.h5path)
+        self.assertTrue((hp2.value[:]==[[1,2,3]]).all())
+        self.assertEqual(hp2.propID,mp.DataID.PID_Concentration)
+        self.assertEqual(hp2.unit,mp.units.Unit('m/s'))
+
+
+class Hdf5Quantity_TestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.daemon=mp.pyroutil.getDaemon()
+    def setUp(self):
+        self.n=1000
+        self.hq=mp.Hdf5OwningRefQuantity(mode='create',h5loc='/some/path')
+        self.hq.allocateDataset(shape=(self.n,3),dtype='f8',unit='m/s') # creates HDF5 file *and* the dataset, all-zero data
+        self.hq.value[1]=1
+        self.hq.closeData()
+    def test_01_assign(self):
+        print(self.hq)
+        hq=self.hq
+        hq.openData(mode='readwrite') # open HDF5 (automatically) and the dataset itself
+        hq.value[:]=np.linspace(0,1,self.n)[:,None]
+        self.assertAlmostEqual(hq.value[2][0],2*1/(self.n-1))
+        hq.value[3]=[1,2,3]
+        self.assertEqual(list(hq.value[3]),[1,2,3])
+
+        hq.quantity[4]=(4,5,6)*mp.U['km/h']
+        self.assertAlmostEqual(hq.value[4][0],4/3.6) # m/s
+
+        def value00(v): hq.value[0][0]=v
+        def quantity00(q): hq.quantity[0][0]=q
+        self.assertRaises(ValueError,lambda: value00(10)) # this would assign to a copy, losing the data
+        self.assertRaises(ValueError,lambda: quantity00(10*mp.U['m/s'])) # this would assign to a copy, losing the data
+
+    def test_02_readonly(self):
+        self.hq.openData(mode='readonly')
+        self.assertRaises(OSError,lambda: self.hq.value.__setitem__(2,1))
+
+    def test_03_refQuantity(self):
+        print(self.hq)
+        self.hq.openData(mode='readwrite')
+        # Hdf5RefQuantity shares underlying dataset
+        hrq=self.hq.makeRef()
+        self.hq.quantity[5]=(1,2,3)*mp.U['m/s']
+        self.assertEqual(list(self.hq.quantity[5]),list(hrq.quantity[5]))
+
+    def test_04_hq_1d(self):
+        hq=mp.Hdf5OwningRefQuantity(mode='create')
+        hq.allocateDataset(shape=(3,),dtype='f4',unit='m/s')
+        hq.value[:]=[1,2,3]
+        hq.reopenData('readwrite')
+        hq.value[1]=44
+        self.assertEqual(hq.value[1],44)
+        hq.reopenData(mode='readwrite')
+        self.assertEqual(hq.value[1],44)
+        # broadcasting
+        hq.value[:]=33
+        hq.reopenData()
+        self.assertEqual(hq.value.shape,(3,))
+        self.assertTrue((np.array(hq.value)==33).all())
+    def test_05_hq_2d(self):
+        hq=mp.Hdf5OwningRefQuantity(mode='create')
+        hq.allocateDataset(shape=(1,3),dtype='f4',unit='m/s')
+        hq.value[0]=[1,2,3]
+        hq.reopenData('readwrite')
+        hq.value[0]=[44,55,66]
+        self.assertEqual(hq.value[0][1],55)
+        hq.reopenData(mode='readwrite')
+        self.assertEqual(hq.value[0][1],55)
+        # broadcasting
+        hq.value[:]=33
+        hq.reopenData()
+        self.assertEqual(hq.value.shape,(1,3))
+        self.assertTrue((np.array(hq.value[:])==33).all())
+
+
+    def test_10_transfer(self):
+        C=self.__class__
+        # 1. register the Hdf5OwningRefQuantity itself
+        uri=C.daemon.register(self.hq)
+
+        # test: exposing open data raises exception
+        self.hq.openData(mode='readonly')
+        v00=self.hq.value[0][0]
+        self.assertRaises(RuntimeError,self.hq.exposeData)
+        self.hq.closeData()
+
+        # 2. expose the data (uses the same daemon)
+        self.hq.exposeData()
+
+        p=Pyro5.api.Proxy(uri)
+        # copies backing HDF5 file automatically
+        hq2=p.copyRemote()
+
+        hq2.openData(mode='readwrite')
+        self.assertEqual(list(hq2.value[1]),[1.,1.,1.])
+        # test that backing storage is really different
+        self.assertNotEqual(self.hq.h5path,hq2.h5path)
+        hq2.value[0]=(100,0,0)
+        self.assertNotEqual(v00,hq2.value[0][0])
+        self.assertIsNone(hq2.h5uri)
+
+    def test_20_makeFromQuantity2d(self):
+        q=mp.Quantity(value=np.array([[1,2,3],[4,5,6],[7,8,9]]),unit='m/s')
+        hq=mp.Hdf5OwningRefQuantity.makeFromQuantity(q)
+        self.assertTrue(os.path.getsize(hq.h5path)>0)
+        self.assertEqual(q.value[1][1],hq.value[1][1])
+        self.assertEqual(q.value.shape,hq.value.shape)
+        self.assertEqual(q.unit,hq.unit)
+    def test_21_makeFromQuantity1d(self):
+        q=mp.Quantity(value=np.array([1,2,3]),unit='m/s')
+        hq=mp.Hdf5OwningRefQuantity.makeFromQuantity(q)
+        self.assertTrue(os.path.getsize(hq.h5path)>0)
+        self.assertEqual(q.value[1],hq.value[1])
+        hq.value[1]=44
+        self.assertEqual(hq.value[1],44)
+        hq.reopenData(mode='readwrite')
+        self.assertEqual(hq.value[1],44)
+    def test_23_toQuantity(self):
+        self.hq.openData(mode='readonly')
+        q=self.hq.toQuantity()
+        self.assertEqual(self.hq.unit,q.unit)
+        self.assertEqual(self.hq.value.shape,q.shape)
+        self.assertEqual(list(self.hq.value[1]),list(q.value[1]))
+    def test_24_propertySwapQuantity(self):
+        p1=mp.Property(propID=mp.DataID.PID_Concentration,quantity=mp.Quantity(value=np.array([[1,2,3]]),unit='mmol/l'),valueType=mp.ValueType.Vector)
+        p2=p1.deepcopy()
+        # replace p2's quantity by Hdf5OwningRefQuantity
+        p2.quantity=mp.Hdf5OwningRefQuantity.makeFromQuantity(p2.quantity)
+        # check stuff
+        self.assertTrue(os.path.getsize(p2.quantity.h5path)>0)
+        self.assertTrue((p1.value[:]==p2.value[:]).all())
+        p2.value[0]=3
+        self.assertTrue((p2.value[0]==3).all())
+
+        # re-load p2.quantity from closed HDF5 file
+        p2.quantity.closeData()
+        q2=mp.Hdf5OwningRefQuantity(h5path=p2.quantity.h5path,h5loc=p2.quantity.h5loc,mode='readonly')
+        q2.openData() # open so that we can assign to quantity
+        q2a=q2.toQuantity() # onvert to in-memory quantity
+        p3=mp.Property(propID=p2.propID,valueType=p2.valueType,quantity=q2.toQuantity())
+
+        self.assertEqual(p1.value.shape,p3.value.shape)
+        self.assertTrue((np.array([[3,3,3]])==p3.value[:]).all())
+        self.assertEqual(p1.getUnit(),p3.getUnit())
+
+class HeavyStruct_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmpdir=tempfile.TemporaryDirectory()
@@ -36,8 +192,8 @@ class Heavydata_TestCase(unittest.TestCase):
         C.h5path2=C.tmp+'/grain2.h5'
         # precompiled schemas
         for handle in [
-                mp.HeavyDataHandle(h5path=C.h5path,h5group='test',mode='create',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json),
-                mp.HeavyDataHandle(mode='create-memory',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+                mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='create',schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json),
+                mp.HeavyStruct(mode='create-memory',schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)
             ]:
             t0=time.time()
             atomCounter=0
@@ -67,7 +223,7 @@ class Heavydata_TestCase(unittest.TestCase):
             # h.closeData()
     def test_02_read(self):
         C=self.__class__
-        with mp.HeavyDataHandle(h5path=C.h5path,h5group='test',mode='readonly') as grains:
+        with mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readonly') as grains:
             t0=time.time()
             atomCounter=0
             for g in grains:
@@ -86,7 +242,7 @@ class Heavydata_TestCase(unittest.TestCase):
         sys.stderr.write(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
     def test_03_copy(self):
         C=self.__class__
-        h1=mp.HeavyDataHandle(h5path=C.h5path,h5group='test')
+        h1=mp.HeavyStruct(h5path=C.h5path,h5group='test')
         h2=h1.cloneHandle()
         self.assertNotEqual(h1.h5path,h2.h5path)
         sys.stderr.write(f'Created temporary file {h2.h5path} for cloneHandle.\n')
@@ -94,17 +250,17 @@ class Heavydata_TestCase(unittest.TestCase):
         grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('QQ')
     def test_04_delete(self):
         C=self.__class__
-        with mp.HeavyDataHandle(h5path=C.h5path,h5group='test',mode='readwrite') as grains:
+        with mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readwrite') as grains:
             mols=grains[0].getMolecules()
             nmols=len(mols)
             mols.resize(nmols-4)
             self.assertEqual(len(mols),nmols-4)
     def test_05_create_temp(self):
-        handle=mp.HeavyDataHandle(schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        handle=mp.HeavyStruct(schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)
         handle.openData(mode='create')
         handle.closeData()
     def test_06_resize(self):
-        handle=mp.HeavyDataHandle(schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        handle=mp.HeavyStruct(schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)
         gg=handle.openData(mode='create-memory')
         self.assertEqual(len(gg),0)
         gg.resize(10)
@@ -112,7 +268,7 @@ class Heavydata_TestCase(unittest.TestCase):
         gg.resize(20)
         self.assertEqual(len(gg),20)
     def test_07_dump_inject(self):
-        handle=mp.HeavyDataHandle(schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json)
+        handle=mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json)
         mols=handle.openData(mode='create-memory')
         mols.resize(2)
         mols[0].getIdentity().setMolecularWeight(1*u.g)
@@ -123,7 +279,7 @@ class Heavydata_TestCase(unittest.TestCase):
         m0a.getIdentity()[1].setElement('BB')
 
         dmp=mols.to_dump()
-        mols_=mp.HeavyDataHandle(schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json).openData(mode='create-memory')
+        mols_=mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json).openData(mode='create-memory')
         mols_.inject(mols)
         # compare string representation
         self.assertEqual(str(mols.to_dump()),str(mols_.to_dump()))
@@ -132,7 +288,7 @@ class Heavydata_TestCase(unittest.TestCase):
         # manipulate the dump by hand and assign it
         dmp[0]['identity.molecularWeight']=(1000.,'u') # change mass of mol0 to 1000 u
         dmp[1]['identity.molecularWeight']=(1,u.kg)  # change mass of mol1 to 1 kg
-        with mp.HeavyDataHandle(schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json,mode='create-memory') as mols2:
+        with mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json,mode='create-memory') as mols2:
             mols2.from_dump(dmp)
             self.assertEqual(mols2[0].getAtoms()[0].getIdentity().getElement(),'AA')
             self.assertEqual(mols2[0].getAtoms()[1].getIdentity().getElement(),'BB')
@@ -141,7 +297,7 @@ class Heavydata_TestCase(unittest.TestCase):
             self.assertEqual(mols2[1].getIdentity().getMolecularWeight(),1000*u.Unit('g'))
 
         # inject fragments of data
-        mols3=mp.HeavyDataHandle(schemaName='org.mupif.sample.molecule',schemasJson=mp.heavydata.sampleSchemas_json).openData(mode='create-memory')
+        mols3=mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json).openData(mode='create-memory')
         mols3.resize(2)
         mols3[0].getAtoms().inject(mols[0].getAtoms())
         self.assertEqual(len(mols3[0].getAtoms()),2)
@@ -158,9 +314,9 @@ class Heavydata_TestCase(unittest.TestCase):
         C.daemon=mp.pyroutil.getDaemon()
     def test_21_publish(self):
         C=self.__class__
-        C.uri=C.daemon.register(handle:=mp.HeavyDataHandle(h5path=C.h5path,h5group='test',mode='readonly'))
+        C.uri=C.daemon.register(handle:=mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readonly'))
         handle.exposeData()
-        handle2=mp.HeavyDataHandle(h5path=C.h5path2,h5group='test',schemaName='org.mupif.sample.grain',schemasJson=mp.heavydata.sampleSchemas_json)
+        handle2=mp.HeavyStruct(h5path=C.h5path2,h5group='test',schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)
         handle2.openData(mode='create') # this actually create the underlying storage
         C.uri2=C.daemon.register(handle2)
         sys.stderr.write(f'Handle URI is {C.uri}, HDF5 URI is {handle.h5uri}\n')
@@ -171,7 +327,7 @@ class Heavydata_TestCase(unittest.TestCase):
             # this MUST be called to get local instance of the handle
             # its constructor will download the HDF5 file, provided exposeData() had been called on the remote
             local=proxy.copyRemote()
-            self.assertEqual(local.__class__,mp.heavydata.HeavyDataHandle)
+            self.assertEqual(local.__class__,mp.heavystruct.HeavyStruct)
             sys.stderr.write(f'Local handle is a {local.__class__.__name__}\n')
             root=local.openData(mode='readonly')
             # sys.stderr.write(f'Local root has {len(root)} grains, {root.__class__}\n')
@@ -235,7 +391,7 @@ class Heavydata_TestCase(unittest.TestCase):
             raise
     def test_25_daemon_auto_register_unregister(self):
         C=self.__class__
-        handle=mp.HeavyDataHandle(h5path=C.h5path,h5group='test',mode='readonly')
+        handle=mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readonly')
         # register the handle with daemon
         # if the parent object is registered, all nested objects should register automatically with the same daemon
         uri0=C.daemon.register(handle)

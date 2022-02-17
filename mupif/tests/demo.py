@@ -89,7 +89,7 @@ class AppGridAvg(model.Model):
         self.dy = self.yl/self.ny
         self.mesh = meshgen_grid2d((0., 0.), (self.xl, self.yl), self.nx, self.ny)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.FID_Temperature:
             if self.field is None:
                 # generate sample field
@@ -127,7 +127,7 @@ class AppMinMax(model.Model):
     _min: float = 0.
     _max: float = 0.
     
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mupif.Field):
             self.extField = obj
 
@@ -141,7 +141,7 @@ class AppMinMax(model.Model):
             self._min = min(self._min, val)
             self._max = max(self._max, val)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.PID_Demo_Min:
             return property.ConstantProperty(self._min, DataID.PID_Demo_Min, ValueType.Scalar, objectTypeID, mupif.U.none, time=time)
         elif objectTypeID == DataID.PID_Demo_Max:
@@ -159,7 +159,7 @@ class AppIntegrateField(model.Model):
     volume: float = 0.
     integral: float = 0.
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mupif.Field):
             self.extField = obj
 
@@ -178,7 +178,7 @@ class AppIntegrateField(model.Model):
                 # print c.loc2glob(p[0])
                 self.integral = self.integral+self.extField.evaluate(c.loc2glob(p[0]))[0]*dv
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.PID_Demo_Integral:
             return property.ConstantProperty(float(self.integral), DataID.PID_Demo_Integral, ValueType.Scalar, objectTypeID, mupif.U.none, time=time)
         elif objectTypeID == DataID.PID_Demo_Volume:
@@ -194,7 +194,7 @@ class AppCurrTime(model.Model):
 
     value: float = 0.0
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.PID_Concentration:
             return property.ConstantProperty(value=self.value, propID=DataID.PID_Concentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
         if objectTypeID == DataID.PID_Velocity:
@@ -218,13 +218,13 @@ class AppPropAvg(model.Model):
     count: float = 0.0
     contrib: mupif.Property = None
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.PID_CumulativeConcentration:
             return property.ConstantProperty(value=self.value/self.count, propID=DataID.PID_CumulativeConcentration, valueType=ValueType.Scalar, unit=mupif.U['kg/m**3'], time=time)
         else:
             raise apierror.APIError('Unknown DataID')
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mupif.Property):
             if obj.getPropertyID() == DataID.PID_Concentration:
                 # remember the mapped value

@@ -5,7 +5,7 @@ thisDir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(thisDir+'/..')
 import mupif as mp
 logging.basicConfig(format='%(message)s')
-log = logging.getLogger('run-ex')
+log = logging.getLogger('run-ns')
 log.setLevel(logging.DEBUG)
 
 

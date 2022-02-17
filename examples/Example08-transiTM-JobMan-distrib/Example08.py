@@ -46,7 +46,7 @@ class Example08(workflow.Workflow):
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         # locate nameserver
-        ns = pyroutil.connectNameServer()
+        ns = pyroutil.connectNameserver()
         # connect to JobManager running on (remote) server
         self.thermalJobMan = pyroutil.connectJobManager(ns, 'thermal-nonstat-ex08')
         
@@ -115,12 +115,12 @@ class Example08(workflow.Workflow):
 
         self.thermal.solveStep(istep)
         f = self.thermal.get(DataID.FID_Temperature, self.mechanical.getAssemblyTime(istep))
-        data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=False)
+        data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=True)
 
         self.mechanical.set(f)
         sol = self.mechanical.solveStep(istep) 
         f = self.mechanical.get(DataID.FID_Displacement, istep.getTime())
-        data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=False)
+        data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=True)
 
         logging.getLogger().setLevel(level0)
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         }
     }
     demo.initialize(metadata=workflowMD)
-    demo.set(mp.ConstantProperty(value=(10. * mp.U.s,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
+    demo.set(mp.ConstantProperty(value=10. * mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     demo.printMetadata()
     demo.terminate()
