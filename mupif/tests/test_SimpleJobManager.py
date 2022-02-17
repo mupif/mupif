@@ -101,6 +101,9 @@ class SimpleJobManager_TestCase(unittest.TestCase):
 
     def test_getApplicationSignature(self):
         self.assertTrue(self.jobMan.getApplicationSignature() == 'Mupif.JobManager.SimpleJobManager')
+
+    def test_getModelMetadata(self):
+        self.assertEqual(self.jobMan.getModelMetadata()['ID'],'mupif-tests-testApp')
     
     def test_allocateJob(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
