@@ -99,7 +99,7 @@ class Hdf5RefQuantity(RefQuantity):
     # def quantity(self,q): self.dataset[:]=q.to(self.unit)
 
 
-HeavyDataBase_ModeChoice=typing.Literal['readonly', 'readwrite', 'overwrite', 'create', 'create-memory']
+HeavyDataBase_ModeChoice=typing.Literal['readonly', 'readwrite', 'overwrite', 'create', 'create-memory', 'copy-readwrite']
 
 @Pyro5.api.expose
 class HeavyDataBase(MupifObject):
@@ -148,6 +148,18 @@ class HeavyDataBase(MupifObject):
         if mode is not None: self.mode=mode
         # log.warning(f'Opening in mode {self.mode}')
 
+
+        # for copy-readwrite, do the copy and let readwrite handle th rest
+        if self.mode == 'copy-readwrite':
+            if self._h5obj and self._h5obj.mode != 'r':
+                raise RuntimeError(f'HDF5 file {self.h5path} open for writing (must be closed or read-only).')
+            fd, h5path_new = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp', text=False)
+            log.info('Using new temporary file {self.h5path}')
+            import shutil
+            shutil.copy(self.h5path, h5path_new)
+            self.h5path = h5path_new
+            self.mode = 'readwrite'
+
         if self.mode in ('readonly', 'readwrite'):
             if self.mode == 'readonly':
                 if self._h5obj:
@@ -176,6 +188,7 @@ class HeavyDataBase(MupifObject):
                 # therefore pass if something unique if filename is not given
                 self._h5obj = h5py.File(p, mode='x', driver='core', backing_store=doSave)
             else:
+                assert self.mode in ('overwrite','create')
                 # overwrite, create
                 if useTemp := (not self.h5path):
                     fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
