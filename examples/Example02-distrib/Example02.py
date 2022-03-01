@@ -50,11 +50,11 @@ class Application1(mp.Model):
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}],
+                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated'}]
+                 'Origin': 'Simulated', "ValueType": "Scalar"}]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)

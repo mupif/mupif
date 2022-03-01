@@ -858,7 +858,6 @@ class HeavyStruct(HeavyDataBase):
     * ``create`` creates new HDF5 file, raising an exception if the file exists already; if :obj:`h5path` is empty, a temporary file will be created automatically; 
     * ``overwrite`` create new HDF5 file, allowing overwriting an existing file;
     * ``create-memory`` create HDF5 file in RAM only; if :obj:`h5path` is non-empty, it will be written out when data is closed via :obj:`closeData` (and discarded otherwise);
-    * ``copy-readwrite``: copies the underlying HDF5 file to a temporary storage first, then opens that for writing.
 
 
     *schemaName* and *schemasJson* must be provided when creating new data (``overwrite``, ``create``, ``create-memory``) and are ignored otherwise.

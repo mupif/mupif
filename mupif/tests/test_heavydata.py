@@ -175,6 +175,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.tmpdir=tempfile.TemporaryDirectory()
         cls.tmp=cls.tmpdir.name
+        #cls.tmp='/tmp/'
         cls.numGrains=2
         time.sleep(.5)
     @classmethod
@@ -240,7 +241,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
                         atomCounter+=1
             t1=time.time()
         sys.stderr.write(f'{atomCounter} atoms read in {t1-t0:g} sec ({atomCounter/(t1-t0):g}/sec).\n')
-    def test_03_copy(self):
+    def test_03_clone_handle(self):
         C=self.__class__
         h1=mp.HeavyStruct(h5path=C.h5path,h5group='test')
         h2=h1.cloneHandle()
@@ -248,18 +249,26 @@ class HeavyStruct_TestCase(unittest.TestCase):
         sys.stderr.write(f'Created temporary file {h2.h5path} for cloneHandle.\n')
         grains=h2.openData(mode='readwrite')
         grains[0].getMolecules()[0].getAtoms()[0].getIdentity().setElement('QQ')
-    def test_04_delete(self):
+    def test_04_copy_readwrite(self):
+        C=self.__class__
+        hs=mp.HeavyStruct(h5path=C.h5path,h5group='test')
+        hs.openData(mode='copy-readwrite')
+        # should copy to temporary
+        self.assertNotEqual(C.h5path,hs.h5path)
+        hs.closeData()
+        self.assertEqual(os.path.getsize(C.h5path),os.path.getsize(hs.h5path))
+    def test_05_delete(self):
         C=self.__class__
         with mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readwrite') as grains:
             mols=grains[0].getMolecules()
             nmols=len(mols)
             mols.resize(nmols-4)
             self.assertEqual(len(mols),nmols-4)
-    def test_05_create_temp(self):
+    def test_06_create_temp(self):
         handle=mp.HeavyStruct(schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)
         handle.openData(mode='create')
         handle.closeData()
-    def test_06_resize(self):
+    def test_07_resize(self):
         handle=mp.HeavyStruct(schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)
         gg=handle.openData(mode='create-memory')
         self.assertEqual(len(gg),0)
@@ -267,7 +276,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
         self.assertEqual(len(gg),10)
         gg.resize(20)
         self.assertEqual(len(gg),20)
-    def test_07_dump_inject(self):
+    def test_08_dump_inject(self):
         handle=mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json)
         mols=handle.openData(mode='create-memory')
         mols.resize(2)

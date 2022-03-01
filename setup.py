@@ -83,10 +83,10 @@ setup(
     url='http://www.mupif.org/',
     entry_points={
         'console_scripts': [
-            'jobMan2cmd = mupif.tools.JobMan2cmd:main',
-            'jobManStatus = mupif.tools.jobManStatus:main',
-            'jobManTest = mupif.tools.jobManTest:main',
-            'startMupifNameserver = mupif.tools.nameserver:main'
+            #'jobMan2cmd = mupif.tools.JobMan2cmd:main',
+            #'jobManStatus = mupif.tools.jobManStatus:main',
+            #'jobManTest = mupif.tools.jobManTest:main',
+            #'startMupifNameserver = mupif.tools.nameserver:main'
         ]
     },
     ext_modules=ext_modules,

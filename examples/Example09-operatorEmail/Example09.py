@@ -60,10 +60,10 @@ class EmailAPI(model.Model):
                 'Robustness': 'Unknown'
             },
             'Inputs': [
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}],
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_CumulativeConcentration', 'Name': 'Concentration', 'Description': 'Concentration', 'Units': 'kg/m**3', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Demo_Value', 'Name': 'Demo value',
-                 'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated'}]
+                 'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated', "ValueType": "Scalar"}]
         }
         self.updateMetadata(MD)
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
