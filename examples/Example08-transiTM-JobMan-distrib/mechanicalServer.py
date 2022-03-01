@@ -10,7 +10,7 @@ log = logging.getLogger()
 util.redirectLog('mechanical.log')
 
 # locate nameserver
-ns = pyroutil.connectNameServer()
+ns = pyroutil.connectNameserver()
 mechanical = models.MechanicalModel()
 
 pyroutil.runAppServer(

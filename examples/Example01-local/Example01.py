@@ -53,7 +53,7 @@ class Application1(mp.Model):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -64,7 +64,7 @@ class Application1(mp.Model):
 
         if objectTypeID == mp.DataID.PID_Time_step:
             return mp.ConstantProperty(
-                value=(self.value,), propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+                value=self.value, propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise mp.APIError('Unknown property ID')
 
@@ -122,12 +122,12 @@ class Application2(mp.Model):
         self.value = 0.0
         self.count = 0.0
         self.contrib = mp.ConstantProperty(
-            value=(0.,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
+            value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir, metadata, validateMetaData, **kwargs)
 
-    def get(self, objectTypeID, time=None, objectID=0):
+    def get(self, objectTypeID, time=None, objectID=""):
         md = {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
@@ -138,11 +138,11 @@ class Application2(mp.Model):
 
         if objectTypeID == mp.DataID.PID_Time:
             return mp.ConstantProperty(
-                value=(self.value,), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
+                value=self.value, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=time, metadata=md)
         else:
             raise mp.APIError('Unknown property ID')
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mp.DataID.PID_Time_step:
                 # remember the mapped value
@@ -152,7 +152,7 @@ class Application2(mp.Model):
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         # here we actually accumulate the value using value of mapped property
-        self.value = self.value+self.contrib.inUnitsOf(mp.U.s).getValue(self.getAssemblyTime(tstep))[0]
+        self.value = self.value+self.contrib.inUnitsOf(mp.U.s).getValue(self.getAssemblyTime(tstep))
         self.count = self.count+1
 
     def getCriticalTimeStep(self):
@@ -216,14 +216,14 @@ while abs(time - targetTime) > 1.e-6:
         # print (istep.getTime(), c, prop)
         atime = app2.getAssemblyTime(istep)
         log.debug("Time: %5.2f app1-time step %5.2f, app2-cummulative time %5.2f" % (
-            atime.getValue(), c.getValue(atime)[0], prop.getValue(atime)[0]))
+            atime.getValue(), c.getValue(atime), prop.getValue(atime)))
         
     except mp.APIError as e:
         log.error("mupif.APIError occurred:", e)
         log.error("Test FAILED")
         raise
 
-if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())[0]-5.5) <= 1.e-4:
+if prop is not None and istep is not None and abs(prop.getValue(istep.getTime())-5.5) <= 1.e-4:
     log.info("Test OK")
 else:
     log.error("Test FAILED")

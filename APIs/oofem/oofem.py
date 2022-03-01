@@ -111,7 +111,7 @@ class OOFEM(model.Model):
         else:
             raise apierror.APIError ('Can\'t return field for other than current time step')
 
-    def set(self, obj, objectID=0):
+    def set(self, obj, objectID=""):
         if obj.isInstance(mp.Field):
             """
             Registers the given (remote) object or parameter in application.
@@ -154,7 +154,7 @@ class OOFEM(model.Model):
             # print checkf
             # print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
 
-    def getProperty(self, propID, time, objectID=0):
+    def getProperty(self, propID, time, objectID=""):
         """
         Returns property identified by its ID evaluated at given time.
 
@@ -167,7 +167,7 @@ class OOFEM(model.Model):
         """
         raise apierror.APIError ('Unknown propertyID')
 
-    def getFunction(self, funcID, objectID=0):
+    def getFunction(self, funcID, objectID=""):
         """
         Returns function identified by its ID
 

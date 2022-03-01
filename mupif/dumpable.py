@@ -20,6 +20,9 @@ except Exception:
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 
+
+if pydantic.__version__.split('.')<['1','9']: raise RuntimeError('Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar)')
+
 # for now, disable numpy validation completely until we figure out what works in what python version reliably
 if 1:
     NumpyArray=NumpyArrayFloat64=typing.Any
@@ -152,7 +155,8 @@ class Dumpable(MupifBaseModel):
             clss = self.__class__
         if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
-            for attr in clss.__fields__.keys():
+            for attr,modelField in clss.__fields__.items():
+                if modelField.field_info.exclude: continue # skip excluded fields
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
@@ -176,6 +180,9 @@ class Dumpable(MupifBaseModel):
         if not daemon:
             raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
         return self.to_dict()
+
+    def deepcopy(self):
+        return Dumpable.from_dict(self.to_dict())
 
     @staticmethod
     def from_dict(dic, clss=None, obj=None):

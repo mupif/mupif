@@ -4,7 +4,7 @@ import models
 import mupif as mp
 
 # locate nameserver
-ns = mp.pyroutil.connectNameServer()
+ns = mp.pyroutil.connectNameserver()
 
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(

@@ -109,6 +109,9 @@ class SimpleJobManager (jobmanager.JobManager):
         self.nshost = nshost
         self.nsport = nsport
 
+        app=appClass()
+        self.modelMetadata=app.getAllMetadata()
+
         log.debug('SimpleJobManager: initialization done for application name %s' % self.applicationName)
 
     def runServer(self):
@@ -330,6 +333,9 @@ class SimpleJobManager (jobmanager.JobManager):
         for key in self.activeJobs:
             status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
         return status
+
+    def getModelMetadata(self):
+        return self.modelMetadata
 
     def uploadFile(self, jobID, filename, pyroFile):
         """
