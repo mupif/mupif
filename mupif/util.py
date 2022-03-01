@@ -124,3 +124,51 @@ def NoneOrInt(arg):
         return None
     else:
         return int(arg)
+
+
+def getVersion():
+    '''
+    Return structured data about this mupif installation. Supports:
+
+    * regular in-place install: ``pip install git+https://github.com/mupif/mupif@master``
+    * editable install ``pip install -e git+https://...`` (relies on the gitpython module)
+    * symlinked to Python path from local repository checkout
+
+    Does *not* support legacy ``pip install mupif``.
+
+    The returned named tuple has ``url``, ``branch`` and ``commit`` fields.
+    '''
+    import mupif
+    import importlib.metadata
+    import collections
+    import os.path
+    import json
+    # use realpath instead of abspath to resolve symlinks
+    # (for installs where mupif/ is symlinked into module directory, where ../.git would not resolve correctly)
+    mupifDir=os.path.dirname(os.path.realpath(mupif.__file__))
+    MupifVerInfo=collections.namedtuple('VerInfo','url branch commit') # timestamp
+
+    # editable checkout, use git
+    if os.path.exists(mupifDir+'/../.git'):
+        import git
+        repo=git.Repo(mupifDir+'/../')
+        return MupifVerInfo(
+            url=list(repo.remote().urls)[0],
+            branch=repo.head.reference.name,
+            commit=repo.head.commit.hexsha,
+            # timestamp=repo.head.commited_datetime
+        )
+    # direct install from remote path
+    try:
+        dist=importlib.metadata.distribution('mupif')
+        url=[f for f in dist.files if f.name=='direct_url.json']
+        if len(url)==1:
+            dta=json.load(open(url[0].locate()))
+            return MupifVerInfo(
+                url=dta['url'],
+                branch=dta['vcs_info']['requested_revision'],
+                commit=dta['vcs_info']['commit_id']
+            )
+    except importlib.metadata.PackageNotFoundError: pass
+
+    raise RuntimeError('Unable to get version data (did you install via "pip install mupif"?).')
