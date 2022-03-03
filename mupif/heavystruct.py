@@ -340,7 +340,8 @@ sampleSchemas_json = '''
                     "unit": "eV"
                 }
             },
-            "chemical": {}
+            "chemical": {},
+            "symmetry": { "choice":["none","axial","periodic","translational","rotational"] }
         },
         "topology": {
             "parent": {
@@ -511,6 +512,31 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
                 else:
                     return val
             meth['get'+capitalize(key)] = inherentGetter
+        elif 'choice' in val:
+            choices=val['choice']
+            num=0
+            str2num,num2str={},{}
+            if not isinstance(choices,(list,tuple)): raise TypeError(f"'{fq}': choice must be a sequence")
+            for ilabel,label in enumerate(choices):
+                if not isinstance(label,str): raise ValueError(f"'{fq}': choice items must be strings (item {ilabel} is a {type(label).__name__})")
+                if label in str2num: raise ValueError(f"'{fq}': duplicate choice label '{label}'")
+                num2str[num],str2num[label]=label,num
+                num+=1
+            mn,mx=min(num2str.keys()),max(num2str.keys())
+            # min_scalar_type: signed when mn<0, otherwise unsigned; min_scalar_type should ensure appropriate range
+            dtype=(np.min_scalar_type(mx) if mn>=0 else mn.min_scalar_type(-max(abs(mn),abs(mx))))
+            ret.dtypes+=[(fq,dtype)]
+            ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: named enumeration stored as {dtype.name}: '+', '.join([f'{k} (v)' for k,v in str2num.items()])]
+            ret.defaults[fq]=list(num2str.keys())[0] # first key is the default
+            ret.units[fq]=None
+            def getter(self,*,fq=fq):
+                if self.row is not None: return num2str[self.ctx.dataset[fq,self.row]]
+                else: return [num2str[self.ctx.dataset[fq,r]] for r in range(self.ctx.dataset.shape[0])]
+            def setter(self,val,*,fq=fq):
+                if self.row is not None: self.ctx.dataset[fq,self.row]=str2num[val]
+                else: self.ctx.dataset[fq]=np.full(self.ctx.dataset.shape[0],str2num[val])
+            meth['get'+capitalize(key)]=getter
+            meth['set'+capitalize(key)]=setter
         # normal data attribute
         elif 'dtype' in val:
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
@@ -558,8 +584,9 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
                 self.ctx.dataset[self.row]=rowdata
             meth['get'+capitalize(key)]=getter
             meth['set'+capitalize(key)]=(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct)
-        elif 'path' in val:
-            path,schema=val['path'],val['schema']
+        elif 'schema' in val:
+            schema,path=val['schema'],val.get('path','{NAME}/{ROW}/')
+            path.replace('{NAME}',key)
             if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
             if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
             ret.subpaths[fq]=(path,schema)
