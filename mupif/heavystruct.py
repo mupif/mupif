@@ -586,7 +586,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
             meth['set'+capitalize(key)]=(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct)
         elif 'schema' in val:
             schema,path=val['schema'],val.get('path','{NAME}/{ROW}/')
-            path.replace('{NAME}',key)
+            path=path.replace('{NAME}',key)
             if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
             if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
             ret.subpaths[fq]=(path,schema)
