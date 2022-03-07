@@ -61,6 +61,7 @@ class DataID(IntEnum):
     FID_Velocity = auto()
     FID_Pressure = auto()
     FID_ESI_VPS_Displacement = auto()
+    FID_Porosity = auto()
 
     # # # # # # # # # # # # # # # # # # # # #
 
@@ -386,6 +387,15 @@ class DataID(IntEnum):
     PID_maxMisesStress = auto()
     PID_maxPrincipalStress = auto()
     PID_Hyper2 = auto()
+
+    #
+    PID_NrOfComponents = auto()
+    PID_Self_Diffusivity = auto()
+    PID_Mass_density = auto()
+    PID_Interface_width = auto()
+    PID_Degree_of_polymerization = auto()
+    PID_Interaction_parameter = auto()
+    PID_Molar_volume = auto()
 
     #
     PID_GrainState = auto()
