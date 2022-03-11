@@ -25,7 +25,7 @@ Local installation
 Full source
 ~~~~~~~~~~~~~
 
-This is the recommended installation method when you can run examples and tests as the entire source is stored on your computer. First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``musicode`` or ``deema``)::
+This is the recommended installation method when you can run examples and tests as the entire source is stored on your computer. First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``Musicode`` or ``Deema``; see `MuPIF branches at GitHub <https://github.com/mupif/mupif/branches>`__)::
 
    git clone --branch BRANCH_NAME https://github.com/mupif/mupif.git
 
