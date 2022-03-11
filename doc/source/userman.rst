@@ -8,53 +8,40 @@ Platform installation
 Prerequisites
 ------------------
 
-Windows platforms
-~~~~~~~~~~~~~~~~~~~~~~~~
+MuPIF installatoin requires:
 
--  We suggest to install `Anaconda scientific python package <https://store.continuum.io/cshop/anaconda/>`__, which
-   includes Python ≥3.4,
+* Python ≥ 3.8
 
--  For secure communication either VPN client/server or SSH
-   client/server is needed (recommended client: `putty.exe
-   <http://www.putty.org/>`__, ssh server: `FreeSSHd
-   <http://www.freesshd.com/>`__).
+  * Windows: we suggest to install `Anaconda scientific python package <https://store.continuum.io/cshop/anaconda/>`__, which includes Python ≥ 3.8;
+  * Linux: use system-installed Python (if ≥ 3.8) or install a separate interpreter via Anaconda;
 
-Linux / Unix (\*nix) platforms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Wireguard (VPN software): see [Wireguard Installation](https://www.wireguard.com/install/)
 
--  The Python (Python ≥3.4) installation is required.
+* git version control system, as MuPIF itself it pulled from its git repository directly (Linux: install package `git`; Windows: [Git Downloads for Windows](https://git-scm.com/download/win))
 
--  You can `download the python installation package <https://www.python.org/downloads/>`__.
-   Just pick up the latest version in
-   the 3.x series (tested version 3.5.2).
+Installation
+-------------
 
--  We recommend to install *pip3* - a tool for installing and managing
-   Python3 packages. If not already installed as a part of your python
-   distribution, see `installation instructions  <http://pip.readthedocs.org/en/latest/installing.html>`__.
+Full source
+~~~~~~~~~~~~~
 
--  For secure communication either VPN client/server (`openVPN <https://openvpn.net/index.php/open-source/downloads.html>`__ recommended) or SSH client/server is needed (usually included in standard distribution).
+This is the recommended installation method when you can run examples and tests as the entire source is stored on your computer. First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``musicode`` or ``deema``)::
 
-General requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   git clone --branch BRANCH_NAME https://github.com/mupif/mupif.git
 
--  MuPIF platform depends/requires, besides others, Pyro4 and numpy
-   modules. They can be installed separately for a particular system or
-   using *pip3*. If you install the whole MuPIF package, it takes care
-   automatically for all dependencies. However, using *git* repository
-   requires those Python modules to installed separately. For example,
-   to install Pyro4 version 4.75::
+and then run inside the repository::
 
-    pip3 install Pyro4==4.75*
+   pip install -e .
 
--  MuPIF platform requires pyvtk (tested 0.4.85) python module. To
-   install this module using *pip*::
+You can run ``git pull`` in the cloned repository to update your installation.
 
-    pip3 install pyvtk
+Modules only
+~~~~~~~~~~~~~
 
--  MuPIF requires enum34 module, which can be installed also using
-   *pip*::
+Run the following command (it can be re-run later for pulling the latest revision)::
 
-    pip3 install enum34
+   pip install --upgrade git+https://github.com/mupif/mupif.git@BRANCH_NAME
+
 
 Other recommended packages/softwares
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,31 +54,6 @@ Other recommended packages/softwares
 
 -  Windows: conEmu, windows terminal emulator,
    `https://code.google.com/p/conemu-maximus5/`.
-   
-Installing the MuPIF platform
-----------------------------------
-
-The recommended procedure is to install platform as a python module
-using *pip3*::
-
-   pip3 install mupif
-
-This type of installation automatically satisfies all the dependencies.
-
-Alternatively, the development version of the platform can be installed
-from *git* repository:
-
--  We recommend to install git, a open source revision control tool. You
-   can install git using your package management tool or download
-   installation package directly from
-   `http://git-scm.com/downloads`.
-
--  Once you have git installed, just clone the MuPIF platform repository
-   into a directory "mupif-code"::
-
-    git clone https://github.com/mupif/mupif.git mupif
-
-.. _section-4:
 
 Verifying platform installation
 ------------------------------------
@@ -99,39 +61,45 @@ Verifying platform installation
 Running unit tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-MuPIF platform comes with unit tests. To run unit tests we recommend to
-install *nose* python module, which facilitates automatic discovery and
-execution of individual tests. To install node module using pip::
+MuPIF platform comes with unit tests. To run unit tests, you need the pytest module::
 
-   pip3 install nose
+   pip install pytest
 
-This will install the nose libraries, as well as the
-`nosetests <http://nose.readthedocs.io/en/latest/usage.html>`__ script,
-which can be used to execute the unit tests. From top level MuPIF
-installation directory enter::
+Then from the top-level MuPIF repository directory, execute::
 
-   cd tests
-   nosetests -v
+   pytest-3
 
 You should see output something like this::
 
-   test_containsPoint (mupif.tests.test_BBox.BBox_TestCase) ... ok
-   test_intersects (mupif.tests.test_BBox.BBox_TestCase) ... ok
-   test_merge (mupif.tests.test_BBox.BBox_TestCase) ... ok
-   test_containsPoint (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   test_geometryType (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   test_glob2loc (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   test_interpolate (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   …..
-   testOctreeNotPickled (mupif.tests.test_saveload.TestSaveLoad) ... ok
+   $ pytest-3 
+   ============================================================= test session starts ==============================================================
+   platform linux -- Python 3.10.2, pytest-6.2.5, py-1.10.0, pluggy-0.13.0
+   rootdir: /home/eudoxos/build/mupif
+   plugins: cov-3.0.0
+   collected 144 items                                                                                                                            
 
-   ----------------------------------------------------------------------
+   mupif/tests/test_BBox.py ......                                                                                                          [  4%]
+   mupif/tests/test_Cell.py ..................................                                                                              [ 27%]
+   mupif/tests/test_Field.py ...............                                                                                                [ 38%]
+   mupif/tests/test_IntegrationRule.py ..                                                                                                   [ 39%]
+   mupif/tests/test_Mesh.py ............                                                                                                    [ 47%]
+   mupif/tests/test_Metadata.py ....                                                                                                        [ 50%]
+   mupif/tests/test_Particle.py ..........                                                                                                  [ 57%]
+   mupif/tests/test_SimpleJobManager.py .......                                                                                             [ 62%]
+   mupif/tests/test_TimeStep.py ....                                                                                                        [ 65%]
+   mupif/tests/test_Vertex.py ....                                                                                                          [ 68%]
+   mupif/tests/test_VtkReader2.py s                                                                                                         [ 68%]
+   mupif/tests/test_app.py .                                                                                                                [ 69%]
+   mupif/tests/test_heavydata.py ..........................                                                                                 [ 87%]
+   mupif/tests/test_multipiecelinfunction.py .                                                                                              [ 88%]
+   mupif/tests/test_property.py ......                                                                                                      [ 92%]
+   mupif/tests/test_pyro.py ......                                                                                                          [ 96%]
+   mupif/tests/test_saveload.py s...                                                                                                        [ 99%]
+   mupif/tests/test_units.py .                                                                                                              [100%]
 
-   Ran 82 tests in 2.166s
+   ======================================================= 142 passed, 2 skipped in 10.34s ========================================================
 
-   OK
-
-Indicating that *nose* found and ran listed tests successfully.
+Indicating that *pytest* found and ran listed tests successfully.
 
 Running examples
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -139,11 +107,13 @@ Running examples
 In addition, the platform installation comes with many examples, that
 can be used to verify the successful installation as well, but they also
 serve as an educational examples illustrating how to use the platform.
-The examples are located in examples subfolder. For example, to run
-Example01::
 
-   cd examples/Example01
-   python3 Example01.py
+To run the examples, go the the examples directory and use the ``runex.py`` script to do the set-up and run the example::
+
+  cd examples
+  python3 runex.py       # run all examples
+  python3 runex.py 1 4 5 # run some examples
+
 
 Platform operations
 ======================
