@@ -19,8 +19,8 @@ MuPIF installatoin requires:
 
 * git version control system, as MuPIF itself it pulled from its git repository directly (Linux: install package `git`; Windows: [Git Downloads for Windows](https://git-scm.com/download/win))
 
-Installation
--------------
+Local installation
+----------------------
 
 Full source
 ~~~~~~~~~~~~~
@@ -55,11 +55,11 @@ Other recommended packages/softwares
 -  Windows: conEmu, windows terminal emulator,
    `https://code.google.com/p/conemu-maximus5/`.
 
-Verifying platform installation
-------------------------------------
+Test and examples
+-------------------
 
-Running unit tests
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Unit tests
+~~~~~~~~~~~
 
 MuPIF platform comes with unit tests. To run unit tests, you need the pytest module::
 
@@ -102,7 +102,7 @@ You should see output something like this::
 Indicating that *pytest* found and ran listed tests successfully.
 
 Running examples
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 In addition, the platform installation comes with many examples, that
 can be used to verify the successful installation as well, but they also
@@ -113,6 +113,38 @@ To run the examples, go the the examples directory and use the ``runex.py`` scri
   cd examples
   python3 runex.py       # run all examples
   python3 runex.py 1 4 5 # run some examples
+
+
+
+Infrastructure integration
+---------------------------
+
+The MuPIF infrastructure means the distributed computational platform, a virtual private network (VPN). Its core element is the nameserver, which serves to locate resources within the network.
+
+Wireguard VPN
+~~~~~~~~~~~~~~
+
+Integrating the local computer into the VPN is done via configuration file (received by a secure channel) for Wireguard.
+
+* Windows: the configuration file can be imported straght into the Wireguard client.
+* Linux:
+
+  * (less user-friendly) the config file is copied into ``/etc/wireguard/somename.conf`` (the name is arbitrary) and the VPN is started with `sudo wg-quick somename`.
+  * (user-friendly) the config file is imported into NetworkManager via ``sudo nmcli connection import type wireguard file configfile.conf`` and subsequently the connection is saved persistently in NetworkManager and can be activated as other network connections. (You will need the wireguard module for NetworkManager installed for this to work)
+
+To confirm that the VPN works, look into the config file for your VPN IP address (e.g. ``Address = 172.22.2.13/24``); replace the last number by ``1`` and test ping onto the machine: ``ping 172.22.2.1``. If the IP address is IPv6 (e.g. ``Address = fd4e:6fb7:b3af:0000::12/32``), also replace the last number by ``1``: ``ping fd4e:6fb7:b3af:0000::1``. If the ping responds, your VPN connection is working.
+
+
+Nameserver
+~~~~~~~~~~~~~~
+
+In order to let MuPIF know which network to use, nameserver address and port should be available. The port is 10000 by default, so use the IP address from the last paragraph, affixing ``:10000`` to the IP address, i.e. ``172.22.2.1:10000``; for IPv6, additionally enclose the address in braces, e.g. ``[fd4e:6fb7:b3af:0000::1]:10000``.
+
+The address:port string should be then stored either in the environment variable ``MUPIF_NS`` or in the file ``MUPIF_NS`` in user-config directory (``~/.config/MUPIF_NS`` in Linux, ``C:\Users\<User>\AppData\Local\MUPIF_NS`` in Windows (probably)). This will ensure that MuPIF will talk to the correct nameserver when it runs.
+
+You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
+
+
 
 
 Platform operations
