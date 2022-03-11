@@ -121,7 +121,7 @@ def locateNameserver(nshost=None,nsport=0,server=False):
     # 3. set from MUPIF_NS *file* in mupif module directory
     import mupif
     if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
-    # 4. set from XDG user-config file (~/.config/mupif/MUPIF_NS on linux)
+    # 4. set from XDG user-config file (~/.config/MUPIF_NS on linux)
     try:
         import appdirs
         if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
