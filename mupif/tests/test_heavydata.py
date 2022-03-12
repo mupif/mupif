@@ -205,6 +205,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
                     if ig==0: C.grain_class=g.__class__
                     g.getMolecules().resize(size=random.randint(5,15))
                     sys.stderr.write(f"Grain #{ig} has {len(g.getMolecules())} molecules\n")
+                    g.getProperties().setSymmetry('periodic')
                     for m in g.getMolecules():
                         m.getIdentity().setMolecularWeight(random.randint(1,10)*u.yg)
                         m.getProperties().getPhysical().getPolarizability().setNeutral(np.array([[1,2,3],[4,5,6],[7,8,9]])*mp.U['Angstrom2 s4 / kg'])
@@ -230,6 +231,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
             for g in grains:
                 self.assertEqual(C.grain_class.__module__,g.__class__.__module__)
                 self.assertEqual(C.grain_class.__name__,g.__class__.__name__)
+                self.assertEqual(g.getProperties().getSymmetry(),'periodic')
                 sys.stderr.write(f'Grain #{g.row} has {len(g.getMolecules())} molecules.\n')
                 for m in g.getMolecules():
                     m.getIdentity().getMolecularWeight()
@@ -317,7 +319,16 @@ class HeavyStruct_TestCase(unittest.TestCase):
 
         # inject mismatched schema
         self.assertRaises(ValueError,lambda:mols3.inject(mols[0].getAtoms()))
-
+    def test_10_move_storage(self):
+        C=self.__class__
+        p0,p1=C.tmp+'/grain-before-move.h5',C.tmp+'/grain-after-move.h5'
+        with (hs:=mp.HeavyStruct(h5path=p0,mode='create',schemaName='org.mupif.sample.grain',schemasJson=sampleSchemas_json)) as grains:
+            grains.resize(size=100)
+            self.assertRaises(RuntimeError,lambda: hs.moveStorage(p1))
+        hs.moveStorage(p1)
+        self.assertEqual(hs.h5path,p1)
+        self.assertFalse(os.path.exists(p0))
+        self.assertTrue(os.path.exists(p1))
     def test_20_daemon_start(self):
         C=self.__class__
         C.daemon=mp.pyroutil.getDaemon()
