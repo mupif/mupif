@@ -31,7 +31,7 @@ services:
         networks: ["client1net"]
         entrypoint: ["/bin/sh","-c"]
         cap_add: ["SYS_ADMIN","NET_ADMIN"]
-        working_dir: /tmp/mupif/examples/Example07-stacTM-JobMan-distrib
+        working_dir: /tmp/mupif/examples/07-stacTM-JobMan-distrib
         command:
         - |
            set -e -x
@@ -46,7 +46,7 @@ services:
         networks: ["client2net"]
         entrypoint: ["/bin/sh","-c"]
         cap_add: ["SYS_ADMIN","NET_ADMIN"]
-        working_dir: /tmp/mupif/examples/Example07-stacTM-JobMan-distrib
+        working_dir: /tmp/mupif/examples/07-stacTM-JobMan-distrib
         command:
         - |
            set -e -x
@@ -61,7 +61,7 @@ services:
         networks: ["client3net"]
         entrypoint: ["/bin/sh","-c"]
         cap_add: ["SYS_ADMIN","NET_ADMIN"]
-        working_dir: /tmp/mupif/examples/Example07-stacTM-JobMan-distrib
+        working_dir: /tmp/mupif/examples/07-stacTM-JobMan-distrib
         command:
         - |
            set -e -x
