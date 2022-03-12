@@ -3,7 +3,7 @@ import os
 import sys
 import argparse
 
-sys.path.extend(['..', '../..', '../Example06-stacTM-local'])
+sys.path.extend(['..', '../..', '../06-stacTM-local'])
 import mupif as mp
 import models
 
