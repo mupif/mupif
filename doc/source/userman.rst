@@ -8,53 +8,40 @@ Platform installation
 Prerequisites
 ------------------
 
-Windows platforms
-~~~~~~~~~~~~~~~~~~~~~~~~
+MuPIF installatoin requires:
 
--  We suggest to install `Anaconda scientific python package <https://store.continuum.io/cshop/anaconda/>`__, which
-   includes Python ≥3.4,
+* Python ≥ 3.8
 
--  For secure communication either VPN client/server or SSH
-   client/server is needed (recommended client: `putty.exe
-   <http://www.putty.org/>`__, ssh server: `FreeSSHd
-   <http://www.freesshd.com/>`__).
+  * Windows: we suggest to install `Anaconda scientific python package <https://store.continuum.io/cshop/anaconda/>`__, which includes Python ≥ 3.8;
+  * Linux: use system-installed Python (if ≥ 3.8) or install a separate interpreter via Anaconda;
 
-Linux / Unix (\*nix) platforms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Wireguard (VPN software): see [Wireguard Installation](https://www.wireguard.com/install/)
 
--  The Python (Python ≥3.4) installation is required.
+* git version control system, as MuPIF itself it pulled from its git repository directly (Linux: install package `git`; Windows: [Git Downloads for Windows](https://git-scm.com/download/win))
 
--  You can `download the python installation package <https://www.python.org/downloads/>`__.
-   Just pick up the latest version in
-   the 3.x series (tested version 3.5.2).
+Local installation
+----------------------
 
--  We recommend to install *pip3* - a tool for installing and managing
-   Python3 packages. If not already installed as a part of your python
-   distribution, see `installation instructions  <http://pip.readthedocs.org/en/latest/installing.html>`__.
+Full source
+~~~~~~~~~~~~~
 
--  For secure communication either VPN client/server (`openVPN <https://openvpn.net/index.php/open-source/downloads.html>`__ recommended) or SSH client/server is needed (usually included in standard distribution).
+This is the recommended installation method when you can run examples and tests as the entire source is stored on your computer. First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``Musicode`` or ``Deema``; see `MuPIF branches at GitHub <https://github.com/mupif/mupif/branches>`__)::
 
-General requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   git clone --branch BRANCH_NAME https://github.com/mupif/mupif.git
 
--  MuPIF platform depends/requires, besides others, Pyro4 and numpy
-   modules. They can be installed separately for a particular system or
-   using *pip3*. If you install the whole MuPIF package, it takes care
-   automatically for all dependencies. However, using *git* repository
-   requires those Python modules to installed separately. For example,
-   to install Pyro4 version 4.75::
+and then run inside the repository::
 
-    pip3 install Pyro4==4.75*
+   pip install -e .
 
--  MuPIF platform requires pyvtk (tested 0.4.85) python module. To
-   install this module using *pip*::
+You can run ``git pull`` in the cloned repository to update your installation.
 
-    pip3 install pyvtk
+Modules only
+~~~~~~~~~~~~~
 
--  MuPIF requires enum34 module, which can be installed also using
-   *pip*::
+Run the following command (it can be re-run later for pulling the latest revision)::
 
-    pip3 install enum34
+   pip install --upgrade git+https://github.com/mupif/mupif.git@BRANCH_NAME
+
 
 Other recommended packages/softwares
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,83 +54,98 @@ Other recommended packages/softwares
 
 -  Windows: conEmu, windows terminal emulator,
    `https://code.google.com/p/conemu-maximus5/`.
-   
-Installing the MuPIF platform
-----------------------------------
 
-The recommended procedure is to install platform as a python module
-using *pip3*::
+Test and examples
+-------------------
 
-   pip3 install mupif
+Unit tests
+~~~~~~~~~~~
 
-This type of installation automatically satisfies all the dependencies.
+MuPIF platform comes with unit tests. To run unit tests, you need the pytest module::
 
-Alternatively, the development version of the platform can be installed
-from *git* repository:
+   pip install pytest
 
--  We recommend to install git, a open source revision control tool. You
-   can install git using your package management tool or download
-   installation package directly from
-   `http://git-scm.com/downloads`.
+Then from the top-level MuPIF repository directory, execute::
 
--  Once you have git installed, just clone the MuPIF platform repository
-   into a directory "mupif-code"::
-
-    git clone https://github.com/mupif/mupif.git mupif
-
-.. _section-4:
-
-Verifying platform installation
-------------------------------------
-
-Running unit tests
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-MuPIF platform comes with unit tests. To run unit tests we recommend to
-install *nose* python module, which facilitates automatic discovery and
-execution of individual tests. To install node module using pip::
-
-   pip3 install nose
-
-This will install the nose libraries, as well as the
-`nosetests <http://nose.readthedocs.io/en/latest/usage.html>`__ script,
-which can be used to execute the unit tests. From top level MuPIF
-installation directory enter::
-
-   cd tests
-   nosetests -v
+   pytest-3
 
 You should see output something like this::
 
-   test_containsPoint (mupif.tests.test_BBox.BBox_TestCase) ... ok
-   test_intersects (mupif.tests.test_BBox.BBox_TestCase) ... ok
-   test_merge (mupif.tests.test_BBox.BBox_TestCase) ... ok
-   test_containsPoint (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   test_geometryType (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   test_glob2loc (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   test_interpolate (mupif.tests.test_Cell.Triangle_2d_lin_TestCase) ... ok
-   …..
-   testOctreeNotPickled (mupif.tests.test_saveload.TestSaveLoad) ... ok
+   $ pytest-3 
+   ============================================================= test session starts ==============================================================
+   platform linux -- Python 3.10.2, pytest-6.2.5, py-1.10.0, pluggy-0.13.0
+   rootdir: /home/eudoxos/build/mupif
+   plugins: cov-3.0.0
+   collected 144 items                                                                                                                            
 
-   ----------------------------------------------------------------------
+   mupif/tests/test_BBox.py ......                                                                                                          [  4%]
+   mupif/tests/test_Cell.py ..................................                                                                              [ 27%]
+   mupif/tests/test_Field.py ...............                                                                                                [ 38%]
+   mupif/tests/test_IntegrationRule.py ..                                                                                                   [ 39%]
+   mupif/tests/test_Mesh.py ............                                                                                                    [ 47%]
+   mupif/tests/test_Metadata.py ....                                                                                                        [ 50%]
+   mupif/tests/test_Particle.py ..........                                                                                                  [ 57%]
+   mupif/tests/test_SimpleJobManager.py .......                                                                                             [ 62%]
+   mupif/tests/test_TimeStep.py ....                                                                                                        [ 65%]
+   mupif/tests/test_Vertex.py ....                                                                                                          [ 68%]
+   mupif/tests/test_VtkReader2.py s                                                                                                         [ 68%]
+   mupif/tests/test_app.py .                                                                                                                [ 69%]
+   mupif/tests/test_heavydata.py ..........................                                                                                 [ 87%]
+   mupif/tests/test_multipiecelinfunction.py .                                                                                              [ 88%]
+   mupif/tests/test_property.py ......                                                                                                      [ 92%]
+   mupif/tests/test_pyro.py ......                                                                                                          [ 96%]
+   mupif/tests/test_saveload.py s...                                                                                                        [ 99%]
+   mupif/tests/test_units.py .                                                                                                              [100%]
 
-   Ran 82 tests in 2.166s
+   ======================================================= 142 passed, 2 skipped in 10.34s ========================================================
 
-   OK
-
-Indicating that *nose* found and ran listed tests successfully.
+Indicating that *pytest* found and ran listed tests successfully.
 
 Running examples
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 In addition, the platform installation comes with many examples, that
 can be used to verify the successful installation as well, but they also
 serve as an educational examples illustrating how to use the platform.
-The examples are located in examples subfolder. For example, to run
-Example01::
 
-   cd examples/Example01
-   python3 Example01.py
+To run the examples, go the the examples directory and use the ``runex.py`` script to do the set-up and run the example::
+
+  cd examples
+  python3 runex.py       # run all examples
+  python3 runex.py 1 4 5 # run some examples
+
+
+
+Infrastructure integration
+---------------------------
+
+The MuPIF infrastructure means the distributed computational platform, a virtual private network (VPN). Its core element is the nameserver, which serves to locate resources within the network.
+
+Wireguard VPN
+~~~~~~~~~~~~~~
+
+Integrating the local computer into the VPN is done via configuration file (received by a secure channel) for Wireguard.
+
+* Windows: the configuration file can be imported straght into the Wireguard client.
+* Linux:
+
+  * (less user-friendly) the config file is copied into ``/etc/wireguard/somename.conf`` (the name is arbitrary) and the VPN is started with `sudo wg-quick somename`.
+  * (user-friendly) the config file is imported into NetworkManager via ``sudo nmcli connection import type wireguard file configfile.conf`` and subsequently the connection is saved persistently in NetworkManager and can be activated as other network connections. (You will need the wireguard module for NetworkManager installed for this to work)
+
+To confirm that the VPN works, look into the config file for your VPN IP address (e.g. ``Address = 172.22.2.13/24``); replace the last number by ``1`` and test ping onto the machine: ``ping 172.22.2.1``. If the IP address is IPv6 (e.g. ``Address = fd4e:6fb7:b3af:0000::12/32``), also replace the last number by ``1``: ``ping fd4e:6fb7:b3af:0000::1``. If the ping responds, your VPN connection is working.
+
+
+Nameserver
+~~~~~~~~~~~~~~
+
+In order to let MuPIF know which network to use, nameserver address and port should be available. The port is 10000 by default, so use the IP address from the last paragraph, affixing ``:10000`` to the IP address, i.e. ``172.22.2.1:10000``; for IPv6, additionally enclose the address in braces, e.g. ``[fd4e:6fb7:b3af:0000::1]:10000``.
+
+The address:port string should be then stored either in the environment variable ``MUPIF_NS`` or in the file ``MUPIF_NS`` in user-config directory (``~/.config/MUPIF_NS`` in Linux, ``C:\Users\<User>\AppData\Local\MUPIF_NS`` in Windows (probably)). This will ensure that MuPIF will talk to the correct nameserver when it runs.
+
+You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
+
+
+
 
 Platform operations
 ======================

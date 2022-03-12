@@ -2,7 +2,7 @@ import sys
 sys.path.extend(['..', '../..'])
 import threading
 
-threading.current_thread().setName('ex13-main')
+threading.current_thread().name='ex13-main'
 
 import mupif as mp
 import Pyro5
