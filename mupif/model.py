@@ -131,7 +131,7 @@ ModelSchema = {
             "items": {
                 "type": "object",  # Object supplies a dictionary
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.PyroFile"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.HeavyStruct", "mupif.PyroFile"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
                         "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
