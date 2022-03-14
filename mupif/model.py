@@ -179,14 +179,14 @@ ModelSchema = {
                 "allOf": [
                     {
                         "anyOf": [
+                            {"required": ["ValueType"]},
                             {
                                 "not": {
                                     "properties": {
                                         "Type": {"const": "mupif.Property"}
                                     }
                                 }
-                            },
-                            {"required": ["ValueType"]}
+                            }
                         ]
                     }
                 ]
