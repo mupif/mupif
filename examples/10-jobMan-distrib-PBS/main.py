@@ -9,6 +9,7 @@ import mupif as mp
 
 threading.current_thread().setName('ex10-main')
 
+
 @Pyro5.api.expose
 class Workflow10(mp.workflow.Workflow):
 
@@ -26,7 +27,7 @@ class Workflow10(mp.workflow.Workflow):
             "Outputs": [
                 # duplicates outputs of the contained model
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
-                 'Description': 'Cummulative time', 'Units': 's'}
+                 'Description': 'Cummulative time', 'Units': 's', 'ValueType': 'Scalar'}
             ],
         }
         mp.workflow.Workflow.__init__(self, metadata=MD)
