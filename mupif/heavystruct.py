@@ -840,7 +840,7 @@ Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``look
 
   #. Computed attribute (identified via the ``lookup`` keyword); computed attribute **must** define ``lookup``, which is a lookup table (key-value dictionary), **dtype** (datatype being returned from lookup) and **key** (descriptor of data attribute used for lookup); it **may** define ``unit``.
   #. Data attribute (identified via the ``dtype`` key, but not having ``lookup``); it **must** define ``dtype`` and **may** define ``unit``, ``shape``.
-  #. subschema reference (identified by the ``path`` keyword); it **must** define ``path`` and ``schema``. ``path`` must contain the substring ``{ROW}`` (is replaced by row number to which the nested data structure belongs) and end with ``/`` (forward slash).
+  #. subschema reference (identified by the ``schema`` keyword); it **must** define ``schema`` (``path`` is optional).
   #. dictionary possibly including other regular entries (directory, creating hierarchy).
 
   * Data types
@@ -866,9 +866,9 @@ Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``look
 
     Entries specifying ``unit`` (which is any string `astropy.units.Unit <https://docs.astropy.org/en/stable/api/astropy.units.Unit.html>`__ can grok) **must** be assigned with quantities including compatible units; the value will be converted to the schema unit before being set. The field will be returned as a Quantity (including the unit) when read back.
 
-* Subschema
- 
-  Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyStruct.openData`). The ``path`` attribute is specified optionally (has a default value); path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
+  * Subschema
+
+    Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyStruct.openData`). The ``path`` attribute is specified optionally (has a default value); path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
 
 **Accessing data**
 
