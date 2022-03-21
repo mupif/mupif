@@ -176,13 +176,16 @@ class Dumpable(MupifBaseModel):
 
         This method does some check whether the object is exposed via Pyro (thus presumable accessed via a Proxy). This cannot be detected reliably, however, thus calling `copyRemote()` on local (unproxied) object will return dictionary rather than a copy of the object.
         '''
-        daemon = getattr(self, '_pyroDaemon', None)
-        if not daemon:
-            raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
+        #daemon = getattr(self, '_pyroDaemon', None)
+        #if not daemon:
+        #    raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
+        if Pyro5.callcontext.current_context.client is None: raise RuntimeError('This does not seem to be a remote object (context client is None)')
         return self.to_dict()
 
     def deepcopy(self):
-        return Dumpable.from_dict(self.to_dict())
+        if Pyro5.callcontext.current_context.client is None: return Dumpable.from_dict(self.to_dict())
+        else: return self.to_dict()
+        # return Dumpable.from_dict(self.to_dict())
 
     @staticmethod
     def from_dict(dic, clss=None, obj=None):
