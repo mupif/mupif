@@ -428,5 +428,16 @@ class HeavyStruct_TestCase(unittest.TestCase):
         handle.closeData()
         # so check that here; note however that the handle does *not* unregister itself
         for i in ids[1:]: self.assertRaises(Pyro5.errors.DaemonError,lambda i=i: C.daemon.proxyFor(i))
+    def test_30_deepcopy(self):
+        C=self.__class__
+        hsLoc=mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readonly')
+        hsRem=Pyro5.api.Proxy(C.daemon.register(hsLoc))
+        hsLoc2=hsLoc.deepcopy() # copies HDF5 via file copy
+        hsRem2=hsRem.deepcopy() # copies HDF5 via exposing data throught the daemon and downloading them in the local constructor
+        self.assertTrue(isinstance(hsRem,Pyro5.api.Proxy))
+        self.assertTrue(isinstance(hsRem2,mp.HeavyStruct))
+        self.assertNotEqual(hsLoc.h5path,hsLoc2.h5path)
+        hsRemAttrs=hsRem.to_dict(clss=hsLoc.__class__)
+        self.assertNotEqual(hsRemAttrs['h5path'],hsRem2.h5path)
 
 

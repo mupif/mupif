@@ -150,6 +150,24 @@ class HeavyDataBase(MupifObject):
         shutil.move(self.h5path,new_h5path)
         self.h5path=new_h5path
 
+    @pydantic.validate_arguments
+    def deepcopy(self):
+        '''
+        Overrides Dumpable.deepcopy, enriching it with copy of the backing HDF5 file; it should correctly detect whether the call is local or remote.
+        '''
+        if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} open (must be closed before deepcopy).')
+        # local
+        if Pyro5.callcontext.current_context.client is None:
+            fd, h5path_new = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp', text=False)
+            shutil.copy(self.h5path, h5path_new)
+            # creates new local object
+            ret = super().deepcopy()
+            ret.h5path = h5path_new
+            return ret
+        else:
+            self.exposeData()
+            return super().deepcopy()
+
 
     @pydantic.validate_arguments
     def openStorage(self,mode: typing.Optional[HeavyDataBase_ModeChoice]=None):
