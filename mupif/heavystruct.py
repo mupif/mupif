@@ -824,8 +824,7 @@ Define semantic access to potentially large (that is, larger than RAM) structure
 
 This class can be used as context manager, in which case the :obj:`openData` and :obj:`closeData` will be called automatically.
 
-JSON schema specification
---------------------------
+**JSON schema specification**
 
 The schema is defined as dictionary (nesting is possible). The top-level dictionary of each schema
 
@@ -835,48 +834,43 @@ The schema is defined as dictionary (nesting is possible). The top-level diction
 
 Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``lookup`` and ``path``.
 
-Regular entries
-""""""""""""""""
+* Regular entries
 
-Regular entries are one of the following.
+  Regular entries are one of the following.
 
-#. Computed attribute (identified via the ``lookup`` keyword); computed attribute **must** define ``lookup``, which is a lookup table (key-value dictionary), **dtype** (datatype being returned from lookup) and **key** (descriptor of data attribute used for lookup); it **may** define ``unit``.
-#. Data attribute (identified via the ``dtype`` key, but not having ``lookup``); it **must** define ``dtype`` and **may** define ``unit``, ``shape``.
-#. subschema reference (identified by the ``path`` keyword); it **must** define ``path`` and ``schema``. ``path`` must contain the substring ``{ROW}`` (is replaced by row number to which the nested data structure belongs) and end with ``/`` (forward slash).
-#. dictionary possibly including other regular entries (directory, creating hierarchy).
+  #. Computed attribute (identified via the ``lookup`` keyword); computed attribute **must** define ``lookup``, which is a lookup table (key-value dictionary), **dtype** (datatype being returned from lookup) and **key** (descriptor of data attribute used for lookup); it **may** define ``unit``.
+  #. Data attribute (identified via the ``dtype`` key, but not having ``lookup``); it **must** define ``dtype`` and **may** define ``unit``, ``shape``.
+  #. subschema reference (identified by the ``path`` keyword); it **must** define ``path`` and ``schema``. ``path`` must contain the substring ``{ROW}`` (is replaced by row number to which the nested data structure belongs) and end with ``/`` (forward slash).
+  #. dictionary possibly including other regular entries (directory, creating hierarchy).
 
-Data types
-^^^^^^^^^^^^
+  * Data types
 
-``dtype`` specifies datatype for the entry value using the ``numpy.dtype`` notation (see `Data type objects <https://numpy.org/doc/stable/reference/arrays.dtypes.html>`__), for example ``f8`` for 8-byte (64-bit) floating-point number.
+    ``dtype`` specifies datatype for the entry value using the ``numpy.dtype`` notation (see `Data type objects <https://numpy.org/doc/stable/reference/arrays.dtypes.html>`__), for example ``f8`` for 8-byte (64-bit) floating-point number.
 
-Strings are stored as utf-8 encoded byte arrays (thus their storage length might be larger than number of characters). use ``"dtype":"a"`` for variable-length strings (``a`` implies ``"shape":"variable"``), and ``"dtype":"a10"`` for string of maximum 10 bytes.
+    Strings are stored as utf-8 encoded byte arrays (thus their storage length might be larger than number of characters). use ``"dtype":"a"`` for variable-length strings (``a`` implies ``"shape":"variable"``), and ``"dtype":"a10"`` for string of maximum 10 bytes.
 
-``shape`` is a tuple specifying fixed shape: e.g. ``"shape":(3)`` is rank-1 3-vector, ``"shape":(3,3)`` is rank-2 3×3 matrix and so on. The special value of ``"shape":"variable"`` denotes dynamic 1d array of given ``dtype``.
+    ``shape`` is a tuple specifying fixed shape: e.g. ``"shape":(3)`` is rank-1 3-vector, ``"shape":(3,3)`` is rank-2 3×3 matrix and so on. The special value of ``"shape":"variable"`` denotes dynamic 1d array of given ``dtype``.
 
-.. note:: Variable-length data (both strings and numerical arrays) are handled in a special way by the HDF5 storage; each (non-empty) entry has about 30b overhead, plus necessitates allocationes. If your data can always fit into a fixed-size array (such as string of maximum 20 bytes, ``a20``), prefer that for both performance ans storage reasons.
+    .. note:: Variable-length data (both strings and numerical arrays) are handled in a special way by the HDF5 storage; each (non-empty) entry has about 30b overhead, plus necessitates allocationes. If your data can always fit into a fixed-size array (such as string of maximum 20 bytes, ``a20``), prefer that for both performance ans storage reasons.
 
-All data are initialized to the default when constructed, which is:
+    All data are initialized to the default when constructed, which is:
 
-* ``NaN`` (not-a-number) for floating-point types (scalars and arrays),
-* ``0`` (zero) for integer types (scalars and arrays),
-* empty array for dynamic arrays,
-* empty string for both static-sized (``"dtype":"a10"``) and dynamic-sized (``"dtype":"a"``) strings.
+    * ``NaN`` (not-a-number) for floating-point types (scalars and arrays),
+    * ``0`` (zero) for integer types (scalars and arrays),
+    * empty array for dynamic arrays,
+    * empty string for both static-sized (``"dtype":"a10"``) and dynamic-sized (``"dtype":"a"``) strings.
 
-Assignments of incompatible data (which cannot be converted to the underlying storage type), including mismatched shape of arrays, will raise exception.
+    Assignments of incompatible data (which cannot be converted to the underlying storage type), including mismatched shape of arrays, will raise exception.
 
-Units
-^^^^^^
+  * Units
 
-Entries specifying ``unit`` (which is any string `astropy.units.Unit <https://docs.astropy.org/en/stable/api/astropy.units.Unit.html>`__ can grok) **must** be assigned with quantities including compatible units; the value will be converted to the schema unit before being set. The field will be returned as a Quantity (including the unit) when read back.
+    Entries specifying ``unit`` (which is any string `astropy.units.Unit <https://docs.astropy.org/en/stable/api/astropy.units.Unit.html>`__ can grok) **must** be assigned with quantities including compatible units; the value will be converted to the schema unit before being set. The field will be returned as a Quantity (including the unit) when read back.
 
-Subschema
-"""""""""""
+* Subschema
+ 
+  Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyStruct.openData`). The ``path`` attribute is specified optionally (has a default value); path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
 
-Subschema entries associate full (nested hierarchical) data stratucture with each table line. The entry **must** specify ``schema`` name (which must be present in the *schemaRegistry* argument of :obj:`HeavyStruct.openData`) and ``path``. Path defines where the nested data is stored within the HDF5 file and **must** contain ``{ROW}`` (as string, including the curly braces) and end with ``/``.
-
-Accessing data
-----------------
+**Accessing data**
 
 Data are accesse using *Contexts*, special classes abstracting away the underlying storage. They define getters (and setters) for each data level (the are called simply ``get``/``set`` followed by capitalized entry name). Rows are selected using the usual indexing operator ``[index]``, though a whole column can be returned when index is not specified.
 
