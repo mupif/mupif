@@ -1,32 +1,35 @@
 import sys
-import Pyro5
 sys.path.extend(['..', '../..'])
+import threading
+
+threading.current_thread().name='ex13-main'
+
+import mupif as mp
+import Pyro5
 import logging
+
 log = logging.getLogger()
 
-import threading
-import mupif as mp
-
-threading.current_thread().setName('ex10-main')
 
 @Pyro5.api.expose
-class Workflow10(mp.workflow.Workflow):
+class Workflow13(mp.workflow.Workflow):
 
     def __init__(self, metadata={}):
         MD = {
-            "ClassName": "Workflow10",
+            "ClassName": "Workflow13",
             "ModuleName": "main.py",
-            "Name": "Example10 workflow",
-            "ID": "workflow_10",
-            "Description": "Calculates cummulative time times 2 using a simple PBS model",
+            "Name": "Example13 workflow",
+            "ID": "workflow_13",
+            "Description": "Calculates multiplication of two given values using a simple model",
             "Inputs": [
-                mp.workflow.workflow_input_targetTime_metadata,
-                mp.workflow.workflow_input_dt_metadata
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
+                 'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"},
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
+                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
             ],
             "Outputs": [
-                # duplicates outputs of the contained model
-                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulated time value',
-                 'Description': 'Cummulative time', 'Units': 's'}
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
+                 'Description': 'Result of multiplication', 'Units': 's^2', "ValueType": "Scalar"}
             ],
         }
         mp.workflow.Workflow.__init__(self, metadata=MD)
@@ -51,8 +54,8 @@ class Workflow10(mp.workflow.Workflow):
         self.ns = mp.pyroutil.connectNameserver()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
-        # initialization code of model_1
-        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'Mupif.JobManager@Example10')
+        # initialization code of model_1 (Non-stationary thermal problem)
+        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'CVUT.demo01')
         try:
             self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
             log.info(self.model_1)
@@ -67,7 +70,7 @@ class Workflow10(mp.workflow.Workflow):
         return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
 
     def set(self, obj, objectID=""):
-        super().set(obj=obj, objectID=objectID)
+        self.model_1.set(obj=obj, objectID=objectID)
 
     def terminate(self):
         self.model_1.terminate()
@@ -76,8 +79,6 @@ class Workflow10(mp.workflow.Workflow):
         self.model_1.finishStep(tstep)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time_property = mp.ConstantProperty(value=tstep.getTime().inUnitsOf(mp.U.s), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
-        self.model_1.set(obj=time_property, objectID=1)
         self.model_1.solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
 
     def getCriticalTimeStep(self):
@@ -85,16 +86,17 @@ class Workflow10(mp.workflow.Workflow):
 
 
 if __name__ == '__main__':
+    # with no targetTime and dt specified
+    # it leads to one-step simulation with default targetTime 1. s
+
+    value_1 = 3.
+    value_2 = 2.
 
     # inputs
-    targetTime = 2.
-    dt = 1.
+    param_1 = mp.ConstantProperty(value=value_1, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_2 = mp.ConstantProperty(value=value_2, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
 
-    # input properties
-    param_targetTime = mp.ConstantProperty(value=targetTime, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
-    param_dt = mp.ConstantProperty(value=dt, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
-
-    workflow = Workflow10()
+    workflow = Workflow13()
 
     # these metadata are supposed to be filled before execution
     md = {
@@ -106,24 +108,20 @@ if __name__ == '__main__':
     }
     workflow.initialize(metadata=md)
 
-    # set the input values defining targetTime and dt of the simulation
-    workflow.set(param_targetTime, 'targetTime')
-    workflow.set(param_dt, 'dt')
+    # set the input values to the workfow which passes it to the models
+    workflow.set(param_1, objectID='1')
+    workflow.set(param_2, objectID='2')
 
     workflow.solve()
-
-    res_property = workflow.get(mp.DataID.PID_Time)
-    value_result = res_property.inUnitsOf(mp.U.s).getValue()
-
+    res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)
+    value_result = res_property.inUnitsOf(mp.U.s*mp.U.s).getValue()
     workflow.terminate()
 
     print('Simulation has finished.')
+    print('Calculated result of %f x %f = %f' % (value_1, value_2, value_result))
 
-    # testing part
-    print(value_result)
-    if value_result is not None and abs(value_result - 6.) <= 1.e-4:
-        print("Test OK")
+    if abs(value_result - 6.) <= 1.e-8:
         log.info("Test OK")
     else:
-        print("Test FAILED")
         log.error("Test FAILED")
+        sys.exit(1)

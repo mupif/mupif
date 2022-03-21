@@ -61,7 +61,18 @@ setup(
     name='mupif',
     version=version[0],
     description='MuPIF platform for multiscale/multiphysics modeling',
-    long_description=open('README.txt', 'r').read(),
+    long_description='''
+Multi-Physics Integration Framework [MuPIF](http://mupif.org) is an integration framework, that 
+will facilitate the implementation of multi-physics and multi-level simulations,
+built from independently developed components. The principal role of the
+framework is to steer individual components (applications) and to provide 
+high-level data-exchange services. Each application should implement 
+an interface that allows to steer application and execute data requests. 
+The design supports various coupling strategies, discretization techniques, 
+and also the distributed applications. 
+
+MuPIF has been developped at Czech Technical University by Borek Patzak and coworkers and is available under GNU Library or Lesser General Public License version 3.0 (LGPLv3).
+''',
     license='LGPL',
     author=author[0],
     author_email='info@oofem.org',

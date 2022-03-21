@@ -142,6 +142,16 @@ class HeavyDataBase(MupifObject):
         return self._h5obj.create_dataset(h5loc,shape=shape,**kw)
 
     @pydantic.validate_arguments
+    def moveStorage(self, new_h5path):
+        '''
+        Moves underlying storage in the filesystem to the new path *new_h5path*, and sets the ``h5path`` attribute to the new path.
+        '''
+        if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} open (must be closed before moving).')
+        shutil.move(self.h5path,new_h5path)
+        self.h5path=new_h5path
+
+
+    @pydantic.validate_arguments
     def openStorage(self,mode: typing.Optional[HeavyDataBase_ModeChoice]=None):
         '''
         '''
