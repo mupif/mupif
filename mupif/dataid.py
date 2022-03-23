@@ -94,6 +94,7 @@ class DataID(IntEnum):
 
     ID_None = auto()
     ID_GrainState = auto()
+    ID_MoleculeState = auto()
     ID_InputFile = auto()
 
     # # # # # # # # # # # # # # # # # # # # #

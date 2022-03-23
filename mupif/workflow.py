@@ -61,11 +61,11 @@ WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Exec
 
 workflow_input_targetTime_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
-    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['targetTime']
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['targetTime'], 'ValueType': 'Scalar'
 }
 workflow_input_dt_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'dt', 'Description': 'Timestep length',
-    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['dt']
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['dt'], 'ValueType': 'Scalar'
 }
 
 
