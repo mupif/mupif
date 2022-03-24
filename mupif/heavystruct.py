@@ -7,7 +7,7 @@ import numpy as np
 import h5py
 import Pyro5.api
 # metadata support
-from .mupifobject import MupifObject
+# from .mupifobject import MupifObject
 from . import units, pyroutil, dumpable
 from . import dataid
 from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice
@@ -96,12 +96,10 @@ sampleSchemas_json = '''
                     "dtype": "l"
                 },
                 "type": {
-                    "dtype": "a",
-                    "shape": "variable"
+                    "dtype": "a"
                 },
                 "name": {
-                    "dtype": "a",
-                    "shape": "variable"
+                    "dtype": "a"
                 },
                 "position": {
                     "dtype": "d",
@@ -132,8 +130,7 @@ sampleSchemas_json = '''
         "_datasetName": "molecules",
         "identity": {
             "chemicalName": {
-                "dtype": "a",
-                "shape": "variable"
+                "dtype": "a"
             },
             "molecularWeight": {
                 "dtype": "d",
@@ -235,8 +232,7 @@ sampleSchemas_json = '''
         },
         "implementation": {
             "forceFieldType": {
-                "dtype": "a",
-                "shape": "variable"
+                "dtype": "a"
             }
         },
         "atoms": {
@@ -252,8 +248,7 @@ sampleSchemas_json = '''
         "_datasetName": "grains",
         "identity": {
             "material": {
-                "dtype": "a",
-                "shape": "variable"
+                "dtype": "a"
             }
         },
         "properties": {
@@ -345,11 +340,17 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
         unit = units.Unit(v['unit']) if 'unit' in v else None
         dtype = v['dtype']
         default = None
-        if dtype == 'a':
-            dtype = h5py.string_dtype(encoding='utf-8')
-            shape = None
-            ddoc['dtype'] = 'string (utf-8 encoded)'
-            ddoc['shape'] = 'dynamic'
+        if (dt:=np.dtype(dtype)).char in ('a','S'):
+            # use special h5py type for dynamic strings
+            if dt.itemsize==0: dtype = h5py.string_dtype(encoding='utf-8')
+            # use numpy dtype for static-size strings
+            else: dtype = dt
+            if shape: raise RuntimeError(f'Shape must NOT be specified with string types (shape: {shape}, dtype: {dtype}).')
+            if 'delim' not in v: ddoc['dtype'] = 'string (utf-8 encoded)'
+            else:
+                if not isinstance(v['delim'],str) or len(v['delim'])<1: raise RuntimeError('*delim* must be a str instance with length at least 1.')
+                ddoc['type'] = 'string list (internal delimiter "{v["delim"]}")'
+            ddoc['shape'] = ('dynamic' if dt.itemsize==0 else '≤ {dt.itemsize} chars')
         elif shape == 'variable':
             ddoc['dtype'] = f'`[{np.dtype(dtype).name},…]`'
             dtype = h5py.vlen_dtype(np.dtype(dtype))
@@ -365,6 +366,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
             elif basedtype.kind in 'iu':
                 default = 0
             ddoc['dtype'] = f'`{basedtype.name}`'
+        if dt.char not in ('a','S') and 'delim' in v: raise RuntimeError('*delim* can only be specified with string dtype (dynamic or static)')
         if unit:
             ddoc['unit'] = f"`{str(unit)}`"
         if 'lookup' in v:
@@ -474,20 +476,27 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
         elif 'dtype' in val:
             dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
             basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
+            delim=val.get('delim',None)
             ret.dtypes+=[(fq,dtype)] # add to the compound type
             ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: '+doc]
             ret.units[fq]=unit
             if default is not None: ret.defaults[fq]=default # add to the defaults
-            def getter(self,*,fq=fq,unit=unit):
+            def getter(self,*,fq=fq,unit=unit,delim=delim):
                 _T_assertDataset(self,f"when getting the value of '{fq}'")
                 if self.row is not None: value=self.ctx.dataset[fq,self.row]
                 else: value=self.ctx.dataset[fq]
                 if isinstance(value,bytes): value=value.decode('utf-8')
+                if delim is not None: value=tuple(value.split(delim))
                 if unit is None: return value
                 return units.Quantity(value=value,unit=unit)
-            def _cookValue(val,*,unit,dtype,basedtype):
+            def _cookValue(val,*,unit,dtype,basedtype,delim):
                 'Unit conversion, type conversion before assignment'
                 if unit: val=(units.Quantity(val).to(unit)).value
+                if delim is not None:
+                    if isinstance(val,(str,bytes)): raise TypeError('String list cannot be set with str/bytes (pass list of chars if this is really what you mean)')
+                    for i,v in enumerate(val):
+                        if delim in v: raise RuntimeError(f'Item {i} contains delimiter "{delim}".')
+                    val=str(delim).join(val)
                 if isinstance(val,str): val=val.encode('utf-8')
                 #sys.stderr.write(f"{fq}: {basedtype}\n")
                 ret=np.array(val).astype(basedtype,casting='safe',copy=False)
@@ -495,17 +504,17 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
                 if basedtype.kind=='O': return val 
                 #sys.stderr.write(f"{fq}: cook {val} → {ret}\n")
                 return ret
-            def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype):
+            def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
                 #_T_assertWritable(self,f"when setting the value of '{fq}'")
-                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype)
+                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim)
                 # sys.stderr.write(f'{fq}: direct setting {val}\n')
                 if self.row is None: self.ctx.dataset[fq]=val
                 else: self.ctx.dataset[self.row,fq]=val
-            def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype):
+            def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim):
                 _T_assertDataset(self,f"when setting the value of '{fq}'")
                 #_T_assertWritable(self,f"when setting the value of '{fq}'")
-                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype)
+                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim)
                 #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
                 # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
                 # direct assignment does not work; must read the whole row, modify, write it back
@@ -848,6 +857,8 @@ Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``look
     ``dtype`` specifies datatype for the entry value using the ``numpy.dtype`` notation (see `Data type objects <https://numpy.org/doc/stable/reference/arrays.dtypes.html>`__), for example ``f8`` for 8-byte (64-bit) floating-point number.
 
     Strings are stored as utf-8 encoded byte arrays (thus their storage length might be larger than number of characters). use ``"dtype":"a"`` for variable-length strings (``a`` implies ``"shape":"variable"``), and ``"dtype":"a10"`` for string of maximum 10 bytes.
+
+    String fields may specify *delim*, which is a delimiter sequence. The value will be presented as a tuple of strings to the user, interally stored as string joined by the *delim*. *delim* may be a single character or several characters. Values being set may not contain the delimiter itself. If the string is fixed-size, summary length of the string must not exceed the storage space. The value returned to the user is a tuple (read-only) to prevent in-place item modification.
 
     ``shape`` is a tuple specifying fixed shape: e.g. ``"shape":(3)`` is rank-1 3-vector, ``"shape":(3,3)`` is rank-2 3×3 matrix and so on. The special value of ``"shape":"variable"`` denotes dynamic 1d array of given ``dtype``.
 
