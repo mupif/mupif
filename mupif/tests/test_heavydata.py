@@ -440,4 +440,40 @@ class HeavyStruct_TestCase(unittest.TestCase):
         hsRemAttrs=hsRem.to_dict(clss=hsLoc.__class__)
         self.assertNotEqual(hsRemAttrs['h5path'],hsRem2.h5path)
 
+    def test_30_delimiter(self):
+        schema='''
+            [
+              {
+                "_schema": {
+                  "name": "test",
+                  "version": "1.0"
+                },
+                "_datasetName": "test",
+                "str10":{ "dtype":"a10" },
+                "str":{ "dtype":"a" },
+                "lst100":{ "dtype":"a100", "delim":"|" },
+                "lst": { "dtype":"a", "delim":"|||" }
+              }
+            ]
+        '''
+        with mp.HeavyStruct(h5path='/tmp/aaa.h5',mode='overwrite',schemaName='test',schemasJson=schema) as tests:
+            tests.resize(1)
+            t0=tests[0]
+            self.assertRaises(TypeError,lambda: t0.setStr10(10*'aa')) # content too long
+            t0.setStr10('str10')
+            t0.setStr('dynamic-str')
+            self.assertRaises(TypeError,lambda: t0.setLst100(100*['hi']))
+            self.assertRaises(BaseException,lambda: t0.setLst100(['this contains the | delimiter and should fail']))
+            t0.setLst100(10*['lst100'])
+            print(t0.getLst100())
+            print(10*['lst100'])
+            self.assertRaises(BaseException,lambda: t0.setLst(['contains the ||| delimiter and should fail']))
+            self.assertRaises(TypeError,lambda: t0.setLst('this is a string, not a list'))
+            t0.setLst(1000*['dynamic-string-list'])
+            def modify_inplace(t): t0.getLst()[1]='foo'
+            self.assertRaises(TypeError, modify_inplace)
+            self.assertEqual(t0.getStr10(),'str10')
+            self.assertEqual(t0.getStr(),'dynamic-str')
+            self.assertEqual(t0.getLst100(),tuple(10*['lst100']))
+            self.assertEqual(t0.getLst(),tuple(1000*['dynamic-string-list']))
 
