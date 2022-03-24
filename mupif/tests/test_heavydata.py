@@ -456,7 +456,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
               }
             ]
         '''
-        with mp.HeavyStruct(h5path='/tmp/aaa.h5',mode='overwrite',schemaName='test',schemasJson=schema) as tests:
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
             tests.resize(1)
             t0=tests[0]
             self.assertRaises(TypeError,lambda: t0.setStr10(10*'aa')) # content too long
