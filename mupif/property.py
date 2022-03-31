@@ -128,13 +128,33 @@ class ConstantProperty(Property):
         else:
             raise IOError(f'Unhandled HDF5 format {fmt} (must be: mupif.Property.saveHdf5:1.0)')
 
-
-
     def inUnitsOf(self, unit):
         """
         Express the quantity in different units.
         """
         return ConstantProperty(quantity=self.quantity.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time)
+
+    def to_db_dict(self):
+        return {
+            'ClassName': 'ConstantProperty',
+            'ValueType': self.valueType.name,
+            'DataID': self.propID.name,
+            'Unit': str(self.quantity.unit),
+            'Value': self.quantity.value.tolist(),
+            'Time': self.time.inUnitsOf('s').value if self.time is not None else None
+        }
+
+    @staticmethod
+    def from_db_dict(d):
+        t = None
+        if d.get('Time', None) is not None:
+            t = d.get('Time') * units.U.s
+        return ConstantProperty(
+            quantity=units.Quantity(value=np.array(d['Value']), unit=d['Unit']),
+            propID=dataid.DataID[d['DataID']],
+            valueType=mupifquantity.ValueType[d['ValueType']],
+            time=t
+        )
 
     # def _convertValue(self, value, src_unit, target_unit):
     #    """
