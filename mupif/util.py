@@ -150,7 +150,8 @@ def getVersion():
 
     # editable checkout, use git
     if os.path.exists(mupifDir+'/../.git'):
-        import git
+        try: import git
+        except ImportError as ie: raise ImportError('Install gitpython first.') from ie
         repo=git.Repo(mupifDir+'/../')
         return MupifVerInfo(
             url=list(repo.remote().urls)[0],
