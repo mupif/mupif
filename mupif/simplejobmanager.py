@@ -279,7 +279,7 @@ class SimpleJobManager (jobmanager.JobManager):
                         # this env trickery add asll of sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path.
                         # the subprocess will be able to import it as well
                         env=os.environ.copy()
-                        env['PYTHONPATH']=':'.join(sys.path)+(':'+env['PYTHONPATH'] if 'PYTHONPATH' in env else '')
+                        env['PYTHONPATH']=os.pathsep.join(sys.path)+(os.pathsep+env['PYTHONPATH'] if 'PYTHONPATH' in env else '')
                         # protocol=0 so that there are no NULLs in the arg
                         proc=subprocess.Popen([sys.executable,'-c','import mupif; mupif.SimpleJobManager._spawnedProcessPopen()','-',pickle.dumps(kwargs,protocol=0),uriFileName],stdout=jobLog,stderr=subprocess.STDOUT,env=env)
                         t0=time.time()
