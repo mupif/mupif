@@ -279,9 +279,7 @@ class SimpleJobManager (jobmanager.JobManager):
                         # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
                         # the subprocess will be able to import it as well
                         env=os.environ.copy()
-                        # HACK: manually add path to where this file's parent dir, assuming that is where mupif is called from
-                        # this seems to be necessary under wine64 for some reason
-                        env['PYTHONPATH']=os.pathsep.join(sys.path+[os.path.dirname(os.path.abspath(__file__))+'/..'])+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
+                        env['PYTHONPATH']=os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
                         # protocol=0 so that there are no NULLs in the arg
                         proc=subprocess.Popen([sys.executable,'-c','import mupif; mupif.SimpleJobManager._spawnedProcessPopen()','-',pickle.dumps(kwargs,protocol=0),uriFileName],stdout=jobLog,stderr=subprocess.STDOUT,env=env)
                         t0=time.time()
