@@ -292,7 +292,7 @@ class SimpleJobManager (jobmanager.JobManager):
                             else: time.sleep(.1)
                         else:
                             log.error('This is the subprocess log file contents: \n'+open(jobLogName,'r').read())
-                            raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else ''))
+                            raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else '')+'. The process log inline follows:\n'+open(jobLogName,'r').read())
                     log.info('Received URI: %s' % uri)
                     jobPort = int(uri.location.split(':')[-1])
                     log.info(f'Job runs on port {jobPort}')
