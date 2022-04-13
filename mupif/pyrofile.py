@@ -29,8 +29,12 @@ import serpent
 import pathlib
 import typing
 import shutil
+import logging
+import deprecated
 import pydantic
 from .mupifobject import MupifObjectBase
+
+log=logging.getLogger(__name__)
 
 
 class PyroFile (MupifObjectBase):
@@ -39,44 +43,44 @@ class PyroFile (MupifObjectBase):
     """
     filename: str
     mode: str
-    buffsize: int = 2**20
+    bufSize: int = 2**20
     compressFlag: bool = False
 
     def __init__(self, **kw):
         super().__init__(**kw)
         if self.mode not in ('rb', 'wb'):
             raise ValueError(f"mode must be 'rb' or 'wb' (not '{self.mode}').")
-        self.myfile = open(self.filename, self.mode)
+        self.fileobj = open(self.filename, self.mode)
         self.compressor = None
         self.decompressor = None
 
     @Pyro5.api.expose
     def rewind(self):
-        self.myfile.seek(0)
+        self.fileobj.seek(0)
 
     @Pyro5.api.expose
     def getChunk(self):
         """
-        Reads and returns next buffsize bytes from open (should be opened in read mode).
+        Reads and returns next bufSize bytes from open (should be opened in read mode).
         The returned chunk may contain less bytes if not enouch data can be read, or can be empty if end-of-file is reached.
         :return: Returns next chunk of data read from the file
         :rtype: str
         """
-        data = self.myfile.read(self.buffsize)
-        if data:
-            # some data read, not yet EOF
-            if self.compressFlag:
-                if not self.compressor:
-                    self.compressor = zlib.compressobj()
-                data = self.compressor.compress(data) + self.compressor.flush(zlib.Z_SYNC_FLUSH)
+        comp=zlib.compressobj() if self.compressFlag else None
+        while True:
+            data=self.fileobj.read(self.bufSize)
+            #log.error(f'ø {len(data)} b')
+            if not data:
+                self.rewind() # we still rewind in copy as well, but it can't hurt
+                return # EOF, no more data
+            finish=(len(data)<self.bufSize) # EOF, some data still read
+            if comp: data=comp.compress(data)+comp.flush(zlib.Z_SYNC_FLUSH)+(comp.flush(zlib.Z_FINISH) if finish else b'')
+            #log.error(f'→ {len(data)} b')
             yield data
-        else:
-            # no data read: EOF
-            # flush compressor if necessary (used to be the terminal chunk)
-            if self.compressor:
-                ret = self.compressor.flush(zlib.Z_FINISH)
-                compressor = None  # perhaps not necessary
-                yield ret
+            # this saves one more call to read returning nothing
+            if finish:
+                self.rewind()
+                return 
 
     @Pyro5.api.expose
     def setChunk(self, buffer):
@@ -91,17 +95,21 @@ class PyroFile (MupifObjectBase):
         if self.compressFlag:
             if not self.decompressor:
                 self.decompressor = zlib.decompressobj()
-            self.myfile.write(self.decompressor.decompress(buffer))
+            self.fileobj.write(self.decompressor.decompress(buffer))
         else:
-            self.myfile.write(buffer)
+            self.fileobj.write(buffer)
 
     @Pyro5.api.expose
-    def setBuffSize(self, buffSize):
+    @deprecated.deprecated('PyroFile.setBuffSize is deprecated, use setBufSize instead')
+    def setBuffSize(self, bs): self.setBufSize(bs)
+
+    @Pyro5.api.expose
+    def setBufSize(self, bufSize):
         """
         Allows to set the receiver buffer size.
-        :param int buffSize: new buffer size
+        :param int bufSize: new buffer size
         """
-        self.buffsize = buffSize
+        self.bufSize = bufSize
 
     @Pyro5.api.expose
     def setCompressionFlag(self, value=True):
@@ -115,7 +123,7 @@ class PyroFile (MupifObjectBase):
         """
         Closes the associated file handle.
         """
-        self.myfile.close()
+        self.fileobj.close()
 
     # MUST be called as mp.PyroFile.copy(src,dst)
     @staticmethod
@@ -143,5 +151,6 @@ class PyroFile (MupifObjectBase):
         src.setCompressionFlag(compress)
         dst.setCompressionFlag(compress)
         for data in src.getChunk():
+            # log.error(f'← {len(data)} b')
             dst.setChunk(data)
         dst.close()
