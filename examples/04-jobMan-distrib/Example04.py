@@ -59,7 +59,9 @@ class Example04(mp.Workflow):
         self.registerModel(self.app1, 'app1')
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        if ival is False:
+            return False
 
         passingMD = {
             'Execution': {
@@ -68,7 +70,11 @@ class Example04(mp.Workflow):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
-        self.app1.initialize(metadata=passingMD)
+        ival = self.app1.initialize(metadata=passingMD)
+        if ival is False:
+            return False
+
+        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         val = mp.ConstantProperty(value=1000, propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)

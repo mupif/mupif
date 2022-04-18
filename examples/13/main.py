@@ -61,10 +61,13 @@ class Workflow13(mp.workflow.Workflow):
             log.info(self.model_1)
         except Exception as e:
             log.exception(e)
-        self.model_1.initialize(workdir='', metadata=execMD)
+            return False
+        ival = self.model_1.initialize(workdir='', metadata=execMD)
+        if ival is False:
+            return False
         self.registerModel(self.model_1, "model_1")
 
-        mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
+        return mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
