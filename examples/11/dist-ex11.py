@@ -46,6 +46,7 @@ class Example11_dist(mp.Workflow):
         log.debug(f'm2 output data: {self.m2app.get(mp.DataID.ID_GrainState)}')
     def terminate(self):
         for a in (self.m1app,self.m2app): a.terminate()
+        super().terminate()
     def getApplicationSignature(self): return "Exmple 11 distributed"
     def getAPIVersion(self): return "1.0"
 

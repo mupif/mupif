@@ -77,7 +77,7 @@ class Example04(mp.Workflow):
         self.retprop = self.app1.get(mp.DataID.PID_Time, istep.getTime())
         log.info("Sucessfully received " + str(self.retprop.getValue(istep.getTime())))
         
-    def terminate(self):    
+    def terminate(self):
         self.app1.terminate()
         self.jobMan.terminate()
         super().terminate()

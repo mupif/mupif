@@ -144,4 +144,4 @@ app.solveStep (tstep)
 r = app.get(DataID.PID_Demo_Value, tstep.getTime())
 log.info("Application API return value is %f", r.getValue())
 # terminate app
-
+app.terminate()

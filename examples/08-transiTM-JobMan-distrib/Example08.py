@@ -140,7 +140,6 @@ class Example08(workflow.Workflow):
             self.thermalJobMan.terminate()
         if self.mechanical is not None:
             self.mechanical.terminate()
-        # self.printMetadata()
         super().terminate()
     
     def getApplicationSignature(self):
