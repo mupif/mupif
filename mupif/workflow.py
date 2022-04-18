@@ -112,6 +112,8 @@ class Workflow(model.Model):
         if validateMetaData:
             self.validateMetadata(WorkflowSchema)
 
+        return True
+
     def solve(self, runInBackground=False):
         """ 
         Solves the workflow.
