@@ -71,7 +71,9 @@ class Workflow10(mp.workflow.Workflow):
         super().set(obj=obj, objectID=objectID)
 
     def terminate(self):
-        self.model_1.terminate()
+        if self.model_1 is not None:
+            self.model_1.terminate()
+        super().terminate()
 
     def finishStep(self, tstep):
         self.model_1.finishStep(tstep)
