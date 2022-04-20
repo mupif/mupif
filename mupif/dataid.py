@@ -400,3 +400,7 @@ class DataID(IntEnum):
 
     #
     PID_GrainState = auto()
+
+    #
+    PID_HOMO = auto()
+    PID_LUMO = auto()
