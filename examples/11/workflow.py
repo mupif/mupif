@@ -35,7 +35,9 @@ class Example11(mp.workflow.Workflow):
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
     
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        if ival is False:
+            return False
         self.m1 = Model1()
         self.m2 = Model2()
 
@@ -48,8 +50,14 @@ class Example11(mp.workflow.Workflow):
             }
         }
 
-        self.m1.initialize(metadata=passingMD)
-        self.m2.initialize(metadata=passingMD)
+        ival = self.m1.initialize(metadata=passingMD)
+        if ival is False:
+            return False
+        ival = self.m2.initialize(metadata=passingMD)
+        if ival is False:
+            return False
+
+        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         

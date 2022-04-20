@@ -37,7 +37,9 @@ class Example11_2(mp.workflow.Workflow):
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
     
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        if ival is False:
+            return False
         self.m1 = Model2()
 
         # To be sure update only required passed metadata in models
@@ -49,7 +51,11 @@ class Example11_2(mp.workflow.Workflow):
             }
         }
 
-        self.m1.initialize(metadata=passingMD)
+        ival = self.m1.initialize(metadata=passingMD)
+        if ival is False:
+            return False
+
+        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         

@@ -32,11 +32,19 @@ class Example11_dist(mp.Workflow):
         self.m2app=mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns,jobMan=self.m2jobman)
         self.registerModel(self.m1app,'m1')
         self.registerModel(self.m2app,'m2')
-        super().initialize(workdir=workdir,metadata=metadata)
+        ival = super().initialize(workdir=workdir,metadata=metadata)
+        if ival is False:
+            return False
 
         md=dict(Execution=dict(ID=self.getMetadata('Execution.ID'),Use_case_ID=self.getMetadata('Execution.Use_case_ID'),Task_ID=self.getMetadata('Execution.Task_ID')))
-        self.m1app.initialize(workdir=self.m1jobman.getJobWorkDir(self.m1app.getJobID()),metadata=md)
-        self.m2app.initialize(workdir=self.m2jobman.getJobWorkDir(self.m2app.getJobID()),metadata=md)
+        ival = self.m1app.initialize(workdir=self.m1jobman.getJobWorkDir(self.m1app.getJobID()),metadata=md)
+        if ival is False:
+            return False
+        ival = self.m2app.initialize(workdir=self.m2jobman.getJobWorkDir(self.m2app.getJobID()),metadata=md)
+        if ival is False:
+            return False
+        return True
+
     def getCriticalTimeStep(self): return 1*mp.U.s
     def solveStep(self,istep,stageID=0,runInBackground=False):
         log.info('m1.solveStep…'); self.m1app.solveStep(istep); log.info('… m1 done')
@@ -46,6 +54,7 @@ class Example11_dist(mp.Workflow):
         log.debug(f'm2 output data: {self.m2app.get(mp.DataID.ID_GrainState)}')
     def terminate(self):
         for a in (self.m1app,self.m2app): a.terminate()
+        super().terminate()
     def getApplicationSignature(self): return "Exmple 11 distributed"
     def getAPIVersion(self): return "1.0"
 

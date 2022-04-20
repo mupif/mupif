@@ -59,11 +59,14 @@ class Example07(workflow.Workflow):
             log.info('Created mechanical job')
         except Exception as e:
             log.exception(e)
+            return False
         else:  # No exception
             self.registerModel(self.thermalSolver, 'thermal')
             self.registerModel(self.mechanicalSolver, 'mechanical')
 
-            super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+            ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+            if ival is False:
+                return False
             if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
 
                 thermalSolverSignature = self.thermalSolver.getApplicationSignature()
@@ -81,24 +84,30 @@ class Example07(workflow.Workflow):
                     }
                 }
 
-                self.thermalSolver.initialize(
+                ival = self.thermalSolver.initialize(
                     workdir=self.thermalJobMan.getJobWorkDir(self.thermalSolver.getJobID()),
                     metadata=passingMD
                 )
+                if ival is False:
+                    return False
                 thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
                 self.daemon.register(thermalInputFile)
                 self.thermalSolver.set(thermalInputFile)
 
-                self.mechanicalSolver.initialize(
+                ival = self.mechanicalSolver.initialize(
                     workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
                     metadata=passingMD
                 )
+                if ival is False:
+                    return False
                 mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
                 self.daemon.register(mechanicalInputFile)
                 self.mechanicalSolver.set(mechanicalInputFile)
 
             else:
                 log.debug("Connection to server failed, exiting")
+
+        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
 

@@ -29,6 +29,7 @@ import time as timeTime
 import Pyro5
 import logging
 import sys
+import pickle
 import time
 import collections
 import uuid 
@@ -75,8 +76,11 @@ class SimpleJobManager (jobmanager.JobManager):
         starttime: float
         user: str
         port: int
+        jobLogName: str
 
     ticketExpireTimeout = 10
+
+    JOBS_USE_MULTIPROCESSING=False
 
     def __init__(
             self,
@@ -117,9 +121,20 @@ class SimpleJobManager (jobmanager.JobManager):
     def runServer(self):
         return pyroutil.runJobManagerServer(jobman=self,ns=self.ns)
 
+    @staticmethod
+    def _spawnedProcessPopen():
+        import sys
+        kwargs,uriFileName=pickle.loads(bytes(sys.argv[-2],encoding='ascii')),sys.argv[-1]
+        uri=SimpleJobManager._spawnedProcess(**kwargs)
+        open(uriFileName+'~','wb').write(pickle.dumps(uri))
+        os.rename(uriFileName+'~',uriFileName)
 
     @staticmethod
-    def _spawnProcess(*, pipe, ns, appName, jobID, cwd, appClass):
+    def _spawnedProcessPipe(*, pipe, ns, appName, jobID, cwd, appClass):
+       pipe.send(SimpleJobManager._spawnedProcess(ns=ns,appName=appName,jobID=jobID,cwd=cwd,appClass=appClass))  # as bytes
+
+    @staticmethod
+    def _spawnedProcess(*, ns, appName, jobID, cwd, appClass):
         '''
         This function is called 
         '''
@@ -137,7 +152,7 @@ class SimpleJobManager (jobmanager.JobManager):
             appName=jobID,
             ns=ns
         )
-        pipe.send(uri)  # as bytes
+        return uri
 
     def __checkTicket(self, ticket):
         """ Returns true, if ticket is valid, false otherwise"""
@@ -164,10 +179,15 @@ class SimpleJobManager (jobmanager.JobManager):
         with self.lock:
             dead=[]
             for jobId,job in self.activeJobs.items():
-                if job.proc.is_alive(): continue
-                assert job.proc.exitcode is not None
-                log.debug(f'Job {jobId} already finished, exit status {job.proc.exitcode}.')
-                if job.proc.exitcode!=0: log.error('Job {jobID} has non-zero exit status {job.proc.exitcode}')
+                if isinstance(job.proc,multiprocessing.Process):
+                    if job.proc.is_alive(): continue
+                    code=job.proc.exitcode
+                else: # subprocess.Popen
+                    if job.proc.poll() is None: continue
+                    code=job.proc.returncode
+                assert code is not None
+                log.debug(f'Job {jobId} already finished, exit status {code}.')
+                if code!=0: log.error('Job {jobID} has non-zero exit status {code}')
                 dead.append(jobId)
             for d in dead: del self.activeJobs[d]
 
@@ -229,25 +249,50 @@ class SimpleJobManager (jobmanager.JobManager):
                     raise
                     # return JOBMAN_ERR, None
                 try:
-                    parentPipe, childPipe = multiprocessing.Pipe()
 
                     kwargs = dict(
-                        pipe=childPipe,
                         ns=self.ns,
                         jobID=jobID,
                         cwd=targetWorkDir,
                         appName=self.applicationName,
                         appClass=self.applicationClass,
                     )
-                    proc = multiprocessing.Process(
-                        target=SimpleJobManager._spawnProcess,
-                        name=self.applicationName,
-                        kwargs=kwargs
-                    )
-                    proc.start()
-                    if not parentPipe.poll(timeout=10):
-                        raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
-                    uri = parentPipe.recv()
+                    if SimpleJobManager.JOBS_USE_MULTIPROCESSING:
+                        # multiprocessing-based implementation
+                        # it is good and readable, but does not allow to redirect subprocess outputs, which is needed for logging
+                        parentPipe, childPipe = multiprocessing.Pipe()
+                        kwargs.update(pipe=childPipe)
+                        proc = multiprocessing.Process(
+                            target=SimpleJobManager._spawnedProcessPipe,
+                            name=self.applicationName,
+                            kwargs=kwargs
+                        )
+                        jobLogName=None
+                        proc.start()
+                        if not parentPipe.poll(timeout=10):
+                            raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
+                        uri = parentPipe.recv()
+                    else:
+                        uriFileName=targetWorkDir+'/_mupif_uri'
+                        jobLogName=targetWorkDir+'/_mupif_job.log'
+                        jobLog=open(jobLogName,'w')
+                        # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
+                        # the subprocess will be able to import it as well
+                        env=os.environ.copy()
+                        env['PYTHONPATH']=os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
+                        # protocol=0 so that there are no NULLs in the arg
+                        proc=subprocess.Popen([sys.executable,'-c','import mupif; mupif.SimpleJobManager._spawnedProcessPopen()','-',pickle.dumps(kwargs,protocol=0),uriFileName],stdout=jobLog,stderr=subprocess.STDOUT,env=env)
+                        t0=time.time()
+                        tMax=10
+                        while time.time()-t0<tMax:
+                            if os.path.exists(uriFileName):
+                                uri=pickle.loads(open(uriFileName,'rb').read())
+                                os.remove(uriFileName)
+                                break
+                            else: time.sleep(.1)
+                        else:
+                            log.error('This is the subprocess log file contents: \n'+open(jobLogName,'r').read())
+                            raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else '')+'. The process log inline follows:\n'+open(jobLogName,'r').read())
                     log.info('Received URI: %s' % uri)
                     jobPort = int(uri.location.split(':')[-1])
                     log.info(f'Job runs on port {jobPort}')
@@ -258,13 +303,12 @@ class SimpleJobManager (jobmanager.JobManager):
                 # check if uri is ok
                 # either by doing some sort of regexp or query ns for it
                 start = timeTime.time()
-                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, user=user, uri=uri, port=jobPort)
+                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, user=user, uri=uri, port=jobPort, jobLogName=jobLogName)
                 log.debug('SimpleJobManager: new process ')
                 log.debug(self.activeJobs[jobID])
 
                 log.info('SimpleJobManager:allocateJob: allocated ' + jobID)
                 return jobmanager.JOBMAN_OK, jobID, jobPort
-            
             else:
                 log.error(f'SimpleJobManager: no more resources, activeJobs:{len(self.activeJobs)} + nTickets:{self.__getNumberOfActiveTickets()} >= maxJobs:{self.maxJobs}')
                 raise jobmanager.JobManNoResourcesException("SimpleJobManager: no more resources")
@@ -284,12 +328,19 @@ class SimpleJobManager (jobmanager.JobManager):
             if jobID in self.activeJobs:
                 job = self.activeJobs[jobID]
                 try:
-                    job.proc.terminate()
-                    job.proc.join(2)
-                    if job.proc.exitcode is None:
-                        log.debug(f'{jobID} still running after 2s timeout, killing.')
-                    job.proc.kill()
-                    # delete entry in the list of active jobs
+                    if isinstance(job.proc,multiprocessing.Process):
+                        job.proc.terminate()
+                        job.proc.join(2)
+                        if job.proc.exitcode is None:
+                            log.debug(f'{jobID} still running after 2s timeout, killing.')
+                        job.proc.kill()
+                        # delete entry in the list of active jobs
+                    else: # subprocess.Popen
+                        job.proc.terminate()
+                        try: job.proc.wait(2)
+                        except:
+                            log.debug(f'{jobID} still running after 2s timeout, killing.')
+                            job.proc.kill()
                     log.debug('SimpleJobManager:terminateJob: job %s terminated' % jobID)
                     del self.activeJobs[jobID]
                 except KeyError:

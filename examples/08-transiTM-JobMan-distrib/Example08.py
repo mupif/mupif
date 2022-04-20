@@ -59,6 +59,7 @@ class Example08(workflow.Workflow):
             log.exception(e)
             log.error('HSDFSD')
             self.terminate()
+            return False
 
         # Connecting directly to mechanical instance, not using jobManager
         self.mechanical = pyroutil.connectApp(ns, 'mechanical-ex08')
@@ -71,7 +72,9 @@ class Example08(workflow.Workflow):
         self.registerModel(self.thermal, 'thermal_8')
         self.registerModel(self.mechanical, 'mechanical_8')
 
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        if ival is False:
+            return False
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -82,24 +85,30 @@ class Example08(workflow.Workflow):
             }
         }
 
-        self.thermal.initialize(
+        ival = self.thermal.initialize(
             workdir=self.thermalJobMan.getJobWorkDir(self.thermal.getJobID()),
             metadata=passingMD
         )
+        if ival is False:
+            return False
         thermalInputFile = mp.PyroFile(filename='..'+os.path.sep+'06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.thermal.set(thermalInputFile)
 
-        self.mechanical.initialize(
+        ival = self.mechanical.initialize(
             workdir='.',
             metadata=passingMD
         )
+        if ival is False:
+            return False
         mechanicalInputFile = mp.PyroFile(filename='..' + os.path.sep + '06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.mechanical.set(mechanicalInputFile)
 
         # self.thermal.printMetadata()
         # self.mechanical.printMetadata()
+
+        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
@@ -140,7 +149,6 @@ class Example08(workflow.Workflow):
             self.thermalJobMan.terminate()
         if self.mechanical is not None:
             self.mechanical.terminate()
-        # self.printMetadata()
         super().terminate()
     
     def getApplicationSignature(self):
