@@ -65,7 +65,7 @@ class PyroFile_TestCase(unittest.TestCase):
         cls.tmpdir=tempfile.TemporaryDirectory()
         cls.tmp=cls.tmpdir.name
         cls.A=cls.tmp+'/A'
-        cls.Adata=bytes(''.join(random.choices(string.ascii_letters+string.digits,k=1000)),encoding='utf-8')
+        cls.Adata=os.urandom(1000)
         f=open(cls.A,'wb')
         f.write(cls.Adata)
         f.close()
@@ -114,6 +114,23 @@ class PyroFile_TestCase(unittest.TestCase):
         self.assertEqual(C.Adata,open(a4,'rb').read())
         self.assertEqual(C.Adata,open(a5,'rb').read())
         self.assertEqual(C.Adata,open(a6,'rb').read())
+    def test_pyroFile_copy_chunks(self):
+        C=self.__class__
+        aa=[f'{C.tmp}/A1{i}' for i in range(4)]
+        src=mp.PyroFile(filename=C.A,mode='rb')
+        src.setBufSize(100)
+        srcUri=C.daemon.register(src)
+        ddst=[C.daemon.register(mp.PyroFile(filename=a,mode='wb')) for a in aa]
+        ddstP=[Pyro5.api.Proxy(dst) for dst in ddst]
+        # use tiny buffer on the reading side to force chunking
+        srcP=Pyro5.api.Proxy(srcUri)
+        mp.PyroFile.copy(src,aa[0],compress=True)
+        mp.PyroFile.copy(src,aa[1],compress=False)
+        mp.PyroFile.copy(srcP,ddstP[2],compress=True)
+        mp.PyroFile.copy(srcP,ddstP[3],compress=False)
+        for i in range(4):
+            self.assertEqual(C.Adata,open(aa[i],'rb').read())
+
 
 
 

@@ -227,7 +227,7 @@ class Model(mupifobject.MupifObject):
         defaults = dict([
             ('Username', username),
             ('Hostname', hostname),
-            ('Status', 'Initialized'),
+            ('Status', 'Instantiated'),
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
             ('Execution', {}),
             ('Solver', {})
@@ -260,6 +260,8 @@ class Model(mupifobject.MupifObject):
         if validateMetaData:
             self.validateMetadata(ModelSchema)
             # log.info('Metadata successfully validated')
+
+        return True
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
         """

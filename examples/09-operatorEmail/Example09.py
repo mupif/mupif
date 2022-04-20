@@ -66,7 +66,7 @@ class EmailAPI(model.Model):
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated', "ValueType": "Scalar"}]
         }
         self.updateMetadata(MD)
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):
@@ -144,4 +144,4 @@ app.solveStep (tstep)
 r = app.get(DataID.PID_Demo_Value, tstep.getTime())
 log.info("Application API return value is %f", r.getValue())
 # terminate app
-
+app.terminate()

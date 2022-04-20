@@ -40,7 +40,9 @@ class Example06(workflow.Workflow):
         self.registerModel(self.mechanicalSolver, 'mechanical')
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        if ival is False:
+            return False
 
         passingMD = {
             'Execution': {
@@ -50,21 +52,27 @@ class Example06(workflow.Workflow):
             }
         }
 
-        self.thermalSolver.initialize(
+        ival = self.thermalSolver.initialize(
             workdir='.',
             metadata=passingMD
         )
+        if ival is False:
+            return False
         thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
         # self.daemon.register(thermalInputFile)
         self.thermalSolver.set(thermalInputFile)
 
-        self.mechanicalSolver.initialize(
+        ival = self.mechanicalSolver.initialize(
             workdir='.',
             metadata=passingMD
         )
+        if ival is False:
+            return False
         mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
         # self.daemon.register(mechanicalInputFile)
         self.mechanicalSolver.set(mechanicalInputFile)
+
+        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.thermalSolver.solveStep(istep, stageID, runInBackground)

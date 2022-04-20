@@ -59,10 +59,13 @@ class Workflow10(mp.workflow.Workflow):
             log.info(self.model_1)
         except Exception as e:
             log.exception(e)
-        self.model_1.initialize(workdir='', metadata=execMD)
+            return False
+        ival = self.model_1.initialize(workdir='', metadata=execMD)
+        if ival is False:
+            return False
         self.registerModel(self.model_1, "model_1")
 
-        mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
+        return mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
@@ -71,7 +74,9 @@ class Workflow10(mp.workflow.Workflow):
         super().set(obj=obj, objectID=objectID)
 
     def terminate(self):
-        self.model_1.terminate()
+        if self.model_1 is not None:
+            self.model_1.terminate()
+        super().terminate()
 
     def finishStep(self, tstep):
         self.model_1.finishStep(tstep)
