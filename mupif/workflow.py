@@ -293,3 +293,11 @@ class Workflow(model.Model):
 
     def getExecutionTimestepLength(self):
         return self._exec_dt
+
+    def terminate(self):
+        for key_name, mmodel in self._models.items():
+            try:
+                mmodel.terminate()
+            except:
+                pass
+        super().terminate()
