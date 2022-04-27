@@ -1,20 +1,17 @@
 # Mechanical server for nonstationary problem
 import os
 import sys
-import logging
 import argparse
 sys.path.extend(['..', '../..'])
-from mupif import *
+import mupif as mp
 import models
-log = logging.getLogger()
-util.redirectLog('mechanical.log')
 
 # locate nameserver
-ns = pyroutil.connectNameserver()
-mechanical = models.MechanicalModel()
+ns = mp.pyroutil.connectNameserver()
 
-pyroutil.runAppServer(
+# Run job manager on a server
+jobMan = mp.SimpleJobManager(
     ns=ns,
+    appClass=models.MechanicalModel,
     appName='mechanical-ex08',
-    app=mechanical
-)
+).runServer()

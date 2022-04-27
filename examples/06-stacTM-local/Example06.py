@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger()
 
 
-class Example06(workflow.Workflow):
+class Example06(mp.Workflow):
 
     def __init__(self, metadata={}):
         """
@@ -28,16 +28,24 @@ class Example06(workflow.Workflow):
                  'Description': 'Temperature field on 2D domain', 'Units': 'degC'},
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
                  'Description': 'Displacement field on 2D domain', 'Units': 'm'}
+            ],
+            'Models': [
+                {
+                    'Name': 'thermal',
+                    'Module': 'models',
+                    'Class': 'ThermalModel',
+                    'Jobmanager': ''
+                },
+                {
+                    'Name': 'mechanical',
+                    'Module': 'models',
+                    'Class': 'MechanicalModel',
+                    'Jobmanager': ''
+                }
             ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-
-        self.thermalSolver = models.ThermalModel()
-        self.mechanicalSolver = models.MechanicalModel()
-
-        self.registerModel(self.thermalSolver, 'thermal')
-        self.registerModel(self.mechanicalSolver, 'mechanical')
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
@@ -52,7 +60,7 @@ class Example06(workflow.Workflow):
             }
         }
 
-        ival = self.thermalSolver.initialize(
+        ival = self.getModel('thermal').initialize(
             workdir='.',
             metadata=passingMD
         )
@@ -60,9 +68,9 @@ class Example06(workflow.Workflow):
             return False
         thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
         # self.daemon.register(thermalInputFile)
-        self.thermalSolver.set(thermalInputFile)
+        self.getModel('thermal').set(thermalInputFile)
 
-        ival = self.mechanicalSolver.initialize(
+        ival = self.getModel('mechanical').initialize(
             workdir='.',
             metadata=passingMD
         )
@@ -70,30 +78,25 @@ class Example06(workflow.Workflow):
             return False
         mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
         # self.daemon.register(mechanicalInputFile)
-        self.mechanicalSolver.set(mechanicalInputFile)
+        self.getModel('mechanical').set(mechanicalInputFile)
 
         return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        self.thermalSolver.solveStep(istep, stageID, runInBackground)
-        self.mechanicalSolver.set(self.thermalSolver.get(DataID.FID_Temperature, istep.getTime()))
-        self.mechanicalSolver.solveStep(istep, stageID, runInBackground)
+        self.getModel('thermal').solveStep(istep, stageID, runInBackground)
+        self.getModel('mechanical').set(self.getModel('thermal').get(DataID.FID_Temperature, istep.getTime()))
+        self.getModel('mechanical').solveStep(istep, stageID, runInBackground)
 
     def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == DataID.FID_Temperature:
-            return self.thermalSolver.get(objectTypeID, time, objectID)
+            return self.getModel('thermal').get(objectTypeID, time, objectID)
         elif objectTypeID == DataID.FID_Displacement:
-            return self.mechanicalSolver.get(objectTypeID, time, objectID)
+            return self.getModel('mechanical').get(objectTypeID, time, objectID)
         else:
             raise apierror.APIError('Unknown field ID')
 
     def getCriticalTimeStep(self):
         return 1*mp.U.s
-
-    def terminate(self):
-        self.thermalSolver.terminate()
-        self.mechanicalSolver.terminate()
-        super().terminate()
 
     def getApplicationSignature(self):
         return "Example06 workflow 1.0"
