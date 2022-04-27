@@ -40,10 +40,12 @@ class Application1(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+            ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         # calls constructor from Application module
         super().__init__(metadata=MD)
@@ -112,10 +114,12 @@ class Application2(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+            ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulative time',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)

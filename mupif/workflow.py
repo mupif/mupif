@@ -30,10 +30,12 @@ from . import units
 from . import Property
 from . import DataID
 from . import U
+from . import pyroutil
 import numpy
 import copy
 import logging
 from collections.abc import Iterable
+import importlib
 
 log = logging.getLogger()
 
@@ -55,9 +57,22 @@ WorkflowSchema["properties"].update({
             },
             "required": ["Name", "ID", "Version_date", "Type"]
         }
+    },
+    "Models": {
+        "type": "array",  # List of contained models/workflows definition
+        "items": {
+            "type": "object",  # Object supplies a dictionary
+            "properties": {
+                "Name": {"type": "string"},
+                "Module": {"type": "string"},
+                "Class": {"type": "string"},
+                "Jobmanager": {"type": "string"},
+            },
+            "required": ["Name", "Module", "Class", "Jobmanager"]
+        }
     }
 })
-WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs"]
+WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs", "Models"]
 
 workflow_input_targetTime_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
@@ -90,8 +105,43 @@ class Workflow(model.Model):
 
         self.workflowMonitor = None  # No monitor by default
         self._models = {}
+        self._jobmans = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
+
+    def _allocateModel(self, name, modulename, classname, jobmanagername):
+        try:
+            if name != '':
+                if jobmanagername != '':
+                    ns = pyroutil.connectNameserver()
+                    self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
+                    self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
+                    return True
+                elif classname != '' and modulename != '':
+                    moduleImport = importlib.import_module(modulename)
+                    model_class = getattr(moduleImport, classname)
+                    self._models[name] = model_class()
+                    return True
+        except Exception as e:
+            log.exception(e)
+            return False
+        return None
+
+
+    def _allocateAllModels(self):
+        for model_info in self.metadata['Models']:
+            if self._allocateModel(name=model_info['Name'], modulename=model_info['Module'], classname=model_info['Class'], jobmanagername=model_info['Jobmanager']) is False:
+                return False
+
+    def getModel(self, name):
+        if name in self._models.keys():
+            return self._models[name]
+        return None
+
+    def getJobManager(self, name):
+        if name in self._jobmans.keys():
+            return self._jobmans[name]
+        return None
 
     def initialize(self, *, workdir='', metadata={}, validateMetaData=True, **kwargs):
         """
@@ -101,8 +151,10 @@ class Workflow(model.Model):
         :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
-        self.generateModelDependencies()
         self.updateMetadata(metadata)
+        self.generateModelDependencies()
+
+        self._allocateAllModels()
 
         if workdir == '':
             self.workDir = os.getcwd()
@@ -115,7 +167,7 @@ class Workflow(model.Model):
         return True
 
     def solve(self, runInBackground=False):
-        """ 
+        """
         Solves the workflow.
 
         The default implementation solves the problem
@@ -294,10 +346,22 @@ class Workflow(model.Model):
     def getExecutionTimestepLength(self):
         return self._exec_dt
 
+    def finishStep(self, tstep):
+        for key_name, mmodel in self._models.items():
+            try:
+                mmodel.finishStep(tstep)
+            except:
+                pass
+
     def terminate(self):
         for key_name, mmodel in self._models.items():
             try:
                 mmodel.terminate()
+            except:
+                pass
+        for key_name, jobman in self._jobmans.items():
+            try:
+                jobman.terminate()
             except:
                 pass
         super().terminate()

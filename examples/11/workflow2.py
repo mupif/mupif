@@ -8,7 +8,7 @@ log = logging.getLogger()
 from model2 import Model2
 
 
-class Example11_2(mp.workflow.Workflow):
+class Example11_2(mp.Workflow):
    
     def __init__(self, metadata={}):
         """

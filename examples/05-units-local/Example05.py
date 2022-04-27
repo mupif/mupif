@@ -41,7 +41,8 @@ class Application1(mp.Model):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Simulation time',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)

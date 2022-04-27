@@ -9,7 +9,7 @@ import logging
 log = logging.getLogger()
 
 
-class Example07(workflow.Workflow):
+class Example07(mp.Workflow):
    
     def __init__(self, metadata={}):
         """
@@ -25,87 +25,70 @@ class Example07(workflow.Workflow):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
-                 'Description': 'Displacement field on 2D domain', 'Units': 'm'}]
+                 'Description': 'Displacement field on 2D domain', 'Units': 'm'}
+            ],
+            'Models': [
+                {
+                    'Name': 'thermal',
+                    'Module': '',
+                    'Class': '',
+                    'Jobmanager': 'Mupif.JobManager@ThermalSolver-ex07'
+                },
+                {
+                    'Name': 'mechanical',
+                    'Module': '',
+                    'Class': '',
+                    'Jobmanager': 'Mupif.JobManager@MechanicalSolver-ex07'
+                }
+            ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-
-        self.thermalJobMan = None
-        self.mechanicalJobMan = None
-        self.thermalSolver = None
-        self.mechanicalSolver = None
         self.daemon = None
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        if ival is False:
+            return False
+
         # locate nameserver
         ns = pyroutil.connectNameserver()
         self.daemon = pyroutil.getDaemon(ns)
 
-        # connect to JobManager running on (remote) server
-        self.thermalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@ThermalSolver-ex07')
-        self.mechanicalJobMan = pyroutil.connectJobManager(ns, 'Mupif.JobManager@MechanicalSolver-ex07')
+        thermalSolverSignature = self.getModel('thermal').getApplicationSignature()
+        log.info("Working thermal solver on server " + thermalSolverSignature)
 
-        # allocate the application instances
-        try:
-            self.thermalSolver = pyroutil.allocateApplicationWithJobManager(
-                ns=ns,
-                jobMan=self.thermalJobMan,
-            )
-            log.info('Created thermal job')
-            self.mechanicalSolver = pyroutil.allocateApplicationWithJobManager(
-                ns=ns,
-                jobMan=self.mechanicalJobMan,
-            )
-            log.info('Created mechanical job')
-        except Exception as e:
-            log.exception(e)
+        mechanicalSolverSignature = self.getModel('mechanical').getApplicationSignature()
+        log.info("Working mechanical solver on server " + mechanicalSolverSignature)
+
+        # To be sure update only required passed metadata in models
+        passingMD = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+
+        ival = self.getModel('thermal').initialize(
+            workdir=self.getJobManager('thermal').getJobWorkDir(self.getModel('thermal').getJobID()),
+            metadata=passingMD
+        )
+        if ival is False:
             return False
-        else:  # No exception
-            self.registerModel(self.thermalSolver, 'thermal')
-            self.registerModel(self.mechanicalSolver, 'mechanical')
+        thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
+        self.daemon.register(thermalInputFile)
+        self.getModel('thermal').set(thermalInputFile)
 
-            ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-            if ival is False:
-                return False
-            if (self.thermalSolver is not None) and (self.mechanicalSolver is not None):
-
-                thermalSolverSignature = self.thermalSolver.getApplicationSignature()
-                log.info("Working thermal solver on server " + thermalSolverSignature)
-
-                mechanicalSolverSignature = self.mechanicalSolver.getApplicationSignature()
-                log.info("Working mechanical solver on server " + mechanicalSolverSignature)
-
-                # To be sure update only required passed metadata in models
-                passingMD = {
-                    'Execution': {
-                        'ID': self.getMetadata('Execution.ID'),
-                        'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                        'Task_ID': self.getMetadata('Execution.Task_ID')
-                    }
-                }
-
-                ival = self.thermalSolver.initialize(
-                    workdir=self.thermalJobMan.getJobWorkDir(self.thermalSolver.getJobID()),
-                    metadata=passingMD
-                )
-                if ival is False:
-                    return False
-                thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
-                self.daemon.register(thermalInputFile)
-                self.thermalSolver.set(thermalInputFile)
-
-                ival = self.mechanicalSolver.initialize(
-                    workdir=self.mechanicalJobMan.getJobWorkDir(self.mechanicalSolver.getJobID()),
-                    metadata=passingMD
-                )
-                if ival is False:
-                    return False
-                mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
-                self.daemon.register(mechanicalInputFile)
-                self.mechanicalSolver.set(mechanicalInputFile)
-
-            else:
-                log.debug("Connection to server failed, exiting")
+        ival = self.getModel('mechanical').initialize(
+            workdir=self.getJobManager('mechanical').getJobWorkDir(self.getModel('mechanical').getJobID()),
+            metadata=passingMD
+        )
+        if ival is False:
+            return False
+        mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
+        self.daemon.register(mechanicalInputFile)
+        self.getModel('mechanical').set(mechanicalInputFile)
 
         return True
 
@@ -114,21 +97,21 @@ class Example07(workflow.Workflow):
         start = timeT.time()
         log.info('Timer started')
         log.info("Solving thermal problem")
-        log.info(self.thermalSolver.getApplicationSignature())
+        log.info(self.getModel('thermal').getApplicationSignature())
         
-        self.thermalSolver.solveStep(istep)
+        self.getModel('thermal').solveStep(istep)
         log.info("Thermal problem solved")
-        uri = self.thermalSolver.getFieldURI(DataID.FID_Temperature, self.mechanicalSolver.getAssemblyTime(istep))
+        uri = self.getModel('thermal').getFieldURI(DataID.FID_Temperature, self.getModel('mechanical').getAssemblyTime(istep))
         log.info("URI of thermal problem's field is " + str(uri))
         field = pyroutil.getObjectFromURI(uri)
-        self.mechanicalSolver.set(field)
+        self.getModel('mechanical').set(field)
         log.info("Solving mechanical problem")
-        self.mechanicalSolver.solveStep(istep)
-        log.info("URI of mechanical problem's field is " + str(self.mechanicalSolver.getFieldURI(DataID.FID_Displacement, istep.getTargetTime())))
-        displacementField = self.mechanicalSolver.get(DataID.FID_Displacement, istep.getTime())
+        self.getModel('mechanical').solveStep(istep)
+        log.info("URI of mechanical problem's field is " + str(self.getModel('mechanical').getFieldURI(DataID.FID_Displacement, istep.getTargetTime())))
+        displacementField = self.getModel('mechanical').get(DataID.FID_Displacement, istep.getTime())
 
         # save results as vtk
-        temperatureField = self.thermalSolver.get(DataID.FID_Temperature, istep.getTime())
+        temperatureField = self.getModel('thermal').get(DataID.FID_Temperature, istep.getTime())
         temperatureField.toMeshioMesh().write('temperatureField.vtk')
         displacementField.toMeshioMesh().write('displacementField.vtk')
         log.info("Time consumed %f s" % (timeT.time()-start))
@@ -136,11 +119,6 @@ class Example07(workflow.Workflow):
     def getCriticalTimeStep(self):
         # determine critical time step
         return 1*mp.U.s
-
-    def terminate(self):
-        self.thermalSolver.terminate()
-        self.mechanicalSolver.terminate()
-        super().terminate()
 
     def getApplicationSignature(self):
         return "Example07 workflow 1.0"
