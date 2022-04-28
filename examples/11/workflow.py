@@ -29,13 +29,11 @@ class Example11(mp.Workflow):
                     'Name': 'm1',
                     'Module': 'model1',
                     'Class': 'Model1',
-                    'Jobmanager': ''
                 },
                 {
                     'Name': 'm2',
                     'Module': 'model2',
                     'Class': 'Model2',
-                    'Jobmanager': ''
                 }
             ]
         }

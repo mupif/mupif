@@ -36,14 +36,10 @@ class Example08(mp.Workflow):
             'Models': [
                 {
                     'Name': 'thermal',
-                    'Module': '',
-                    'Class': '',
                     'Jobmanager': 'thermal-nonstat-ex08'
                 },
                 {
                     'Name': 'mechanical',
-                    'Module': '',
-                    'Class': '',
                     'Jobmanager': 'mechanical-ex08'
                 }
             ]

@@ -18,7 +18,7 @@ class Example04(mp.Workflow):
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
             'Description': 'Cummulates time steps',
-            'Dependencies': ['SimulationTimer-1'],
+            # 'Dependencies': ['SimulationTimer-1'],
             'Version_date': '1.0.0, Feb 2019',
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
@@ -32,8 +32,6 @@ class Example04(mp.Workflow):
             'Models': [
                 {
                     'Name': 'm1',
-                    'Module': '',
-                    'Class': '',
                     'Jobmanager': 'mupif/example04/jobMan'
                 }
             ]

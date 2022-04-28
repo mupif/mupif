@@ -33,14 +33,12 @@ class Example06(mp.Workflow):
                 {
                     'Name': 'thermal',
                     'Module': 'models',
-                    'Class': 'ThermalModel',
-                    'Jobmanager': ''
+                    'Class': 'ThermalModel'
                 },
                 {
                     'Name': 'mechanical',
                     'Module': 'models',
-                    'Class': 'MechanicalModel',
-                    'Jobmanager': ''
+                    'Class': 'MechanicalModel'
                 }
             ]
         }
