@@ -68,11 +68,15 @@ WorkflowSchema["properties"].update({
                 "Class": {"type": "string"},
                 "Jobmanager": {"type": "string"},
             },
-            "required": ["Name", "Module", "Class", "Jobmanager"]
+            "required": ["Name"],
+            "anyOf": [
+                {"required": ["Module", "Class"]},
+                {"required": ["Jobmanager"]}
+            ]
         }
     }
 })
-WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs", "Models"]
+WorkflowSchema["required"] = ["Name", "ID", "Description", "Execution", "Inputs", "Outputs", "Models"]
 
 workflow_input_targetTime_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
@@ -127,10 +131,9 @@ class Workflow(model.Model):
             return False
         return None
 
-
     def _allocateAllModels(self):
         for model_info in self.metadata['Models']:
-            if self._allocateModel(name=model_info['Name'], modulename=model_info['Module'], classname=model_info['Class'], jobmanagername=model_info['Jobmanager']) is False:
+            if self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', '')) is False:
                 return False
 
     def getModel(self, name):
@@ -152,7 +155,7 @@ class Workflow(model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
         self.updateMetadata(metadata)
-        self.generateModelDependencies()
+        # self.generateModelDependencies()
 
         self._allocateAllModels()
 

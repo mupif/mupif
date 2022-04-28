@@ -30,14 +30,10 @@ class Example07(mp.Workflow):
             'Models': [
                 {
                     'Name': 'thermal',
-                    'Module': '',
-                    'Class': '',
                     'Jobmanager': 'Mupif.JobManager@ThermalSolver-ex07'
                 },
                 {
                     'Name': 'mechanical',
-                    'Module': '',
-                    'Class': '',
                     'Jobmanager': 'Mupif.JobManager@MechanicalSolver-ex07'
                 }
             ]

@@ -34,8 +34,6 @@ class Workflow13(mp.Workflow):
             'Models': [
                 {
                     'Name': 'm1',
-                    'Module': '',
-                    'Class': '',
                     'Jobmanager': 'CVUT.demo01'
                 }
             ]
