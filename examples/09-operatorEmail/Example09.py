@@ -66,7 +66,7 @@ class EmailAPI(model.Model):
                  'Description': 'Demo value', 'Units': 'dimensionless', 'Origin': 'Simulated', "ValueType": "Scalar"}]
         }
         self.updateMetadata(MD)
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=""):
         if obj.isInstance(mp.Property):

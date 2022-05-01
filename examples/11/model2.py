@@ -58,7 +58,7 @@ class Model2 (mp.Model):
         self.outputGrainState = None
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mp.DataID.ID_GrainState:

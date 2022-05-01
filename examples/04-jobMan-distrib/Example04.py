@@ -46,9 +46,7 @@ class Example04(mp.Workflow):
             value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -57,11 +55,7 @@ class Example04(mp.Workflow):
                 'Task_ID': self.getMetadata('Execution.Task_ID')
             }
         }
-        ival = self.getModel('m1').initialize(metadata=passingMD)
-        if ival is False:
-            return False
-
-        return True
+        self.getModel('m1').initialize(metadata=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         val = mp.ConstantProperty(value=1000, propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)

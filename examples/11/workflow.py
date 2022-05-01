@@ -5,9 +5,6 @@ import mupif as mp
 import logging
 log = logging.getLogger()
 
-from model1 import Model1
-from model2 import Model2
-
 
 class Example11(mp.Workflow):
    
@@ -43,9 +40,7 @@ class Example11(mp.Workflow):
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
     
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -56,14 +51,8 @@ class Example11(mp.Workflow):
             }
         }
 
-        ival = self.getModel('m1').initialize(metadata=passingMD)
-        if ival is False:
-            return False
-        ival = self.getModel('m2').initialize(metadata=passingMD)
-        if ival is False:
-            return False
-
-        return True
+        self.getModel('m1').initialize(metadata=passingMD)
+        self.getModel('m2').initialize(metadata=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         

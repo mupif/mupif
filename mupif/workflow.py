@@ -80,11 +80,11 @@ WorkflowSchema["required"] = ["Name", "ID", "Description", "Execution", "Inputs"
 
 workflow_input_targetTime_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
-    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['targetTime'], 'ValueType': 'Scalar'
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': 'targetTime', 'ValueType': 'Scalar'
 }
 workflow_input_dt_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'dt', 'Description': 'Timestep length',
-    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['dt'], 'ValueType': 'Scalar'
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': 'dt', 'ValueType': 'Scalar'
 }
 
 
@@ -114,22 +114,17 @@ class Workflow(model.Model):
         self._exec_dt = None
 
     def _allocateModel(self, name, modulename, classname, jobmanagername):
-        try:
-            if name != '':
-                if jobmanagername != '':
-                    ns = pyroutil.connectNameserver()
-                    self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
-                    self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
-                    return True
-                elif classname != '' and modulename != '':
-                    moduleImport = importlib.import_module(modulename)
-                    model_class = getattr(moduleImport, classname)
-                    self._models[name] = model_class()
-                    return True
-        except Exception as e:
-            log.exception(e)
-            return False
-        return None
+        if name:
+            if jobmanagername:
+                ns = pyroutil.connectNameserver()
+                self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
+                return True
+            elif classname and modulename:
+                moduleImport = importlib.import_module(modulename)
+                model_class = getattr(moduleImport, classname)
+                self._models[name] = model_class()
+                return True
 
     def _allocateAllModels(self):
         for model_info in self.metadata['Models']:
@@ -166,8 +161,6 @@ class Workflow(model.Model):
 
         if validateMetaData:
             self.validateMetadata(WorkflowSchema)
-
-        return True
 
     def solve(self, runInBackground=False):
         """

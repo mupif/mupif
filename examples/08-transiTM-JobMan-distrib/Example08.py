@@ -52,14 +52,7 @@ class Example08(mp.Workflow):
         threading.Thread(target=self.daemon.requestLoop).start()
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
-
-        print(self._models)
-
-        # # Connecting directly to mechanical instance, not using jobManager
-        # self.mechanical = pyroutil.connectApp(ns, 'mechanical-ex08')
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         thermalSignature = self.getModel('thermal').getApplicationSignature()
         log.info("Working thermal server " + thermalSignature)
@@ -75,30 +68,24 @@ class Example08(mp.Workflow):
             }
         }
 
-        ival = self.getModel('thermal').initialize(
+        self.getModel('thermal').initialize(
             workdir=self.getJobManager('thermal').getJobWorkDir(self.getModel('thermal').getJobID()),
             metadata=passingMD
         )
-        if ival is False:
-            return False
         thermalInputFile = mp.PyroFile(filename='..'+os.path.sep+'06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        ival = self.getModel('mechanical').initialize(
+        self.getModel('mechanical').initialize(
             workdir='.',
             metadata=passingMD
         )
-        if ival is False:
-            return False
         mechanicalInputFile = mp.PyroFile(filename='..' + os.path.sep + '06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
 
         # self.getModel('thermal').printMetadata()
         # self.getModel('mechanical').printMetadata()
-
-        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         

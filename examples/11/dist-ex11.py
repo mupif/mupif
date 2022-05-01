@@ -8,8 +8,10 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 log.setLevel(logging.INFO)
+
+
 class Example11_dist(mp.Workflow):
-    def __init__(self,metadata={}):
+    def __init__(self, metadata={}):
         MD=dict(
             Name='Generate random grain with dopant',
             ID='Example11-distrib',
@@ -18,7 +20,7 @@ class Example11_dist(mp.Workflow):
             Version_date='1.0.0, Feb 2019',
             Inputs=[],
             Outputs=[
-                dict(Type='mupif.GrainState',Type_ID='mupif.DataID.ID_GrainState',Name='Grain state',Description='Random grain state (model1) with dopand (added by model2)',Units='None',Origin='Simulated')
+                dict(Type='mupif.GrainState', Type_ID='mupif.DataID.ID_GrainState', Name='Grain state', Description='Random grain state (model1) with dopand (added by model2)', Units='None', Origin='Simulated')
             ],
             Models=[
                 {
@@ -38,21 +40,15 @@ class Example11_dist(mp.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self,workdir='',metadata={}):
-        ival = super().initialize(workdir=workdir, metadata=metadata)
-        if ival is False:
-            return False
-        md=dict(Execution=dict(ID=self.getMetadata('Execution.ID'),Use_case_ID=self.getMetadata('Execution.Use_case_ID'),Task_ID=self.getMetadata('Execution.Task_ID')))
-        ival = self.getModel('m1').initialize(workdir=self.getJobManager('m1').getJobWorkDir(self.getModel('m1').getJobID()),metadata=md)
-        if ival is False:
-            return False
-        ival = self.getModel('m2').initialize(workdir=self.getJobManager('m2').getJobWorkDir(self.getModel('m2').getJobID()),metadata=md)
-        if ival is False:
-            return False
-        return True
+    def initialize(self, workdir='', metadata={}):
+        super().initialize(workdir=workdir, metadata=metadata)
+        md = dict(Execution=dict(ID=self.getMetadata('Execution.ID'), Use_case_ID=self.getMetadata('Execution.Use_case_ID'), Task_ID=self.getMetadata('Execution.Task_ID')))
+        self.getModel('m1').initialize(workdir=self.getJobManager('m1').getJobWorkDir(self.getModel('m1').getJobID()), metadata=md)
+        self.getModel('m2').initialize(workdir=self.getJobManager('m2').getJobWorkDir(self.getModel('m2').getJobID()), metadata=md)
 
     def getCriticalTimeStep(self): return 1*mp.U.s
-    def solveStep(self,istep,stageID=0,runInBackground=False):
+
+    def solveStep(self, istep, stageID=0, runInBackground=False):
         log.info('m1.solveStep…'); self.getModel('m1').solveStep(istep); log.info('… m1 done')
         # connect m1 output to m2 input
         self.getModel('m2').set(self.getModel('m1').get(mp.DataID.ID_GrainState))
@@ -60,11 +56,13 @@ class Example11_dist(mp.Workflow):
         log.debug(f'm2 output data: {self.getModel("m2").get(mp.DataID.ID_GrainState)}')
 
     def getApplicationSignature(self): return "Exmple 11 distributed"
+
     def getAPIVersion(self): return "1.0"
 
-if __name__=='__main__':
-    ex11=Example11_dist()
-    md=dict(Execution=dict(ID='1',Use_case_ID='1_1',Task_ID='1'))
+
+if __name__ == '__main__':
+    ex11 = Example11_dist()
+    md = dict(Execution=dict(ID='1', Use_case_ID='1_1', Task_ID='1'))
     ex11.initialize(metadata=md)
     ex11.solve()
     ex11.terminate()

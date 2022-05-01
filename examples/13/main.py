@@ -44,9 +44,7 @@ class Workflow13(mp.Workflow):
         self.ns = None
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         execMD = {
             'Execution': {
@@ -59,11 +57,7 @@ class Workflow13(mp.Workflow):
         self.ns = mp.pyroutil.connectNameserver()
         self.daemon = mp.pyroutil.getDaemon(self.ns)
 
-        ival = self.getModel('m1').initialize(workdir='', metadata=execMD)
-        if ival is False:
-            return False
-
-        return True
+        self.getModel('m1').initialize(workdir='', metadata=execMD)
 
     def get(self, objectTypeID, time=None, objectID=""):
         return self.getModel('m1').get(objectTypeID=objectTypeID, time=time, objectID=objectID)
