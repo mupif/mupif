@@ -40,9 +40,7 @@ class Workflow10(mp.workflow.Workflow):
         self.updateMetadata(metadata)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         execMD = {
             'Execution': {
@@ -52,9 +50,7 @@ class Workflow10(mp.workflow.Workflow):
             }
         }
 
-        ival = self.getModel('m1').initialize(workdir='', metadata=execMD)
-        if ival is False:
-            return False
+        self.getModel('m1').initialize(workdir='', metadata=execMD)
 
     def get(self, objectTypeID, time=None, objectID=""):
         return self.getModel('m1').get(objectTypeID=objectTypeID, time=time, objectID=objectID)

@@ -46,9 +46,7 @@ class Example06(mp.Workflow):
         self.updateMetadata(metadata)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         passingMD = {
             'Execution': {
@@ -58,27 +56,21 @@ class Example06(mp.Workflow):
             }
         }
 
-        ival = self.getModel('thermal').initialize(
+        self.getModel('thermal').initialize(
             workdir='.',
             metadata=passingMD
         )
-        if ival is False:
-            return False
         thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
         # self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        ival = self.getModel('mechanical').initialize(
+        self.getModel('mechanical').initialize(
             workdir='.',
             metadata=passingMD
         )
-        if ival is False:
-            return False
         mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
         # self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
-
-        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         self.getModel('thermal').solveStep(istep, stageID, runInBackground)

@@ -43,9 +43,7 @@ class Example07(mp.Workflow):
         self.daemon = None
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         # locate nameserver
         ns = pyroutil.connectNameserver()
@@ -66,27 +64,21 @@ class Example07(mp.Workflow):
             }
         }
 
-        ival = self.getModel('thermal').initialize(
+        self.getModel('thermal').initialize(
             workdir=self.getJobManager('thermal').getJobWorkDir(self.getModel('thermal').getJobID()),
             metadata=passingMD
         )
-        if ival is False:
-            return False
         thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        ival = self.getModel('mechanical').initialize(
+        self.getModel('mechanical').initialize(
             workdir=self.getJobManager('mechanical').getJobWorkDir(self.getModel('mechanical').getJobID()),
             metadata=passingMD
         )
-        if ival is False:
-            return False
         mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
-
-        return True
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
 

@@ -61,7 +61,7 @@ class Application2(mp.Model):
         # import pprint.prrint
         # pprint(self.metadata)
         # sys.exit(1)
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         md = {

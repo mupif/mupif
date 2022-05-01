@@ -7,6 +7,7 @@ import mupif as mp
 import logging
 log=logging.getLogger(__name__)
 
+
 class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
@@ -53,7 +54,7 @@ class Application1(mp.Model):
         self.value = 0.
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         md = {
@@ -129,7 +130,7 @@ class Application2(mp.Model):
             value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
 
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir, metadata, validateMetaData, **kwargs)
+        super().initialize(workdir, metadata, validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         md = {

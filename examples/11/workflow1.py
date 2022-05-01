@@ -5,8 +5,6 @@ import mupif as mp
 import logging
 log = logging.getLogger()
 
-from model1 import Model1
-
 
 class Example11_1(mp.Workflow):
    
@@ -24,21 +22,22 @@ class Example11_1(mp.Workflow):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state', 'Description': 'Sample Random grain state', 'Units': 'None', 'Origin': 'Simulated'}
+            ],
+            'Models': [
+                {
+                    'Name': 'm1',
+                    'Module': 'model1',
+                    'Class': 'Model1',
+                }
             ]
         }
 
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-
-        # model references
-        self.m1 = None
     
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
     
-        ival = super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-        if ival is False:
-            return False
-        self.m1 = Model1()
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         # To be sure update only required passed metadata in models
         passingMD = {
@@ -49,11 +48,7 @@ class Example11_1(mp.Workflow):
             }
         }
 
-        ival = self.m1.initialize(metadata=passingMD)
-        if ival is False:
-            return False
-
-        return True
+        self.getModel('m1').initialize(metadata=passingMD)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
@@ -61,27 +56,19 @@ class Example11_1(mp.Workflow):
         log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
 
         try:
-            self.m1.solveStep(istep)
+            self.getModel('m1').solveStep(istep)
 
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
 
-    def finishStep(self, tstep):
-        self.m1.finishStep(tstep)
-
     def get(self, objectTypeID, time=None, objectID=""):
-        return self.m1.get(objectTypeID, time, objectID)
+        return self.getModel('m1').get(objectTypeID, time, objectID)
 
     def set(self, obj, objectID=""):
-        return self.m1.set(obj, objectID)
+        return self.getModel('m1').set(obj, objectID)
 
     def getCriticalTimeStep(self):
-        return self.m1.getCriticalTimeStep()
-
-    def terminate(self):
-        if self.m1 is not None:
-            self.m1.terminate()
-        super().terminate()
+        return self.getModel('m1').getCriticalTimeStep()
     
     def getApplicationSignature(self):
         return "Example11 workflow1 1.0"

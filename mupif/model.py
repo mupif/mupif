@@ -261,8 +261,6 @@ class Model(mupifobject.MupifObject):
             self.validateMetadata(ModelSchema)
             # log.info('Metadata successfully validated')
 
-        return True
-
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
         """
         Register the Pyro daemon and nameserver. Required by several services
