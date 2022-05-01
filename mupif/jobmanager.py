@@ -44,6 +44,7 @@ JOBMAN_ERR = 99
 #  - how to kill the locked threads > this is an issue
 
 
+@Pyro5.api.expose
 class JobManException(Exception):
     """
     This class serves as a base class for exceptions thrown by the job manager.
@@ -51,11 +52,17 @@ class JobManException(Exception):
     pass
 
 
+@Pyro5.api.expose
 class JobManNoResourcesException(JobManException):
     """
     This class is thrown when there are no more available resources.
     """
     pass
+
+
+c = JobManNoResourcesException
+Pyro5.api.register_class_to_dict(c, {'__class__': c.__module__+'.'+c.__name__})
+Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, c)
 
 
 @Pyro5.api.expose
