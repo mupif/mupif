@@ -58,16 +58,10 @@ class Workflow10(mp.workflow.Workflow):
     def set(self, obj, objectID=""):
         super().set(obj=obj, objectID=objectID)
 
-    def finishStep(self, tstep):
-        self.getModel('m1').finishStep(tstep)
-
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time_property = mp.ConstantProperty(value=tstep.getTime().inUnitsOf(mp.U.s), propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
         self.getModel('m1').set(obj=time_property, objectID=1)
         self.getModel('m1').solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
-
-    def getCriticalTimeStep(self):
-        return self.getModel('m1').getCriticalTimeStep()
 
 
 if __name__ == '__main__':

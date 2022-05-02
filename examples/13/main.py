@@ -65,14 +65,8 @@ class Workflow13(mp.Workflow):
     def set(self, obj, objectID=""):
         self.getModel('m1').set(obj=obj, objectID=objectID)
 
-    def finishStep(self, tstep):
-        self.getModel('m1').finishStep(tstep)
-
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         self.getModel('m1').solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
-
-    def getCriticalTimeStep(self):
-        return self.getModel('m1').getCriticalTimeStep()
 
 
 if __name__ == '__main__':

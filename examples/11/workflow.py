@@ -70,14 +70,6 @@ class Example11(mp.Workflow):
 
         except mp.apierror.APIError as e:
             log.error("Following API error occurred: %s" % e)
-
-    def finishStep(self, tstep):
-        self.getModel('m1').finishStep(tstep)
-        self.getModel('m2').finishStep(tstep)
-
-    def getCriticalTimeStep(self):
-        # determine critical time step
-        return min(self.getModel('m1').getCriticalTimeStep(), self.getModel('m2').getCriticalTimeStep())
     
     def getApplicationSignature(self):
         return "Example11 workflow 1.0"

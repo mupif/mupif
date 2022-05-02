@@ -67,9 +67,6 @@ class Example11_2(mp.Workflow):
 
     def set(self, obj, objectID=""):
         return self.getModel('m2').set(obj, objectID)
-
-    def getCriticalTimeStep(self):
-        return self.getModel('m2').getCriticalTimeStep()
     
     def getApplicationSignature(self):
         return "Example11 workflow2 1.0"
