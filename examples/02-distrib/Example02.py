@@ -20,7 +20,7 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -77,7 +77,7 @@ class Application1(mp.Model):
         else:
             raise apierror.APIError('Unknown DataID')
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):

@@ -13,7 +13,7 @@ threading.current_thread().setName('ex10-main')
 @Pyro5.api.expose
 class Workflow10(mp.workflow.Workflow):
 
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             "ClassName": "Workflow10",
             "ModuleName": "main.py",
@@ -39,7 +39,7 @@ class Workflow10(mp.workflow.Workflow):
         mp.workflow.Workflow.__init__(self, metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):

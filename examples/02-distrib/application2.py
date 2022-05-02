@@ -12,7 +12,7 @@ class Application2(mp.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
@@ -57,7 +57,7 @@ class Application2(mp.Model):
         self.contrib = mp.ConstantProperty(
             value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         # import pprint.prrint
         # pprint(self.metadata)
         # sys.exit(1)

@@ -222,8 +222,9 @@ class Model(mupifobject.MupifObject):
     workDir: str = ''
     _jobID: str = None
 
-    def __init__(self, *, metadata={}, **kw):
-        super().__init__(metadata=metadata, **kw)
+    def __init__(self, *, metadata=None, **kw):
+        super().__init__(metadata={}, **kw)
+        self.updateMetadata(dictionary=metadata)
 
         (username, hostname) = pyroutil.getUserInfo()
         defaults = dict([
@@ -239,7 +240,7 @@ class Model(mupifobject.MupifObject):
             if k not in self.metadata:
                 self.setMetadata(k, v)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
 

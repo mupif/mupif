@@ -16,7 +16,7 @@ import mupif as mp
 
 class Example08(mp.Workflow):
    
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         """
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -51,7 +51,7 @@ class Example08(mp.Workflow):
         self.daemon = Pyro5.api.Daemon()
         threading.Thread(target=self.daemon.requestLoop).start()
     
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         log.info("Working thermal server " + self.getModel('thermal').getApplicationSignature())
