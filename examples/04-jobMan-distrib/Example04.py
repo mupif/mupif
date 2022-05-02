@@ -13,7 +13,7 @@ log.info('Timer started')
 
 class Example04(mp.Workflow):
    
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
@@ -45,7 +45,7 @@ class Example04(mp.Workflow):
         self.retprop = mp.ConstantProperty(
             value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):

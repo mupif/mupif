@@ -14,7 +14,7 @@ log = logging.getLogger()
 @Pyro5.api.expose
 class Workflow13(mp.Workflow):
 
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             "ClassName": "Workflow13",
             "ModuleName": "main.py",
@@ -41,7 +41,7 @@ class Workflow13(mp.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):

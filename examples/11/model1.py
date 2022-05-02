@@ -15,7 +15,7 @@ class Model1 (mp.Model):
     """
     Simple model that generates random grain state
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Application1',
             'ID': 'App1',
@@ -52,7 +52,7 @@ class Model1 (mp.Model):
         self.updateMetadata(metadata)
         self.grainState = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):

@@ -11,7 +11,7 @@ log.setLevel(logging.INFO)
 
 
 class Example11_dist(mp.Workflow):
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD=dict(
             Name='Generate random grain with dopant',
             ID='Example11-distrib',
@@ -40,7 +40,7 @@ class Example11_dist(mp.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, workdir='', metadata={}):
+    def initialize(self, workdir='', metadata=None):
         super().initialize(workdir=workdir, metadata=metadata)
         md = dict(Execution=dict(ID=self.getMetadata('Execution.ID'), Use_case_ID=self.getMetadata('Execution.Use_case_ID'), Task_ID=self.getMetadata('Execution.Task_ID')))
         self.getModel('m1').initialize(workdir=self.getJobManager('m1').getJobWorkDir(self.getModel('m1').getJobID()), metadata=md)

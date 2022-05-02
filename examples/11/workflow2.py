@@ -8,7 +8,7 @@ log = logging.getLogger()
 
 class Example11_2(mp.Workflow):
    
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         """
         Construct the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -37,7 +37,7 @@ class Example11_2(mp.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
     
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def solveStep(self, istep, stageID=0, runInBackground=False):

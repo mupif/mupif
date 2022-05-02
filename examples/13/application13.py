@@ -13,7 +13,7 @@ class Application13(mp.Model):
     """
     Simple application which sums given time values times 2
     """
-    def __init__(self, metadata={}, **kwargs):
+    def __init__(self, metadata=None, **kwargs):
         MD = {
             'Name': 'Simple multiplicator',
             'ID': 'N/A',
@@ -58,7 +58,7 @@ class Application13(mp.Model):
         self.value_1 = 0.
         self.value_2 = 0.
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):

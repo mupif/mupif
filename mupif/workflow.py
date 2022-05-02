@@ -99,7 +99,7 @@ class Workflow(model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, *, metadata={}):
+    def __init__(self, *, metadata=None):
         """
         Constructor. Initializes the workflow
 
@@ -153,7 +153,7 @@ class Workflow(model.Model):
             return self._jobmans[name]
         return None
 
-    def initialize(self, *, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, *, workdir='', metadata=None, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
 

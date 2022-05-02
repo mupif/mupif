@@ -12,7 +12,7 @@ log = logging.getLogger()
 
 class Example06(mp.Workflow):
 
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         """
         Initializes the workflow.
         """
@@ -45,7 +45,7 @@ class Example06(mp.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")

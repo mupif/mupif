@@ -11,7 +11,7 @@ log = logging.getLogger()
 
 class Example07(mp.Workflow):
    
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
         applications and store them within a class.
@@ -42,7 +42,7 @@ class Example07(mp.Workflow):
         self.updateMetadata(metadata)
         self.daemon = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
         # locate nameserver
