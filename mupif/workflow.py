@@ -63,15 +63,15 @@ WorkflowSchema["properties"].update({
         "items": {
             "type": "object",  # Object supplies a dictionary
             "properties": {
-                "Name": {"type": "string"},
+                "Name": {"type": "string"},  # specifies access to the model using self.getModel('Name')
                 "Module": {"type": "string"},
                 "Class": {"type": "string"},
                 "Jobmanager": {"type": "string"},
             },
             "required": ["Name"],
             "anyOf": [
-                {"required": ["Module", "Class"]},
-                {"required": ["Jobmanager"]}
+                {"required": ["Module", "Class"]},  # local module with the workflow class
+                {"required": ["Jobmanager"]}  # remote model
             ]
         }
     }
@@ -341,6 +341,11 @@ class Workflow(model.Model):
 
     def getExecutionTimestepLength(self):
         return self._exec_dt
+
+    def getCriticalTimeStep(self):
+        if len(self._models):
+            return min([m.getCriticalTimeStep() for m in self._models.values()])
+        return 1.e10
 
     def finishStep(self, tstep):
         for key_name, mmodel in self._models.items():

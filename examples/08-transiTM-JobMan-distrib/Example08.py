@@ -110,14 +110,6 @@ class Example08(mp.Workflow):
 
         logging.getLogger().setLevel(level0)
 
-    def finishStep(self, tstep):
-        self.getModel('thermal').finishStep(tstep)
-        self.getModel('mechanical').finishStep(tstep)
-
-    def getCriticalTimeStep(self):
-        # determine critical time step
-        return min(self.getModel('thermal').getCriticalTimeStep(), self.getModel('mechanical').getCriticalTimeStep())
-
     def terminate(self):
         self.daemon.shutdown()
         super().terminate()
