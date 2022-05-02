@@ -380,3 +380,27 @@ class Workflow(model.Model):
         self.updateMetadata(dictionary=dictionary)
         for _model in self._models.values():
             _model.updateAndPassMetadata(dictionary=dictionary)
+
+    @staticmethod
+    def checkModelRemoteResource(jobmanagername):
+        try:
+            ns = pyroutil.connectNameserver()
+            jobman = pyroutil.connectJobManager(ns, jobmanagername)
+            free_jobs = jobman.getNumberOfFreeJobs()
+            if free_jobs:
+                log.info("Jobmanager " + jobmanagername + " has " + str(free_jobs) + " free jobs")
+                return True
+            else:
+                log.warning("No available job slots for jobmanager " + jobmanagername)
+                return False
+        except Exception as e:
+            log.exception(e)
+            return False
+
+    @staticmethod
+    def checkModelRemoteResourcesByMetadata(models_md):
+        for model_info in models_md:
+            if model_info.get('Jobmanager', ''):
+                if Workflow.checkModelRemoteResource(jobmanagername=model_info.get('Jobmanager', '')) is False:
+                    return False
+        return True
