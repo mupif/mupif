@@ -48,15 +48,6 @@ class Example04(mp.Workflow):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        passingMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-        self.getModel('m1').initialize(metadata=passingMD)
-
     def solveStep(self, istep, stageID=0, runInBackground=False):
         val = mp.ConstantProperty(value=1000, propID=mp.DataID.PID_Time_step, valueType=mp.ValueType.Scalar, unit=mp.U.s)
         self.getModel('m1').set(val)

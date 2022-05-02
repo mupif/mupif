@@ -54,32 +54,13 @@ class Example08(mp.Workflow):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        thermalSignature = self.getModel('thermal').getApplicationSignature()
-        log.info("Working thermal server " + thermalSignature)
-        mechanicalSignature = self.getModel('mechanical').getApplicationSignature()
-        log.info("Working mechanical server " + mechanicalSignature)
+        log.info("Working thermal server " + self.getModel('thermal').getApplicationSignature())
+        log.info("Working mechanical server " + self.getModel('mechanical').getApplicationSignature())
 
-        # To be sure update only required passed metadata in models
-        passingMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        self.getModel('thermal').initialize(
-            workdir=self.getJobManager('thermal').getJobWorkDir(self.getModel('thermal').getJobID()),
-            metadata=passingMD
-        )
         thermalInputFile = mp.PyroFile(filename='..'+os.path.sep+'06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        self.getModel('mechanical').initialize(
-            workdir='.',
-            metadata=passingMD
-        )
         mechanicalInputFile = mp.PyroFile(filename='..' + os.path.sep + '06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
@@ -96,17 +77,17 @@ class Example08(mp.Workflow):
         
         # suppress show meshio warnings that writing VTK ASCII is for debugging only
         import logging
-        level0=logging.getLogger().level
+        level0 = logging.getLogger().level
         logging.getLogger().setLevel(logging.ERROR)
 
         self.getModel('thermal').solveStep(istep)
         f = self.getModel('thermal').get(DataID.FID_Temperature, self.getModel('mechanical').getAssemblyTime(istep))
-        data = f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=True)
+        f.toMeshioMesh().write('T_%02d.vtk' % istep.getNumber(), binary=True)
 
         self.getModel('mechanical').set(f)
-        sol = self.getModel('mechanical').solveStep(istep)
+        self.getModel('mechanical').solveStep(istep)
         f = self.getModel('mechanical').get(DataID.FID_Displacement, istep.getTime())
-        data = f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=True)
+        f.toMeshioMesh().write('M_%02d.vtk' % istep.getNumber(), binary=True)
 
         logging.getLogger().setLevel(level0)
 

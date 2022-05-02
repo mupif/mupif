@@ -48,26 +48,10 @@ class Example06(mp.Workflow):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        passingMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        self.getModel('thermal').initialize(
-            workdir='.',
-            metadata=passingMD
-        )
         thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
         # self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        self.getModel('mechanical').initialize(
-            workdir='.',
-            metadata=passingMD
-        )
         mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
         # self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)

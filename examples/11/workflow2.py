@@ -40,17 +40,6 @@ class Example11_2(mp.Workflow):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        # To be sure update only required passed metadata in models
-        passingMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        self.getModel('m2').initialize(metadata=passingMD)
-
     def solveStep(self, istep, stageID=0, runInBackground=False):
         
         log.info("Solving workflow")    

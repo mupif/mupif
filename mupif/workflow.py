@@ -131,6 +131,18 @@ class Workflow(model.Model):
             if self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', '')) is False:
                 return False
 
+    def _initializeAllModels(self):
+        _md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+        for _model in self._models.values():
+            print("Workflow calls initialize of " + _model.__class__.__name__)
+            _model.initialize(metadata=_md)
+
     def getModel(self, name):
         if name in self._models.keys():
             return self._models[name]
@@ -149,15 +161,12 @@ class Workflow(model.Model):
         :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
-        self.updateMetadata(metadata)
-        # self.generateModelDependencies()
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=False, **kwargs)
 
         self._allocateAllModels()
+        self._initializeAllModels()
 
-        if workdir == '':
-            self.workDir = os.getcwd()
-        else:
-            self.workDir = workdir
+        self.generateModelDependencies()
 
         if validateMetaData:
             self.validateMetadata(WorkflowSchema)
@@ -269,7 +278,7 @@ class Workflow(model.Model):
                 log.exception("Connection to workflow monitor broken")
                 raise e
 
-    def registerModel(self, mmodel, label=None):
+    def registerModel(self, mmodel, label=None):  # not used anymore
         """
         :param model.Model or model.RemoteModel or Workflow mmodel:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
@@ -312,26 +321,26 @@ class Workflow(model.Model):
 
     def generateModelDependencies(self):
         dependencies = []
-        for key_name, mmodel in self.getDictOfModels().items():
-            if isinstance(mmodel, (model.Model, Workflow, model.RemoteModel)):
+        for key_name, _model in self.getDictOfModels().items():
+            if isinstance(_model, (model.Model, Workflow, model.RemoteModel)):
                 # Temporary fix due to compatibility
-                if not mmodel.hasMetadata('Version_date') and not isinstance(model, Workflow):
-                    if mmodel.hasMetadata('Solver.Version_date'):
-                        mmodel.setMetadata('Version_date', mmodel.getMetadata('Solver.Version_date'))
+                if not _model.hasMetadata('Version_date') and not isinstance(model, Workflow):
+                    if _model.hasMetadata('Solver.Version_date'):
+                        _model.setMetadata('Version_date', _model.getMetadata('Solver.Version_date'))
 
-                md_name = mmodel.getMetadata('Name') if mmodel.hasMetadata('Name') else ''
-                md_id = mmodel.getMetadata('ID') if mmodel.hasMetadata('ID') else ''
-                md_ver = mmodel.getMetadata('Version_date') if mmodel.hasMetadata('Version_date') else ''
+                md_name = _model.getMetadata('Name') if _model.hasMetadata('Name') else ''
+                md_id = _model.getMetadata('ID') if _model.hasMetadata('ID') else ''
+                md_ver = _model.getMetadata('Version_date') if _model.hasMetadata('Version_date') else ''
 
                 m_r_id = {
                     'Label': str(key_name),
                     'Name': md_name,
                     'ID': md_id,
                     'Version_date': md_ver,
-                    'Type': 'Workflow' if isinstance(mmodel, Workflow) else 'Model'
+                    'Type': 'Workflow' if isinstance(_model, Workflow) else 'Model'
                 }
-                if isinstance(mmodel, Workflow):
-                    m_r_id.update({'Dependencies': mmodel.getMetadata('Dependencies')})
+                if isinstance(_model, Workflow):
+                    m_r_id.update({'Dependencies': _model.getMetadata('Dependencies')})
                 dependencies.append(m_r_id)
 
         self.setMetadata('Dependencies', dependencies)
@@ -348,16 +357,16 @@ class Workflow(model.Model):
         return 1.e10
 
     def finishStep(self, tstep):
-        for key_name, mmodel in self._models.items():
+        for _model in self._models.values():
             try:
-                mmodel.finishStep(tstep)
+                _model.finishStep(tstep)
             except:
                 pass
 
     def terminate(self):
-        for key_name, mmodel in self._models.items():
+        for _model in self._models.values():
             try:
-                mmodel.terminate()
+                _model.terminate()
             except:
                 pass
         for key_name, jobman in self._jobmans.items():
@@ -366,3 +375,8 @@ class Workflow(model.Model):
             except:
                 pass
         super().terminate()
+
+    def updateAndPassMetadata(self, dictionary: dict):
+        self.updateMetadata(dictionary=dictionary)
+        for _model in self._models.values():
+            _model.updateAndPassMetadata(dictionary=dictionary)

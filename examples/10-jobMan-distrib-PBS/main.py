@@ -42,16 +42,6 @@ class Workflow10(mp.workflow.Workflow):
     def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        execMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        self.getModel('m1').initialize(workdir='', metadata=execMD)
-
     def get(self, objectTypeID, time=None, objectID=""):
         return self.getModel('m1').get(objectTypeID=objectTypeID, time=time, objectID=objectID)
 

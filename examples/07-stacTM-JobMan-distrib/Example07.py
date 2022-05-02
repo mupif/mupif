@@ -49,33 +49,13 @@ class Example07(mp.Workflow):
         ns = pyroutil.connectNameserver()
         self.daemon = pyroutil.getDaemon(ns)
 
-        thermalSolverSignature = self.getModel('thermal').getApplicationSignature()
-        log.info("Working thermal solver on server " + thermalSolverSignature)
+        log.info("Working thermal solver on server " + self.getModel('thermal').getApplicationSignature())
+        log.info("Working mechanical solver on server " + self.getModel('mechanical').getApplicationSignature())
 
-        mechanicalSolverSignature = self.getModel('mechanical').getApplicationSignature()
-        log.info("Working mechanical solver on server " + mechanicalSolverSignature)
-
-        # To be sure update only required passed metadata in models
-        passingMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        self.getModel('thermal').initialize(
-            workdir=self.getJobManager('thermal').getJobWorkDir(self.getModel('thermal').getJobID()),
-            metadata=passingMD
-        )
         thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
         self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        self.getModel('mechanical').initialize(
-            workdir=self.getJobManager('mechanical').getJobWorkDir(self.getModel('mechanical').getJobID()),
-            metadata=passingMD
-        )
         mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
         self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
