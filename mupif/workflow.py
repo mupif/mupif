@@ -369,11 +369,6 @@ class Workflow(model.Model):
                 _model.terminate()
             except:
                 pass
-        for key_name, jobman in self._jobmans.items():
-            try:
-                jobman.terminate()
-            except:
-                pass
         super().terminate()
 
     def updateAndPassMetadata(self, dictionary: dict):
