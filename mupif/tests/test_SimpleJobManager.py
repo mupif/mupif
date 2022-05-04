@@ -9,12 +9,15 @@ from mupif.tests import testApp
 import unittest
 import time
 import mupif
+import mupif as mp
 import mupif.tests.testApp as testApp
 import multiprocessing
 import subprocess
 import importlib
 
 import Pyro5
+
+import pytest
 
 Pyro5.config.SERIALIZER = "serpent"
 # Pyro5.config.PICKLE_PROTOCOL_VERSION = 2  # to work with python 2.x and 3.x
@@ -23,6 +26,18 @@ Pyro5.config.SERVERTYPE = "multiplex"
 
 import logging
 log=logging.getLogger()
+
+@Pyro5.api.expose
+class StdOutErrModel(mp.Model):
+    def __init__(self,metadata={}):
+        super().__init__()
+        self.updateMetadata(metadata)
+    def solveStep(self,*args,**kw):
+        import sys
+        sys.stdout.write('THIS-IS-STDOUT\n')
+        sys.stdout.flush()
+        sys.stderr.write('THIS-IS-STDERR\n')
+        sys.stderr.flush()
 
 # find free port so that previously hung test does not block us
 def availablePort(p0,p1,host='127.0.0.1'):
@@ -146,8 +161,32 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user",ticket=ticket)
         print("Retcode2 "+str(retCode2))
 
+    def test_jobLog(self):
+        cls=self.__class__
+        jobManOut=mp.SimpleJobManager(ns=cls.ns,appName='appOut',workDir=cls.tmp,appClass=StdOutErrModel,maxJobs=1)
+        daemon=Pyro5.api.Daemon()
+        uri=daemon.register(jobManOut)
+        jobManOut.registerPyro(daemon=daemon,ns=cls.ns,uri=uri,appName=jobManOut.appName,externalDaemon=True)
+        self.assertEqual(jobManOut.getStatus(),[])
+        (retCode,jobId,port)=jobManOut.allocateJob(user='user')
+        self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
+        stat=jobManOut.getStatus()
+        self.assertEqual(len(stat),1)
+        jobId=stat[0].key
+        uri=stat[0].uri
+        mod=Pyro5.api.Proxy(uri)
+        mod.solveStep()
+        mod.terminate()
+        jobManOut.terminateJob(jobId)
+        stat=jobManOut.getStatus() # this will update job statuses internally
+        log=jobManOut.getLogFile(jobId)
+        log2=f'{cls.tmp}/job.log'
+        mp.PyroFile.copy(log,log2)
+        dta=open(log2,'r').read()
+        self.assertTrue('THIS-IS-STDOUT' in dta)
+        self.assertTrue('THIS-IS-STDERR' in dta)
 
 
-        
+
 
 if __name__ == '__main__': unittest.main()

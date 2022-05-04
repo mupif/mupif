@@ -80,6 +80,8 @@ class SimpleJobManager (jobmanager.JobManager):
 
     ticketExpireTimeout = 10
 
+    # if set to True (legacy!), simple multiprocess interface is used, but does not redirect stdout/stderr of the subprocess
+    # so keep it at False for now, and delete all JOBS_USE_MULTIPROCESSING blocks later
     JOBS_USE_MULTIPROCESSING=False
 
     def __init__(
@@ -116,7 +118,14 @@ class SimpleJobManager (jobmanager.JobManager):
         app=appClass()
         self.modelMetadata=app.getAllMetadata()
 
+        threading.Thread(target=self._childMonitorLoop,daemon=True).start()
+
         log.debug('SimpleJobManager: initialization done for application name %s' % self.applicationName)
+
+    def __del__(self):
+        # will cause the child monitoring thread to exit gracefully within 1 second
+        # (or it dies with the main process, if that comes sooner)
+        self._childMonitorFlag=False
 
     def runServer(self):
         return pyroutil.runJobManagerServer(jobman=self,ns=self.ns)
@@ -189,7 +198,15 @@ class SimpleJobManager (jobmanager.JobManager):
                 log.debug(f'Job {jobId} already finished, exit status {code}.')
                 if code!=0: log.error('Job {jobID} has non-zero exit status {code}')
                 dead.append(jobId)
-            for d in dead: del self.activeJobs[d]
+            for d in dead:
+                self.doneJobs[d]=self.activeJobs[d]
+                del self.activeJobs[d]
+
+    def _childMonitorLoop(self):
+        self._childMonitorFlag=True
+        while self._childMonitorFlag:
+            time.sleep(1)
+            self._updateActiveJobs()
 
 
     def preAllocate(self, requirements=None):
@@ -342,6 +359,7 @@ class SimpleJobManager (jobmanager.JobManager):
                             log.debug(f'{jobID} still running after 2s timeout, killing.')
                             job.proc.kill()
                     log.debug('SimpleJobManager:terminateJob: job %s terminated' % jobID)
+                    self.doneJobs[jobID]=job
                     del self.activeJobs[jobID]
                 except KeyError:
                     log.debug('SimpleJobManager:terminateJob: jobID error, job %s already terminated?' % jobID)
@@ -395,12 +413,12 @@ class SimpleJobManager (jobmanager.JobManager):
         See :func:`JobManager.getStatus`
         """
         self._updateActiveJobs()
-        JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user'])
+        JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user', 'uri'])
         status = []
         tnow = timeTime.time()
         with self.lock:
-            for key in self.activeJobs:
-                status.append(JobManagerStatus(key=key, running=tnow-self.activeJobs[key].starttime, user=self.activeJobs[key].user))
+            for key,job in self.activeJobs.items():
+                status.append(JobManagerStatus(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri))
         return status
 
     def getModelMetadata(self):
@@ -412,9 +430,14 @@ class SimpleJobManager (jobmanager.JobManager):
         """
         targetFileName = self.jobManWorkDir+os.path.sep+jobID+os.path.sep+filename
         PyroFile.copy(targetFileName, pyroFile)
-        # pyroutil.uploadPyroFile(targetFileName, pyroFile)
 
-    def getPyroFile(self, jobID, filename, mode="r", buffSize=1024):
+    def getLogFile(self,jobID):
+        pf=PyroFile(filename=self.doneJobs[jobID].jobLogName,mode='rb',bufSize=2**20)
+        self.pyroDaemon.register(pf)
+        return pf
+        #return self.getPyroFile(self.doneJobs[jobID].jobLogName)
+
+    def getPyroFile(self, jobID, filename, mode="r", buffSize=2**20):
         """
         See :func:`JobManager.getPyroFile`
         """
@@ -424,3 +447,5 @@ class SimpleJobManager (jobmanager.JobManager):
         self.pyroDaemon.register(pfile)
 
         return pfile
+
+

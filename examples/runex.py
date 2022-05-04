@@ -46,7 +46,7 @@ def getExec(main):
     if args.codecov and main: ret+=['-m','coverage','run']
     return tuple(ret)
 
-nshost,nsport=mp.pyroutil.runNameserverBg()
+nsBg=mp.pyroutil.runNameserverBg()
 import time
 time.sleep(.5)
 
@@ -54,7 +54,7 @@ def runEx(ex):
     env=os.environ.copy()
     exDir=thisDir+'/'+ex.dir
     env['PYTHONPATH']=os.pathsep.join([thisDir+'/..',thisDir,exDir])
-    env['MUPIF_NS']=f'{nshost}:{nsport}'
+    env['MUPIF_NS']=f'{nsBg.host}:{nsBg.port}'
     bg=[]
     try:
         for script in ex.scripts[1:]:

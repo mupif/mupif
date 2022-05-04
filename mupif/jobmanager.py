@@ -81,6 +81,7 @@ class JobManager(object):
         self.applicationName = appName
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
+        self.doneJobs = {} # dictionary of done jobs (for retrieving log files, for example)
         if workDir is None:
             self.workDirTemp=tempfile.TemporaryDirectory(prefix='mupif-')
             self.workDir=self.workDirTemp.name
