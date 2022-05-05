@@ -249,7 +249,7 @@ class Model(mupifobject.MupifObject):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-        print("Calling initialize() of " + self.__class__.__name__)
+        # print("Calling initialize() of " + self.__class__.__name__)
         self.updateMetadata(metadata)
 
         self.setMetadata('Name', self.getApplicationSignature())
@@ -370,7 +370,7 @@ class Model(mupifobject.MupifObject):
 
         :param timestep.TimeStep tstep: Solution step
         """
-        print("Calling finishStep() of " + self.__class__.__name__)
+        # print("Calling finishStep() of " + self.__class__.__name__)
 
     def getCriticalTimeStep(self):
         """
@@ -447,7 +447,7 @@ class Model(mupifobject.MupifObject):
         """
         Terminates the application. Shutdowns daemons if created internally.
         """
-        print("Calling terminate() of " + self.__class__.__name__)
+        # print("Calling terminate() of " + self.__class__.__name__)
         self.setMetadata('Status', 'Finished')
         self.setMetadata('Date_time_end', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
         

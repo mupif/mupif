@@ -137,7 +137,7 @@ class Workflow(model.Model):
             }
         }
         for _model in self._models.values():
-            print("Workflow calls initialize of " + _model.__class__.__name__)
+            # print("Workflow calls initialize of " + _model.__class__.__name__)
             _model.initialize(metadata=_md)
 
     def getModel(self, name):
