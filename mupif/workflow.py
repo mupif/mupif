@@ -119,17 +119,14 @@ class Workflow(model.Model):
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
                 self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
-                return True
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
                 self._models[name] = model_class()
-                return True
 
     def _allocateAllModels(self):
         for model_info in self.metadata['Models']:
-            if self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', '')) is False:
-                return False
+            self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
 
     def _initializeAllModels(self):
         _md = {
@@ -278,7 +275,7 @@ class Workflow(model.Model):
                 log.exception("Connection to workflow monitor broken")
                 raise e
 
-    def registerModel(self, mmodel, label=None):  # not used anymore
+    def registerModel(self, mmodel, label=None):
         """
         :param model.Model or model.RemoteModel or Workflow mmodel:
         :param str or None label: Explicit label of the model/workflow, given by the parent workflow.
