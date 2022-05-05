@@ -222,7 +222,10 @@ class Model(mupifobject.MupifObject):
     workDir: str = ''
     _jobID: str = None
 
-    def __init__(self, *, metadata={}, **kw):
+    def __init__(self, *, metadata=None, **kw):
+        super().__init__(metadata={}, **kw)
+        self.updateMetadata(dictionary=metadata)
+
         (username, hostname) = pyroutil.getUserInfo()
         defaults = dict([
             ('Username', username),
@@ -234,11 +237,10 @@ class Model(mupifobject.MupifObject):
         ])
         # use defaults for metadata, unless given explicitly
         for k, v in defaults.items():
-            if k not in metadata:
-                metadata[k] = v
-        super().__init__(metadata=metadata, **kw)
+            if k not in self.metadata:
+                self.setMetadata(k, v)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
 
@@ -247,6 +249,7 @@ class Model(mupifobject.MupifObject):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
+        print("Calling initialize() of " + self.__class__.__name__)
         self.updateMetadata(metadata)
 
         self.setMetadata('Name', self.getApplicationSignature())
@@ -261,7 +264,8 @@ class Model(mupifobject.MupifObject):
             self.validateMetadata(ModelSchema)
             # log.info('Metadata successfully validated')
 
-        return True
+    def updateAndPassMetadata(self, dictionary: dict):
+        self.updateMetadata(dictionary=dictionary)
 
     def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
         """
@@ -366,6 +370,7 @@ class Model(mupifobject.MupifObject):
 
         :param timestep.TimeStep tstep: Solution step
         """
+        print("Calling finishStep() of " + self.__class__.__name__)
 
     def getCriticalTimeStep(self):
         """
@@ -442,6 +447,7 @@ class Model(mupifobject.MupifObject):
         """
         Terminates the application. Shutdowns daemons if created internally.
         """
+        print("Calling terminate() of " + self.__class__.__name__)
         self.setMetadata('Status', 'Finished')
         self.setMetadata('Date_time_end', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
         

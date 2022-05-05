@@ -15,7 +15,7 @@ class Model2 (mp.Model):
     """
     Simple model that replaces random molecule in grain by another one (dopant)
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Application2',
             'ID': 'App2',
@@ -57,8 +57,8 @@ class Model2 (mp.Model):
         self.inputGrainState = None
         self.outputGrainState = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mp.DataID.ID_GrainState:

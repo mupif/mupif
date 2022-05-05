@@ -12,9 +12,9 @@ log = logging.getLogger()
 
 
 @Pyro5.api.expose
-class Workflow13(mp.workflow.Workflow):
+class Workflow13(mp.Workflow):
 
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             "ClassName": "Workflow13",
             "ModuleName": "main.py",
@@ -31,63 +31,27 @@ class Workflow13(mp.workflow.Workflow):
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
                  'Description': 'Result of multiplication', 'Units': 's^2', "ValueType": "Scalar"}
             ],
+            'Models': [
+                {
+                    'Name': 'm1',
+                    'Jobmanager': 'CVUT.demo01'
+                }
+            ]
         }
-        mp.workflow.Workflow.__init__(self, metadata=MD)
+        super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.daemon = None
-        self.ns = None
-        self.model_1_jobman = None
-        self.model_1 = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-
-        self.updateMetadata(dictionary=metadata)
-
-        execMD = {
-            'Execution': {
-                'ID': self.getMetadata('Execution.ID'),
-                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
-            }
-        }
-
-        self.ns = mp.pyroutil.connectNameserver()
-        self.daemon = mp.pyroutil.getDaemon(self.ns)
-
-        # initialization code of model_1 (Non-stationary thermal problem)
-        self.model_1_jobman = mp.pyroutil.connectJobManager(self.ns, 'CVUT.demo01')
-        try:
-            self.model_1 = mp.pyroutil.allocateApplicationWithJobManager(ns=self.ns, jobMan=self.model_1_jobman)
-            log.info(self.model_1)
-        except Exception as e:
-            log.exception(e)
-            return False
-        ival = self.model_1.initialize(workdir='', metadata=execMD)
-        if ival is False:
-            return False
-        self.registerModel(self.model_1, "model_1")
-
-        return mp.Workflow.initialize(self, workdir=workdir, metadata={}, validateMetaData=validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
-        return self.model_1.get(objectTypeID=objectTypeID, time=time, objectID=objectID)
+        return self.getModel('m1').get(objectTypeID=objectTypeID, time=time, objectID=objectID)
 
     def set(self, obj, objectID=""):
-        self.model_1.set(obj=obj, objectID=objectID)
-
-    def terminate(self):
-        if self.model_1 is not None:
-            self.model_1.terminate()
-        super().terminate()
-
-    def finishStep(self, tstep):
-        self.model_1.finishStep(tstep)
+        self.getModel('m1').set(obj=obj, objectID=objectID)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        self.model_1.solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
-
-    def getCriticalTimeStep(self):
-        return self.model_1.getCriticalTimeStep()
+        self.getModel('m1').solveStep(tstep=tstep, stageID=stageID, runInBackground=runInBackground)
 
 
 if __name__ == '__main__':

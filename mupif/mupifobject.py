@@ -145,14 +145,22 @@ class MupifObjectBase(MupifBaseModel):
                 self._iterInDictOfMetadataForUpdate(value, new_key)
             else:
                 self.setMetadata(new_key, value)
-        
+
     @pydantic.validate_arguments
-    def updateMetadata(self, dictionary: dict):
+    def _updateMetadata(self, dictionary: dict):
         """ 
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
         """
         self._iterInDictOfMetadataForUpdate(dictionary, "")
+
+    def updateMetadata(self, dictionary: dict):
+        """
+        Updates metadata's dictionary with a given dictionary
+        :param dict dictionary: Dictionary of metadata
+        """
+        if dictionary:
+            self._updateMetadata(dictionary=dictionary)
 
     def validateMetadata(self, template):
         """

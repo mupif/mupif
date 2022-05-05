@@ -7,11 +7,12 @@ import mupif as mp
 import logging
 log=logging.getLogger(__name__)
 
+
 class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -40,18 +41,20 @@ class Application1(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+            ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         # calls constructor from Application module
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         md = {
@@ -83,7 +86,7 @@ class Application2(mp.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application cummulating time steps',
             'ID': 'N/A',
@@ -112,10 +115,12 @@ class Application2(mp.Model):
             },
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
-                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
+                 'Description': 'Time step', 'Units': 's', 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+            ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Cummulative time',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
@@ -124,8 +129,8 @@ class Application2(mp.Model):
         self.contrib = mp.ConstantProperty(
             value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir, metadata, validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+        super().initialize(workdir, metadata, validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         md = {

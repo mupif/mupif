@@ -44,6 +44,7 @@ JOBMAN_ERR = 99
 #  - how to kill the locked threads > this is an issue
 
 
+@Pyro5.api.expose
 class JobManException(Exception):
     """
     This class serves as a base class for exceptions thrown by the job manager.
@@ -51,11 +52,17 @@ class JobManException(Exception):
     pass
 
 
+@Pyro5.api.expose
 class JobManNoResourcesException(JobManException):
     """
     This class is thrown when there are no more available resources.
     """
     pass
+
+
+c = JobManNoResourcesException
+Pyro5.api.register_class_to_dict(c, {'__class__': c.__module__+'.'+c.__name__})
+Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, c)
 
 
 @Pyro5.api.expose
@@ -96,6 +103,11 @@ class JobManager(object):
         self.appName = None
         self.externalDaemon = None
 
+    def getNumberOfFreeJobs(self):
+        """
+        Returns number of free jobs to be allocated.
+        """
+
     def preAllocate(self, requirements=None):
         """
             Allows to pre-allocate(reserve) the resource. 
@@ -106,12 +118,11 @@ class JobManager(object):
         """
         return False
 
-    def allocateJob(self, user, natPort=0, ticket=None):
+    def allocateJob(self, user, ticket=None):
         """
         Allocates a new job.
 
         :param str user: user name
-        :param int natPort: NAT port used in ssh tunnel
         :param ticket: ticket for preallocated resource, defaults to None
 
         :return: tuple (error code, None). errCode = (JOBMAN_OK, JOBMAN_ERR, JOBMAN_NO_RESOURCES). JOBMAN_OK indicates sucessfull allocation and JobID contains the PYRO name, under which the new instance is registered (composed of application name and a job number (allocated by jobmanager), ie, Miccress23). JOBMAN_ERR indicates an internal error, JOBMAN_NO_RESOURCES means that job manager is not able to allocate new instance of application (no more recources available)

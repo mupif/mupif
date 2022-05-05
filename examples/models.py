@@ -24,9 +24,10 @@ def getline(f):
 class ThermalModel(mupif.model.Model):
     """ Simple stationary heat transport solver on rectangular domains"""
 
-    def __init__(self, metadata={}):
-        if len(metadata) == 0:
-            metadata = {
+    def __init__(self, metadata=None):
+        super().__init__(metadata=metadata)
+        if metadata is None:
+            MD = {
                 "Name": "Stationary thermal problem",
                 "ID": "Thermo-1",
                 "Description": "Stationary heat conduction using finite elements on rectangular domain",
@@ -100,7 +101,7 @@ class ThermalModel(mupif.model.Model):
                     "Representation": "Finite volumes"
                 }
             }
-        super().__init__(metadata=metadata)
+            self.updateMetadata(MD)
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
@@ -138,7 +139,7 @@ class ThermalModel(mupif.model.Model):
 
         self.input_file = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def readInput(self, filename, tria=False):
@@ -743,7 +744,7 @@ class ThermalNonstatModel(ThermalModel):
         self.P = None
         self.Tp = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def getApplicationSignature(self):
@@ -1073,7 +1074,7 @@ class MechanicalModel(mupif.model.Model):
 
         self.input_file = None
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=""):

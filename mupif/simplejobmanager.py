@@ -183,7 +183,6 @@ class SimpleJobManager (jobmanager.JobManager):
                 del(self.tickets[i])
         return len(self.tickets)
 
-
     def _updateActiveJobs(self):
         with self.lock:
             dead=[]
@@ -208,6 +207,8 @@ class SimpleJobManager (jobmanager.JobManager):
             time.sleep(1)
             self._updateActiveJobs()
 
+    def getNumberOfFreeJobs(self):
+        return self.maxJobs - len(self.activeJobs) - self.__getNumberOfActiveTickets()
 
     def preAllocate(self, requirements=None):
         """
