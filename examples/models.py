@@ -59,7 +59,7 @@ class ThermalModel(mupif.model.Model):
                         "Type": "mupif.PyroFile",
                         "Required": True,
                         "Type_ID": "mupif.DataID.ID_InputFile",
-                        "Obj_ID": ["input_file_thermal"],
+                        "Obj_ID": "input_file_thermal",
                         "Set_at": "initialization",
                         "Units": "none"
                     }
@@ -105,7 +105,7 @@ class ThermalModel(mupif.model.Model):
         self.mesh = None
         self.morphologyType = None
         self.conductivity = mupif.property.ConstantProperty(
-            value=(1.,),
+            value=1.,
             propID=mupif.DataID.PID_effective_conductivity,
             valueType=mupif.ValueType.Scalar,
             unit=mupif.U['W/m/K']
@@ -398,7 +398,7 @@ class ThermalModel(mupif.model.Model):
 
         log.info("Assembling ...")
         for e in mesh.cells():
-            A_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime())[0])
+            A_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime()))
 
             # Assemble
             for i in range(ndofs):  # loop of dofs
@@ -690,7 +690,7 @@ class ThermalNonstatModel(ThermalModel):
                     "Type": "mupif.PyroFile",
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_InputFile",
-                    "Obj_ID": ["input_file_thermal_nonstat"],
+                    "Obj_ID": "input_file_thermal_nonstat",
                     "Set_at": "initialization",
                     "Units": "none"
                 }
@@ -837,7 +837,7 @@ class ThermalNonstatModel(ThermalModel):
 
             log.info("Assembling ...")
             for e in mesh.cells():
-                K_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime())[0])
+                K_e = self.compute_elem_conductivity(e, self.conductivity.getValue(tstep.getTime()))
                 C_e = self.compute_elem_capacity(e)
                 A_e = K_e * self.Tau + C_e / dt
                 P_e = np.subtract(C_e / dt, K_e * (1. - self.Tau))
@@ -1004,7 +1004,7 @@ class MechanicalModel(mupif.model.Model):
                     "Type": "mupif.PyroFile",
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_InputFile",
-                    "Obj_ID": ["input_file_mechanical"],
+                    "Obj_ID": "input_file_mechanical",
                     "Set_at": "initialization",
                     "Units": "none"
                 }
