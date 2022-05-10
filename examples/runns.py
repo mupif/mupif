@@ -10,6 +10,6 @@ log.setLevel(logging.DEBUG)
 
 
 if __name__ == "__main__":
-    nshost, nsport = mp.pyroutil.runNameserverBg()
-    log.warning(f"Starting nameserver on {nshost}:{nsport}")
+    nsBg = mp.pyroutil.runNameserverBg()
+    log.warning(f"Starting nameserver on {nsBg.host}:{nsBg.port}")
     input("Press key to shutdown nameserver.")
