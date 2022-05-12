@@ -29,7 +29,7 @@ log=logging.getLogger()
 
 @Pyro5.api.expose
 class StdOutErrModel(mp.Model):
-    def __init__(self,metadata={}):
+    def __init__(self,metadata=None):
         super().__init__()
         self.updateMetadata(metadata)
     def solveStep(self,*args,**kw):
@@ -38,6 +38,15 @@ class StdOutErrModel(mp.Model):
         sys.stdout.flush()
         sys.stderr.write('THIS-IS-STDERR\n')
         sys.stderr.flush()
+
+@Pyro5.api.expose
+class TimeoutModel(mp.Model):
+    def __init__(self,metadata=None):
+        super().__init__()
+        self.updateMetadata({'Timeout':1})
+    def solveStep(self,*args,**kw):
+        import time
+        time.sleep(10)
 
 # find free port so that previously hung test does not block us
 def availablePort(p0,p1,host='127.0.0.1'):
@@ -185,6 +194,19 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         dta=open(log2,'r').read()
         self.assertTrue('THIS-IS-STDOUT' in dta)
         self.assertTrue('THIS-IS-STDERR' in dta)
+
+    def test_timeout(self):
+        cls=self.__class__
+        jobManTime=mp.SimpleJobManager(ns=cls.ns,appName='appTimeout',workDir=cls.tmp,appClass=TimeoutModel,maxJobs=1)
+        daemon=Pyro5.api.Daemon()
+        uri=daemon.register(jobManTime)
+        jobManTime.registerPyro(daemon=daemon,ns=cls.ns,uri=uri,appName=jobManTime.appName,externalDaemon=True)
+        self.assertEqual(jobManTime.getStatus(),[])
+        (retCode,jobId,port)=jobManTime.allocateJob(user='user')
+        self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
+        time.sleep(2) # this will trigger the timeout of 1s
+        stat=jobManTime.getStatus()
+        self.assertEqual(len(stat),0) # not in active jobs anymore
 
 
 

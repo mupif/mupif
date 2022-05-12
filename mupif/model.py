@@ -121,6 +121,7 @@ ModelSchema = {
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
                 "Date_time_end": {"type": "string"},  # automatically set in Workflow
+                "Timeout": {"type": "int"}, # maximum runtime in seconds
                 "Username": {"type": "string"},  # automatically set in Model and Workflow
                 "Hostname": {"type": "string"}  # automatically set in Model and Workflow
             },
@@ -233,7 +234,8 @@ class Model(mupifobject.MupifObject):
             ('Status', 'Instantiated'),
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
             ('Execution', {}),
-            ('Solver', {})
+            ('Solver', {}),
+            ('Timeout',3*60*60.), # 3 hours
         ])
         # use defaults for metadata, unless given explicitly
         for k, v in defaults.items():
@@ -509,7 +511,6 @@ class RemoteModel (object):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID
-        self._appTunnel = appTunnel
         
     def __getattr__(self, name):
         """
@@ -541,12 +542,6 @@ class RemoteModel (object):
             finally:
                 self._jobMan.terminateJob(self._jobID)
                 self._jobID = None
-
-        # close tunnel as the last step so an application is still reachable
-        if self._appTunnel:
-            # log.info ("RemoteApplication: Terminating sshTunnel of application")
-            if self._appTunnel != "manual":
-                self._appTunnel.terminate()
 
     def __del__(self):
         """

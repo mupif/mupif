@@ -20,6 +20,7 @@ class Workflow13(mp.Workflow):
             "ModuleName": "main.py",
             "Name": "Example13 workflow",
             "ID": "workflow_13",
+            "Timeout": 30,
             "Description": "Calculates multiplication of two given values using a simple model",
             "Inputs": [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',

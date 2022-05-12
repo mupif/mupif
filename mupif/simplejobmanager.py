@@ -74,6 +74,7 @@ class SimpleJobManager (jobmanager.JobManager):
         proc: typing.Union[subprocess.Popen,multiprocessing.Process]
         uri: str
         starttime: float
+        timeout: int
         user: str
         port: int
         jobLogName: str
@@ -185,6 +186,7 @@ class SimpleJobManager (jobmanager.JobManager):
 
     def _updateActiveJobs(self):
         with self.lock:
+            # take note of processes terminated asynchronously
             dead=[]
             for jobId,job in self.activeJobs.items():
                 if isinstance(job.proc,multiprocessing.Process):
@@ -200,6 +202,16 @@ class SimpleJobManager (jobmanager.JobManager):
             for d in dead:
                 self.doneJobs[d]=self.activeJobs[d]
                 del self.activeJobs[d]
+
+            for jobId,job in self.activeJobs.items():
+                alive=time.time()-job.starttime
+                if alive>job.timeout:
+                    log.error('Job {jobId}: alive for {alive} < timeout {timeout}: terminating.')
+                    # don't call terminateJob directly: self.lock would deadlock
+                    # instead terminate the process, this will be picked up above in later
+                    job.proc.terminate()
+
+
 
     def _childMonitorLoop(self):
         self._childMonitorFlag=True
@@ -318,10 +330,14 @@ class SimpleJobManager (jobmanager.JobManager):
                     log.exception(e)
                     raise
 
+                # get model metadta remotely
+                model=Pyro5.api.Proxy(uri)
+                timeout=model.getMetadata('Timeout')
+
                 # check if uri is ok
                 # either by doing some sort of regexp or query ns for it
                 start = timeTime.time()
-                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, user=user, uri=uri, port=jobPort, jobLogName=jobLogName)
+                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, timeout=timeout, user=user, uri=uri, port=jobPort, jobLogName=jobLogName)
                 log.debug('SimpleJobManager: new process ')
                 log.debug(self.activeJobs[jobID])
 
