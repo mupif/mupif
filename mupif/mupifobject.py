@@ -28,6 +28,7 @@ import pprint
 import copy
 import typing
 from .dumpable import Dumpable, MupifBaseModel
+from typing import Optional
 
 import pydantic
 
@@ -135,6 +136,7 @@ class MupifObjectBase(MupifBaseModel):
             i += 1
 
     def _iterInDictOfMetadataForUpdate(self, dictionary, base_key):
+        if dictionary is None: return
         for key, value in dictionary.items():
             if base_key != "":
                 new_key = "%s.%s" % (base_key, key)
@@ -147,14 +149,14 @@ class MupifObjectBase(MupifBaseModel):
                 self.setMetadata(new_key, value)
 
     @pydantic.validate_arguments
-    def _updateMetadata(self, dictionary: dict):
+    def _updateMetadata(self, dictionary: Optional[dict]):
         """ 
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
         """
         self._iterInDictOfMetadataForUpdate(dictionary, "")
 
-    def updateMetadata(self, dictionary: dict):
+    def updateMetadata(self, dictionary: Optional[dict]):
         """
         Updates metadata's dictionary with a given dictionary
         :param dict dictionary: Dictionary of metadata
