@@ -223,16 +223,11 @@ class RemoteJobManager (object):
     has to be done from local computer, where the ssh tunnel has been created. 
     Also different connections (proxies) to the same jobManager can exist.
     """
-    def __init__(self, decoratee, sshTunnel=None):
+    def __init__(self, decoratee):
         self._decoratee = decoratee
-        self._sshTunnel = sshTunnel
         
     def __del__(self):
         self.terminate()
-        if self._sshTunnel:
-            # log.info ("RemoteJobManager: autoterminating sshTunnel")
-            # print ("RemoteJobManager: autoterminating sshTunnel")
-            self._sshTunnel.terminate()
     
     @Pyro5.api.oneway  # in case call returns much later than daemon.shutdown
     def terminate(self):
