@@ -235,7 +235,7 @@ class Model(mupifobject.MupifObject):
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
             ('Execution', {}),
             ('Solver', {}),
-            ('Timeout',3*60*60.), # 3 hours
+            ('Timeout',0), # no limit by default
         ])
         # use defaults for metadata, unless given explicitly
         for k, v in defaults.items():
