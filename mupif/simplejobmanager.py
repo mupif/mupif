@@ -205,7 +205,7 @@ class SimpleJobManager (jobmanager.JobManager):
 
             for jobId,job in self.activeJobs.items():
                 alive=time.time()-job.starttime
-                if alive>job.timeout:
+                if job.timeout>0 and alive>job.timeout:
                     log.error('Job {jobId}: alive for {alive} < timeout {timeout}: terminating.')
                     # don't call terminateJob directly: self.lock would deadlock
                     # instead terminate the process, this will be picked up above in later
