@@ -46,6 +46,8 @@ Pyro5.config.SERIALIZER = "serpent"
 # Pyro4.config.THREADPOOL_SIZE=100
 Pyro5.config.SERVERTYPE = "multiplex"
 
+Pyro5.config.COMMTIMEOUT=60
+
 import importlib.resources
 
 
