@@ -121,7 +121,7 @@ ModelSchema = {
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
                 "Date_time_end": {"type": "string"},  # automatically set in Workflow
-                "Timeout": {"type": "int"}, # maximum runtime in seconds
+                "Timeout": {"type": "integer"}, # maximum runtime in seconds
                 "Username": {"type": "string"},  # automatically set in Model and Workflow
                 "Hostname": {"type": "string"}  # automatically set in Model and Workflow
             },
