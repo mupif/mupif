@@ -9,7 +9,7 @@ import jsonschema
 class _TestModel1(model.Model):
     """ Empty model1(with missing required metadata) to test metadata setting"""
 
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         metadata1 = {
             'Name': 'Empty application to test metadata',
             'ID': 'N/A',
@@ -19,14 +19,14 @@ class _TestModel1(model.Model):
         super().__init__(metadata=metadata1)
         self.updateMetadata(metadata)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
 
 class _TestModel2(model.Model):
     """ Empty model2 to test metadata setting"""
 
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Empty application to test metadata',
             'ID': 'N/A',
@@ -61,7 +61,7 @@ class _TestModel2(model.Model):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):

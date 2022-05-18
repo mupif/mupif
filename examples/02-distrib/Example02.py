@@ -20,7 +20,7 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application storing time steps',
             'ID': 'N/A',
@@ -50,11 +50,13 @@ class Application1(mp.Model):
             'Inputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}],
+                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+            ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time_step', 'Name': 'Time step',
                  'Description': 'Time step', 'Units': 's',
-                 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
@@ -75,8 +77,8 @@ class Application1(mp.Model):
         else:
             raise apierror.APIError('Unknown DataID')
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         time = tstep.getTime().inUnitsOf('s').getValue()

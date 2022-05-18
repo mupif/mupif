@@ -11,7 +11,7 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
-    def __init__(self, metadata={}):
+    def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application returning simulation time',
             'ID': 'N/A',
@@ -41,14 +41,15 @@ class Application1(mp.Model):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Simulation time',
-                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}]
+                 'Description': 'Cummulative time', 'Units': 's', 'Origin': 'Simulated', "ValueType": "Scalar"}
+            ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
         self.value = 0.
 
-    def initialize(self, workdir='', metadata={}, validateMetaData=True, **kwargs):
-        return super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
         if objectTypeID == mp.DataID.PID_Time:
