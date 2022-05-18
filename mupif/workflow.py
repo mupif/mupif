@@ -30,10 +30,12 @@ from . import units
 from . import Property
 from . import DataID
 from . import U
+from . import pyroutil
 import numpy
 import copy
 import logging
 from collections.abc import Iterable
+import importlib
 
 log = logging.getLogger()
 
@@ -55,17 +57,34 @@ WorkflowSchema["properties"].update({
             },
             "required": ["Name", "ID", "Version_date", "Type"]
         }
+    },
+    "Models": {
+        "type": "array",  # List of contained models/workflows definition
+        "items": {
+            "type": "object",  # Object supplies a dictionary
+            "properties": {
+                "Name": {"type": "string"},  # specifies access to the model using self.getModel('Name')
+                "Module": {"type": "string"},
+                "Class": {"type": "string"},
+                "Jobmanager": {"type": "string"},
+            },
+            "required": ["Name"],
+            "anyOf": [
+                {"required": ["Module", "Class"]},  # local module with the workflow class
+                {"required": ["Jobmanager"]}  # remote model
+            ]
+        }
     }
 })
-WorkflowSchema["required"] = ["Name", "ID", "Description", "Dependencies", "Execution", "Inputs", "Outputs"]
+WorkflowSchema["required"] = ["Name", "ID", "Description", "Execution", "Inputs", "Outputs", "Models"]
 
 workflow_input_targetTime_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
-    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['targetTime'], 'ValueType': 'Scalar'
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': 'targetTime', 'ValueType': 'Scalar'
 }
 workflow_input_dt_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'dt', 'Description': 'Timestep length',
-    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': ['dt'], 'ValueType': 'Scalar'
+    'Units': 's', 'Origin': 'User_input', 'Required': False, 'Set_at': 'initialization', 'Obj_ID': 'dt', 'ValueType': 'Scalar'
 }
 
 
@@ -80,7 +99,7 @@ class Workflow(model.Model):
 
     .. automethod:: __init__
     """
-    def __init__(self, *, metadata={}):
+    def __init__(self, *, metadata=None):
         """
         Constructor. Initializes the workflow
 
@@ -90,10 +109,48 @@ class Workflow(model.Model):
 
         self.workflowMonitor = None  # No monitor by default
         self._models = {}
+        self._jobmans = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
 
-    def initialize(self, *, workdir='', metadata={}, validateMetaData=True, **kwargs):
+    def _allocateModel(self, name, modulename, classname, jobmanagername):
+        if name:
+            if jobmanagername:
+                ns = pyroutil.connectNameserver()
+                self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
+            elif classname and modulename:
+                moduleImport = importlib.import_module(modulename)
+                model_class = getattr(moduleImport, classname)
+                self._models[name] = model_class()
+
+    def _allocateAllModels(self):
+        for model_info in self.metadata['Models']:
+            self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+
+    def _initializeAllModels(self):
+        _md = {
+            'Execution': {
+                'ID': self.getMetadata('Execution.ID'),
+                'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
+                'Task_ID': self.getMetadata('Execution.Task_ID')
+            }
+        }
+        for _model in self._models.values():
+            # print("Workflow calls initialize of " + _model.__class__.__name__)
+            _model.initialize(metadata=_md)
+
+    def getModel(self, name):
+        if name in self._models.keys():
+            return self._models[name]
+        return None
+
+    def getJobManager(self, name):
+        if name in self._jobmans.keys():
+            return self._jobmans[name]
+        return None
+
+    def initialize(self, *, workdir='', metadata=None, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
 
@@ -101,21 +158,18 @@ class Workflow(model.Model):
         :param dict metadata: Optional dictionary used to set up metadata (can be also set by setMetadata() )
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
-        self.generateModelDependencies()
-        self.updateMetadata(metadata)
+        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=False, **kwargs)
 
-        if workdir == '':
-            self.workDir = os.getcwd()
-        else:
-            self.workDir = workdir
+        self._allocateAllModels()
+        self._initializeAllModels()
+
+        self.generateModelDependencies()
 
         if validateMetaData:
             self.validateMetadata(WorkflowSchema)
 
-        return True
-
     def solve(self, runInBackground=False):
-        """ 
+        """
         Solves the workflow.
 
         The default implementation solves the problem
@@ -264,26 +318,26 @@ class Workflow(model.Model):
 
     def generateModelDependencies(self):
         dependencies = []
-        for key_name, mmodel in self.getDictOfModels().items():
-            if isinstance(mmodel, (model.Model, Workflow, model.RemoteModel)):
+        for key_name, _model in self.getDictOfModels().items():
+            if isinstance(_model, (model.Model, Workflow, model.RemoteModel)):
                 # Temporary fix due to compatibility
-                if not mmodel.hasMetadata('Version_date') and not isinstance(model, Workflow):
-                    if mmodel.hasMetadata('Solver.Version_date'):
-                        mmodel.setMetadata('Version_date', mmodel.getMetadata('Solver.Version_date'))
+                if not _model.hasMetadata('Version_date') and not isinstance(model, Workflow):
+                    if _model.hasMetadata('Solver.Version_date'):
+                        _model.setMetadata('Version_date', _model.getMetadata('Solver.Version_date'))
 
-                md_name = mmodel.getMetadata('Name') if mmodel.hasMetadata('Name') else ''
-                md_id = mmodel.getMetadata('ID') if mmodel.hasMetadata('ID') else ''
-                md_ver = mmodel.getMetadata('Version_date') if mmodel.hasMetadata('Version_date') else ''
+                md_name = _model.getMetadata('Name') if _model.hasMetadata('Name') else ''
+                md_id = _model.getMetadata('ID') if _model.hasMetadata('ID') else ''
+                md_ver = _model.getMetadata('Version_date') if _model.hasMetadata('Version_date') else ''
 
                 m_r_id = {
                     'Label': str(key_name),
                     'Name': md_name,
                     'ID': md_id,
                     'Version_date': md_ver,
-                    'Type': 'Workflow' if isinstance(mmodel, Workflow) else 'Model'
+                    'Type': 'Workflow' if isinstance(_model, Workflow) else 'Model'
                 }
-                if isinstance(mmodel, Workflow):
-                    m_r_id.update({'Dependencies': mmodel.getMetadata('Dependencies')})
+                if isinstance(_model, Workflow):
+                    m_r_id.update({'Dependencies': _model.getMetadata('Dependencies')})
                 dependencies.append(m_r_id)
 
         self.setMetadata('Dependencies', dependencies)
@@ -293,3 +347,52 @@ class Workflow(model.Model):
 
     def getExecutionTimestepLength(self):
         return self._exec_dt
+
+    def getCriticalTimeStep(self):
+        if len(self._models):
+            return min([m.getCriticalTimeStep() for m in self._models.values()])
+        return 1.e10
+
+    def finishStep(self, tstep):
+        for _model in self._models.values():
+            try:
+                _model.finishStep(tstep)
+            except:
+                pass
+
+    def terminate(self):
+        for _model in self._models.values():
+            try:
+                _model.terminate()
+            except:
+                pass
+        super().terminate()
+
+    def updateAndPassMetadata(self, dictionary: dict):
+        self.updateMetadata(dictionary=dictionary)
+        for _model in self._models.values():
+            _model.updateAndPassMetadata(dictionary=dictionary)
+
+    @staticmethod
+    def checkModelRemoteResource(jobmanagername):
+        try:
+            ns = pyroutil.connectNameserver()
+            jobman = pyroutil.connectJobManager(ns, jobmanagername)
+            free_jobs = jobman.getNumberOfFreeJobs()
+            if free_jobs:
+                log.info("Jobmanager " + jobmanagername + " has " + str(free_jobs) + " free jobs")
+                return True
+            else:
+                log.warning("No available job slots for jobmanager " + jobmanagername)
+                return False
+        except Exception as e:
+            log.exception(e)
+            return False
+
+    @staticmethod
+    def checkModelRemoteResourcesByMetadata(models_md):
+        for model_info in models_md:
+            if model_info.get('Jobmanager', ''):
+                if Workflow.checkModelRemoteResource(jobmanagername=model_info.get('Jobmanager', '')) is False:
+                    return False
+        return True

@@ -30,6 +30,7 @@ import time
 import json
 import atexit
 import signal
+import collections
 import urllib.parse
 import os.path
 import deprecated
@@ -44,6 +45,8 @@ log=logging.getLogger()
 Pyro5.config.SERIALIZER = "serpent"
 # Pyro4.config.THREADPOOL_SIZE=100
 Pyro5.config.SERVERTYPE = "multiplex"
+
+Pyro5.config.COMMTIMEOUT=60
 
 import importlib.resources
 
@@ -76,7 +79,7 @@ class _NS_METADATA:
 
 def runNameserverBg(nshost=None,nsport=None):
     import threading
-    threading.current_thread().setName('mupif-nameserver')
+    threading.current_thread().name='mupif-nameserver'
     import Pyro5.configure
     Pyro5.configure.SERIALIZER='serpent'
     Pyro5.configure.PYRO_SERVERTYPE='multiplex'
@@ -91,10 +94,11 @@ def runNameserverBg(nshost=None,nsport=None):
         finally:
             nsDaemon.close()
             if nsBroadcast is not None: nsBroadcast.close()
-    threading.Thread(target=_nsBg,daemon=True).start()
+    thread=threading.Thread(target=_nsBg,daemon=True).start()
     h,p=nsDaemon.locationStr.rsplit(':',1) # handles both ipv4 and ipv6
     log.info(f'Nameserver up at {h}:{p}')
-    return h,p
+    NameserverBg=collections.namedtuple('NameserverBg',['host','port','thread'])
+    return NameserverBg(host=h,port=p,thread=thread)
 
 
 def locateNameserver(nshost=None,nsport=0,server=False):

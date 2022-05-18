@@ -949,6 +949,8 @@ Top contexts (on the level of the schema) define a few special methods:
             schemaRegistry = makeSchemaRegistry(json.loads(self.schemasJson))
             top = schemaRegistry[grp.attrs['schema']](top=HeavyStruct.TopContext(h5group=grp, schemaRegistry=schemaRegistry, pyroIds=self.pyroIds))
             return self._returnProxy(top)
+    def getSchemaName(self): return self.schemaName
+    def getSchemasJson(self): return self.schemasJson
 
 
 '''
