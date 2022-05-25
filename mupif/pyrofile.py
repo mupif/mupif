@@ -32,6 +32,7 @@ import shutil
 import logging
 import deprecated
 import pydantic
+import os.path
 from .mupifobject import MupifObjectBase
 
 log=logging.getLogger(__name__)
@@ -81,6 +82,10 @@ class PyroFile (MupifObjectBase):
             if finish:
                 self.rewind()
                 return 
+
+    @Pyro5.api.expose
+    def getBasename(self):
+        return os.path.basename(self.filename)
 
     @Pyro5.api.expose
     def setChunk(self, buffer):
