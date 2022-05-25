@@ -7,7 +7,7 @@ from . import mupifobject
 
 
 @Pyro5.api.expose
-class TextProperty(mupifobject.MupifObject):
+class StringProperty(mupifobject.MupifObject):
     """
 
     """
@@ -26,14 +26,14 @@ class TextProperty(mupifobject.MupifObject):
 
     def to_db_dict(self):
         return {
-            'ClassName': 'TextProperty',
+            'ClassName': 'StringProperty',
             'DataID': self.dataID.name,
             'Value': self.value
         }
 
     @staticmethod
     def from_db_dict(d):
-        return TextProperty(
+        return StringProperty(
             dataID=dataid.DataID[d['DataID']],
             value=d['Value']
         )
