@@ -304,7 +304,7 @@ if __name__=='__main__':
         chunk=10000
         print('Adding vertices')
         import tqdm
-        import warning
+        import warnings
         import math
         warnings.simplefilter('ignore',tqdm.TqdmWarning)
         for vv in tqdm.tqdm(chunker(verts,chunk),total=math.ceil(len(verts)/chunk),unit_scale=chunk,unit='verts'):
