@@ -23,6 +23,7 @@
 import logging
 import argparse
 import os
+from . import pyrolog
 
 import Pyro5
 
@@ -58,6 +59,11 @@ def setupLoggingAtStartup():
         fileHandler=logging.FileHandler(out, mode='w')
         fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
         root.addHandler(fileHandler)
+
+    pyroOut=os.environ.get('MUPIF_LOG_PYRO',None)
+    if pyroOut is not None:
+        pyroHandler=pyrolog.PyroLogHandler(uri=pyroOut,tag='<unspecified>')
+        root.addHandler(pyroHandler)
 
     try:
         import colorlog
