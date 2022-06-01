@@ -228,8 +228,8 @@ class Field(mupifquantity.MupifQuantity):
                             try:
                                 answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
                             except IndexError:
-                                log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
-                                raise
+                                raise RuntimeError('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
+                                # raise
                             return answer
 
                     except ZeroDivisionError:
@@ -239,47 +239,33 @@ class Field(mupifquantity.MupifQuantity):
                         icell.debug = 1
                         log.debug(icell.containsPoint(position), icell.glob2loc(position))
 
-                log.error('Field::evaluate - no source cell found for position %s' % str(position))
+                # log.error('Field::evaluate - no source cell found for position %s' % str(position))
                 for icell in cells:
                     log.debug(icell.number)
                     log.debug(icell.containsPoint(position))
                     log.debug(icell.glob2loc(position))
+                raise ValueError(f'Field.evaluate: no source cell found for position {position}')
 
-            else:  # if (self.fieldType == FieldType.FT_vertexBased):
+            else:
                 # in case of cell based fields do compute average of cell values containing point
                 # this typically happens when point is on the shared edge or vertex
-                count = 0
+                answer=[]
                 for icell in cells:
                     if icell.containsPoint(position):
-                        if debug:
-                            log.debug(icell.getVertices())
-
-                        try:
-                            tmp = self.value[icell.number]
-                            if count == 0:
-                                answer = list(tmp)
-                            else:
-                                for i in answer:
-                                    answer = [x+y for x in answer for y in tmp]
-                            count += 1
-
+                        if debug: log.debug(icell.getVertices())
+                        try: answer.append(self.value[icell.number])
                         except IndexError:
                             log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                             log.error(icell.getVertices())
                             raise
-                # end loop over icells
-                if count == 0:
-                    log.error('Field::evaluate - no source cell found for position %s', str(position))
-                    # for icell in cells:
-                    #    log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                if not answer: 
+                    raise ValueError(f'Field::evaluate - no source cell found for {position=}')
                 else:
-                    answer = [x/count for x in answer]
-                    return answer
-
+                    return np.mean(answer,axis=0)
         else:
             # no source cell found
-            log.error('Field::evaluate - no source cell found for position ' + str(position))
-            raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
+            # log.error('Field::evaluate - no source cell found for position ' + str(position))
+            raise ValueError(f'No source cell found for {position=}')  # + str(position))
 
     def getVertexValue(self, vertexID):
         """

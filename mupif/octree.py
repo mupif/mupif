@@ -20,8 +20,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, 
 # Boston, MA  02110-1301  USA
 #
-from builtins import str, range, object
-
 import math
 import itertools
 from . import bbox
@@ -29,14 +27,20 @@ from . import localizer
 import Pyro5
 import pydantic
 import deprecated
+import sys
+import numpy
+import logging
 
 debug = 0
 refineLimit = 400  # refine cell if number of items exceeds this treshold value
+maxSubdivLevel=10 
+
+log=logging.getLogger(__name__)
 
 
-class Octant(object):
+class Octant_py(object):
     """
-    Defines Octree Octant: a cell containing either terminal data or its child octants.
+    Defines Octree Octant (Octant_py): a cell containing either terminal data or its child octants.
     Octree is used to partition space by recursively subdividing the root cell 
     (square or cube) into octants. Octants can be terminal (containing the data) 
     or can be further subdivided into children octants.
@@ -45,19 +49,19 @@ class Octant(object):
     .. automethod:: __init__
     """
 
-    def __init__(self, octree, parent, origin, size):
+    def __init__(self, *, octree, parent, origin, size, level):
         """
-        The contructor. Octant class contains:
+        The contructor. Octant_py class contains:
 
         * data: Container storing the indexed objects (cells, vertices, etc)
         * children: Container storing the children octants (if not terminal). 
         * octree: Link to octree object 
-        * parent: Link to parent Octant
-        * origin: Coordinates of Octant lower left corner
-        * size: Dimension of Octant
+        * parent: Link to parent Octant_py
+        * origin: Coordinates of Octant_py lower left corner
+        * size: Dimension of Octant_py
 
         :param Octree octree: Link to octree object 
-        :param Octree parent: Link to parent Octant
+        :param Octree parent: Link to parent Octant_py
         :param tuple origin: coordinates of octant lower left corner
         :param float size: Size (dimension) of receiver
         """
@@ -68,8 +72,8 @@ class Octant(object):
         self.origin = origin
         self.size = size
         self.bbox = None
-        if debug:
-            print("Octree init: origin:", origin, "size:", size)
+        self.level = level
+        if debug: print(f'Octree {level=} init: {origin=}, {size=}')
 
     def childrenIJK(self):
         """
@@ -89,10 +93,9 @@ class Octant(object):
         """
         Divides the receiver locally, creating child octants.
         """
-        if debug:
-            print("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
-        if not self.isTerminal():
-            assert "Could not divide non terminal octant"
+        # if debug: print("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
+        if not self.isTerminal(): raise RuntimeError("Could not divide non-terminal octant (programming error)")
+        if self.level>maxSubdivLevel: raise RuntimeError(f'Subdivision {maxSubdivLevel=} reached. ?!')
         self.children = []
         for i in range(self.octree.mask[0]+1):
             self.children.append([])
@@ -100,7 +103,7 @@ class Octant(object):
                 self.children[i].append([])
                 for k in range(self.octree.mask[2]+1):
                     origin = (self.origin[0]+i*self.size/2., self.origin[1]+j*self.size/2., self.origin[2]+k*self.size/2.)
-                    self.children[i][j].append(Octant(self.octree, self, origin, self.size/2.))
+                    self.children[i][j].append(Octant_py(octree=self.octree, parent=self, origin=origin, size=self.size/2., level=self.level+1))
                     if debug:
                         print("  Children: ", self.children[i][j][k].giveMyBBox())
 
@@ -138,12 +141,12 @@ class Octant(object):
         """
         if itemBBox is None:
             itemBBox = item.getBBox()
+            # print(f'  {itemBBox=}')
         if self.containsBBox(itemBBox):
             if self.isTerminal():
                 self.data.append(item)
                 if len(self.data) > refineLimit:
-                    if debug:
-                        print("Octant insert: data limit reached, subdivision")
+                    if debug: print(f'Octant_py insert: {refineLimit=} reached ({len(self.data)=}), subdividing...')
                     self.divide()
                     for item2 in self.data:
                         for i, j, k in self.childrenIJK():
@@ -247,7 +250,12 @@ class Octree(localizer.Localizer):
         :param tuple mask: boolean tuple, where true values determine the coordinate indices in which octree octants are subdivided
         """
         self.mask = mask
-        self.root = Octant(self, None, origin, size)
+        if len(origin)==2:
+            log.error(f'{origin=}, using py-based octant')
+            self.root=Octant_py(octree=self, parent=None, origin=origin, size=size, level=0)
+        else:
+            log.error(f'{origin=}, FAST')
+            self.root=Octant(octree=self, parent=None, origin=numpy.array(origin), size=size, level=0)
 
     def insert(self, item):
         """
@@ -292,3 +300,12 @@ class Octree(localizer.Localizer):
         See :func:`Octant.giveDepth`
         """
         return self.root.giveDepth()
+
+try:
+    from . import fastOctant
+    log.info('using mupif.fastOctact (imported)')
+    Octant=fastOctant.Octant
+    # Octant=Octant_py
+except ImportError:
+    log.warning('mupif.fastOctant not importable, using slower python implementation')
+    Octant=Octant_py

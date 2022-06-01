@@ -5,6 +5,7 @@ from .units import Unit
 from .cell import Cell
 from .vertex import Vertex
 from .mesh import Mesh
+from .bbox import BBox
 from . import cellgeometrytype as CGT
 import logging
 import Pyro5.api
@@ -22,6 +23,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
     Vertices and cells can be added to the mesh arbitrarily (grows dynamically).
     '''
     dim: int=3
+    h5group: str='/'
 
     GRP_VERTS='vertices'
     GRP_CELL_OFFSETS='cellOffsets'
@@ -59,6 +61,11 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
     def getVertex(self,i):
         self._ensureData()
         return Vertex(number=i,label=None,coords=tuple(self._h5grp[self.GRP_VERTS][i]))
+    def getGlobalBBox(self):
+        self._ensureData()
+        verts=self._h5grp[self.GRP_VERTS]
+        mn,mx=np.min(verts,axis=0),np.max(verts,axis=0)
+        return BBox(coords_ll=tuple(mn),coords_ur=tuple(mx))
     def getCell(self,i):
         self._ensureData()
         if self.GRP_CELL_OFFSETS in self._h5grp: offset=self._h5grp[self.GRP_CELL_OFFSETS][i]
@@ -66,7 +73,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         cgt=CGT.xdmfIndex2cgt[self._h5grp[self.GRP_CELL_CONN][offset]]
         CellType=Cell.getClassForCellGeometryType(cgt)
         nVerts=CGT.cgt2numVerts[cgt]
-        conn=self._h5grp[self.GRP_CELL_CONN][i+1:i+1+nVerts]
+        conn=self._h5grp[self.GRP_CELL_CONN][offset+1:offset+1+nVerts]
         return CellType(number=i,label=None,vertices=tuple(conn),mesh=self)
 
     def openData(self,mode: HeavyDataBase_ModeChoice):
@@ -88,6 +95,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
     def appendVertices(self,coords: np.ndarray):
         'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
         self._ensureData()
+        # print('appendVertices coords: ',coords)
         if coords.shape[1]!=self.dim: raise RuntimeError(f'Dimension mismatch: HeavyUnstructuredMesh.dim={self.dim}, coords.shape[1]={coords.shape[1]}.')
         _VERTS=self._h5grp[self.GRP_VERTS]
         l0,l1=_VERTS.shape[0],_VERTS.shape[0]+coords.shape[0]
@@ -127,8 +135,12 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         assert off==_CONN.shape[0]
     def writeXDMF(self,xdmf=None,fields=[]):
         'Write crude XDMF file for inspection — without copying any of the heavy data.'
-        if xdmf is None: xdmf=self.h5path+'.xdmf'
-        base=f'{os.path.basename(self.h5path)}:{self.h5group}'
+        if xdmf is None:
+            xdmf=self.h5path+'.xdmf'
+            xdmfH5path=os.path.basename(self.h5path)
+        else:
+            xdmfH5path=os.path.relpath(os.path.abspath(self.h5path),os.path.dirname(os.path.abspath(xdmf)))
+        base=f'{xdmfH5path}:{self.h5group}'
         head=f'''<?xml version="1.0"?>
 <Xdmf Version="3.0">
   <Domain>
@@ -147,11 +159,12 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         for field in fields:
             if id(field.mesh)!=id(self): raise ValueError('Field does not have this underlying mesh.')
             name=field.getFieldIDName()
+            xdmfH5path=os.path.relpath(os.path.abspath(field.quantity.dataset.file.filename),os.path.dirname(os.path.abspath(xdmf)))
             center={FieldType.FT_vertexBased:'Node',FieldType.FT_cellBased:'Cell'}[field.fieldType]
             attType={ValueType.Scalar:'Scalar',ValueType.Vector:'Vector',ValueType.Tensor:'Tensor'}[field.valueType]
             dim=' '.join([str(i) for i in field.value.shape])
             fieldXmls.append(f'''      <Attribute Name="{field.getFieldIDName()}" AttributeType="{attType}" Center="{center}">
-        <DataItem DataType="Float" Dimensions="{dim}" Format="HDF" Precision="8">{os.path.basename(self.h5path)}:{field.value.name}</DataItem>
+        <DataItem DataType="Float" Dimensions="{dim}" Format="HDF" Precision="8">{xdmfH5path}:{field.quantity.dataset.name}</DataItem>
      </Attribute>''')
         open(xdmf,'wb').write('\n'.join([head]+fieldXmls+[tail]).encode('utf8'))
     def fromMeshioMesh(self,mesh,progress=False,chunk=10000):
@@ -172,7 +185,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             for cc in seq(block.data,what=' '+block.type):
                 self.appendCells(types=len(cc)*[cgt],conn=cc)
 
-    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8'):
+    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8',h5mode='create'):
         '''
         Create preallocated :obj:`mupif.Field` object storing its data in the same HDF5 file as the mesh (*self*). The field dimensions are determined from fieldType (cell/vertex based, plus the number of cells/vertices of the mesh object) and valueType (size of one record). The field's values are not assigned but allocated in the HDF5 container as a dataset.
 
@@ -183,12 +196,12 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         >>>     # load mesh from somewhere
         >>>     hMesh.fromMeshioMesh(meshio.read('...'),progress=True,chunk=1000)
         >>>     # declare and allocate scalar field
-        >>>     pressure=hMesh.makeField(unit='Pa',fieldID=mp.DataID.FID_Pressure,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Scalar)
+        >>>     pressure=hMesh.makeHeavyField(unit='Pa',fieldID=mp.DataID.FID_Pressure,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Scalar)
         >>>     # fill field data
-        >>>     pressure.value=np.loadtxt('...',comments='%',usecols=(1,))
+        >>>     pressure.value[:]=np.loadtxt('...',comments='%',usecols=(1,))
         >>>     # create vector field
-        >>>     velocity=t3.makeField(unit='m/s',fieldID=mp.DataID.FID_Velocity,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Vector)
-        >>>     velocity.value=np.loadtxt('...',comments='%',usecols=(1,2,3))
+        >>>     velocity=t3.makeHeavyField(unit='m/s',fieldID=mp.DataID.FID_Velocity,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Vector)
+        >>>     velocity.value[:]=np.loadtxt('...',comments='%',usecols=(1,2,3))
         >>>     # write XDMF (can be opened in Paraview)
         >>>     t3.writeXDMF(xdmf='/tmp/t3.xdmf',fields=[pressure,velocity])
 
@@ -202,8 +215,8 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             ds=self._h5grp.create_dataset(fieldID.name,shape=shape,**kw)
             hq=Hdf5RefQuantity(dataset=ds,unit=unit)
         else:
-            hq=Hdf5OwningRefQuantity(mode='create',h5path=h5path,unit=unit)
-            hq.allocateDataset(fieldID.name,shape=shape,**kw)
+            hq=Hdf5OwningRefQuantity(mode=h5mode,h5path=h5path,h5loc=fieldID.name,unit=unit)
+            hq.allocateDataset(shape=shape,unit=unit,**kw)
         return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hq,fieldID=fieldID,time=0*Unit('s'))
 
 
@@ -290,13 +303,15 @@ if __name__=='__main__':
         t1.openData(mode='overwrite')
         chunk=10000
         print('Adding vertices')
-        from tqdm import tqdm
+        import tqdm
+        import warning
         import math
-        for vv in tqdm(chunker(verts,chunk),total=math.ceil(len(verts)/chunk),unit_scale=chunk,unit='verts'):
+        warnings.simplefilter('ignore',tqdm.TqdmWarning)
+        for vv in tqdm.tqdm(chunker(verts,chunk),total=math.ceil(len(verts)/chunk),unit_scale=chunk,unit='verts'):
             vv2=np.array([v[1] for v in vv])
             t1.appendVertices(coords=vv2)
         print('Adding cells')
-        for cc in tqdm(chunker(cells,chunk),total=math.ceil(len(cells)/chunk),unit_scale=chunk,unit='cells'):
+        for cc in tqdm.tqdm(chunker(cells,chunk),total=math.ceil(len(cells)/chunk),unit_scale=chunk,unit='cells'):
             t1.appendCells(types=[c[0] for c in cc],conn=[c[1] for c in cc])
         t1.writeXDMF()
         t1.closeData()
