@@ -120,7 +120,7 @@ class Octant_py(object):
                 cc[i] = self.origin[i]+self.size
             else:
                 cc[i] = self.origin[i]
-        self.bbox=bbox.BBox(self.origin, tuple(cc))  # create self bbox
+        self.bbox=bbox.BBox(tuple(self.origin), tuple(cc))  # create self bbox
         return self.bbox
 
     def containsBBox(self, _bbox):
