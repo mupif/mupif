@@ -136,6 +136,9 @@ class HeavyDataBase(MupifObject):
             self.pyroIds.append(v._pyroId)
         return v
 
+    def _ensureData(self,msg=None):
+        if not self._h5obj: raise RuntimeError('Backing storage not open'+('' if msg is None else f' ({msg})')+'.')
+
     def allocateDataset(self,*,h5loc,shape,**kw):
         if not self._h5obj: self.openStorage()
         if h5loc in self._h5obj: raise RuntimeError(f'Dataset {h5loc} already exists (shape {"×".join(self._h5obj[h5loc].shape)}).')
