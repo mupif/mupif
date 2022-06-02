@@ -8,6 +8,7 @@ import time as timemod
 import uuid
 import pbs_tool
 import tempfile
+import shutil
 
 log = logging.getLogger()
 
@@ -85,6 +86,8 @@ class Application10(mp.Model):
         dirname = os.path.dirname(rp)
 
         with tempfile.TemporaryDirectory(dir="/tmp", prefix='MuPIFex10') as tempDir:
+            shutil.copy(dirname + '/appexec.py', tempDir + '/appexec.py')
+            shutil.copy(dirname + '/appexec.job', tempDir + '/appexec.job')
 
             inpfile = "%s/inp.txt" % tempDir
             outfile = "%s/out.txt" % tempDir
@@ -97,7 +100,7 @@ class Application10(mp.Model):
             #
 
             # submit the job
-            jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
+            jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, tempDir, tempDir, tempDir, tempDir, tempDir))
 
             #
 
