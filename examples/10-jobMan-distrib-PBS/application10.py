@@ -86,8 +86,8 @@ class Application10(mp.Model):
 
         with tempfile.TemporaryDirectory(dir="/tmp", prefix='MuPIFex10') as tempDir:
 
-            inpfile = "%s/inp.txt" % dirname
-            outfile = "%s/out.txt" % dirname
+            inpfile = "%s/inp.txt" % tempDir
+            outfile = "%s/out.txt" % tempDir
             #
             # create the input file
             f = open(inpfile, 'w')
