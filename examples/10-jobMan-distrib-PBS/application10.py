@@ -86,8 +86,8 @@ class Application10(mp.Model):
 
         with tempfile.TemporaryDirectory(dir="/tmp", prefix='MuPIFex10') as tempDir:
 
-            inpfile = "%s/inp.txt" % tempDir
-            outfile = "%s/out.txt" % tempDir
+            inpfile = "%s/inp.txt" % dirname
+            outfile = "%s/out.txt" % dirname
             #
             # create the input file
             f = open(inpfile, 'w')
@@ -97,7 +97,7 @@ class Application10(mp.Model):
             #
 
             # submit the job
-            jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, tempDir, dirname, tempDir, tempDir))
+            jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
 
             #
 
