@@ -132,7 +132,7 @@ ModelSchema = {
             "items": {
                 "type": "object",  # Object supplies a dictionary
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.HeavyStruct", "mupif.PyroFile"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.HeavyStruct", "mupif.PyroFile", "mupif.String", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
                         "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
@@ -166,7 +166,7 @@ ModelSchema = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.HeavyStruct", "mupif.String", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
                         "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
