@@ -7,6 +7,7 @@ import mupif as mp
 import time as timemod
 import uuid
 import pbs_tool
+import tempfile
 
 log = logging.getLogger()
 
@@ -83,49 +84,43 @@ class Application10(mp.Model):
         rp = os.path.realpath(__file__)
         dirname = os.path.dirname(rp)
 
-        # create unique input and output file names (this is specific for each application/executable)
-        step_id = uuid.uuid4()
-        inpfile = "%s/inp_%s.txt" % (dirname, step_id)
-        outfile = "%s/out_%s.txt" % (dirname, step_id)
-        #
-        # create the input file
-        f = open(inpfile, 'w')
-        f.write("%f" % self.input)
-        f.close()
+        with tempfile.TemporaryDirectory(dir="/tmp", prefix='MuPIFex10') as tempDir:
 
-        #
-
-        # submit the job
-        jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
-
-        #
-
-        # wait until the job is finished
-        # After its completion, the job stays in the list of jobs with 'Completed' status for a while.
-        # After that time it is not in the list any more, which results in 'Unknown' state.
-        # With 60-second period of checking the job should be still available in the list.
-        pbs_tool.wait_until_job_is_done(jobid=jobid, checking_frequency=1.)
-
-        #
-
-        # process the results (this is specific for each application/executable)
-        if os.path.exists(outfile):
-            f = open(outfile, 'r')
-            read_value = f.readline()
+            inpfile = "%s/inp.txt" % tempDir
+            outfile = "%s/out.txt" % tempDir
+            #
+            # create the input file
+            f = open(inpfile, 'w')
+            f.write("%f" % self.input)
             f.close()
-            if read_value != "error":
-                self.value += float(read_value)
-            else:
-                raise mp.apierror.APIError("A problem occured in the solver.")
-        else:
-            print("File '%s' does not exist." % outfile)
-            raise mp.apierror.APIError("The output file does not exist.")
 
-        # delete the temporary input and output files
-        if os.path.exists(inpfile):
-            os.remove(inpfile)
-        if os.path.exists(outfile):
-            os.remove(outfile)
+            #
+
+            # submit the job
+            jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, tempDir, dirname, tempDir, tempDir))
+
+            #
+
+            # wait until the job is finished
+            # After its completion, the job stays in the list of jobs with 'Completed' status for a while.
+            # After that time it is not in the list any more, which results in 'Unknown' state.
+            # With 60-second period of checking the job should be still available in the list.
+            pbs_tool.wait_until_job_is_done(jobid=jobid, checking_frequency=1.)
+
+            #
+
+            # process the results (this is specific for each application/executable)
+            if os.path.exists(outfile):
+                f = open(outfile, 'r')
+                read_value = f.readline()
+                f.close()
+                if read_value != "error":
+                    self.value += float(read_value)
+                else:
+                    raise mp.apierror.APIError("A problem occured in the solver.")
+            else:
+                print("File '%s' does not exist." % outfile)
+                raise mp.apierror.APIError("The output file does not exist.")
 
     def getCriticalTimeStep(self):
         return 1000.*mp.U.s
