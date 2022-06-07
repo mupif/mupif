@@ -24,6 +24,14 @@ typedef Eigen::Matrix<int,3,1> Vector3i;
 using Eigen::Index;
 namespace py=pybind11;
 
+
+/*
+XDMF/hdf5 cell type codes which are supported by MuPIF and their volume is completely inside hull of their vertices. This allows an important optimization: bounding box of a cell can be computed without constructing the cell object itself, saving calls to Python from c++.
+*/
+std::set<int> vertHullEnvelope={0x04,0x05,0x06,0x09,0x24};
+
+
+
 /*
 Copied from https://github.com/woodem/woo/tree/master/src/supp/eigen/pybind11
 which happens to be code written by myself, so no license issues.
@@ -158,22 +166,29 @@ AlignedBox3d bbox_mupif2eigen(py::object bb){
 	return ret;
 }
 
+#if 0
 AlignedBox3d object_getBBox(const py::object& item){
 	return bbox_mupif2eigen(item.attr("getBBox")());
 }
+#endif
 
 struct Octant { //  XXX /* make sure copying does not happen */ public boost::noncopyable {
+
+	struct ItemBbox{ int item; AlignedBox3d bbox; };
+
 	AlignedBox3d box;
 	//Vector3d size;
 	double size;
 	boost::multi_array<shared_ptr<Octant>,3> children; // initially empty
-	std::vector<py::object> data;
+	// std::vector<py::object> data;
+	std::vector<ItemBbox> data;
 
 	/* first 2 ctor args ignored and *level*, only used for API-compatibility with Octant_py */
 	Octant(/*ignored*/py::object octree,/*ignored*/py::object parent, const Vector3d& _origin, const double& _size, int level=0): box(_origin,_origin+_size*Vector3d::Ones()), size(_size) { };
 	// same ctor, but without garbage args
 	Octant(const Vector3d& _origin, const double& _size): box(_origin,_origin+_size*Vector3d::Ones()), size(_size) { };
 
+	#if 0
 	// pickle support
 	// stuff everything into tuple, which will be passed to the ctor below
 	py::tuple pickle() const {
@@ -203,10 +218,11 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 		for(size_t i=0; i<py::len(dataList); i++) ret->data.push_back(dataList[i]);
 		return ret;
 	}
+	#endif
 
 	bool isTerminal() const{ return children.size()==0; }
 
-	AlignedBox3d giveMyBBox() const { return box; }
+	AlignedBox3d getBbox() const { return box; }
 	bool containsBBox(const AlignedBox3d& b) const { return !box.intersection(b).isEmpty(); }
 
 	void divide() {
@@ -214,28 +230,31 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 		children.resize(boost::extents[2][2][2]);
 		for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++){
 			shared_ptr<Octant> oc(make_shared<Octant>(/*origin*/box.min()+.5*size*Vector3d(i,j,k),/*size*/.5*size));
-			for(const py::object& i: data) oc->insert(i);
+			for(const ItemBbox& ib: data) oc->insert(ib);
 			children[i][j][k]=oc;
 		}
 		// in child nodes, remove from here
 		data.clear(); 
 	}
 
-	void insert(const py::object& item, AlignedBox3d itemBox=AlignedBox3d()){
-		if(itemBox.isEmpty()) itemBox=object_getBBox(item);
+	void insert_py(int item, py::object bbox){
+		this->insert(ItemBbox{item,bbox_mupif2eigen(bbox)});
+	}
+	void insert(const ItemBbox& itemBbox){
+		if(itemBbox.bbox.isEmpty()) throw std::runtime_error("item's bbox is empty.");
 		// item not here, nothing to do
-		if(!containsBBox(itemBox)) return;
+		if(!containsBBox(itemBbox.bbox)) return;
 		// dispatch to children, finished
 		if(!isTerminal()){
-			for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++) children[i][j][k]->insert(item,itemBox);
+			for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++) children[i][j][k]->insert(itemBbox);
 			return;
 		}
 		// add here
-		data.push_back(item);
+		data.push_back(itemBbox);
 		// divide also copies data to new children (unlike in the python implementation)
 		if(data.size()>refineLimit) divide();
 	}
-
+	#if 0
 	void delete_(py::object item, AlignedBox3d itemBox=AlignedBox3d()){
 		if(itemBox.isEmpty()) itemBox=object_getBBox(item);
 		if(!containsBBox(itemBox)) return;
@@ -245,8 +264,23 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 		}
 		for(size_t i=0; i<data.size(); i++){ if(data[i].ptr()==item.ptr()){ data.erase(data.begin()+i); break; } }
 	}
+	#endif
 
+	void getItemsInBBox_py(py::set& itemSet, const py::object& bbox_){
+		getItemsInBBox(itemSet,bbox_mupif2eigen(bbox_));
+	}
+	void getItemsInBBox(py::set& itemSet, const AlignedBox3d& bbox){
+		if(!containsBBox(bbox)) return;
+		if(!isTerminal()){
+			for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++) children[i][j][k]->getItemsInBBox(itemSet,bbox);
+			return;
+		}
+		for(const ItemBbox& ib: data){
+			if(!box.intersection(ib.bbox).isEmpty()) itemSet.add(ib.item); // PySet_Add(itemSet.ptr(),i.ptr());
+		}
+	}
 
+	#if 0
 	// exposed to python, checks storage type and dispatches to appropriate method
 	void getItemsInBBox_dispatcher(py::object& itemStorage, py::object bbox){
 		if(PySet_Check(itemStorage.ptr())){ getItemsInBBox_set(itemStorage,bbox_mupif2eigen(bbox)); return; }
@@ -267,31 +301,20 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 			if(!box.intersection(object_getBBox(i)).isEmpty()) itemList.append(i);
 		}
 	}
-
-	void getItemsInBBox_set(py::object& itemSet, const AlignedBox3d& bbox){
-		if(!containsBBox(bbox)) return;
-		if(!isTerminal()){
-			for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++) children[i][j][k]->getItemsInBBox_set(itemSet,bbox);
-			return;
+		void evaluate(py::object functor, AlignedBox3d functorBox=AlignedBox3d()){
+			if(functorBox.isEmpty()) functorBox=object_getBBox(functor);
+			if(!containsBBox(functorBox)) return;
+			if(!isTerminal()){
+				for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++) children[i][j][k]->evaluate(functor,functorBox);
+				return;
+			}
+			for(const py::object& i: data){
+				// if(!box.intersects(object_getBBox(i))) continue; /* needed? not in python */
+				functor.attr("evaluate")(i);
+			}
 		}
-		for(const py::object& i: data){
-			if(!box.intersection(object_getBBox(i)).isEmpty()) PySet_Add(itemSet.ptr(),i.ptr());
-		}
-	}
-
-	void evaluate(py::object functor, AlignedBox3d functorBox=AlignedBox3d()){
-		if(functorBox.isEmpty()) functorBox=object_getBBox(functor);
-		if(!containsBBox(functorBox)) return;
-		if(!isTerminal()){
-			for(int i=0; i<2; i++) for(int j=0; j<2; j++) for(int k=0; k<2; k++) children[i][j][k]->evaluate(functor,functorBox);
-			return;
-		}
-		for(const py::object& i: data){
-			// if(!box.intersects(object_getBBox(i))) continue; /* needed? not in python */
-			functor.attr("evaluate")(i);
-		}
-	}
-	int giveDepth() { throw std::runtime_error("Octant.giveDepth: not impelmented in c++"); }
+		int giveDepth() { throw std::runtime_error("Octant.giveDepth: not impelmented in c++"); }
+	#endif
 };
 
 PYBIND11_MODULE(fastOctant,mod){
@@ -304,13 +327,15 @@ PYBIND11_MODULE(fastOctant,mod){
 		.def(py::init<const Vector3d&, const double&>(),py::arg("min"),py::arg("size"))
 		.def(py::init<py::object,py::object,const Vector3d&,const double&,int>(),py::arg("octree"),py::arg("parent"),py::arg("origin"),py::arg("size"),py::arg("level")=0)
 		.def("isTerminal",&Octant::isTerminal)
-		.def("insert",&Octant::insert,py::arg("item"),py::arg("bbox")=AlignedBox3d())
-		.def("getItemsInBBox",&Octant::getItemsInBBox_dispatcher,py::arg("itemStorage"),py::arg("bbox"))
-		.def("delete",&Octant::delete_,py::arg("item"),py::arg("bbox")=AlignedBox3d())
-		.def("evaluate",&Octant::evaluate,py::arg("functor"),py::arg("bbox")=AlignedBox3d())
-		.def("giveDepth",&Octant::giveDepth)
-		.def("giveMyBBox",&Octant::giveMyBBox)
-		// XXX .def(py::pickle(&Octant::pickle,&Octant::unpickle))
+		.def("insert",&Octant::insert_py,py::arg("item"),py::arg("bbox"))
+		.def("getItemsInBBox",&Octant::getItemsInBBox_py,py::arg("itemSet"),py::arg("bbox"))
+		#if 0
+			.def("getBBox",&Octant::getBBox)
+			.def("evaluate",&Octant::evaluate,py::arg("functor"),py::arg("bbox")=AlignedBox3d())
+			.def("getDepth",&Octant::getDepth)
+			.def("delete",&Octant::delete_,py::arg("item"),py::arg("bbox")=AlignedBox3d())
+			.def(py::pickle(&Octant::pickle,&Octant::unpickle))	
+		#endif
 	;
 
 		/* not exposed:

@@ -30,12 +30,15 @@ import deprecated
 import sys
 import numpy
 import logging
+import collections
 
 debug = 0
 refineLimit = 400  # refine cell if number of items exceeds this treshold value
 maxSubdivLevel=10 
 
 log=logging.getLogger(__name__)
+
+ItemBbox=collections.namedtuple('ItemBBox','item bbox')
 
 
 class Octant_py(object):
@@ -93,7 +96,7 @@ class Octant_py(object):
         """
         Divides the receiver locally, creating child octants.
         """
-        # if debug: print("Dividing locally: self ", self.giveMyBBox(), " mask:", self.octree.mask)
+        # if debug: print("Dividing locally: self ", self.getBBox(), " mask:", self.octree.mask)
         if not self.isTerminal(): raise RuntimeError("Could not divide non-terminal octant (programming error)")
         if self.level>maxSubdivLevel: raise RuntimeError(f'Subdivision {maxSubdivLevel=} reached. ?!')
         self.children = []
@@ -105,9 +108,9 @@ class Octant_py(object):
                     origin = (self.origin[0]+i*self.size/2., self.origin[1]+j*self.size/2., self.origin[2]+k*self.size/2.)
                     self.children[i][j].append(Octant_py(octree=self.octree, parent=self, origin=origin, size=self.size/2., level=self.level+1))
                     if debug:
-                        print("  Children: ", self.children[i][j][k].giveMyBBox())
+                        print("  Children: ", self.children[i][j][k].getBBox())
 
-    def giveMyBBox(self):
+    def getBBox(self):
         """ 
         :return: Receiver's BBox
         :rtype: bbox.BBox
@@ -127,9 +130,9 @@ class Octant_py(object):
         """ 
         :return: True if BBox contains or intersects the receiver.
         """
-        return self.giveMyBBox().intersects(_bbox)
+        return self.getBBox().intersects(_bbox)
 
-    def insert(self, item, itemBBox=None):
+    def insert(self, item, bbox):
         """
         Insert given object into receiver container. 
         Object is inserted only when its bounding box intersects the bounding box of the receiver.
@@ -139,45 +142,38 @@ class Octant_py(object):
         :param object item: object to insert
         :param bbox.BBox itemBBox: Optional parameter determining the BBox of the object
         """
-        if itemBBox is None:
-            itemBBox = item.getBBox()
-            # print(f'  {itemBBox=}')
-        if self.containsBBox(itemBBox):
+        if self.containsBBox(bbox):
             if self.isTerminal():
-                self.data.append(item)
+                self.data.append(ItemBbox(item,bbox))
                 if len(self.data) > refineLimit:
                     if debug: print(f'Octant_py insert: {refineLimit=} reached ({len(self.data)=}), subdividing...')
                     self.divide()
-                    for item2 in self.data:
+                    for itemBbox in self.data:
                         for i, j, k in self.childrenIJK():
-                            self.children[i][j][k].insert(item2)
+                            self.children[i][j][k].insert(itemBbox.item,itemBbox.bbox)
                     # empty item list (items already inserted into its childrenren)
                     self.data = []
 
             else:
                 for i, j, k in self.childrenIJK():
-                    self.children[i][j][k].insert(item, itemBBox)
+                    self.children[i][j][k].insert(item, bbox)
 
-    def delete(self, item, itemBBox=None):
-        """
-        Deletes/removes the given object from receiver
+    #def delete(self, item, itemBBox=None):
+    #    """
+    #    Deletes/removes the given object from receiver
+    #
+    #    :param object item: object to remove
+    #    :param bbox.BBox itemBBox: Optional parameter to specify bounding box of the object to be removed
+    #    """
+    #    if itemBBox is None:
+    #        itemBBox = item.getBBox()
+    #    if self.containsBBox(itemBBox):
+    #        if self.isTerminal():
+    #            self.data.remove(item)
+    #        else:
+    #            for i, j, k in self.childrenIJK():
+    #                self.children[i][j][k].remove(item, itemBBox)
 
-        :param object item: object to remove
-        :param bbox.BBox itemBBox: Optional parameter to specify bounding box of the object to be removed
-        """
-        if itemBBox is None:
-            itemBBox = item.getBBox()
-        if self.containsBBox(itemBBox):
-            if self.isTerminal():
-                self.data.remove(item)
-            else:
-                for i, j, k in self.childrenIJK():
-                    self.children[i][j][k].remove(item, itemBBox)
-
-    @deprecated.deprecated('use getItemsInBBox instead')
-    def giveItemsInBBox(self,*args, **kw): return self.getItemsInBBox(*args,**kw)
-
-    @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
     def getItemsInBBox(self, itemSet: set, bbox: bbox.BBox):
         """ 
         Returns the list of objects inside the given bounding box. 
@@ -192,50 +188,50 @@ class Octant_py(object):
                 # if debug: print(tab, "Terminal containing bbox found....", self.giveMyBBox(), "nitems:", len(self.data))
                 for i in self.data:
                     # if debug: print(tab, "checking ... \n   %s %s"%(str(i.getBBox()), str(bbox)))
-                    if i.getBBox().intersects(bbox):
-                        itemSet.add(i)
+                    if i.bbox.intersects(bbox):
+                        itemSet.add(i.item)
                         # if isinstance(itemList, set):
                         #    itemList.add(i)
                         # else:
                         #    itemList.append(i)
             else:
-                # if debug: print(tab, "Parent containing bbox found ....", self.giveMyBBox())
+                # if debug: print(tab, "Parent containing bbox found ....", self.getBBox())
                 for i, j, k in self.childrenIJK():
-                    # if debug: print(tab, "  Checking child .....", self.children[i][j][k].giveMyBBox())
+                    # if debug: print(tab, "  Checking child .....", self.children[i][j][k].getBBox())
                     self.children[i][j][k].getItemsInBBox(itemSet, bbox)
 
-    def evaluate(self, functor):
-        """ 
-        Evaluate the given functor on all containing objects.
-        The functor should define getBBox() function to return functor bounding box. Only the objects within this bouding box will be processed.
-        Functor should also define evaluate method accepting object as a parameter.
-
-        :param functor: Functor
-        """
-        if self.containsBBox(functor.getBBox()):
-            if self.isTerminal():
-                for i in self.data:
-                    functor.evaluate(i)
-            else:
-                for i, j, k in self.childrenIJK():
-                    self.children[i][j][k].evaluate(functor)
-
-    def giveDepth(self):
-        """
-        :return: Returns the depth (the subdivision level) of the receiver (and its children)
-        """
-        depth = math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0))
-        if not self.isTerminal():
-            for i, j, k in self.childrenIJK():
-                depth = max(depth, self.children[i][j][k].giveDepth())
-        return depth
+    #def evaluate(self, functor):
+    #    """ 
+    #    Evaluate the given functor on all containing objects.
+    #    The functor should define getBBox() function to return functor bounding box. Only the objects within this bouding box will be processed.
+    #    Functor should also define evaluate method accepting object as a parameter.
+    #
+    #    :param functor: Functor
+    #    """
+    #    if self.containsBBox(functor.getBBox()):
+    #        if self.isTerminal():
+    #            for i in self.data:
+    #                functor.evaluate(i)
+    #        else:
+    #            for i, j, k in self.childrenIJK():
+    #                self.children[i][j][k].evaluate(functor)
+    #
+    #def getDepth(self):
+    #    """
+    #    :return: Returns the depth (the subdivision level) of the receiver (and its children)
+    #    """
+    #    depth = math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0))
+    #    if not self.isTerminal():
+    #        for i, j, k in self.childrenIJK():
+    #            depth = max(depth, self.children[i][j][k].getDepth())
+    #    return depth
 
 
 class Octree(localizer.Localizer):
     """
     An octree is used to partition space by recursively subdividing the root cell (square or cube) into octants. Octants can be terminal (containing the data) or can be further subdivided into children octants partitioning the parent. Each terminal octant contains the objects with bounding box within the octant. Octree contains at least one octant, called root octant, with geometry large enough to contain all potential objects. Such a partitiong can significantly speed up spatial serches on objects.
     
-    Each object that can be inserted is assumed to provide giveBBox() returning its bounding box.
+    Each object that can be inserted is assumed to provide getBBox() returning its bounding box.
 
     Octree implementation supports 1D, 2D and 3D setting. This is controlled by Octree mask. Octree mask is a tuple containing 0 or 1 values. If corresponding mask value is nonzero, receiver is subdivided in corresponding coordinate direction. 
     
@@ -257,12 +253,12 @@ class Octree(localizer.Localizer):
             log.error(f'{origin=}, FAST')
             self.root=Octant(octree=self, parent=None, origin=numpy.array(origin), size=size, level=0)
 
-    def insert(self, item):
+    def insert(self, item, bbox):
         """
         Inserts given object into octree.
         See :func:`Octant.insert`
         """
-        self.root.insert(item)
+        self.root.insert(item, bbox)
 
     def delete(self, item):
         """
@@ -271,10 +267,8 @@ class Octree(localizer.Localizer):
         """
         self.root.delete(item)
 
-    @deprecated.deprecated('use getItemsInBBox instead')
-    def giveItemsInBBox(self, bbox): return self.getItemsInBBox(bbox)
-
-    def getItemsInBBox(self, bbox):
+    @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
+    def getItemsInBBox(self, bbox: bbox.BBox):
         """
         Returns the set of objects inside the given bounding box. 
         See :func:`Octant.getItemsInBBox`
@@ -288,18 +282,18 @@ class Octree(localizer.Localizer):
             print("Octree: Items found:", answer)
         return answer
 
-    def evaluate(self, functor):
-        """
-        Evaluate the given functor on all containing objects.
-        See :func:`Octant.evaluate`
-        """
-        self.root.evaluate(functor)
+    #def evaluate(self, functor):
+    #    """
+    #    Evaluate the given functor on all containing objects.
+    #    See :func:`Octant.evaluate`
+    #    """
+    #    self.root.evaluate(functor)
 
-    def giveDepth(self):
-        """
-        See :func:`Octant.giveDepth`
-        """
-        return self.root.giveDepth()
+    #def getDepth(self):
+    #    """
+    #    See :func:`Octant.getDepth`
+    #    """
+    #    return self.root.getDepth()
 
 try:
     from . import fastOctant

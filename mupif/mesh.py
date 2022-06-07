@@ -424,7 +424,7 @@ class Mesh(dumpable.Dumpable):
 
     def getGlobalBBox(self):
         vvv = self.vertices()
-        c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
+        c0 = next(iter(vvv)).getCoordinates()  # use the first bbox as base
         bb = bbox.BBox(c0, c0)  # ope-pointed bbox
         ## XXX replace by call to getVertices()
         for vert in vvv:
@@ -452,14 +452,11 @@ class Mesh(dumpable.Dumpable):
             # add mesh vertices into octree
             for iv,vertex in enumerate(self.vertices()):
                 if debug: print(f'  {iv=}, {vertex=}')
-                self._vertexOctree.insert(vertex)
+                self._vertexOctree.insert(iv,vertex.getBBox())
             if debug:
                 print("done in ", time.clock() - t0, "[s]")
 
             return self._vertexOctree
-
-    @deprecated.deprecated('use getCellLocalizer instead')
-    def giveCellLocalizer(self): return self.getCellLocalizer()
 
     def getCellLocalizer(self):
         """
@@ -498,7 +495,7 @@ class Mesh(dumpable.Dumpable):
             print("Mesh: setting up cell octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
         import tqdm
         for ic,cell in enumerate(tqdm.tqdm(self.cells(),unit=' cells',total=self.getNumberOfCells())):
-            self._cellOctree.insert(cell)
+            self._cellOctree.insert(ic,cell.getBBox())
         if debug:
             print("done in ", time.time() - t0, "[s]")
         return self._cellOctree

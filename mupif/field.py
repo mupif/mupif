@@ -217,6 +217,8 @@ class Field(mupifquantity.MupifQuantity):
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
+        # localizer in the newer version returns cell id, not the cell object, check that here
+        if isinstance(next(iter(cells)),int): cells=[self.mesh.getCell(ic) for ic in cells]
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:
@@ -233,7 +235,7 @@ class Field(mupifquantity.MupifQuantity):
                             return answer
 
                     except ZeroDivisionError:
-                        print('ZeroDivisionError?')
+                        log.error('ZeroDivisionError in Field.evaluate?')
                         log.debug(icell.number)
                         log.debug(position)
                         icell.debug = 1
@@ -318,7 +320,7 @@ class Field(mupifquantity.MupifQuantity):
             vv = np.zeros_like(self.value, shape=(mesh.getNumberOfCells(), self.getRecordSize()))
             for f in self, field:
                 for v in range(f.mesh.getNumberOfCells()):
-                    vv[mesh.cellLabel2Number(f.mesh.giveCell(v).label)] = f.getRecord(v)
+                    vv[mesh.cellLabel2Number(f.mesh.getCell(v).label)] = f.getRecord(v)
 
         self.mesh = mesh
         self.value = vv
