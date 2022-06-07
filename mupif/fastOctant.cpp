@@ -239,9 +239,6 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 		data.clear(); 
 	}
 
-	void insert_py(int item, py::object bbox){
-		this->insert(ItemBbox{item,bbox_mupif2eigen(bbox)});
-	}
 	void insert(const ItemBbox& itemBbox){
 		if(itemBbox.bbox.isEmpty()) throw std::runtime_error("item's bbox is empty.");
 		// item not here, nothing to do
@@ -256,25 +253,31 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 		// divide also copies data to new children (unlike in the python implementation)
 		if(data.size()>refineLimit) divide();
 	}
-	void insertCellArrayChunk(const Eigen::Array<double,Eigen::Dynamic,3>& vertices, const Eigen::Array<int,Eigen::Dynamic,1>& cellData, int cellOffset){
+	void insertCellArrayChunk(const Eigen::Array<double,Eigen::Dynamic,3>& vertices, const Eigen::Array<int,Eigen::Dynamic,1>& cellData, int cellOffset, const py::object& mesh){
 		int numVerts=0;
 		int cellNo=cellOffset;
+		int indirect=0;
 		// std::cerr<<"Chunk: first cell is "<<cellOffset<<", chunk has "<<cellData.rows()<<" entries."<<std::endl;
 		for(int icd=0; icd<cellData.rows(); icd+=numVerts+1){
 			int cellType=cellData[icd];
 			if(xdmfCellType_numVertices.count(cellType)==0) throw std::runtime_error("Cell "+to_string(cellNo)+": unhandled cell type "+to_string(cellType)+", cell within chunk "+to_string(icd)+", chunk offset "+to_string(cellOffset));
 			numVerts=xdmfCellType_numVertices[cellType];
-			if(xdmfCellType_vertexHullEnveloped.count(cellType)==0) throw std::runtime_error("Cell "+to_string(cellNo)+": cell of type "+to_string(cellType)+" is not entirely contained in hull of its vertices; this is currently unsupported for fastOctant.");
-			// std::cerr<<"Cell "<<cellNo<<" ("<<icd<<" + chunk offset "<<cellOffset<<"): type "<<cellType<<", "<<numVerts<<" verts."<<std::endl;
 			AlignedBox3d bb;
-			for(int ic=icd+1; ic<icd+numVerts+1; ic++){
-				if(ic>=cellData.rows()) throw std::runtime_error("Programming erorr: ic="+to_string(ic)+" > cellData.rows()="+to_string(cellData.rows())+")");
-				// std::cerr<<"  vertex "<<cellData[ic]<<" at "<<vertices.row(cellData[ic]).matrix().eval()<<std::endl;
-				bb.extend(vertices.row(cellData[ic]).matrix().transpose().eval());
+			if(xdmfCellType_vertexHullEnveloped.count(cellType)==0){
+				if(indirect++==0) std::cerr<<"Cell "+to_string(cellNo)+": cell of type "+to_string(cellType)+" is possibly not entirely contained in vertex hull. Using much slower Python calls to compute true bounding box."<<std::endl;;
+				bb=bbox_mupif2eigen(mesh.attr("getCell")(cellNo).attr("getBBox")());
+			} else {
+				// std::cerr<<"Cell "<<cellNo<<" ("<<icd<<" + chunk offset "<<cellOffset<<"): type "<<cellType<<", "<<numVerts<<" verts."<<std::endl;
+				for(int ic=icd+1; ic<icd+numVerts+1; ic++){
+					if(ic>=cellData.rows()) throw std::runtime_error("Programming erorr: ic="+to_string(ic)+" > cellData.rows()="+to_string(cellData.rows())+")");
+					// std::cerr<<"  vertex "<<cellData[ic]<<" at "<<vertices.row(cellData[ic]).matrix().eval()<<std::endl;
+					bb.extend(vertices.row(cellData[ic]).matrix().transpose().eval());
+				}
 			}
 			this->insert(ItemBbox{cellNo,bb});
 			cellNo++;
 		}
+		if(indirect>0) std::cerr<<"Number of cells with Python-side computation of the bounding box: "<<indirect<<std::endl;
 	}
 	#if 0
 	void delete_(py::object item, AlignedBox3d itemBox=AlignedBox3d()){
@@ -288,9 +291,6 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 	}
 	#endif
 
-	void getItemsInBBox_py(py::set& itemSet, const py::object& bbox_){
-		getItemsInBBox(itemSet,bbox_mupif2eigen(bbox_));
-	}
 	void getItemsInBBox(py::set& itemSet, const AlignedBox3d& bbox){
 		if(!containsBBox(bbox)) return;
 		if(!isTerminal()){
@@ -349,9 +349,9 @@ PYBIND11_MODULE(fastOctant,mod){
 		.def(py::init<const Vector3d&, const double&>(),py::arg("min"),py::arg("size"))
 		.def(py::init<py::object,py::object,const Vector3d&,const double&,int>(),py::arg("octree"),py::arg("parent"),py::arg("origin"),py::arg("size"),py::arg("level")=0)
 		.def("isTerminal",&Octant::isTerminal)
-		.def("insert",&Octant::insert_py,py::arg("item"),py::arg("bbox"))
-		.def("insertCellArrayChunk",&Octant::insertCellArrayChunk,py::arg("vertices"),py::arg("cellData"),py::arg("cellOffset"))
-		.def("getItemsInBBox",&Octant::getItemsInBBox_py,py::arg("itemSet"),py::arg("bbox"))
+		.def("insert",[](Octant* self, int item, py::object& bbox){ self->insert(Octant::ItemBbox{item,bbox_mupif2eigen(bbox)});} ,py::arg("item"),py::arg("bbox"))
+		.def("insertCellArrayChunk",&Octant::insertCellArrayChunk,py::arg("vertices"),py::arg("cellData"),py::arg("cellOffset"),py::arg("mesh"))
+		.def("getItemsInBBox",[](Octant* self,py::set itemSet, py::object& bbox){ self->getItemsInBBox(itemSet,bbox_mupif2eigen(bbox)); },py::arg("itemSet"),py::arg("bbox"))
 		#if 0
 			.def("getBBox",&Octant::getBBox)
 			.def("evaluate",&Octant::evaluate,py::arg("functor"),py::arg("bbox")=AlignedBox3d())

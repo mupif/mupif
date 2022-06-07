@@ -247,10 +247,10 @@ class Octree(localizer.Localizer):
         """
         self.mask = mask
         if len(origin)==2:
-            log.error(f'{origin=}, using py-based octant')
+            log.info(f'{origin=}, using py-based octant')
             self.root=Octant_py(octree=self, parent=None, origin=origin, size=size, level=0)
         else:
-            log.error(f'{origin=}, FAST')
+            log.info(f'{origin=}, FAST')
             self.root=Octant(octree=self, parent=None, origin=numpy.array(origin), size=size, level=0)
 
     def insert(self, item, bbox):
@@ -260,8 +260,8 @@ class Octree(localizer.Localizer):
         """
         self.root.insert(item, bbox)
 
-    def insertCellArrayChunk(self,vertices,cellData,cellOffset):
-        self.root.insertCellArrayChunk(vertices,cellData,cellOffset)
+    def insertCellArrayChunk(self,vertices,cellData,cellOffset,mesh):
+        self.root.insertCellArrayChunk(vertices,cellData,cellOffset,mesh)
 
     def delete(self, item):
         """
