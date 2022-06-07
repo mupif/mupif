@@ -1,7 +1,8 @@
 from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice, Hdf5RefQuantity, Hdf5OwningRefQuantity
 from .field import FieldType, Field
 from .mupifquantity import ValueType
-from .units import Unit
+from .dataid import DataID
+from .units import Unit, Quantity
 from .cell import Cell
 from .vertex import Vertex
 from .mesh import Mesh
@@ -11,6 +12,7 @@ import logging
 import Pyro5.api
 import numpy as np
 import os.path
+from typing import ClassVar
 
 log=logging.getLogger(__name__)
 
@@ -25,9 +27,10 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
     dim: int=3
     h5group: str='/'
 
-    GRP_VERTS='vertices'
-    GRP_CELL_OFFSETS='cellOffsets'
-    GRP_CELL_CONN='connectivity'
+    GRP_VERTS: ClassVar[str]='mesh/vertices'
+    GRP_CELL_OFFSETS: ClassVar[str]='mesh/cellOffsets'
+    GRP_CELL_CONN: ClassVar[str]='mesh/connectivity'
+    GRP_FIELDS: ClassVar[str]='fields'
 
     # see https://github.com/nschloe/meshio/blob/main/src/meshio/xdmf/common.py
     # and https://www.xdmf.org/index.php/XDMF_Model_and_Format#Arbitrary
@@ -185,7 +188,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             for cc in seq(block.data,what=' '+block.type):
                 self.appendCells(types=len(cc)*[cgt],conn=cc)
 
-    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8',h5mode='create'):
+    def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8',h5mode='create',fieldTime=0*Unit('s')):
         '''
         Create preallocated :obj:`mupif.Field` object storing its data in the same HDF5 file as the mesh (*self*). The field dimensions are determined from fieldType (cell/vertex based, plus the number of cells/vertices of the mesh object) and valueType (size of one record). The field's values are not assigned but allocated in the HDF5 container as a dataset.
 
@@ -212,12 +215,37 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         else: shape=(n,valueType.getNumberOfComponents())
         kw=dict(chunks=True,compression='gzip',compression_opts=9)
         if not h5path:
-            ds=self._h5grp.create_dataset(fieldID.name,shape=shape,**kw)
+            ds=self._h5grp.create_dataset(self.GRP_FIELDS+'/'+fieldID.name,shape=shape,**kw)
             hq=Hdf5RefQuantity(dataset=ds,unit=unit)
         else:
-            hq=Hdf5OwningRefQuantity(mode=h5mode,h5path=h5path,h5loc=fieldID.name,unit=unit)
+            hq=Hdf5OwningRefQuantity(mode=h5mode,h5path=h5path,h5loc=self.GRP_FIELDS+'/'+fieldID.name,unit=unit)
             hq.allocateDataset(shape=shape,unit=unit,**kw)
-        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hq,fieldID=fieldID,time=0*Unit('s'))
+        hq.dataset.attrs['fieldType']=fieldType.name
+        hq.dataset.attrs['valueType']=valueType.name
+        hq.dataset.attrs['time']=str(fieldTime)
+        return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hq,fieldID=fieldID,time=fieldTime)
+    @staticmethod
+    def load(h5path,h5loc='/',open=True):
+        import h5py
+        h5=h5py.File(h5path,'r')
+        base=h5[h5loc]
+        for g in HeavyUnstructuredMesh.GRP_VERTS,HeavyUnstructuredMesh.GRP_CELL_OFFSETS,HeavyUnstructuredMesh.GRP_CELL_CONN:
+            if g not in base: raise IOError(f'{h5path}::{h5loc}: {g} is missing')
+        mesh=HeavyUnstructuredMesh(h5path=h5path,h5group=h5loc,mode='readonly')
+        if open: mesh.openData(mode='readonly')
+        if HeavyUnstructuredMesh.GRP_FIELDS not in base: return (mesh,[])
+        fields=[]
+        fieldsBase=base[HeavyUnstructuredMesh.GRP_FIELDS]
+        for fName in fieldsBase:
+            ds=fieldsBase[fName]
+            log.error(f'Processing field {h5path}::{h5loc}/{HeavyUnstructuredMesh.GRP_FIELDS}/{fName} {ds.name}')
+            fieldType=FieldType[ds.attrs['fieldType']]
+            valueType=ValueType[ds.attrs['valueType']]
+            time=Quantity(ds.attrs['time'])
+            fieldID=DataID[fName]
+            hq=Hdf5RefQuantity(dataset=ds)
+            fields.append(Field(quantity=hq,mesh=mesh,fieldID=fieldID,fieldType=fieldType,valueType=valueType,time=time))
+        return (mesh,fields)
 
 
 def _chunker(it,size):
