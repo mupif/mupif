@@ -18,6 +18,7 @@
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
+using std::to_string;
 typedef Eigen::AlignedBox<double,3> AlignedBox3d;
 typedef Eigen::Matrix<double,3,1> Vector3d;
 typedef Eigen::Matrix<int,3,1> Vector3i;
@@ -28,7 +29,8 @@ namespace py=pybind11;
 /*
 XDMF/hdf5 cell type codes which are supported by MuPIF and their volume is completely inside hull of their vertices. This allows an important optimization: bounding box of a cell can be computed without constructing the cell object itself, saving calls to Python from c++.
 */
-std::set<int> vertHullEnvelope={0x04,0x05,0x06,0x09,0x24};
+std::set<int> xdmfCellType_vertexHullEnveloped={0x04,0x05,0x06,0x09,0x24};
+std::map<int,int> xdmfCellType_numVertices={/*triangle*/{0x04,3},/*quad*/{0x05,4},/*tetra*/{0x06,4},/*hexa*/{0x09,8},/*quadratic triangle*/{0x24,6}};
 
 
 
@@ -38,14 +40,14 @@ which happens to be code written by myself, so no license issues.
 */
 
 
-static inline void IDX_CHECK(Eigen::Index i,Eigen::Index MAX){ if(i<0 || i>=MAX) { throw py::index_error("Index "+std::to_string(i)+" out of range 0.." + std::to_string(MAX-1)); } }
-static inline void IDX2_CHECKED_TUPLE_INTS(py::tuple tuple,const Eigen::Index max2[2], Eigen::Index arr2[2]) {Eigen::Index l=py::len(tuple); if(l!=2) { PyErr_SetString(PyExc_IndexError,"Index must be integer or a 2-tuple"); throw py::error_already_set(); } for(int _i=0; _i<2; _i++) { try{ arr2[_i]=py::cast<Eigen::Index>(tuple[_i]); } catch(...){ throw py::value_error("Unable to convert "+std::to_string(_i)+"-th index to integer."); } IDX_CHECK(arr2[_i],max2[_i]); }  }
+static inline void IDX_CHECK(Eigen::Index i,Eigen::Index MAX){ if(i<0 || i>=MAX) { throw py::index_error("Index "+to_string(i)+" out of range 0.." + to_string(MAX-1)); } }
+static inline void IDX2_CHECKED_TUPLE_INTS(py::tuple tuple,const Eigen::Index max2[2], Eigen::Index arr2[2]) {Eigen::Index l=py::len(tuple); if(l!=2) { PyErr_SetString(PyExc_IndexError,"Index must be integer or a 2-tuple"); throw py::error_already_set(); } for(int _i=0; _i<2; _i++) { try{ arr2[_i]=py::cast<Eigen::Index>(tuple[_i]); } catch(...){ throw py::value_error("Unable to convert "+to_string(_i)+"-th index to integer."); } IDX_CHECK(arr2[_i],max2[_i]); }  }
 static inline string object_class_name(const py::object& obj){ return py::cast<string>(obj.attr("__class__").attr("__name__")); }
 
-/* generic function to print numbers, via std::to_string plus padding -- used for ints */
+/* generic function to print numbers, via to_string plus padding -- used for ints */
 template<typename T>
 string num_to_string(const T& num, int pad=0){
-	string ret(std::to_string(num));
+	string ret(to_string(num));
 	if(pad==0 || (int)ret.size()>=pad) return ret;
 	return string(pad-ret.size(),' ')+ret; // left-pad with spaces
 }
@@ -134,7 +136,7 @@ class AabbVisitor{
 	};
 	static Box from_list(py::list l){ return from_tuple(py::tuple(l)); }
 	static Box from_tuple(py::tuple t){
-		if(py::len(t)!=2) throw py::type_error("Can only be constructed from a 2-tuple (not "+std::to_string(py::len(t))+"-tuple).");
+		if(py::len(t)!=2) throw py::type_error("Can only be constructed from a 2-tuple (not "+to_string(py::len(t))+"-tuple).");
 		return Box(py::cast<VectorType>(t[0]),py::cast<VectorType>(t[1]));
 	}
 	static string __str__(const py::object& obj){
@@ -254,6 +256,26 @@ struct Octant { //  XXX /* make sure copying does not happen */ public boost::no
 		// divide also copies data to new children (unlike in the python implementation)
 		if(data.size()>refineLimit) divide();
 	}
+	void insertCellArrayChunk(const Eigen::Array<double,Eigen::Dynamic,3>& vertices, const Eigen::Array<int,Eigen::Dynamic,1>& cellData, int cellOffset){
+		int numVerts=0;
+		int cellNo=cellOffset;
+		// std::cerr<<"Chunk: first cell is "<<cellOffset<<", chunk has "<<cellData.rows()<<" entries."<<std::endl;
+		for(int icd=0; icd<cellData.rows(); icd+=numVerts+1){
+			int cellType=cellData[icd];
+			if(xdmfCellType_numVertices.count(cellType)==0) throw std::runtime_error("Cell "+to_string(cellNo)+": unhandled cell type "+to_string(cellType)+", cell within chunk "+to_string(icd)+", chunk offset "+to_string(cellOffset));
+			numVerts=xdmfCellType_numVertices[cellType];
+			if(xdmfCellType_vertexHullEnveloped.count(cellType)==0) throw std::runtime_error("Cell "+to_string(cellNo)+": cell of type "+to_string(cellType)+" is not entirely contained in hull of its vertices; this is currently unsupported for fastOctant.");
+			// std::cerr<<"Cell "<<cellNo<<" ("<<icd<<" + chunk offset "<<cellOffset<<"): type "<<cellType<<", "<<numVerts<<" verts."<<std::endl;
+			AlignedBox3d bb;
+			for(int ic=icd+1; ic<icd+numVerts+1; ic++){
+				if(ic>=cellData.rows()) throw std::runtime_error("Programming erorr: ic="+to_string(ic)+" > cellData.rows()="+to_string(cellData.rows())+")");
+				// std::cerr<<"  vertex "<<cellData[ic]<<" at "<<vertices.row(cellData[ic]).matrix().eval()<<std::endl;
+				bb.extend(vertices.row(cellData[ic]).matrix().transpose().eval());
+			}
+			this->insert(ItemBbox{cellNo,bb});
+			cellNo++;
+		}
+	}
 	#if 0
 	void delete_(py::object item, AlignedBox3d itemBox=AlignedBox3d()){
 		if(itemBox.isEmpty()) itemBox=object_getBBox(item);
@@ -328,6 +350,7 @@ PYBIND11_MODULE(fastOctant,mod){
 		.def(py::init<py::object,py::object,const Vector3d&,const double&,int>(),py::arg("octree"),py::arg("parent"),py::arg("origin"),py::arg("size"),py::arg("level")=0)
 		.def("isTerminal",&Octant::isTerminal)
 		.def("insert",&Octant::insert_py,py::arg("item"),py::arg("bbox"))
+		.def("insertCellArrayChunk",&Octant::insertCellArrayChunk,py::arg("vertices"),py::arg("cellData"),py::arg("cellOffset"))
 		.def("getItemsInBBox",&Octant::getItemsInBBox_py,py::arg("itemSet"),py::arg("bbox"))
 		#if 0
 			.def("getBBox",&Octant::getBBox)

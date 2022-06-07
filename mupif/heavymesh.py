@@ -7,6 +7,7 @@ from .cell import Cell
 from .vertex import Vertex
 from .mesh import Mesh
 from .bbox import BBox
+from . import octree
 from . import cellgeometrytype as CGT
 import logging
 import Pyro5.api
@@ -78,6 +79,27 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         nVerts=CGT.cgt2numVerts[cgt]
         conn=self._h5grp[self.GRP_CELL_CONN][offset+1:offset+1+nVerts]
         return CellType(number=i,label=None,vertices=tuple(conn),mesh=self)
+
+    def getCellLocalizer(self):
+        if self._cellOctree: return self._cellOctree
+        bb=self.getGlobalBBox()
+        # move all this to the octree ctor?
+        minc, maxc = bb.coords_ll, bb.coords_ur
+        size = max(y-x for x, y in zip(minc, maxc))
+        mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
+        self._cellOctree = octree.Octree(minc, size, tuple(mask))
+        verts=np.array(self._h5grp[self.GRP_VERTS])
+        chunkSize=10000
+        offGrp=self._h5grp[self.GRP_CELL_OFFSETS]
+        import tqdm
+        import math
+        for chunkStart in tqdm.tqdm(range(0,offGrp.shape[0],chunkSize),total=math.ceil(offGrp.shape[0]/chunkSize),unit_scale=chunkSize,unit=' cells'):
+            c0=offGrp[chunkStart]
+            c1=(offGrp[chunkStart+chunkSize] if offGrp.shape[0]>chunkStart+chunkSize else None)
+            self._cellOctree.insertCellArrayChunk(verts,np.array(self._h5grp[self.GRP_CELL_CONN][c0:c1]),chunkStart)
+        assert c1 is None # the last chunk must take the rest of the array
+        return self._cellOctree
+
 
     def openData(self,mode: HeavyDataBase_ModeChoice):
         'Opens the backing storage (HDF5 file) and prepares'

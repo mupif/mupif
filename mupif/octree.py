@@ -260,6 +260,9 @@ class Octree(localizer.Localizer):
         """
         self.root.insert(item, bbox)
 
+    def insertCellArrayChunk(self,vertices,cellData,cellOffset):
+        self.root.insertCellArrayChunk(vertices,cellData,cellOffset)
+
     def delete(self, item):
         """
         Removes the given object from octree.
