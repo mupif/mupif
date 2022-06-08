@@ -95,7 +95,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         import math
         import warnings
         warnings.simplefilter('ignore',tqdm.TqdmWarning)
-        for chunkStart in tqdm.tqdm(range(0,offGrp.shape[0],chunkSize),total=offGrp.shape[0]/chunkSize,unit_scale=float(chunkSize),unit=' cells',desc='octree:'):
+        for chunkStart in tqdm.tqdm(range(0,offGrp.shape[0],chunkSize),total=offGrp.shape[0]/chunkSize,unit_scale=float(chunkSize),unit=' cells',desc='octree'):
             c0=offGrp[chunkStart]
             c1=(offGrp[chunkStart+chunkSize] if offGrp.shape[0]>chunkStart+chunkSize else None)
             self._cellOctree.insertCellArrayChunk(verts,np.array(self._h5grp[self.GRP_CELL_CONN][c0:c1]),chunkStart,mesh=self)
@@ -205,7 +205,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             if not progress: return chunked
             import tqdm, math, warnings
             warnings.simplefilter('ignore',tqdm.TqdmWarning)
-            return tqdm.tqdm(chunked,total=len(s)/chunk,unit_scale=float(chunk),unit=what,desc='meshio import:')
+            return tqdm.tqdm(chunked,total=len(s)/chunk,unit_scale=float(chunk),unit=what,desc='meshio import')
         for vv in seq(mesh.points,what=' verts'):
             self.appendVertices(coords=np.vstack(vv))
         for block in mesh.cells:
