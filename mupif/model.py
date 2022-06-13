@@ -291,7 +291,7 @@ class Model(mupifobject.MupifObject):
 
         :param DataID objectTypeID: Identifier of the object
         :param Physics.PhysicalQuantity time: Target time
-        :param int objectID: Identifies object with objectID (optional, default 0)
+        :param str objectID: Identifies object with objectID (optional, default 0)
 
         :return: Returns requested object.
         """
@@ -301,7 +301,7 @@ class Model(mupifobject.MupifObject):
         Registers the given (remote) object in application.
 
         :param property.Property or field.Field or function.Function or pyrofile.PyroFile or heavydata.HeavyDataHandle obj: Remote object to be registered by the application
-        :param int or str objectID: Identifies object with objectID (optional, default 0)
+        :param str objectID: Identifies object with objectID (optional, default 0)
         """
 
     def getFieldURI(self, fieldID, time, objectID=""):
