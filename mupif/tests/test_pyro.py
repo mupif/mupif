@@ -64,7 +64,7 @@ class PyroFile_TestCase(unittest.TestCase):
         cls.daemon=mp.pyroutil.getDaemon()
         cls.tmpdir=tempfile.TemporaryDirectory()
         cls.tmp=cls.tmpdir.name
-        cls.A=cls.tmp+'/A'
+        cls.A=cls.tmp+'/A.bin'
         cls.Adata=os.urandom(1000)
         f=open(cls.A,'wb')
         f.write(cls.Adata)
@@ -130,6 +130,15 @@ class PyroFile_TestCase(unittest.TestCase):
         mp.PyroFile.copy(srcP,ddstP[3],compress=False)
         for i in range(4):
             self.assertEqual(C.Adata,open(aa[i],'rb').read())
+    def test_pyroFile_basename(self):
+        'PyroFile.getBasename()'
+        C=self.__class__
+        pf=mp.PyroFile(filename=C.A,mode='rb')
+        uri=C.daemon.register(pf)
+        pfp=Pyro5.api.Proxy(uri)
+        import os.path
+        self.assertEqual(pf.getBasename(),os.path.basename(C.A))
+        self.assertEqual(pfp.getBasename(),os.path.basename(C.A))
 
 
 

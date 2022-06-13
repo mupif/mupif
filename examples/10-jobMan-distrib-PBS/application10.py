@@ -4,9 +4,7 @@ import Pyro5
 import logging
 sys.path.extend(['..', '../..'])
 import mupif as mp
-import time as timemod
 import uuid
-import pbs_tool
 
 log = logging.getLogger()
 
@@ -96,7 +94,7 @@ class Application10(mp.Model):
         #
 
         # submit the job
-        jobid = pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
+        jobid = mp.pbs_tool.submit_job(command=" -v inpfile=\"%s\",outfile=\"%s\",script=\"%s/appexec.py\",dirname=\"%s\" %s/appexec.job -o %s/log.txt -e %s/err.txt" % (inpfile, outfile, dirname, dirname, dirname, dirname, dirname))
 
         #
 
@@ -104,7 +102,7 @@ class Application10(mp.Model):
         # After its completion, the job stays in the list of jobs with 'Completed' status for a while.
         # After that time it is not in the list any more, which results in 'Unknown' state.
         # With 60-second period of checking the job should be still available in the list.
-        pbs_tool.wait_until_job_is_done(jobid=jobid, checking_frequency=1.)
+        mp.pbs_tool.wait_until_job_is_done(jobid=jobid, checking_frequency=1.)
 
         #
 
