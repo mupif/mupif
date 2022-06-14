@@ -200,31 +200,16 @@ class Octant_py(object):
                     # if debug: print(tab, "  Checking child .....", self.children[i][j][k].getBBox())
                     self.children[i][j][k].getItemsInBBox(itemSet, bbox)
 
-    #def evaluate(self, functor):
-    #    """ 
-    #    Evaluate the given functor on all containing objects.
-    #    The functor should define getBBox() function to return functor bounding box. Only the objects within this bouding box will be processed.
-    #    Functor should also define evaluate method accepting object as a parameter.
-    #
-    #    :param functor: Functor
-    #    """
-    #    if self.containsBBox(functor.getBBox()):
-    #        if self.isTerminal():
-    #            for i in self.data:
-    #                functor.evaluate(i)
-    #        else:
-    #            for i, j, k in self.childrenIJK():
-    #                self.children[i][j][k].evaluate(functor)
-    #
-    #def getDepth(self):
-    #    """
-    #    :return: Returns the depth (the subdivision level) of the receiver (and its children)
-    #    """
-    #    depth = math.ceil(math.log(self.octree.root.size / self.size) / math.log(2.0))
-    #    if not self.isTerminal():
-    #        for i, j, k in self.childrenIJK():
-    #            depth = max(depth, self.children[i][j][k].getDepth())
-    #    return depth
+    def insertCellArrayChunk(vertices,cellData,cellOffset,mesh):
+        from . import cellgeometrytype
+        icd=0
+        cellNo=cellOffset
+        while True:
+            cell=mesh.getCell(cellNo)
+            self.insert(cellNo,cell.getBBox())
+            icd+=cell.getNumberOfVertices()+1
+            cellNo+=1
+            if icd>=cellData.shape[0]: break
 
 
 class Octree(localizer.Localizer):
@@ -263,12 +248,12 @@ class Octree(localizer.Localizer):
     def insertCellArrayChunk(self,vertices,cellData,cellOffset,mesh):
         self.root.insertCellArrayChunk(vertices,cellData,cellOffset,mesh)
 
-    def delete(self, item):
-        """
-        Removes the given object from octree.
-        See :func:`Octant.delete`
-        """
-        self.root.delete(item)
+    #def delete(self, item):
+    #    """
+    #    Removes the given object from octree.
+    #    See :func:`Octant.delete`
+    #    """
+    #    self.root.delete(item)
 
     @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
     def getItemsInBBox(self, bbox: bbox.BBox):
@@ -285,24 +270,12 @@ class Octree(localizer.Localizer):
             print("Octree: Items found:", answer)
         return answer
 
-    #def evaluate(self, functor):
-    #    """
-    #    Evaluate the given functor on all containing objects.
-    #    See :func:`Octant.evaluate`
-    #    """
-    #    self.root.evaluate(functor)
-
-    #def getDepth(self):
-    #    """
-    #    See :func:`Octant.getDepth`
-    #    """
-    #    return self.root.getDepth()
 
 try:
-    from . import fastOctant
-    log.info('using mupif.fastOctact (imported)')
+    from mupifAccel import fastOctant
+    log.info('using mupifAccel.fastOctant (imported)')
     Octant=fastOctant.Octant
     # Octant=Octant_py
 except ImportError:
-    log.warning('mupif.fastOctant not importable, using slower python implementation')
+    log.warning('mupifAccel.fastOctant not importable, using slower python implementation')
     Octant=Octant_py

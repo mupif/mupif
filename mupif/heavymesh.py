@@ -92,13 +92,13 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         chunkSize=10000
         offGrp=self._h5grp[self.GRP_CELL_OFFSETS]
         import tqdm
-        import math
-        import warnings
-        warnings.simplefilter('ignore',tqdm.TqdmWarning)
-        for chunkStart in tqdm.tqdm(range(0,offGrp.shape[0],chunkSize),total=offGrp.shape[0]/chunkSize,unit_scale=float(chunkSize),unit=' cells',desc='octree'):
-            c0=offGrp[chunkStart]
-            c1=(offGrp[chunkStart+chunkSize] if offGrp.shape[0]>chunkStart+chunkSize else None)
-            self._cellOctree.insertCellArrayChunk(verts,np.array(self._h5grp[self.GRP_CELL_CONN][c0:c1]),chunkStart,mesh=self)
+        with tqdm.tqdm(total=offGrp.shape[0],unit=' cells',desc='octree') as pbar:
+            for chunkStart in range(0,offGrp.shape[0],chunkSize):
+                c0=offGrp[chunkStart]
+                c1=(offGrp[chunkStart+chunkSize] if offGrp.shape[0]>chunkStart+chunkSize else None)
+                dta=np.array(self._h5grp[self.GRP_CELL_CONN][c0:c1])
+                self._cellOctree.insertCellArrayChunk(verts,dta,chunkStart,mesh=self)
+                pbar.update(dta.shape[0])
         assert c1 is None # the last chunk must take the rest of the array
         return self._cellOctree
 
@@ -205,7 +205,10 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             if not progress: return chunked
             import tqdm, math, warnings
             warnings.simplefilter('ignore',tqdm.TqdmWarning)
-            return tqdm.tqdm(chunked,total=len(s)/chunk,unit_scale=float(chunk),unit=what,desc='meshio import')
+            with tqdm.tqdm(total=len(s),unit=what,desc='meshio import') as pbar:
+                for c in chunked:
+                    yield c
+                    pbar.update(len(c))
         for vv in seq(mesh.points,what=' verts'):
             self.appendVertices(coords=np.vstack(vv))
         for block in mesh.cells:
@@ -357,15 +360,16 @@ if __name__=='__main__':
         chunk=10000
         print('Adding vertices')
         import tqdm
-        import warnings
-        import math
-        warnings.simplefilter('ignore',tqdm.TqdmWarning)
-        for vv in tqdm.tqdm(chunker(verts,chunk),total=math.ceil(len(verts)/chunk),unit_scale=chunk,unit='verts'):
-            vv2=np.array([v[1] for v in vv])
-            t1.appendVertices(coords=vv2)
+        with tqdm.tqdm(total=len(verts),unit=' verts') as pbar:
+            for vv in chunker(verts,chunk):
+                vv2=np.array([v[1] for v in vv])
+                t1.appendVertices(coords=vv2)
+                pbar.progress(len(vv))
         print('Adding cells')
-        for cc in tqdm.tqdm(chunker(cells,chunk),total=math.ceil(len(cells)/chunk),unit_scale=chunk,unit='cells'):
-            t1.appendCells(types=[c[0] for c in cc],conn=[c[1] for c in cc])
+        with tqdm.tqdm(total=len(cells),unit=' cells') as pbar:
+            for cc chunker(cells,chunk):
+                t1.appendCells(types=[c[0] for c in cc],conn=[c[1] for c in cc])
+                pbar.progress(len(cc))
         t1.writeXDMF()
         t1.closeData()
     if 1:
