@@ -23,12 +23,14 @@
 import logging
 import argparse
 import os
+from . import octree
 
 import Pyro5
 
 _formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
 _formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
 
+log=logging.getLogger(__name__)
 
 def setupLoggingAtStartup():
     """
@@ -173,3 +175,15 @@ def getVersion():
     except importlib.metadata.PackageNotFoundError: pass
 
     raise RuntimeError('Unable to get version data (did you install via "pip install mupif"?).')
+
+
+def accelOn():
+    import mupifAccel
+    import mupifAccel.fastOctant
+    log.info('Accelerating octree.Octant via mupifAccel.fastOctant.Octant')
+    octree.Octant=mupifAccel.fastOctant.Octant
+
+def accelOff():
+    octree.Octant=octree.Octant_py
+
+

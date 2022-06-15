@@ -367,7 +367,7 @@ if __name__=='__main__':
                 pbar.progress(len(vv))
         print('Adding cells')
         with tqdm.tqdm(total=len(cells),unit=' cells') as pbar:
-            for cc chunker(cells,chunk):
+            for cc in chunker(cells,chunk):
                 t1.appendCells(types=[c[0] for c in cc],conn=[c[1] for c in cc])
                 pbar.progress(len(cc))
         t1.writeXDMF()

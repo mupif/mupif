@@ -607,8 +607,8 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
             if self.__class__.datasetName in self.ctx.h5group: self.ctx.dataset=self.ctx.h5group[self.__class__.datasetName]
             else: raise RuntimeError(f'Dataset not yet initialized, use resize first{" ("+msg+")" if msg else ""}: {self.ctx.h5group.name}/{self.__class__.datasetName}.')
     def _T_assertWritable(self,msg):
-        log.error(f'{self.ctx.h5group.file=}')
-        log.error(f'{self.ctx.h5group.file.mode=}')
+        #log.error(f'{self.ctx.h5group.file=}')
+        #log.error(f'{self.ctx.h5group.file.mode=}')
         if self.ctx.h5group.file.mode!='r+': raise RuntimeError(f'Underlying HDF5 file was not open for writing ({msg}).')
     def T_resize(self,size,reset=False,*,ret=ret):
         'Resizes the backing dataset; this will, as necessary, create a new dataset, or grow/shrink size of an existing dataset. New records are always default-initialized.'

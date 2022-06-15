@@ -41,6 +41,8 @@ log=logging.getLogger(__name__)
 ItemBbox=collections.namedtuple('ItemBBox','item bbox')
 
 
+Octant=None # set in mp.utils.accel(), called from mupif.__init__
+
 class Octant_py(object):
     """
     Defines Octree Octant (Octant_py): a cell containing either terminal data or its child octants.
@@ -270,12 +272,3 @@ class Octree(localizer.Localizer):
             print("Octree: Items found:", answer)
         return answer
 
-
-try:
-    from mupifAccel import fastOctant
-    log.info('using mupifAccel.fastOctant (imported)')
-    Octant=fastOctant.Octant
-    # Octant=Octant_py
-except ImportError:
-    log.warning('mupifAccel.fastOctant not importable, using slower python implementation')
-    Octant=Octant_py

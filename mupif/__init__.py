@@ -222,3 +222,7 @@ field.Field.update_forward_refs()
 
 # configure logging
 util.setupLoggingAtStartup()
+
+# switch on optional components
+try: util.accelOn()
+except ImportError: pass
