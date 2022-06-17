@@ -202,7 +202,7 @@ class Octant_py(object):
                     # if debug: print(tab, "  Checking child .....", self.children[i][j][k].getBBox())
                     self.children[i][j][k].getItemsInBBox(itemSet, bbox)
 
-    def insertCellArrayChunk(vertices,cellData,cellOffset,mesh):
+    def insertCellArrayChunk(self,vertices,cellData,cellOffset,mesh):
         from . import cellgeometrytype
         icd=0
         cellNo=cellOffset
