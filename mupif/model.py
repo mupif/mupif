@@ -132,7 +132,7 @@ ModelSchema = {
             "items": {
                 "type": "object",  # Object supplies a dictionary
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState", "mupif.HeavyStruct", "mupif.PyroFile"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.HeavyStruct", "mupif.PyroFile", "mupif.String", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
                         "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
@@ -166,7 +166,7 @@ ModelSchema = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.ParticleSet", "mupif.GrainState"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.HeavyStruct", "mupif.String", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
                         "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
@@ -291,7 +291,7 @@ class Model(mupifobject.MupifObject):
 
         :param DataID objectTypeID: Identifier of the object
         :param Physics.PhysicalQuantity time: Target time
-        :param int objectID: Identifies object with objectID (optional, default 0)
+        :param str objectID: Identifies object with objectID (optional, default 0)
 
         :return: Returns requested object.
         """
@@ -301,7 +301,7 @@ class Model(mupifobject.MupifObject):
         Registers the given (remote) object in application.
 
         :param property.Property or field.Field or function.Function or pyrofile.PyroFile or heavydata.HeavyDataHandle obj: Remote object to be registered by the application
-        :param int or str objectID: Identifies object with objectID (optional, default 0)
+        :param str objectID: Identifies object with objectID (optional, default 0)
         """
 
     def getFieldURI(self, fieldID, time, objectID=""):
