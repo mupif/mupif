@@ -17,3 +17,4 @@ pydantic>=1.9.0
 sphinxcontrib-apidoc
 asyncssh
 setproctitle
+tqdm

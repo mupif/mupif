@@ -149,34 +149,21 @@ class Cell(dumpable.Dumpable):
         :rtype: BBox
         """
 
-        if hasattr(self, 'bbox') and self.bbox is not None:
-            return self.bbox
+        if hasattr(self, '_bbox') and self._bbox is not None:
+            return self._bbox
+            # pass
 
-        # This piece should be rewritten
-        init = True
-        try:
-            for vertex in self.vertices:
-                c = self.mesh.getVertex(vertex).coords
-                if init:
-                    min_coords = list(c)
-                    max_coords = list(c)
-                    init = False
-                else:
-                    for i in range(len(c)):
-                        min_coords[i] = min(min_coords[i], c[i])
-                        max_coords[i] = max(max_coords[i], c[i])
-        except IndexError:
-            print("getBBox failed: cell-no: ", self.number, "vertices: ", self.vertices, "vertex: ", vertex)
-            exit(1)
-
+        vertCoords=np.array([self.mesh.getVertex(vertId).coords for vertId in self.vertices])
+        mn,mx=np.min(vertCoords,axis=0),np.max(vertCoords,axis=0)
+        #print(f'{mn=} {mx=} {vertCoords=}')
         if relPad:
-            sizes = [max_coords[i]-min_coords[i] for i in (0, 1, 2)]  # compute box sizes (should be all non-negative)
-            sizes = [max(sizes) if sizes[i] == 0 else sizes[i] for i in (0, 1, 2)]  # replace zero size by maximum for the purposes of padding
-            min_coords = [min_coords[i]-relPad*sizes[i] for i in (0, 1, 2)]  # pad on the negative side
-            max_coords = [max_coords[i]+relPad*sizes[i] for i in (0, 1, 2)]  # pad on the positive side
+            sz=mx-mn
+            sz[sz==0]=np.max(sz) # replace zero size by maximum for the purposes of padding
+            mn-=relPad*sz
+            mx+=relPad*sz
 
-        object.__setattr__(self,'bbox',bbox.BBox(tuple(min_coords), tuple(max_coords)))
-        return self.bbox
+        self._bbox=bbox.BBox(tuple(mn),tuple(mx))
+        return self._bbox
 
     def getTransformationJacobian(self, coords):
         """

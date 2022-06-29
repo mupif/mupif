@@ -78,7 +78,7 @@ class MupifBaseModel(pydantic.BaseModel):
         extra = 'allow'
 
     def __init__(self, *args, **kw):
-        # print('### __init__ with '+str(kw))
+        # print(f'### __init__ with {args=} {kw=}')
         if args:
             raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
         # print(kw.keys())

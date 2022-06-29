@@ -99,15 +99,6 @@ class BBox(pydantic.BaseModel):
         else:
             raise ValueError(f'BBox dimension must be 2 or 3 (not {nsd}).')
 
-        if 0:
-            nsd = len(self.coords_ll)
-            for i in range(nsd):
-                maxleft = max(self.coords_ll[i], bbox.coords_ll[i])
-                minright = min(self.coords_ur[i], bbox.coords_ur[i])
-                if maxleft > minright: 
-                    return False
-            return True
-
     def merge(self, entity):
         """
         Merges receiver with given entity (position vector or a BBox).

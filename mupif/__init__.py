@@ -119,7 +119,7 @@ from .model import Model, RemoteModel
 from .multipiecewiselinfunction import MultiPiecewiseLinFunction
 from .mupifobject import MupifObjectBase, MupifObject
 from .mupifquantity import ValueType, MupifQuantity
-from .octree import Octant, Octree
+from .octree import Octant_py, Octree
 from .operatorutil import OperatorInteraction, OperatorEMailInteraction
 from .particle import Particle, ParticleSet
 from .property import Property, ConstantProperty
@@ -135,7 +135,9 @@ from .vertex import Dumpable, Vertex
 from .workflow import Workflow
 from .workflowmonitor import WorkflowMonitor
 from . import pbs_tool
-__all__ = ['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','dumpable','NumpyArray','MupifBaseModel','Dumpable','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','mupifobject','MupifObjectBase','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','PyroNetConf','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','pbs_tool']
+
+__all__ = ['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','dumpable','NumpyArray','MupifBaseModel','Dumpable','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','mupifobject','MupifObjectBase','MupifObject','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','PyroNetConf','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','pbs_tool']
+
 
 
 # import h5py
@@ -223,3 +225,7 @@ field.Field.update_forward_refs()
 
 # configure logging
 util.setupLoggingAtStartup()
+
+# switch on optional components
+try: util.accelOn()
+except ImportError: util.accelOff()

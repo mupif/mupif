@@ -384,23 +384,31 @@ class Mesh(dumpable.Dumpable):
         """
 
     def vertices(self):
-        """
-        Iterator over vertices.
-        
-        :return: Iterator over vertices
-        :rtype: MeshIterator
-        """
-
-        return MeshIterator(self, VERTICES) 
+        for i in range(0,self.getNumberOfVertices()):
+            yield self.getVertex(i)
 
     def cells(self):
-        """
-        Iterator over cells.
+        for i in range(0,self.getNumberOfCells()):
+            yield self.getCell(i)
 
-        :return: Iterator over cells
-        :rtype: MeshIterator
-        """
-        return MeshIterator(self, CELLS)
+    #def vertices(self):
+    #    """
+    #    Iterator over vertices.
+    #    
+    #    :return: Iterator over vertices
+    #    :rtype: MeshIterator
+    #    """
+    #
+    #    return MeshIterator(self, VERTICES) 
+
+    #def cells(self):
+    #    """
+    #    Iterator over cells.
+    #
+    #    :return: Iterator over cells
+    #    :rtype: MeshIterator
+    #    """
+    #    return MeshIterator(self, CELLS)
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
@@ -414,6 +422,16 @@ class Mesh(dumpable.Dumpable):
     @deprecated.deprecated('use getVertexLocalizer instead')
     def giveVertexLocalizer(self): return self.getVertexLocalizer()
 
+    def getGlobalBBox(self):
+        vvv = self.vertices()
+        c0 = next(iter(vvv)).getCoordinates()  # use the first bbox as base
+        bb = bbox.BBox(c0, c0)  # ope-pointed bbox
+        ## XXX replace by call to getVertices()
+        for vert in vvv:
+            bb.merge(vert.getCoordinates())  # extend it with all other cells
+        return bb
+
+
     def getVertexLocalizer(self):
         """
         :return: Returns the vertex localizer.
@@ -422,13 +440,8 @@ class Mesh(dumpable.Dumpable):
         if self._vertexOctree: 
             return self._vertexOctree
         else:
-            vvv = self.vertices()
-            c0 = vvv.__iter__().__next__().getCoordinates()  # use the first bbox as base
-            bb = bbox.BBox(c0, c0)  # ope-pointed bbox
-            for vert in vvv:
-                bb.merge(vert.getCoordinates())  # extend it with all other cells
+            bb=self.getGlobalBBox()
             minc, maxc = bb.coords_ll, bb.coords_ur
-
             # setup vertex localizer
             size = max(y-x for x, y in zip(minc, maxc))
             mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
@@ -437,15 +450,13 @@ class Mesh(dumpable.Dumpable):
                 t0 = time.clock()
                 print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
             # add mesh vertices into octree
-            for vertex in self.vertices():
-                self._vertexOctree.insert(vertex)
+            for iv,vertex in enumerate(self.vertices()):
+                if debug: print(f'  {iv=}, {vertex=}')
+                self._vertexOctree.insert(iv,vertex.getBBox())
             if debug:
                 print("done in ", time.clock() - t0, "[s]")
 
             return self._vertexOctree
-
-    @deprecated.deprecated('use getCellLocalizer instead')
-    def giveCellLocalizer(self): return self.getCellLocalizer()
 
     def getCellLocalizer(self):
         """
@@ -455,33 +466,38 @@ class Mesh(dumpable.Dumpable):
         :rtype: Octree
         """
         if debug:
-            t0 = time.clock()
+            t0 = time.time()
         if self._cellOctree: 
             return self._cellOctree
         else:
             if debug:
-                print('Start at: ', time.clock()-t0)
-
-            ccc = self.cells()
-            bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
-            for cell in ccc:
-                bb.merge(cell.getBBox())  # extend it with all other cells
+                print('Start at: ', time.time()-t0)
+            if 0:
+                ccc = self.cells()
+                bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
+                i=0
+                for cell in ccc:
+                    bb.merge(cell.getBBox())  # extend it with all other cells
+                    if i%1000==0: print(f'{i}')
+                    i+=1
+            bb=self.getGlobalBBox()
             minc, maxc = bb.coords_ll, bb.coords_ur
 
             if debug:
-                print('Cell bbox: ', time.clock()-t0)
+                print('Cell bbox: ', time.time()-t0)
 
-        # setup vertex localizer
+        # setup cell localizer
         size = max(y-x for x, y in zip(minc, maxc))
         mask = [(y-x) > 0.0 for x, y in zip(minc, maxc)]
         self._cellOctree = octree.Octree(minc, size, tuple(mask))
         if debug:
-            print('Octree ctor: ', time.clock()-t0)
-            print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
-        for cell in self.cells():
-            self._cellOctree.insert(cell)
+            print('Octree ctor: ', time.time()-t0)
+            print("Mesh: setting up cell octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
+        import tqdm
+        for ic,cell in enumerate(tqdm.tqdm(self.cells(),unit=' cells',total=self.getNumberOfCells())):
+            self._cellOctree.insert(ic,cell.getBBox())
         if debug:
-            print("done in ", time.clock() - t0, "[s]")
+            print("done in ", time.time() - t0, "[s]")
         return self._cellOctree
 
 @Pyro5.api.expose
