@@ -168,10 +168,12 @@ def _registerDumpable(clss=dumpable.Dumpable):
 def _registerOther():
     import Pyro5.api
     # serialize ids if they are sent as top-level objects via Pyro5
+    import enum
     from . import dataid
-    c = dataid.DataID
-    Pyro5.api.register_class_to_dict(c, dumpable.enum_to_dict)
-    Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, dumpable.enum_from_dict_with_name)
+    assert(enum.Enum in serpent._special_classes_registry) # check we are really overwriting this
+    for c in dataid.DataID, enum.Enum:
+        Pyro5.api.register_class_to_dict(c, dumpable.enum_to_dict)
+        Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, dumpable.enum_from_dict_with_name)
 
     # don't use numpy.ndarray.tobytes as it is not cross-plaform; npy files are
     Pyro5.api.register_class_to_dict(numpy.ndarray, lambda arr: {'__class__': 'numpy.ndarray', 'npy': (numpy.save(buf := io.BytesIO(), arr, allow_pickle=False), buf.getvalue())[1]})
