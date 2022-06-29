@@ -1,6 +1,0 @@
-project(fastOctact LANGUAGES CXX)
-cmake_minimum_required(VERSION 3.12)
-find_package(Eigen3 REQUIRED)
-find_package(pybind11 REQUIRED)
-pybind11_add_module(fastOctant fastOctant.cpp)
-target_link_libraries(fastOctant PRIVATE Eigen3::Eigen)
