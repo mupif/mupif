@@ -90,7 +90,7 @@ jobs:
     - uses: satackey/action-docker-layer-caching@v0.0.11
       continue-on-error: true
     - name: Distributed example on Docker containers in VPN
-      run:
+      run: |
         # free up some space: https://github.com/satackey/action-docker-layer-caching/issues/1392
         # should avoid "no space left on device"
         rm -rf /usr/local/android /usr/share/dotnet /usr/local/share/boost /opt/ghc
