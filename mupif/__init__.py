@@ -225,4 +225,4 @@ util.setupLoggingAtStartup()
 
 # switch on optional components
 try: util.accelOn()
-except ImportError: pass
+except ImportError: util.accelOff()
