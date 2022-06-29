@@ -48,11 +48,11 @@ class Example06(mp.Workflow):
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
+        thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         # self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
+        mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         # self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
 

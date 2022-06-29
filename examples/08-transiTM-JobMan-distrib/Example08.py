@@ -57,11 +57,11 @@ class Example08(mp.Workflow):
         log.info("Working thermal server " + self.getModel('thermal').getApplicationSignature())
         log.info("Working mechanical server " + self.getModel('mechanical').getApplicationSignature())
 
-        thermalInputFile = mp.PyroFile(filename='..'+os.path.sep+'06-stacTM-local'+os.path.sep+'inputT.in', mode="rb")
+        thermalInputFile = mp.PyroFile(filename='..'+os.path.sep+'06-stacTM-local'+os.path.sep+'inputT.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        mechanicalInputFile = mp.PyroFile(filename='..' + os.path.sep + '06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb")
+        mechanicalInputFile = mp.PyroFile(filename='..' + os.path.sep + '06-stacTM-local' + os.path.sep + 'inputM.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
 

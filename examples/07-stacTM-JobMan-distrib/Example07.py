@@ -52,11 +52,11 @@ class Example07(mp.Workflow):
         log.info("Working thermal solver on server " + self.getModel('thermal').getApplicationSignature())
         log.info("Working mechanical solver on server " + self.getModel('mechanical').getApplicationSignature())
 
-        thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb")
+        thermalInputFile = mp.PyroFile(filename='./inputT.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb")
+        mechanicalInputFile = mp.PyroFile(filename='./inputM.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
 
@@ -111,3 +111,4 @@ if __name__ == '__main__':
     demo.printListOfModels()
     demo.terminate()
     log.info("Test OK")
+    print("OK")
