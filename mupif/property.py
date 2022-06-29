@@ -43,6 +43,13 @@ class Property(mupifquantity.MupifQuantity):
         :return: Receiver's property ID
         :rtype: DataID
         """
+        return self.getDataID()
+
+    def getDataID(self):
+        """
+        Returns DataID of property.
+        :rtype: DataID
+        """
         return self.propID
 
 

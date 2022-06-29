@@ -598,10 +598,11 @@ class ThermalModel(mupif.model.Model):
 
     def set(self, obj, objectID=""):
         if obj.isInstance(mp.PyroFile):
-            print("Downloading the input file..")
-            mp.PyroFile.copy(obj, self.workDir + os.path.sep + 'tmin.in')
-            print("Download finished.")
-            self.readInput(self.workDir + os.path.sep + 'tmin.in')
+            if obj.getDataID() == mp.DataID.ID_InputFile:
+                print("Downloading the input file..")
+                mp.PyroFile.copy(obj, self.workDir + os.path.sep + 'tmin.in')
+                print("Download finished.")
+                self.readInput(self.workDir + os.path.sep + 'tmin.in')
 
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mupif.DataID.PID_effective_conductivity:
@@ -1079,10 +1080,11 @@ class MechanicalModel(mupif.model.Model):
 
     def set(self, obj, objectID=""):
         if obj.isInstance(mp.PyroFile):
-            print("Downloading the input file..")
-            mupif.PyroFile.copy(obj, self.workDir + os.path.sep + 'smin.in')
-            print("Download finished.")
-            self.readInput(self.workDir + os.path.sep + 'smin.in')
+            if obj.getDataID() == mp.DataID.ID_InputFile:
+                print("Downloading the input file..")
+                mupif.PyroFile.copy(obj, self.workDir + os.path.sep + 'smin.in')
+                print("Download finished.")
+                self.readInput(self.workDir + os.path.sep + 'smin.in')
 
         if obj.isInstance(mp.Field):
             if obj.getFieldID() == mupif.DataID.FID_Temperature:
