@@ -139,6 +139,15 @@ class PyroFile_TestCase(unittest.TestCase):
         import os.path
         self.assertEqual(pf.getBasename(),os.path.basename(C.A))
         self.assertEqual(pfp.getBasename(),os.path.basename(C.A))
+    def test_pyrofile_dataid_enum(self):
+        'PyroFile.getDataID()'
+        # check that DataID is correctly (de)serialized as mp.DataID (registered in __init__.py, along with enum.Enum)
+        C=self.__class__
+        pf=mp.PyroFile(filename=C.A,mode='rb',dataID=mp.DataID.FID_Displacement)
+        uri=C.daemon.register(pf)
+        pfp=Pyro5.api.Proxy(uri)
+        self.assertEqual(pfp.getDataID(),mp.DataID.FID_Displacement)
+        self.assertEqual(type(pfp.getDataID()),mp.DataID)
 
 
 
