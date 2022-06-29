@@ -320,6 +320,13 @@ class HeavyStruct_TestCase(unittest.TestCase):
 
         # inject mismatched schema
         self.assertRaises(ValueError,lambda:mols3.inject(mols[0].getAtoms()))
+    def test_09_schema_storage(self):
+        C=self.__class__
+        with (hs:=mp.HeavyStruct(h5path=C.h5path,h5group='test',mode='readonly')) as grains:
+            self.assertEqual(hs.getSchemaName(),'org.mupif.sample.grain')
+            self.assertEqual(hs.getSchemasJson(),sampleSchemas_json)
+        # data closed, should not work
+        self.assertRaises(RuntimeError,lambda: hs.getSchemaName())
     def test_10_move_storage(self):
         C=self.__class__
         p0,p1=C.tmp+'/grain-before-move.h5',C.tmp+'/grain-after-move.h5'
