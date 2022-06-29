@@ -181,8 +181,11 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
         stat=jobManOut.getStatus()
         self.assertEqual(len(stat),1)
-        jobId=stat[0].key
-        uri=stat[0].uri
+        state=jobManOut.getStatusExtended()
+        self.assertEqual(len(state['currJobs']),1)
+        self.assertEqual(state['totalJobs'],1)
+        jobId=stat[0]['key']
+        uri=stat[0]['uri']
         mod=Pyro5.api.Proxy(uri)
         mod.solveStep()
         mod.terminate()
