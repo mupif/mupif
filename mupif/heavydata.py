@@ -241,6 +241,11 @@ class HeavyDataBase(MupifObject):
         else: raise ValueError(f'Invalid mode {self.mode}: must be one of {HeavyDataBase_ModeChoice}')
         return self._h5obj
 
+    def preDumpHook(self):
+        # remote call will expose the data throgu the daemon so that the HDF5 container gets transferred automatically
+        if Pyro5.callcontext.current_context.client is not None: self.exposeData()
+        super().preDumpHook()
+
     def exposeData(self):
         '''
         If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataBase` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
