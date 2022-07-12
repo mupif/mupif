@@ -184,12 +184,23 @@ def getVersion():
 
 
 def accelOn():
-    import mupifAccel
+    # fail with ImportError if not installed at all
+    import mupifAccel 
+    # check version
+    minVer='0.0.2'
+    import importlib.metadata
+    from packaging.version import parse
+    currVer=importlib.metadata.version('mupif-accel')
+    if parse(currVer)<parse(minVer):
+        log.warning(f'Acceleration not enabled as mupif-accel is too old: {currVer} is installed, must be at least {minVer}')
+        raise ImportError('mupif-accel too old')
+    # this should pass now
     import mupifAccel.fastOctant
     log.info('Accelerating octree.Octant via mupifAccel.fastOctant.Octant')
     octree.Octant=mupifAccel.fastOctant.Octant
 
 def accelOff():
+    # revert any accelerations applied in accelOn
     octree.Octant=octree.Octant_py
 
 
