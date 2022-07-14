@@ -1,6 +1,7 @@
 # from .pyroutil import connectNameserver
 import Pyro5.api
 import urllib.parse
+import warnings
 
 def jobmanInfo(ns):
     query=ns.yplookup(meta_any={"type:jobmanager"})
@@ -74,7 +75,7 @@ def vpnInfo(geoIpDb=None,hidePriv=True):
                 remote=dict(host=pt.hostname,port=pt.port)
                 if geoIpDb:
                     gir=geoip.record_by_addr(pt.hostname)
-                    remote['geoip']=dict(country_code=gir['country_code'],country_name=gir['country_name'],city=git['city'],longitude=gir['longitude'],latitude=git['latitude'])
+                    remote['geoip']=dict(country_code=gir['country_code'],country_name=gir['country_name'],city=gir['city'],longitude=gir['longitude'],latitude=gir['latitude'])
                 peer['remote']=remote
             ret['peers'].append(peer)
         rret[iface]=ret
