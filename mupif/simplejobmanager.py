@@ -438,7 +438,7 @@ class SimpleJobManager (jobmanager.JobManager):
         return status
 
     def getStatusExtended(self):
-        return dict(currJobs=self.getStatus(),totalJobs=self.jobCounter)
+        return dict(currJobs=self.getStatus(),totalJobs=self.jobCounter,maxJobs=self.maxJobs)
 
     def getModelMetadata(self):
         return self.modelMetadata
