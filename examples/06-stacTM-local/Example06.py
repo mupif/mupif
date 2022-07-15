@@ -111,8 +111,8 @@ print(t_val.getValue()[0], m_val.getValue()[1])
 demo.printMetadata()
 demo.terminate()
 
-if ((abs(t_val.getValue()[0]-4.4994119521216644) <= 1.e-8) and
-        (abs(m_val.getValue()[1]-(-4.170695218292803e-06)) <= 1.e-8)):
+if ((abs(t_val.getValue()[0]-4.499411952121665) <= 1.e-8) and
+        (abs(m_val.getValue()[1]-(-1.0496318531310624e-05)) <= 1.e-8)):
     log.info("Test OK")
 else:
     log.error("Test FAILED")
