@@ -1315,7 +1315,7 @@ class MechanicalModel(mupif.model.Model):
                     et[0] = self.alpha * t.getValue()[0]
                     et[1] = self.alpha * t.getValue()[0]
                     et[2] = 0.0
-                    b_e = np.dot(Grad.T, np.dot(D, et)) * dv
+                    b_e += np.dot(Grad.T, np.dot(D, et)) * dv
             # print "A_e :",A_e
             # print "b_e :",b_e
 
