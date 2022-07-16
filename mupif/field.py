@@ -429,6 +429,8 @@ class Field(mupifquantity.MupifQuantity):
         
         # Create the Triangulation; no triangles so Delaunay triangulation created.
         triang = matplotlib.tri.Triangulation(vx, vy)
+        mask=matplotlib.tri.TriAnalyzer(triang).get_flat_tri_mask()
+        triang.set_mask(mask)
         # pcolor plot.
         plt.figure()
         plt.gca().set_aspect('equal')
