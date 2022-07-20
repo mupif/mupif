@@ -99,6 +99,11 @@ class ThermalModel(mupif.model.Model):
                     "Relation_description": ["Fick's first law"],
                     "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
                     "Representation": "Finite volumes"
+                },
+                "Execution": {
+                    'ID': '0',
+                    'Use_case_ID': '0',
+                    'Task_ID': '0'
                 }
             }
             self.updateMetadata(MD)
@@ -116,10 +121,10 @@ class ThermalModel(mupif.model.Model):
         self.dirichletModelEdges = []
         self.convectionModelEdges = []
 
-        self.xl = None
-        self.yl = None
-        self.nx = None
-        self.ny = None
+        self.xl = 5
+        self.yl = 1
+        self.nx = 10
+        self.ny = 4
 
         self.dirichletBCs = None
         self.convectionBC = None
@@ -731,6 +736,11 @@ class ThermalNonstatModel(ThermalModel):
                 "Relation_description": ["Fick's first law"],
                 "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
                 "Representation": "Finite volumes"
+            },
+            "Execution": {
+                'ID': '0',
+                'Use_case_ID': '0',
+                'Task_ID': '0'
             }
         }
         super().__init__(metadata=metadata)
@@ -1045,7 +1055,12 @@ class MechanicalModel(mupif.model.Model):
                 "Relation_description": ["Hooke's law"],
                 "Relation_formulation": ["Stress strain"],
                 "Representation": "Finite volumes"
-            }
+            },
+            "Execution": {
+                'ID': '0',
+                'Use_case_ID': '0',
+                'Task_ID': '0'
+            },
         }
         super().__init__(metadata=metadata)
         self.E = 30.0e+9  # ceramics
@@ -1059,10 +1074,10 @@ class MechanicalModel(mupif.model.Model):
         self.dirichletModelEdges = []
         self.loadModelEdges = []
 
-        self.xl = None
-        self.yl = None
-        self.nx = None
-        self.ny = None
+        self.xl = 5
+        self.yl = 1
+        self.nx = 20
+        self.ny = 8
 
         self.mesh = None
         self.dirichletBCs = None
@@ -1089,6 +1104,15 @@ class MechanicalModel(mupif.model.Model):
         if obj.isInstance(mp.Field):
             if obj.getFieldID() == mupif.DataID.FID_Temperature:
                 self.temperatureField = obj
+
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mupif.DataID.FID_Displacement:
+                # Dirichlet
+                edge_ids = ['Dirichlet bottom', 'Dirichlet right', 'Dirichlet top', 'Dirichlet left']
+                for edge_id in edge_ids:
+                    if objectID == edge_id:
+                        edge_index = edge_ids.index(edge_id)+1
+                        self.dirichletModelEdges.append(edge_index) # value ignored
 
     def getCriticalTimeStep(self):
         return .4*mp.U.s
