@@ -1020,20 +1020,20 @@ class MechanicalModel(mupif.model.Model):
                     "Units": "none"
                 },
                 {
-                        "Name": "Prescribed displacement",
-                        "Type": "mupif.Property",
-                        "Required": False,
-                        "Type_ID": "mupif.DataID.PID_Displacement",
-                        "Units": "m",
-                        "Obj_ID": [
-                            "Dirichlet top",
-                            "Dirichlet bottom",
-                            "Dirichlet left",
-                            "Dirichlet right"
-                        ],
-                        "Set_at": "initialization",
-                        "ValueType": "Scalar"
-                    },
+                    "Name": "Prescribed displacement",
+                    "Type": "mupif.Property",
+                    "Required": False,
+                    "Type_ID": "mupif.DataID.FID_Displacement",
+                    "Units": "m",
+                    "Obj_ID": [
+                        "Dirichlet top",
+                        "Dirichlet bottom",
+                        "Dirichlet left",
+                        "Dirichlet right"
+                    ],
+                    "Set_at": "initialization",
+                    "ValueType": "Scalar"
+                }
             ],
             "Outputs": [
                 {
