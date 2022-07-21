@@ -78,7 +78,7 @@ class MupifBaseModel(pydantic.BaseModel):
         extra = 'allow'
 
     def __init__(self, *args, **kw):
-        # print('### __init__ with '+str(kw))
+        # print(f'### __init__ with {args=} {kw=}')
         if args:
             raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
         # print(kw.keys())
@@ -124,6 +124,10 @@ class Dumpable(MupifBaseModel):
                 sd[k] = None  # del sd[k]
         return s
 
+    def preDumpHook(self):
+        'No-op in Dumpable. Reimplement in derived classes which need special care before being serialized.'
+        pass
+
     def to_dict(self, clss=None):
         def _handle_attr(attr, val, clssName):
             if isinstance(val, list): return [_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)]
@@ -146,6 +150,7 @@ class Dumpable(MupifBaseModel):
                 return val
         import enum
         if not isinstance(self, Dumpable): raise RuntimeError("Not a Dumpable.");
+        self.preDumpHook()
         ret = {}
         if clss is None:
             ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__

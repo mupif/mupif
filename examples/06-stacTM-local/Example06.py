@@ -48,11 +48,11 @@ class Example06(mp.Workflow):
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb")
+        thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         # self.daemon.register(thermalInputFile)
         self.getModel('thermal').set(thermalInputFile)
 
-        mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb")
+        mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb", dataID=mp.DataID.ID_InputFile)
         # self.daemon.register(mechanicalInputFile)
         self.getModel('mechanical').set(mechanicalInputFile)
 
@@ -111,8 +111,8 @@ print(t_val.getValue()[0], m_val.getValue()[1])
 demo.printMetadata()
 demo.terminate()
 
-if ((abs(t_val.getValue()[0]-4.4994119521216644) <= 1.e-8) and
-        (abs(m_val.getValue()[1]-(-4.170695218292803e-06)) <= 1.e-8)):
+if ((abs(t_val.getValue()[0]-4.499411952121665) <= 1.e-8) and
+        (abs(m_val.getValue()[1]-(-1.0496318531310624e-05)) <= 1.e-8)):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

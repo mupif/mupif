@@ -40,13 +40,13 @@ class Hdf5RefQuantity(RefQuantity):
     # unit: astropy.units.UnitBase
     dataset: typing.Optional[h5py.Dataset]=None
 
-    #def __init__(self,*,unit,**kw):
-    #    # print(self,unit,kw)
-    #    super().__init__(self,**kw)
-    #    self.dataset.attrs['unit']=str(unit)
+    def __init__(self,*,unit=None,**kw):
+        super().__init__(**kw)
+        if self.dataset and unit: self.dataset.attrs['unit']=str(unit)
+        if not self.dataset and unit: raise ValueError(f'{unit=} cannot be specified without dataset (no storage for unit available)')
 
     # this will convert nicesly to arrays
-    def __len__(self): return self.value_.shape[0]
+    def __len__(self): return self.dataset.shape[0]
 
     class ValueRowAccessor(object):
         def __init__(self,refq): self.refq,self.shape=refq,refq.dataset.shape
@@ -66,18 +66,25 @@ class Hdf5RefQuantity(RefQuantity):
             if not isinstance(q,units.Quantity): raise ValueError('quantity must be an instance of mupif.units.Quantity (not a {q.__class__.__name__})')
             self.refq.dataset[row]=q.to(self.refq.dataset.attrs['unit'])
 
+    #def checkValue(self):
+    #    import h5py
+    #    if not isinstance(self.value,type(property5py.Dataset,Hdf5RefQuantity.ValueRowAccessor))
+
     @property
     def value(self):
+        if self.dataset is None: raise ValueError('Dataset not allocated yet.')
         if len(self.dataset.shape)>1: return Hdf5RefQuantity.ValueRowAccessor(self)
         return self.dataset
 
     @property
     def quantity(self):
+        if self.dataset is None: raise ValueError('Dataset not allocated yet.')
         if len(self.dataset.shape)>1: return Hdf5RefQuantity.QuantityRowAccessor(self)
         return self.dataset
 
     @property
     def unit(self):
+        if self.dataset is None: raise ValueError('Dataset not allocated yet.')
         return units.Unit(self.dataset.attrs['unit'])
 
     # properties setters don't work with pydantic
@@ -234,6 +241,11 @@ class HeavyDataBase(MupifObject):
         else: raise ValueError(f'Invalid mode {self.mode}: must be one of {HeavyDataBase_ModeChoice}')
         return self._h5obj
 
+    def preDumpHook(self):
+        # remote call will expose the data throgu the daemon so that the HDF5 container gets transferred automatically
+        if Pyro5.callcontext.current_context.client is not None: self.exposeData()
+        super().preDumpHook()
+
     def exposeData(self):
         '''
         If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataBase` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
@@ -248,6 +260,10 @@ class HeavyDataBase(MupifObject):
         # TypeError: a bytes-like object is required, not 'dict'
         self.h5uri = str(daemon.register(pf := PyroFile(filename=self.h5path, mode='rb')))
         self.pyroIds.append(pf._pyroId)
+
+    # this seems to be breaking some other stuff, so leave it up to the user to close the data by hand
+    #def __del__(self):
+    #    if hasattr(self,'_h5obj'): self.closeData()
 
     def closeData(self):
         '''
@@ -291,7 +307,11 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
     'Quantity stored in HDF5 dataset, managing the HDF5 file itself.'
     h5loc: str='/quantity'
 
-    def allocateDataset(self,shape,unit,**kw):
+    def __init__(self,**kw):
+        super().__init__(**kw)
+        self._h5obj=None # disappears??
+
+    def allocateDataset(self,*,shape,unit,**kw):
         if self.dataset: raise RuntimeError(f'dataset is already assigned (shape {"×".join(self.dataset.shape)})')
         self.dataset=HeavyDataBase.allocateDataset(self,h5loc=self.h5loc,shape=shape,**kw)
         self.dataset.attrs['unit']=str(unit)
@@ -304,14 +324,14 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
     @pydantic.validate_arguments
     def makeFromQuantity(q: units.Quantity, h5path: str='', h5loc: Optional[str]='/quantity'):
         ret=Hdf5OwningRefQuantity(h5path=h5path,h5loc=h5loc,mode='create')
-        ret.allocateDataset(q.value.shape,unit=q.unit)
+        ret.allocateDataset(shape=q.value.shape,unit=q.unit)
         ret.value[:]=q.value
         assert (q.value[:]==ret.value[:]).all()
         assert q.unit==ret.unit
         return ret
 
     def toQuantity(self):
-        'Convert to "norma" (in-memory) quantity'
+        'Convert to "normal" (in-memory) quantity'
         return units.Quantity(value=np.array(self.dataset),unit=self.unit)
 
     def reopenData(self, mode: typing.Optional[HeavyDataBase_ModeChoice]=None):

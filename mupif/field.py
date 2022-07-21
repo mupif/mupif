@@ -217,6 +217,8 @@ class Field(mupifquantity.MupifQuantity):
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
+        # localizer in the newer version returns cell id, not the cell object, check that here
+        if isinstance(next(iter(cells)),int): cells=[self.mesh.getCell(ic) for ic in cells]
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:
@@ -228,58 +230,44 @@ class Field(mupifquantity.MupifQuantity):
                             try:
                                 answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
                             except IndexError:
-                                log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
-                                raise
+                                raise RuntimeError('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
+                                # raise
                             return answer
 
                     except ZeroDivisionError:
-                        print('ZeroDivisionError?')
+                        log.error('ZeroDivisionError in Field.evaluate?')
                         log.debug(icell.number)
                         log.debug(position)
                         icell.debug = 1
                         log.debug(icell.containsPoint(position), icell.glob2loc(position))
 
-                log.error('Field::evaluate - no source cell found for position %s' % str(position))
+                # log.error('Field::evaluate - no source cell found for position %s' % str(position))
                 for icell in cells:
                     log.debug(icell.number)
                     log.debug(icell.containsPoint(position))
                     log.debug(icell.glob2loc(position))
+                raise ValueError(f'Field.evaluate: no source cell found for position {position}')
 
-            else:  # if (self.fieldType == FieldType.FT_vertexBased):
+            else:
                 # in case of cell based fields do compute average of cell values containing point
                 # this typically happens when point is on the shared edge or vertex
-                count = 0
+                answer=[]
                 for icell in cells:
                     if icell.containsPoint(position):
-                        if debug:
-                            log.debug(icell.getVertices())
-
-                        try:
-                            tmp = self.value[icell.number]
-                            if count == 0:
-                                answer = list(tmp)
-                            else:
-                                for i in answer:
-                                    answer = [x+y for x in answer for y in tmp]
-                            count += 1
-
+                        if debug: log.debug(icell.getVertices())
+                        try: answer.append(self.value[icell.number])
                         except IndexError:
                             log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                             log.error(icell.getVertices())
                             raise
-                # end loop over icells
-                if count == 0:
-                    log.error('Field::evaluate - no source cell found for position %s', str(position))
-                    # for icell in cells:
-                    #    log.debug(icell.number, icell.containsPoint(position), icell.glob2loc(position))
+                if not answer: 
+                    raise ValueError(f'Field::evaluate - no source cell found for {position=}')
                 else:
-                    answer = [x/count for x in answer]
-                    return answer
-
+                    return np.mean(answer,axis=0)
         else:
             # no source cell found
-            log.error('Field::evaluate - no source cell found for position ' + str(position))
-            raise ValueError('Field::evaluate - no source cell found for position ' + str(position))
+            # log.error('Field::evaluate - no source cell found for position ' + str(position))
+            raise ValueError(f'No source cell found for {position=}')  # + str(position))
 
     def getVertexValue(self, vertexID):
         """
@@ -332,7 +320,7 @@ class Field(mupifquantity.MupifQuantity):
             vv = np.zeros_like(self.value, shape=(mesh.getNumberOfCells(), self.getRecordSize()))
             for f in self, field:
                 for v in range(f.mesh.getNumberOfCells()):
-                    vv[mesh.cellLabel2Number(f.mesh.giveCell(v).label)] = f.getRecord(v)
+                    vv[mesh.cellLabel2Number(f.mesh.getCell(v).label)] = f.getRecord(v)
 
         self.mesh = mesh
         self.value = vv
@@ -441,6 +429,8 @@ class Field(mupifquantity.MupifQuantity):
         
         # Create the Triangulation; no triangles so Delaunay triangulation created.
         triang = matplotlib.tri.Triangulation(vx, vy)
+        mask=matplotlib.tri.TriAnalyzer(triang).get_flat_tri_mask()
+        triang.set_mask(mask)
         # pcolor plot.
         plt.figure()
         plt.gca().set_aspect('equal')

@@ -34,8 +34,10 @@ import deprecated
 import pydantic
 import os.path
 from .mupifobject import MupifObjectBase
+from typing import Optional
+from .dataid import DataID
 
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class PyroFile (MupifObjectBase):
@@ -46,6 +48,7 @@ class PyroFile (MupifObjectBase):
     mode: str
     bufSize: int = 2**20
     compressFlag: bool = False
+    dataID: Optional[DataID] = DataID.ID_None
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -54,6 +57,10 @@ class PyroFile (MupifObjectBase):
         self.fileobj = open(self.filename, self.mode)
         self.compressor = None
         self.decompressor = None
+
+    @Pyro5.api.expose
+    def getDataID(self):
+        return self.dataID
 
     @Pyro5.api.expose
     def rewind(self):
@@ -67,16 +74,17 @@ class PyroFile (MupifObjectBase):
         :return: Returns next chunk of data read from the file
         :rtype: str
         """
-        comp=zlib.compressobj() if self.compressFlag else None
+        comp = zlib.compressobj() if self.compressFlag else None
         while True:
-            data=self.fileobj.read(self.bufSize)
-            #log.error(f'ø {len(data)} b')
+            data = self.fileobj.read(self.bufSize)
+            # log.error(f'ø {len(data)} b')
             if not data:
-                self.rewind() # we still rewind in copy as well, but it can't hurt
-                return # EOF, no more data
-            finish=(len(data)<self.bufSize) # EOF, some data still read
-            if comp: data=comp.compress(data)+comp.flush(zlib.Z_SYNC_FLUSH)+(comp.flush(zlib.Z_FINISH) if finish else b'')
-            #log.error(f'→ {len(data)} b')
+                self.rewind()  # we still rewind in copy as well, but it can't hurt
+                return  # EOF, no more data
+            finish = (len(data) < self.bufSize)  # EOF, some data still read
+            if comp:
+                data = comp.compress(data)+comp.flush(zlib.Z_SYNC_FLUSH)+(comp.flush(zlib.Z_FINISH) if finish else b'')
+            # log.error(f'→ {len(data)} b')
             yield data
             # this saves one more call to read returning nothing
             if finish:
@@ -132,7 +140,7 @@ class PyroFile (MupifObjectBase):
 
     # MUST be called as mp.PyroFile.copy(src,dst)
     @staticmethod
-    #@pydantic.validate_arguments # does not work yet, see https://stackoverflow.com/q/70965979
+    # @pydantic.validate_arguments # does not work yet, see https://stackoverflow.com/q/70965979
     def copy(src: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
              dst: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
              compress=True):

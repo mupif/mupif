@@ -17,6 +17,7 @@ from mupif.heavystruct import sampleSchemas_json
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
 
+
 class Hdf5HeavyProperty_TestCase(unittest.TestCase):
     def setUp(self): pass
     def test_01_create(self):
@@ -111,8 +112,8 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertRaises(RuntimeError,self.hq.exposeData)
         self.hq.closeData()
 
-        # 2. expose the data (uses the same daemon)
-        self.hq.exposeData()
+        # # 2. expose the data (uses the same daemon); this is now automatic
+        # self.hq.exposeData()
 
         p=Pyro5.api.Proxy(uri)
         # copies backing HDF5 file automatically
@@ -125,6 +126,16 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         hq2.value[0]=(100,0,0)
         self.assertNotEqual(v00,hq2.value[0][0])
         self.assertIsNone(hq2.h5uri)
+    def test_11_preDumpHook_transfer(self):
+        C=self.__class__
+        # 1. register the Hdf5OwningRefQuantity itself
+        uri=C.daemon.register(self.hq)
+        p=Pyro5.api.Proxy(uri)
+        self.assertIsNone(self.hq.h5uri)
+        # should transfer HDF5 file automatically, via calling exposeData in preDumpHook first
+        hq2=p.copyRemote()
+        self.assertIsNotNone(self.hq.h5uri)
+        self.assertNotEqual(self.hq.h5path,hq2.h5path) # storage should have been copied
 
     def test_20_makeFromQuantity2d(self):
         q=mp.Quantity(value=np.array([[1,2,3],[4,5,6],[7,8,9]]),unit='m/s')

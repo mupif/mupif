@@ -242,7 +242,7 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
         log.debug(f"Application {name}, found URI {uri} on {getNSConnectionInfo(ns,name)} from a nameServer {ns._pyroUri}")
         app2 = Pyro5.api.Proxy(uri)
     except Exception as e:
-        log.error("Cannot find registered server %s on %s" % (name, ns) )
+        log.error(f"Cannot find registered server {name} on {ns}")
         raise
 
     try:

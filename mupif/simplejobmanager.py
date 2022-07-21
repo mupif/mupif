@@ -92,8 +92,6 @@ class SimpleJobManager (jobmanager.JobManager):
             appName,
             appClass,
             server=None,
-            nshost=None,
-            nsport=None,
             workDir=None,
             maxJobs=1,
             daemon=None,
@@ -109,12 +107,10 @@ class SimpleJobManager (jobmanager.JobManager):
 
         self.tickets = []  # list of tickets issued when pre-allocating resources; tickets generated using uuid
         self.jobCounter = 0
-        # self.overrideNsPort = overrideNsPort
         self.lock = threading.Lock()
         self.applicationClass = appClass
         self.server = server
-        self.nshost = nshost
-        self.nsport = nsport
+        self.acceptingJobs=True
 
         app=appClass()
         self.modelMetadata=app.getAllMetadata()
@@ -254,6 +250,7 @@ class SimpleJobManager (jobmanager.JobManager):
 
         """
         self._updateActiveJobs()
+        if not self.acceptingJobs: raise RuntimeError('Not accepting any new jobs (soft-terminate has been called already).')
         with self.lock:
             log.info('allocateJob...')
             # allocate job if valid ticket given or available resource exist
@@ -391,11 +388,14 @@ class SimpleJobManager (jobmanager.JobManager):
             except Exception as e:
                 log.debug("Can not terminate job %s" % key)
 
-    @Pyro5.api.oneway  # in case call returns much later than daemon.shutdown
-    def terminate(self):
+    def terminate(self, force=False):
         """
         Terminates job manager itself.
         """
+        self._updateActiveJobs()
+        self.acceptingJobs=False
+        log.info('No more jobs will be accepted.')
+        if not force and self.activeJobs: raise RuntimeError(f'There are {len(self.activeJobs)} active jobs; call terminate(force=True) to kill them.')
         try:
             self.terminateAllJobs()
             self.ns._pyroClaimOwnership()
@@ -430,13 +430,15 @@ class SimpleJobManager (jobmanager.JobManager):
         See :func:`JobManager.getStatus`
         """
         self._updateActiveJobs()
-        JobManagerStatus = collections.namedtuple('JobManagerStatus', ['key', 'running', 'user', 'uri'])
         status = []
         tnow = timeTime.time()
         with self.lock:
             for key,job in self.activeJobs.items():
-                status.append(JobManagerStatus(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri))
+                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri))
         return status
+
+    def getStatusExtended(self):
+        return dict(currJobs=self.getStatus(),totalJobs=self.jobCounter,maxJobs=self.maxJobs)
 
     def getModelMetadata(self):
         return self.modelMetadata

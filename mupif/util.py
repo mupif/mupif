@@ -23,12 +23,15 @@
 import logging
 import argparse
 import os
+from . import pyrolog
+from . import octree
 
 import Pyro5
 
 _formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
 _formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
 
+log=logging.getLogger(__name__)
 
 def setupLoggingAtStartup():
     """
@@ -58,6 +61,11 @@ def setupLoggingAtStartup():
         fileHandler=logging.FileHandler(out, mode='w')
         fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
         root.addHandler(fileHandler)
+
+    pyroOut=os.environ.get('MUPIF_LOG_PYRO',None)
+    if pyroOut is not None:
+        pyroHandler=pyrolog.PyroLogHandler(uri=pyroOut,tag='<unspecified>')
+        root.addHandler(pyroHandler)
 
     try:
         import colorlog
@@ -173,3 +181,26 @@ def getVersion():
     except importlib.metadata.PackageNotFoundError: pass
 
     raise RuntimeError('Unable to get version data (did you install via "pip install mupif"?).')
+
+
+def accelOn():
+    # fail with ImportError if not installed at all
+    import mupifAccel 
+    # check version
+    minVer='0.0.2'
+    import importlib.metadata
+    from packaging.version import parse
+    currVer=importlib.metadata.version('mupif-accel')
+    if parse(currVer)<parse(minVer):
+        log.warning(f'Acceleration not enabled as mupif-accel is too old: {currVer} is installed, must be at least {minVer}')
+        raise ImportError('mupif-accel too old')
+    # this should pass now
+    import mupifAccel.fastOctant
+    log.info('Accelerating octree.Octant via mupifAccel.fastOctant.Octant')
+    octree.Octant=mupifAccel.fastOctant.Octant
+
+def accelOff():
+    # revert any accelerations applied in accelOn
+    octree.Octant=octree.Octant_py
+
+
