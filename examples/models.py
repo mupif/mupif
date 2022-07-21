@@ -113,7 +113,7 @@ class ThermalModel(mupif.model.Model):
             value=1.,
             propID=mupif.DataID.PID_effective_conductivity,
             valueType=mupif.ValueType.Scalar,
-            unit=mupif.U['W/m/K']
+            unit=mupif.U['W/(m K)']
         )
         self.tria = False
 
@@ -338,7 +338,7 @@ class ThermalModel(mupif.model.Model):
                 value=eff_conductivity,
                 propID=mupif.DataID.PID_effective_conductivity,
                 valueType=mupif.ValueType.Scalar,
-                unit=mp.U['W/m/K'],
+                unit=mp.U['W/(m K)'],
                 time=time
             )
 
@@ -612,7 +612,7 @@ class ThermalModel(mupif.model.Model):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mupif.DataID.PID_effective_conductivity:
                 # remember the mapped value
-                self.conductivity = obj.inUnitsOf('W/m/K')
+                self.conductivity = obj.inUnitsOf('W/(m K)')
                 # log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
 
             elif obj.getPropertyID() == mupif.DataID.PID_Temperature:
