@@ -93,13 +93,13 @@ MuPIF has been developped at Czech Technical University by Borek Patzak and cowo
     zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)
     url='https://www.mupif.org/',
     entry_points={
-        'console_scripts': [
-            'mupif-cli' = mupif.cli:main
+        'console_scripts': {
+            'mupif-cli': 'mupif.cli:main',
             #'jobMan2cmd = mupif.tools.JobMan2cmd:main',
             #'jobManStatus = mupif.tools.jobManStatus:main',
             #'jobManTest = mupif.tools.jobManTest:main',
             #'startMupifNameserver = mupif.tools.nameserver:main'
-        ]
+        }
     },
     ext_modules=ext_modules,
 )
