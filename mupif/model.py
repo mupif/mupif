@@ -121,7 +121,7 @@ ModelSchema = {
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
                 "Date_time_end": {"type": "string"},  # automatically set in Workflow
-                "Timeout": {"type": "integer"}, # maximum runtime in seconds
+                "Timeout": {"type": "integer"},  # maximum runtime in seconds
                 "Username": {"type": "string"},  # automatically set in Model and Workflow
                 "Hostname": {"type": "string"}  # automatically set in Model and Workflow
             },
@@ -235,7 +235,7 @@ class Model(mupifobject.MupifObject):
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
             ('Execution', {}),
             ('Solver', {}),
-            ('Timeout',0), # no limit by default
+            ('Timeout', 0),  # no limit by default
         ])
         # use defaults for metadata, unless given explicitly
         for k, v in defaults.items():
@@ -507,7 +507,7 @@ class RemoteModel (object):
     and the termination of job and tunnel has to be done from local computer, which has the neccesary
     communication link established (ssh tunnel in particular, when port translation takes place)
     """
-    def __init__(self, decoratee, jobMan=None, jobID=None, appTunnel=None):
+    def __init__(self, decoratee, jobMan=None, jobID=None):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID

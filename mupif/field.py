@@ -63,7 +63,79 @@ class FieldType(IntEnum):
 
 
 @Pyro5.api.expose
-class Field(mupifquantity.MupifQuantity):
+class FieldBase(mupifobject.MupifObject):
+    fieldID: DataID
+    time: Quantity
+    units: Unit = None  # todo Rename to unit ?
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def getDataID(self):
+        """
+        Returns DataID, e.g. FID_Displacement, FID_Temperature.
+
+        :return: Returns field DataID
+        :rtype: DataID
+        """
+        return self.fieldID
+
+    def getFieldID(self):
+        """
+        Returns DataID, e.g. FID_Displacement, FID_Temperature.
+
+        :return: Returns field DataID
+        :rtype: DataID
+        """
+        return self.fieldID
+
+    def getFieldIDName(self):
+        """
+        Returns name of the field.
+
+        :return: Returns DataID name
+        :rtype: string
+        """
+        return self.fieldID.name
+
+    def getTime(self):
+        """
+        Get time of the field.
+
+        :return: Time of field data
+        :rtype: units.Quantity
+        """
+        return self.time
+
+    def getUnit(self) -> Unit:
+        """
+        Returns representation of property units.
+        """
+        return self.units
+
+    @pydantic.validate_arguments
+    def evaluate(
+            self,
+            positions: typing.Union[
+                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
+                typing.List[typing.Tuple[float, float]],  # list of 2d coords
+                typing.Tuple[float, float, float],  # single 3d coords
+                typing.Tuple[float, float]  # single 2d coord
+            ],
+            eps: float = 0.0):
+        """
+        Evaluates the receiver at given spatial position(s).
+
+        :param positions: 1D/2D/3D position vectors
+        :type positions: tuple, a list of tuples
+        :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
+        :return: field value(s)
+        :rtype: units.Quantity with given value or tuple of values
+        """
+
+
+@Pyro5.api.expose
+class Field(FieldBase, mupifquantity.MupifQuantity):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -77,12 +149,7 @@ class Field(mupifquantity.MupifQuantity):
     .. automethod:: _evaluate
     """
     #: Instance of a Mesh class representing the underlying discretization.
-    mesh: mesh.Mesh 
-    #: Field type (displacement, strain, temperature ...)
-    fieldID: DataID
-    #: Time associated with field values
-    # (setting the default here results in pydatic trying __bool__ on Quantity, resulting in astropy warning... hence, leave it without the default)
-    time: Quantity 
+    mesh: mesh.Mesh
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
 
@@ -104,6 +171,12 @@ class Field(mupifquantity.MupifQuantity):
             'FieldType': str(self.fieldType),
             'ValueType': str(self.valueType)
         })
+
+    def getUnit(self) -> Unit:
+        """
+        Returns representation of property units.
+        """
+        return self.quantity.unit
 
     def setRecord(self, componentID, value):
         """
@@ -130,7 +203,6 @@ class Field(mupifquantity.MupifQuantity):
         :rtype: int
         """
         return self.valueType.getNumberOfComponents()
-
 
     def getMesh(self):
         """
@@ -178,14 +250,15 @@ class Field(mupifquantity.MupifQuantity):
         return self.time
 
     @pydantic.validate_arguments
-    def evaluate(self,
-        positions: typing.Union[
-            typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-            typing.List[typing.Tuple[float, float]],  # list of 2d coords
-            typing.Tuple[float, float, float],  # single 3d coords
-            typing.Tuple[float, float]  # single 2d coord
-        ],
-        eps: float = 0.0):
+    def evaluate(
+            self,
+            positions: typing.Union[
+                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
+                typing.List[typing.Tuple[float, float]],  # list of 2d coords
+                typing.Tuple[float, float, float],  # single 3d coords
+                typing.Tuple[float, float]  # single 2d coord
+            ],
+            eps: float = 0.0):
         """
         Evaluates the receiver at given spatial position(s).
 
@@ -218,7 +291,7 @@ class Field(mupifquantity.MupifQuantity):
         """
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
         # localizer in the newer version returns cell id, not the cell object, check that here
-        if isinstance(next(iter(cells)),int): cells=[self.mesh.getCell(ic) for ic in cells]
+        if isinstance(next(iter(cells)), int): cells = [self.mesh.getCell(ic) for ic in cells]
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:
@@ -251,7 +324,7 @@ class Field(mupifquantity.MupifQuantity):
             else:
                 # in case of cell based fields do compute average of cell values containing point
                 # this typically happens when point is on the shared edge or vertex
-                answer=[]
+                answer = []
                 for icell in cells:
                     if icell.containsPoint(position):
                         if debug: log.debug(icell.getVertices())
@@ -263,7 +336,7 @@ class Field(mupifquantity.MupifQuantity):
                 if not answer: 
                     raise ValueError(f'Field::evaluate - no source cell found for {position=}')
                 else:
-                    return np.mean(answer,axis=0)
+                    return np.mean(answer, axis=0)
         else:
             # no source cell found
             # log.error('Field::evaluate - no source cell found for position ' + str(position))
@@ -356,9 +429,6 @@ class Field(mupifquantity.MupifQuantity):
         :param float warpScale: warping scale
         :return: handle to matplotlib figure
         """
-        import numpy as np
-        import math
-        from scipy.interpolate import griddata
         import matplotlib
         import matplotlib.pyplot as plt
         if 0:

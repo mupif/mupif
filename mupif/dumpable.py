@@ -174,15 +174,15 @@ class Dumpable(MupifBaseModel):
         return ret
 
     def copyRemote(self):
-        '''
+        """
         Create local copy from Pyro's Proxy of this object.
 
         This abuses the in-band transfer of types in Pyro serializers, thus returning the dictionary with appropriate keys (`__class__` in particular) will automatically deserialize it into an object on the other (local) side of the wire.
 
         This method does some check whether the object is exposed via Pyro (thus presumable accessed via a Proxy). This cannot be detected reliably, however, thus calling `copyRemote()` on local (unproxied) object will return dictionary rather than a copy of the object.
-        '''
-        #daemon = getattr(self, '_pyroDaemon', None)
-        #if not daemon:
+        """
+        # daemon = getattr(self, '_pyroDaemon', None)
+        # if not daemon:
         #    raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
         if Pyro5.callcontext.current_context.client is None: raise RuntimeError('This does not seem to be a remote object (context client is None)')
         return self.to_dict()
