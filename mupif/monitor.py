@@ -111,3 +111,4 @@ if __name__=='__main__':
     pprint(schedulerInfo(ns))
     pprint(jobmanInfo(ns))
     pprint(vpnInfo(hidePriv=False))
+    pprint(nsInfo())
