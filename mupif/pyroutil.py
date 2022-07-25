@@ -101,11 +101,12 @@ def runNameserverBg(nshost=None,nsport=None):
     return NameserverBg(host=h,port=p,thread=thread)
 
 
-def locateNameserver(nshost=None,nsport=0,server=False):
+def locateNameserver(nshost=None,nsport=0,server=False,return_src=False):
+    retSlice=(slice(0,3) if return_src else slice(0,2))
     def fromFile(f):
         s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0].strip())
         log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
-        return s.hostname,s.port
+        return s.hostname,s.port,f'file://{os.path.abspath(f)}'
     # 1. set from arguments passed
 
     # for the server, 0.0.0.0 binds all local interfaces
@@ -115,28 +116,28 @@ def locateNameserver(nshost=None,nsport=0,server=False):
     #    else: return None,nsport
     if nshost is not None:
         log.info(f'Using nameserver arguments {nshost}:{nsport}')
-        return nshost,nsport
+        return (nshost,nsport,'explicit')[retSlice]
 
     # 2. set from MUPIF_NS env var
     if (nshp:=os.environ.get('MUPIF_NS',None)):
         s=urllib.parse.urlsplit('//'+nshp)
         log.info(f'Using MUPIF_NS environment variable → nameserver {s.hostname}:{s.port}')
-        return s.hostname,s.port
+        return (s.hostname,s.port,'env:MUPIF_NS')[retSlice]
     # 3. set from MUPIF_NS *file* in mupif module directory
     import mupif
-    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
+    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)[retSlice]
     # 4. set from XDG user-config file (~/.config/MUPIF_NS on linux)
     try:
         import appdirs
-        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
+        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)[retSlice]
     except ImportError:
         log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
     if server:
         log.warning('Falling back to 127.0.0.1:9090 for nameserver (server).')
-        return '127.0.0.1',9090
+        return ('127.0.0.1',9090,'fallback-server')[retSlice]
     else:
         log.warning('Falling back to 0.0.0.0:0 for nameserver (client).')
-        return None,0
+        return (None,0,'fallback-client')[retSlice]
 
 
 @deprecated.deprecated('renamed to connectNameserver')

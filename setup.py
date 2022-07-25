@@ -87,13 +87,14 @@ MuPIF has been developped at Czech Technical University by Borek Patzak and cowo
     install_requires=[
         'numpy', 'scipy', 'setuptools', 'config', 'pytest', 'pytest-cov', 'Pyro5', 'jsonpickle',
         'jsonschema', 'matplotlib', 'pydantic', 'serpent', 'meshio', 'h5py', 'asyncssh', 'astropy',
-        'appdirs', 'setproctitle', 'deprecated', 'tqdm'
+        'appdirs', 'setproctitle', 'deprecated', 'tqdm', 'typer', 'rich'
     ],
     include_package_data=True,
     zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)
     url='https://www.mupif.org/',
     entry_points={
         'console_scripts': [
+            'mupif-cli' = mupif.cli:main
             #'jobMan2cmd = mupif.tools.JobMan2cmd:main',
             #'jobManStatus = mupif.tools.jobManStatus:main',
             #'jobManTest = mupif.tools.jobManTest:main',
