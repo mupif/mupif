@@ -31,6 +31,7 @@ from . import cellgeometrytype
 from . import mesh
 from . import mupifquantity
 from .units import Quantity, Unit
+from .dumpable import NumpyArray
 
 import meshio
 import sys
@@ -65,7 +66,7 @@ class FieldType(IntEnum):
 @Pyro5.api.expose
 class FieldBase(mupifobject.MupifObject):
     fieldID: DataID
-    time: Quantity
+    time: Quantity=0*Unit('s')
     units: Unit = None  # todo Rename to unit ?
 
     def __init__(self, **kw):
@@ -116,13 +117,9 @@ class FieldBase(mupifobject.MupifObject):
     @pydantic.validate_arguments
     def evaluate(
             self,
-            positions: typing.Union[
-                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-                typing.List[typing.Tuple[float, float]],  # list of 2d coords
-                typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float]  # single 2d coord
-            ],
-            eps: float = 0.0):
+            positions,
+            eps: float = 0.0
+        ):
         """
         Evaluates the receiver at given spatial position(s).
 
@@ -132,6 +129,29 @@ class FieldBase(mupifobject.MupifObject):
         :return: field value(s)
         :rtype: units.Quantity with given value or tuple of values
         """
+        raise RuntimeError('FieldBase.evaluate is abstract.')
+
+@Pyro5.api.expose
+class AnalyticalField(FieldBase):
+    expr: str
+    dim: pydantic.conint(ge=2,le=3)=3
+
+    @pydantic.validate_arguments
+    def evaluate(
+            self,
+            positions: typing.Union[
+                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
+                typing.List[typing.Tuple[float, float]],  # list of 2d coords
+                typing.Tuple[float, float, float],  # single 3d coords
+                typing.Tuple[float, float],  # single 2d coord
+                NumpyArray
+            ],
+            eps: float = 0.0):
+        import numexpr as ne
+        loc=dict(x=positions[...,0],y=positions[...,1])
+        if self.dim==2: loc['xy']=positions
+        if self.dim==3: loc.update({'z':positions[...,2],'xyz':positions})
+        return ne.evaluate(self.expr,loc)
 
 
 @Pyro5.api.expose
