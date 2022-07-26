@@ -50,7 +50,8 @@ def autoImports():
         if modsplit == ['mupif']:
             continue
         # important, would mess tests up as they use from mupif import * and such (should not, being nested)
-        if modsplit[1] in ('tests', 'physics'):
+        # demo is only imported as mupif.demo later, not pulling its contents into mupif.*
+        if modsplit[1] in ('tests', 'demo'):
             continue
         try:
             # important! don't call loader if the modules appeared in sys.modules meanwhile
@@ -147,6 +148,7 @@ import io
 
 # make flake8 happy
 from . import dumpable, util
+from . import demo
 
 # can be set to expose PyroFile automatically during serialization, passing the URI to the remote
 # (currently unused)

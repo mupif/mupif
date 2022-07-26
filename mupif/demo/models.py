@@ -2,7 +2,7 @@ import os
 import mupif
 import mupif as mp
 import Pyro5
-import meshgen
+from . import meshgen
 import math
 import numpy as np
 import time as timeTime
