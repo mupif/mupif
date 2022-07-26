@@ -64,10 +64,9 @@ class FieldType(IntEnum):
 
 
 @Pyro5.api.expose
-class FieldBase(mupifobject.MupifObject):
+class FieldBase(mupifquantity.MupifQuantity):
     fieldID: DataID
     time: Quantity=0*Unit('s')
-    units: Unit = None  # todo Rename to unit ?
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -136,6 +135,11 @@ class AnalyticalField(FieldBase):
     expr: str
     dim: pydantic.conint(ge=2,le=3)=3
 
+    def __init__(self, *, unit, **kw):
+        # quantity with null array; only the unit is relevant
+        super().__init__(quantity=np.array([])*Unit(unit),**kw)
+
+
     @pydantic.validate_arguments
     def evaluate(
             self,
@@ -151,11 +155,11 @@ class AnalyticalField(FieldBase):
         loc=dict(x=positions[...,0],y=positions[...,1])
         if self.dim==2: loc['xy']=positions
         if self.dim==3: loc.update({'z':positions[...,2],'xyz':positions})
-        return ne.evaluate(self.expr,loc)
+        return self.quantity.unit*ne.evaluate(self.expr,loc)
 
 
 @Pyro5.api.expose
-class Field(FieldBase, mupifquantity.MupifQuantity):
+class Field(FieldBase):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
