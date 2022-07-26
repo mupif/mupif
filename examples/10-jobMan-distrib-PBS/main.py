@@ -7,7 +7,7 @@ log = logging.getLogger()
 import threading
 import mupif as mp
 
-threading.current_thread().setName('ex10-main')
+threading.current_thread().name='ex10-main'
 
 
 @Pyro5.api.expose
