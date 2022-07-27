@@ -112,13 +112,14 @@ class Workflow(model.Model):
         self._jobmans = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
+        self._remoteLogUri=None
 
     def _allocateModel(self, name, modulename, classname, jobmanagername):
         if name:
             if jobmanagername:
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self._remoteLogUri)
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
@@ -150,7 +151,7 @@ class Workflow(model.Model):
             return self._jobmans[name]
         return None
 
-    def initialize(self, *, workdir='', metadata=None, validateMetaData=True, **kwargs):
+    def initialize(self, *, workdir='', remoteLogUri=None, metadata=None, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
 
@@ -159,6 +160,8 @@ class Workflow(model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=False, **kwargs)
+
+        self._remoteLogUri=remoteLogUri # used in _allocateAllModels already
 
         self._allocateAllModels()
         self._initializeAllModels()
