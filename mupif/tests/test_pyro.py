@@ -40,21 +40,21 @@ class PyroNS(unittest.TestCase):
         # 5. fallback values
 
         # 1. args
-        self.assertEqual(mp.pyroutil.locateNameserver('1.1.1.1',1111),('1.1.1.1',1111))
+        self.assertEqual(mp.pyroutil.locateNameserver('1.1.1.1',1111)[:2],('1.1.1.1',1111))
         # 2. env var
-        self.assertEqual(mp.pyroutil.locateNameserver(),('2.2.2.2',2222))
+        self.assertEqual(mp.pyroutil.locateNameserver()[:2],('2.2.2.2',2222))
         del os.environ['MUPIF_NS']
         # 3. module dir
-        self.assertEqual(mp.pyroutil.locateNameserver(),srcNs)
+        self.assertEqual(mp.pyroutil.locateNameserver()[:2],srcNs)
         os.remove(srcNsFile)
         # 4. user config
-        self.assertEqual(mp.pyroutil.locateNameserver(),('4.4.4.4',4444))
+        self.assertEqual(mp.pyroutil.locateNameserver()[:2],('4.4.4.4',4444))
         os.remove(cfgNsFile)
         # 5. fallback values
         # broadcast lookup for client
-        self.assertEqual(mp.pyroutil.locateNameserver(),(None,0))
+        self.assertEqual(mp.pyroutil.locateNameserver()[:2],(None,0))
         # bind localhost for server
-        self.assertEqual(mp.pyroutil.locateNameserver(server=True),('127.0.0.1',9090))
+        self.assertEqual(mp.pyroutil.locateNameserver(server=True)[:2],('127.0.0.1',9090))
 
 
 
