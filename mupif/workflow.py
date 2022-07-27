@@ -112,14 +112,14 @@ class Workflow(model.Model):
         self._jobmans = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
-        self._remoteLogUri=None
 
     def _allocateModel(self, name, modulename, classname, jobmanagername):
         if name:
             if jobmanagername:
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self._remoteLogUri)
+                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI',''))
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
@@ -134,7 +134,8 @@ class Workflow(model.Model):
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
                 'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
+                'Task_ID': self.getMetadata('Execution.Task_ID'),
+                'Log_URI': self.getMetadata('Execution.Log_URI','')
             }
         }
         for _model in self._models.values():
@@ -151,7 +152,7 @@ class Workflow(model.Model):
             return self._jobmans[name]
         return None
 
-    def initialize(self, *, workdir='', remoteLogUri=None, metadata=None, validateMetaData=True, **kwargs):
+    def initialize(self, *, workdir='', metadata=None, validateMetaData=True, **kwargs):
         """
         Initializes application, i.e. all functions after constructor and before run.
 
@@ -160,8 +161,6 @@ class Workflow(model.Model):
         :param bool validateMetaData: Defines if the metadata validation will be called
         """
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=False, **kwargs)
-
-        self._remoteLogUri=remoteLogUri # used in _allocateAllModels already
 
         self._allocateAllModels()
         self._initializeAllModels()

@@ -366,10 +366,8 @@ def runJobManagerServer(*, ns, jobman):
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
-    if server is not None or nshost is not None or nsport!=0: raise ValueError('*server*, *nshost*, *nsport* are deprecated (pass *ns* instead).')
 
     return runServer(
-        net=None,
         ns=ns,
         appName=jobman.getNSName(),
         app=jobman,
@@ -446,7 +444,11 @@ def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname,)
+        # signature of allocateJob changed, support both versions
+        try: status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname,remoteLogUri=remoteLogUri)
+        except TypeError:
+            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
+            log.warning('JobManager.allocateJob failed with remoteLogUri, remote logging disabled.')
         log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
     except Exception:
         log.exception("JobManager allocateJob() failed")

@@ -117,6 +117,7 @@ ModelSchema = {
                 "Use_case_ID": {"type": ["string", "integer"]},
                 # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
                 "Task_ID": {"type": "string"},
+                "Log_URI": {"type": "string"},
                 "Status": {"type": "string", "enum": ["Instantiated", "Initialized", "Running", "Finished", "Failed"]},
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
