@@ -117,6 +117,7 @@ ModelSchema = {
                 "Use_case_ID": {"type": ["string", "integer"]},
                 # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
                 "Task_ID": {"type": "string"},
+                "Log_URI": {"type": "string"},
                 "Status": {"type": "string", "enum": ["Instantiated", "Initialized", "Running", "Finished", "Failed"]},
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
@@ -459,8 +460,8 @@ class Model(mupifobject.MupifObject):
             self.removeApp()
                         
         if self.pyroDaemon:
+            log.info(f"Unregistering from daemon {self.pyroDaemon}")
             self.pyroDaemon.unregister(self)
-            log.info("Unregistering daemon %s" % self.pyroDaemon)
             # log.info(self.pyroDaemon)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()

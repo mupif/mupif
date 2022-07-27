@@ -168,9 +168,9 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
 # global variable holding daemon objects, keyed by hostname (local IP address)
 _daemons={}
 
-def getDaemon(proxy: Pyro5.api.Proxy = None) -> Pyro5.api.Daemon:
+def getDaemon(proxy: Pyro5.api.Proxy = None, daemonThread=True) -> Pyro5.api.Daemon:
     '''
-    Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will lsiten on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
+    Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will listen on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
 
     Passing *proxy=None* will return the (possibly cached) daemon listening on the IPv4 loopback interface.
 
@@ -181,10 +181,13 @@ def getDaemon(proxy: Pyro5.api.Proxy = None) -> Pyro5.api.Daemon:
         host=proxy._pyroConnection.sock.getsockname()[0]
     else: host='127.0.0.1'
     global _daemons
-    if (d:=_daemons.get(host,None)) is not None: return d
+    if (d:=_daemons.get(host,None)) is not None:
+        log.debug(f're-using existing daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
+        return d
     dNew=_daemons[host]=Pyro5.api.Daemon(host=host)
-    th=threading.Thread(target=dNew.requestLoop,daemon=True)
+    th=threading.Thread(target=dNew.requestLoop,daemon=daemonThread)
     th.start()
+    log.debug(f'started new {"NON-" if daemonThread else ""}persistent daemon for {host}: {dNew.locationStr} [pid={os.getpid()}]')
     return dNew
 
 def getNSmetadata(ns, name):
@@ -245,6 +248,7 @@ def _connectApp(ns, name, connectionTestTimeOut = 10. ):
         log.debug("Connected to " + sig + " with the application " + name)
     except Pyro5.core.errors.CommunicationError as e:
         log.exception("Communication error (network config?).")
+        print("|".join(Pyro5.errors.get_pyro_traceback()))
         raise
     except Exception as e:
         log.exception(f"Cannot connect to application {name}. Is the server running?")
@@ -282,14 +286,11 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
-    if not daemon: 
-        daemon=getDaemon(proxy=ns)
-        import threading
+    if not daemon:
+        # in server, daemon thread should keep the process alive
+        daemon=getDaemon(proxy=ns,daemonThread=False) 
+        # we can assume new daemon thread may be renamed to the app
         threading.current_thread().name=appName
-        externalDaemon=False
-    else:
-        externalDaemon=True
-
     # Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
@@ -301,19 +302,18 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
     uri = daemon.register(app)
     try:
         # the same interface shared by both Model and JobManager
-        app.registerPyro(daemon, ns, uri, appName, externalDaemon=externalDaemon)
-    # except AttributeError as e:
-    #    # catch attribute error (thrown when method not defined)
-    #    log.warning(f'Can not register daemon for application {appName}')
+
+        # TODO: externalDaemon semantics is unclear now; getDaemon can be cached
+        # TODO: thus the server should never delete its own daemon?
+        # TODO: we should have a way for daemon to stop when the last object deregisters...
+        app.registerPyro(daemon, ns, uri, appName, externalDaemon=False)
     except Exception:
         log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
         raise
 
     ns.register(appName, uri, metadata=metadata)
 
-    # log.debug(f'NameServer {appName} has registered uri {uri}')
     log.debug(f'Running {appName} at {uri} (nameserver: {str(ns)})')
-    threading.Thread(target=daemon.requestLoop).start()  # run daemon request loop in separate thread
 
     def _remove_from_ns(sig=None,stack=None):
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
@@ -367,7 +367,6 @@ def runJobManagerServer(*, ns, jobman):
     :param jobman: Jobmanager
     """
     return runServer(
-        net=None,
         ns=ns,
         appName=jobman.getNSName(),
         app=jobman,
@@ -444,11 +443,15 @@ def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname,)
+        # signature of allocateJob changed, support both versions
+        try: status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname,remoteLogUri=remoteLogUri)
+        except TypeError:
+            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
+            log.warning('JobManager.allocateJob failed with remoteLogUri, remote logging disabled.')
         log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
     except Exception:
         log.exception("JobManager allocateJob() failed")
-        print("".join(Pyro5.errors.get_pyro_traceback()))
+        print("| ".join(Pyro5.errors.get_pyro_traceback()))
         raise
     return model.RemoteModel(_connectApp(ns, jobid), jobMan=jobMan, jobID=jobid)
 
