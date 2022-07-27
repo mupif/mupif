@@ -366,8 +366,6 @@ def runJobManagerServer(*, ns, jobman):
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
-    if server is not None or nshost is not None or nsport!=0: raise ValueError('*server*, *nshost*, *nsport* are deprecated (pass *ns* instead).')
-
     return runServer(
         net=None,
         ns=ns,
