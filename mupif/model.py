@@ -460,8 +460,8 @@ class Model(mupifobject.MupifObject):
             self.removeApp()
                         
         if self.pyroDaemon:
+            log.info(f"Unregistering from daemon {self.pyroDaemon}")
             self.pyroDaemon.unregister(self)
-            log.info("Unregistering daemon %s" % self.pyroDaemon)
             # log.info(self.pyroDaemon)
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
