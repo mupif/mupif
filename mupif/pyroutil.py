@@ -54,20 +54,6 @@ import importlib.resources
 
 from dataclasses import dataclass
 from typing import Optional
-@dataclass
-class PyroNetConf:
-    nshost: Optional[str] = None
-    nsport: int = 0
-    ns: Optional[Pyro5.api.Proxy] = None
-    host: Optional[str] = None
-    port: int = 0
-
-    def getNS(self):
-        if self.ns is not None:
-            return self.ns
-        # self.ns=Pyro5.api.locate_ns(host=self.nshost, port=self.nsport)
-        self.ns = connectNameserver(nshost=self.nshost, nsport=self.nsport)
-        return self.ns
 
 
 # pyro5 nameserver metadata
@@ -85,9 +71,9 @@ def runNameserverBg(nshost=None,nsport=None):
     Pyro5.configure.PYRO_SERVERTYPE='multiplex'
     Pyro5.configure.PYRO_SSL=0
     log.debug(Pyro5.configure.global_config.dump())
-    nshost,nsport=locateNameserver(nshost,nsport,server=True)
+    nshost,nsport,nssrc=locateNameserver(nshost,nsport,server=True)
     import Pyro5.nameserver
-    log.info(f"Starting nameserver on {nshost}:{nsport}")
+    log.info(f"Starting nameserver on {nshost}:{nsport} (via {nssrc})")
     nsUri,nsDaemon,nsBroadcast=Pyro5.nameserver.start_ns(nshost,nsport)
     def _nsBg():
         try: nsDaemon.requestLoop()
@@ -102,7 +88,6 @@ def runNameserverBg(nshost=None,nsport=None):
 
 
 def locateNameserver(nshost=None,nsport=0,server=False,return_src=False):
-    retSlice=(slice(0,3) if return_src else slice(0,2))
     def fromFile(f):
         s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0].strip())
         log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
@@ -116,28 +101,28 @@ def locateNameserver(nshost=None,nsport=0,server=False,return_src=False):
     #    else: return None,nsport
     if nshost is not None:
         log.info(f'Using nameserver arguments {nshost}:{nsport}')
-        return (nshost,nsport,'explicit')[retSlice]
+        return (nshost,nsport,'explicit')
 
     # 2. set from MUPIF_NS env var
     if (nshp:=os.environ.get('MUPIF_NS',None)):
         s=urllib.parse.urlsplit('//'+nshp)
         log.info(f'Using MUPIF_NS environment variable → nameserver {s.hostname}:{s.port}')
-        return (s.hostname,s.port,'env:MUPIF_NS')[retSlice]
+        return (s.hostname,s.port,'env:MUPIF_NS')
     # 3. set from MUPIF_NS *file* in mupif module directory
     import mupif
-    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)[retSlice]
+    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
     # 4. set from XDG user-config file (~/.config/MUPIF_NS on linux)
     try:
         import appdirs
-        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)[retSlice]
+        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
     except ImportError:
         log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
     if server:
         log.warning('Falling back to 127.0.0.1:9090 for nameserver (server).')
-        return ('127.0.0.1',9090,'fallback-server')[retSlice]
+        return ('127.0.0.1',9090,'fallback-server')
     else:
         log.warning('Falling back to 0.0.0.0:0 for nameserver (client).')
-        return (None,0,'fallback-client')[retSlice]
+        return (None,0,'fallback-client')
 
 
 @deprecated.deprecated('renamed to connectNameserver')
@@ -159,7 +144,7 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     if nshost == '0.0.0.0' or nshost == '::':
         nshost = None
 
-    nshost,nsport=locateNameserver(nshost,nsport)
+    nshost,nsport,nssrc=locateNameserver(nshost,nsport)
 
     if nshost is not None and nsport != 0:
         try:
@@ -284,12 +269,11 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional[PyroNetConf]=None, daemon=None, metadata=None):
+def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
     """
     Runs a simple application server
 
     :param ns: nameserver Proxy
-    :param net: network configuration (deprecated)
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
@@ -298,30 +282,13 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
-    if ns is None:
-        log.error('ns not specified (this is deprecated)')
-        ns = net.getNS()
-    else: 
-        if net is not None: raise ValueError(f'When *ns* is specified, *net* must be None (not {net})')
-    # server, port, nshost, nsport, 
-    # fix the IP address published so that it is not 0.0.0.0
-
-    externalDaemon = False
-    if not daemon:
-        host = (net.host if net else '0.0.0.0')
-        port = (net.port if net else 0)
-        if host in ('0.0.0.0', '::'):
-            ns._pyroBind()  # connect so that _pyroConnection exists
-            host,port = ns._pyroConnection.sock.getsockname()[0:2]
-            if net is not None: log.warning(f"Adjusted INADDR_ANY {net.host}:{net.port} → {host}:{port} as per NS socket")
-        try:
-            daemon = Pyro5.api.Daemon(host=host, port=port)
-            log.info(f'Pyro5 daemon runs on {host}:{port}')
-        except Exception:
-            log.exception(f'Can not run Pyro5 daemon on {host}:{port}')
-            raise
+    if not daemon: 
+        daemon=getDaemon(proxy=ns)
+        import threading
+        threading.current_thread().name=appName
+        externalDaemon=False
     else:
-        externalDaemon = True
+        externalDaemon=True
 
     # Check if application name already exists on a nameServer
     try:
@@ -342,23 +309,10 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
         log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
         raise
 
-    import threading
-    threading.current_thread().setName(appName)
-
-    # generate connection metadata entry
-    _host, _port = daemon.locationStr.rsplit(':',1)
-    # for ipv6, remove braces
-    if _host.startswith('[') and _host.endswith(']'): _host=_host[1:-1]
-
-    if metadata is None:
-        metadata = set()
-    metadata.add(_NS_METADATA.network+json.dumps({'host': _host, 'port': _port}))
-
     ns.register(appName, uri, metadata=metadata)
 
-    log.debug(f'NameServer {appName} has registered uri {uri}')
-    if net is not None: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameServer:{net.nshost}, nameServerPort:{net.nsport}: applicationName:{appName}, daemon URI {uri}')
-    else: log.debug(f'Running runServer: server:{_host}, port:{_port}, nameserver: {ns._pyroUri}, applicationName:{appName}, daemon URI {uri}')
+    # log.debug(f'NameServer {appName} has registered uri {uri}')
+    log.debug(f'Running {appName} at {uri} (nameserver: {str(ns)})')
     threading.Thread(target=daemon.requestLoop).start()  # run daemon request loop in separate thread
 
     def _remove_from_ns(sig=None,stack=None):
@@ -378,7 +332,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, net: Optional
     return uri
 
 
-def runAppServer(*, appName, app, ns=None, server=None, nshost=None, nsport=0, port=0):
+def runAppServer(*, appName, app, ns):
     """
     Runs a simple application server
 
@@ -392,13 +346,8 @@ def runAppServer(*, appName, app, ns=None, server=None, nshost=None, nsport=0, p
 
     :raises Exception: if can not run Pyro5 daemon
     """
-    if ns is not None:
-        if server is not None or nshost is not None or nsport!=0: raise ValueError('When *ns* is specified, server, nshost, nsport must *not* be given')
-    else:
-        if server is None or nshost is None or nsport==0: raise ValueError('When *ns* is not specified, server, nshost, nsport *must* be given')
 
     return runServer(
-        net=(PyroNetConf(host=server, nshost=nshost, nsport=nsport) if ns is None else None),
         ns=ns,
         appName=appName,
         app=app,
@@ -407,7 +356,7 @@ def runAppServer(*, appName, app, ns=None, server=None, nshost=None, nsport=0, p
     )
 
 
-def runJobManagerServer(*, ns=None, server=None, nshost=None, nsport=0, jobman, port=0):
+def runJobManagerServer(*, ns, jobman):
     """
     Registers and runs given jobManager server
 
@@ -417,13 +366,10 @@ def runJobManagerServer(*, ns=None, server=None, nshost=None, nsport=0, jobman, 
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
-    if ns is not None:
-        if server is not None or nshost is not None or nsport!=0: raise ValueError('When *ns* is specified, server, nshost, nsport must *not* be given')
-    else:
-        if server is None or nshost is None or nsport==0: raise ValueError('When *ns* is not specified, server, nshost, nsport *must* be given')
+    if server is not None or nshost is not None or nsport!=0: raise ValueError('*server*, *nshost*, *nsport* are deprecated (pass *ns* instead).')
 
     return runServer(
-        net=(PyroNetConf(host=server, nshost=nshost, nsport=nsport) if ns is None else None),
+        net=None,
         ns=ns,
         appName=jobman.getNSName(),
         app=jobman,
@@ -485,7 +431,7 @@ def connectJobManager(ns, jobManName):
     return jobmanager.RemoteJobManager(_connectApp(ns, jobManName))
 
 
-def allocateApplicationWithJobManager(ns, jobMan):
+def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
     """
     Request new application instance to be spawned by  given jobManager.
     
@@ -500,7 +446,7 @@ def allocateApplicationWithJobManager(ns, jobMan):
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        status, jobid, jobport = jobMan.allocateJob(username+"@"+hostname)
+        status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname,)
         log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
     except Exception:
         log.exception("JobManager allocateJob() failed")
