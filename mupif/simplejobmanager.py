@@ -411,7 +411,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 self.pyroDaemon.unregister(self)
             except Exception:
                 pass
-            if not self.externalDaemon:
+            if self.exclusiveDaemon:
                 log.info("SimpleJobManager:terminate Shutting down daemon %s" % self.pyroDaemon)
                 try:
                     self.pyroDaemon.shutdown()

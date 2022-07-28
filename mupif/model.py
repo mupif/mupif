@@ -217,7 +217,7 @@ class Model(mupifobject.MupifObject):
     """
 
     pyroDaemon: Optional[Any] = None
-    externalDaemon: bool = False
+    exclusiveDaemon: bool = False
     pyroNS: Optional[str] = None
     pyroURI: Optional[str] = None
     appName: str = None
@@ -270,7 +270,7 @@ class Model(mupifobject.MupifObject):
     def updateAndPassMetadata(self, dictionary: dict):
         self.updateMetadata(dictionary=dictionary)
 
-    def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
+    def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, exclusiveDaemon=False):
         """
         Register the Pyro daemon and nameserver. Required by several services
 
@@ -278,13 +278,13 @@ class Model(mupifobject.MupifObject):
         :param Pyro5.naming.Nameserver pyroNS: Optional nameserver
         :param string pyroURI: Optional URI of receiver
         :param string appName: Optional application name. Used for removing from pyroNS
-        :param bool externalDaemon: Optional parameter when daemon was allocated externally.
+        :param bool exclusiveDaemon: Optional parameter when daemon was allocated externally.
         """
         self.pyroDaemon = pyroDaemon
         self.pyroNS = pyroNS
         self.pyroURI = pyroURI
         self.appName = appName
-        self.externalDaemon = externalDaemon
+        self.exclusiveDaemon = exclusiveDaemon
 
     def get(self, objectTypeID, time=None, objectID=""):
         """
@@ -462,9 +462,7 @@ class Model(mupifobject.MupifObject):
         if self.pyroDaemon:
             log.info(f"Unregistering from daemon {self.pyroDaemon}")
             self.pyroDaemon.unregister(self)
-            # log.info(self.pyroDaemon)
-            if not self.externalDaemon:
-                self.pyroDaemon.shutdown()
+            if self.exclusiveDaemon: self.pyroDaemon.shutdown()
             self.pyroDaemon = None
         else:
             log.info("Terminating model") 

@@ -101,7 +101,7 @@ class JobManager(object):
         self.pyroNS = None
         self.pyroURI = None
         self.appName = None
-        self.externalDaemon = None
+        self.exclusiveDaemon = None
 
     def getNumberOfFreeJobs(self):
         """
@@ -180,7 +180,7 @@ class JobManager(object):
         :rtype: PyroFile
         """
 
-    def registerPyro(self, daemon, ns, uri, appName, externalDaemon):
+    def registerPyro(self, daemon, ns, uri, appName, exclusiveDaemon):
         """
         Possibility to register the Pyro daemon and nameserver.
 
@@ -188,7 +188,7 @@ class JobManager(object):
         :param Pyro4.naming.Nameserver ns: Optional nameserver
         :param string uri: Optional URI of receiver
         :param string appName:
-        :param bool externalDaemon: Optional parameter when damon was allocated externally.
+        :param bool exclusiveDaemon: Optional parameter when damon was allocated externally.
         """
         # XXX: this is the same as in Model.registerPyro
         # there should be a common base for things exposed over Pyro
@@ -196,7 +196,7 @@ class JobManager(object):
         self.pyroNS = ns
         self.pyroURI = uri
         self.appName = appName
-        self.externalDaemon = externalDaemon
+        self.exclusiveDaemon = exclusiveDaemon
 
     def getJobWorkDir(self, jobID):
         """
