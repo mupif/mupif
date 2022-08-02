@@ -63,6 +63,8 @@ def list():
     print(mupif.monitor.nsInfo())
 
 def main():
+    import sys
+    if len(sys.argv)==1: sys.argv.append('--help')
     app()
 
 if __name__ == '__main__':
