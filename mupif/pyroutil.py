@@ -308,7 +308,7 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
         # TODO: exclusiveDaemon semantics is unclear now; getDaemon can be cached
         # TODO: thus the server should never delete its own daemon?
         # TODO: we should have a way for daemon to stop when the last object deregisters...
-        app.registerPyro(daemon, ns, uri, appName, exclusiveDaemon=exclusiveDaemon)
+        app.registerPyro(daemon=daemon, ns=ns, uri=uri, appName=appName, exclusiveDaemon=exclusiveDaemon)
     except Exception:
         log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
         raise

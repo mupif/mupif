@@ -270,7 +270,7 @@ class Model(mupifobject.MupifObject):
     def updateAndPassMetadata(self, dictionary: dict):
         self.updateMetadata(dictionary=dictionary)
 
-    def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, exclusiveDaemon=False):
+    def registerPyro(self, *, daemon, ns, uri, appName=None, exclusiveDaemon=False, externalDaemon=None):
         """
         Register the Pyro daemon and nameserver. Required by several services
 
@@ -280,9 +280,13 @@ class Model(mupifobject.MupifObject):
         :param string appName: Optional application name. Used for removing from pyroNS
         :param bool exclusiveDaemon: Optional parameter when daemon was allocated externally.
         """
-        self.pyroDaemon = pyroDaemon
-        self.pyroNS = pyroNS
-        self.pyroURI = pyroURI
+        if externalDaemon is not None:
+            import warnings
+            warnings.warn('externalDaemon is deprecated, use exclusiveDaemon (with opposite meaning) instead',DeprecationWarning)
+            exclusiveDaemon=not externalDaemon
+        self.pyroDaemon = daemon
+        self.pyroNS = ns
+        self.pyroURI = uri
         self.appName = appName
         self.exclusiveDaemon = exclusiveDaemon
 
