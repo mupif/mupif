@@ -202,7 +202,9 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         assert self.getNumberOfCells()==0
         def seq(s,what):
             chunked=_chunker(s,chunk)
-            if not progress: return chunked
+            if not progress:
+                for c in chunked: yield c
+                return
             import tqdm, math, warnings
             warnings.simplefilter('ignore',tqdm.TqdmWarning)
             with tqdm.tqdm(total=len(s),unit=what,desc='meshio import') as pbar:
@@ -266,7 +268,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         fieldsBase=base[HeavyUnstructuredMesh.GRP_FIELDS]
         for fName in fieldsBase:
             ds=fieldsBase[fName]
-            log.error(f'Processing field {h5path}::{h5loc}/{HeavyUnstructuredMesh.GRP_FIELDS}/{fName} {ds.name}')
+            log.info(f'Processing field {h5path}::{ds.name}')
             fieldType=FieldType[ds.attrs['fieldType']]
             valueType=ValueType[ds.attrs['valueType']]
             time=Quantity(ds.attrs['time'])

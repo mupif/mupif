@@ -136,11 +136,11 @@ class SimpleJobManager (jobmanager.JobManager):
         os.rename(uriFileName+'~',uriFileName)
 
     @staticmethod
-    def _spawnedProcessPipe(*, pipe, ns, appName, jobID, cwd, appClass):
-       pipe.send(SimpleJobManager._spawnedProcess(ns=ns,appName=appName,jobID=jobID,cwd=cwd,appClass=appClass))  # as bytes
+    def _spawnedProcessPipe(*, pipe, ns, appName, jobID, cwd, appClass, pyroLog):
+       pipe.send(SimpleJobManager._spawnedProcess(ns=ns,appName=appName,jobID=jobID,cwd=cwd,appClass=appClass,pyroLog=pyroLog))  # as bytes
 
     @staticmethod
-    def _spawnedProcess(*, ns, appName, jobID, cwd, appClass):
+    def _spawnedProcess(*, ns, appName, jobID, cwd, appClass, pyroLog):
         '''
         This function is called 
         '''
@@ -148,6 +148,7 @@ class SimpleJobManager (jobmanager.JobManager):
         # log.info('Changing directory to %s',cwd)
         os.chdir(cwd)
         os.environ['MUPIF_LOG_LEVEL']='DEBUG'
+        if pyroLog: os.environ['MUPIF_LOG_PYRO']=pyroLog
         import mupif.pyroutil
         # sys.excepthook=Pyro5.errors.excepthook
         # Pyro5.config.DETAILED_TRACEBACK=True
@@ -237,7 +238,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 self.tickets.append(ticket)
                 return ticket
 
-    def allocateJob(self, user, ticket=None): 
+    def allocateJob(self, *, user, remoteLogUri=None, ticket=None): 
         """
         Allocates a new job.
 
@@ -283,6 +284,7 @@ class SimpleJobManager (jobmanager.JobManager):
                         cwd=targetWorkDir,
                         appName=self.applicationName,
                         appClass=self.applicationClass,
+                        pyroLog=remoteLogUri
                     )
                     if SimpleJobManager.JOBS_USE_MULTIPROCESSING:
                         # multiprocessing-based implementation
@@ -409,7 +411,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 self.pyroDaemon.unregister(self)
             except Exception:
                 pass
-            if not self.externalDaemon:
+            if self.exclusiveDaemon:
                 log.info("SimpleJobManager:terminate Shutting down daemon %s" % self.pyroDaemon)
                 try:
                     self.pyroDaemon.shutdown()

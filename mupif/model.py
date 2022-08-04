@@ -117,11 +117,12 @@ ModelSchema = {
                 "Use_case_ID": {"type": ["string", "integer"]},
                 # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
                 "Task_ID": {"type": "string"},
+                "Log_URI": {"type": "string"},
                 "Status": {"type": "string", "enum": ["Instantiated", "Initialized", "Running", "Finished", "Failed"]},
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
                 "Date_time_end": {"type": "string"},  # automatically set in Workflow
-                "Timeout": {"type": "integer"}, # maximum runtime in seconds
+                "Timeout": {"type": "integer"},  # maximum runtime in seconds
                 "Username": {"type": "string"},  # automatically set in Model and Workflow
                 "Hostname": {"type": "string"}  # automatically set in Model and Workflow
             },
@@ -216,7 +217,7 @@ class Model(mupifobject.MupifObject):
     """
 
     pyroDaemon: Optional[Any] = None
-    externalDaemon: bool = False
+    exclusiveDaemon: bool = False
     pyroNS: Optional[str] = None
     pyroURI: Optional[str] = None
     appName: str = None
@@ -235,7 +236,7 @@ class Model(mupifobject.MupifObject):
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
             ('Execution', {}),
             ('Solver', {}),
-            ('Timeout',0), # no limit by default
+            ('Timeout', 0),  # no limit by default
         ])
         # use defaults for metadata, unless given explicitly
         for k, v in defaults.items():
@@ -269,7 +270,7 @@ class Model(mupifobject.MupifObject):
     def updateAndPassMetadata(self, dictionary: dict):
         self.updateMetadata(dictionary=dictionary)
 
-    def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
+    def registerPyro(self, *, daemon, ns, uri, appName=None, exclusiveDaemon=False, externalDaemon=None):
         """
         Register the Pyro daemon and nameserver. Required by several services
 
@@ -277,13 +278,17 @@ class Model(mupifobject.MupifObject):
         :param Pyro5.naming.Nameserver pyroNS: Optional nameserver
         :param string pyroURI: Optional URI of receiver
         :param string appName: Optional application name. Used for removing from pyroNS
-        :param bool externalDaemon: Optional parameter when daemon was allocated externally.
+        :param bool exclusiveDaemon: Optional parameter when daemon was allocated externally.
         """
-        self.pyroDaemon = pyroDaemon
-        self.pyroNS = pyroNS
-        self.pyroURI = pyroURI
+        if externalDaemon is not None:
+            import warnings
+            warnings.warn('externalDaemon is deprecated, use exclusiveDaemon (with opposite meaning) instead',DeprecationWarning)
+            exclusiveDaemon=not externalDaemon
+        self.pyroDaemon = daemon
+        self.pyroNS = ns
+        self.pyroURI = uri
         self.appName = appName
-        self.externalDaemon = externalDaemon
+        self.exclusiveDaemon = exclusiveDaemon
 
     def get(self, objectTypeID, time=None, objectID=""):
         """
@@ -459,11 +464,9 @@ class Model(mupifobject.MupifObject):
             self.removeApp()
                         
         if self.pyroDaemon:
+            log.info(f"Unregistering from daemon {self.pyroDaemon}")
             self.pyroDaemon.unregister(self)
-            log.info("Unregistering daemon %s" % self.pyroDaemon)
-            # log.info(self.pyroDaemon)
-            if not self.externalDaemon:
-                self.pyroDaemon.shutdown()
+            if self.exclusiveDaemon: self.pyroDaemon.shutdown()
             self.pyroDaemon = None
         else:
             log.info("Terminating model") 
@@ -507,7 +510,7 @@ class RemoteModel (object):
     and the termination of job and tunnel has to be done from local computer, which has the neccesary
     communication link established (ssh tunnel in particular, when port translation takes place)
     """
-    def __init__(self, decoratee, jobMan=None, jobID=None, appTunnel=None):
+    def __init__(self, decoratee, jobMan=None, jobID=None):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID

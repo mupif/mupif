@@ -18,3 +18,5 @@ sphinxcontrib-apidoc
 asyncssh
 setproctitle
 tqdm
+typer
+rich

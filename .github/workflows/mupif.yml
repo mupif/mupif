@@ -13,10 +13,10 @@ jobs:
   test-linux:
     runs-on: ubuntu-20.04
     strategy:
+      fail-fast: false
       matrix:
         # needs quotes so that float 3.10 does not get interpreted as 3.1
         python-version: [ '3.8', '3.9', '3.10' ]
-        # fail-fast: 0
       # max-parallel: 1 # avoid localhost conflicts
     steps:
     - uses: actions/checkout@v2
@@ -37,7 +37,7 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=obsolete
     - name: pytest (native)
-      timeout-minutes: 1
+      timeout-minutes: 2
       run: |
         set -euo pipefail
         python -m pytest -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif

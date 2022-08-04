@@ -2,7 +2,7 @@ import os
 import mupif
 import mupif as mp
 import Pyro5
-import meshgen
+from . import meshgen
 import math
 import numpy as np
 import time as timeTime
@@ -113,7 +113,7 @@ class ThermalModel(mupif.model.Model):
             value=1.,
             propID=mupif.DataID.PID_effective_conductivity,
             valueType=mupif.ValueType.Scalar,
-            unit=mupif.U['W/m/K']
+            unit=mupif.U['W/(m K)']
         )
         self.tria = False
 
@@ -338,7 +338,7 @@ class ThermalModel(mupif.model.Model):
                 value=eff_conductivity,
                 propID=mupif.DataID.PID_effective_conductivity,
                 valueType=mupif.ValueType.Scalar,
-                unit=mp.U['W/m/K'],
+                unit=mp.U['W/(m K)'],
                 time=time
             )
 
@@ -612,7 +612,7 @@ class ThermalModel(mupif.model.Model):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mupif.DataID.PID_effective_conductivity:
                 # remember the mapped value
-                self.conductivity = obj.inUnitsOf('W/m/K')
+                self.conductivity = obj.inUnitsOf('W/(m K)')
                 # log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
 
             elif obj.getPropertyID() == mupif.DataID.PID_Temperature:
@@ -1018,6 +1018,21 @@ class MechanicalModel(mupif.model.Model):
                     "Obj_ID": "input_file_mechanical",
                     "Set_at": "initialization",
                     "Units": "none"
+                },
+                {
+                    "Name": "Prescribed displacement",
+                    "Type": "mupif.Property",
+                    "Required": False,
+                    "Type_ID": "mupif.DataID.FID_Displacement",
+                    "Units": "m",
+                    "Obj_ID": [
+                        "Dirichlet top",
+                        "Dirichlet bottom",
+                        "Dirichlet left",
+                        "Dirichlet right"
+                    ],
+                    "Set_at": "initialization",
+                    "ValueType": "Scalar"
                 }
             ],
             "Outputs": [

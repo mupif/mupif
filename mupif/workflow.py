@@ -118,7 +118,8 @@ class Workflow(model.Model):
             if jobmanagername:
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
+                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI',''))
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
@@ -133,7 +134,8 @@ class Workflow(model.Model):
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
                 'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
+                'Task_ID': self.getMetadata('Execution.Task_ID'),
+                'Log_URI': self.getMetadata('Execution.Log_URI','')
             }
         }
         for _model in self._models.values():

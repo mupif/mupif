@@ -81,6 +81,23 @@ def vpnInfo(geoIpDb=None,hidePriv=True):
         rret[iface]=ret
     return rret
 
+def nsInfo(ns=None):
+    # jobMans=query=ns.yplookup(meta_any={"type:jobmanager"})
+    import mupif as mp
+    import os
+    nshost,nsport,nssrc=mp.pyroutil.locateNameserver(return_src=True)
+    if ns is None: ns=mp.pyroutil.connectNameserver(nshost,nsport)
+    return dict(
+        loc=dict(host=nshost,port=nsport,source=nssrc),
+        names=ns.list(return_metadata=True),
+        env=dict((k,v) for k,v in os.environ.items() if k.startswith('MUPIF_')),
+    )
+
+#def baseInfo():
+#    import mupif as mp
+#    import os
+#    nshost,nsport,nssrc=mp.pyroutil.locateNameserver(return_src=True)
+
 
 if __name__=='__main__':
     def pprint(obj):
@@ -94,3 +111,4 @@ if __name__=='__main__':
     pprint(schedulerInfo(ns))
     pprint(jobmanInfo(ns))
     pprint(vpnInfo(hidePriv=False))
+    pprint(nsInfo())

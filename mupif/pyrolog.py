@@ -13,7 +13,7 @@ class PyroLogHandler(logging.StreamHandler):
     it only sends pickled LogRecord over to the PyroLogReceiver side, which forwards the record to the
     logger on the remote side. That is where formatting happens.
 
-    The handler should be set up automatically when MUPIF_LOG_PYRO_URI is set.
+    The handler should be set up automatically when MUPIF_LOG_PYRO is set.
 
     The *tag* is currently unused, but something similar should be used (and added to the formatter on
     the remote side) so that records are identified with their originating machine and model.

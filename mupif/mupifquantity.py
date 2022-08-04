@@ -52,7 +52,7 @@ class MupifQuantity(mupifobject.MupifObject):
     Value and unit can be accessed separately as `value` and `unit`.
     """
 
-    quantity: typing.Union[units.Quantity,units.RefQuantity]
+    quantity: typing.Union[units.Quantity, units.RefQuantity]
     valueType: ValueType = ValueType.Scalar
 
     # shorthand accessor for quantity (less typing)
@@ -74,6 +74,7 @@ class MupifQuantity(mupifobject.MupifObject):
         super().__init__(**kw)  # this calls the real ctor
 
     def getValue(self): return self.quantity.value
+
     def getQuantity(self): return self.quantity
 
     def getValueType(self):

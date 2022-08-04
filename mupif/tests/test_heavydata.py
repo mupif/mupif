@@ -495,3 +495,32 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(t0.getLst100(),tuple(10*['lst100']))
             self.assertEqual(t0.getLst(),tuple(1000*['dynamic-string-list']))
 
+
+class HeavyMesh_TestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.box=mp.demo.make_meshio_box_hexa(dim=(1,2,3),sz=.1)
+        cls.tmpdir=tempfile.TemporaryDirectory()
+        cls.tmp=cls.tmpdir.name
+    @classmethod
+    def tearDownClass(cls):
+        try: cls.tmpdir.cleanup()
+        except: pass # this would fail under Windows
+    def test_saveload(self):
+        cls=self.__class__
+        h5path=f'{cls.tmp}/01-mesh.h5'
+        xdmfPath=f'{cls.tmp}/01-mesh.xdmf'
+        evalAt=(.1,.1,.1)
+        with mp.HeavyUnstructuredMesh(h5path=h5path,mode='overwrite') as mesh:
+            mesh.fromMeshioMesh(cls.box)
+            fieldP=mesh.makeHeavyField(unit='Pa',fieldID=mp.DataID.FID_Pressure,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Scalar)
+            fieldUVW=mesh.makeHeavyField(unit='m/s',fieldID=mp.DataID.FID_Velocity,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Vector)
+            fieldP.value[:]=np.linspace(0,1,mesh.getNumberOfCells())
+            # mesh.writeXDMF(xdmfPath,fields=[fieldP,fieldUVW]) # this is actually not necessary
+            val0=fieldP.evaluate(evalAt)
+        # load mesh and fields from HDF5, also opens the storage
+        mesh,fields=mp.HeavyUnstructuredMesh.load(h5path)
+        val1=fields[0].evaluate((.1,.1,.1))
+        self.assertEqual(val0,val1)
+        mesh.closeData()
+
