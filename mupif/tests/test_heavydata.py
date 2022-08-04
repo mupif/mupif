@@ -522,4 +522,5 @@ class HeavyMesh_TestCase(unittest.TestCase):
         mesh,fields=mp.HeavyUnstructuredMesh.load(h5path)
         val1=fields[0].evaluate((.1,.1,.1))
         self.assertEqual(val0,val1)
+        mesh.closeData()
 
