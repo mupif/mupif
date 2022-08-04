@@ -13,10 +13,10 @@ jobs:
   test-linux:
     runs-on: ubuntu-20.04
     strategy:
+      fail-fast: false
       matrix:
         # needs quotes so that float 3.10 does not get interpreted as 3.1
         python-version: [ '3.8', '3.9', '3.10' ]
-        fail-fast: false
       # max-parallel: 1 # avoid localhost conflicts
     steps:
     - uses: actions/checkout@v2
