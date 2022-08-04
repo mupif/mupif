@@ -16,7 +16,7 @@ jobs:
       matrix:
         # needs quotes so that float 3.10 does not get interpreted as 3.1
         python-version: [ '3.8', '3.9', '3.10' ]
-        # fail-fast: 0
+        fail-fast: 0
       # max-parallel: 1 # avoid localhost conflicts
     steps:
     - uses: actions/checkout@v2
