@@ -353,7 +353,6 @@ def runAppServer(*, appName, app, ns):
         ns=ns,
         appName=appName,
         app=app,
-        # daemon=daemon,
         metadata={_NS_METADATA.appserver}
     )
 
@@ -372,7 +371,6 @@ def runJobManagerServer(*, ns, jobman):
         ns=ns,
         appName=jobman.getNSName(),
         app=jobman,
-        # daemon=daemon,
         metadata={_NS_METADATA.jobmanager}
     )
 

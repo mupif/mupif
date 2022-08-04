@@ -110,7 +110,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         # test jobManager
         cls.jobMan.getApplicationSignature()
 
-        cls.daemon=Pyro5.api.Daemon(host='127.0.0.1')
+        cls.daemon=mp.pyroutil.getDaemon(proxy=cls.ns)
 
     @classmethod
     def tearDownClass(cls):
@@ -173,9 +173,8 @@ class SimpleJobManager_TestCase(unittest.TestCase):
     def test_jobLog(self):
         cls=self.__class__
         jobManOut=mp.SimpleJobManager(ns=cls.ns,appName='appOut',workDir=cls.tmp,appClass=StdOutErrModel,maxJobs=1)
-        daemon=Pyro5.api.Daemon()
-        uri=daemon.register(jobManOut)
-        jobManOut.registerPyro(daemon=daemon,ns=cls.ns,uri=uri,appName=jobManOut.appName,exclusiveDaemon=False)
+        uri=cls.daemon.register(jobManOut)
+        jobManOut.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName=jobManOut.appName,exclusiveDaemon=False)
         self.assertEqual(jobManOut.getStatus(),[])
         (retCode,jobId,port)=jobManOut.allocateJob(user='user')
         self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
@@ -201,9 +200,8 @@ class SimpleJobManager_TestCase(unittest.TestCase):
     def test_timeout(self):
         cls=self.__class__
         jobManTime=mp.SimpleJobManager(ns=cls.ns,appName='appTimeout',workDir=cls.tmp,appClass=TimeoutModel,maxJobs=1)
-        daemon=Pyro5.api.Daemon()
-        uri=daemon.register(jobManTime)
-        jobManTime.registerPyro(daemon=daemon,ns=cls.ns,uri=uri,appName=jobManTime.appName,exclusiveDaemon=False)
+        uri=cls.daemon.register(jobManTime)
+        jobManTime.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName=jobManTime.appName,exclusiveDaemon=False)
         self.assertEqual(jobManTime.getStatus(),[])
         (retCode,jobId,port)=jobManTime.allocateJob(user='user')
         self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
