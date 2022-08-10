@@ -170,8 +170,8 @@ class MupifObjectBase(MupifBaseModel):
         Validates metadata's dictionary with a given dictionary
         :param dict template: Schema for json template
         """
-        jsonschema.validate(self.metadata, template)
-        # fastjsonschema.validate(template, self.metadata) # inverse order
+        if type(template)==pydantic.main.ModelMetaclass: template(**self.metadata)
+        else: jsonschema.validate(self.metadata, template)
         
     def __str__(self):
         """

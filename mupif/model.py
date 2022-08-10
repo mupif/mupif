@@ -32,7 +32,7 @@ from . import function
 from . import timestep
 from . import pyroutil
 from . import pyrofile
-from typing import Optional, Any
+from typing import Optional, Any, Literal, Union, List
 import time
 
 from pydantic.dataclasses import dataclass
@@ -43,6 +43,87 @@ log = logging.getLogger()
 prefix = "mupif."
 type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, DataID)))
+
+import pydantic
+
+class PhysicsMeta(pydantic.BaseModel):
+    Type: Literal['Electronic','Atomistic','Molecular','Mesoscopic','Continuum','Other']
+    Entity: Literal['Atom','Electron','Grains','Finite volume','Other']
+    Entity_description: str=''
+    Equation: List[str]=[]
+    Equation_quantities: List[str]=[]
+    Relation_description: List[str]=[]
+
+class SolverMeta(pydantic.BaseModel):
+    Software: str
+    Language: str
+    License: str
+    Creator: str
+    Version_date: str
+    Solver_additional_params: str=''
+    Documentation: str
+    Estim_time_step_s: float
+    Estim_comp_time_s: float
+    Estim_execution_cost_EUR: float
+    Estim_personnel_cost_EUR: float
+    Required_expertise:  Literal["None", "User", "Expert"]
+    Accuracy:  Literal["Low", "Medium", "High", "Unknown"]
+    Sensitivity:  Literal["Low", "Medium", "High", "Unknown"]
+    Complexity:  Literal["Low", "Medium", "High", "Unknown"]
+    Robustness:  Literal["Low", "Medium", "High", "Unknown"]
+
+class ExecutionMeta(pydantic.BaseModel):
+    ID: str
+    Use_case_ID: Union[str,int]=''
+    Task_ID: str=''
+    Log_URI: str=''
+    Status: str=Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"]
+    Progress: float=0
+    Date_time_start: str='' # automatically set in Workflow
+    Date_time_end: str='' # automatically set in Workflow
+    Timeout: int=0 # maximum runtime in seconds
+    Username: str='' # automatically set in Model and Workflow
+    Hostname: str='' # automatically set in Model and Workflow
+
+class IOMeta(pydantic.BaseModel):
+    Type: Literal['mupif.Property','mupif.Field','mupif.HeavyStruct','mupif.PyroFile','mupif.String','mupif.ParticleSet','mupif.GrainState']
+    Type_ID: DataID
+    Obj_ID: Optional[Union[str,List[str]]]=None
+    Name: str
+    ValueType: Literal['Scalar','Vector','Tensor','ScalarArray','VectorArray','TensorArray','']=''
+    Description: str=''
+    Units: str
+    Required: bool=False
+
+    @pydantic.root_validator(pre=False)
+    def _require_valueType_unless_property(cls,values):
+        if values['Type']!='mupif.Property': assert 'ValueType'!=''
+        return values
+
+    @pydantic.root_validator(pre=True)
+    def _convert_type_id_to_value(cls,values):
+        tid=values['Type_ID']
+        if isinstance(tid,str):
+            prefix='mupif.DataID.'
+            if tid.startswith(prefix): tid=tid[len(prefix):]
+            values['Type_ID']=DataID[tid]
+        return values
+
+class InputMeta(IOMeta):
+    Set_at: Literal['initialization','timestep']
+class OutputMeta(IOMeta): pass
+
+class ModelMeta(pydantic.BaseModel):
+    Name: str
+    ID: Union[str,int]
+    Description: str
+    Physics: PhysicsMeta
+    Solver: SolverMeta
+    Execution: ExecutionMeta
+    Inputs: List[InputMeta]=[]
+    Outputs: List[OutputMeta]=[]
+
+
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
@@ -264,7 +345,7 @@ class Model(mupifobject.MupifObject):
             self.workDir = workdir
 
         if validateMetaData:
-            self.validateMetadata(ModelSchema)
+            self.validateMetadata(ModelMeta) # Schema)
             # log.info('Metadata successfully validated')
 
     def updateAndPassMetadata(self, dictionary: dict):

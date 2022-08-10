@@ -36,8 +36,33 @@ import copy
 import logging
 from collections.abc import Iterable
 import importlib
+import pydantic
+from typing import List, Union
 
 log = logging.getLogger()
+
+class ModelsMeta(pydantic.BaseModel):
+    Name: str
+    Module: str=''
+    Class: str=''
+    Jobmanager: str=''
+
+    @pydantic.root_validator(pre=False)
+    def _moduleClass_or_jobmanager(cls,values):
+        if values['Jobmanager']=='': assert values['Module']!='' and values['Name']!=''
+        return values
+
+class WorkflowMeta(pydantic.BaseModel):
+    Name: str
+    ID: Union[str,int]
+    Description: str
+    # Physics: PhysicsMeta
+    # Solver: SolverMeta
+    Execution: model.ExecutionMeta
+    Inputs: List[model.InputMeta]=[]
+    Outputs: List[model.OutputMeta]=[]
+    Models: List[ModelsMeta]=[]
+
 
 WorkflowSchema = copy.deepcopy(model.ModelSchema)
 del WorkflowSchema["properties"]["Solver"]
@@ -168,7 +193,7 @@ class Workflow(model.Model):
         self.generateModelDependencies()
 
         if validateMetaData:
-            self.validateMetadata(WorkflowSchema)
+            self.validateMetadata(WorkflowMeta)
 
     def solve(self, runInBackground=False):
         """
