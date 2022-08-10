@@ -108,7 +108,9 @@ def locateNameserver(nshost=None,nsport=0,server=False,return_src=False):
         s=urllib.parse.urlsplit('//'+nshp)
         log.info(f'Using MUPIF_NS environment variable → nameserver {s.hostname}:{s.port}')
         return (s.hostname,s.port,'env:MUPIF_NS')
-    # 3. set from MUPIF_NS *file* in mupif module directory
+    # 3. from MUPIF_NS in cwd
+    if (os.path.exists(nshp:=os.getcwd()+'/MUPIF_NS')): return fromFile(nshp)
+    # 4. set from MUPIF_NS *file* in mupif module directory
     import mupif
     if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
     # 4. set from XDG user-config file (~/.config/MUPIF_NS on linux)
