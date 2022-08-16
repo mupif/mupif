@@ -52,18 +52,16 @@ def setupLoggingAtStartup():
     """
     root=logging.getLogger()
 
-    level=os.environ.get('MUPIF_LOG_LEVEL',None)
-    if level is not None:
+    
+    if (level:=os.environ.get('MUPIF_LOG_LEVEL',None)) is not None:
         root.setLevel(level)
 
-    out=os.environ.get('MUPIF_LOG_FILE',None)
-    if out is not None:
+    if (out:=os.environ.get('MUPIF_LOG_FILE',None)) is not None:
         fileHandler=logging.FileHandler(out, mode='w')
         fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
         root.addHandler(fileHandler)
 
-    pyroOut=os.environ.get('MUPIF_LOG_PYRO',None)
-    if pyroOut is not None:
+    if (pyroOut:=os.environ.get('MUPIF_LOG_PYRO',None)) is not None:
         pyroHandler=pyrolog.PyroLogHandler(uri=pyroOut,tag='<unspecified>')
         root.addHandler(pyroHandler)
 

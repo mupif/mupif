@@ -5,6 +5,7 @@ import sys
 import time
 import pickle
 import serpent
+import threading
 
 
 class PyroLogHandler(logging.StreamHandler):
@@ -21,10 +22,13 @@ class PyroLogHandler(logging.StreamHandler):
     def __init__(self,*,uri,tag):
         self.tag=tag
         self.remoteLog=Pyro5.api.Proxy(uri)
+        self.lock=threading.Lock()
         super().__init__()
     def emit(self,record):
         record.tag=self.tag
-        self.remoteLog.handleRecord(pickle.dumps(record))
+        with self.lock:
+            self.remoteLog._pyroClaimOwnership()
+            self.remoteLog.handleRecord(pickle.dumps(record))
 
 @Pyro5.api.expose
 class PyroLogReceiver(object):
