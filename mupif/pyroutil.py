@@ -317,7 +317,7 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
 
     ns.register(appName, uri, metadata=metadata)
 
-    log.debug(f'Running {appName} at {uri} (nameserver: {str(ns)})')
+    log.debug(f'Running {appName} at {uri} (nameserver: {ns._pyroUri})')
 
     def _remove_from_ns(sig=None,stack=None):
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
