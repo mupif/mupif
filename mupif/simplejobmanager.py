@@ -278,13 +278,13 @@ class SimpleJobManager (jobmanager.JobManager):
                     )
                     jobLogName=targetWorkDir+'/_mupif_job.log'
                     jobLog=open(jobLogName,'w')
-                    log.info(f'Logging into {jobLog} (+ {remoteLogUri} remotely)')
+                    log.info(f'Logging into {jobLogName} (+ {remoteLogUri} remotely)')
                     # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
                     # the subprocess will be able to import it as well
                     env=os.environ.copy()
                     env['PYTHONPATH']=os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
                     # this will redirect logs the moment mupif is imported on the remote side
-                    env['MUPIF_LOG_PYRO']=remoteLogUri
+                    if remoteLogUri: env['MUPIF_LOG_PYRO']=remoteLogUri
                     # to be tuned?
                     env['MUPIF_LOG_LEVEL']='DEBUG'
                     proc=subprocess.Popen([sys.executable,'-c','import mupif; mupif.SimpleJobManager._spawnedProcessPopen()','-',args.pickle()],stdout=jobLog,stderr=subprocess.STDOUT,env=env)
