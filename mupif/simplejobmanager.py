@@ -154,7 +154,7 @@ class SimpleJobManager (jobmanager.JobManager):
             appName=args.jobID,
             ns=Pyro5.api.Proxy(args.nsUri)
         )
-        open(args.uriFileName+'~','wb').write(pickle.dumps(uri))
+        open(args.uriFileName+'~','w').write(str(uri))
         os.rename(args.uriFileName+'~',args.uriFileName)
 
     def __checkTicket(self, ticket):
@@ -293,7 +293,7 @@ class SimpleJobManager (jobmanager.JobManager):
                     tMax=10
                     while time.time()-t0<tMax:
                         if os.path.exists(args.uriFileName):
-                            uri=pickle.loads(open(args.uriFileName,'rb').read())
+                            uri=open(args.uriFileName,'r').read()
                             os.remove(args.uriFileName)
                             break
                         else: time.sleep(.1)
@@ -302,7 +302,7 @@ class SimpleJobManager (jobmanager.JobManager):
                         raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else '')+'. The process log inline follows:\n'+open(jobLogName,'r').read())
 
                     log.info('Received URI: %s' % uri)
-                    jobPort = int(uri.location.split(':')[-1])
+                    jobPort = int(uri.split(':')[-1])
                     log.info(f'Job runs on port {jobPort}')
                 except Exception as e:
                     log.exception(e)
