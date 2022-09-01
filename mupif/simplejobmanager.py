@@ -79,6 +79,7 @@ class SimpleJobManager (jobmanager.JobManager):
         user: str
         port: int
         jobLogName: str
+        remoteLogUri: str
 
     ticketExpireTimeout = 10
 
@@ -314,7 +315,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 # check if uri is ok
                 # either by doing some sort of regexp or query ns for it
                 start = timeTime.time()
-                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, timeout=timeout, user=user, uri=uri, port=jobPort, jobLogName=jobLogName)
+                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, timeout=timeout, user=user, uri=uri, port=jobPort, jobLogName=jobLogName, remoteLogUri=remoteLogUri)
                 log.debug('SimpleJobManager: new process ')
                 log.debug(self.activeJobs[jobID])
 
@@ -414,7 +415,7 @@ class SimpleJobManager (jobmanager.JobManager):
         tnow = timeTime.time()
         with self.lock:
             for key,job in self.activeJobs.items():
-                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri))
+                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri, remoteLogUri=job.remoteLogUri))
         return status
 
     def getStatusExtended(self):

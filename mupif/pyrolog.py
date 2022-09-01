@@ -23,6 +23,7 @@ class PyroLogHandler(logging.StreamHandler):
     '''
     def __init__(self,*,uri,tag):
         self.tag=tag
+        self.uri=uri
         self.remoteLog=Pyro5.api.Proxy(uri)
         self.lock=threading.Lock()
         super().__init__()
