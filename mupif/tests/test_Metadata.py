@@ -4,6 +4,7 @@ sys.path.append('../..')
 from mupif import *
 import mupif
 import jsonschema
+import pydantic
 
 # undescored so that pytest does not see it as a test case
 class _TestModel1(model.Model):
@@ -90,7 +91,7 @@ class Metadata_TestCase(unittest.TestCase):
         self.tm2 = _TestModel2()
 
     def test_Init(self):
-        with self.assertRaises(jsonschema.exceptions.ValidationError):
+        with self.assertRaises((jsonschema.exceptions.ValidationError,pydantic.ValidationError)):
             self.tm1.initialize()
         self.tm2.initialize(metadata=Metadata_TestCase.executionMetadata)
 

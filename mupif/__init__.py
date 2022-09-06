@@ -200,8 +200,9 @@ def _registerOther():
     # Pyro5.api.register_dict_to_class('h5py.Group',lambda _,d: None)
     # Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
-    Pyro5.api.register_dict_to_class('pydantic.error_wrappers.ValidationError',lambda name,dic: RuntimeError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
-    Pyro5.api.register_dict_to_class('mupif.apierror.APIError',lambda name,dic: APIError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
+    # various exception we want to catch in remote calls
+    for exc in ['pydantic.error_wrapper.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
+        Pyro5.api.register_dict_to_class(exc,lambda name,dic: RuntimeError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
 
 
 def _pyroMonkeyPatch():

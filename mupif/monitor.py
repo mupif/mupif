@@ -2,22 +2,32 @@
 import Pyro5.api
 import urllib.parse
 import warnings
+import pickle
+import logging
+import serpent
 
-def jobmanInfo(ns):
+def jobmanInfo(ns,logLines=10):
     query=ns.yplookup(meta_any={"type:jobmanager"})
     ret=[]
     for name,(uri,metadata) in query.items():
+        jobman=Pyro5.api.Proxy(uri)
         jm={}
         jm['ns']=dict(name=name,uri=uri,metadata=metadata)
-        j=Pyro5.api.Proxy(uri)
         try:
-            se=j.getStatusExtended()
+            se=jobman.getStatusExtended()
             jm['numJobs']=dict(max=se.get('maxJobs',-1),curr=len(se['currJobs']),total=se['totalJobs'])
             jm['jobs']=se['currJobs']
         except AttributeError:
-            jm['jobs']=j.getStatus()
+            jm['jobs']=jobman.getStatus()
             jm['numJobs']=dict(max=-1,curr=len(jm['jobs']),total=-1)
-        jm['signature']=j.getApplicationSignature()
+        for job in jm['jobs']:
+            fmt=logging.Formatter(fmt='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s')
+            if 'remoteLogUri' in job:
+                ll=Pyro5.api.Proxy(job['remoteLogUri']).tail(logLines,raw=True)
+                if isinstance(ll,dict): ll=serpent.tobytes(ll)
+                ll=pickle.loads(ll)
+                job['tail']=[fmt.format(rec) for rec in ll]
+        jm['signature']=jobman.getApplicationSignature()
         ret.append(jm)
     return ret
 
