@@ -110,7 +110,7 @@ class Dumpable(MupifBaseModel):
     class Config:
         # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
         # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = False
+        copy_on_model_validation = 'none'
         # this unfortunately also allows arbitrary **kw passed to the ctor
         # but we filter that in the custom __init__ function just below
         # see https://github.com/samuelcolvin/pydantic/discussions/2459
