@@ -37,13 +37,13 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=obsolete
     - name: pytest (native)
-      timeout-minutes: 3
+      timeout-minutes: 2
       run: |
         set -euo pipefail
         python -m pytest --durations=10 -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: examples (native)
-      timeout-minutes: 3 # normally about 35s
+      timeout-minutes: 2 # normally about 35s
       run: |
         set -euo pipefail
         cd examples; ./runex.py --codecov 2>&1 | ../tools/grcat-mupif
