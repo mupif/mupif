@@ -3,7 +3,7 @@ Module defining DataID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
 FunctionID is deprecated and will be removed
 """
-from enum import Enum, auto
+from enum import Enum, auto, IntEnum
 
 # Schema for metadata
 DataSchema = {
@@ -40,7 +40,7 @@ class AutoName(Enum):
         return name
 
 
-class DataID(AutoName):
+class DataID(IntEnum):
     """
     This class represents the supported values of IDs of property, field, etc.
     Values of members should be stored by .name, .value should not be used.
