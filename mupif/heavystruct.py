@@ -295,7 +295,7 @@ sampleSchemas_json = '''
     }
 ]
 '''
-def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
+def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', namingConvention='get-set'):
     __doc0__ = '''
     Transform dictionary-structured data schema into context access types.
     The access types are created using the "type" builtin and only stored
@@ -340,7 +340,12 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
         unit = units.Unit(v['unit']) if 'unit' in v else None
         dtype = v['dtype']
         default = None
-        if (dt:=np.dtype(dtype)).char in ('a','S'):
+        if dtype == 'json':
+            dtype=h5py.string_dtype(encoding='utf-8')
+            if shape: raise RuntimeError(f'Shape must NOT be specified with dtype="json".')
+            ddoc['dtype']='data with automatic json conversion (stored as dynamic utf-8 string)'
+            ddoc['shape']='dynamic'
+        elif (dt:=np.dtype(dtype)).char in ('a','S'):
             # use special h5py type for dynamic strings
             if dt.itemsize==0: dtype = h5py.string_dtype(encoding='utf-8')
             # use numpy dtype for static-size strings
@@ -366,7 +371,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
             elif basedtype.kind in 'iu':
                 default = 0
             ddoc['dtype'] = f'`{basedtype.name}`'
-        if dt.char not in ('a','S') and 'delim' in v: raise RuntimeError('*delim* can only be specified with string dtype (dynamic or static)')
+        if 'delim' in v and dt.char not in ('a','S'): raise RuntimeError('*delim* can only be specified with string dtype (dynamic or static)')
         if unit:
             ddoc['unit'] = f"`{str(unit)}`"
         if 'lookup' in v:
@@ -378,7 +383,24 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
 
     def capitalize(k):
         'Turn the first letter into uppercase'
-        return k[0].upper()+k[1:]  
+        return k[0].upper()+k[1:]
+
+    def addAccessors(meth,attr,getter,setter=None):
+        if namingConvention=='get-set':
+            meth['get'+capitalize(attr)]=getter
+            if setter: meth['set'+capitalize(attr)]=setter
+        elif namingConvention=='property':
+            meth[attr]=property(fget=getter,fset=setter)
+        else: raise RuntimeError(f'namingConvention must be "get-set" or "property" (not "{namingConvention}").')
+    def makeDoc(key,doc,ro=False):
+        if namingConvention=='get-set':
+            if ro: ret=" `get{capitalize(key)}()`: "+doc
+            else:  ret=" `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: "+doc
+        elif namingConvention=='property':
+            if ro: ret=" `key` [read-only]: "+doc
+            else:  ret=" `key` [read-write]: "+doc
+        return ret
+
 
     ret = CookedSchemaFragment(dtypes=[], defaults={}, subpaths={}, units={})
     meth = {} # accumulate attribute access methods
@@ -387,8 +409,9 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
     # top-level only
     if not schemaName:
         schemaName = desc['_schema']['name']
-        schemaVersion = desc['_schema']['version']
-        datasetName = desc['_datasetName']
+        schemaVersion = desc['_schema'].get('version','<unspecified>')
+        namingConvention=desc['_schema'].get('naming',namingConvention)
+        datasetName = desc.get('_datasetName',schemaName)
         assert len(prefix) == 0
         T_name = 'Context_'+schemaName.replace('.', '_')
         import hashlib
@@ -401,164 +424,204 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
         ret.doc += [f'**schema {schemaName}**', '']
     else:
         T_name = 'Context_'+schemaName+'_'+prefix.replace('.', '_')
+    assert namingConvention in ['get-set','property']
 
     for key, val in desc.items():
-        # fully-qualified name: for messages and compound field name in h5py
-        fq = (f"{prefix}.{key}" if prefix else key)
-        docHead = docLevel*3*' '+f'* `{key}`'
-        # special keys start with underscore, so far only _schema is used
-        if key.startswith('_'):
-            if key == '_schema':
-                continue
-            elif key == '_datasetName':
-                continue
+        try:
+            # fully-qualified name: for messages and compound field name in h5py
+            fq = (f"{prefix}.{key}" if prefix else key)
+            docHead = docLevel*3*' '+f'* `{key}`'
+            # special keys start with underscore, so far only _schema is used
+            if key.startswith('_'):
+                if key == '_schema':
+                    continue
+                elif key == '_datasetName':
+                    continue
+                else:
+                    raise ValueError(f"Unrecognized special key '{key}' in prefix '{prefix}'.")
+            if not isinstance(val, dict):
+                raise TypeError(f"{fq}: value is not a dictionary.")
+            # attribute defined via lookup, not stored
+            if 'indexed' in val:
+                indexName=val['indexed']
+                path=val['path']
+                ret.doc+=[docHead+': '+makeDoc(key,f'reference indexed by `{indexName}` into group `{path}`.',ro=True)]
+                def indexGetter(self, *, fq=fq, indexName=indexName, path=path):
+                    if path not in self.ctx.h5group:
+                        # dataset to be referenced does not exist yet, find its schema by going through the schema registry
+                        ss=[s for s in self.ctx.schemaRegistry.values() if s.datasetName==path]
+                        if len(ss)!=1: raise RuntimeError(f'Unable to find unique schema with dataset called {path} (count is {len(ss)}, should be 1).')
+                        SchemaT=ss[0]
+                    else:
+                        refSchema=self.ctx.h5group[path].attrs['schema']
+                        SchemaT=self.ctx.schemaRegistry[refSchema]
+                    if self.row is None:
+                        # returns the entire dataset referenced
+                        return SchemaT(top=HeavyStruct.TopContext(h5group=self.ctx.h5group,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=None)
+                    _T_assertDataset(self,f'when looking up index array')
+                    index=np.array(self.ctx.dataset[indexName][self.row])
+                    indices=([index] if index.ndim==0 else index)
+                    ret=[SchemaT(top=HeavyStruct.TopContext(h5group=self.ctx.h5group,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=idx) for idx in indices]
+                    #log.error(f'{index=}, {indices=}, {index.ndim=}')
+                    return (ret[0] if index.ndim==0 else ret)
+                addAccessors(meth,key,indexGetter)
+            elif 'lookup' in val:
+                dtype, unit, default, doc = dtypeUnitDefaultDoc(val)
+                ret.doc += [docHead+': '+makeDoc(key,doc,ro=True)]
+                lKey, lDict = val['key'], val['lookup']
+                if isinstance(lKey, bytes):
+                    lKey = lKey.decode('utf8')
+
+                # bind local values via default args (closure)
+                def inherentGetter(self, *, fq=fq, dtype=dtype, unit=unit, lKey=lKey, lDict=lDict):
+                    _T_assertDataset(self, f"when looking up '{fq}' based on '{lKey}'.")
+
+                    def _lookup(row):
+                        k=self.ctx.dataset[lKey, row]
+                        if isinstance(k, bytes):
+                            k = k.decode('utf8')
+                        try:
+                            val = np.array(lDict[k], dtype=dtype)[()]  # [()] unpacks rank-0 scalar
+                        except KeyError:
+                            raise KeyError(f"{fq}: key '{k}' ({lKey}) not found in the lookup table with keys {list(lDict.keys())}") from None
+                        return val
+                    # fake broadcasting
+                    if self.row is None:
+                        val = np.array([_lookup(r) for r in range(self.ctx.dataset.shape[0])])
+                    else:
+                        val = _lookup(self.row)
+                    if unit:
+                        return units.Quantity(value=val, unit=unit)
+                    else:
+                        return val
+                addAccessors(meth,key,inherentGetter)
+            elif 'choice' in val:
+                choices=val['choice']
+                num=0
+                str2num,num2str={},{}
+                if not isinstance(choices,(list,tuple)): raise TypeError(f"'{fq}': choice must be a sequence")
+                for ilabel,label in enumerate(choices):
+                    if not isinstance(label,str): raise ValueError(f"'{fq}': choice items must be strings (item {ilabel} is a {type(label).__name__})")
+                    if label in str2num: raise ValueError(f"'{fq}': duplicate choice label '{label}'")
+                    num2str[num],str2num[label]=label,num
+                    num+=1
+                mn,mx=min(num2str.keys()),max(num2str.keys())
+                # min_scalar_type: signed when mn<0, otherwise unsigned; min_scalar_type should ensure appropriate range
+                dtype=(np.min_scalar_type(mx) if mn>=0 else mn.min_scalar_type(-max(abs(mn),abs(mx))))
+                ret.dtypes+=[(fq,dtype)]
+                ret.doc+=[docHead+': '+makeDoc(key,'named enumeration stored as {dtype.name}: '+', '.join([f'{k} (v)' for k,v in str2num.items()]),ro=False)]
+                ret.defaults[fq]=list(num2str.keys())[0] # first key is the default
+                ret.units[fq]=None
+                def getter(self,*,fq=fq):
+                    if self.row is not None: return num2str[self.ctx.dataset[fq,self.row]]
+                    else: return [num2str[self.ctx.dataset[fq,r]] for r in range(self.ctx.dataset.shape[0])]
+                def setter(self,val,*,fq=fq):
+                    if self.row is not None: self.ctx.dataset[fq,self.row]=str2num[val]
+                    else: self.ctx.dataset[fq]=np.full(self.ctx.dataset.shape[0],str2num[val])
+                addAccessors(meth,key,getter,setter)
+            # normal data attribute
+            elif 'dtype' in val:
+                dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
+                basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
+                delim=val.get('delim',None)
+                isJson=(val['dtype']=='json')
+                ret.dtypes+=[(fq,dtype)] # add to the compound type
+                ret.doc+=[docHead+': '+makeDoc(key,doc)]
+                ret.units[fq]=unit
+                if default is not None: ret.defaults[fq]=default # add to the defaults
+                def getter(self,*,fq=fq,unit=unit,delim=delim,isJson=isJson):
+                    _T_assertDataset(self,f"when getting the value of '{fq}'")
+                    if self.row is not None: value=self.ctx.dataset[fq,self.row]
+                    else: value=self.ctx.dataset[fq]
+                    if isinstance(value,bytes): value=value.decode('utf-8')
+                    if delim is not None: value=tuple(value.split(delim))
+                    if isJson: value=json.loads(value)
+                    if unit is None: return value
+                    return units.Quantity(value=value,unit=unit)
+                def _cookValue(val,*,unit,dtype,basedtype,delim,isJson=False):
+                    'Unit conversion, type conversion before assignment'
+                    if unit: val=(units.Quantity(val).to(unit)).value
+                    if delim is not None:
+                        if isinstance(val,(str,bytes)): raise TypeError('String list cannot be set with str/bytes (pass list of chars if this is really what you mean)')
+                        for i,v in enumerate(val):
+                            if delim in v: raise RuntimeError(f'Item {i} contains delimiter "{delim}".')
+                        val=str(delim).join(val)
+                    if isJson: val=json.dumps(val)
+                    if isinstance(val,str): val=val.encode('utf-8')
+                    #sys.stderr.write(f"{fq}: {basedtype}\n")
+                    ret=np.array(val).astype(basedtype,casting='safe',copy=False)
+                    #log.error(f'{val=}')
+                    #log.error(f'{ret=}')
+                    #log.error(f'{dtype=} {basedtype=}')
+                    #log.error(f'{h5py.check_vlen_dtype(dtype)=}')
+                    # for object (variable-length) types, convertibility was checked but the result is discarded
+                    if basedtype.kind=='O':
+                        # this allows to assign e.g. list like [1,2] rather than requiring np.array([1,2])
+                        # int8 is exempted as that would convert strings to numeric arrays, causing error later
+                        if (dt2:=h5py.check_vlen_dtype(dtype)) and np.issubdtype(dt2,np.number) and dt2!=np.dtype('int8'): val=np.array(val).astype(dt2,casting='safe')
+                        #log.error(f'{val=}')
+                        return val 
+                    #sys.stderr.write(f"{fq}: cook {val} → {ret}\n")
+                    return ret
+                def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim,isJson=isJson):
+                    _T_assertDataset(self,f"when setting the value of '{fq}'")
+                    #_T_assertWritable(self,f"when setting the value of '{fq}'")
+                    val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim)
+                    # sys.stderr.write(f'{fq}: direct setting {val}\n')
+                    if self.row is None: self.ctx.dataset[fq]=val
+                    else: self.ctx.dataset[self.row,fq]=val
+                def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim,isJson=isJson):
+                    _T_assertDataset(self,f"when setting the value of '{fq}'")
+                    #_T_assertWritable(self,f"when setting the value of '{fq}'")
+                    val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim,isJson=isJson)
+                    #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
+                    # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
+                    # direct assignment does not work; must read the whole row, modify, write it back
+                    # see https://stackoverflow.com/q/67192725/761090 and https://stackoverflow.com/q/67451714/761090
+                    # kind=='O' covers h5py.vlen_dtype and strings (h5py.string_dtype) with variable length
+                    if self.row is None: raise NotImplementedError('Broadcasting to variable-length fields or multidimensional subarrays not yet implemented.')
+                    rowdata=self.ctx.dataset[self.row]
+                    #log.error(f'{rowdata=}')
+                    rowdata[self.ctx.dataset.dtype.names.index(fq)]=val
+                    #log.error(f'{rowdata=}')
+                    self.ctx.dataset[self.row]=rowdata
+                addAccessors(meth,key,getter,(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct))
+            elif 'schema' in val:
+                schema,path=val['schema'],val.get('path','{NAME}/{ROW}/')
+                path=path.replace('{NAME}',key)
+                if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
+                if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
+                ret.subpaths[fq]=(path,schema)
+                # path=path[:-1] # remove trailing slash
+                def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
+                    rr=[self.row is None,row is None]
+                    if sum(rr)==2: raise AttributeError(f"'{fq}': row index not set (or given as arg), unable to follow schema ref.")
+                    if sum(rr)==0: raise AttributeError(f"'{fq}': row given both as index ({self.row}) and arg ({row}).")
+                    if row is None: row=self.row
+                    #_T_assertDataset(self,f"when accessing subschema '{path}'.")
+                    #self.ctx.dataset[self.row] # catch invalid row index, data unused
+                    #print(f"{fq}: getting {path}")
+                    path=path.replace('{ROW}',str(row))
+                    subgrp=self.ctx.h5group.require_group(path)
+                    SchemaT=self.ctx.schemaRegistry[schema]
+                    ret=SchemaT(top=HeavyStruct.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=None)
+                    # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
+                    return _registeredWithDaemon(self,ret)
+                ret.doc+=[docHead+': '+makeDoc(key,'nested data at `{path}`, schema `{schema}`.',ro=True)]
+                addAccessors(meth,key,subschemaGetter)
             else:
-                raise ValueError(f"Unrecognized special key '{key}' in prefix '{prefix}'.")
-        if not isinstance(val, dict):
-            raise TypeError("{fq}: value is not a dictionary.")
-        # attribute defined via lookup, not stored
-        if 'lookup' in val:
-            dtype, unit, default, doc = dtypeUnitDefaultDoc(val)
-            ret.doc += [docHead+f': `get{capitalize(key)}()`: '+doc]
-            lKey, lDict = val['key'], val['lookup']
-            if isinstance(lKey, bytes):
-                lKey = lKey.decode('utf8')
-
-            # bind local values via default args (closure)
-            def inherentGetter(self, *, fq=fq, dtype=dtype, unit=unit, lKey=lKey, lDict=lDict):
-                _T_assertDataset(self, f"when looking up '{fq}' based on '{lKey}'.")
-
-                def _lookup(row):
-                    k=self.ctx.dataset[lKey, row]
-                    if isinstance(k, bytes):
-                        k = k.decode('utf8')
-                    try:
-                        val = np.array(lDict[k], dtype=dtype)[()]  # [()] unpacks rank-0 scalar
-                    except KeyError:
-                        raise KeyError(f"{fq}: key '{k}' ({lKey}) not found in the lookup table with keys {list(lDict.keys())}") from None
-                    return val
-                # fake broadcasting
-                if self.row is None:
-                    val = np.array([_lookup(r) for r in range(self.ctx.dataset.shape[0])])
-                else:
-                    val = _lookup(self.row)
-                if unit:
-                    return units.Quantity(value=val, unit=unit)
-                else:
-                    return val
-            meth['get'+capitalize(key)] = inherentGetter
-        elif 'choice' in val:
-            choices=val['choice']
-            num=0
-            str2num,num2str={},{}
-            if not isinstance(choices,(list,tuple)): raise TypeError(f"'{fq}': choice must be a sequence")
-            for ilabel,label in enumerate(choices):
-                if not isinstance(label,str): raise ValueError(f"'{fq}': choice items must be strings (item {ilabel} is a {type(label).__name__})")
-                if label in str2num: raise ValueError(f"'{fq}': duplicate choice label '{label}'")
-                num2str[num],str2num[label]=label,num
-                num+=1
-            mn,mx=min(num2str.keys()),max(num2str.keys())
-            # min_scalar_type: signed when mn<0, otherwise unsigned; min_scalar_type should ensure appropriate range
-            dtype=(np.min_scalar_type(mx) if mn>=0 else mn.min_scalar_type(-max(abs(mn),abs(mx))))
-            ret.dtypes+=[(fq,dtype)]
-            ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: named enumeration stored as {dtype.name}: '+', '.join([f'{k} (v)' for k,v in str2num.items()])]
-            ret.defaults[fq]=list(num2str.keys())[0] # first key is the default
-            ret.units[fq]=None
-            def getter(self,*,fq=fq):
-                if self.row is not None: return num2str[self.ctx.dataset[fq,self.row]]
-                else: return [num2str[self.ctx.dataset[fq,r]] for r in range(self.ctx.dataset.shape[0])]
-            def setter(self,val,*,fq=fq):
-                if self.row is not None: self.ctx.dataset[fq,self.row]=str2num[val]
-                else: self.ctx.dataset[fq]=np.full(self.ctx.dataset.shape[0],str2num[val])
-            meth['get'+capitalize(key)]=getter
-            meth['set'+capitalize(key)]=setter
-        # normal data attribute
-        elif 'dtype' in val:
-            dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
-            basedtype=(b[0] if (b:=getattr(dtype,'subdtype',None)) else dtype)
-            delim=val.get('delim',None)
-            ret.dtypes+=[(fq,dtype)] # add to the compound type
-            ret.doc+=[docHead+f': `get{capitalize(key)}()`, `set{capitalize(key)}(…)`: '+doc]
-            ret.units[fq]=unit
-            if default is not None: ret.defaults[fq]=default # add to the defaults
-            def getter(self,*,fq=fq,unit=unit,delim=delim):
-                _T_assertDataset(self,f"when getting the value of '{fq}'")
-                if self.row is not None: value=self.ctx.dataset[fq,self.row]
-                else: value=self.ctx.dataset[fq]
-                if isinstance(value,bytes): value=value.decode('utf-8')
-                if delim is not None: value=tuple(value.split(delim))
-                if unit is None: return value
-                return units.Quantity(value=value,unit=unit)
-            def _cookValue(val,*,unit,dtype,basedtype,delim):
-                'Unit conversion, type conversion before assignment'
-                if unit: val=(units.Quantity(val).to(unit)).value
-                if delim is not None:
-                    if isinstance(val,(str,bytes)): raise TypeError('String list cannot be set with str/bytes (pass list of chars if this is really what you mean)')
-                    for i,v in enumerate(val):
-                        if delim in v: raise RuntimeError(f'Item {i} contains delimiter "{delim}".')
-                    val=str(delim).join(val)
-                if isinstance(val,str): val=val.encode('utf-8')
-                #sys.stderr.write(f"{fq}: {basedtype}\n")
-                ret=np.array(val).astype(basedtype,casting='safe',copy=False)
-                # for object (variable-length) types, convertibility was checked but the result is discarded
-                if basedtype.kind=='O': return val 
-                #sys.stderr.write(f"{fq}: cook {val} → {ret}\n")
-                return ret
-            def setter_direct(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim):
-                _T_assertDataset(self,f"when setting the value of '{fq}'")
-                #_T_assertWritable(self,f"when setting the value of '{fq}'")
-                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim)
-                # sys.stderr.write(f'{fq}: direct setting {val}\n')
-                if self.row is None: self.ctx.dataset[fq]=val
-                else: self.ctx.dataset[self.row,fq]=val
-            def setter_wholeRow(self,val,*,fq=fq,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim):
-                _T_assertDataset(self,f"when setting the value of '{fq}'")
-                #_T_assertWritable(self,f"when setting the value of '{fq}'")
-                val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim)
-                #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
-                # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
-                # direct assignment does not work; must read the whole row, modify, write it back
-                # see https://stackoverflow.com/q/67192725/761090 and https://stackoverflow.com/q/67451714/761090
-                # kind=='O' covers h5py.vlen_dtype and strings (h5py.string_dtype) with variable length
-                if self.row is None: raise NotImplementedError('Broadcasting to variable-length fields or multidimensional subarrays not yet implemented.')
-                rowdata=self.ctx.dataset[self.row]
-                rowdata[self.ctx.dataset.dtype.names.index(fq)]=val
-                self.ctx.dataset[self.row]=rowdata
-            meth['get'+capitalize(key)]=getter
-            meth['set'+capitalize(key)]=(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct)
-        elif 'schema' in val:
-            schema,path=val['schema'],val.get('path','{NAME}/{ROW}/')
-            path=path.replace('{NAME}',key)
-            if '{ROW}' not in path: raise ValueError(f"'{fq}': schema ref path '{path}' does not contain '{{ROW}}'.")
-            if not path.endswith('/'): raise ValueError(f"'{fq}': schema ref path '{path}' does not end with '/'.")
-            ret.subpaths[fq]=(path,schema)
-            # path=path[:-1] # remove trailing slash
-            def subschemaGetter(self,row=None,*,fq=fq,path=path,schema=schema):
-                rr=[self.row is None,row is None]
-                if sum(rr)==2: raise AttributeError(f"'{fq}': row index not set (or given as arg), unable to follow schema ref.")
-                if sum(rr)==0: raise AttributeError(f"'{fq}': row given both as index ({self.row}) and arg ({row}).")
-                if row is None: row=self.row
-                #_T_assertDataset(self,f"when accessing subschema '{path}'.")
-                #self.ctx.dataset[self.row] # catch invalid row index, data unused
-                #print(f"{fq}: getting {path}")
-                path=path.replace('{ROW}',str(row))
-                subgrp=self.ctx.h5group.require_group(path)
-                SchemaT=self.ctx.schemaRegistry[schema]
-                ret=SchemaT(top=HeavyStruct.TopContext(h5group=subgrp,schemaRegistry=self.ctx.schemaRegistry,pyroIds=self.ctx.pyroIds),row=None)
-                # print(f"{fq}: schema is {SchemaT}, returning: {ret}.")
-                return _registeredWithDaemon(self,ret)
-            ret.doc+=[docHead+f': `get{capitalize(key)}()`: nested data at `{path}`, schema `{schema}`.']
-            meth['get'+capitalize(key)]=subschemaGetter
-        else:
-            # recurse
-            ret.doc+=[docHead+f': `get{capitalize(key)}()`',''] # empty line for nesting in restructured text
-            cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule,datasetName=datasetName)
-            ret.append(cooked)
-            def nestedGetter(self,*,T=cooked.T):
-                #print('nestedGetter',T)
-                ret=T(other=self)
-                return _registeredWithDaemon(self,ret)
-            meth['get'+capitalize(key)]=nestedGetter # lambda self, T=cooked.T: T(self)
+                # recurse
+                ret.doc+=[docHead+': '+makeDoc(key,doc='',ro=True)] # empty line for nesting in restructured text
+                cooked=_cookSchema(val,prefix=fq,schemaName=schemaName,fakeModule=fakeModule,datasetName=datasetName,namingConvention=namingConvention)
+                ret.append(cooked)
+                def nestedGetter(self,*,T=cooked.T):
+                    #print('nestedGetter',T)
+                    ret=T(other=self)
+                    return _registeredWithDaemon(self,ret)
+                addAccessors(meth,key,nestedGetter)
+        except BaseException as e:
+            log.error(f'Error cooking {schemaName}, key {key}:')
+            raise
     def _registeredWithDaemon(context,obj):
         if not hasattr(context,'_pyroDaemon'): return obj
         context._pyroDaemon.register(obj)
@@ -625,6 +688,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName=''):
             if dsname not in self.ctx.h5group: # create new dataset, initialize, return
                 if size==0: return # request to reset but nothing is here
                 self.ctx.dataset=self.ctx.h5group.create_dataset(dsname,shape=(size,),maxshape=(None,),dtype=ret.dtypes,compression='gzip')
+                self.ctx.dataset.attrs['schema']=self.schemaName
                 _initrows(ds=self.ctx.dataset,rowmin=0,rowmax=size-1)
                 return
             else: # open existing dataset

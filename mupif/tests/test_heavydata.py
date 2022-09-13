@@ -10,9 +10,12 @@ import Pyro5.api
 import json
 import time, random
 import tempfile
+import logging
 import astropy.units as u
 
 from mupif.heavystruct import sampleSchemas_json
+
+log=logging.getLogger()
 
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
@@ -494,6 +497,72 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(t0.getStr(),'dynamic-str')
             self.assertEqual(t0.getLst100(),tuple(10*['lst100']))
             self.assertEqual(t0.getLst(),tuple(1000*['dynamic-string-list']))
+
+    def test_31_json(self):
+        schema='''
+            [
+              {
+                "_schema": { "name": "test" },
+                "json":{ "dtype":"json" }
+              }
+            ]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
+            tests.resize(1)
+            t0=tests[0]
+            data=['abc',dict(foo='bar',baz='baz',d={'123':456})]
+            t0.setJson(data)
+            self.assertEqual(t0.getJson(),data)
+
+    def test_31_namingConvention(self):
+        schema='''
+            [{
+                "_schema": { "name": "test", "naming":"property" },
+                "str10":{ "dtype":"a10" }
+            }]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
+            tests.resize(1)
+            t0=tests[0]
+            t0.str10='sdfd'
+            self.assertRaises(TypeError,lambda: setattr(t0,'str10',10*'aa')) # content too long
+            self.assertEqual(t0.str10,'sdfd')
+
+    def test_32_indexed(self):
+        schema='''
+            [
+              {
+                "_schema": { "name": "testA", "naming":"property" },
+                "refB_raw": { "dtype":"int64" },
+                "refBB_raw": { "dtype":"int64", "shape":"variable" },
+                "refB":{ "indexed":"refB_raw", "path":"testB"  },
+                "refBB":{ "indexed":"refBB_raw", "path":"testB" }
+              },
+              {
+                "_schema": { "name": "testB", "naming":"property" },
+                "name": { "dtype": "a20" }
+              }
+            ]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='testA',schemasJson=schema) as a:
+            a.resize(1)
+            b=a.refB
+            b.resize(3) # this is the entire testB dataset, since "a" is not indexed
+            self.assertEqual(len(b),3)
+            b[0].name,b[1].name,b[2].name='zeroth','first','second'
+            a0=a[0]
+            a0.refB_raw=1
+            self.assertEqual(a0.refB_raw,1)
+            b1=a0.refB
+            log.error(b1)
+            self.assertEqual(b1.name,'first')
+            a0.refBB_raw=np.array([0,1,2,1,0])
+            bb=a0.refBB
+            self.assertEqual(len(bb),len(a0.refBB_raw))
+            for b,name in zip(bb,['zeroth','first','second','first','zeroth']): self.assertEqual(b.name,name)
+            self.assertEqual(len(a.refBB),3) # same dataset as a.refB
+
+
 
 
 class HeavyMesh_TestCase(unittest.TestCase):
