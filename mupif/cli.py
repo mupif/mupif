@@ -48,6 +48,12 @@ def schedmon():
                 for lex in si['lastExecutions']:
                     tab.add_row(lex['weid'],lex['wid'],rich.text.Text(lex['status'],style=exeStatusStyle(lex['status'])),lex['finished'] if lex['finished'] is not None else lex['started'])
                 tree2.add(tab)
+                for weid,rr in si['running'].items():
+                    ex=tree2.add(weid)
+                    import rich.logging
+                    handler=rich.logging.RichHandler()
+                    for l in rr['tail']:
+                        ex.add(handler.render(record=l,traceback=None,message_renderable=rich.text.Text(l.message)))
             live.update(tree)
             time.sleep(.5)
 
