@@ -103,29 +103,32 @@ class ConstantProperty(Property):
         """
         return self.time
 
-    def saveHdf5(self,hdf5):
+    def saveHdf5(self, hdf5):
         import h5py
-        h5=h5py.File(hdf5,'w')
-        h5.attrs['format']='mupif.Property.saveHdf5:1.0'
-        ds=h5.create_dataset(self.propID.name,shape=self.quantity.value.shape,dtype=self.quantity.value.dtype)
-        ds.attrs['unit']=str(self.quantity.unit)
-        ds.attrs['valueType']=self.valueType.name
-        if self.time is not None: ds.attrs['time']=str(self.time)
-        ds[()]=self.quantity.value
+        h5 = h5py.File(hdf5, 'w')
+        h5.attrs['format'] = 'mupif.Property.saveHdf5:1.0'
+        ds = h5.create_dataset(self.propID.name, shape=self.quantity.value.shape, dtype=self.quantity.value.dtype)
+        ds.attrs['unit'] = str(self.quantity.unit)
+        ds.attrs['valueType'] = self.valueType.name
+        if self.time is not None:
+            ds.attrs['time'] = str(self.time)
+        ds[()] = self.quantity.value
         h5.close()
 
     @staticmethod
     def loadHdf5(hdf5):
         import h5py
-        h5=h5py.File(hdf5,'r')
-        if 'format' not in h5.attrs: raise IOError('HDF5 root does not define "format" attribute.')
-        fmt=h5.attrs['format']
-        if fmt=='mupif.Property.saveHdf5:1.0':
-            if (l:=len(h5.keys()))!=1: raise IOError(f'{fmt}: HDF5 root must contain exactly one entity (not {l}).')
-            loc=list(h5.keys())[0]
-            ds=h5[loc]
-            ret=ConstantProperty(
-                quantity=units.Quantity(value=np.array(ds),unit=ds.attrs['unit']),
+        h5 = h5py.File(hdf5, 'r')
+        if 'format' not in h5.attrs:
+            raise IOError('HDF5 root does not define "format" attribute.')
+        fmt = h5.attrs['format']
+        if fmt == 'mupif.Property.saveHdf5:1.0':
+            if (l := len(h5.keys())) != 1:
+                raise IOError(f'{fmt}: HDF5 root must contain exactly one entity (not {l}).')
+            loc = list(h5.keys())[0]
+            ds = h5[loc]
+            ret = ConstantProperty(
+                quantity=units.Quantity(value=np.array(ds), unit=ds.attrs['unit']),
                 propID=dataid.DataID[loc],
                 valueType=mupifquantity.ValueType[ds.attrs['valueType']],
                 time=(units.Quantity(ds.attrs['time']) if 'time' in ds.attrs else None)
