@@ -40,16 +40,15 @@ from . import util
 from . import apierror
 from .pyrofile import PyroFile
 import pydantic
-log=logging.getLogger()
+log = logging.getLogger()
 
 Pyro5.config.SERIALIZER = "serpent"
 # Pyro4.config.THREADPOOL_SIZE=100
 Pyro5.config.SERVERTYPE = "multiplex"
 
-Pyro5.config.COMMTIMEOUT=60
+Pyro5.config.COMMTIMEOUT = 60
 
 import importlib.resources
-
 
 
 from dataclasses import dataclass
@@ -58,77 +57,84 @@ from typing import Optional
 
 # pyro5 nameserver metadata
 class _NS_METADATA:
-    jobmanager="type:jobmanager"
+    jobmanager = "type:jobmanager"
     appserver = "type:appserver"
     network = "network:"  # plus JSON
 
 
-def runNameserverBg(nshost=None,nsport=None):
+def runNameserverBg(nshost=None, nsport=None):
     import threading
-    threading.current_thread().name='mupif-nameserver'
+    threading.current_thread().name = 'mupif-nameserver'
     import Pyro5.configure
-    Pyro5.configure.SERIALIZER='serpent'
-    Pyro5.configure.PYRO_SERVERTYPE='multiplex'
-    Pyro5.configure.PYRO_SSL=0
+    Pyro5.configure.SERIALIZER = 'serpent'
+    Pyro5.configure.PYRO_SERVERTYPE = 'multiplex'
+    Pyro5.configure.PYRO_SSL = 0
     log.debug(Pyro5.configure.global_config.dump())
-    nshost,nsport,nssrc=locateNameserver(nshost,nsport,server=True)
+    nshost, nsport, nssrc = locateNameserver(nshost, nsport, server=True)
     import Pyro5.nameserver
     log.info(f"Starting nameserver on {nshost}:{nsport} (via {nssrc})")
-    nsUri,nsDaemon,nsBroadcast=Pyro5.nameserver.start_ns(nshost,nsport)
+    nsUri, nsDaemon, nsBroadcast = Pyro5.nameserver.start_ns(nshost, nsport)
+
     def _nsBg():
-        try: nsDaemon.requestLoop()
+        try:
+            nsDaemon.requestLoop()
         finally:
             nsDaemon.close()
-            if nsBroadcast is not None: nsBroadcast.close()
-    thread=threading.Thread(target=_nsBg,daemon=True).start()
-    h,p=nsDaemon.locationStr.rsplit(':',1) # handles both ipv4 and ipv6
+            if nsBroadcast is not None:
+                nsBroadcast.close()
+    thread = threading.Thread(target=_nsBg, daemon=True).start()
+    h, p = nsDaemon.locationStr.rsplit(':', 1)  # handles both ipv4 and ipv6
     log.info(f'Nameserver up at {h}:{p}')
-    NameserverBg=collections.namedtuple('NameserverBg',['host','port','thread'])
-    return NameserverBg(host=h,port=p,thread=thread)
+    NameserverBg = collections.namedtuple('NameserverBg', ['host', 'port', 'thread'])
+    return NameserverBg(host=h, port=p, thread=thread)
 
 
-def locateNameserver(nshost=None,nsport=0,server=False,return_src=False):
+def locateNameserver(nshost=None, nsport=0, server=False, return_src=False):
     def fromFile(f):
-        s=urllib.parse.urlsplit('//'+open(f,'r').readlines()[0].strip())
+        s = urllib.parse.urlsplit('//'+open(f, 'r').readlines()[0].strip())
         log.info(f'Using {f} → nameserver {s.hostname}:{s.port}')
-        return s.hostname,s.port,f'file://{os.path.abspath(f)}'
+        return s.hostname, s.port, f'file://{os.path.abspath(f)}'
     # 1. set from arguments passed
 
     # for the server, 0.0.0.0 binds all local interfaces
     # for the client, 0.0.0.0 is meaningless
-    #if nshost=='0.0.0.0' or nshost=='::':
+    # if nshost=='0.0.0.0' or nshost=='::':
     #    if server: return nshost,nsport
     #    else: return None,nsport
     if nshost is not None:
         log.info(f'Using nameserver arguments {nshost}:{nsport}')
-        return (nshost,nsport,'explicit')
+        return nshost, nsport, 'explicit'
 
     # 2. set from MUPIF_NS env var
-    if (nshp:=os.environ.get('MUPIF_NS',None)):
-        s=urllib.parse.urlsplit('//'+nshp)
+    if nshp := os.environ.get('MUPIF_NS', None):
+        s = urllib.parse.urlsplit('//'+nshp)
         log.info(f'Using MUPIF_NS environment variable → nameserver {s.hostname}:{s.port}')
-        return (s.hostname,s.port,'env:MUPIF_NS')
+        return s.hostname, s.port, 'env:MUPIF_NS'
     # 3. from MUPIF_NS in cwd
-    if (os.path.exists(nshp:=os.getcwd()+'/MUPIF_NS')): return fromFile(nshp)
+    if os.path.exists(nshp := os.getcwd()+'/MUPIF_NS'):
+        return fromFile(nshp)
     # 4. set from MUPIF_NS *file* in mupif module directory
     import mupif
-    if os.path.exists(nshp:=os.path.dirname(mupif.__file__)+'/MUPIF_NS'): return fromFile(nshp)
+    if os.path.exists(nshp := os.path.dirname(mupif.__file__)+'/MUPIF_NS'):
+        return fromFile(nshp)
     # 4. set from XDG user-config file (~/.config/MUPIF_NS on linux)
     try:
         import appdirs
-        if os.path.exists(nshp:=(appdirs.user_config_dir()+'/MUPIF_NS')): return fromFile(nshp)
+        if os.path.exists(nshp := (appdirs.user_config_dir()+'/MUPIF_NS')):
+            return fromFile(nshp)
     except ImportError:
         log.warning('Module appdirs not installed, not using user-level MUPIF_NS config file.')
     if server:
         log.warning('Falling back to 127.0.0.1:9090 for nameserver (server).')
-        return ('127.0.0.1',9090,'fallback-server')
+        return '127.0.0.1', 9090, 'fallback-server'
     else:
         log.warning('Falling back to 0.0.0.0:0 for nameserver (client).')
-        return (None,0,'fallback-client')
+        return None, 0, 'fallback-client'
 
 
 @deprecated.deprecated('renamed to connectNameserver')
-def connectNameServer(*args,**kw): return connectNameserver(*args,**kw)
+def connectNameServer(*args, **kw): return connectNameserver(*args, **kw)
+
 
 @pydantic.validate_arguments
 def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: float = 3.0) -> Pyro5.client.Proxy:
@@ -146,11 +152,11 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     if nshost == '0.0.0.0' or nshost == '::':
         nshost = None
 
-    nshost,nsport,nssrc=locateNameserver(nshost,nsport)
+    nshost, nsport, nssrc = locateNameserver(nshost, nsport)
 
     if nshost is not None and nsport != 0:
         try:
-            conn=socket.create_connection((nshost,nsport),timeout=timeOut)
+            conn = socket.create_connection((nshost, nsport), timeout=timeOut)
             log.debug(f'Connection to {nshost}:{nsport} is possible.')
             conn.close()
         except Exception:
@@ -168,29 +174,32 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
 
 
 # global variable holding daemon objects, keyed by hostname (local IP address)
-_daemons={}
+_daemons = {}
+
 
 def getDaemon(proxy: Pyro5.api.Proxy = None, exclusive=False) -> Pyro5.api.Daemon:
-    '''
+    """
     Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will listen on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
 
     Passing *proxy=None* will return the (possibly cached) daemon listening on the IPv4 loopback interface.
 
     Do *not* call ``shutdown`` on the daemon returned as this would break the caching involved.
-    '''
+    """
     if proxy is not None:
         proxy._pyroBind()
-        host=proxy._pyroConnection.sock.getsockname()[0]
-    else: host='127.0.0.1'
+        host = proxy._pyroConnection.sock.getsockname()[0]
+    else:
+        host = '127.0.0.1'
     global _daemons
-    if not exclusive and ((d:=_daemons.get(host,None)) is not None):
+    if not exclusive and ((d := _daemons.get(host, None)) is not None):
         log.debug(f're-using existing daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
         return d
-    dNew=_daemons[host]=Pyro5.api.Daemon(host=host)
-    th=threading.Thread(target=dNew.requestLoop,daemon=(not exclusive))
+    dNew = _daemons[host] = Pyro5.api.Daemon(host=host)
+    th = threading.Thread(target=dNew.requestLoop, daemon=(not exclusive))
     th.start()
     log.debug(f'started new {"NON-" if exclusive else ""}exclusive daemon for {host}: {dNew.locationStr} [pid={os.getpid()}]')
     return dNew
+
 
 def getNSmetadata(ns, name):
     """
@@ -217,7 +226,7 @@ def getNSConnectionInfo(ns, name):
     return None, None
 
 
-def _connectApp(ns, name, connectionTestTimeOut = 10. ):
+def _connectApp(ns, name, connectionTestTimeOut=10.):
     """
     Connects to a remote application.
 
@@ -288,13 +297,13 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
-    exclusiveDaemon=False
+    exclusiveDaemon = False
     if not daemon:
         # in server, daemon thread should keep the process alive
-        daemon=getDaemon(proxy=ns,exclusive=True) 
+        daemon = getDaemon(proxy=ns, exclusive=True)
         # we can assume new daemon thread may be renamed to the app
-        threading.current_thread().name=appName
-        exclusiveDaemon=True
+        threading.current_thread().name = appName
+        exclusiveDaemon = True
     # Check if application name already exists on a nameServer
     try:
         (uri, mdata) = ns.lookup(appName, return_metadata=True)
@@ -319,7 +328,7 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
 
     log.debug(f'Running {appName} at {uri} (nameserver: {ns._pyroUri})')
 
-    def _remove_from_ns(sig=None,stack=None):
+    def _remove_from_ns(sig=None, stack=None):
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
         ns._pyroClaimOwnership()
         ns.remove(appName)
@@ -327,12 +336,12 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
         # important: when handling a signal, reset the handler and re-emit it
         # otherwise e.g. TERM would not cause the process to terminate
         if sig is not None:
-           signal.signal(sig,signal.SIG_DFL)
-           log.warning(f'Re-emiting signal {sig}')
-           os.kill(os.getpid(),sig)
-           # os._exit(0)
-    atexit.register(_remove_from_ns) # regular process exit
-    signal.signal(signal.SIGTERM,_remove_from_ns) # terminate by signal
+            signal.signal(sig, signal.SIG_DFL)
+            log.warning(f'Re-emiting signal {sig}')
+            os.kill(os.getpid(), sig)
+            # os._exit(0)
+    atexit.register(_remove_from_ns)  # regular process exit
+    signal.signal(signal.SIGTERM, _remove_from_ns)  # terminate by signal
     return uri
 
 
@@ -436,6 +445,7 @@ def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
     
     :param Pyro5.naming.Nameserver ns: running name server
     :param jobManager jobMan: jobmanager to use
+    :param remoteLogUri: remote log URI
 
     :returns: Application instance
     :rtype: model.RemoteModel
@@ -446,7 +456,8 @@ def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
     try:
         (username, hostname) = getUserInfo()
         # signature of allocateJob changed, support both versions
-        try: status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname,remoteLogUri=remoteLogUri)
+        try:
+            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri)
         except TypeError:
             status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
             log.warning('JobManager.allocateJob failed with remoteLogUri, remote logging disabled.')
@@ -458,15 +469,16 @@ def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
     return model.RemoteModel(_connectApp(ns, jobid), jobMan=jobMan, jobID=jobid)
 
 
-def allocateNextApplication(ns, jobMan):
+def allocateNextApplication(*, ns, jobMan, remoteLogUri):
     """
     Request a new application instance to be spawned by given jobManager
     
     :param Pyro5.naming.Nameserver ns: running name server
     :param jobMan: jobmanager to use
+    :param remoteLogUri: remote log URI
     
     :return: Application instance
     :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
-    return allocateApplicationWithJobManager(ns, jobMan)
+    return allocateApplicationWithJobManager(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri)
