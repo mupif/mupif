@@ -40,7 +40,7 @@ jobs:
       timeout-minutes: 2
       run: |
         set -euo pipefail
-        python -m pytest -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
+        python -m pytest --durations=10 -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
         codecov -F unittests
     - name: examples (native)
       timeout-minutes: 2 # normally about 35s

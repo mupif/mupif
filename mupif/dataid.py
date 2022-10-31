@@ -3,7 +3,7 @@ Module defining DataID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
 FunctionID is deprecated and will be removed
 """
-from enum import IntEnum, auto
+from enum import Enum, auto, IntEnum
 
 # Schema for metadata
 DataSchema = {
@@ -33,6 +33,11 @@ DataSchema = {
         "Type", "Type_ID", "Units", "ValueType"
     ]
 }
+
+
+class AutoName(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
 
 
 class DataID(IntEnum):

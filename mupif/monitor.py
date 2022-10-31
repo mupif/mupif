@@ -6,6 +6,9 @@ import pickle
 import logging
 import serpent
 
+log=logging.getLogger()
+
+
 def jobmanInfo(ns,logLines=10):
     query=ns.yplookup(meta_any={"type:jobmanager"})
     ret=[]
@@ -42,6 +45,18 @@ def schedulerInfo(ns):
         sch['numTasks']=dict(running=st['runningTasks'],scheduled=st['scheduledTasks'],processed=st['processedTasks'],finished=st['finishedTasks'],failed=st['failedTasks'])
         sch['lastExecutions']=[dict(weid=l[0],wid=l[1],status=l[2],started=l[3],finished=l[4]) for l in st['lastJobs']]
         ret.append(sch)
+        if not 'getExecutions' in dir(s):
+            log.warning('getExecutions not defined')
+            continue # old workflow monitor?
+        rr={}
+        for ex in s.getExecutions(status='Running'):
+            try: wf,lg=ex['workflowURI'],ex['loggerURI']
+            except KeyError: continue
+            try:
+                rawTail=pickle.loads(serpent.tobytes(Pyro5.api.Proxy(lg).tail(10,raw=True)))
+                rr[ex['_id']]=dict(tail=rawTail)
+            except Pyro5.errors.CommunicationError: log.debug(f'Error getting tail of weid {ex["_id"]}, logger {lg}')
+        ret[-1]['running']=rr
     return ret
 
 def vpnInfo(geoIpDb=None,hidePriv=True):
