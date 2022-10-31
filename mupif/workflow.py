@@ -381,7 +381,7 @@ class Workflow(model.Model):
     def getCriticalTimeStep(self):
         if len(self._models):
             return min([m.getCriticalTimeStep() for m in self._models.values()])
-        return 1.e10
+        return 1.e10*U.s
 
     def finishStep(self, tstep):
         for _model in self._models.values():
