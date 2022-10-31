@@ -10,9 +10,12 @@ import Pyro5.api
 import json
 import time, random
 import tempfile
+import logging
 import astropy.units as u
 
 from mupif.heavystruct import sampleSchemas_json
+
+log=logging.getLogger()
 
 #sys.excepthook=Pyro5.errors.excepthook
 #Pyro5.config.DETAILED_TRACEBACK=True
@@ -112,8 +115,8 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         self.assertRaises(RuntimeError,self.hq.exposeData)
         self.hq.closeData()
 
-        # 2. expose the data (uses the same daemon)
-        self.hq.exposeData()
+        # # 2. expose the data (uses the same daemon); this is now automatic
+        # self.hq.exposeData()
 
         p=Pyro5.api.Proxy(uri)
         # copies backing HDF5 file automatically
@@ -126,6 +129,16 @@ class Hdf5Quantity_TestCase(unittest.TestCase):
         hq2.value[0]=(100,0,0)
         self.assertNotEqual(v00,hq2.value[0][0])
         self.assertIsNone(hq2.h5uri)
+    def test_11_preDumpHook_transfer(self):
+        C=self.__class__
+        # 1. register the Hdf5OwningRefQuantity itself
+        uri=C.daemon.register(self.hq)
+        p=Pyro5.api.Proxy(uri)
+        self.assertIsNone(self.hq.h5uri)
+        # should transfer HDF5 file automatically, via calling exposeData in preDumpHook first
+        hq2=p.copyRemote()
+        self.assertIsNotNone(self.hq.h5uri)
+        self.assertNotEqual(self.hq.h5path,hq2.h5path) # storage should have been copied
 
     def test_20_makeFromQuantity2d(self):
         q=mp.Quantity(value=np.array([[1,2,3],[4,5,6],[7,8,9]]),unit='m/s')
@@ -484,4 +497,99 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(t0.getStr(),'dynamic-str')
             self.assertEqual(t0.getLst100(),tuple(10*['lst100']))
             self.assertEqual(t0.getLst(),tuple(1000*['dynamic-string-list']))
+
+    def test_31_json(self):
+        schema='''
+            [
+              {
+                "_schema": { "name": "test" },
+                "json":{ "dtype":"json" }
+              }
+            ]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
+            tests.resize(1)
+            t0=tests[0]
+            data=['abc',dict(foo='bar',baz='baz',d={'123':456})]
+            t0.setJson(data)
+            self.assertEqual(t0.getJson(),data)
+
+    def test_31_namingConvention(self):
+        schema='''
+            [{
+                "_schema": { "name": "test", "naming":"property" },
+                "str10":{ "dtype":"a10" }
+            }]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
+            tests.resize(1)
+            t0=tests[0]
+            t0.str10='sdfd'
+            self.assertRaises(TypeError,lambda: setattr(t0,'str10',10*'aa')) # content too long
+            self.assertEqual(t0.str10,'sdfd')
+
+    def test_32_indexed(self):
+        schema='''
+            [
+              {
+                "_schema": { "name": "testA", "naming":"property" },
+                "refB_raw": { "dtype":"int64" },
+                "refBB_raw": { "dtype":"int64", "shape":"variable" },
+                "refB":{ "indexed":"refB_raw", "path":"testB"  },
+                "refBB":{ "indexed":"refBB_raw", "path":"testB" }
+              },
+              {
+                "_schema": { "name": "testB", "naming":"property" },
+                "name": { "dtype": "a20" }
+              }
+            ]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='testA',schemasJson=schema) as a:
+            a.resize(1)
+            b=a.refB
+            b.resize(3) # this is the entire testB dataset, since "a" is not indexed
+            self.assertEqual(len(b),3)
+            b[0].name,b[1].name,b[2].name='zeroth','first','second'
+            a0=a[0]
+            a0.refB_raw=1
+            self.assertEqual(a0.refB_raw,1)
+            b1=a0.refB
+            log.error(b1)
+            self.assertEqual(b1.name,'first')
+            a0.refBB_raw=np.array([0,1,2,1,0])
+            bb=a0.refBB
+            self.assertEqual(len(bb),len(a0.refBB_raw))
+            for b,name in zip(bb,['zeroth','first','second','first','zeroth']): self.assertEqual(b.name,name)
+            self.assertEqual(len(a.refBB),3) # same dataset as a.refB
+
+
+
+
+class HeavyMesh_TestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.box=mp.demo.make_meshio_box_hexa(dim=(1,2,3),sz=.1)
+        cls.tmpdir=tempfile.TemporaryDirectory()
+        cls.tmp=cls.tmpdir.name
+    @classmethod
+    def tearDownClass(cls):
+        try: cls.tmpdir.cleanup()
+        except: pass # this would fail under Windows
+    def test_saveload(self):
+        cls=self.__class__
+        h5path=f'{cls.tmp}/01-mesh.h5'
+        xdmfPath=f'{cls.tmp}/01-mesh.xdmf'
+        evalAt=(.1,.1,.1)
+        with mp.HeavyUnstructuredMesh(h5path=h5path,mode='overwrite') as mesh:
+            mesh.fromMeshioMesh(cls.box)
+            fieldP=mesh.makeHeavyField(unit='Pa',fieldID=mp.DataID.FID_Pressure,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Scalar)
+            fieldUVW=mesh.makeHeavyField(unit='m/s',fieldID=mp.DataID.FID_Velocity,fieldType=mp.FieldType.FT_cellBased,valueType=mp.ValueType.Vector)
+            fieldP.value[:]=np.linspace(0,1,mesh.getNumberOfCells())
+            # mesh.writeXDMF(xdmfPath,fields=[fieldP,fieldUVW]) # this is actually not necessary
+            val0=fieldP.evaluate(evalAt)
+        # load mesh and fields from HDF5, also opens the storage
+        mesh,fields=mp.HeavyUnstructuredMesh.load(h5path)
+        val1=fields[0].evaluate((.1,.1,.1))
+        self.assertEqual(val0,val1)
+        mesh.closeData()
 

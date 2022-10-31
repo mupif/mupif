@@ -20,12 +20,13 @@ except Exception:
 from typing import Generic, TypeVar
 from pydantic.fields import ModelField
 
-
-if pydantic.__version__.split('.')<['1','9']: raise RuntimeError('Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar)')
+pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
+if pyd_v0=='1' and int(pyd_v1)<9:
+    raise RuntimeError(f'Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar); current pydantic version is {pydantic.__version__}')
 
 # for now, disable numpy validation completely until we figure out what works in what python version reliably
 if 1:
-    NumpyArray=NumpyArrayFloat64=typing.Any
+    NumpyArray = NumpyArrayFloat64 = typing.Any
 else:
     # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
     DType = TypeVar('DType')
@@ -56,22 +57,22 @@ else:
         NumpyArrayFloat64 = NumpyArray
 
 
-def addPydanticInstanceValidator(klass,makeKlass=None):
-    def klass_validate(cls,v):
-        if isinstance(v,klass): return v
+def addPydanticInstanceValidator(klass, makeKlass=None):
+    def klass_validate(cls, v):
+        if isinstance(v, klass): return v
         if makeKlass: return makeKlass(v)
         else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__}')
     @classmethod
     def klass_get_validators(cls): yield klass_validate
-    klass.__get_validators__=klass_get_validators
+    klass.__get_validators__ = klass_get_validators
 
 
 class MupifBaseModel(pydantic.BaseModel):
-    '''Basic configuration of pydantic.BaseModel, common to Dumpable and also MupifObjectBase'''
+    """Basic configuration of pydantic.BaseModel, common to Dumpable and also MupifObjectBase"""
     class Config:
         # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
         # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = False
+        copy_on_model_validation = 'none'
         # this unfortunately also allows arbitrary **kw passed to the ctor
         # but we filter that in the custom __init__ function just below
         # see https://github.com/samuelcolvin/pydantic/discussions/2459
@@ -90,7 +91,7 @@ class MupifBaseModel(pydantic.BaseModel):
 
 @Pyro5.api.expose
 class Dumpable(MupifBaseModel):
-    '''
+    """
     Base class for all serializable (dumpable) objects; all objects which are sent over the wire via python must be recursively dumpable, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
 
     Attributes of a dumpable objects are specified via ``dumpAttrs`` class attribute: it is list of attribute names which are to be dumped; the list can be empty, but it is an error if a class about to be dumped does not define it at all. Inheritance of dumpables is handled by recursion, thus multiple inheritance is supported.
@@ -103,17 +104,17 @@ class Dumpable(MupifBaseModel):
 
     The ``(attr,val)`` form of ``dumpAttrs`` item can be (ab)used to create a post-processing function, e.g. by saying ``('_postprocess',lambda self: self._postDump())``. Put it at the end of ``dumpAttrs`` to have it called when the reconstruction is about to finish. See :obj:`~mupif.mesh.Mesh` for this usage.
 
-    '''
+    """
     _pickleInside = False
 
     class Config:
         # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
         # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = False
+        copy_on_model_validation = 'none'
         # this unfortunately also allows arbitrary **kw passed to the ctor
         # but we filter that in the custom __init__ function just below
         # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra='allow'
+        extra = 'allow'
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):
@@ -123,6 +124,10 @@ class Dumpable(MupifBaseModel):
             if k.startswith('_'):
                 sd[k] = None  # del sd[k]
         return s
+
+    def preDumpHook(self):
+        'No-op in Dumpable. Reimplement in derived classes which need special care before being serialized.'
+        pass
 
     def to_dict(self, clss=None):
         def _handle_attr(attr, val, clssName):
@@ -146,6 +151,7 @@ class Dumpable(MupifBaseModel):
                 return val
         import enum
         if not isinstance(self, Dumpable): raise RuntimeError("Not a Dumpable.");
+        self.preDumpHook()
         ret = {}
         if clss is None:
             ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
@@ -169,15 +175,15 @@ class Dumpable(MupifBaseModel):
         return ret
 
     def copyRemote(self):
-        '''
+        """
         Create local copy from Pyro's Proxy of this object.
 
         This abuses the in-band transfer of types in Pyro serializers, thus returning the dictionary with appropriate keys (`__class__` in particular) will automatically deserialize it into an object on the other (local) side of the wire.
 
         This method does some check whether the object is exposed via Pyro (thus presumable accessed via a Proxy). This cannot be detected reliably, however, thus calling `copyRemote()` on local (unproxied) object will return dictionary rather than a copy of the object.
-        '''
-        #daemon = getattr(self, '_pyroDaemon', None)
-        #if not daemon:
+        """
+        # daemon = getattr(self, '_pyroDaemon', None)
+        # if not daemon:
         #    raise RuntimeError(f'_pyroDaemon not defined on {str(self)} (not a remote object?)')
         if Pyro5.callcontext.current_context.client is None: raise RuntimeError('This does not seem to be a remote object (context client is None)')
         return self.to_dict()

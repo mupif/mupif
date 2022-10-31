@@ -38,6 +38,7 @@ from . import pyroutil
 from .pyrofile import PyroFile
 import os
 import typing
+import pydantic
 
 sys.excepthook = Pyro5.errors.excepthook
 Pyro5.config.DETAILED_TRACEBACK = False
@@ -78,12 +79,9 @@ class SimpleJobManager (jobmanager.JobManager):
         user: str
         port: int
         jobLogName: str
+        remoteLogUri: str
 
     ticketExpireTimeout = 10
-
-    # if set to True (legacy!), simple multiprocess interface is used, but does not redirect stdout/stderr of the subprocess
-    # so keep it at False for now, and delete all JOBS_USE_MULTIPROCESSING blocks later
-    JOBS_USE_MULTIPROCESSING=False
 
     def __init__(
             self,
@@ -127,38 +125,37 @@ class SimpleJobManager (jobmanager.JobManager):
     def runServer(self):
         return pyroutil.runJobManagerServer(jobman=self,ns=self.ns)
 
+    class SpawnedProcessArgs(pydantic.BaseModel):
+        '''Args passed to child processes via Popen'''
+        uriFileName: str
+        nsUri: str
+        appName: str
+        jobID: str
+        cwd: str
+        appClass: object
+
+        def pickle(self):
+            # protocol=0 so that there are no NULLs
+            return pickle.dumps(self.dict(),protocol=0)
+        @classmethod
+        def unpickle(cls,data): return cls(**pickle.loads(bytes(data,encoding='ascii')))
+
     @staticmethod
     def _spawnedProcessPopen():
         import sys
-        kwargs,uriFileName=pickle.loads(bytes(sys.argv[-2],encoding='ascii')),sys.argv[-1]
-        uri=SimpleJobManager._spawnedProcess(**kwargs)
-        open(uriFileName+'~','wb').write(pickle.dumps(uri))
-        os.rename(uriFileName+'~',uriFileName)
-
-    @staticmethod
-    def _spawnedProcessPipe(*, pipe, ns, appName, jobID, cwd, appClass):
-       pipe.send(SimpleJobManager._spawnedProcess(ns=ns,appName=appName,jobID=jobID,cwd=cwd,appClass=appClass))  # as bytes
-
-    @staticmethod
-    def _spawnedProcess(*, ns, appName, jobID, cwd, appClass):
-        '''
-        This function is called 
-        '''
-        # this is all run in the subprocess
-        # log.info('Changing directory to %s',cwd)
-        os.chdir(cwd)
-        os.environ['MUPIF_LOG_LEVEL']='DEBUG'
-        import mupif.pyroutil
-        # sys.excepthook=Pyro5.errors.excepthook
-        # Pyro5.config.DETAILED_TRACEBACK=True
-        app = appClass()
-        app.setJobID(jobID)
-        uri = mupif.pyroutil.runAppServer(
+        import mupif # this will use MUPIF_LOG_PYRO, but mupif would be imported by unpickling anyway
+        args=SimpleJobManager.SpawnedProcessArgs.unpickle(sys.argv[-1])
+        log.info(f'New subprocess: nameserver {args.nsUri}, cwd {args.cwd}')
+        os.chdir(args.cwd)
+        app=args.appClass()
+        app.setJobID(args.jobID)
+        uri=mupif.pyroutil.runAppServer(
             app=app,
-            appName=jobID,
-            ns=ns
+            appName=args.jobID,
+            ns=Pyro5.api.Proxy(args.nsUri)
         )
-        return uri
+        open(args.uriFileName+'~','w').write(str(uri))
+        os.rename(args.uriFileName+'~',args.uriFileName)
 
     def __checkTicket(self, ticket):
         """ Returns true, if ticket is valid, false otherwise"""
@@ -185,12 +182,8 @@ class SimpleJobManager (jobmanager.JobManager):
             # take note of processes terminated asynchronously
             dead=[]
             for jobId,job in self.activeJobs.items():
-                if isinstance(job.proc,multiprocessing.Process):
-                    if job.proc.is_alive(): continue
-                    code=job.proc.exitcode
-                else: # subprocess.Popen
-                    if job.proc.poll() is None: continue
-                    code=job.proc.returncode
+                if job.proc.poll() is None: continue
+                code=job.proc.returncode
                 assert code is not None
                 log.debug(f'Job {jobId} already finished, exit status {code}.')
                 if code!=0: log.error('Job {jobID} has non-zero exit status {code}')
@@ -237,7 +230,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 self.tickets.append(ticket)
                 return ticket
 
-    def allocateJob(self, user, ticket=None): 
+    def allocateJob(self, *, user, remoteLogUri=None, ticket=None): 
         """
         Allocates a new job.
 
@@ -276,52 +269,40 @@ class SimpleJobManager (jobmanager.JobManager):
                     raise
                     # return JOBMAN_ERR, None
                 try:
-
-                    kwargs = dict(
-                        ns=self.ns,
+                    args=SimpleJobManager.SpawnedProcessArgs(
+                        uriFileName=targetWorkDir+'/_mupif_uri',
+                        nsUri=str(self.ns._pyroUri),
                         jobID=jobID,
                         cwd=targetWorkDir,
                         appName=self.applicationName,
                         appClass=self.applicationClass,
                     )
-                    if SimpleJobManager.JOBS_USE_MULTIPROCESSING:
-                        # multiprocessing-based implementation
-                        # it is good and readable, but does not allow to redirect subprocess outputs, which is needed for logging
-                        parentPipe, childPipe = multiprocessing.Pipe()
-                        kwargs.update(pipe=childPipe)
-                        proc = multiprocessing.Process(
-                            target=SimpleJobManager._spawnedProcessPipe,
-                            name=self.applicationName,
-                            kwargs=kwargs
-                        )
-                        jobLogName=None
-                        proc.start()
-                        if not parentPipe.poll(timeout=10):
-                            raise RuntimeError('Timeout waiting 10s for URI from spawned process.')
-                        uri = parentPipe.recv()
+                    jobLogName=targetWorkDir+'/_mupif_job.log'
+                    jobLog=open(jobLogName,'w')
+                    log.info(f'Logging into {jobLogName} (+ {remoteLogUri} remotely)')
+                    # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
+                    # the subprocess will be able to import it as well
+                    env=os.environ.copy()
+                    env['PYTHONPATH']=os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
+                    # this will redirect logs the moment mupif is imported on the remote side
+                    if remoteLogUri: env['MUPIF_LOG_PYRO']=remoteLogUri
+                    # to be tuned?
+                    env['MUPIF_LOG_LEVEL']='DEBUG'
+                    proc=subprocess.Popen([sys.executable,'-c','import mupif; mupif.SimpleJobManager._spawnedProcessPopen()','-',args.pickle()],stdout=jobLog,stderr=subprocess.STDOUT,env=env)
+                    t0=time.time()
+                    tMax=10
+                    while time.time()-t0<tMax:
+                        if os.path.exists(args.uriFileName):
+                            uri=open(args.uriFileName,'r').read()
+                            os.remove(args.uriFileName)
+                            break
+                        else: time.sleep(.1)
                     else:
-                        uriFileName=targetWorkDir+'/_mupif_uri'
-                        jobLogName=targetWorkDir+'/_mupif_job.log'
-                        jobLog=open(jobLogName,'w')
-                        # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
-                        # the subprocess will be able to import it as well
-                        env=os.environ.copy()
-                        env['PYTHONPATH']=os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
-                        # protocol=0 so that there are no NULLs in the arg
-                        proc=subprocess.Popen([sys.executable,'-c','import mupif; mupif.SimpleJobManager._spawnedProcessPopen()','-',pickle.dumps(kwargs,protocol=0),uriFileName],stdout=jobLog,stderr=subprocess.STDOUT,env=env)
-                        t0=time.time()
-                        tMax=10
-                        while time.time()-t0<tMax:
-                            if os.path.exists(uriFileName):
-                                uri=pickle.loads(open(uriFileName,'rb').read())
-                                os.remove(uriFileName)
-                                break
-                            else: time.sleep(.1)
-                        else:
-                            log.error('This is the subprocess log file contents: \n'+open(jobLogName,'r').read())
-                            raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else '')+'. The process log inline follows:\n'+open(jobLogName,'r').read())
+                        log.error('This is the subprocess log file contents: \n'+open(jobLogName,'r').read())
+                        raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else '')+'. The process log inline follows:\n'+open(jobLogName,'r').read())
+
                     log.info('Received URI: %s' % uri)
-                    jobPort = int(uri.location.split(':')[-1])
+                    jobPort = int(uri.split(':')[-1])
                     log.info(f'Job runs on port {jobPort}')
                 except Exception as e:
                     log.exception(e)
@@ -334,7 +315,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 # check if uri is ok
                 # either by doing some sort of regexp or query ns for it
                 start = timeTime.time()
-                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, timeout=timeout, user=user, uri=uri, port=jobPort, jobLogName=jobLogName)
+                self.activeJobs[jobID] = SimpleJobManager.ActiveJob(proc=proc, starttime=start, timeout=timeout, user=user, uri=uri, port=jobPort, jobLogName=jobLogName, remoteLogUri=remoteLogUri)
                 log.debug('SimpleJobManager: new process ')
                 log.debug(self.activeJobs[jobID])
 
@@ -409,7 +390,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 self.pyroDaemon.unregister(self)
             except Exception:
                 pass
-            if not self.externalDaemon:
+            if self.exclusiveDaemon:
                 log.info("SimpleJobManager:terminate Shutting down daemon %s" % self.pyroDaemon)
                 try:
                     self.pyroDaemon.shutdown()
@@ -434,11 +415,11 @@ class SimpleJobManager (jobmanager.JobManager):
         tnow = timeTime.time()
         with self.lock:
             for key,job in self.activeJobs.items():
-                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri))
+                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri, remoteLogUri=job.remoteLogUri))
         return status
 
     def getStatusExtended(self):
-        return dict(currJobs=self.getStatus(),totalJobs=self.jobCounter)
+        return dict(currJobs=self.getStatus(),totalJobs=self.jobCounter,maxJobs=self.maxJobs)
 
     def getModelMetadata(self):
         return self.modelMetadata

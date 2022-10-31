@@ -81,6 +81,7 @@ class Application13(mp.Model):
                     self.value_2 = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
+        log.error("solveStep() of model13")
         self.result = self.value_1 * self.value_2
 
     def getCriticalTimeStep(self):

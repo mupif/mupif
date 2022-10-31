@@ -36,8 +36,36 @@ import copy
 import logging
 from collections.abc import Iterable
 import importlib
+import pydantic
+from typing import List, Union
 
 log = logging.getLogger()
+
+
+class ModelsMeta(pydantic.BaseModel):
+    Name: str
+    Module: str = ''
+    Class: str = ''
+    Jobmanager: str = ''
+
+    @pydantic.root_validator(pre=False)
+    def _moduleClass_or_jobmanager(cls, values):
+        if values['Jobmanager'] == '':
+            assert values['Module'] != '' and values['Name'] != ''
+        return values
+
+
+class WorkflowMeta(pydantic.BaseModel):
+    Name: str
+    ID: Union[str, int]
+    Description: str
+    # Physics: PhysicsMeta
+    # Solver: SolverMeta
+    Execution: model.ExecutionMeta
+    Inputs: List[model.InputMeta] = []
+    Outputs: List[model.OutputMeta] = []
+    Models: List[ModelsMeta] = []
+
 
 WorkflowSchema = copy.deepcopy(model.ModelSchema)
 del WorkflowSchema["properties"]["Solver"]
@@ -118,7 +146,8 @@ class Workflow(model.Model):
             if jobmanagername:
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name])
+                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI', ''))
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
@@ -133,7 +162,8 @@ class Workflow(model.Model):
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
                 'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
-                'Task_ID': self.getMetadata('Execution.Task_ID')
+                'Task_ID': self.getMetadata('Execution.Task_ID'),
+                'Log_URI': self.getMetadata('Execution.Log_URI', '')
             }
         }
         for _model in self._models.values():
@@ -166,7 +196,7 @@ class Workflow(model.Model):
         self.generateModelDependencies()
 
         if validateMetaData:
-            self.validateMetadata(WorkflowSchema)
+            self.validateMetadata(WorkflowMeta)
 
     def solve(self, runInBackground=False):
         """
@@ -351,7 +381,7 @@ class Workflow(model.Model):
     def getCriticalTimeStep(self):
         if len(self._models):
             return min([m.getCriticalTimeStep() for m in self._models.values()])
-        return 1.e10
+        return 1.e10*U.s
 
     def finishStep(self, tstep):
         for _model in self._models.values():

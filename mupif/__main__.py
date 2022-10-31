@@ -1,3 +1,2 @@
-from . import util
-print(util.getVersion())
-
+from . import cli
+cli.main()

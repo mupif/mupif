@@ -1,7 +1,7 @@
 import sys
 sys.path += ['..', '../..']
-import models
 import mupif as mp
+import mupif.demo
 
 # locate nameserver
 ns = mp.pyroutil.connectNameserver()
@@ -9,6 +9,6 @@ ns = mp.pyroutil.connectNameserver()
 # Run job manager on a server
 jobMan = mp.SimpleJobManager(
     ns=ns,
-    appClass=models.MechanicalModel,
+    appClass=mp.demo.MechanicalModel,
     appName='Mupif.JobManager@MechanicalSolver-ex07',
 ).runServer()

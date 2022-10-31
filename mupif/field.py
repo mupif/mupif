@@ -31,6 +31,7 @@ from . import cellgeometrytype
 from . import mesh
 from . import mupifquantity
 from .units import Quantity, Unit
+from .dumpable import NumpyArray
 
 import meshio
 import sys
@@ -63,7 +64,102 @@ class FieldType(IntEnum):
 
 
 @Pyro5.api.expose
-class Field(mupifquantity.MupifQuantity):
+class FieldBase(mupifquantity.MupifQuantity):
+    fieldID: DataID
+    time: Quantity = 0*Unit('s')
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def getDataID(self):
+        """
+        Returns DataID, e.g. FID_Displacement, FID_Temperature.
+
+        :return: Returns field DataID
+        :rtype: DataID
+        """
+        return self.fieldID
+
+    def getFieldID(self):
+        """
+        Returns DataID, e.g. FID_Displacement, FID_Temperature.
+
+        :return: Returns field DataID
+        :rtype: DataID
+        """
+        return self.fieldID
+
+    def getFieldIDName(self):
+        """
+        Returns name of the field.
+
+        :return: Returns DataID name
+        :rtype: string
+        """
+        return self.fieldID.name
+
+    def getTime(self):
+        """
+        Get time of the field.
+
+        :return: Time of field data
+        :rtype: units.Quantity
+        """
+        return self.time
+
+    def getUnit(self) -> Unit:
+        """
+        Returns representation of property units.
+        """
+        return self.units
+
+    @pydantic.validate_arguments
+    def evaluate(
+            self,
+            positions,
+            eps: float = 0.0
+        ):
+        """
+        Evaluates the receiver at given spatial position(s).
+
+        :param positions: 1D/2D/3D position vectors
+        :type positions: tuple, a list of tuples
+        :param float eps: Optional tolerance for probing whether the point belongs to a cell (should really not be used)
+        :return: field value(s)
+        :rtype: units.Quantity with given value or tuple of values
+        """
+        raise RuntimeError('FieldBase.evaluate is abstract.')
+
+
+@Pyro5.api.expose
+class AnalyticalField(FieldBase):
+    expr: str
+    dim: pydantic.conint(ge=2, le=3) = 3
+
+    def __init__(self, *, unit, **kw):
+        # quantity with null array; only the unit is relevant
+        super().__init__(quantity=np.array([])*Unit(unit), **kw)
+
+    @pydantic.validate_arguments
+    def evaluate(
+            self,
+            positions: typing.Union[
+                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
+                typing.List[typing.Tuple[float, float]],  # list of 2d coords
+                typing.Tuple[float, float, float],  # single 3d coords
+                typing.Tuple[float, float],  # single 2d coord
+                NumpyArray
+            ],
+            eps: float = 0.0):
+        import numexpr as ne
+        loc = dict(x=positions[..., 0], y=positions[..., 1])
+        if self.dim == 2: loc['xy'] = positions
+        if self.dim == 3: loc.update({'z': positions[..., 2], 'xyz': positions})
+        return self.quantity.unit*ne.evaluate(self.expr, loc)
+
+
+@Pyro5.api.expose
+class Field(FieldBase):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -77,12 +173,7 @@ class Field(mupifquantity.MupifQuantity):
     .. automethod:: _evaluate
     """
     #: Instance of a Mesh class representing the underlying discretization.
-    mesh: mesh.Mesh 
-    #: Field type (displacement, strain, temperature ...)
-    fieldID: DataID
-    #: Time associated with field values
-    # (setting the default here results in pydatic trying __bool__ on Quantity, resulting in astropy warning... hence, leave it without the default)
-    time: Quantity 
+    mesh: mesh.Mesh
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
 
@@ -104,6 +195,12 @@ class Field(mupifquantity.MupifQuantity):
             'FieldType': str(self.fieldType),
             'ValueType': str(self.valueType)
         })
+
+    def getUnit(self) -> Unit:
+        """
+        Returns representation of property units.
+        """
+        return self.quantity.unit
 
     def setRecord(self, componentID, value):
         """
@@ -130,7 +227,6 @@ class Field(mupifquantity.MupifQuantity):
         :rtype: int
         """
         return self.valueType.getNumberOfComponents()
-
 
     def getMesh(self):
         """
@@ -178,14 +274,15 @@ class Field(mupifquantity.MupifQuantity):
         return self.time
 
     @pydantic.validate_arguments
-    def evaluate(self,
-        positions: typing.Union[
-            typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-            typing.List[typing.Tuple[float, float]],  # list of 2d coords
-            typing.Tuple[float, float, float],  # single 3d coords
-            typing.Tuple[float, float]  # single 2d coord
-        ],
-        eps: float = 0.0):
+    def evaluate(
+            self,
+            positions: typing.Union[
+                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
+                typing.List[typing.Tuple[float, float]],  # list of 2d coords
+                typing.Tuple[float, float, float],  # single 3d coords
+                typing.Tuple[float, float]  # single 2d coord
+            ],
+            eps: float = 0.0):
         """
         Evaluates the receiver at given spatial position(s).
 
@@ -218,7 +315,7 @@ class Field(mupifquantity.MupifQuantity):
         """
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
         # localizer in the newer version returns cell id, not the cell object, check that here
-        if isinstance(next(iter(cells)),int): cells=[self.mesh.getCell(ic) for ic in cells]
+        if isinstance(next(iter(cells)), int): cells = [self.mesh.getCell(ic) for ic in cells]
         # answer=None
         if len(cells):
             if self.fieldType == FieldType.FT_vertexBased:
@@ -251,7 +348,7 @@ class Field(mupifquantity.MupifQuantity):
             else:
                 # in case of cell based fields do compute average of cell values containing point
                 # this typically happens when point is on the shared edge or vertex
-                answer=[]
+                answer = []
                 for icell in cells:
                     if icell.containsPoint(position):
                         if debug: log.debug(icell.getVertices())
@@ -263,7 +360,7 @@ class Field(mupifquantity.MupifQuantity):
                 if not answer: 
                     raise ValueError(f'Field::evaluate - no source cell found for {position=}')
                 else:
-                    return np.mean(answer,axis=0)
+                    return np.mean(answer, axis=0)
         else:
             # no source cell found
             # log.error('Field::evaluate - no source cell found for position ' + str(position))
@@ -356,9 +453,6 @@ class Field(mupifquantity.MupifQuantity):
         :param float warpScale: warping scale
         :return: handle to matplotlib figure
         """
-        import numpy as np
-        import math
-        from scipy.interpolate import griddata
         import matplotlib
         import matplotlib.pyplot as plt
         if 0:
@@ -429,6 +523,8 @@ class Field(mupifquantity.MupifQuantity):
         
         # Create the Triangulation; no triangles so Delaunay triangulation created.
         triang = matplotlib.tri.Triangulation(vx, vy)
+        mask = matplotlib.tri.TriAnalyzer(triang).get_flat_tri_mask()
+        triang.set_mask(mask)
         # pcolor plot.
         plt.figure()
         plt.gca().set_aspect('equal')
@@ -606,7 +702,7 @@ class Field(mupifquantity.MupifQuantity):
             cols = f.getRecordSize()
             # sys.stderr.write(f'each record has {cols} components\n')
             # dta=np.ndarray((rows,cols),dtype='float32')
-            dta=np.array([f.getRecord(row) for row in range(rows)])
+            dta = np.array([f.getRecord(row) for row in range(rows)])
             (point_data if ptData else cell_data)[f.getFieldIDName()] = (dta if ptData else dta.T)
             # print(f.getFieldIDName())
             # print('Is point data?',ptData)
@@ -630,7 +726,7 @@ class Field(mupifquantity.MupifQuantity):
                 ret.append(Field(
                     mesh=msh,
                     fieldID=DataID[fname],
-                    unit=unit.get(fname,None),
+                    unit=unit.get(fname, None),
                     time=time,
                     valueType=mupifquantity.ValueType.fromNumberOfComponents(values.shape[1]),
                     value=values.tolist(),
@@ -655,4 +751,3 @@ class Field(mupifquantity.MupifQuantity):
         performing in place conversion.
         """
         raise TypeError('Not supported')
-

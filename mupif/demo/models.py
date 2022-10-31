@@ -2,7 +2,7 @@ import os
 import mupif
 import mupif as mp
 import Pyro5
-import meshgen
+from . import meshgen
 import math
 import numpy as np
 import time as timeTime
@@ -99,6 +99,11 @@ class ThermalModel(mupif.model.Model):
                     "Relation_description": ["Fick's first law"],
                     "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
                     "Representation": "Finite volumes"
+                },
+                "Execution": {
+                    'ID': '0',
+                    'Use_case_ID': '0',
+                    'Task_ID': '0'
                 }
             }
             self.updateMetadata(MD)
@@ -108,7 +113,7 @@ class ThermalModel(mupif.model.Model):
             value=1.,
             propID=mupif.DataID.PID_effective_conductivity,
             valueType=mupif.ValueType.Scalar,
-            unit=mupif.U['W/m/K']
+            unit=mupif.U['W/(m K)']
         )
         self.tria = False
 
@@ -116,10 +121,10 @@ class ThermalModel(mupif.model.Model):
         self.dirichletModelEdges = []
         self.convectionModelEdges = []
 
-        self.xl = None
-        self.yl = None
-        self.nx = None
-        self.ny = None
+        self.xl = 5
+        self.yl = 1
+        self.nx = 10
+        self.ny = 4
 
         self.dirichletBCs = None
         self.convectionBC = None
@@ -333,7 +338,7 @@ class ThermalModel(mupif.model.Model):
                 value=eff_conductivity,
                 propID=mupif.DataID.PID_effective_conductivity,
                 valueType=mupif.ValueType.Scalar,
-                unit=mp.U['W/m/K'],
+                unit=mp.U['W/(m K)'],
                 time=time
             )
 
@@ -607,7 +612,7 @@ class ThermalModel(mupif.model.Model):
         if obj.isInstance(mp.Property):
             if obj.getPropertyID() == mupif.DataID.PID_effective_conductivity:
                 # remember the mapped value
-                self.conductivity = obj.inUnitsOf('W/m/K')
+                self.conductivity = obj.inUnitsOf('W/(m K)')
                 # log.info("Assigning effective conductivity %f" % self.conductivity.getValue() )
 
             elif obj.getPropertyID() == mupif.DataID.PID_Temperature:
@@ -731,6 +736,11 @@ class ThermalNonstatModel(ThermalModel):
                 "Relation_description": ["Fick's first law"],
                 "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
                 "Representation": "Finite volumes"
+            },
+            "Execution": {
+                'ID': '0',
+                'Use_case_ID': '0',
+                'Task_ID': '0'
             }
         }
         super().__init__(metadata=metadata)
@@ -1008,6 +1018,21 @@ class MechanicalModel(mupif.model.Model):
                     "Obj_ID": "input_file_mechanical",
                     "Set_at": "initialization",
                     "Units": "none"
+                },
+                {
+                    "Name": "Prescribed displacement",
+                    "Type": "mupif.Property",
+                    "Required": False,
+                    "Type_ID": "mupif.DataID.FID_Displacement",
+                    "Units": "m",
+                    "Obj_ID": [
+                        "Dirichlet top",
+                        "Dirichlet bottom",
+                        "Dirichlet left",
+                        "Dirichlet right"
+                    ],
+                    "Set_at": "initialization",
+                    "ValueType": "Scalar"
                 }
             ],
             "Outputs": [
@@ -1045,7 +1070,12 @@ class MechanicalModel(mupif.model.Model):
                 "Relation_description": ["Hooke's law"],
                 "Relation_formulation": ["Stress strain"],
                 "Representation": "Finite volumes"
-            }
+            },
+            "Execution": {
+                'ID': '0',
+                'Use_case_ID': '0',
+                'Task_ID': '0'
+            },
         }
         super().__init__(metadata=metadata)
         self.E = 30.0e+9  # ceramics
@@ -1059,10 +1089,10 @@ class MechanicalModel(mupif.model.Model):
         self.dirichletModelEdges = []
         self.loadModelEdges = []
 
-        self.xl = None
-        self.yl = None
-        self.nx = None
-        self.ny = None
+        self.xl = 5
+        self.yl = 1
+        self.nx = 20
+        self.ny = 8
 
         self.mesh = None
         self.dirichletBCs = None
@@ -1089,6 +1119,15 @@ class MechanicalModel(mupif.model.Model):
         if obj.isInstance(mp.Field):
             if obj.getFieldID() == mupif.DataID.FID_Temperature:
                 self.temperatureField = obj
+
+        if obj.isInstance(mp.Property):
+            if obj.getPropertyID() == mupif.DataID.FID_Displacement:
+                # Dirichlet
+                edge_ids = ['Dirichlet bottom', 'Dirichlet right', 'Dirichlet top', 'Dirichlet left']
+                for edge_id in edge_ids:
+                    if objectID == edge_id:
+                        edge_index = edge_ids.index(edge_id)+1
+                        self.dirichletModelEdges.append(edge_index) # value ignored
 
     def getCriticalTimeStep(self):
         return .4*mp.U.s
@@ -1315,7 +1354,7 @@ class MechanicalModel(mupif.model.Model):
                     et[0] = self.alpha * t.getValue()[0]
                     et[1] = self.alpha * t.getValue()[0]
                     et[2] = 0.0
-                    b_e = np.dot(Grad.T, np.dot(D, et)) * dv
+                    b_e += np.dot(Grad.T, np.dot(D, et)) * dv
             # print "A_e :",A_e
             # print "b_e :",b_e
 

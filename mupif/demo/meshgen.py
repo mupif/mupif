@@ -1,7 +1,7 @@
-from builtins import range
 import mupif.mesh
 from mupif import cell
 from mupif import vertex
+import numpy as np
 
 # debug flag
 debug = 0
@@ -57,3 +57,18 @@ def meshgen(origin, size, nx, ny, tria=False):
     mesh.setup(vertexlist, celllist)
     return mesh
 
+def make_meshio_box_hexa(dim=(1,1,1),sz=.1,):
+    xx,yy,zz=[np.linspace(start=0,stop=dim[i],num=int(np.round((dim[i]-0)//sz)+1)) for i in (0,1,2)]
+    sx,sy,sz=len(xx),len(yy),len(zz)
+    syz=sx*sz
+    X,Y,Z=np.meshgrid(xx,yy,zz)
+    cells=[]
+    for i in range(sx*sy*sz):
+        if (i+1)%sz==0: continue
+        if ((i//sz)+1)%sx==0: continue
+        if ((i//syz)+1)%sy==0: continue
+        lo,hi=[(o,o+1,o+sz+1,o+sz) for o in (i,i+syz)]
+        cells.append((*lo,*hi))
+    pts=np.column_stack((X.ravel(),Y.ravel(),Z.ravel()))
+    import meshio
+    return meshio.Mesh(points=pts,cells={'hexahedron':cells})

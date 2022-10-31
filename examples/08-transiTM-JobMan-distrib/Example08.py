@@ -48,11 +48,11 @@ class Example08(mp.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-        self.daemon = Pyro5.api.Daemon()
-        threading.Thread(target=self.daemon.requestLoop).start()
-    
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+
+        ns=mp.pyroutil.connectNameserver()
+        self.daemon=mp.pyroutil.getDaemon(ns)
 
         log.info("Working thermal server " + self.getModel('thermal').getApplicationSignature())
         log.info("Working mechanical server " + self.getModel('mechanical').getApplicationSignature())

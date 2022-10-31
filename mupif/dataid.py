@@ -3,7 +3,7 @@ Module defining DataID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
 FunctionID is deprecated and will be removed
 """
-from enum import IntEnum, auto
+from enum import Enum, auto, IntEnum
 
 # Schema for metadata
 DataSchema = {
@@ -33,6 +33,11 @@ DataSchema = {
         "Type", "Type_ID", "Units", "ValueType"
     ]
 }
+
+
+class AutoName(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
 
 
 class DataID(IntEnum):
@@ -405,3 +410,81 @@ class DataID(IntEnum):
     #
     PID_HOMO = auto()
     PID_LUMO = auto()
+
+    #
+
+    # Tinflow properties
+    # GENERAL / tinflow Solver
+    PID_EnvTemperature = auto()
+
+    PID_HeaterTemperature = auto()
+    PID_BeltTemperature = auto()
+    PID_BeltVelocity = auto()
+    PID_InletVelocity = auto()
+    PID_InletTemperature = auto()
+    PID_OutletVelocity = auto()
+
+    PID_TinflowSolvent = auto()
+    PID_TinflowBackground = auto()
+    PID_TinflowModelID = auto()
+    PID_TinflowModelType = auto()
+    PID_TinflowPolymer = auto()
+    PID_PolymerConcentration = auto()
+
+    # only for test/debug
+    PID_TinflowFileProperty = auto()
+
+    # SLOTDIE
+    PID_FilmThickness = auto()
+    PID_FilmTemperature = auto()
+
+    # DRYER
+    FID_FilmThickness = auto()
+    FID_FilmTemperature = auto()
+    FID_FilmConcentration = auto()
+    FID_FilmEvaporationRate = auto()
+
+    # GASPROCESS
+    PID_SubstrateTemperature = auto()
+    PID_InletPressure = auto()
+    PID_InletFlowRate = auto()
+    PID_DepositionRate = auto()
+    FID_Velocity2D = auto()
+    FID_Velocity3D = auto()
+    FID_PropertyDistribution = auto()
+
+    # TinniT Material Database
+    PID_Material = auto()
+    PID_MaterialCard = auto()
+    PID_MaterialList = auto()
+    PID_MaterialPlot = auto()
+    PID_DynamicViscosityGaseous = auto()
+    PID_DynamicViscosityLiquid = auto()
+    PID_HeatCapacityGaseous = auto()
+    PID_HeatCapacityLiquid = auto()
+    PID_HeatConductivityGaseous = auto()
+    PID_HeatConductivityLiquid = auto()
+    PID_SurfaceTension = auto()
+    PID_EvaporationEnthalpy = auto()
+    PID_EbullitionTemperature = auto()
+    PID_IdealGasDensity = auto()
+    PID_MolarMass = auto()
+    PID_MeltingTemperature = auto()
+    PID_MeltingEnthalpy = auto()
+    PID_CriticalTemperature = auto()
+    PID_CriticalPressure = auto()
+    PID_CriticalDensity = auto()
+    PID_AcentricFactor = auto()
+
+    #
+
+    # PID_SolverTimeSteps = auto()
+    # PID_SolverStartFilm = auto()
+    # PID_SolverOutputStep = auto()
+    # PID_TinflowModelConfig = auto()
+    # PID_FlagNewModel = auto()
+    # PID_FlagRestart = auto()
+    # PID_FlagPostProcess = auto()
+    # PID_FlagVerbose = auto()
+    # PID_TinflowInputFile = auto()
+    # PID_SolverDeltaT = auto()

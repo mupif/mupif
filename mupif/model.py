@@ -32,7 +32,7 @@ from . import function
 from . import timestep
 from . import pyroutil
 from . import pyrofile
-from typing import Optional, Any
+from typing import Optional, Any, Literal, Union, List
 import time
 
 from pydantic.dataclasses import dataclass
@@ -43,6 +43,87 @@ log = logging.getLogger()
 prefix = "mupif."
 type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, DataID)))
+
+import pydantic
+
+class PhysicsMeta(pydantic.BaseModel):
+    Type: Literal['Electronic','Atomistic','Molecular','Mesoscopic','Continuum','Other']
+    Entity: Literal['Atom','Electron','Grains','Finite volume','Other']
+    Entity_description: str=''
+    Equation: List[str]=[]
+    Equation_quantities: List[str]=[]
+    Relation_description: List[str]=[]
+
+class SolverMeta(pydantic.BaseModel):
+    Software: str
+    Language: str
+    License: str
+    Creator: str
+    Version_date: str
+    Solver_additional_params: str=''
+    Documentation: str
+    Estim_time_step_s: float
+    Estim_comp_time_s: float
+    Estim_execution_cost_EUR: float
+    Estim_personnel_cost_EUR: float
+    Required_expertise:  Literal["None", "User", "Expert"]
+    Accuracy:  Literal["Low", "Medium", "High", "Unknown"]
+    Sensitivity:  Literal["Low", "Medium", "High", "Unknown"]
+    Complexity:  Literal["Low", "Medium", "High", "Unknown"]
+    Robustness:  Literal["Low", "Medium", "High", "Unknown"]
+
+class ExecutionMeta(pydantic.BaseModel):
+    ID: str
+    Use_case_ID: Union[str,int]=''
+    Task_ID: str=''
+    Log_URI: str=''
+    Status: str=Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"]
+    Progress: float=0
+    Date_time_start: str='' # automatically set in Workflow
+    Date_time_end: str='' # automatically set in Workflow
+    Timeout: int=0 # maximum runtime in seconds
+    Username: str='' # automatically set in Model and Workflow
+    Hostname: str='' # automatically set in Model and Workflow
+
+class IOMeta(pydantic.BaseModel):
+    Type: Literal['mupif.Property','mupif.Field','mupif.HeavyStruct','mupif.PyroFile','mupif.String','mupif.ParticleSet','mupif.GrainState']
+    Type_ID: DataID
+    Obj_ID: Optional[Union[str,List[str]]]=None
+    Name: str
+    ValueType: Literal['Scalar','Vector','Tensor','ScalarArray','VectorArray','TensorArray','']=''
+    Description: str=''
+    Units: str
+    Required: bool=False
+
+    @pydantic.root_validator(pre=False)
+    def _require_valueType_unless_property(cls,values):
+        if values['Type']!='mupif.Property': assert 'ValueType'!=''
+        return values
+
+    @pydantic.root_validator(pre=True)
+    def _convert_type_id_to_value(cls,values):
+        tid=values['Type_ID']
+        if isinstance(tid,str):
+            prefix='mupif.DataID.'
+            if tid.startswith(prefix): tid=tid[len(prefix):]
+            values['Type_ID']=DataID[tid]
+        return values
+
+class InputMeta(IOMeta):
+    Set_at: Literal['initialization','timestep']
+class OutputMeta(IOMeta): pass
+
+class ModelMeta(pydantic.BaseModel):
+    Name: str
+    ID: Union[str,int]
+    Description: str
+    Physics: PhysicsMeta
+    Solver: SolverMeta
+    Execution: ExecutionMeta
+    Inputs: List[InputMeta]=[]
+    Outputs: List[OutputMeta]=[]
+
+
 
 # Schema for metadata for Model and further passed to Workflow
 ModelSchema = {
@@ -117,11 +198,12 @@ ModelSchema = {
                 "Use_case_ID": {"type": ["string", "integer"]},
                 # Task_ID: user task ID (e.g. variant of user case ID such as model with higher accuracy)
                 "Task_ID": {"type": "string"},
+                "Log_URI": {"type": "string"},
                 "Status": {"type": "string", "enum": ["Instantiated", "Initialized", "Running", "Finished", "Failed"]},
                 "Progress": {"type": "number"},  # Progress in %
                 "Date_time_start": {"type": "string"},  # automatically set in Workflow
                 "Date_time_end": {"type": "string"},  # automatically set in Workflow
-                "Timeout": {"type": "integer"}, # maximum runtime in seconds
+                "Timeout": {"type": "integer"},  # maximum runtime in seconds
                 "Username": {"type": "string"},  # automatically set in Model and Workflow
                 "Hostname": {"type": "string"}  # automatically set in Model and Workflow
             },
@@ -166,7 +248,7 @@ ModelSchema = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.HeavyStruct", "mupif.String", "mupif.ParticleSet", "mupif.GrainState"]},
+                    "Type": {"type": "string", "enum": ["mupif.Property", "mupif.Field", "mupif.HeavyStruct", "mupif.PyroFile", "mupif.String", "mupif.ParticleSet", "mupif.GrainState"]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
                         "anyof": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]
@@ -216,7 +298,7 @@ class Model(mupifobject.MupifObject):
     """
 
     pyroDaemon: Optional[Any] = None
-    externalDaemon: bool = False
+    exclusiveDaemon: bool = False
     pyroNS: Optional[str] = None
     pyroURI: Optional[str] = None
     appName: str = None
@@ -235,7 +317,7 @@ class Model(mupifobject.MupifObject):
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
             ('Execution', {}),
             ('Solver', {}),
-            ('Timeout',0), # no limit by default
+            ('Timeout', 0),  # no limit by default
         ])
         # use defaults for metadata, unless given explicitly
         for k, v in defaults.items():
@@ -263,13 +345,13 @@ class Model(mupifobject.MupifObject):
             self.workDir = workdir
 
         if validateMetaData:
-            self.validateMetadata(ModelSchema)
+            self.validateMetadata(ModelMeta) # Schema)
             # log.info('Metadata successfully validated')
 
     def updateAndPassMetadata(self, dictionary: dict):
         self.updateMetadata(dictionary=dictionary)
 
-    def registerPyro(self, pyroDaemon, pyroNS, pyroURI, appName=None, externalDaemon=False):
+    def registerPyro(self, *, daemon, ns, uri, appName=None, exclusiveDaemon=False, externalDaemon=None):
         """
         Register the Pyro daemon and nameserver. Required by several services
 
@@ -277,13 +359,17 @@ class Model(mupifobject.MupifObject):
         :param Pyro5.naming.Nameserver pyroNS: Optional nameserver
         :param string pyroURI: Optional URI of receiver
         :param string appName: Optional application name. Used for removing from pyroNS
-        :param bool externalDaemon: Optional parameter when daemon was allocated externally.
+        :param bool exclusiveDaemon: Optional parameter when daemon was allocated externally.
         """
-        self.pyroDaemon = pyroDaemon
-        self.pyroNS = pyroNS
-        self.pyroURI = pyroURI
+        if externalDaemon is not None:
+            import warnings
+            warnings.warn('externalDaemon is deprecated, use exclusiveDaemon (with opposite meaning) instead',DeprecationWarning)
+            exclusiveDaemon=not externalDaemon
+        self.pyroDaemon = daemon
+        self.pyroNS = ns
+        self.pyroURI = uri
         self.appName = appName
-        self.externalDaemon = externalDaemon
+        self.exclusiveDaemon = exclusiveDaemon
 
     def get(self, objectTypeID, time=None, objectID=""):
         """
@@ -459,11 +545,9 @@ class Model(mupifobject.MupifObject):
             self.removeApp()
                         
         if self.pyroDaemon:
+            log.info(f"Unregistering from daemon {self.pyroDaemon}")
             self.pyroDaemon.unregister(self)
-            log.info("Unregistering daemon %s" % self.pyroDaemon)
-            # log.info(self.pyroDaemon)
-            if not self.externalDaemon:
-                self.pyroDaemon.shutdown()
+            if self.exclusiveDaemon: self.pyroDaemon.shutdown()
             self.pyroDaemon = None
         else:
             log.info("Terminating model") 
@@ -507,7 +591,7 @@ class RemoteModel (object):
     and the termination of job and tunnel has to be done from local computer, which has the neccesary
     communication link established (ssh tunnel in particular, when port translation takes place)
     """
-    def __init__(self, decoratee, jobMan=None, jobID=None, appTunnel=None):
+    def __init__(self, decoratee, jobMan=None, jobID=None):
         self._decoratee = decoratee
         self._jobMan = jobMan
         self._jobID = jobID

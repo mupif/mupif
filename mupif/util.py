@@ -52,18 +52,16 @@ def setupLoggingAtStartup():
     """
     root=logging.getLogger()
 
-    level=os.environ.get('MUPIF_LOG_LEVEL',None)
-    if level is not None:
+    
+    if (level:=os.environ.get('MUPIF_LOG_LEVEL',None)) is not None:
         root.setLevel(level)
 
-    out=os.environ.get('MUPIF_LOG_FILE',None)
-    if out is not None:
+    if (out:=os.environ.get('MUPIF_LOG_FILE',None)) is not None:
         fileHandler=logging.FileHandler(out, mode='w')
         fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
         root.addHandler(fileHandler)
 
-    pyroOut=os.environ.get('MUPIF_LOG_PYRO',None)
-    if pyroOut is not None:
+    if (pyroOut:=os.environ.get('MUPIF_LOG_PYRO',None)) is not None:
         pyroHandler=pyrolog.PyroLogHandler(uri=pyroOut,tag='<unspecified>')
         root.addHandler(pyroHandler)
 
@@ -184,12 +182,23 @@ def getVersion():
 
 
 def accelOn():
-    import mupifAccel
+    # fail with ImportError if not installed at all
+    import mupifAccel 
+    # check version
+    minVer='0.0.2'
+    import importlib.metadata
+    from packaging.version import parse
+    currVer=importlib.metadata.version('mupif-accel')
+    if parse(currVer)<parse(minVer):
+        log.warning(f'Acceleration not enabled as mupif-accel is too old: {currVer} is installed, must be at least {minVer}')
+        raise ImportError('mupif-accel too old')
+    # this should pass now
     import mupifAccel.fastOctant
     log.info('Accelerating octree.Octant via mupifAccel.fastOctant.Octant')
     octree.Octant=mupifAccel.fastOctant.Octant
 
 def accelOff():
+    # revert any accelerations applied in accelOn
     octree.Octant=octree.Octant_py
 
 

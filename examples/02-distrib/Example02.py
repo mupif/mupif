@@ -13,7 +13,7 @@ import mupif as mp
 
 
 import threading
-threading.current_thread().setName('ex02-main')
+threading.current_thread().name='ex02-main'
 
 
 class Application1(mp.Model):

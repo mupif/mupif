@@ -60,3 +60,14 @@ Pyro5.api.register_class_to_dict(au.Unit, lambda x: {'__class__': 'astropy.units
 Pyro5.api.register_dict_to_class('astropy.units.Unit', lambda cname, x: au.Unit(x['unit']))
 Pyro5.api.register_class_to_dict(au.Quantity, lambda x: {'__class__': 'astropy.units.Quantity', 'value': np.array(x.value).tolist(), 'unit': x.unit.to_string()})
 Pyro5.api.register_dict_to_class('astropy.units.Quantity', lambda cname, x: au.Quantity(x['value'], au.Unit(x['unit'])))
+
+
+# this is to hide the warning:
+#
+#   WARNING: AstropyDeprecationWarning: The truth value of a Quantity is ambiguous. In the future this will raise a ValueError. [astropy.units.quantity]
+#
+# which comes from smart_deepcopy in pydantic (see https://github.com/samuelcolvin/pydantic/issues/4184 where the object in question raises an exception from __bool__);
+# exception would be handled fine by pydantic but the warning is obnoxious
+#
+import warnings
+warnings.filterwarnings('ignore',module='astropy.units.quantity')

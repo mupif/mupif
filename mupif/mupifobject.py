@@ -45,19 +45,20 @@ class MupifObjectBase(MupifBaseModel):
     def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
         return isinstance(self, classinfo)
 
-    def getMetadata(self, key):
+    def getMetadata(self, key, default=None):
         """
         Returns metadata associated to given key
         :param key: unique metadataID
+        :param default: default value returned when key is not found (otherwise KeyError is thrown)
         :return: metadata associated to key, throws TypeError if key does not exist
         """
         keys = key.split('.')
         d = copy.deepcopy(self.metadata)
         while True:
-            # import pprint
-            # pprint.pprint(d)
-            # print('KEYS ARE: ',str(keys))
-            d = d[keys[0]]
+            try: d = d[keys[0]]
+            except KeyError:
+                if default is not None: return default
+                raise
             if len(keys) == 1:
                 return d
             keys = keys[1:]
@@ -169,8 +170,8 @@ class MupifObjectBase(MupifBaseModel):
         Validates metadata's dictionary with a given dictionary
         :param dict template: Schema for json template
         """
-        jsonschema.validate(self.metadata, template)
-        # fastjsonschema.validate(template, self.metadata) # inverse order
+        if type(template)==pydantic.main.ModelMetaclass: template(**self.metadata)
+        else: jsonschema.validate(self.metadata, template)
         
     def __str__(self):
         """

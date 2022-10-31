@@ -2,7 +2,6 @@ import Pyro5
 import sys
 sys.path.append('../..')
 sys.path.append('..')
-import models
 from mupif import *
 import mupif as mp
 import logging
@@ -32,12 +31,12 @@ class Example06(mp.Workflow):
             'Models': [
                 {
                     'Name': 'thermal',
-                    'Module': 'models',
+                    'Module': 'mupif.demo',
                     'Class': 'ThermalModel'
                 },
                 {
                     'Name': 'mechanical',
-                    'Module': 'models',
+                    'Module': 'mupif.demo',
                     'Class': 'MechanicalModel'
                 }
             ]
@@ -69,7 +68,7 @@ class Example06(mp.Workflow):
         else:
             raise apierror.APIError('Unknown field ID')
 
-    def getCriticalTimeStep(self):
+    def getCriticoalTimeStep(self):
         return 1*mp.U.s
 
     def getApplicationSignature(self):
@@ -111,8 +110,8 @@ print(t_val.getValue()[0], m_val.getValue()[1])
 demo.printMetadata()
 demo.terminate()
 
-if ((abs(t_val.getValue()[0]-4.4994119521216644) <= 1.e-8) and
-        (abs(m_val.getValue()[1]-(-4.170695218292803e-06)) <= 1.e-8)):
+if ((abs(t_val.getValue()[0]-4.499411952121665) <= 1.e-8) and
+        (abs(m_val.getValue()[1]-(-1.0496318531310624e-05)) <= 1.e-8)):
     log.info("Test OK")
 else:
     log.error("Test FAILED")

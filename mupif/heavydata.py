@@ -128,7 +128,10 @@ class HeavyDataBase(MupifObject):
             remote = Pyro5.api.Proxy(uri)
             # sys.stderr.write(f'Remote is {remote}\n')
             fd, self.h5path = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
-            atexit.register(os.unlink,self.h5path)
+            def _try_unlink():
+                try: os.unlink(self.h5path)
+                except PermissionError: pass # can fail on Windows if the file is still open
+            atexit.register(_try_unlink)
             log.debug(f'Temporary is {self.h5path}, will be deleted via atexit handler.')
             PyroFile.copy(remote, self.h5path)
             log.warning(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
@@ -240,6 +243,11 @@ class HeavyDataBase(MupifObject):
             self.mode='readwrite'
         else: raise ValueError(f'Invalid mode {self.mode}: must be one of {HeavyDataBase_ModeChoice}')
         return self._h5obj
+
+    def preDumpHook(self):
+        # remote call will expose the data throgu the daemon so that the HDF5 container gets transferred automatically
+        if Pyro5.callcontext.current_context.client is not None: self.exposeData()
+        super().preDumpHook()
 
     def exposeData(self):
         '''
