@@ -60,6 +60,9 @@ class Cell(dumpable.Dumpable):
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(number={self.number}{", label="+str(self.label) if self.label is not None else ""}, vertices={str(self.vertices)})'
+
     def __init__(self, *, mesh=None, **kw):
         super().__init__(**kw)
         #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized

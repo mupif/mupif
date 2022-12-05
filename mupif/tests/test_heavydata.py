@@ -563,6 +563,36 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(len(a.refBB),3) # same dataset as a.refB
 
 
+    def test_40_mupifObject(self):
+        schema='''
+            [
+              {
+                "_schema": { "name": "test" },
+                "field": { "dtype":"i", "mupifType":"mupif.Field" },
+                "fields": { "dtype":"i", "shape":"variable", "mupifType":"mupif.Field" }
+              }
+            ]
+        '''
+        box=mp.demo.make_meshio_box_hexa(dim=(1,2,3),sz=.1)
+        mesh=mp.Mesh.makeFromMeshioMesh(box)
+        f1=mp.Field(mesh=mesh,fieldID=mp.DataID.FID_Displacement,valueType=mp.ValueType.Scalar,time=13*mp.Q.s,quantity=[(.001*i,) for i in range(mesh.getNumberOfVertices())]*mp.U.m,fieldType=mp.FieldType.FT_vertexBased)
+        f2=mp.Field(mesh=mesh,fieldID=mp.DataID.FID_Strain,valueType=mp.ValueType.Vector,time=128*mp.Q.s,quantity=[(.1*i,.2*i,.3*i) for i in range(mesh.getNumberOfVertices())]*mp.U['kg/(m*s**2)'],fieldType=mp.FieldType.FT_vertexBased)
+
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
+            tests.resize(1)
+            t0=tests[0]
+            t0.setField(f2)
+            f2a=t0.getField()
+            self.assert(isinstance(f2a,mp.Field))
+            t0.setFields([f1,f2])
+            t0.appendFields(f1)
+            t0.appendFields(f2)
+            self.assertEqual(len(t0.getFields(),4))
+            self.assertEqual(len(t0.ctx.dataset.file[t0.ctx.dataset.name+'../mupif-obj/fields']),4)
+            # check that mesh object is shared
+            self.assertEqual(len(t0.ctx.dataset.file[t0.ctx.dataset.name+'../mupif-obj/meshes']),1)
+
+
 
 
 class HeavyMesh_TestCase(unittest.TestCase):

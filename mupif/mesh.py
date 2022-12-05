@@ -117,6 +117,10 @@ class Mesh(dumpable.Dumpable):
 
     mapping: typing.Any = None
 
+    def __str__(self):
+        return f'<{self.__class__.__module__}.{self.__class__.__name__} at {hex(id(self))}, {self.getNumberOfVertices()} vertices, {self.getNumberOfCells()} cells>'
+
+
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._setDirty()
@@ -237,24 +241,19 @@ class Mesh(dumpable.Dumpable):
             import hashlib
             return ''.join([hashlib.sha1(arr.view(numpy.uint8)).hexdigest() for arr in args])
         mvc, (mct, mci) = self.getVertices(), self.getCells()
-        return 'mesh_'+numpyHash(mvc, mct, mci)
+        return numpyHash(mvc, mct, mci)
 
-    def asHdf5Object(self, parentgroup, newgroup):
+    def asHdf5Object(self, parentgroup):
         """
         Return the instance as HDF5 object.
         Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
         """
         mhash = self.internalArraysDigest()
-        # try to find this mesh in the hdf5 group and return that one, instead of creating a new one
-        if parentgroup:
-            for name, group in parentgroup.items():
-                if 'mhash' in group.attrs and group.attrs['mhash'] == mhash:
-                    return parentgroup[name]
-        gg = parentgroup.create_group(name=newgroup)
+        if mhash in parentgroup: return parentgroup[mhash]
+        gg = parentgroup.create_group(name=mhash)
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
             gg[name] = data
-        gg.attrs['mhash'] = mhash
         gg.attrs['__class__'] = self.__class__.__name__
         gg.attrs['__module__'] = self.__class__.__module__
         return gg
@@ -301,6 +300,9 @@ class Mesh(dumpable.Dumpable):
                 ret[t] = [ids]
         return self.getVertices(), [(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
 
+    @staticmethod
+    def makeFromMeshioMesh(mesh):
+        return Mesh.makeFromMeshioPointsCells(mesh.points,mesh.cells)
     @staticmethod
     def makeFromMeshioPointsCells(points, cells):
         ret = UnstructuredMesh()

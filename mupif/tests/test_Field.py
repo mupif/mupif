@@ -166,8 +166,8 @@ class Field_TestCase(unittest.TestCase):
 
     def test_ioHdf5(self):
         f=self.tmp+'/aa.hdf5'
-        self.f1.toHdf5(f)
-        res=self.f1.makeFromHdf5(f)[0]
+        self.f1.toHdf5(fileName=f)
+        res=self.f1.makeFromHdf5(fileName=f)[0]
         self._compareFields(self.f1,res)
 
     #@unittest.skipIf(pyvtk is None,'pyvtk not importable')
