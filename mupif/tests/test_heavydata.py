@@ -583,14 +583,14 @@ class HeavyStruct_TestCase(unittest.TestCase):
             t0=tests[0]
             t0.setField(f2)
             f2a=t0.getField()
-            self.assert(isinstance(f2a,mp.Field))
+            self.assertTrue(isinstance(f2a,mp.Field))
             t0.setFields([f1,f2])
             t0.appendFields(f1)
             t0.appendFields(f2)
-            self.assertEqual(len(t0.getFields(),4))
-            self.assertEqual(len(t0.ctx.dataset.file[t0.ctx.dataset.name+'../mupif-obj/fields']),4)
+            self.assertEqual(len(t0.getFields()),4)
+            self.assertEqual(len(t0.ctx.dataset.parent['mupif-obj/fields']),5)
             # check that mesh object is shared
-            self.assertEqual(len(t0.ctx.dataset.file[t0.ctx.dataset.name+'../mupif-obj/meshes']),1)
+            self.assertEqual(len(t0.ctx.dataset.parent['mupif-obj/meshes']),1)
 
 
 
