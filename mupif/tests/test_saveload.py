@@ -81,7 +81,7 @@ class TestSaveLoad(unittest.TestCase):
         ff2=mupif.field.Field.makeFromHdf5(fileName=v)
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
-        self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
+        self.assertEqual(f.getMesh().dataDigest(),f2.getMesh().dataDigest())
 
     if 0:
         @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above

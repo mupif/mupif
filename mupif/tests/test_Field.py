@@ -79,8 +79,11 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getRecordSize(),1)
                 
     def test_getMesh(self):
-        self.assertEqual(id(self.f1.getMesh()),id(self.mesh))
-        self.assertEqual(id(self.f4.getMesh()),id(self.mesh4))
+        from rich.pretty import pprint
+        pprint(self.f1.getMesh())
+        pprint(self.mesh)
+        self.assertEqual(hex(id(self.f1.getMesh())),hex(id(self.mesh)))
+        self.assertEqual(hex(id(self.f4.getMesh())),hex(id(self.mesh4)))
         
     def test_getValueType(self):
         self.assertEqual(self.f1.getValueType(),ValueType.Scalar)

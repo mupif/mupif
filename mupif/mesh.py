@@ -117,6 +117,7 @@ class Mesh(dumpable.Dumpable):
 
     mapping: typing.Any = None
 
+    def __repr__(self): return str(self)
     def __str__(self):
         return f'<{self.__class__.__module__}.{self.__class__.__name__} at {hex(id(self))}, {self.getNumberOfVertices()} vertices, {self.getNumberOfCells()} cells>'
 
@@ -233,13 +234,15 @@ class Mesh(dumpable.Dumpable):
             cc[i, :len(vv)] = vv  # excess elements in the row stay at -1
         return tt, cc
 
-    def internalArraysDigest(self):
+    def dataDigest(self):
         """Internal function returning hash digest of all internal data, for the purposes of identity test."""
         def numpyHash(*args):
             """Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to
             find an identical mesh which was already stored."""
             import hashlib
-            return ''.join([hashlib.sha1(arr.view(numpy.uint8)).hexdigest() for arr in args])
+            H=hashlib.sha1()
+            for arr in args: H.update(arr.view(numpy.uint8))
+            return H.hexdigest()
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         return numpyHash(mvc, mct, mci)
 
@@ -248,15 +251,18 @@ class Mesh(dumpable.Dumpable):
         Return the instance as HDF5 object.
         Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
         """
-        mhash = self.internalArraysDigest()
+        mhash = self.dataDigest()
         if mhash in parentgroup: return parentgroup[mhash]
         gg = parentgroup.create_group(name=mhash)
+        self.toHdf5Group(gg)
+        return gg
+
+    def toHdf5Group(self,group):
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
-            gg[name] = data
-        gg.attrs['__class__'] = self.__class__.__name__
-        gg.attrs['__module__'] = self.__class__.__module__
-        return gg
+            group[name] = data
+        group.attrs['__class__'] = self.__class__.__name__
+        group.attrs['__module__'] = self.__class__.__module__
 
     @staticmethod
     def makeFromHdf5Object(h5obj):

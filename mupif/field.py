@@ -49,6 +49,7 @@ import pydantic
 import pickle
 import logging
 import itertools
+import os.path
 from .units import Unit
 log = logging.getLogger()
 
@@ -320,10 +321,11 @@ class Field(FieldBase):
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
-        # localizer in the newer version returns cell id, not the cell object, check that here
-        if isinstance(next(iter(cells)), int): cells = [self.mesh.getCell(ic) for ic in cells]
         # answer=None
         if len(cells):
+            # localizer in the newer version returns cell id, not the cell object, check that here
+            if isinstance(next(iter(cells)), int): cells = [self.mesh.getCell(ic) for ic in cells]
+
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
                     try:
@@ -555,6 +557,30 @@ class Field(FieldBase):
         plt.ioff()
         plt.show(block=True)
 
+    def dataDigest(self):
+        return mupifquantity.MupifQuantity.dataDigest(self,np.array([self.time.value]),np.frombuffer(bytes(self.time.unit),dtype=np.uint8))
+
+    def toHdf5_split_files(self,fieldPrefix:str,meshPrefix:str,flat=True):
+        import h5py
+        fDigest=self.dataDigest()
+        mDigest=self.mesh.dataDigest()
+        for p in (fieldPrefix,meshPrefix): os.makedirs(os.path.dirname(p),exist_ok=True)
+        fOut,mOut=fieldPrefix+fDigest,meshPrefix+mDigest
+        fg5,mg5=None,None
+        if not os.path.exists(fOut):
+            fg5=h5py.File(fOut,'w',libver='latest')
+            if not flat: fg5=fg5.create_group(f'fields/{fDigest}')
+        if not os.path.exists(mOut):
+            mg5=h5py.File(mOut,'w',libver='latest')
+            if not flat: mg5.create_group(f'meshes/{mDigest}')
+        self._to_hdf5_groups(fg5,mg5)
+        return {'field':fDigest,'mesh':mDigest}
+
+    def _to_hdf5_groups(self,fg,mg):
+        if mg is not None: self.getMesh().toHdf5Group(mg)
+        if fg is not None: self.toHdf5Group(fg,meshLink=None)
+
+
     def toHdf5(self, fileName:str=None, groupName='component1/part1', h5group=None):
         r"""
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
@@ -613,29 +639,56 @@ class Field(FieldBase):
         if len(self.value) > 0:
             fieldIndex=_lowest(gg,'fields')
             fieldGrp = gg.create_group(f'fields/{fieldIndex}')
-            fieldGrp['mesh']=h5py.SoftLink(mh5.name)
-            fieldGrp.attrs['fieldID'] = self.fieldID
-            fieldGrp.attrs['valueType'] = self.valueType
-            # string/bytes may not contain NULL when stored as string in HDF5
-            # see http://docs.h5py.org/en/2.3/strings.html
-            # that's why we cast to opaque type "void" and uncast using tostring before unpickling
-            fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.getUnit(),protocol=0))
-            fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time,protocol=0))
-            if self.fieldType == FieldType.FT_vertexBased:
-                val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float64)
-                for vert in range(self.getMesh().getNumberOfVertices()):
-                    val[vert] = self.getVertexValue(vert).getValue()
-                fieldGrp['vertex_values'] = val
-            elif self.fieldType == FieldType.FT_cellBased:
-                # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
-                val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
-                for cell in range(self.getMesh().getNumberOfCells()):
-                    val[cell] = self.getCellValue(cell)
-                fieldGrp['cell_values'] = val
-            else:
-                raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+            self.toHdf5Group(fieldGrp,meshLink=h5py.SoftLink(mh5.name))
         if fileName is not None: hdf.close()  # necessary for windows
         return fieldIndex
+
+    def toHdf5Group(self,fieldGrp,meshLink=None):
+        if meshLink is not None: fieldGrp['mesh']=meshLink
+        fieldGrp.attrs['fieldID'] = self.fieldID
+        fieldGrp.attrs['valueType'] = self.valueType
+        # string/bytes may not contain NULL when stored as string in HDF5
+        # see http://docs.h5py.org/en/2.3/strings.html
+        # that's why we cast to opaque type "void" and uncast using tostring before unpickling
+        fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.getUnit(),protocol=0))
+        fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time,protocol=0))
+        if self.fieldType == FieldType.FT_vertexBased:
+            val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float64)
+            for vert in range(self.getMesh().getNumberOfVertices()):
+                val[vert] = self.getVertexValue(vert).getValue()
+            fieldGrp['vertex_values'] = val
+        elif self.fieldType == FieldType.FT_cellBased:
+            # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
+            val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
+            for cell in range(self.getMesh().getNumberOfCells()):
+                val[cell] = self.getCellValue(cell)
+            fieldGrp['cell_values'] = val
+        else:
+            raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+
+    @staticmethod
+    def makeFromHdf5_groups(*,fieldGrp,meshGrp=None,meshCache=None):
+        import h5py
+        f=fieldGrp
+        if 'vertex_values' in f: fieldType, values = FieldType.FT_vertexBased, numpy.array(f['vertex_values'])
+        elif 'cell_values' in f: fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
+        else: raise ValueError("HDF5/mupif format error: unable to determine field type.")
+        fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tobytes(), f.attrs['time'].tobytes()
+        if unit == '': unit = None  # special case, handled at saving time
+        else: unit = pickle.loads(unit)
+        if time == '': time = None  # special case, handled at saving time
+        else:  time = pickle.loads(time)
+        if meshGrp is not None:
+            m=mesh.Mesh.makeFromHdf5Object(meshGrp)
+        else:
+            if 'mesh' not in f: raise ValueError('HDF5/mesh: missing attribute')
+            link=f.get('mesh',getlink=True)
+            assert isinstance(link,h5py.SoftLink)
+            mPath=link.path
+            if mPath not in meshCache: meshCache[mPath]=mesh.Mesh.makeFromHdf5Object(f['mesh'])
+            m=meshCache[mPath]
+        return Field(mesh=m, fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values.tolist(), fieldType=fieldType)
+
 
     @staticmethod
     def makeFromHdf5(*,fileName:str=None, group:str='component1/part1', h5group=None, indices: typing.Optional[typing.List[int]]=None):
@@ -661,29 +714,12 @@ class Field(FieldBase):
         # if indices is None:
         if indices is None: fieldObjs = [obj for obj in grp['fields'].values()]
         else: fieldObjs = [grp[f'fields/{ix}'] for ix in indices]
-        # if indices is not None: fieldObjs=[fieldObjs[ix] for ix in indices]
         # construct all meshes as mupif objects
         meshes = {} # maps HDF5 paths to meshes
         # construct all fields as mupif objects
         ret = []
         for f in fieldObjs:
-            if 'vertex_values' in f: fieldType, values = FieldType.FT_vertexBased, numpy.array(f['vertex_values'])
-            elif 'cell_values' in f: fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
-            else: raise ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tobytes(), f.attrs['time'].tobytes()
-            if unit == '': unit = None  # special case, handled at saving time
-            else: unit = pickle.loads(unit)
-            if time == '': time = None  # special case, handled at saving time
-            else:  time = pickle.loads(time)
-            # meshName=f['mesh']
-            #print(dir(f['mesh']))
-            # assert hasattr(f['mesh'],'path') # soft link
-            #mPath=f['mesh'].path
-            link=f.get('mesh',getlink=True)
-            assert isinstance(link,h5py.SoftLink)
-            mPath=link.path
-            if mPath not in meshes: meshes[mPath]=mesh.Mesh.makeFromHdf5Object(f['mesh'])
-            ret.append(Field(mesh=meshes[mPath], fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values.tolist(), fieldType=fieldType))
+            ret.append(Field.makeFromHdf5_groups(fieldGrp=f,meshGrp=None,meshCache=meshes))
         if fileName is not None: hdf.close()  # necessary for windows
         return ret
 
