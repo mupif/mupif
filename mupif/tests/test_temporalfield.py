@@ -63,7 +63,7 @@ class TemporalField_TestCase(unittest.TestCase):
     def test_02_eval(self):
         tf=mp.DirTemporalField(dir=self.tmp)
         for f in self.displ: tf.addField(f,userMetadata={})
-        pos=(.1,.1,.1)
+        pos=(.1,.1,0)
         # evaluation correctly finds field at given time point
         self.assertEqual(tf.evaluate(time=1*au.s,positions=pos),self.displ[1].evaluate(positions=pos))
         # field was cached by evaluate for future use
