@@ -298,6 +298,8 @@ sampleSchemas_json = '''
 ]
 '''
 
+## XXX: field utility functions
+
 def _mupif_to_hdf5_group__return_index(*,grp,obj):
     assert isinstance(obj,field.Field)
     return obj.toHdf5(h5group=grp)
@@ -538,7 +540,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
                     if self.row is not None: self.ctx.dataset[fq,self.row]=str2num[val]
                     else: self.ctx.dataset[fq]=np.full(self.ctx.dataset.shape[0],str2num[val])
                 addAccessors(meth,key,getter,setter)
-            elif 'mupifType' in val:
+            elif 'mupifType' in val: ## XXX experimental
                 dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
                 if issubclass(dtype.type,numbers.Integral): ndim=0
                 elif issubclass(h5py.check_vlen_dtype(dtype).type,numbers.Integral): ndim=1
