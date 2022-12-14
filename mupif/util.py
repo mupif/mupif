@@ -23,6 +23,7 @@
 import logging
 import argparse
 import os
+import pathlib
 from . import pyrolog
 from . import octree
 
@@ -196,7 +197,6 @@ def sha1digest(objs: list):
                     chunk=f.read(2**25) # 32MB chunk size
                     if not chunk: break
                     H.update(chunk)
-            H.update(self._h5grp[g].view(np.uint8))
         else: raise ValueError(f'Unhandled type for digest: {a.__class__.__module__}.{a.__class__.__name__}')
     return H.hexdigest()
 
