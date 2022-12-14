@@ -607,7 +607,7 @@ class HeavyMesh_TestCase(unittest.TestCase):
     def tearDownClass(cls):
         try: cls.tmpdir.cleanup()
         except: pass # this would fail under Windows
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(60)
     def test_saveload(self):
         cls=self.__class__
         h5path=f'{cls.tmp}/01-mesh.h5'
