@@ -11,9 +11,9 @@ def mkVertex(number,label,coords): return vertex.Vertex(number=number,label=labe
 
 class TemporalField_TestCase(unittest.TestCase):
     def setUp(self):
-        #self.tmpdir=tempfile.TemporaryDirectory()
-        #self.tmp=self.tmpdir.name
-        self.tmp,self.tmpdir='/tmp/aa',None
+        self.tmpdir=tempfile.TemporaryDirectory()
+        self.tmp=self.tmpdir.name
+        #self.tmp,self.tmpdir='/tmp/aa',None
 
 
         self.mesh = mesh.UnstructuredMesh()
