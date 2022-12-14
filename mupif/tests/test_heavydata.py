@@ -12,6 +12,8 @@ import time, random
 import tempfile
 import logging
 import astropy.units as u
+import pytest
+import pytest_timeout
 
 from mupif.heavystruct import sampleSchemas_json
 
@@ -605,6 +607,7 @@ class HeavyMesh_TestCase(unittest.TestCase):
     def tearDownClass(cls):
         try: cls.tmpdir.cleanup()
         except: pass # this would fail under Windows
+    @pytest.mark.timeout(10)
     def test_saveload(self):
         cls=self.__class__
         h5path=f'{cls.tmp}/01-mesh.h5'
