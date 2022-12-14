@@ -197,7 +197,7 @@ def sha1digest(objs: list):
                     chunk=f.read(2**25) # 32MB chunk size
                     if not chunk: break
                     H.update(chunk)
-        else: raise ValueError(f'Unhandled type for digest: {a.__class__.__module__}.{a.__class__.__name__}')
+        else: raise ValueError(f'Unhandled type for digest: {o.__class__.__module__}.{o.__class__.__name__}')
     return H.hexdigest()
 
 
