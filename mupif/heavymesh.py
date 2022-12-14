@@ -7,6 +7,7 @@ from .cell import Cell
 from .vertex import Vertex
 from .mesh import Mesh
 from .bbox import BBox
+from . import util
 from . import octree
 from . import cellgeometrytype as CGT
 import logging
@@ -61,6 +62,11 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         'Number of cells; returns -1 if backing storage is not open.'
         if not self._hasData(): return -1
         return self._h5grp[self.GRP_CELL_OFFSETS].shape[0]
+
+    def dataDigest(self):
+        self._ensureData()
+        # FIXME: reads datasets into memory (should just pass buffers?)
+        return util.sha1digest([np.array(self._h5grp[g]) for g in (self.GRP_VERTS,self.GRP_CELL_OFFSETS,self.GRP_CELL_CONN)])
 
     def getVertex(self,i):
         self._ensureData()
@@ -276,6 +282,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             hq=Hdf5RefQuantity(dataset=ds)
             fields.append(Field(quantity=hq,mesh=mesh,fieldID=fieldID,fieldType=fieldType,valueType=valueType,time=time))
         return (mesh,fields)
+
 
 
 def _chunker(it,size):

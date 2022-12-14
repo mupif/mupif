@@ -560,10 +560,11 @@ class Field(FieldBase):
     def dataDigest(self):
         return mupifquantity.MupifQuantity.dataDigest(self,np.array([self.time.value]),np.frombuffer(bytes(self.time.unit),dtype=np.uint8))
 
-    def toHdf5_split_files(self,fieldPrefix:str,meshPrefix:str,flat=True):
+    def toHdf5_split_files(self,fieldPrefix:str,meshPrefix:str,flat=True,heavy=False):
         import h5py
+        import shutil
         fDigest=self.dataDigest()
-        mDigest=self.mesh.dataDigest()
+        mDigest=self.getMesh().dataDigest()
         for p in (fieldPrefix,meshPrefix): os.makedirs(os.path.dirname(p),exist_ok=True)
         fOut,mOut=fieldPrefix+fDigest,meshPrefix+mDigest
         fg5,mg5=None,None
@@ -571,12 +572,21 @@ class Field(FieldBase):
             fg5=h5py.File(fOut,'w',libver='latest')
             if not flat: fg5=fg5.create_group(f'fields/{fDigest}')
         if not os.path.exists(mOut):
-            mg5=h5py.File(mOut,'w',libver='latest')
-            if not flat: mg5.create_group(f'meshes/{mDigest}')
-        self._to_hdf5_groups(fg5,mg5)
+            if not heavy:
+                mg5=h5py.File(mOut,'w',libver='latest')
+                if not flat: mg5.create_group(f'meshes/{mDigest}')
+            else:
+                mOutTmp=mOut+'~heavy~'
+                from . import heavymesh
+                with heavymesh.HeavyUnstructuredMesh(h5path=mOutTmp,mode='overwrite') as hMesh:
+                    hMesh.fromMeshioMesh(self.getMesh().toMeshioMesh())
+                    mDigest=hMesh.dataDigest()
+                mOut=meshPrefix+mDigest
+                shutil.move(mOutTmp,mOut)
+        self._to_hdf5_groups(fg5,mg5,heavy=heavy)
         return {'field':fDigest,'mesh':mDigest}
 
-    def _to_hdf5_groups(self,fg,mg):
+    def _to_hdf5_groups(self,fg,mg,heavy):
         if mg is not None: self.getMesh().toHdf5Group(mg)
         if fg is not None: self.toHdf5Group(fg,meshLink=None)
 
@@ -656,22 +666,26 @@ class Field(FieldBase):
             val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float64)
             for vert in range(self.getMesh().getNumberOfVertices()):
                 val[vert] = self.getVertexValue(vert).getValue()
-            fieldGrp['vertex_values'] = val
+            subGrp='vertex_values'
+            fieldGrp[subGrp]=val
         elif self.fieldType == FieldType.FT_cellBased:
             # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
             val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
             for cell in range(self.getMesh().getNumberOfCells()):
                 val[cell] = self.getCellValue(cell)
-            fieldGrp['cell_values'] = val
+            subGrp='vertex_values'
+            fieldGrp[subGrp]=val
         else:
             raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+        # for compatibility with Hdf5RefQuantity
+        fieldGrp[subGrp].attrs['unit']=str(self.getUnit())
 
     @staticmethod
-    def makeFromHdf5_groups(*,fieldGrp,meshGrp=None,meshCache=None):
+    def makeFromHdf5_groups(*,fieldGrp,meshGrp=None,meshCache=None,heavy=False):
         import h5py
         f=fieldGrp
-        if 'vertex_values' in f: fieldType, values = FieldType.FT_vertexBased, numpy.array(f['vertex_values'])
-        elif 'cell_values' in f: fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
+        if 'vertex_values' in f: fieldType, valDs = FieldType.FT_vertexBased, f['vertex_values']
+        elif 'cell_values' in f: fieldType, valDs = FieldType.FT_cellBased, f['cell_values']
         else: raise ValueError("HDF5/mupif format error: unable to determine field type.")
         fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tobytes(), f.attrs['time'].tobytes()
         if unit == '': unit = None  # special case, handled at saving time
@@ -679,6 +693,7 @@ class Field(FieldBase):
         if time == '': time = None  # special case, handled at saving time
         else:  time = pickle.loads(time)
         if meshGrp is not None:
+            # creates HeavyUnstructuredMesh if that is the meshGrp storage format
             m=mesh.Mesh.makeFromHdf5Object(meshGrp)
         else:
             if 'mesh' not in f: raise ValueError('HDF5/mesh: missing attribute')
@@ -687,7 +702,20 @@ class Field(FieldBase):
             mPath=link.path
             if mPath not in meshCache: meshCache[mPath]=mesh.Mesh.makeFromHdf5Object(f['mesh'])
             m=meshCache[mPath]
-        return Field(mesh=m, fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values.tolist(), fieldType=fieldType)
+        if not heavy: quantity=Quantity(value=np.array(valDs).tolist(),unit=unit)
+        else:
+            from .heavydata import Hdf5RefQuantity, Hdf5OwningRefQuantity
+            # hack
+            if fieldGrp.name=='/':
+                quantity=Hdf5OwningRefQuantity(
+                    h5path=valDs.file.filename,
+                    h5loc=valDs.name,
+                    mode='readonly'
+                )
+                quantity.openData()
+            else:
+                quantity=Hdf5RefQuantity(dataset=valDs) 
+        return Field(mesh=m, fieldID=fieldID, quantity=quantity, time=time, valueType=valueType, fieldType=fieldType)
 
 
     @staticmethod

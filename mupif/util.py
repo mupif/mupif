@@ -181,6 +181,26 @@ def getVersion():
     raise RuntimeError('Unable to get version data (did you install via "pip install mupif"?).')
 
 
+def sha1digest(objs: list):
+    import hashlib
+    import h5py
+    import numpy as np
+    H=hashlib.sha1()
+    for o in objs:
+        if isinstance(o,str): H.update(o.encode('utf-8'))
+        elif isinstance(o,bytes): H.update(o)
+        elif isinstance(o,np.ndarray): H.update(o.view(np.uint8))
+        elif isinstance(o,pathlib.Path):
+            with open(o,'rb') as f:
+                while True:
+                    chunk=f.read(2**25) # 32MB chunk size
+                    if not chunk: break
+                    H.update(chunk)
+            H.update(self._h5grp[g].view(np.uint8))
+        else: raise ValueError(f'Unhandled type for digest: {a.__class__.__module__}.{a.__class__.__name__}')
+    return H.hexdigest()
+
+
 def accelOn():
     # fail with ImportError if not installed at all
     import mupifAccel 

@@ -11,8 +11,10 @@ def mkVertex(number,label,coords): return vertex.Vertex(number=number,label=labe
 
 class TemporalField_TestCase(unittest.TestCase):
     def setUp(self):
-        self.tmpdir=tempfile.TemporaryDirectory()
-        self.tmp=self.tmpdir.name
+        #self.tmpdir=tempfile.TemporaryDirectory()
+        #self.tmp=self.tmpdir.name
+        self.tmp,self.tmpdir='/tmp/aa',None
+
 
         self.mesh = mesh.UnstructuredMesh()
         self.mesh.setup([
@@ -59,6 +61,10 @@ class TemporalField_TestCase(unittest.TestCase):
         self.assertEqual(len(os.listdir(self.tmp+'/field')),len(self.times))
         # correct metadata
         self.assertEqual(tf.timeMetadata(1*au.s)['user'],{'foo':'bar','ordinal':1})
+        # correct instances
+        f=tf.getField(time=1*au.s)
+        self.assertTrue(isinstance(f.getMesh(),mp.HeavyUnstructuredMesh))
+        self.assertTrue(isinstance(f.quantity,mp.Hdf5OwningRefQuantity))
 
     def test_02_eval(self):
         tf=mp.DirTemporalField(dir=self.tmp)

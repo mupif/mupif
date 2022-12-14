@@ -56,9 +56,7 @@ class TemporalField(MupifObject):
         self.fieldMeta.append({'time':time,'loc':loc,'user':userMetadata})
     def _field_make_from_loc(self,loc):
         fieldGrp,meshGrp=self._loc_to_h5_groups(loc)
-        return Field.makeFromHdf5_groups(fieldGrp=fieldGrp,meshGrp=meshGrp)
-        # an open question is whether we return in-memory Field and Mesh, or use Hdf5-backed Field and HeavyMesh
-
+        return Field.makeFromHdf5_groups(fieldGrp=fieldGrp,meshGrp=meshGrp,heavy=True)
 
 class DirTemporalField(TemporalField):
     '''Implementation of TemporalField which stored all data in local files'''
@@ -70,7 +68,7 @@ class DirTemporalField(TemporalField):
             h5py.File(f'{self.dir}/mesh/{loc["mesh"]}','r')
         )
     def _field_save_return_loc(self,field):
-        loc=field.toHdf5_split_files(fieldPrefix=f'{self.dir}/field/',meshPrefix=f'{self.dir}/mesh/',flat=True)
+        loc=field.toHdf5_split_files(fieldPrefix=f'{self.dir}/field/',meshPrefix=f'{self.dir}/mesh/',flat=True,heavy=True)
         return loc
 
 if 0:

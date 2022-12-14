@@ -269,6 +269,8 @@ class Mesh(dumpable.Dumpable):
         """
         Create new :obj:`Mesh` instance from given hdf5 object. Complementary to :obj:`asHdf5Object`.
 
+        Constructs HeavyUnstructuredMesh if data are saved in that format.
+
         :return: new instance
         :rtype: :obj:`Mesh` or its subclass
         """
@@ -276,6 +278,10 @@ class Mesh(dumpable.Dumpable):
         import importlib
         from mupif.vertex import Vertex
         from mupif.cell import Cell
+        if 'mesh/cellOffsets' in h5obj:
+            from mupif.heavymesh import HeavyUnstructuredMesh
+            print(f'{h5obj.filename=} {h5obj.name=}')
+            return HeavyUnstructuredMesh.load(h5path=h5obj.filename,h5loc=h5obj.name)[0]
         klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
         ret = klass()
         mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
@@ -305,6 +311,9 @@ class Mesh(dumpable.Dumpable):
             else:
                 ret[t] = [ids]
         return self.getVertices(), [(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
+    def toMeshioMesh(self):
+        import meshio
+        return meshio.Mesh(*self.toMeshioPointsCells())
 
     @staticmethod
     def makeFromMeshioMesh(mesh):
