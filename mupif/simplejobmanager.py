@@ -273,8 +273,8 @@ class SimpleJobManager (jobmanager.JobManager):
                         if self.includeFiles:
                             for incF in self.includeFiles:
                                 # copy
-                                path_source = os.getcwd() + os.pathsep + str(incF)
-                                path_dest = targetWorkDir + os.pathsep + str(incF)
+                                path_source = os.path.join(os.getcwd(), str(incF))
+                                path_dest = os.path.join(targetWorkDir, str(incF))
                                 shutil.copy(path_source, path_dest)
 
                 except Exception as e:
