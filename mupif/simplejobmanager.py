@@ -269,6 +269,14 @@ class SimpleJobManager (jobmanager.JobManager):
                     if not os.path.exists(targetWorkDir):
                         os.makedirs(targetWorkDir)
                         log.info('creating target workdir %s', targetWorkDir)
+
+                        if self.includeFiles:
+                            for incF in self.includeFiles:
+                                # copy
+                                path_source = os.getcwd() + os.pathsep + str(incF)
+                                path_dest = targetWorkDir + os.pathsep + str(incF)
+                                shutil.copy(path_source, path_dest)
+
                 except Exception as e:
                     log.exception(e)
                     raise
@@ -307,14 +315,6 @@ class SimpleJobManager (jobmanager.JobManager):
                     else:
                         log.error('This is the subprocess log file contents: \n'+open(jobLogName, 'r').read())
                         raise RuntimeError(f'Timeout waiting {tMax}s for URI from spawned process'+(f' (process died meanwhile with exit status {proc.returncode})' if proc.poll() else '')+'. The process log inline follows:\n'+open(jobLogName, 'r').read())
-
-                    if self.includeFiles:
-                        for incF in self.includeFiles:
-                            # copy
-                            path_source = os.getcwd() + os.pathsep + str(incF)
-                            path_dest = targetWorkDir + os.pathsep + str(incF)
-                            if os.path.exists(path_source):
-                                shutil.copy(path_source, path_dest)
 
                     log.info('Received URI: %s' % uri)
                     jobPort = int(uri.split(':')[-1])
