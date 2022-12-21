@@ -50,9 +50,12 @@ addPydanticInstanceValidator(Quantity)
 addPydanticInstanceValidator(astropy.units.UnitBase,makeKlass=astropy.units.Unit)
 
 from .dumpable import MupifBaseModel
+
+
 class RefQuantity(MupifBaseModel):
     'Quantity with data stored somewhere else. Abstract class, to be subclassed.'
     pass
+
 
 # pyro serialization (this is for single-value type only)
 # embedding within a dumpable is handled in dumpable.py
@@ -70,4 +73,4 @@ Pyro5.api.register_dict_to_class('astropy.units.Quantity', lambda cname, x: au.Q
 # exception would be handled fine by pydantic but the warning is obnoxious
 #
 import warnings
-warnings.filterwarnings('ignore',module='astropy.units.quantity')
+warnings.filterwarnings('ignore', module='astropy.units.quantity')
