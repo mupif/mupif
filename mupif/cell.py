@@ -156,16 +156,16 @@ class Cell(dumpable.Dumpable):
             return self._bbox
             # pass
 
-        vertCoords=np.array([self.mesh.getVertex(vertId).coords for vertId in self.vertices])
-        mn,mx=np.min(vertCoords,axis=0),np.max(vertCoords,axis=0)
-        #print(f'{mn=} {mx=} {vertCoords=}')
+        vertCoords = np.array([self.mesh.getVertex(vertId).coords for vertId in self.vertices])
+        mn, mx = np.min(vertCoords, axis=0), np.max(vertCoords, axis=0)
+        # print(f'{mn=} {mx=} {vertCoords=}')
         if relPad:
-            sz=mx-mn
-            sz[sz==0]=np.max(sz) # replace zero size by maximum for the purposes of padding
-            mn-=relPad*sz
-            mx+=relPad*sz
+            sz = mx-mn
+            sz[sz == 0] = np.max(sz)  # replace zero size by maximum for the purposes of padding
+            mn -= relPad*sz
+            mx += relPad*sz
 
-        self._bbox=bbox.BBox(tuple(mn),tuple(mx))
+        self._bbox = bbox.BBox(tuple(mn), tuple(mx))
         return self._bbox
 
     def getTransformationJacobian(self, coords):

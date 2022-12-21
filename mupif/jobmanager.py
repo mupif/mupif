@@ -88,12 +88,12 @@ class JobManager(object):
         self.applicationName = appName
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
-        self.doneJobs = {} # dictionary of done jobs (for retrieving log files, for example)
+        self.doneJobs = {}  # dictionary of done jobs (for retrieving log files, for example)
         if workDir is None:
-            self.workDirTemp=tempfile.TemporaryDirectory(prefix='mupif-')
-            self.workDir=self.workDirTemp.name
+            self.workDirTemp = tempfile.TemporaryDirectory(prefix='mupif-')
+            self.workDir = self.workDirTemp.name
         else:
-            self.workDir=workDir
+            self.workDir = workDir
 
         # XXX: this is the same as in Model.registerPyro
         # there should be a common base for things exposed over Pyro
@@ -192,8 +192,8 @@ class JobManager(object):
         """
         if externalDaemon is not None:
             import warnings
-            warnings.warn('externalDaemon is deprecated, use exclusiveDaemon (with opposite meaning) instead',DeprecationWarning)
-            exclusiveDaemon=not externalDaemon
+            warnings.warn('externalDaemon is deprecated, use exclusiveDaemon (with opposite meaning) instead', DeprecationWarning)
+            exclusiveDaemon = not externalDaemon
         # XXX: this is the same as in Model.registerPyro
         # there should be a common base for things exposed over Pyro
         self.pyroDaemon = daemon

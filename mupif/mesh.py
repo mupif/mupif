@@ -118,9 +118,9 @@ class Mesh(dumpable.Dumpable):
     mapping: typing.Any = None
 
     def __repr__(self): return str(self)
+
     def __str__(self):
         return f'<{self.__class__.__module__}.{self.__class__.__name__} at {hex(id(self))}, {self.getNumberOfVertices()} vertices, {self.getNumberOfCells()} cells>'
-
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -240,8 +240,9 @@ class Mesh(dumpable.Dumpable):
             """Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to
             find an identical mesh which was already stored."""
             import hashlib
-            H=hashlib.sha1()
-            for arr in args: H.update(arr.view(numpy.uint8))
+            H = hashlib.sha1()
+            for arr in args:
+                H.update(arr.view(numpy.uint8))
             return H.hexdigest()
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         return numpyHash(mvc, mct, mci)
@@ -252,12 +253,13 @@ class Mesh(dumpable.Dumpable):
         Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
         """
         mhash = self.dataDigest()
-        if mhash in parentgroup: return parentgroup[mhash]
+        if mhash in parentgroup:
+            return parentgroup[mhash]
         gg = parentgroup.create_group(name=mhash)
         self.toHdf5Group(gg)
         return gg
 
-    def toHdf5Group(self,group):
+    def toHdf5Group(self, group):
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
             group[name] = data
@@ -281,7 +283,7 @@ class Mesh(dumpable.Dumpable):
         if 'mesh/cellOffsets' in h5obj:
             from mupif.heavymesh import HeavyUnstructuredMesh
             print(f'{h5obj.filename=} {h5obj.name=}')
-            return HeavyUnstructuredMesh.load(h5path=h5obj.filename,h5loc=h5obj.name)[0]
+            return HeavyUnstructuredMesh.load(h5path=h5obj.filename, h5loc=h5obj.name)[0]
         klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
         ret = klass()
         mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
@@ -311,13 +313,15 @@ class Mesh(dumpable.Dumpable):
             else:
                 ret[t] = [ids]
         return self.getVertices(), [(vert_type, np.array(ids)) for vert_type, ids in ret.items()]
+
     def toMeshioMesh(self):
         import meshio
         return meshio.Mesh(*self.toMeshioPointsCells())
 
     @staticmethod
     def makeFromMeshioMesh(mesh):
-        return Mesh.makeFromMeshioPointsCells(mesh.points,mesh.cells)
+        return Mesh.makeFromMeshioPointsCells(mesh.points, mesh.cells)
+
     @staticmethod
     def makeFromMeshioPointsCells(points, cells):
         ret = UnstructuredMesh()
@@ -401,31 +405,30 @@ class Mesh(dumpable.Dumpable):
         """
 
     def vertices(self):
-        for i in range(0,self.getNumberOfVertices()):
+        for i in range(0, self.getNumberOfVertices()):
             yield self.getVertex(i)
 
     def cells(self):
-        for i in range(0,self.getNumberOfCells()):
+        for i in range(0, self.getNumberOfCells()):
             yield self.getCell(i)
 
-    #def vertices(self):
-    #    """
-    #    Iterator over vertices.
-    #    
-    #    :return: Iterator over vertices
-    #    :rtype: MeshIterator
-    #    """
+    # def vertices(self):
+    #     """
+    #     Iterator over vertices.
     #
-    #    return MeshIterator(self, VERTICES) 
+    #     :return: Iterator over vertices
+    #     :rtype: MeshIterator
+    #     """
+    #     return MeshIterator(self, VERTICES)
 
-    #def cells(self):
-    #    """
-    #    Iterator over cells.
+    # def cells(self):
+    #     """
+    #     Iterator over cells.
     #
-    #    :return: Iterator over cells
-    #    :rtype: MeshIterator
-    #    """
-    #    return MeshIterator(self, CELLS)
+    #     :return: Iterator over cells
+    #     :rtype: MeshIterator
+    #     """
+    #     return MeshIterator(self, CELLS)
 
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
@@ -443,11 +446,10 @@ class Mesh(dumpable.Dumpable):
         vvv = self.vertices()
         c0 = next(iter(vvv)).getCoordinates()  # use the first bbox as base
         bb = bbox.BBox(c0, c0)  # ope-pointed bbox
-        ## XXX replace by call to getVertices()
+        # XXX replace by call to getVertices()
         for vert in vvv:
             bb.merge(vert.getCoordinates())  # extend it with all other cells
         return bb
-
 
     def getVertexLocalizer(self):
         """
@@ -457,7 +459,7 @@ class Mesh(dumpable.Dumpable):
         if self._vertexOctree: 
             return self._vertexOctree
         else:
-            bb=self.getGlobalBBox()
+            bb = self.getGlobalBBox()
             minc, maxc = bb.coords_ll, bb.coords_ur
             # setup vertex localizer
             size = max(y-x for x, y in zip(minc, maxc))
@@ -467,9 +469,10 @@ class Mesh(dumpable.Dumpable):
                 t0 = time.clock()
                 print("Mesh: setting up vertex octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
             # add mesh vertices into octree
-            for iv,vertex in enumerate(self.vertices()):
-                if debug: print(f'  {iv=}, {vertex=}')
-                self._vertexOctree.insert(iv,vertex.getBBox())
+            for iv, vertex in enumerate(self.vertices()):
+                if debug:
+                    print(f'  {iv=}, {vertex=}')
+                self._vertexOctree.insert(iv, vertex.getBBox())
             if debug:
                 print("done in ", time.clock() - t0, "[s]")
 
@@ -511,11 +514,12 @@ class Mesh(dumpable.Dumpable):
             print('Octree ctor: ', time.time()-t0)
             print("Mesh: setting up cell octree ...\nminc=", minc, "size:", size, "mask:", mask, "\n")
         import tqdm
-        for ic,cell in enumerate(tqdm.tqdm(self.cells(),unit=' cells',total=self.getNumberOfCells())):
-            self._cellOctree.insert(ic,cell.getBBox())
+        for ic, cell in enumerate(tqdm.tqdm(self.cells(), unit=' cells', total=self.getNumberOfCells())):
+            self._cellOctree.insert(ic, cell.getBBox())
         if debug:
             print("done in ", time.time() - t0, "[s]")
         return self._cellOctree
+
 
 @Pyro5.api.expose
 # @dataclasses.dataclass
@@ -606,8 +610,6 @@ class UnstructuredMesh(Mesh):
         See :func:`Mesh.getCell`
         """
         return self.cellList[i]
-
-
 
     def __buildVertexLabelMap__(self):
         """
