@@ -13,7 +13,7 @@ class TemporalField_TestCase(unittest.TestCase):
     def setUp(self):
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name
-        #self.tmp,self.tmpdir='/tmp/aa',None
+        self.tmp,self.tmpdir='/tmp/aa',None
 
 
         self.mesh = mesh.UnstructuredMesh()
@@ -49,33 +49,55 @@ class TemporalField_TestCase(unittest.TestCase):
         if self.tmpdir: self.tmpdir.cleanup()
 
     def test_01_construct(self):
-        tf=mp.DirTemporalField(dir=self.tmp)
-        self.assertEqual(tf.timeList(),[])
-        for i,f in enumerate(self.displ):
-            tf.addField(f,userMetadata={'foo':'bar','ordinal':i})
-        self.assertEqual(tf.timeList(),[t*au.s for t in self.times])
-        self.assertRaises(ValueError,lambda:tf.addField(self.displ[0],userMetadata={}))
-        # correct mesh deduplication
-        self.assertEqual(len(os.listdir(self.tmp+'/mesh')),1)
-        # correct number of fields
-        self.assertEqual(len(os.listdir(self.tmp+'/field')),len(self.times))
-        # correct metadata
-        self.assertEqual(tf.timeMetadata(1*au.s)['user'],{'foo':'bar','ordinal':1})
-        # correct instances
-        f=tf.getField(time=1*au.s)
-        self.assertTrue(isinstance(f.getMesh(),mp.HeavyUnstructuredMesh))
-        self.assertTrue(isinstance(f.quantity,mp.Hdf5OwningRefQuantity))
+        def _do(tf,dir=None):
+            self.assertEqual(tf.timeList(),[])
+            for i,f in enumerate(self.displ):
+                tf.addField(f,userMetadata={'foo':'bar','ordinal':i})
+            self.assertEqual(tf.timeList(),[t*au.s for t in self.times])
+            self.assertRaises(ValueError,lambda:tf.addField(self.displ[0],userMetadata={}))
+            if dir:
+                # correct mesh deduplication
+                self.assertEqual(len(os.listdir(dir+'/mesh')),1)
+                # correct number of fields
+                self.assertEqual(len(os.listdir(dir+'/field')),len(self.times))
+            # correct metadata
+            self.assertEqual(tf.timeMetadata(1*au.s)['user'],{'foo':'bar','ordinal':1})
+            # correct instances
+            f=tf.getField(time=1*au.s)
+            m=f.getMesh()
+            # print(f'MESH {m.__class__.__module__}.{m.__class__.__name__}')
+            #print('IS',m,isinstance(m,mp.HeavyUnstructuredMesh))
+            self.assertTrue(isinstance(f.getMesh(),mp.HeavyUnstructuredMesh))
+            #print('Q',f.quantity)
+            if dir:
+                self.assertTrue(isinstance(f.quantity,mp.Hdf5OwningRefQuantity))
+            else:
+                self.assertTrue(isinstance(f.quantity,mp.Hdf5RefQuantity))
+        tf1=mp.DirTemporalField(dir=self.tmp)
+        _do(tf1)
+        if 1:
+            tf2=mp.SingleFileTemporalField(mode='overwrite',h5path=self.tmp+'/single-01.h5')
+            tf2.openStorage()
+            _do(tf2)
+            tf2.closeData()
+       
 
     def test_02_eval(self):
-        tf=mp.DirTemporalField(dir=self.tmp)
-        for f in self.displ: tf.addField(f,userMetadata={})
-        pos=(.1,.1,0)
-        # evaluation correctly finds field at given time point
-        self.assertEqual(tf.evaluate(time=1*au.s,positions=pos),self.displ[1].evaluate(positions=pos))
-        # field was cached by evaluate for future use
-        self.assertEqual(tf.getCachedTimes(),set([1*au.s]))
-        # undefined time point, no evaluation done
-        self.assertRaises(ValueError,lambda:tf.evaluate(time=-1*au.s,positions=pos))
+        def _do(tf,dir=None):
+            for f in self.displ: tf.addField(f,userMetadata={})
+            pos=(.1,.1,0)
+            # evaluation correctly finds field at given time point
+            self.assertEqual(tf.evaluate(time=1*au.s,positions=pos),self.displ[1].evaluate(positions=pos))
+            # field was cached by evaluate for future use
+            self.assertEqual(tf.getCachedTimes(),set([1*au.s]))
+            # undefined time point, no evaluation done
+            self.assertRaises(ValueError,lambda:tf.evaluate(time=-1*au.s,positions=pos))
+        _do(mp.DirTemporalField(dir=self.tmp))
+        tf2=mp.SingleFileTemporalField(mode='overwrite',h5path=self.tmp+'/single-02.h5')
+        tf2.openStorage()
+        _do(tf2)
+        tf2.closeData()
+
 
 if __name__=='__main__':
     pytest.main([__file__])

@@ -42,6 +42,11 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         self._h5obj=None # this attribute is set in HeavyDataBase ctor but somehow does not survive... (is pydantic cleaning instance attributes? probably)
         self._h5grp=None
 
+    def __repr__(self): return str(self)
+    def __str__(self):
+        return f'<{self.__class__.__module__}.{self.__class__.__name__} at {hex(id(self))}, {self.getNumberOfVertices()} vertices, {self.getNumberOfCells()} cells, HDF5 backing store "{self.h5path}::{self.h5group}">'
+
+
 
     # this is not useful over Pyro (the Proxy defines its own context manager) but handy for local testing
     def __enter__(self):
@@ -108,41 +113,55 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         assert c1 is None # the last chunk must take the rest of the array
         return self._cellOctree
 
+    @staticmethod
+    def _prepStorage_static(h5grp,dim):
+        kw=dict(chunks=True,compression='gzip',compression_opts=9)
+        HUM=HeavyUnstructuredMesh
+        if HUM.GRP_VERTS not in h5grp: h5grp.create_dataset(HUM.GRP_VERTS,shape=(0,dim),maxshape=(None,dim),dtype='f8',**kw)
+        if HUM.GRP_CELL_OFFSETS not in h5grp: h5grp.create_dataset(HUM.GRP_CELL_OFFSETS,shape=(0,),maxshape=(None,),dtype='i8',**kw)
+        if HUM.GRP_CELL_CONN not in h5grp: h5grp.create_dataset(HUM.GRP_CELL_CONN,shape=(0,),maxshape=(None,),dtype='i8',**kw)
 
-    def openData(self,mode: HeavyDataBase_ModeChoice):
+    def openData(self, mode: HeavyDataBase_ModeChoice):
         'Opens the backing storage (HDF5 file) and prepares'
         self.openStorage(mode=mode)
-        extant=(self.h5group in self._h5obj and self.GRP_VERTS in self._h5obj[self.h5group])
-        if not extant:
-            self._h5grp=self._h5obj.require_group(self.h5group)
-            kw=dict(chunks=True,compression='gzip',compression_opts=9)
-            self._h5grp.create_dataset(self.GRP_VERTS,shape=(0,self.dim),maxshape=(None,self.dim),dtype='f8',**kw)
-            self._h5grp.create_dataset(self.GRP_CELL_OFFSETS,shape=(0,),maxshape=(None,),dtype='i8',**kw)
-            self._h5grp.create_dataset(self.GRP_CELL_CONN,shape=(0,),maxshape=(None,),dtype='i8',**kw)
-        else:
-            self._h5grp=self._h5obj[self.h5group]
+        self._h5grp=self._h5obj.require_group(self.h5group)
+        #extant=(self.h5group in self._h5obj and self.GRP_VERTS in self._h5obj[self.h5group])
+        #if not extant:
+        HeavyUnstructuredMesh._prepStorage_static(h5grp=self._h5grp,dim=self.dim)
+        #else:
+        #    self._h5grp=self._h5obj[self.h5group]
         assert self.GRP_VERTS in self._h5grp
         assert self.GRP_CELL_CONN in self._h5grp
         assert self.GRP_CELL_OFFSETS in self._h5grp
 
-    def appendVertices(self,coords: np.ndarray):
-        'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
+
+    def appendVertices(self, coords: np.ndarray):
         self._ensureData()
+        return self.appendVertices_static(self._h5obj,self.dim,coords)
+        
+    @staticmethod
+    def appendVertices_static(h5grp, dim: int, coords: np.ndarray):
+        'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
         # print('appendVertices coords: ',coords)
-        if coords.shape[1]!=self.dim: raise RuntimeError(f'Dimension mismatch: HeavyUnstructuredMesh.dim={self.dim}, coords.shape[1]={coords.shape[1]}.')
-        _VERTS=self._h5grp[self.GRP_VERTS]
+        if coords.shape[1]!=dim: raise RuntimeError(f'Dimension mismatch: HeavyUnstructuredMesh.dim={dim}, coords.shape[1]={coords.shape[1]}.')
+        _VERTS=h5grp[HeavyUnstructuredMesh.GRP_VERTS]
         l0,l1=_VERTS.shape[0],_VERTS.shape[0]+coords.shape[0]
-        _VERTS.resize((l1,self.dim))
-        self._h5grp[self.GRP_VERTS][l0:l1]=coords
+        _VERTS.resize((l1,dim))
+        h5grp[HeavyUnstructuredMesh.GRP_VERTS][l0:l1]=coords
 
     def appendCells(self,types,conn):
-        'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
-        _OFF,_CONN=self._h5grp[self.GRP_CELL_OFFSETS],self._h5grp[self.GRP_CELL_CONN]
         self._ensureData()
+        return self.appendCells_static(self._h5grp,types,conn)
+
+    @staticmethod
+    def appendCells_static(h5grp,types,conn):
+        'TODO: add to UnstructuredMesh API (and Mesh as abstract) as well'
+        _OFF,_CONN=h5grp[HeavyUnstructuredMesh.GRP_CELL_OFFSETS],h5grp[HeavyUnstructuredMesh.GRP_CELL_CONN]
         assert len(types)==len(conn)
-        if self.getNumberOfCells()==0: off=0
+        numCells=h5grp[HeavyUnstructuredMesh.GRP_CELL_OFFSETS].shape[0]
+        if numCells==0: off=0
         else:
-            lastOff=_OFF[self.getNumberOfCells()-1]
+            lastOff=_OFF[numCells-1]
             # must convert xdmf cell type back to mupif cell type
             lastLen=1+CGT.cgt2numVerts[CGT.xdmfIndex2cgt[_CONN[lastOff]]]
             off=lastOff+lastLen
@@ -166,6 +185,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             # sys.stdout.write(f'[{off};{off/9}]')
         # print(f'new offset is {off}, shape is {_CONN.shape}')
         assert off==_CONN.shape[0]
+
     def writeXDMF(self,xdmf=None,fields=[]):
         'Write crude XDMF file for inspection — without copying any of the heavy data.'
         if xdmf is None:
@@ -200,12 +220,20 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         <DataItem DataType="Float" Dimensions="{dim}" Format="HDF" Precision="8">{xdmfH5path}:{field.quantity.dataset.name}</DataItem>
      </Attribute>''')
         open(xdmf,'wb').write('\n'.join([head]+fieldXmls+[tail]).encode('utf8'))
-    def fromMeshioMesh(self,mesh,progress=False,chunk=10000):
+    def fromMeshioMesh(self,mesh,unit=None,progress=False,chunk=10000):
         self._ensureData()
-        # for now, don't allow adding mesh to an existing one
-        # (it would be possible, only vertex number would have to be offset; usefulness = ?)
         assert self.getNumberOfVertices()==0
         assert self.getNumberOfCells()==0
+        self.fromMeshioMesh_static(self._h5grp,mesh=mesh,unit=unit,progress=progress,chunk=chunk)
+        self.unit=self._h5grp.attrs['unit']
+
+    @staticmethod
+    def fromMeshioMesh_static(h5grp,mesh,unit=None,progress=False,chunk=10000):
+        dim=mesh.points.shape[1]
+        HeavyUnstructuredMesh._prepStorage_static(h5grp,dim=dim)
+        h5grp.attrs['unit']=('' if unit is None else str(unit))
+        # for now, don't allow adding mesh to an existing one
+        # (it would be possible, only vertex number would have to be offset; usefulness = ?)
         def seq(s,what):
             chunked=_chunker(s,chunk)
             if not progress:
@@ -218,11 +246,11 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
                     yield c
                     pbar.update(len(c))
         for vv in seq(mesh.points,what=' verts'):
-            self.appendVertices(coords=np.vstack(vv))
+            HeavyUnstructuredMesh.appendVertices_static(h5grp,dim=dim,coords=np.vstack(vv))
         for block in mesh.cells:
             cgt=CGT.meshioName2cgt[block.type]
             for cc in seq(block.data,what=' '+block.type):
-                self.appendCells(types=len(cc)*[cgt],conn=cc)
+                HeavyUnstructuredMesh.appendCells_static(h5grp,types=len(cc)*[cgt],conn=cc)
 
     def makeHeavyField(self,*,fieldID,fieldType,valueType,unit,h5path='',dtype='f8',h5mode='create',fieldTime=0*Unit('s')):
         '''
@@ -269,6 +297,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             if g not in base: raise IOError(f'{h5path}::{h5loc}: {g} is missing')
         mesh=HeavyUnstructuredMesh(h5path=h5path,h5group=h5loc,mode='readonly')
         if open: mesh.openData(mode='readonly')
+        mesh.unit=base.attrs.get('unit',None)
         if HeavyUnstructuredMesh.GRP_FIELDS not in base: return (mesh,[])
         fields=[]
         fieldsBase=base[HeavyUnstructuredMesh.GRP_FIELDS]

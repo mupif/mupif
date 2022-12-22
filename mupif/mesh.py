@@ -116,6 +116,7 @@ class Mesh(dumpable.Dumpable):
     """
 
     mapping: typing.Any = None
+    unit: typing.Union[str,units.Unit]=None
 
     def __repr__(self): return str(self)
 
@@ -263,6 +264,7 @@ class Mesh(dumpable.Dumpable):
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
             group[name] = data
+        group.attrs['unit']=('' if self.unit is None else str(self.unit))
         group.attrs['__class__'] = self.__class__.__name__
         group.attrs['__module__'] = self.__class__.__module__
 
@@ -282,8 +284,9 @@ class Mesh(dumpable.Dumpable):
         from mupif.cell import Cell
         if 'mesh/cellOffsets' in h5obj:
             from mupif.heavymesh import HeavyUnstructuredMesh
-            print(f'{h5obj.filename=} {h5obj.name=}')
-            return HeavyUnstructuredMesh.load(h5path=h5obj.filename, h5loc=h5obj.name)[0]
+            print(f'{h5obj=} {h5obj.__class__.__name__}')
+            print(f'{h5obj.file.filename=} {h5obj.name=}')
+            return HeavyUnstructuredMesh.load(h5path=h5obj.file.filename,h5loc=h5obj.name)[0]
         klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
         ret = klass()
         mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']

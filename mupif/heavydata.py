@@ -79,27 +79,33 @@ class Hdf5RefQuantity(RefQuantity):
     #    import h5py
     #    if not isinstance(self.value,type(property5py.Dataset,Hdf5RefQuantity.ValueRowAccessor))
 
+    def _ensureData(self):
+        if self.dataset is None: raise ValueError('Dataset not allocated yet.')
+
     @property
     def value(self):
-        if self.dataset is None:
-            raise ValueError('Dataset not allocated yet.')
-        if len(self.dataset.shape) > 1:
-            return Hdf5RefQuantity.ValueRowAccessor(self)
+        self._ensureData()
+        if len(self.dataset.shape)>1: return Hdf5RefQuantity.ValueRowAccessor(self)
         return self.dataset
 
     @property
     def quantity(self):
-        if self.dataset is None:
-            raise ValueError('Dataset not allocated yet.')
-        if len(self.dataset.shape) > 1:
-            return Hdf5RefQuantity.QuantityRowAccessor(self)
+        self._ensureData()
+        if len(self.dataset.shape)>1: return Hdf5RefQuantity.QuantityRowAccessor(self)
         return self.dataset
 
     @property
     def unit(self):
-        if self.dataset is None:
-            raise ValueError('Dataset not allocated yet.')
+        self._ensureData()
         return units.Unit(self.dataset.attrs['unit'])
+    @property
+    def ndim(self):
+        self._ensureData()
+        return self.dataset.ndim
+    @property
+    def shape(self):
+        self._ensureData()
+        return self.dataset.shape
 
     # properties setters don't work with pydantic
     # thus the user can screw up easily
@@ -134,7 +140,7 @@ class HeavyDataBase(MupifObject):
 
     def __init__(self, **kw):
         super().__init__(**kw)  # calls the real ctor
-        self._h5obj = None      # assigned in openStorage
+        self._h5obj = None # _h5obj # normally assigned in openStorage
         self.pyroIds = []
         if self.h5uri is not None:
             log.warning(f'HDF5 transfer: starting…\n')

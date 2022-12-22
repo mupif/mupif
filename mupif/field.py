@@ -109,12 +109,6 @@ class FieldBase(mupifquantity.MupifQuantity):
         """
         return self.time
 
-    def getUnit(self) -> Unit:
-        """
-        Returns representation of property units.
-        """
-        return self.units
-
     @pydantic.validate_arguments
     def evaluate(
             self,
@@ -150,9 +144,13 @@ class AnalyticalField(FieldBase):
                 typing.List[typing.Tuple[float, float]],  # list of 2d coords
                 typing.Tuple[float, float, float],  # single 3d coords
                 typing.Tuple[float, float],  # single 2d coord
-                NumpyArray
+                NumpyArray,
+                Quantity
             ],
             eps: float = 0.0):
+        if isinstance(positions,Quantity):
+            if self.mesh.unit is not None: positions=positions.to(self.mesh.unit).value
+            else: raise RuntimeError(f'position has unit "{positions.unit}", but mesh has no unit defined.')
         import numexpr as ne
         loc = dict(x=positions[..., 0], y=positions[..., 1])
         if self.dim == 2: loc['xy'] = positions
@@ -287,7 +285,9 @@ class Field(FieldBase):
                 typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
                 typing.List[typing.Tuple[float, float]],  # list of 2d coords
                 typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float]  # single 2d coord
+                typing.Tuple[float, float],  # single 2d coord
+                NumpyArray,
+                Quantity,
             ],
             eps: float = 0.0):
         """
@@ -320,6 +320,10 @@ class Field(FieldBase):
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
+        if isinstance(position,Quantity):
+            if self.mesh.unit is None: raise RuntimeError('position has unit "{position.unit}" but mesh has no unit defined.')
+            position=position.to(self.mesh.unit).value
+
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
         # answer=None
         if len(cells):
@@ -586,7 +590,7 @@ class Field(FieldBase):
         self._to_hdf5_groups(fg5,mg5,heavy=heavy)
         return {'field':fDigest,'mesh':mDigest}
 
-    def _to_hdf5_groups(self,fg,mg,heavy):
+    def _to_hdf5_groups(self,fg,mg,heavy,meshLink=None):
         if mg is not None: self.getMesh().toHdf5Group(mg)
         if fg is not None: self.toHdf5Group(fg,meshLink=None)
 

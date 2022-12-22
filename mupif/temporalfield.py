@@ -1,10 +1,14 @@
 from .mupifobject import MupifObject
 from .field import Field
 from .units import Quantity
+from .heavydata import HeavyDataBase
+from .mesh import UnstructuredMesh
+from .heavymesh import HeavyUnstructuredMesh
 import pydantic
 import astropy.units as au
 import typing
 import Pyro5.api
+import numpy as np
 
 
 class _FieldLocation(pydantic.BaseModel):
@@ -36,15 +40,13 @@ class TemporalField(MupifObject):
 
     def timeList(self) -> typing.List[Quantity]:
         return [md['time'] for md in self.fieldMeta]
-
-    def timeMetadata(self, time) -> dict:
-        mmd = [md for md in self.fieldMeta if md['time'] == time]
-        assert len(mmd) < 2
-        if len(mmd) == 1:
-            return mmd[0]
+    def timeMetadata(self, time, epsTime=0.0*au.s) -> dict:
+        mmd=[md for md in self.fieldMeta if np.abs(md['time']-time)<=epsTime]
+        if len(mmd)>=2: raise ValueError('Ambiguous time specification {time} with given eps={eps} ({len(mmd)} fields matching).')
+        assert len(mmd)<2
+        if len(mmd)==1: return mmd[0]
         return None
-
-    def getField(self, time: Quantity):
+    def getField(self, time: Quantity, epsTime=0.0*au.s):
         # don't fetch field we already have
         if time in self._cache:
             return self._cache[time]
@@ -58,21 +60,16 @@ class TemporalField(MupifObject):
 
     def getCachedTimes(self):
         return set(self._cache.keys())
-
-    def evaluate(self, time: Quantity, positions, eps: float = 0.0):
-        return self.getField(time).evaluate(positions=positions, eps=eps)
-
-    def addField(self, field, userMetadata):
-        time = field.getTime()
-        if self.timeMetadata(time):
-            raise ValueError(f'Field already saved for time {time}')
-        loc = self._field_save_return_loc(field)
-        self.fieldMeta.append({'time': time, 'loc': loc, 'user': userMetadata})
-
-    def _field_make_from_loc(self, loc):
-        fieldGrp, meshGrp = self._loc_to_h5_groups(loc)
-        return Field.makeFromHdf5_groups(fieldGrp=fieldGrp, meshGrp=meshGrp, heavy=True)
-
+    def evaluate(self,time: Quantity, positions, eps: float=0.0, epsTime=0.0*au.s):
+        return self.getField(time,epsTime=epsTime).evaluate(positions=positions,eps=eps)
+    def addField(self,field,userMetadata):
+        time=field.getTime()
+        if self.timeMetadata(time): raise ValueError(f'Field already saved for time {time}')
+        loc=self._field_save_return_loc(field)
+        self.fieldMeta.append({'time':time,'loc':loc,'user':userMetadata})
+    def _field_make_from_loc(self,loc):
+        fieldGrp,meshGrp=self._loc_to_h5_groups(loc)
+        return Field.makeFromHdf5_groups(fieldGrp=fieldGrp,meshGrp=meshGrp,heavy=True)
 
 class DirTemporalField(TemporalField):
     """Implementation of TemporalField which stored all data in local files"""
@@ -89,6 +86,26 @@ class DirTemporalField(TemporalField):
         loc = field.toHdf5_split_files(fieldPrefix=f'{self.dir}/field/', meshPrefix=f'{self.dir}/mesh/', flat=True, heavy=True)
         return loc
 
+class SingleFileTemporalField(TemporalField,HeavyDataBase):
+    def __init__(self,*a,**kw):
+        TemporalField.__init__(self,*a,**kw)
+        HeavyDataBase.__init__(self,*a,**kw)
+        self._cache={} # hack
+    def _loc_to_h5_groups(self,loc):
+        self._ensureData()
+        return (self._h5obj[loc["field"]],self._h5obj[loc["mesh"]])
+    def _field_save_return_loc(self,field):
+        import h5py
+        if not isinstance(field.getMesh(),UnstructuredMesh): raise RuntimeError('Field\'s mesh must be an UnstructuredMesh (not a {field.getMesh().__class__.__module__}.{field.getMesh().__class__.__name__}')
+        mLoc='meshes/'+field.getMesh().dataDigest()
+        fLoc='fields/'+field.dataDigest()
+        if mLoc not in self._h5obj:
+            # store as HeavyUnstructredMesh
+            HeavyUnstructuredMesh.fromMeshioMesh_static(self._h5obj.create_group(mLoc),field.getMesh().toMeshioMesh())
+        mg=self._h5obj[mLoc]
+        fg=self._h5obj.create_group(fLoc)
+        loc=field.toHdf5Group(fg,meshLink=h5py.SoftLink(mg.name))
+        return {'field':fLoc,'mesh':mLoc}
 
 if 0:
     class HeavyStructTemporalField(TemporalField):
