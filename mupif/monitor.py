@@ -47,7 +47,7 @@ def schedulerInfo(ns):
         sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'])
         sch['lastExecutions'] = [dict(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
         ret.append(sch)
-        if not 'getExecutions' in dir(s):
+        if 'getExecutions' not in dir(s):
             log.warning('getExecutions not defined')
             continue  # old workflow monitor?
         rr = {}

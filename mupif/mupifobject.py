@@ -55,9 +55,11 @@ class MupifObjectBase(MupifBaseModel):
         keys = key.split('.')
         d = copy.deepcopy(self.metadata)
         while True:
-            try: d = d[keys[0]]
+            try:
+                d = d[keys[0]]
             except KeyError:
-                if default is not None: return default
+                if default is not None:
+                    return default
                 raise
             if len(keys) == 1:
                 return d
@@ -137,7 +139,8 @@ class MupifObjectBase(MupifBaseModel):
             i += 1
 
     def _iterInDictOfMetadataForUpdate(self, dictionary, base_key):
-        if dictionary is None: return
+        if dictionary is None:
+            return
         for key, value in dictionary.items():
             if base_key != "":
                 new_key = "%s.%s" % (base_key, key)
@@ -170,8 +173,10 @@ class MupifObjectBase(MupifBaseModel):
         Validates metadata's dictionary with a given dictionary
         :param dict template: Schema for json template
         """
-        if type(template)==pydantic.main.ModelMetaclass: template(**self.metadata)
-        else: jsonschema.validate(self.metadata, template)
+        if type(template) == pydantic.main.ModelMetaclass:
+            template(**self.metadata)
+        else:
+            jsonschema.validate(self.metadata, template)
         
     def __str__(self):
         """

@@ -162,16 +162,16 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(orig.getUnit().name,loaded.getUnit().name)
         
     def test_ioDump(self):
-        f=self.tmp+'/aa.dump'
+        f = self.tmp+'/aa.dump'
         self.f1.dumpToLocalFile(f)
-        res=self.f1.loadFromLocalFile(f)
-        self._compareFields(self.f1,res)
+        res = self.f1.loadFromLocalFile(f)
+        self._compareFields(self.f1, res)
 
     def test_ioHdf5(self):
-        f=self.tmp+'/aa.hdf5'
+        f = self.tmp+'/aa.hdf5'
         self.f1.toHdf5(fileName=f)
-        res=self.f1.makeFromHdf5(fileName=f)[0]
-        self._compareFields(self.f1,res)
+        res = self.f1.makeFromHdf5(fileName=f)[0]
+        self._compareFields(self.f1, res)
 
     #@unittest.skipIf(pyvtk is None,'pyvtk not importable')
     #def test_field2VTKData(self):
@@ -206,5 +206,5 @@ class Field_TestCase(unittest.TestCase):
 
 
 # python test_Field.py for stand-alone test being run
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()

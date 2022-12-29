@@ -71,4 +71,3 @@ class WorkflowMonitor(mupifobject.MupifObject):
         :return dict: all metadata
         """
         return self.metadata
-

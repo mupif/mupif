@@ -93,13 +93,14 @@ class MupifQuantity(mupifobject.MupifObject):
         """
         return self.quantity.unit
 
-    def dataDigest(self,*args):
+    def dataDigest(self, *args):
         def numpyHash(*_args):
             """Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to
             find an identical mesh which was already stored."""
             import hashlib
             # print(f'{_args=}')
-            H=hashlib.sha1()
-            for arr in _args: H.update(arr.view(np.uint8))
+            H = hashlib.sha1()
+            for arr in _args:
+                H.update(arr.view(np.uint8))
             return H.hexdigest()
-        return numpyHash(self.quantity.value,np.frombuffer(bytes(self.quantity.unit),dtype=np.uint8),*args)
+        return numpyHash(self.quantity.value, np.frombuffer(bytes(self.quantity.unit), dtype=np.uint8), *args)

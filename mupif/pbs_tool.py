@@ -65,7 +65,7 @@ def get_job_status(jobid):
         if len(lines) >= 3:
             line = lines[2]
             while '  ' in line:
-                line = line.replace('  ',' ')
+                line = line.replace('  ', ' ')
             line = line.strip()
             words = line.split(' ')
             if len(words) >= 2:
