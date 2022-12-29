@@ -21,95 +21,152 @@
 # Boston, MA  02110-1301  USA
 #
 import sys
-sys.path.append('../../..')
-from mupif import *
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+'/../../..')
+sys.path.append('/home/stanislav/Projects/oofem/build')
+sys.path.append('/home/stanislav/Projects/oofem/bindings/python')
 import mupif as mp
-import mupif.physics.physicalquantities as PQ
-import liboofem
-
-timeUnits = PQ.PhysicalUnit('s',   1.,    [0,0,1,0,0,0,0,0,0])
+import oofempy
 
 
 # shorthands
-_EGT=liboofem.Element_Geometry_Type 
-_FT=liboofem.FieldType
+_EGT = oofempy.Element_Geometry_Type
+_FT = oofempy.FieldType
 # mapping from oofem element type enumeration to corresponding mupif cell class
-elementTypeMap={
-    cellgeometrytype.CGT_TRIANGLE_1:    _EGT.EGT_triangle_1,
-    cellgeometrytype.CGT_QUAD:          _EGT.EGT_quad_1,
+elementTypeMap = {
+    mp.cellgeometrytype.CGT_TRIANGLE_1:    _EGT.EGT_triangle_1,
+    mp.cellgeometrytype.CGT_QUAD:          _EGT.EGT_quad_1,
 }
 # mapping from mupif field ID to oofem field type
-fieldTypeMap={
-    DataID.FID_Displacement:  (_FT.FT_Displacements,0),
-    DataID.FID_Stress: None,
-    DataID.FID_Strain: None,
-    DataID.FID_Temperature:   (_FT.FT_Temperature,0),
-    DataID.FID_Humidity:      (_FT.FT_HumidityConcentration,0),
-    DataID.FID_Concentration: (_FT.FT_HumidityConcentration,1),
+fieldTypeMap = {
+    mp.DataID.FID_Displacement:  (_FT.FT_Displacements, 0),
+    mp.DataID.FID_Stress: None,
+    mp.DataID.FID_Strain: None,
+    mp.DataID.FID_Temperature:   (_FT.FT_Temperature, 0),
+    mp.DataID.FID_Humidity:      (_FT.FT_HumidityConcentration, 0),
+    mp.DataID.FID_Concentration: (_FT.FT_HumidityConcentration, 1),
 }
 
-# TODO Update this API.
 
-
-class OOFEM(model.Model):
+class OOFEM(mp.Model):
     """
     Implementation of OOFEM MuPIF API.
     OOFEM is an object oriented FE solver, see www.oofem.org for details.
 
     .. automethod:: __init__
     """
-    def __init__ (self, file, workdir=''):
+    def __init__(self, workDir=''):
         """
         Constructor. Initializes the application.
 
-        :param str file: Name of file
-        :param str workdir: Optional parameter for working directory
+        :param str workDir: Optional parameter for working directory
         """
-        super().__init__(file=file, workdir=workdir)
-        dr = liboofem.OOFEMTXTDataReader(file)
-        self.oofem_pb = liboofem.InstanciateProblem(dr,liboofem.problemMode._processor,0)
+
+        MD = {
+            "Name": "OOFEM API",
+            "ID": "OOFEM_API",
+            "Description": "OOFEM solver",
+            "Version_date": "1.0.0, Dec 2022",
+            # "Geometry": "2D rectangle",
+            # "Boundary_conditions": "Dirichlet, Neumann",
+            "Inputs": [
+                {
+                    "Name": "Input file",
+                    "Type": "mupif.PyroFile",
+                    "Required": True,
+                    "Type_ID": "mupif.DataID.ID_InputFile",
+                    "Obj_ID": "input_file",
+                    "Set_at": "initialization",
+                    "Units": "none"
+                }
+            ],
+            "Outputs": [
+                # {
+                #     "Name": "temperature",
+                #     "Type_ID": "mupif.DataID.FID_Temperature",
+                #     "Type": "mupif.Field",
+                #     "Required": False,
+                #     "Units": "degC"
+                # }
+            ],
+            "Solver": {
+                "Software": "OOFEM",
+                "Type": "Finite elements",
+                "Accuracy": "High",
+                "Sensitivity": "Low",
+                "Complexity": "High",
+                "Robustness": "High",
+                "Estim_time_step_s": 1,
+                "Estim_comp_time_s": 1,
+                "Estim_execution_cost_EUR": 0.01,
+                "Estim_personnel_cost_EUR": 0.01,
+                "Required_expertise": "None",
+                "Language": "C++",
+                "License": "LGPL",
+                "Creator": "Borek Patzak",
+                "Version_date": "1.0.0, Dec 2022",
+                "Documentation": "oofem.org"
+            },
+            "Physics": {
+                "Type": "Continuum",
+                "Entity": "Finite elements",
+                "Equation": [],
+                "Equation_quantities": [],
+                "Relation_description": [],
+                "Relation_formulation": [],
+                "Representation": "Finite elements"
+            }
+        }
+
+        super().__init__(workDir=workDir, metadata=MD)
+
+        dr = oofempy.OOFEMTXTDataReader("testt.oofem.in")
+        # dr = oofempy.DataReader("testt.oofem.in")
+        # dr = oofempy.OOFEMTXTDataReader(file)
+        self.oofem_pb = oofempy.InstanciateProblem(dr, oofempy.problemMode.processor, 0, None, False)
         self.oofem_pb.checkProblemConsistency()
         self.oofem_mesh = self.oofem_pb.giveDomain(1)
-        self.mesh = None # MuPIF representation of oofem mesh
+        self.mesh = None  # MuPIF representation of oofem mesh
 
-        print ("Imported %d node and %d elements" % (self.oofem_mesh.giveNumberOfDofManagers(), self.oofem_mesh.giveNumberOfElements()))
+        print("Imported %d node and %d elements" % (self.oofem_mesh.giveNumberOfDofManagers(), self.oofem_mesh.giveNumberOfElements()))
 
     def getField(self, fieldID, time):
         """
         Returns the requested field at given time. Field is identified by fieldID.
 
-        :param DataID fieldID: Identifier of the field
-        :param float time: Target time
+        :param mp.DataID fieldID: Identifier of the field
+        :param  time: Target time
 
         :return: Returns requested field.
         :rtype: Field
         """
-        ts=self.oofem_pb.giveCurrentStep()
+        ts = self.oofem_pb.giveCurrentStep()
         self.mesh = self.getMesh(ts)
 
-        #print "Mesh conversion finished"
-        if (abs(ts.targetTime - time.inUnitsOf(timeUnits).getValue()) < 1.e-6):
-            values=[]
-            ne=self.oofem_mesh.giveNumberOfElements()
-            nd=self.oofem_mesh.giveNumberOfDofManagers()
-            vmt=liboofem.ValueModeType.VM_Total
-            f=self.oofem_pb.giveField(self.getOOFEMFieldName(fieldID), ts)
-            #print "oofem returned f=",f
-            if not f: raise ValueError("no suitable field in solver found")
+        # print "Mesh conversion finished"
+        if abs(ts.targetTime - time.inUnitsOf('s').getValue()) < 1.e-6:
+            values = []
+            ne = self.oofem_mesh.giveNumberOfElements()
+            nd = self.oofem_mesh.giveNumberOfDofManagers()
+            vmt = oofempy.ValueModeType.VM_Total
+            f = self.oofem_pb.giveField(self.getOOFEMFieldName(fieldID), ts)
+            # print "oofem returned f=",f
+            if not f:
+                raise ValueError("no suitable field in solver found")
             
-            for i in range (1, nd+1):
-                d=self.oofem_mesh.giveDofManager(i)
-                val=f.evaluateAtDman(d,mode=vmt,atTime=ts)
-                ###  print "Temp at node ", i, "=", val
-                #convert val into tuple
+            for i in range(1, nd+1):
+                d = self.oofem_mesh.giveDofManager(i)
+                val = f.evaluateAtDman(d, mode=vmt, atTime=ts)
+                # print "Temp at node ", i, "=", val
+                # convert val into tuple
                 v = []
                 for j in range(len(val)):
                     v.append(val[j])
                 values.append(tuple(v))
-            return field.Field(self.mesh, fieldID, ValueType.Scalar, None, time, values)
+            return mp.Field(self.mesh, fieldID, mp.ValueType.Scalar, None, time, values)
 
         else:
-            raise apierror.APIError ('Can\'t return field for other than current time step')
+            raise mp.APIError('Can\'t return field for other than current time step')
 
     def set(self, obj, objectID=""):
         if obj.isInstance(mp.Field):
@@ -118,24 +175,24 @@ class OOFEM(model.Model):
     
             :param Field obj: Remote object or parameter to be registered by the application
             """
-            # convert field.Field into liboofem.UnstructredGridField first
+            # convert field.Field into oofempy.UnstructredGridField first
             mesh = obj.getMesh()
-            target = liboofem.UnstructuredGridField(mesh.getNumberOfVertices(), mesh.getNumberOfCells())
+            target = oofempy.UnstructuredGridField(mesh.getNumberOfVertices(), mesh.getNumberOfCells())
             # convert vertices first
             for node in mesh.vertices():
                 c = node.getCoordinates()  # tuple -> FloatArray conversion
-                cc = liboofem.FloatArray(len(c))
+                cc = oofempy.FloatArray(len(c))
                 for i in range(len(c)):
                     cc[i] = c[i]
                 target.addVertex(node.getNumber(), cc)
             for cell in mesh.cells():
                 v = cell.getVertices()
-                vv = liboofem.IntArray(len(v))
+                vv = oofempy.IntArray(len(v))
                 for i in range(len(v)):
                     vv[i]=v[i].getNumber()
                 target.addCell(cell.number, elementTypeMap.get(cell.getGeometryType()), vv)
             # set values
-            if obj.getFieldType() == field.FieldType.FT_vertexBased:
+            if obj.getFieldType() == mp.FieldType.FT_vertexBased:
                 for node in mesh.vertices():
                     target.setVertexValue(node.getNumber(), obj.getVertexValue(node.getNumber()))
             else:
@@ -145,14 +202,14 @@ class OOFEM(model.Model):
             ft = fieldTypeMap.get((obj.getFieldID()))[0]
             if ft is None:
                 raise ValueError("Field type not recognized")
-            print("oofem: registering extermal field ", field, "as ...", target)
-            # print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+            print("oofem: registering extermal field ", obj, "as ...", target)
+            # print "Check: ", field.evaluate((2.5,0.9,0)), " == ", target.evaluateAtPos (t2f((2.5,0.9,0)), oofempy.ValueModeType.VM_Total)
 
             self.oofem_pb.giveContext().giveFieldManager().registerField(target, ft)
             # internal check
-            # checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(liboofem.FieldType.FT_Temperature)
+            # checkf = self.oofem_pb.giveContext().giveFieldManager().giveField(oofempy.FieldType.FT_Temperature)
             # print checkf
-            # print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), liboofem.ValueModeType.VM_Total)
+            # print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), oofempy.ValueModeType.VM_Total)
 
     def getProperty(self, propID, time, objectID=""):
         """
@@ -165,7 +222,7 @@ class OOFEM(model.Model):
         :return: Returns representation of requested property
         :rtype: Property
         """
-        raise apierror.APIError ('Unknown propertyID')
+        raise mp.APIError('Unknown propertyID')
 
     def getFunction(self, funcID, objectID=""):
         """
@@ -177,7 +234,7 @@ class OOFEM(model.Model):
         :return: Returns requested function
         :rtype: Function
         """
-        raise apierror.APIError ('Unknown funcID')
+        raise mp.APIError('Unknown funcID')
 
     def getMesh(self, tstep):
         """
@@ -187,34 +244,34 @@ class OOFEM(model.Model):
         :return: Returns the representation of mesh
         :rtype: Mesh
         """
-        if (self.mesh == None):
-            self.mesh = mesh.UnstructuredMesh()
+        if self.mesh is None:
+            self.mesh = mp.UnstructuredMesh()
             vertexlist = []
-            celllist   = []
-            ne=self.oofem_mesh.giveNumberOfElements()
-            nd=self.oofem_mesh.giveNumberOfDofManagers()
-            for i in range (1, nd+1):
+            celllist = []
+            ne = self.oofem_mesh.giveNumberOfElements()
+            nd = self.oofem_mesh.giveNumberOfDofManagers()
+            for i in range(1, nd+1):
                 d = self.oofem_mesh.giveDofManager(i)
                 c = d.giveCoordinates()
-                vertexlist.append(vertex.Vertex(i-1, d.giveLabel(), tuple([c[j] for j in range(len(c))])))
+                vertexlist.append(mp.Vertex(i-1, d.giveLabel(), tuple([c[j] for j in range(len(c))])))
                 # print "adding vertex", i
-            for i in range (1, ne+1):
+            for i in range(1, ne+1):
                 e = self.oofem_mesh.giveElement(i)
                 egt = e.giveGeometryType()
                 en = e.giveDofManArray()
                 # convert en to list
-                nodes=tuple([en[n]-1 for n in range(len(en))])
+                nodes = tuple([en[n]-1 for n in range(len(en))])
                 # print "element ", i, "nodes:", en, nodes
-                if (egt == liboofem.Element_Geometry_Type.EGT_triangle_1):
-                    celllist.append(cell.Triangle_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
-                elif (egt == liboofem.Element_Geometry_Type.EGT_quad_1):
-                    celllist.append(cell.Quad_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
-                elif (egt == liboofem.Element_Geometry_Type.EGT_tetra_1):
-                    celllist.append(cell.Tetrahedron_3d_lin(self.mesh, i-1, e.giveLabel(), nodes))
+                if egt == oofempy.Element_Geometry_Type.EGT_triangle_1:
+                    celllist.append(mp.Triangle_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
+                elif egt == oofempy.Element_Geometry_Type.EGT_quad_1:
+                    celllist.append(mp.Quad_2d_lin(self.mesh, i-1, e.giveLabel(), nodes))
+                elif egt == oofempy.Element_Geometry_Type.EGT_tetra_1:
+                    celllist.append(mp.Tetrahedron_3d_lin(self.mesh, i-1, e.giveLabel(), nodes))
                 else:
-                    raise apierror.APIError ('Unknown element GeometryType')
-                ##print "adding element ", i
-            self.mesh.setup (vertexlist, celllist)
+                    raise mp.APIError('Unknown element GeometryType')
+                # print "adding element ", i
+            self.mesh.setup(vertexlist, celllist)
         return self.mesh
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
@@ -235,14 +292,23 @@ class OOFEM(model.Model):
         :param bool runInBackground: optional argument, defualt False. If True, the solution will run in background (in separate thread or remotely).
 
         """
-        ts = self.oofem_pb.generateNextStep()
-        ##print ts
-        #override ts settings by the given ones
-        ts.setTargetTime(tstep.getTime().getValue())
-        ts.setIntrinsicTime(tstep.getTime().getValue())
-        ts.setTimeIncrement(tstep.getTimeIncrement().getValue())
-        self.oofem_pb.initializeYourself(ts)
-        self.oofem_pb.solveYourselfAt(ts)
+        self.oofem_pb.preInitializeNextStep()
+        self.oofem_pb.giveNextStep()
+        currentStep = self.oofem_pb.giveCurrentStep()
+        self.oofem_pb.initializeYourself(currentStep)
+        self.oofem_pb.solveYourselfAt(currentStep)
+        self.oofem_pb.updateYourself(currentStep)
+        self.oofem_pb.terminate(currentStep)
+        print("TimeStep %d finished" % tstep.getNumber())
+
+        # ts = self.oofem_pb.giveNextStep()
+        # print ts
+        # override ts settings by the given ones
+        # ts.setTargetTime(tstep.getTime().getValue())
+        # ts.setIntrinsicTime(tstep.getTime().getValue())
+        # ts.setTimeIncrement(tstep.getTimeIncrement().getValue())
+        # self.oofem_pb.initializeYourself(ts)
+        # self.oofem_pb.solveYourselfAt(ts)
 
     def wait(self):
         """
@@ -261,7 +327,7 @@ class OOFEM(model.Model):
 
         :param TimeStep tstep: Solution step
         """
-        self.oofem_pb.updateYourself(self.oofem_pb.giveCurrentStep() )
+        self.oofem_pb.updateYourself(self.oofem_pb.giveCurrentStep())
         self.oofem_pb.terminate(self.oofem_pb.giveCurrentStep())
 
     def getCriticalTimeStep(self):
@@ -297,6 +363,7 @@ class OOFEM(model.Model):
         :rtype: str, int
         """
         return 1
+
     def getApplicationSignature(self):
         """
         Get application signature.
@@ -316,7 +383,6 @@ class OOFEM(model.Model):
             if not self.externalDaemon:
                 self.pyroDaemon.shutdown()
 
-
     def getURI(self):
         """
         :return: Returns the application URI or None if application not registered in Pyro
@@ -324,81 +390,76 @@ class OOFEM(model.Model):
         """
         return self.pyroURI
 
-
-    def getOOFEMFieldName (self, fieldID):
-        if (fieldID == DataID.FID_Temperature):
-            return liboofem.FieldType.FT_Temperature
+    def getOOFEMFieldName(self, fieldID):
+        if fieldID == mp.DataID.FID_Temperature:
+            return oofempy.FieldType.FT_Temperature
         else:
-            raise apierror.APIError ('Unknown fieldID')            
+            raise mp.APIError('Unknown fieldID')
 
 
 if __name__ == "__main__":
 
-
-    def t2f (t):
-        # conver tuple to floatArray
-        ans = liboofem.FloatArray(len(t))
-        for i in range(len(t)):
-            ans[i]=t[i]
-        return ans
-            
-    def t2i (t):
-        # conver tuple to floatArray
-        ans = liboofem.IntArray(len(t))
-        for i in range(len(t)):
-            ans[i]=t[i]
-        return ans
-
-    
-    f = liboofem.UnstructuredGridField(9, 4)
-    f.addVertex(0, t2f((0,0,0)))
-    f.addVertex(1, t2f((1,0,0)))
-    f.addVertex(2, t2f((2,0,0)))
-
-    f.addVertex(3, t2f((0,0.5,0)))
-    f.addVertex(4, t2f((1,0.5,0)))
-    f.addVertex(5, t2f((2,0.5,0)))
-
-    f.addVertex(6, t2f((0,1,0)))
-    f.addVertex(7, t2f((1,1,0)))
-    f.addVertex(8, t2f((2,1,0)))
-
-    f.addCell(0, _EGT.EGT_quad_1, t2i((0,1,4,3)))
-    f.addCell(1, _EGT.EGT_quad_1, t2i((1,2,5,4)))
-    f.addCell(2, _EGT.EGT_quad_1, t2i((3,4,7,6)))
-    f.addCell(3, _EGT.EGT_quad_1, t2i((4,5,8,7)))
-
-    
-    for i in range(9):
-        f.setVertexValue(i,t2f((i%3,)))
-        print (i, i%3)
-    
-    print (f.evaluateAtPos (t2f((2,1,0)), liboofem.ValueModeType.VM_Total))
-
+    # def t2f(t):
+    #     # conver tuple to floatArray
+    #     ans = oofempy.FloatArray(len(t))
+    #     for i in range(len(t)):
+    #         ans[i] = t[i]
+    #     return ans
+    #
+    # def t2i(t):
+    #     # conver tuple to floatArray
+    #     ans = oofempy.IntArray(len(t))
+    #     for i in range(len(t)):
+    #         ans[i] = t[i]
+    #     return ans
+    #
+    #
+    # f = oofempy.UnstructuredGridField(9, 4)
+    # f.addVertex(0, t2f((0,0,0)))
+    # f.addVertex(1, t2f((1,0,0)))
+    # f.addVertex(2, t2f((2,0,0)))
+    #
+    # f.addVertex(3, t2f((0,0.5,0)))
+    # f.addVertex(4, t2f((1,0.5,0)))
+    # f.addVertex(5, t2f((2,0.5,0)))
+    #
+    # f.addVertex(6, t2f((0,1,0)))
+    # f.addVertex(7, t2f((1,1,0)))
+    # f.addVertex(8, t2f((2,1,0)))
+    #
+    # f.addCell(0, _EGT.EGT_quad_1, t2i((0,1,4,3)))
+    # f.addCell(1, _EGT.EGT_quad_1, t2i((1,2,5,4)))
+    # f.addCell(2, _EGT.EGT_quad_1, t2i((3,4,7,6)))
+    # f.addCell(3, _EGT.EGT_quad_1, t2i((4,5,8,7)))
+    #
+    #
+    # for i in range(9):
+    #     f.setVertexValue(i,t2f((i%3,)))
+    #     print (i, i%3)
+    #
+    # print (f.evaluateAtPos (t2f((2,1,0)), oofempy.ValueModeType.VM_Total))
 
     if 1:
-        ot = OOFEM ("testt.oofem.in")
-        om = OOFEM ("testm.oofem.in")
+        ot = OOFEM()  # "testt.oofem.in"
+        # om = OOFEM("testm.oofem.in")
         time = 0.0
         dt = 0.1
-
-        for i in range (10):
-            time=i*dt;
-            ts = timestep.TimeStep(time, dt)
-            ot.solveStep (ts)
-            ot.finishStep (ts)
+        targetTime = 1.
+        for i in range(10):
+            time = i*dt
+            ts = mp.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mp.U.s, number=i)
+            ot.solveStep(ts)
+            ot.finishStep(ts)
             
-            f = ot.getField(DataID.FID_Temperature, ts.getTime())
-            f.toVTK2("temp%d"%(i))
-            #print f.evaluate ((2.5, 0.9, 0.0))
-            #print "Got field ", f
-            om.set(f)
-            om.solveStep (ts)
-            om.finishStep (ts)
+            f = ot.getField(mp.DataID.FID_Temperature, ts.getTime().getValue())
+            f.toVTK2("temp%d" % i)
+            # print f.evaluate ((2.5, 0.9, 0.0))
+            # print "Got field ", f
+            # om.set(f)
+            # om.solveStep(ts)
+            # om.finishStep(ts)
 
-        
-        
-        
+    #
 
     # o = OOFEM ("test.oofem.in")
     # time = 0.0
@@ -416,7 +477,5 @@ if __name__ == "__main__":
     # #print f.evaluate ((-7.75, -6.1, 0.0))
     # f.toVTK2("field1")
 
-
     # o2 = OOFEM ("test.oofem.in")
     # o2.set(f)
-    
