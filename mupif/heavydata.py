@@ -334,18 +334,12 @@ class HeavyDataBase(MupifObject):
             log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
 
 
-<<<<<<< HEAD
-class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
-    """Quantity stored in HDF5 dataset, managing the HDF5 file itself."""
-    h5loc: str = '/quantity'
-=======
 HeavyDataBase.ModeChoice=HeavyDataBase_ModeChoice
 
 
 class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
     'Quantity stored in HDF5 dataset, managing the HDF5 file itself.'
     h5loc: str='/quantity'
->>>>>>> 2427849 (Make HDF5 hierarchy flatter for meshes (no mesh/* everything, just * in the group))
 
     def __init__(self, **kw):
         super().__init__(**kw)
