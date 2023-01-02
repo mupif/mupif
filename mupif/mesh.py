@@ -28,6 +28,7 @@ from . import bbox
 from . import dumpable
 from . import vertex
 from . import cell
+from . import units
 import copy
 import time
 import sys
@@ -282,10 +283,10 @@ class Mesh(dumpable.Dumpable):
         import importlib
         from mupif.vertex import Vertex
         from mupif.cell import Cell
-        if 'mesh/cellOffsets' in h5obj:
-            from mupif.heavymesh import HeavyUnstructuredMesh
-            print(f'{h5obj=} {h5obj.__class__.__name__}')
-            print(f'{h5obj.file.filename=} {h5obj.name=}')
+        from mupif.heavymesh import HeavyUnstructuredMesh
+        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5obj:
+            #print(f'{h5obj=} {h5obj.__class__.__name__}')
+            #print(f'{h5obj.file.filename=} {h5obj.name=}')
             return HeavyUnstructuredMesh.load(h5path=h5obj.file.filename,h5loc=h5obj.name)[0]
         klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
         ret = klass()

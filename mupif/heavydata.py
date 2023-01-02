@@ -138,7 +138,7 @@ class HeavyDataBase(MupifObject):
     h5uri: typing.Optional[str] = None
     mode: HeavyDataBase_ModeChoice = 'readonly'
 
-    def __init__(self, **kw):
+    def __init__(self,**kw):
         super().__init__(**kw)  # calls the real ctor
         self._h5obj = None # _h5obj # normally assigned in openStorage
         self.pyroIds = []
@@ -334,9 +334,18 @@ class HeavyDataBase(MupifObject):
             log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
 
 
+<<<<<<< HEAD
 class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
     """Quantity stored in HDF5 dataset, managing the HDF5 file itself."""
     h5loc: str = '/quantity'
+=======
+HeavyDataBase.ModeChoice=HeavyDataBase_ModeChoice
+
+
+class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
+    'Quantity stored in HDF5 dataset, managing the HDF5 file itself.'
+    h5loc: str='/quantity'
+>>>>>>> 2427849 (Make HDF5 hierarchy flatter for meshes (no mesh/* everything, just * in the group))
 
     def __init__(self, **kw):
         super().__init__(**kw)

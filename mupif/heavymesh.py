@@ -29,9 +29,9 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
     dim: int=3
     h5group: str='/'
 
-    GRP_VERTS: ClassVar[str]='mesh/vertices'
-    GRP_CELL_OFFSETS: ClassVar[str]='mesh/cellOffsets'
-    GRP_CELL_CONN: ClassVar[str]='mesh/connectivity'
+    GRP_VERTS: ClassVar[str]='vertices'
+    GRP_CELL_OFFSETS: ClassVar[str]='cellOffsets'
+    GRP_CELL_CONN: ClassVar[str]='connectivity'
     GRP_FIELDS: ClassVar[str]='fields'
 
     # see https://github.com/nschloe/meshio/blob/main/src/meshio/xdmf/common.py
