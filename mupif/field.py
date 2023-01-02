@@ -321,7 +321,7 @@ class Field(FieldBase):
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
         if isinstance(position,Quantity):
-            if self.mesh.unit is None: raise RuntimeError('position has unit "{position.unit}" but mesh has no unit defined.')
+            if self.mesh.unit is None: raise RuntimeError(f'position has unit "{position.unit}" but mesh has no unit defined.')
             position=position.to(self.mesh.unit).value
 
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))

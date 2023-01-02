@@ -119,6 +119,13 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f6.evaluate((2.,2.,2.)).getValue(),(24.,))
         self.assertEqual(self.f6.evaluate((1.5,1.5,1.5)).getValue(),(18.,))
 
+        import astropy.units as au
+        self.assertRaises(RuntimeError,lambda: self.f1.evaluate((1.,2.5,0)*au.m))
+        self.f1.getMesh().unit=au.m
+        self.assertEqual(self.f1.evaluate((1.,2.5,0.)*au.m).getValue(),(93.5,))
+        self.assertEqual(self.f1.evaluate((1000,2500,0)*au.mm).getValue(),(93.5,))
+        self.assertRaises(au.UnitConversionError,lambda: self.f1.evaluate((1,2,3)*au.s))
+
     def test_getVertexValue(self):
         self.assertEqual(self.f1.getVertexValue(0).getValue(),(0,))
         self.assertEqual(self.f1.getVertexValue(1).getValue(),(12,))
@@ -172,27 +179,6 @@ class Field_TestCase(unittest.TestCase):
         self.f1.toHdf5(fileName=f)
         res = self.f1.makeFromHdf5(fileName=f)[0]
         self._compareFields(self.f1, res)
-
-    #@unittest.skipIf(pyvtk is None,'pyvtk not importable')
-    #def test_field2VTKData(self):
-    #   self.res=self.f5.field2VTKData()
-    #   import pyvtk
-    #   self.assertTrue(isinstance(self.res,pyvtk.VtkData),'error in getVTKRepresentation')
-
-    #@unittest.skipIf(pyvtk is None,'pyvtk not importable')
-    #def test_ioVTK2(self):
-    #    f=self.tmp+'/aa.vtk'
-    #    self.f1.toVTK2(f)
-    #    res=self.f1.makeFromVTK2(f, PU({'m': 1}, 1,(1,0,0,0,0,0,0)), time=self.f1.getTime())[0]
-    #    # VTK2 does not store units
-    #    self._compareFields(self.f1,res,units=False)
-       
-    #@unittest.skipIf(vtk is None,'vtk (python-vtk*) not importable')
-    #def test_ioVTK3(self):
-    #    f=self.tmp+'/aa.vtu'
-    #    self.f1.toVTK3(f)
-    #    self.res=self.f1.makeFromVTK3(f,units=self.f1.getUnit(),time=self.f1.getTime())[0]
-    #    self._compareFields(self.f1,self.res)
 
     @unittest.skipIf(meshio is None, 'meshio not importable')
     def test_ioMeshio(self):
