@@ -3,7 +3,7 @@ import pytest
 import tempfile
 from mupif import *
 import mupif as mp
-import math, os
+import math, os, os.path
 import numpy as np
 import astropy.units as au
 
@@ -13,7 +13,7 @@ class TemporalField_TestCase(unittest.TestCase):
     def setUp(self):
         self.tmpdir=tempfile.TemporaryDirectory()
         self.tmp=self.tmpdir.name
-        self.tmp,self.tmpdir='/tmp/aa',None
+        #self.tmp,self.tmpdir='/tmp/aa',None
 
 
         self.mesh = mesh.UnstructuredMesh()
@@ -77,7 +77,7 @@ class TemporalField_TestCase(unittest.TestCase):
         _do(tf1)
         if 1:
             tf2=mp.SingleFileTemporalField(mode='overwrite',h5path=self.tmp+'/single-01.h5')
-            tf2.openStorage()
+            tf2.openData(mode=None)
             _do(tf2)
             tf2.closeData()
        
@@ -97,6 +97,19 @@ class TemporalField_TestCase(unittest.TestCase):
         tf2.openStorage()
         _do(tf2)
         tf2.closeData()
+
+    def test_03_singlefile(self):
+        # save fields into new SingleFileTemporalField
+        h5path=self.tmp+'/single-03.h5'
+        with mp.SingleFileTemporalField(mode='overwrite',h5path=h5path) as tf:
+            for f in self.displ: tf.addField(f,userMetadata={})
+        self.assertTrue(os.path.exists(h5path))
+        # open the field again, see that we can access stored fields
+        with mp.SingleFileTemporalField(mode='readonly',h5path=h5path) as tf:
+            pos=(.1,.1,0)
+            self.assertEqual(tf.evaluate(time=1*au.s,positions=pos),self.displ[1].evaluate(positions=pos))
+            self.assertEqual(set(tf.timeList()),set([f.getTime() for f in self.displ]))
+            tf.writeXdmf(timeUnit=au.Unit('ms'))
 
 
 if __name__=='__main__':
