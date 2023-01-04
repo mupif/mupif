@@ -48,9 +48,9 @@ class OOFEMTestWorkflow(mupif.Workflow):
         self.daemon.register(inp_file_t)
         self.getModel('thermal').set(inp_file_t)
 
-        # inp_file_m = mupif.PyroFile(filename='./testm.oofem.in', mode="rb", dataID=mupif.DataID.ID_InputFile)
-        # self.daemon.register(inp_file_m)
-        # self.getModel('mechanical').set(inp_file_m)
+        inp_file_m = mupif.PyroFile(filename='./testm.oofem.in', mode="rb", dataID=mupif.DataID.ID_InputFile)
+        self.daemon.register(inp_file_m)
+        self.getModel('mechanical').set(inp_file_m)
 
     # get method for all external outputs
     def get(self, objectTypeID, time=None, objectID=''):
@@ -60,8 +60,8 @@ class OOFEMTestWorkflow(mupif.Workflow):
         self.getModel('thermal').solveStep(tstep)
         self.getModel('thermal').finishStep(tstep)
 
-        # self.getModel('mechanical').solveStep(tstep)
-        # self.getModel('mechanical').finishStep(tstep)
+        self.getModel('mechanical').solveStep(tstep)
+        self.getModel('mechanical').finishStep(tstep)
 
 
 if __name__ == '__main__':

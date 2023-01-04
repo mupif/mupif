@@ -23,20 +23,20 @@ if __name__ == "__main__":
     daemon.register(inp_file_t)
     ot.set(inp_file_t)
 
-    # om = oofem.OOFEM()
-    # ot.initialize(metadata=md)
-    # inp_file_m = mp.PyroFile(filename='./testm.oofem.in', mode="rb", dataID=mp.DataID.ID_InputFile)
-    # daemon.register(inp_file_m)
-    # om.set(inp_file_m)
+    om = oofem.OOFEM()
+    om.initialize(metadata=md)
+    inp_file_m = mp.PyroFile(filename='./testm.oofem.in', mode="rb", dataID=mp.DataID.ID_InputFile)
+    daemon.register(inp_file_m)
+    om.set(inp_file_m)
 
     dt = 0.1
     targetTime = 1.
     for istep in range(10):
         t = istep * dt
         ts = mp.TimeStep(time=t, dt=dt, targetTime=targetTime, unit=mp.U.s, number=istep)
-
+        print("\n==============================\nThermal task:")
         ot.solveStep(ts)
         ot.finishStep(ts)
-
-        # om.solveStep(ts)
-        # om.finishStep(ts)
+        print("\n==============================\nMechanical task:")
+        om.solveStep(ts)
+        om.finishStep(ts)

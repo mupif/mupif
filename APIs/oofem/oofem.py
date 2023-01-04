@@ -138,7 +138,10 @@ class OOFEM(mp.Model):
                     self.oofem_pb = oofempy.InstanciateProblem(dr, oofempy.problemMode.processor, 0, None, False)
                     self.oofem_pb.checkProblemConsistency()
                     self.oofem_mesh = self.oofem_pb.giveDomain(1)
-                    print("Imported %d node and %d elements" % (self.oofem_mesh.giveNumberOfDofManagers(), self.oofem_mesh.giveNumberOfElements()))
+                    self.oofem_pb.init()
+                    self.oofem_pb.postInitialize()
+                    activeMStep = self.oofem_pb.giveMetaStep(1)
+                    self.oofem_pb.initMetaStepAttributes(activeMStep)
 
         if obj.isInstance(mp.Field):
             """
