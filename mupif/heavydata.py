@@ -80,28 +80,33 @@ class Hdf5RefQuantity(RefQuantity):
     #    if not isinstance(self.value,type(property5py.Dataset,Hdf5RefQuantity.ValueRowAccessor))
 
     def _ensureData(self):
-        if self.dataset is None: raise ValueError('Dataset not allocated yet.')
+        if self.dataset is None:
+            raise ValueError('Dataset not allocated yet.')
 
     @property
     def value(self):
         self._ensureData()
-        if len(self.dataset.shape)>1: return Hdf5RefQuantity.ValueRowAccessor(self)
+        if len(self.dataset.shape) > 1:
+            return Hdf5RefQuantity.ValueRowAccessor(self)
         return self.dataset
 
     @property
     def quantity(self):
         self._ensureData()
-        if len(self.dataset.shape)>1: return Hdf5RefQuantity.QuantityRowAccessor(self)
+        if len(self.dataset.shape) > 1:
+            return Hdf5RefQuantity.QuantityRowAccessor(self)
         return self.dataset
 
     @property
     def unit(self):
         self._ensureData()
         return units.Unit(self.dataset.attrs['unit'])
+
     @property
     def ndim(self):
         self._ensureData()
         return self.dataset.ndim
+
     @property
     def shape(self):
         self._ensureData()
@@ -138,12 +143,12 @@ class HeavyDataBase(MupifObject):
     h5uri: typing.Optional[str] = None
     mode: HeavyDataBase_ModeChoice = 'readonly'
 
-    def __init__(self,**kw):
+    def __init__(self, **kw):
         super().__init__(**kw)  # calls the real ctor
-        self._h5obj = None # _h5obj # normally assigned in openStorage
+        self._h5obj = None  # _h5obj # normally assigned in openStorage
         self.pyroIds = []
         if self.h5uri is not None:
-            log.warning(f'HDF5 transfer: starting…\n')
+            log.info(f'HDF5 transfer: starting…\n')
             uri = Pyro5.api.URI(self.h5uri)
             remote = Pyro5.api.Proxy(uri)
             # sys.stderr.write(f'Remote is {remote}\n')
@@ -157,7 +162,7 @@ class HeavyDataBase(MupifObject):
             atexit.register(_try_unlink)
             log.debug(f'Temporary is {self.h5path}, will be deleted via atexit handler.')
             PyroFile.copy(remote, self.h5path)
-            log.warning(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
+            log.info(f'HDF5 transfer: finished, {os.stat(self.h5path).st_size} bytes.\n')
             # local copy is not the original, the URI is no longer valid
             self.h5uri = None
 
@@ -193,7 +198,8 @@ class HeavyDataBase(MupifObject):
         """
         Overrides Dumpable.deepcopy, enriching it with copy of the backing HDF5 file; it should correctly detect whether the call is local or remote.
         """
-        if self._h5obj: raise RuntimeError(f'HDF5 file {self.h5path} open (must be closed before deepcopy).')
+        if self._h5obj:
+            raise RuntimeError(f'HDF5 file {self.h5path} open (must be closed before deepcopy).')
         # local
         if Pyro5.callcontext.current_context.client is None:
             fd, h5path_new = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp', text=False)
@@ -277,7 +283,8 @@ class HeavyDataBase(MupifObject):
 
     def exposeData(self):
         """
-        If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well. This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataBase` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
+        If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well.
+        This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataBase` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
         """
         if self._h5obj:
             raise RuntimeError('Cannot expose open HDF5 file. Call closeData() first.')
@@ -334,12 +341,12 @@ class HeavyDataBase(MupifObject):
             log.warning('Repacking HDF5 file failed, unrepacked version was retained.')
 
 
-HeavyDataBase.ModeChoice=HeavyDataBase_ModeChoice
+HeavyDataBase.ModeChoice = HeavyDataBase_ModeChoice
 
 
-class Hdf5OwningRefQuantity(Hdf5RefQuantity,HeavyDataBase):
-    'Quantity stored in HDF5 dataset, managing the HDF5 file itself.'
-    h5loc: str='/quantity'
+class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
+    """Quantity stored in HDF5 dataset, managing the HDF5 file itself."""
+    h5loc: str = '/quantity'
 
     def __init__(self, **kw):
         super().__init__(**kw)
