@@ -1,0 +1,65 @@
+{
+    "ClassName": "MUPIF_M_demo",
+    "ModuleName": "mupif_demo_mechanical",
+    "Name": "MUPIF demo API mechanical",
+    "ID": "MUPIF_Mechanical_demo",
+    "Description": "MUPIF mechanical demo solver",
+    "Version_date": "1.0.0, Jan 2023",
+    "Inputs": [
+        {
+            "Name": "temperature",
+            "Type_ID": "mupif.DataID.FID_Temperature",
+            "Type": "mupif.Field",
+            "Units": "degC",
+            "Required": true,
+            "Set_at": "timestep"
+        }
+    ],
+    "Outputs": [
+        {
+            "Name": "displacement",
+            "Type_ID": "mupif.DataID.FID_Displacement",
+            "Type": "mupif.Field",
+            "Units": "m"
+        },
+        {
+            "Name": "max vertical displacement",
+            "Type": "mupif.Property",
+            "Type_ID": "mupif.DataID.PID_maxDisplacement",
+            "Units": "m",
+            "Obj_ID": "max_displacement",
+            "ValueType": "Scalar"
+        }
+    ],
+    "Solver": {
+        "Software": "MUPIF",
+        "Type": "Finite elements",
+        "Accuracy": "High",
+        "Sensitivity": "Low",
+        "Complexity": "High",
+        "Robustness": "High",
+        "Estim_time_step_s": 1,
+        "Estim_comp_time_s": 1,
+        "Estim_execution_cost_EUR": 0.01,
+        "Estim_personnel_cost_EUR": 0.01,
+        "Required_expertise": "None",
+        "Language": "Python",
+        "License": "LGPL",
+        "Creator": "Borek Patzak",
+        "Version_date": "1.0.0, Jan 2023",
+        "Documentation": "mupif.org"
+    },
+    "Physics": {
+        "Type": "Continuum",
+        "Entity": "Other",
+        "Equation": [],
+        "Equation_quantities": [],
+        "Relation_description": [],
+        "Relation_formulation": [],
+        "Representation": "Finite elements"
+    },
+    "Execution_settings": {
+        "Type": "Distributed",
+        "jobManName": "MUPIF_Mechanical_demo"
+    }
+}
