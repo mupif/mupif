@@ -7,31 +7,37 @@ import math
 
 
 class GaussIntegrationRule_TestCase(unittest.TestCase):        
-# Testing getIntegrationPoints
+    # Testing getIntegrationPoints
     def test_getIntegrationPoints(self):
-        ### test Trangle with
+        # ## test Trangle with
         rule = integrationrule.GaussIntegrationRule()
         cgt = cellgeometrytype.CGT_TRIANGLE_1
-        #one integration point
-        self.assertTrue(rule.getIntegrationPoints(cgt,1) == [((0.333333333333, 0.333333333333), 0.5)])
+        # one integration point
+        self.assertTrue(rule.getIntegrationPoints(cgt, 1) == [((0.333333333333, 0.333333333333), 0.5)])
         # three integration point
-        self.assertTrue(rule.getIntegrationPoints(cgt,3) == [((0.166666666666667, 0.166666666666667),  0.166666666666667),
-                              ((0.666666666666667, 0.166666666666667),  0.166666666666667),
-                              ((0.166666666666667, 0.666666666666667),  0.166666666666667)])
+        self.assertTrue(rule.getIntegrationPoints(cgt, 3) == [
+            ((0.166666666666667, 0.166666666666667),  0.166666666666667),
+            ((0.666666666666667, 0.166666666666667),  0.166666666666667),
+            ((0.166666666666667, 0.666666666666667),  0.166666666666667)
+        ])
         # four integration point
-        self.assertTrue(rule.getIntegrationPoints(cgt,4) == [((0.333333333333333, 0.333333333333333), -0.281250000000000),
-                               ((0.200000000000000, 0.600000000000000),  0.260416666666667),
-                               ((0.200000000000000, 0.200000000000000),  0.260416666666667),
-                               ((0.600000000000000, 0.200000000000000),  0.260416666666667)])
-        ### test Quad
+        self.assertTrue(rule.getIntegrationPoints(cgt, 4) == [
+            ((0.333333333333333, 0.333333333333333), -0.281250000000000),
+            ((0.200000000000000, 0.600000000000000),  0.260416666666667),
+            ((0.200000000000000, 0.200000000000000),  0.260416666666667),
+            ((0.600000000000000, 0.200000000000000),  0.260416666666667)
+        ])
+        # ## test Quad
         cgt = cellgeometrytype.CGT_QUAD
-        #one integration point
-        self.assertTrue(rule.getIntegrationPoints(cgt,1) == [((0.0, 0.0), 4.0)])
-        #one integration point
-        self.assertTrue(rule.getIntegrationPoints(cgt,4) == [(( 0.577350269189626,  0.577350269189626), 1),
-                               ((-0.577350269189626,  0.577350269189626), 1),
-                               ((-0.577350269189626, -0.577350269189626), 1),
-                               (( 0.577350269189626, -0.577350269189626), 1)])
+        # one integration point
+        self.assertTrue(rule.getIntegrationPoints(cgt, 1) == [((0.0, 0.0), 4.0)])
+        # one integration point
+        self.assertTrue(rule.getIntegrationPoints(cgt, 4) == [
+            ((0.577350269189626,  0.577350269189626), 1),
+            ((-0.577350269189626,  0.577350269189626), 1),
+            ((-0.577350269189626, -0.577350269189626), 1),
+            ((0.577350269189626, -0.577350269189626), 1)])
+
     def test_getRequiredNumberOfPoints(self):
         rule = integrationrule.GaussIntegrationRule()
         cgt = cellgeometrytype.CGT_TRIANGLE_1
@@ -51,7 +57,8 @@ class GaussIntegrationRule_TestCase(unittest.TestCase):
         self.assertTrue(rule.getRequiredNumberOfPoints(cgt, 6) == 7)
         self.assertTrue(rule.getRequiredNumberOfPoints(cgt, 7) == 8)
         self.assertTrue(rule.getRequiredNumberOfPoints(cgt, 8) == -1)
-        
-# python test_Cell.py for stand-alone test being run
-if __name__=='__main__': unittest.main()
 
+
+# python test_Cell.py for stand-alone test being run
+if __name__ == '__main__':
+    unittest.main()
