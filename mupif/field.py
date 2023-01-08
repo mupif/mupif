@@ -787,11 +787,12 @@ class Field(FieldBase):
             # print(f.getFieldIDName(),dta.shape)
         return meshio.Mesh(points, cells_list, point_data, cell_data)
 
+    @staticmethod
     def makeFromMeshioMesh(
-            input: typing.Union[str,meshio.Mesh],  # could also be buffer, is that useful?
-            unit: dict[str, Unit],  # maps field name to Unit
-            time: Quantity = Quantity(value=0, unit='s')
-        ) -> typing.List[Field]:
+        input: typing.Union[str, meshio.Mesh],  # could also be buffer, is that useful?
+        unit: dict[str, Unit],  # maps field name to Unit
+        time: Quantity = Quantity(value=0, unit='s')
+    ) -> typing.List[Field]:
         if isinstance(input, str):
             input = meshio.read(input)
         msh = mesh.Mesh.makeFromMeshioPointsCells(input.points, input.cells)
@@ -801,9 +802,20 @@ class Field(FieldBase):
                 # reshape scalar array saved as 1D
                 if len(values.shape) == 1:
                     values = np.reshape(values, (-1, 1))
+                data_id = None
+                try:
+                    data_id = DataID[fname]
+                except:
+                    pass
+                if data_id is None:
+                    try:
+                        data_id = DataID['FID_'+fname]
+                    except:
+                        pass
+
                 ret.append(Field(
                     mesh=msh,
-                    fieldID=DataID[fname],
+                    fieldID=data_id,
                     unit=unit.get(fname, None),
                     time=time,
                     valueType=mupifquantity.ValueType.fromNumberOfComponents(values.shape[1]),
