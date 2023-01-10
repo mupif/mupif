@@ -7,15 +7,22 @@
     "Version_date": "1.0.0, Jan 2023",
     "Inputs": [
         {
-            "Name": "edge temperature",
+            "Name": "top edge temperature",
             "Type": "mupif.Property",
             "Required": true,
             "Type_ID": "mupif.DataID.PID_Temperature",
             "Units": "deg_C",
-            "Obj_ID": [
-                "temperature_top",
-                "temperature_bottom"
-            ],
+            "Obj_ID": "temperature_top",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        },
+        {
+            "Name": "bottom edge temperature",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.PID_Temperature",
+            "Units": "deg_C",
+            "Obj_ID": "temperature_bottom",
             "Set_at": "timestep",
             "ValueType": "Scalar"
         }
