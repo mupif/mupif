@@ -8,7 +8,7 @@ import h5py
 import Pyro5.api
 # metadata support
 # from .mupifobject import MupifObject
-from . import units, pyroutil, dumpable
+from . import units, pyroutil, dumpable, field
 from . import dataid
 from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice
 from .pyrofile import PyroFile
@@ -20,6 +20,8 @@ import os
 import pydantic
 import subprocess
 import shutil
+import itertools
+import numbers
 log = logging.getLogger(__name__)
 
 sampleSchemas_json = '''
@@ -295,6 +297,17 @@ sampleSchemas_json = '''
     }
 ]
 '''
+
+## XXX: field utility functions
+
+def _mupif_to_hdf5_group__return_index(*,grp,obj):
+    assert isinstance(obj,field.Field)
+    return obj.toHdf5(h5group=grp)
+
+def _mupif_from_hdf5_group(*,grp,index):
+    return field.Field.makeFromHdf5(h5group=grp,indices=[index])[0]
+
+
 def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', namingConvention='get-set'):
     __doc0__ = '''
     Transform dictionary-structured data schema into context access types.
@@ -385,6 +398,14 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
         'Turn the first letter into uppercase'
         return k[0].upper()+k[1:]
 
+    def setEntireDatasetRow_changeOneItem(*,ds,row,fq,val):
+        # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
+        # direct assignment does not work; must read the whole row, modify, write it back
+        # see https://stackoverflow.com/q/67192725/761090 and https://stackoverflow.com/q/67451714/761090
+        rowdata=ds[row]
+        # rowdata[ds.dtype.names.index(fq)]=val # this does not seem to be needed (anymore?)
+        rowdata[fq]=val
+        ds[row]=rowdata
     def addAccessors(meth,attr,getter,setter=None):
         if namingConvention=='get-set':
             meth['get'+capitalize(attr)]=getter
@@ -519,6 +540,43 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
                     if self.row is not None: self.ctx.dataset[fq,self.row]=str2num[val]
                     else: self.ctx.dataset[fq]=np.full(self.ctx.dataset.shape[0],str2num[val])
                 addAccessors(meth,key,getter,setter)
+            elif 'mupifType' in val: ## XXX experimental
+                dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
+                if issubclass(dtype.type,numbers.Integral): ndim=0
+                elif issubclass(h5py.check_vlen_dtype(dtype).type,numbers.Integral): ndim=1
+                else: raise ValueError(f'{fq}: dtype must be integral type, or variable-length integral type')
+                ret.dtypes+=[(fq,dtype)]
+                mupifObjectGrp='mupif-obj'
+                def getter(self,*,fq=fq,dtype=dtype,ndim=ndim):
+                    if self.row is None:
+                        raise NotImplementedError(f'{fq}: broadcasting.')
+                    if ndim==0:
+                        index=self.ctx.dataset[self.row,fq]
+                        grp=self.ctx.h5group[mupifObjectGrp]
+                        return _mupif_from_hdf5_group(grp=grp,index=index)
+                    else:
+                        assert ndim==1
+                        return [_mupif_from_hdf5_group(grp=self.ctx.h5group[mupifObjectGrp],index=ix) for ix in np.array(self.ctx.dataset[self.row,fq])]
+                def setter(self,val,metadata={},*,dtype=dtype,fq=fq,ndim=ndim):
+                    if self.row is None: raise NotImplementedError(f'{fq}: broadcasting.')
+                    if mupifObjectGrp not in self.ctx.h5group: self.ctx.h5group.create_group(mupifObjectGrp)
+                    if ndim==0:
+                        index=_mupif_to_hdf5_group__return_index(grp=self.ctx.h5group[mupifObjectGrp],obj=val)
+                        self.ctx.dataset[self.row,fq]=index
+                    else:
+                        assert ndim==1
+                        indices=np.array([_mupif_to_hdf5_group__return_index(grp=self.ctx.h5group[mupifObjectGrp],obj=v) for v in val])
+                        setEntireDatasetRow_changeOneItem(ds=self.ctx.dataset,row=self.row,fq=fq,val=indices.astype(h5py.check_vlen_dtype(dtype)))
+                def appender(self,val,*,dtype=dtype,ndim=ndim,fq=fq):
+                    assert ndim==1
+                    if mupifObjectGrp not in self.ctx.h5group: self.ctx.h5group.create_group(mupifObjectGrp)
+                    newIx=_mupif_to_hdf5_group__return_index(grp=self.ctx.h5group[mupifObjectGrp],obj=val)
+                    indices=np.array(self.ctx.dataset[self.row,fq].tolist()+[newIx])
+                    setEntireDatasetRow_changeOneItem(ds=self.ctx.dataset,row=self.row,fq=fq,val=indices.astype(h5py.check_vlen_dtype(dtype)))
+                addAccessors(meth,key,getter,setter)
+                if ndim==1:
+                    assert namingConvention=='get-set'
+                    meth['append'+capitalize(key)]=appender
             # normal data attribute
             elif 'dtype' in val:
                 dtype,unit,default,doc=dtypeUnitDefaultDoc(val)
@@ -575,16 +633,10 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
                     #_T_assertWritable(self,f"when setting the value of '{fq}'")
                     val=_cookValue(val,unit=unit,dtype=dtype,basedtype=basedtype,delim=delim,isJson=isJson)
                     #sys.stderr.write(f'{fq}: wholeRow setting {repr(val)}\n')
-                    # workaround for bugs in h5py: for variable-length fields, and dim>1 subarrays:
-                    # direct assignment does not work; must read the whole row, modify, write it back
-                    # see https://stackoverflow.com/q/67192725/761090 and https://stackoverflow.com/q/67451714/761090
                     # kind=='O' covers h5py.vlen_dtype and strings (h5py.string_dtype) with variable length
                     if self.row is None: raise NotImplementedError('Broadcasting to variable-length fields or multidimensional subarrays not yet implemented.')
-                    rowdata=self.ctx.dataset[self.row]
+                    setEntireDatasetRow_changeOneItem(ds=self.ctx.dataset,row=self.row,fq=fq,val=val)
                     #log.error(f'{rowdata=}')
-                    rowdata[self.ctx.dataset.dtype.names.index(fq)]=val
-                    #log.error(f'{rowdata=}')
-                    self.ctx.dataset[self.row]=rowdata
                 addAccessors(meth,key,getter,(setter_wholeRow if (dtype.kind=='O' or dtype.ndim>1) else setter_direct))
             elif 'schema' in val:
                 schema,path=val['schema'],val.get('path','{NAME}/{ROW}/')

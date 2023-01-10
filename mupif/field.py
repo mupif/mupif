@@ -48,6 +48,8 @@ from enum import IntEnum
 import pydantic
 import pickle
 import logging
+import itertools
+import os.path
 from .units import Unit
 log = logging.getLogger()
 
@@ -107,18 +109,8 @@ class FieldBase(mupifquantity.MupifQuantity):
         """
         return self.time
 
-    def getUnit(self) -> Unit:
-        """
-        Returns representation of property units.
-        """
-        return self.units
-
     @pydantic.validate_arguments
-    def evaluate(
-            self,
-            positions,
-            eps: float = 0.0
-        ):
+    def evaluate(self, positions, eps: float = 0.0):
         """
         Evaluates the receiver at given spatial position(s).
 
@@ -148,13 +140,21 @@ class AnalyticalField(FieldBase):
                 typing.List[typing.Tuple[float, float]],  # list of 2d coords
                 typing.Tuple[float, float, float],  # single 3d coords
                 typing.Tuple[float, float],  # single 2d coord
-                NumpyArray
+                NumpyArray,
+                Quantity
             ],
             eps: float = 0.0):
+        if isinstance(positions, Quantity):
+            if self.mesh.unit is not None:
+                positions = positions.to(self.mesh.unit).value
+            else:
+                raise RuntimeError(f'position has unit "{positions.unit}", but mesh has no unit defined.')
         import numexpr as ne
         loc = dict(x=positions[..., 0], y=positions[..., 1])
-        if self.dim == 2: loc['xy'] = positions
-        if self.dim == 3: loc.update({'z': positions[..., 2], 'xyz': positions})
+        if self.dim == 2:
+            loc['xy'] = positions
+        if self.dim == 3:
+            loc.update({'z': positions[..., 2], 'xyz': positions})
         return self.quantity.unit*ne.evaluate(self.expr, loc)
 
 
@@ -176,6 +176,11 @@ class Field(FieldBase):
     mesh: mesh.Mesh
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
+
+    def __repr__(self): return str(self)
+
+    def __str__(self):
+        return f'<{self.__class__.__module__}.{self.__class__.__name__} at {hex(id(self))}, {self.getFieldIDName()}, time={self.getTime()}, unit={str(self.quantity.unit)}, dim={"×".join([str(s) for s in self.quantity.shape]) if self.quantity.ndim>0 else "scalar"}, mesh={str(self.mesh)} >'
 
     def __init__(self, **kw):
         super().__init__(**kw)  # this calls the real ctor
@@ -280,7 +285,9 @@ class Field(FieldBase):
                 typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
                 typing.List[typing.Tuple[float, float]],  # list of 2d coords
                 typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float]  # single 2d coord
+                typing.Tuple[float, float],  # single 2d coord
+                NumpyArray,
+                Quantity,
             ],
             eps: float = 0.0):
         """
@@ -313,11 +320,18 @@ class Field(FieldBase):
 
         .. note:: This method has some issues related to https://sourceforge.net/p/mupif/tickets/22/ .
         """
+        if isinstance(position, Quantity):
+            if self.mesh.unit is None:
+                raise RuntimeError(f'position has unit "{position.unit}" but mesh has no unit defined.')
+            position = position.to(self.mesh.unit).value
+
         cells = self.mesh.getCellLocalizer().getItemsInBBox(bbox.BBox([c-eps for c in position], [c+eps for c in position]))
-        # localizer in the newer version returns cell id, not the cell object, check that here
-        if isinstance(next(iter(cells)), int): cells = [self.mesh.getCell(ic) for ic in cells]
         # answer=None
         if len(cells):
+            # localizer in the newer version returns cell id, not the cell object, check that here
+            if isinstance(next(iter(cells)), int):
+                cells = [self.mesh.getCell(ic) for ic in cells]
+
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
                     try:
@@ -351,8 +365,10 @@ class Field(FieldBase):
                 answer = []
                 for icell in cells:
                     if icell.containsPoint(position):
-                        if debug: log.debug(icell.getVertices())
-                        try: answer.append(self.value[icell.number])
+                        if debug:
+                            log.debug(icell.getVertices())
+                        try:
+                            answer.append(self.value[icell.number])
                         except IndexError:
                             log.error('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                             log.error(icell.getVertices())
@@ -436,19 +452,17 @@ class Field(FieldBase):
             tensor.append(numpy.reshape(i, (3, 3)))
         return tensor
 
-    def plot2D(self, plane="xy", title=None, fieldComponent=0, warpField=None, warpScale=0., fileName=None, show=0, colorbar='horizontal'):
+    def plot2D(self, plane="xy", title=None, fieldComponent=0, warpField=None, warpScale=0., fileName=None, show=False, colorbar='horizontal'):
         """ 
         Plots and/or saves 2D image using a matplotlib library. Works for structured and unstructured 2D/3D fields. 2D/3D fields need to define plane. This method gives only basic viewing options, for aesthetic and more elaborated output use e.g. VTK field export with 
         postprocessors such as ParaView or Mayavi. Idea from https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html#id1
 
         :param str plane: what plane to extract from field, valid values are 'xy', 'xz', 'yz'
         :param int fieldComponent: component of the field
-        :param bool vertex: if vertices shoud be plot as points
-        :param str colorBar: color bar details. Valid values '' for no colorbar, 'vertical' or 'horizontal'  
+        :param str colorbar: color bar details. Valid values '' for no colorbar, 'vertical' or 'horizontal'
         :param str title: title
         :param str fileName: if nonempty, a filename is written to the disk, usually png, pdf, ps, eps and svg are supported
         :param bool show: if the plot should be showed
-        :param tuple figsize: size of canvas in inches. Affects only showing a figure. Image to a file adjust one side automatically.
         :param Field warpField: vector field to wrap geometry
         :param float warpScale: warping scale
         :return: handle to matplotlib figure
@@ -549,132 +563,227 @@ class Field(FieldBase):
         plt.ioff()
         plt.show(block=True)
 
-    def toHdf5(self, fileName, group='component1/part1'):
+    def dataDigest(self):
+        return mupifquantity.MupifQuantity.dataDigest(self, np.array([self.time.value]), np.frombuffer(bytes(self.time.unit), dtype=np.uint8))
+
+    def toHdf5_split_files(self, fieldPrefix: str, meshPrefix: str, flat=True, heavy=False):
+        import h5py
+        import shutil
+        fDigest = self.dataDigest()
+        mDigest = self.getMesh().dataDigest()
+        for p in (fieldPrefix, meshPrefix):
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+        fOut, mOut = fieldPrefix+fDigest, meshPrefix+mDigest
+        fg5, mg5 = None, None
+        if not os.path.exists(fOut):
+            fg5 = h5py.File(fOut, 'w', libver='latest')
+            if not flat:
+                fg5 = fg5.create_group(f'fields/{fDigest}')
+        if not os.path.exists(mOut):
+            if not heavy:
+                mg5 = h5py.File(mOut, 'w', libver='latest')
+                if not flat:
+                    mg5.create_group(f'meshes/{mDigest}')
+            else:
+                mOutTmp = mOut+'~heavy~'
+                from . import heavymesh
+                with heavymesh.HeavyUnstructuredMesh(h5path=mOutTmp, mode='overwrite') as hMesh:
+                    hMesh.fromMeshioMesh(self.getMesh().toMeshioMesh())
+                    mDigest = hMesh.dataDigest()
+                mOut = meshPrefix+mDigest
+                shutil.move(mOutTmp, mOut)
+        self._to_hdf5_groups(fg5, mg5, heavy=heavy)
+        return {'field': fDigest, 'mesh': mDigest}
+
+    def _to_hdf5_groups(self, fg, mg, heavy, meshLink=None):
+        if mg is not None:
+            self.getMesh().toHdf5Group(mg)
+        if fg is not None:
+            self.toHdf5Group(fg, meshLink=None)
+
+    def toHdf5(self, fileName: str = None, groupName='component1/part1', h5group=None):
         r"""
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
 
         :param str fileName: HDF5 file
-        :param str group: HDF5 group the data will be saved under.
+        :param str groupName:
+        :param str h5group: HDF5 group the data will be saved under.
 
         The HDF hierarchy is like this::
 
             group
               |
-              +--- mesh_01 {hash=25aa0aa04457}
+              +--- meshes
+              |   +----25aa0aa04457
+              |   |   +--- [vertex_coords]
+              |   |   +--- [cell_types]
+              |   |   \--- [cell_vertices]
+              |   +--- 17809e2b86ea
               |      +--- [vertex_coords]
               |      +--- [cell_types]
               |      \--- [cell_vertices]
-              +--- mesh_02 {hash=17809e2b86ea}
-              |      +--- [vertex_coords]
-              |      +--- [cell_types]
-              |      \--- [cell_vertices]
-              +--- ...
-              +--- field_01
-              |      +--- -> mesh_01
-              |      \--- [vertex_values]
-              +--- field_02
-              |      +--- -> mesh_01
-              |      \--- [vertex_values]
-              +--- field_03
-              |      +--- -> mesh_02
-              |      \--- [cell_values]
-              \--- ...
+              +--- fields
+                 +--- 1
+                 |   +--- -> meshes/25aa0aa04457
+                 |   \--- [vertex_values]
+                 +--- 2
+                 |   +--- -> meshes/17809e2b86ea
+                 |   \--- [vertex_values]
+                 +--- 3
+                     +--- -> meshes/17809e2b86ea
+                     \--- [cell_values]
+
 
         where ``plain`` names are HDF (sub)groups, ``[bracketed]`` names are datasets, ``{name=value}`` are HDF attributes, ``->`` prefix indicated HDF5 hardlink (transparent to the user); numerical suffixes (``_01``, ...) are auto-allocated. Mesh objects are hardlinked using HDF5 hardlinks if an identical mesh is already stored in the group, based on hexdigest of its full data.
 
         .. note:: This method has not been tested yet. The format is subject to future changes.
         """
         import h5py
-        hdf = h5py.File(fileName, 'a', libver='latest')
-        if group not in hdf:
-            gg = hdf.create_group(group)
+        if fileName is not None:
+            if h5group is not None:
+                raise ValueError('Only one of *fileName* and *h5group* may be given (not both).')
+            hdf = h5py.File(fileName, 'a', libver='latest')
+            if groupName not in hdf:
+                gg = hdf.create_group(groupName)
+            else:
+                gg = hdf[groupName]
+        elif h5group is not None:
+            gg = h5group
         else:
-            gg = hdf[group]
+            raise ValueError('One of *fileName* or *h5group* must be given.')
         # raise IOError('Path "%s" is already used in "%s".'%(path,fileName))
 
-        def lowestUnused(trsf, predicate, start=1):
-            """
-            Find the lowest unused index, where *predicate* is used to test for existence, and *trsf* transforms
-            integer (starting at *start* and incremented until unused value is found) to whatever predicate accepts
-            as argument. Lowest transformed value is returned.
-            """
-            import itertools
+        def _lowest(grp, dir, start=1):
             for i in itertools.count(start=start):
-                t = trsf(i)
-                if not predicate(t):
-                    return t
+                if f'{dir}/{i}' not in grp:
+                    return i
         # save mesh (not saved if there already)
-        newgrp = lowestUnused(trsf=lambda i: 'mesh_%02d' % i, predicate=lambda t: t in gg)
-        mh5 = self.getMesh().asHdf5Object(parentgroup=gg, newgroup=newgrp)
+        # groupIndex=_lowest(gg,'meshes')
+        # newgrp=f'meshes/{_lowest(gg,"meshes")}'
+        if 'meshes' not in gg:
+            gg.create_group('meshes')
+        mh5 = self.getMesh().asHdf5Object(parentgroup=gg['meshes'])
 
         if len(self.value) > 0:
-            fieldGrp = hdf.create_group(lowestUnused(trsf=lambda i, group=group: group+'/field_%02d' % i, predicate=lambda t: t in hdf))
-            fieldGrp['mesh'] = mh5
-            fieldGrp.attrs['fieldID'] = self.fieldID
-            fieldGrp.attrs['valueType'] = self.valueType
-            # string/bytes may not contain NULL when stored as string in HDF5
-            # see http://docs.h5py.org/en/2.3/strings.html
-            # that's why we cast to opaque type "void" and uncast using tostring before unpickling
-            fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.getUnit()))
-            fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time))
-            if self.fieldType == FieldType.FT_vertexBased:
-                val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float64)
-                for vert in range(self.getMesh().getNumberOfVertices()):
-                    val[vert] = self.getVertexValue(vert).getValue()
-                fieldGrp['vertex_values'] = val
-            elif self.fieldType == FieldType.FT_cellBased:
-                # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
-                val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
-                for cell in range(self.getMesh().getNumberOfCells()):
-                    val[cell] = self.getCellValue(cell)
-                fieldGrp['cell_values'] = val
-            else:
-                raise RuntimeError("Unknown fieldType %d." % self.fieldType)
-        hdf.close()  # necessary for windows
+            fieldIndex = _lowest(gg, 'fields')
+            fieldGrp = gg.create_group(f'fields/{fieldIndex}')
+            self.toHdf5Group(fieldGrp, meshLink=h5py.SoftLink(mh5.name))
+        if fileName is not None:
+            hdf.close()  # necessary for windows
+        return fieldIndex
+
+    def toHdf5Group(self, fieldGrp, meshLink=None):
+        if meshLink is not None:
+            fieldGrp['mesh'] = meshLink
+        fieldGrp.attrs['fieldID'] = self.fieldID
+        fieldGrp.attrs['valueType'] = self.valueType
+        # string/bytes may not contain NULL when stored as string in HDF5
+        # see http://docs.h5py.org/en/2.3/strings.html
+        # that's why we cast to opaque type "void" and uncast using tostring before unpickling
+        fieldGrp.attrs['unit'] = numpy.void(pickle.dumps(self.getUnit(), protocol=0))
+        fieldGrp.attrs['time'] = numpy.void(pickle.dumps(self.time, protocol=0))
+        if self.fieldType == FieldType.FT_vertexBased:
+            val = numpy.empty(shape=(self.getMesh().getNumberOfVertices(), self.getRecordSize()), dtype=numpy.float64)
+            for vert in range(self.getMesh().getNumberOfVertices()):
+                val[vert] = self.getVertexValue(vert).getValue()
+            subGrp = 'vertex_values'
+            fieldGrp[subGrp] = val
+        elif self.fieldType == FieldType.FT_cellBased:
+            # raise NotImplementedError("Saving cell-based fields to HDF5 is not yet implemented.")
+            val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
+            for cell in range(self.getMesh().getNumberOfCells()):
+                val[cell] = self.getCellValue(cell)
+            subGrp = 'vertex_values'
+            fieldGrp[subGrp] = val
+        else:
+            raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+        # for compatibility with Hdf5RefQuantity
+        fieldGrp[subGrp].attrs['unit'] = str(self.getUnit())
 
     @staticmethod
-    def makeFromHdf5(fileName, group='component1/part1'):
+    def makeFromHdf5_groups(*, fieldGrp, meshGrp=None, meshCache=None, heavy=False):
+        import h5py
+        f=fieldGrp
+        if 'vertex_values' in f:
+            fieldType, valDs = FieldType.FT_vertexBased, f['vertex_values']
+        elif 'cell_values' in f:
+            fieldType, valDs = FieldType.FT_cellBased, f['cell_values']
+        else:
+            raise ValueError("HDF5/mupif format error: unable to determine field type.")
+        fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tobytes(), f.attrs['time'].tobytes()
+        if unit == '':
+            unit = None  # special case, handled at saving time
+        else: unit = pickle.loads(unit)
+        if time == '':
+            time = None  # special case, handled at saving time
+        else:
+            time = pickle.loads(time)
+        if meshGrp is not None:
+            # creates HeavyUnstructuredMesh if that is the meshGrp storage format
+            m = mesh.Mesh.makeFromHdf5Object(meshGrp)
+        else:
+            if 'mesh' not in f:
+                raise ValueError('HDF5/mesh: missing attribute')
+            link = f.get('mesh', getlink=True)
+            assert isinstance(link, h5py.SoftLink)
+            mPath = link.path
+            if mPath not in meshCache:
+                meshCache[mPath] = mesh.Mesh.makeFromHdf5Object(f['mesh'])
+            m = meshCache[mPath]
+        if not heavy:
+            quantity = Quantity(value=np.array(valDs).tolist(), unit=unit)
+        else:
+            from .heavydata import Hdf5RefQuantity, Hdf5OwningRefQuantity
+            # hack
+            if fieldGrp.name == '/':
+                quantity = Hdf5OwningRefQuantity(
+                    h5path=valDs.file.filename,
+                    h5loc=valDs.name,
+                    mode='readonly'
+                )
+                quantity.openData()
+            else:
+                quantity = Hdf5RefQuantity(dataset=valDs)
+        return Field(mesh=m, fieldID=fieldID, quantity=quantity, time=time, valueType=valueType, fieldType=fieldType)
+
+    @staticmethod
+    def makeFromHdf5(*, fileName: str = None, group: str = 'component1/part1', h5group=None, indices: typing.Optional[typing.List[int]] = None):
         """
         Restore Fields from HDF5 file.
 
         :param str fileName: HDF5 file
         :param str group: HDF5 group the data will be read from (IOError is raised if the group does not exist).
         :return: list of new :obj:`Field` instances
+        :param h5group:
+        :param indices:
         :rtype: [Field,Field,...]
-
 
         .. note:: This method has not been tested yet.
         """
         import h5py
-        hdf = h5py.File(fileName, 'r', libver='latest')
-        grp = hdf[group]
+        if fileName is not None:
+            if h5group is not None:
+                raise ValueError('Only one of *fileName* and *h5group* may be given (not both).')
+            hdf = h5py.File(fileName, 'r', libver='latest')
+            grp = hdf[group]
+        elif h5group is not None:
+            grp = h5group
+        else:
+            raise ValueError('One of *fileName*, *h5group* must be given.')
         # load mesh and field data from HDF5
-        meshObjs = [obj for name, obj in grp.items() if name.startswith('mesh_')]
-        fieldObjs = [obj for name, obj in grp.items() if name.startswith('field_')]
+        # if indices is None:
+        if indices is None:
+            fieldObjs = [obj for obj in grp['fields'].values()]
+        else:
+            fieldObjs = [grp[f'fields/{ix}'] for ix in indices]
         # construct all meshes as mupif objects
-        meshes = [mesh.Mesh.makeFromHdf5Object(meshObj) for meshObj in meshObjs]
+        meshes = {}  # maps HDF5 paths to meshes
         # construct all fields as mupif objects
         ret = []
         for f in fieldObjs:
-            if 'vertex_values' in f:
-                fieldType, values = FieldType.FT_vertexBased, numpy.array(f['vertex_values'])
-            elif 'cell_values' in f:
-                fieldType, values = FieldType.FT_cellBased, numpy.array(f['cell_values'])
-            else:
-                raise ValueError("HDF5/mupif format error: unable to determine field type.")
-            fieldID, valueType, unit, time = DataID(f.attrs['fieldID']), f.attrs['valueType'], f.attrs['unit'].tobytes(), f.attrs['time'].tobytes()
-            if unit == '':
-                unit = None  # special case, handled at saving time
-            else:
-                unit = pickle.loads(unit)
-            if time == '':
-                time = None  # special case, handled at saving time
-            else:
-                time = pickle.loads(time)
-           
-            meshIndex = meshObjs.index(f['mesh'])  # find which mesh object this field refers to
-            ret.append(Field(mesh=meshes[meshIndex], fieldID=fieldID, unit=unit, time=time, valueType=valueType, value=values.tolist(), fieldType=fieldType))
-        hdf.close()  # necessary for windows
+            ret.append(Field.makeFromHdf5_groups(fieldGrp=f, meshGrp=None, meshCache=meshes))
+        if fileName is not None:
+            hdf.close()  # necessary for windows
         return ret
 
     def toMeshioMesh(self):
@@ -709,11 +818,12 @@ class Field(FieldBase):
             # print(f.getFieldIDName(),dta.shape)
         return meshio.Mesh(points, cells_list, point_data, cell_data)
 
+    @staticmethod
     def makeFromMeshioMesh(
-            input: typing.Union[str,meshio.Mesh],  # could also be buffer, is that useful?
-            unit: dict[str, Unit],  # maps field name to Unit
-            time: Quantity = Quantity(value=0, unit='s')
-        ) -> typing.List[Field]:
+        input: typing.Union[str, meshio.Mesh],  # could also be buffer, is that useful?
+        unit: dict[str, Unit],  # maps field name to Unit
+        time: Quantity = Quantity(value=0, unit='s')
+    ) -> typing.List[Field]:
         if isinstance(input, str):
             input = meshio.read(input)
         msh = mesh.Mesh.makeFromMeshioPointsCells(input.points, input.cells)
@@ -723,9 +833,20 @@ class Field(FieldBase):
                 # reshape scalar array saved as 1D
                 if len(values.shape) == 1:
                     values = np.reshape(values, (-1, 1))
+                data_id = None
+                try:
+                    data_id = DataID[fname]
+                except:
+                    pass
+                if data_id is None:
+                    try:
+                        data_id = DataID['FID_'+fname]
+                    except:
+                        pass
+
                 ret.append(Field(
                     mesh=msh,
-                    fieldID=DataID[fname],
+                    fieldID=data_id,
                     unit=unit.get(fname, None),
                     time=time,
                     valueType=mupifquantity.ValueType.fromNumberOfComponents(values.shape[1]),

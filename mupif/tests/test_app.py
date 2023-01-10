@@ -1,15 +1,12 @@
+import unittest
 import sys
 sys.path.append('../..')
-
-import unittest
 import mupif
-from mupif import *
-from mupif.tests import demo
 
 
 class TestApp(unittest.TestCase):
     def setUp(self):
-        self.app1, self.app2 = demo.AppCurrTime(), demo.AppPropAvg()
+        self.app1, self.app2 = mupif.tests.demo.AppCurrTime(), mupif.tests.demo.AppPropAvg()
 
     def test_app(self):
         app1, app2 = self.app1, self.app2
@@ -27,18 +24,18 @@ class TestApp(unittest.TestCase):
                 time = targetTime
             timestepnumber = timestepnumber+1
             # create a time step
-            istep = timestep.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mupif.U.s, number=timestepnumber)
+            istep = mupif.TimeStep(time=time, dt=dt, targetTime=targetTime, unit=mupif.U.s, number=timestepnumber)
 
             # solve problem 1
             app1.solveStep(istep)
             # request Concentration property from app1
-            c = app1.get(DataID.PID_Concentration, app2.getAssemblyTime(istep))
+            c = app1.get(mupif.DataID.PID_Concentration, app2.getAssemblyTime(istep))
             # register Concentration property in app2
             app2.set(c)
             # solve second sub-problem 
             app2.solveStep(istep)
             # get the averaged concentration
-            prop = app2.get(DataID.PID_CumulativeConcentration, time*mupif.Q.s)
+            prop = app2.get(mupif.DataID.PID_CumulativeConcentration, time*mupif.Q.s)
             print(f"Time: {istep.getTime().getValue()} concentraion {c.getValue(istep.getTime())}, running average {prop.getValue(istep.getTime())}")
         self.assertAlmostEqual(prop.getValue(istep.getTime()), 0.55)
 

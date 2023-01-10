@@ -60,6 +60,9 @@ class Cell(dumpable.Dumpable):
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(number={self.number}{", label="+str(self.label) if self.label is not None else ""}, vertices={str(self.vertices)})'
+
     def __init__(self, *, mesh=None, **kw):
         super().__init__(**kw)
         #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized
@@ -153,16 +156,16 @@ class Cell(dumpable.Dumpable):
             return self._bbox
             # pass
 
-        vertCoords=np.array([self.mesh.getVertex(vertId).coords for vertId in self.vertices])
-        mn,mx=np.min(vertCoords,axis=0),np.max(vertCoords,axis=0)
-        #print(f'{mn=} {mx=} {vertCoords=}')
+        vertCoords = np.array([self.mesh.getVertex(vertId).coords for vertId in self.vertices])
+        mn, mx = np.min(vertCoords, axis=0), np.max(vertCoords, axis=0)
+        # print(f'{mn=} {mx=} {vertCoords=}')
         if relPad:
-            sz=mx-mn
-            sz[sz==0]=np.max(sz) # replace zero size by maximum for the purposes of padding
-            mn-=relPad*sz
-            mx+=relPad*sz
+            sz = mx-mn
+            sz[sz == 0] = np.max(sz)  # replace zero size by maximum for the purposes of padding
+            mn -= relPad*sz
+            mx += relPad*sz
 
-        self._bbox=bbox.BBox(tuple(mn),tuple(mx))
+        self._bbox = bbox.BBox(tuple(mn), tuple(mx))
         return self._bbox
 
     def getTransformationJacobian(self, coords):

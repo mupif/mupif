@@ -49,4 +49,5 @@ class Vertex(Dumpable):
         :return: Receiver's number, label, coordinates
         :rtype: string
         """
+        # print(f'__repr__ on {self.number=}, {self.label=}, {self.coords=}')
         return '['+repr(self.number)+','+repr(self.label)+','+repr(self.coords)+']'

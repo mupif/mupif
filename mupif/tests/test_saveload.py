@@ -78,10 +78,10 @@ class TestSaveLoad(unittest.TestCase):
         f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         v=self.tmp+'/aa2.h5'
         f.toHdf5(v)
-        ff2=mupif.field.Field.makeFromHdf5(v)
+        ff2=mupif.field.Field.makeFromHdf5(fileName=v)
         self.assertEqual(len(ff2),1)
         f2=ff2[0]
-        self.assertEqual(f.getMesh().internalArraysDigest(),f2.getMesh().internalArraysDigest())
+        self.assertEqual(f.getMesh().dataDigest(),f2.getMesh().dataDigest())
 
     if 0:
         @unittest.skipUnless(vtkAvailable,'vtk (python-vtk/python-vtk6) not importable') # vtkAvailable defined above

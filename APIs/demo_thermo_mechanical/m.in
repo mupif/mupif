@@ -1,0 +1,18 @@
+1 0.1  #length_X length_Y
+40 10 #number_X number_Y of finite elements
+1.0  #Thickness
+30.0e+9 0.25 #Young's_modulus Poisson's_ratio
+12.e-6 #Coefficient of thermal expansion
+1 N
+2 N
+3 N
+4 D
+
+#
+# Model edges
+#     ----------3----------
+#     |                   |
+#     4                   2
+#     |                   |
+#     ----------1---------
+#
