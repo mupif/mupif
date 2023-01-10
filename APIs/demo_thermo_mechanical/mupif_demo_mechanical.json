@@ -60,6 +60,8 @@
     },
     "Execution_settings": {
         "Type": "Distributed",
-        "jobManName": "MUPIF_Mechanical_demo"
+        "jobManName": "MUPIF_Mechanical_demo",
+        "Class": "MUPIF_M_demo",
+        "Module": "mupif_demo_mechanical"
     }
 }

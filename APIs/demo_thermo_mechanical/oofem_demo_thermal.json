@@ -64,6 +64,8 @@
     },
     "Execution_settings": {
         "Type": "Distributed",
-        "jobManName": "OOFEM_Thermal_demo"
+        "jobManName": "OOFEM_Thermal_demo",
+        "Class": "OOFEM_T_demo",
+        "Module": "oofem_demo_thermal"
     }
 }
