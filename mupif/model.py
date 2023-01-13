@@ -32,6 +32,7 @@ from . import function
 from . import timestep
 from . import pyroutil
 from . import pyrofile
+from . import U
 from typing import Optional, Any, Literal, Union, List
 import time
 import copy
@@ -478,6 +479,7 @@ class Model(mupifobject.MupifObject):
         :return: Returns the actual (related to current state) critical time step increment
         :rtype: Physics.PhysicalQuantity
         """
+        return 10**10 * U.s
 
     def getAssemblyTime(self, tstep):
         """
