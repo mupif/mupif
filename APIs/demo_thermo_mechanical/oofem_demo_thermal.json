@@ -7,22 +7,22 @@
     "Version_date": "1.0.0, Jan 2023",
     "Inputs": [
         {
-            "Name": "top edge temperature",
+            "Name": "temperature",
             "Type": "mupif.Property",
             "Required": true,
             "Type_ID": "mupif.DataID.PID_Temperature",
             "Units": "deg_C",
-            "Obj_ID": "temperature_top",
+            "Obj_ID": "top_edge",
             "Set_at": "timestep",
             "ValueType": "Scalar"
         },
         {
-            "Name": "bottom edge temperature",
+            "Name": "temperature",
             "Type": "mupif.Property",
             "Required": true,
             "Type_ID": "mupif.DataID.PID_Temperature",
             "Units": "deg_C",
-            "Obj_ID": "temperature_bottom",
+            "Obj_ID": "bottom_edge",
             "Set_at": "timestep",
             "ValueType": "Scalar"
         }
@@ -32,7 +32,7 @@
             "Name": "temperature",
             "Type_ID": "mupif.DataID.FID_Temperature",
             "Type": "mupif.Field",
-            "Units": "degC"
+            "Units": "deg_C"
         }
     ],
     "Solver": {
@@ -64,7 +64,7 @@
     },
     "Execution_settings": {
         "Type": "Distributed",
-        "jobManName": "OOFEM_Thermal_demo",
+        "jobManName": "CVUT.Thermal_demo",
         "Class": "OOFEM_T_demo",
         "Module": "oofem_demo_thermal"
     }

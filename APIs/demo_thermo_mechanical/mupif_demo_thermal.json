@@ -1,34 +1,38 @@
 {
-    "ClassName": "MUPIF_M_demo",
-    "ModuleName": "mupif_demo_mechanical",
-    "Name": "MUPIF demo API mechanical",
-    "ID": "MUPIF_Mechanical_demo",
-    "Description": "MUPIF mechanical demo solver",
+    "ClassName": "MUPIF_T_demo",
+    "ModuleName": "mupif_demo_thermal",
+    "Name": "MUPIF demo API thermal",
+    "ID": "MUPIF_Thermal_demo",
+    "Description": "MUPIF thermal demo solver",
     "Version_date": "1.0.0, Jan 2023",
     "Inputs": [
         {
             "Name": "temperature",
-            "Type_ID": "mupif.DataID.FID_Temperature",
-            "Type": "mupif.Field",
-            "Units": "deg_C",
+            "Type": "mupif.Property",
             "Required": true,
-            "Set_at": "timestep"
+            "Type_ID": "mupif.DataID.PID_Temperature",
+            "Units": "deg_C",
+            "Obj_ID": "top_edge",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        },
+        {
+            "Name": "temperature",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.PID_Temperature",
+            "Units": "deg_C",
+            "Obj_ID": "bottom_edge",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
         }
     ],
     "Outputs": [
         {
-            "Name": "displacement",
-            "Type_ID": "mupif.DataID.FID_Displacement",
+            "Name": "temperature",
+            "Type_ID": "mupif.DataID.FID_Temperature",
             "Type": "mupif.Field",
-            "Units": "m"
-        },
-        {
-            "Name": "max vertical displacement",
-            "Type": "mupif.Property",
-            "Type_ID": "mupif.DataID.PID_maxDisplacement",
-            "Units": "m",
-            "Obj_ID": "",
-            "ValueType": "Scalar"
+            "Units": "degC"
         }
     ],
     "Solver": {
@@ -60,8 +64,8 @@
     },
     "Execution_settings": {
         "Type": "Distributed",
-        "jobManName": "CVUT.Mechanical_demo",
-        "Class": "MUPIF_M_demo",
-        "Module": "mupif_demo_mechanical"
+        "jobManName": "CVUT.Thermal_demo",
+        "Class": "MUPIF_T_demo",
+        "Module": "mupif_demo_thermal"
     }
 }
