@@ -112,8 +112,6 @@ class MUPIF_M_demo(mp.Model):
         model = mp.demo.MechanicalModel()
         model.initialize(metadata={'Execution': self.getMetadata('Execution')})
         input_file = mp.PyroFile(filename='./inp_mupif_mechanical.in', mode="rb", dataID=mp.DataID.ID_InputFile)
-        daemon = mp.pyroutil.getDaemon(mp.pyroutil.connectNameserver())
-        daemon.register(input_file)
         model.set(input_file)
         model.set(self.input_temperature)
         ts = mp.TimeStep(time=0, dt=1, targetTime=1, unit=mp.U.s, number=1)

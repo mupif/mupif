@@ -121,8 +121,6 @@ class MUPIF_T_demo(mupif.Model):
         model = mupif.demo.ThermalModel()
         model.initialize(metadata={'Execution': self.getMetadata('Execution')})
         input_file = mupif.PyroFile(filename='./temp_mupif_thermal.in', mode="rb", dataID=mupif.DataID.ID_InputFile)
-        daemon = mupif.pyroutil.getDaemon(mupif.pyroutil.connectNameserver())
-        daemon.register(input_file)
         model.set(input_file)
         ts = mupif.TimeStep(time=0, dt=1, targetTime=1, unit=mupif.U.s, number=1)
         model.solveStep(ts)
