@@ -7,7 +7,7 @@
     "Version_date": "1.0.0, Jan 2023",
     "Inputs": [
         {
-            "Name": "temperature",
+            "Name": "temperature_top",
             "Type": "mupif.Property",
             "Required": true,
             "Type_ID": "mupif.DataID.PID_Temperature",
@@ -17,7 +17,7 @@
             "ValueType": "Scalar"
         },
         {
-            "Name": "temperature",
+            "Name": "temperature_bottom",
             "Type": "mupif.Property",
             "Required": true,
             "Type_ID": "mupif.DataID.PID_Temperature",
