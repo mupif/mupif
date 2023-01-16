@@ -15,7 +15,7 @@ class MUPIF_T_demo(mupif.Model):
             "Version_date": "1.0.0, Jan 2023",
             "Inputs": [
                 {
-                    "Name": "temperature",
+                    "Name": "temperature_top",
                     "Type": "mupif.Property",
                     "Required": True,
                     "Type_ID": "mupif.DataID.PID_Temperature",
@@ -25,7 +25,7 @@ class MUPIF_T_demo(mupif.Model):
                     "ValueType": "Scalar"
                 },
                 {
-                    "Name": "temperature",
+                    "Name": "temperature_bottom",
                     "Type": "mupif.Property",
                     "Required": True,
                     "Type_ID": "mupif.DataID.PID_Temperature",
@@ -81,8 +81,8 @@ class MUPIF_T_demo(mupif.Model):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-        self.input_temperature_top_edge = None
-        self.input_temperature_bottom_edge = None
+        self.input_temperature_top_top_edge = None
+        self.input_temperature_bottom_bottom_edge = None
         self.output_temperature = None
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
@@ -96,9 +96,9 @@ class MUPIF_T_demo(mupif.Model):
 
     def set(self, obj, objectID=""):
         if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "top_edge":
-            self.input_temperature_top_edge = obj
+            self.input_temperature_top_top_edge = obj
         if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "bottom_edge":
-            self.input_temperature_bottom_edge = obj
+            self.input_temperature_bottom_bottom_edge = obj
 
     def getApplicationSignature(self):
         return "MUPIF_T_demo"
@@ -107,7 +107,7 @@ class MUPIF_T_demo(mupif.Model):
         return 1
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        for inp in [self.input_temperature_top_edge, self.input_temperature_bottom_edge]:
+        for inp in [self.input_temperature_top_top_edge, self.input_temperature_bottom_bottom_edge]:
             if inp is None:
                 raise ValueError("A required input was not defined")
 
@@ -116,8 +116,8 @@ class MUPIF_T_demo(mupif.Model):
         inp_content = file.read()
         file.close()
         #
-        inp_content = inp_content.replace('{top_temperature}', str(self.input_temperature_top_edge.inUnitsOf('deg_C').getValue()))
-        inp_content = inp_content.replace('{bottom_temperature}', str(self.input_temperature_bottom_edge.inUnitsOf('deg_C').getValue()))
+        inp_content = inp_content.replace('{top_temperature}', str(self.input_temperature_top_top_edge.inUnitsOf('deg_C').getValue()))
+        inp_content = inp_content.replace('{bottom_temperature}', str(self.input_temperature_bottom_bottom_edge.inUnitsOf('deg_C').getValue()))
         #
         file = open('temp_mupif_thermal.in', 'wt')
         file.write(inp_content)

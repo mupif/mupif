@@ -1,3 +1,4 @@
+import mupif
 import Pyro5
 import subprocess
 import sys
@@ -5,15 +6,14 @@ import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../..')
 sys.path.append('/home/stanislav/Projects/oofem/build')
-import mupif as mp
 import logging
 log = logging.getLogger()
 
 
 @Pyro5.api.expose
-class OOFEM_T_demo(mp.Model):
-
+class OOFEM_T_demo(mupif.Model):
     def __init__(self, metadata=None):
+
         MD = {
             "ClassName": "OOFEM_T_demo",
             "ModuleName": "oofem_demo_thermal",
@@ -23,7 +23,7 @@ class OOFEM_T_demo(mp.Model):
             "Version_date": "1.0.0, Jan 2023",
             "Inputs": [
                 {
-                    "Name": "temperature",
+                    "Name": "temperature_top",
                     "Type": "mupif.Property",
                     "Required": True,
                     "Type_ID": "mupif.DataID.PID_Temperature",
@@ -33,7 +33,7 @@ class OOFEM_T_demo(mp.Model):
                     "ValueType": "Scalar"
                 },
                 {
-                    "Name": "temperature",
+                    "Name": "temperature_bottom",
                     "Type": "mupif.Property",
                     "Required": True,
                     "Type_ID": "mupif.DataID.PID_Temperature",
@@ -89,27 +89,33 @@ class OOFEM_T_demo(mp.Model):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-        self.input_temperature_top_edge = None
-        self.input_temperature_bottom_edge = None
+        self.input_temperature_top_top_edge = None
+        self.input_temperature_bottom_bottom_edge = None
         self.output_temperature = None
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
-        if objectTypeID == mp.DataID.FID_Temperature:
+        if objectTypeID == mupif.DataID.FID_Temperature:
             if self.output_temperature is None:
                 raise ValueError("Value not defined")
             return self.output_temperature
 
     def set(self, obj, objectID=""):
-        if obj.isInstance(mp.Property) and obj.getDataID() == mp.DataID.PID_Temperature and objectID == "top_edge":
-            self.input_temperature_top_edge = obj
-        if obj.isInstance(mp.Property) and obj.getDataID() == mp.DataID.PID_Temperature and objectID == "bottom_edge":
-            self.input_temperature_bottom_edge = obj
+        if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "top_edge":
+            self.input_temperature_top_top_edge = obj
+        if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "bottom_edge":
+            self.input_temperature_bottom_bottom_edge = obj
+
+    def getApplicationSignature(self):
+        return "OOFEM_T_demo"
+
+    def getAPIVersion(self):
+        return 1
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        for inp in [self.input_temperature_top_edge, self.input_temperature_bottom_edge]:
+        for inp in [self.input_temperature_top_top_edge, self.input_temperature_bottom_bottom_edge]:
             if inp is None:
                 raise ValueError("A required input was not defined")
 
@@ -118,8 +124,8 @@ class OOFEM_T_demo(mp.Model):
         inp_content = file.read()
         file.close()
         #
-        inp_content = inp_content.replace('{top_temperature}', str(self.input_temperature_top_edge.inUnitsOf('deg_C').getValue()))
-        inp_content = inp_content.replace('{bottom_temperature}', str(self.input_temperature_bottom_edge.inUnitsOf('deg_C').getValue()))
+        inp_content = inp_content.replace('{top_temperature}', str(self.input_temperature_top_top_edge.inUnitsOf('deg_C').getValue()))
+        inp_content = inp_content.replace('{bottom_temperature}', str(self.input_temperature_bottom_bottom_edge.inUnitsOf('deg_C').getValue()))
         #
         file = open('temp_oofem_thermal.in', 'wt')
         file.write(inp_content)
@@ -130,27 +136,14 @@ class OOFEM_T_demo(mp.Model):
 
         # load the field from vtk
         filename = 'demot.out.m0.1.vtu'
-        self.output_temperature = mp.Field.makeFromMeshioMesh(filename, unit={'Temperature': mp.U.deg_C, 'Displacement': mp.U.m}, time=0*mp.U.s)[0]
-
-    def finishStep(self, tstep):
-        pass
-
-    def getAssemblyTime(self, tstep):
-        return tstep.getTime()
-
-    def getAPIVersion(self):
-        return 1
-
-    def getApplicationSignature(self):
-        return "OOFEM_Thermal_demo"
+        self.output_temperature = mupif.Field.makeFromMeshioMesh(filename, unit={'Temperature': mupif.U.deg_C, 'Displacement': mupif.U.m}, time=0*mupif.U.s)[0]
 
 
 if __name__ == '__main__':
     import oofem_demo_thermal
 
-    ns = mp.pyroutil.connectNameserver()
-    mp.SimpleJobManager(
-        ns=ns,
+    mupif.SimpleJobManager(
+        ns=mupif.pyroutil.connectNameserver(),
         appClass=oofem_demo_thermal.OOFEM_T_demo,
         appName='CVUT.Thermal_demo',
         maxJobs=10,
