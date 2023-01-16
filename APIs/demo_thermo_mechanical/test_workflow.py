@@ -37,7 +37,7 @@ class OOFEMTestWorkflow(mupif.Workflow):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
-                    "Units": "degC"
+                    "Units": "deg_C"
                 },
                 {
                     "Name": "displacement",

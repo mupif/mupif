@@ -15,8 +15,6 @@ if __name__ == "__main__":
             'Task_ID': '1'
         }
     }
-    ns = mp.pyroutil.connectNameserver()
-    daemon = mp.pyroutil.getDaemon(ns)
 
     tm = oofem_demo_thermal.OOFEM_T_demo()
     tm.initialize(metadata=md)

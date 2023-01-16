@@ -40,7 +40,7 @@ class MUPIF_T_demo(mupif.Model):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
-                    "Units": "degC"
+                    "Units": "deg_C"
                 }
             ],
             "Solver": {
@@ -100,6 +100,12 @@ class MUPIF_T_demo(mupif.Model):
         if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "bottom_edge":
             self.input_temperature_bottom_edge = obj
 
+    def getApplicationSignature(self):
+        return "MUPIF_T_demo"
+
+    def getAPIVersion(self):
+        return 1
+
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         for inp in [self.input_temperature_top_edge, self.input_temperature_bottom_edge]:
             if inp is None:
@@ -138,4 +144,3 @@ if __name__ == '__main__':
         maxJobs=10,
         includeFiles=['inp_mupif_thermal.in']
     ).runServer()
-

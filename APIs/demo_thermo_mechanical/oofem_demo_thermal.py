@@ -144,9 +144,6 @@ class OOFEM_T_demo(mp.Model):
     def getApplicationSignature(self):
         return "OOFEM_Thermal_demo"
 
-    def getURI(self):
-        return self.pyroURI
-
 
 if __name__ == '__main__':
     import oofem_demo_thermal
