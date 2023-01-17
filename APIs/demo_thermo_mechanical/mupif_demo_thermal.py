@@ -1,5 +1,7 @@
 import mupif
 import Pyro5
+import subprocess
+import os
 
 
 @Pyro5.api.expose
@@ -123,14 +125,11 @@ class MUPIF_T_demo(mupif.Model):
         file.write(inp_content)
         file.close()
 
-        # execute mupif thermal model
-        model = mupif.demo.ThermalModel()
-        model.initialize(metadata={'Execution': self.getMetadata('Execution')})
-        input_file = mupif.PyroFile(filename='./temp_mupif_thermal.in', mode="rb", dataID=mupif.DataID.ID_InputFile)
-        model.set(input_file)
-        ts = mupif.TimeStep(time=0, dt=1, targetTime=1, unit=mupif.U.s, number=1)
-        model.solveStep(ts)
-        self.output_temperature = model.get(mupif.DataID.FID_Temperature, time=tstep.getTargetTime())
+        # execute the thermal solver
+        result = subprocess.run(['/home/stanislav/Projects/mupif/APIs/demo_thermo_mechanical/exec_thermal.py', 'temp_mupif_thermal.in', 'temperature_field.h5'], capture_output=True, encoding='UTF-8', cwd=os.getcwd())
+
+        # load the output temperature field
+        self.output_temperature = mupif.Field.makeFromHdf5(fileName='temperature_field.h5')[0]
 
 
 if __name__ == '__main__':
