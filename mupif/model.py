@@ -92,7 +92,7 @@ class ExecutionMeta(pydantic.BaseModel):
 
 
 class IOMeta(pydantic.BaseModel):
-    Type: Literal['mupif.Property', 'mupif.Field', 'mupif.HeavyStruct', 'mupif.PyroFile', 'mupif.String', 'mupif.ParticleSet', 'mupif.GrainState']
+    Type: Literal['mupif.Property', 'mupif.Field', 'mupif.TemporalField', 'mupif.HeavyStruct', 'mupif.PyroFile', 'mupif.String', 'mupif.ParticleSet', 'mupif.GrainState']
     Type_ID: DataID
     Obj_ID: Optional[Union[str, List[str]]] = None
     Name: str
