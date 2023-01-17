@@ -82,13 +82,12 @@ class OOFEM(mp.Model):
                 }
             ],
             "Outputs": [
-                # {
-                #     "Name": "temperature",
-                #     "Type_ID": "mupif.DataID.FID_Temperature",
-                #     "Type": "mupif.Field",
-                #     "Required": False,
-                #     "Units": "degC"
-                # }
+                {
+                    "Name": "temperature",
+                    "Type_ID": "mupif.DataID.FID_Temperature",
+                    "Type": "mupif.Field",
+                    "Units": "degC"
+                }
             ],
             "Solver": {
                 "Software": "OOFEM",
@@ -185,25 +184,26 @@ class OOFEM(mp.Model):
             # print checkf
             # print "Controll evaluation = ", checkf.evaluateAtPos (t2f((2.5,0.9,0)), oofempy.ValueModeType.VM_Total)
 
-    def getField(self, fieldID, time):
+    def get(self, objectTypeID, time=None, objectID=""):
         """
         Returns the requested field at given time. Field is identified by fieldID.
 
-        :param mp.DataID fieldID: Identifier of the field
+        :param mp.DataID objectTypeID: Identifier of the field
         :param  time: Target time
+        :param  objectID:
 
         :return: Returns requested field.
         :rtype: Field
         """
         current_step = self.oofem_pb.giveCurrentStep()
-        self.mesh = self.getMesh(current_step)
+        self.mesh = self.getMesh()
 
         if abs(current_step.giveTargetTime() - time.inUnitsOf('s').getValue()) < 1.e-6:
             values = []
             ne = self.oofem_mesh.giveNumberOfElements()
             nd = self.oofem_mesh.giveNumberOfDofManagers()
             vmt = oofempy.ValueModeType.VM_Total
-            f = self.oofem_pb.giveField(self.getOOFEMFieldName(fieldID), current_step)
+            f = self.oofem_pb.giveField(self.getOOFEMFieldName(objectTypeID), current_step)
             if not f:
                 raise ValueError("no suitable field in solver found")
 
@@ -214,16 +214,15 @@ class OOFEM(mp.Model):
                 for j in range(len(val)):
                     v.append(val[j])
                 values.append(tuple(v))
-            return mp.Field(self.mesh, fieldID, mp.ValueType.Scalar, None, time, values)
+            return mp.Field(self.mesh, objectTypeID, mp.ValueType.Scalar, None, time, values)
 
         else:
             raise mp.APIError('Can\'t return field for other than current time step')
 
-    def getMesh(self, tstep):
+    def getMesh(self):
         """
         Returns the computational mesh for given solution step.
 
-        :param TimeStep tstep: Solution step
         :return: Returns the representation of mesh
         :rtype: Mesh
         """

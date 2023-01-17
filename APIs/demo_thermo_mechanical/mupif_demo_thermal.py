@@ -1,25 +1,17 @@
 import mupif
 import Pyro5
-import subprocess
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../..')
-sys.path.append('/home/stanislav/Projects/oofem/build')
-import logging
-log = logging.getLogger()
 
 
 @Pyro5.api.expose
-class OOFEM_T_demo(mupif.Model):
+class MUPIF_T_demo(mupif.Model):
     def __init__(self, metadata=None):
 
         MD = {
-            "ClassName": "OOFEM_T_demo",
-            "ModuleName": "oofem_demo_thermal",
-            "Name": "OOFEM demo API thermal",
-            "ID": "OOFEM_Thermal_demo",
-            "Description": "OOFEM thermal demo solver",
+            "ClassName": "MUPIF_T_demo",
+            "ModuleName": "mupif_demo_thermal",
+            "Name": "MUPIF demo API thermal",
+            "ID": "MUPIF_Thermal_demo",
+            "Description": "MUPIF thermal demo solver",
             "Version_date": "1.0.0, Jan 2023",
             "Inputs": [
                 {
@@ -52,7 +44,7 @@ class OOFEM_T_demo(mupif.Model):
                 }
             ],
             "Solver": {
-                "Software": "OOFEM",
+                "Software": "MUPIF",
                 "Type": "Finite elements",
                 "Accuracy": "High",
                 "Sensitivity": "Low",
@@ -63,11 +55,11 @@ class OOFEM_T_demo(mupif.Model):
                 "Estim_execution_cost_EUR": 0.01,
                 "Estim_personnel_cost_EUR": 0.01,
                 "Required_expertise": "None",
-                "Language": "C++",
+                "Language": "Python",
                 "License": "LGPL",
                 "Creator": "Borek Patzak",
-                "Version_date": "1.0.0, Dec 2022",
-                "Documentation": "oofem.org"
+                "Version_date": "1.0.0, Jan 2023",
+                "Documentation": "mupif.org"
             },
             "Physics": {
                 "Type": "Continuum",
@@ -81,8 +73,8 @@ class OOFEM_T_demo(mupif.Model):
             "Execution_settings": {
                 "Type": "Distributed",
                 "jobManName": "CVUT.Thermal_demo",
-                "Class": "OOFEM_T_demo",
-                "Module": "oofem_demo_thermal"
+                "Class": "MUPIF_T_demo",
+                "Module": "mupif_demo_thermal"
             }
         }
 
@@ -109,7 +101,7 @@ class OOFEM_T_demo(mupif.Model):
             self.input_temperature_bottom_bottom_edge = obj
 
     def getApplicationSignature(self):
-        return "OOFEM_T_demo"
+        return "MUPIF_T_demo"
 
     def getAPIVersion(self):
         return 1
@@ -120,32 +112,35 @@ class OOFEM_T_demo(mupif.Model):
                 raise ValueError("A required input was not defined")
 
         # create input file from template
-        file = open('inp_oofem_thermal.in', 'rt')
+        file = open('inp_mupif_thermal.in', 'rt')
         inp_content = file.read()
         file.close()
         #
         inp_content = inp_content.replace('{top_temperature}', str(self.input_temperature_top_top_edge.inUnitsOf('deg_C').getValue()))
         inp_content = inp_content.replace('{bottom_temperature}', str(self.input_temperature_bottom_bottom_edge.inUnitsOf('deg_C').getValue()))
         #
-        file = open('temp_oofem_thermal.in', 'wt')
+        file = open('temp_mupif_thermal.in', 'wt')
         file.write(inp_content)
         file.close()
 
-        # execute oofem
-        result = subprocess.run(['/home/stanislav/Projects/oofem/build/oofem', '-f', 'temp_oofem_thermal.in'], capture_output=True, encoding='UTF-8', cwd=os.getcwd())
-
-        # load the field from vtk
-        filename = 'demot.out.m0.1.vtu'
-        self.output_temperature = mupif.Field.makeFromMeshioMesh(filename, unit={'Temperature': mupif.U.deg_C, 'Displacement': mupif.U.m}, time=0*mupif.U.s)[0]
+        # execute mupif thermal model
+        model = mupif.demo.ThermalModel()
+        model.initialize(metadata={'Execution': self.getMetadata('Execution')})
+        input_file = mupif.PyroFile(filename='./temp_mupif_thermal.in', mode="rb", dataID=mupif.DataID.ID_InputFile)
+        model.set(input_file)
+        ts = mupif.TimeStep(time=0, dt=1, targetTime=1, unit=mupif.U.s, number=1)
+        model.solveStep(ts)
+        self.output_temperature = model.get(mupif.DataID.FID_Temperature, time=tstep.getTargetTime())
 
 
 if __name__ == '__main__':
-    import oofem_demo_thermal
+    import mupif_demo_thermal
 
-    mupif.SimpleJobManager(
-        ns=mupif.pyroutil.connectNameserver(),
-        appClass=oofem_demo_thermal.OOFEM_T_demo,
+    ns = mupif.pyroutil.connectNameserver()
+    jobMan = mupif.SimpleJobManager(
+        ns=ns,
+        appClass=mupif_demo_thermal.MUPIF_T_demo,
         appName='CVUT.Thermal_demo',
         maxJobs=10,
-        includeFiles=['inp_oofem_thermal.in']
+        includeFiles=['inp_mupif_thermal.in']
     ).runServer()

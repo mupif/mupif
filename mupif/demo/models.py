@@ -99,11 +99,6 @@ class ThermalModel(mupif.model.Model):
                     "Relation_description": ["Fick's first law"],
                     "Relation_formulation": ["Flow induced by thermal gradient on isotropic material"],
                     "Representation": "Finite volumes"
-                },
-                "Execution": {
-                    'ID': '0',
-                    'Use_case_ID': '0',
-                    'Task_ID': '0'
                 }
             }
             self.updateMetadata(MD)
@@ -177,8 +172,8 @@ class ThermalModel(mupif.model.Model):
             # print (line)
             rec = line.split()
             edge = int(rec[0])
-            code = rec[1]
-            temperature = float(rec[2])
+            code = rec[1] if len(rec) > 1 else ''
+            temperature = float(rec[2]) if len(rec) > 2 else None
             if code == 'D':
                 self.dirichletModelEdges.append((edge, temperature))
             elif code == 'C':
@@ -1168,7 +1163,7 @@ class MechanicalModel(mupif.model.Model):
                 line = getline(f)
                 rec = line.split()
                 edge = int(rec[0])
-                code = rec[1]
+                code = rec[1] if len(rec) > 1 else ''
                 if code == 'D':
                     self.dirichletModelEdges.append(edge)
                 elif code == 'C':

@@ -113,8 +113,8 @@ SimpleTransportCS 2 thickness 1.0 mat 2
 IsoHeat 1  k 1.0  c 0.3  d 1.0 
 IsoHeat 2  k 1.0  c 0.3  d 1.0
 BoundaryCondition  1 loadTimeFunction 1 prescribedvalue 0.0
-Constantedgeload 2 loadTimeFunction 1 components 1 {top_temperature} properties 1 a 15 loadtype 3 set 3 # top surface
-Constantedgeload 3 loadTimeFunction 1 components 1 {bottom_temperature} properties 1 a 15 loadtype 3 set 4 # bottom surface
+Constantedgeload 2 loadTimeFunction 1 components 1 {bottom_temperature} properties 1 a 15 loadtype 3 set 3 # bottom surface
+Constantedgeload 3 loadTimeFunction 1 components 1 {top_temperature} properties 1 a 15 loadtype 3 set 4 # top surface
 ConstantFunction 1 f(t) 1.0
 #left edge
 set 1 elementedges 6 1 4 2 4 3 4 

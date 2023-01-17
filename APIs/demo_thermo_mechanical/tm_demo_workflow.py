@@ -24,7 +24,7 @@ class TMDemoWorkflow(mupif.Workflow):
                 {"Name": "temperature_bottom", "Type": "mupif.Property", "Required": True, "description": "", "Type_ID": "mupif.DataID.PID_Temperature", "Obj_ID": "temperature_bottom", "Units": "deg_C", "Set_at": "timestep", "ValueType": "Scalar"}
             ],
             "Outputs": [
-                {"Name": "field_temperature", "Type": "mupif.Field", "description": "", "Type_ID": "mupif.DataID.FID_Temperature", "Obj_ID": "field_temperature", "Units": "degC"},
+                {"Name": "field_temperature", "Type": "mupif.Field", "description": "", "Type_ID": "mupif.DataID.FID_Temperature", "Obj_ID": "field_temperature", "Units": "deg_C"},
                 {"Name": "field_displacement", "Type": "mupif.Field", "description": "", "Type_ID": "mupif.DataID.FID_Displacement", "Obj_ID": "field_displacement", "Units": "m"},
                 {"Name": "max_displacement", "Type": "mupif.Property", "description": "", "Type_ID": "mupif.DataID.PID_maxDisplacement", "Obj_ID": "max_displacement", "Units": "m", "ValueType": "Scalar"}
             ],

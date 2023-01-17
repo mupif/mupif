@@ -3,7 +3,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../..')
 import mupif as mp
-import oofem_demo_thermal
+import mupif_demo_thermal
 import mupif_demo_mechanical
 
 
@@ -15,8 +15,10 @@ if __name__ == "__main__":
             'Task_ID': '1'
         }
     }
+    ns = mp.pyroutil.connectNameserver()
+    daemon = mp.pyroutil.getDaemon(ns)
 
-    tm = oofem_demo_thermal.OOFEM_T_demo()
+    tm = mupif_demo_thermal.MUPIF_T_demo()
     tm.initialize(metadata=md)
 
     sm = mupif_demo_mechanical.MUPIF_M_demo()

@@ -25,8 +25,8 @@ class OOFEMTestWorkflow(mupif.Workflow):
                     "Type_ID": "mupif.DataID.PID_Temperature",
                     "Units": "deg_C",
                     "Obj_ID": [
-                        "temperature_top",
-                        "temperature_bottom"
+                        "top_edge",
+                        "bottom_edge"
                     ],
                     "Set_at": "timestep",
                     "ValueType": "Scalar"
@@ -37,7 +37,7 @@ class OOFEMTestWorkflow(mupif.Workflow):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
-                    "Units": "degC"
+                    "Units": "deg_C"
                 },
                 {
                     "Name": "displacement",
@@ -49,11 +49,11 @@ class OOFEMTestWorkflow(mupif.Workflow):
             "Models": [
                 {
                     "Name": "thermal",
-                    "Jobmanager": "OOFEM_Thermal_demo"
+                    "Jobmanager": "CVUT.Thermal_demo"
                 },
                 {
                     "Name": "mechanical",
-                    "Jobmanager": "MUPIF_Mechanical_demo"
+                    "Jobmanager": "CVUT.Mechanical_demo"
                 }
             ]
         }
@@ -100,8 +100,8 @@ if __name__ == '__main__':
     
     ttop = mupif.ConstantProperty(value=300., propID=mupif.DataID.PID_Temperature, valueType=mupif.ValueType.Scalar, unit=mupif.U.deg_C, time=None)
     tbottom = mupif.ConstantProperty(value=-300., propID=mupif.DataID.PID_Temperature, valueType=mupif.ValueType.Scalar, unit=mupif.U.deg_C, time=None)
-    w.set(ttop, 'temperature_top')
-    w.set(tbottom, 'temperature_bottom')
+    w.set(ttop, 'top_edge')
+    w.set(tbottom, 'bottom_edge')
     
     w.solve()
 
