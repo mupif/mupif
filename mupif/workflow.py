@@ -102,7 +102,10 @@ WorkflowSchema["properties"].update({
                 {"required": ["Jobmanager"]}  # remote model
             ]
         }
-    }
+    },
+    "EDMMapping": {
+        "type": "array"
+    },
 })
 WorkflowSchema["required"] = ["Name", "ID", "Description", "Execution", "Inputs", "Outputs", "Models"]
 
