@@ -104,7 +104,17 @@ WorkflowSchema["properties"].update({
         }
     },
     "EDMMapping": {
-        "type": "array"
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "Name": {"type": "string"},
+                "EDMEntity": {"type": "string"},
+                "DBName": {"type": "string"},
+                "createFrom": {"type": "string"}
+            },
+            "required": ["Name", "EDMEntity", "DBName"]
+        }
     },
 })
 WorkflowSchema["required"] = ["Name", "ID", "Description", "Execution", "Inputs", "Outputs", "Models"]
