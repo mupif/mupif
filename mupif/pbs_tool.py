@@ -25,10 +25,7 @@ def wait_until_job_is_done(jobid, checking_frequency=10.):
 def submit_job(command):
     cmmnd = 'qsub %s' % command
     stream = os.popen(cmmnd)
-    result = str(stream.read())
-
-    result = result.strip()
-
+    result = str(stream.read()).strip()
     print("'%s'" % result)
     if result != '':
         return result
