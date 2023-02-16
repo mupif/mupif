@@ -1,0 +1,58 @@
+{
+    "ClassName": "TestModel",
+    "ModuleName": "test_model",
+    "Name": "Test Model",
+    "ID": "test_model",
+    "Description": "Test model",
+    "Version_date": "1.0.0, Jan 2023",
+    "Inputs": [
+        {
+            "Name": "Inp",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": "",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        }
+    ],
+    "Outputs": [
+        {
+            "Name": "Res",
+            "Type": "mupif.Property",
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": "",
+            "ValueType": "Scalar"
+        }
+    ],
+    "Solver": {
+        "Software": "Own",
+        "Type": "tester",
+        "Accuracy": "High",
+        "Sensitivity": "Low",
+        "Complexity": "High",
+        "Robustness": "High",
+        "Estim_time_step_s": 1,
+        "Estim_comp_time_s": 1,
+        "Estim_execution_cost_EUR": 0.01,
+        "Estim_personnel_cost_EUR": 0.01,
+        "Required_expertise": "None",
+        "Language": "Python",
+        "License": "LGPL",
+        "Creator": "Stanislav Sulc",
+        "Version_date": "1.0.0, Jan 2023",
+        "Documentation": "not available"
+    },
+    "Physics": {
+        "Type": "Other",
+        "Entity": "Other"
+    },
+    "Execution_settings": {
+        "Type": "Distributed",
+        "jobManName": "TestModel",
+        "Class": "TestModel",
+        "Module": "test_model"
+    }
+}
