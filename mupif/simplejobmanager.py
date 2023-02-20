@@ -44,10 +44,6 @@ import shutil
 sys.excepthook = Pyro5.errors.excepthook
 Pyro5.config.DETAILED_TRACEBACK = False
 
-# spawn is safe for windows; this is a global setting
-if multiprocessing.get_start_method() != 'spawn':
-    multiprocessing.set_start_method('spawn', force=True)
-
 log = logging.getLogger(__name__)
 
 try:
