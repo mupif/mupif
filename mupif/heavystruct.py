@@ -1010,6 +1010,9 @@ Top contexts (on the level of the schema) define a few special methods:
 
     '''
 
+    def getDataID(self):
+        return self.id
+
     # from https://stackoverflow.com/a/3203659/761090
     class _classproperty(object):
         def __init__(self, getter): self.getter = getter
