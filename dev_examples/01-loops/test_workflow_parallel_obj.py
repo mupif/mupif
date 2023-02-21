@@ -5,14 +5,8 @@ import random
 import logging
 log = logging.getLogger()
 
-num_models = 3
-keys = [i for i in range(1, num_models+1)]
-
-inp_array = []
-for m in keys:
-    inp_array.append(mupif.ConstantProperty(value=random.randint(5, 20), propID=mupif.DataID.ID_None, valueType=mupif.ValueType.Scalar, unit=mupif.U.none, time=None))
-
-input_mupif_array = mupif.MupifObjectList(inp_array)
+num_inputs = 20
+input_mupif_array = mupif.MupifObjectList([mupif.ConstantProperty(value=random.randint(5, 20), propID=mupif.DataID.ID_None, valueType=mupif.ValueType.Scalar, unit=mupif.U.none, time=None) for m in [i for i in range(1, num_inputs+1)]])
 
 
 @Pyro5.api.expose
@@ -29,8 +23,24 @@ class LoopsTestWorkflow(mupif.Workflow):
                 "Type": "Local"
             },
             "Inputs": [
+                {
+                    "Name": "Input data array",
+                    "Type": "mupif.MupifObjectList",
+                    "Required": True,
+                    "Type_ID": "mupif.DataID.ID_None",
+                    "Units": "",
+                    "Obj_ID": "",
+                    "Set_at": "timestep"
+                }
             ],
             "Outputs": [
+                {
+                    "Name": "Output data array",
+                    "Type": "mupif.MupifObjectList",
+                    "Type_ID": "mupif.DataID.ID_None",
+                    "Units": "",
+                    "Obj_ID": ""
+                }
             ],
             "Models": [
                 {
@@ -43,27 +53,31 @@ class LoopsTestWorkflow(mupif.Workflow):
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
         self.daemon = None
+        self.input_array = None
+        self.output_array = None
         self.inputs = {}
         self.outputs = {}
         self.states = {}
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
+
+    def set(self, obj, objectID=""):
+        self.input_array = obj
+
+    def get(self, objectTypeID, time=None, objectID=''):
+        return self.output_array
+
+    def solveStep(self, tstep, stageID=0, runInBackground=False):
+        # prepare data
         idx = 0
-        for obj in input_mupif_array.objs:
+        for obj in self.input_array.objs:
             idx += 1
             mname = str(idx)
             self.inputs[mname] = obj
             self.outputs[mname] = None
             self.states[mname] = False
 
-    def set(self, obj, objectID=""):
-        pass
-
-    def get(self, objectTypeID, time=None, objectID=''):
-        return None
-
-    def solveStep(self, tstep, stageID=0, runInBackground=False):
         # instantiate models
         idx = 0
         for ik in self.inputs.keys():
@@ -74,7 +88,6 @@ class LoopsTestWorkflow(mupif.Workflow):
 
         # execute
         for ik in self.inputs.keys():
-            print(ik)
             self.getModel(ik).set(self.inputs[ik])
             self.getModel(ik).solveStep(tstep, runInBackground=True)
         all_done = False
@@ -94,10 +107,7 @@ class LoopsTestWorkflow(mupif.Workflow):
             print(''.join(strings))
             time.sleep(1)
 
-        print("Inputs:")
-        print([self.inputs[mn].inUnitsOf('').getValue() for mn in self.inputs.keys()])
-        print("Outputs:")
-        print([self.outputs[mn].inUnitsOf('').getValue() for mn in self.inputs.keys()])
+        self.output_array = mupif.MupifObjectList([val for val in self.outputs.values()])
 
 
 if __name__ == '__main__':
@@ -110,5 +120,15 @@ if __name__ == '__main__':
         }
     }
     w.initialize(metadata=md)
+    w.set(input_mupif_array, 'input_array')
     w.solve()
+    output_mupif_array = w.get(mupif.DataID.ID_None, 'input_array')
     w.terminate()
+
+    print(input_mupif_array)
+    print(output_mupif_array)
+
+    print("Inputs:")
+    print([obj.inUnitsOf('').getValue() for obj in input_mupif_array.objs])
+    print("Outputs:")
+    print([obj.inUnitsOf('').getValue() for obj in output_mupif_array.objs])
