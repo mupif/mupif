@@ -203,28 +203,34 @@ class MupifObject(MupifObjectBase, Dumpable):
     """Base class for objects which have metadata and are dumpable (serializable)."""
     pass
 
+
 @Pyro5.api.expose
 class MupifObjectList(MupifObject):
     objs: typing.List[MupifObject]
-    typeId: typing.Optional[str]=None
+    typeId: typing.Optional[str] = None
     @staticmethod
-    def _seqTypes(seq): return  [f'{t.__module__}.{t.__class__.__name__}' for t in seq]
-    def __init__(self,*args,**kw):
-        if len(args)>1: raise ValueError('Only one non-keyword argument is accepted')
-        if len(args)==1:
-            if not isinstance(args[0],(list,tuple)): raise ValueError(f'Argument must be a list or tuple (not a {type(args[0])}).')
-        if 'objs' in kw: raise ValueError('Both non-keyword sequence and *objs* were specified.')
-        kw['objs']=args[0]
-        args=()
+    def _seqTypes(seq): return [f'{t.__module__}.{t.__class__.__name__}' for t in seq]
+
+    def __init__(self, *args, **kw):
+        if len(args) > 1:
+            raise ValueError('Only one non-keyword argument is accepted')
+        if len(args) == 1:
+            if not isinstance(args[0], (list, tuple)):
+                raise ValueError(f'Argument must be a list or tuple (not a {type(args[0])}).')
+        if 'objs' in kw:  # disables any use of objs in kw..
+            raise ValueError('Both non-keyword sequence and *objs* were specified.')
+        kw['objs'] = args[0]
         super().__init__(**kw)
-        tset=set(MupifObjectList._seqTypes(kw['objs']))
-        assert len(tset)<=1
-        self.typeId=tset.pop()
+        tset = set(MupifObjectList._seqTypes(kw['objs']))
+        assert len(tset) <= 1
+        self.typeId = tset.pop()
+        self.objs = kw['objs']
 
     @pydantic.validator('objs')
-    def objs_validator(cls,v):
+    def objs_validator(cls, v):
         # if ft:=[e for e in v if not isinstance(e,MupifObject)]: raise ValueError(f'Some objects in the sequence are not a MupifObject (foreign types: {", ".join([t.__module__+t.__class__.__name__ for t in ft])})')
-        if len(tset:=set(MupifObjectList._seqTypes(v)))>1: raise ValueError(f'Multiple MupifObject subclasses in sequence, must be only one ({", ".join([t for t in tset])}).')
+        if len(tset := set(MupifObjectList._seqTypes(v))) > 1:
+            raise ValueError(f'Multiple MupifObject subclasses in sequence, must be only one ({", ".join([t for t in tset])}).')
 
 
 
