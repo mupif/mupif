@@ -207,7 +207,7 @@ class MupifObject(MupifObjectBase, Dumpable):
 @Pyro5.api.expose
 class MupifObjectList(MupifObject):
     objs: typing.List[MupifObject]
-    typeId: typing.Optional[str] = None
+    dataID: typing.Optional[str] = None
     @staticmethod
     def _seqTypes(seq): return [f'{t.__module__}.{t.__class__.__name__}' for t in seq]
 
@@ -223,7 +223,7 @@ class MupifObjectList(MupifObject):
         super().__init__(**kw)
         tset = set(MupifObjectList._seqTypes(kw['objs']))
         assert len(tset) <= 1
-        self.typeId = tset.pop()
+        self.dataID = tset.pop()
         self.objs = kw['objs']
 
     @pydantic.validator('objs')
