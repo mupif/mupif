@@ -5,7 +5,7 @@ import random
 import logging
 log = logging.getLogger()
 
-num_inputs = 20
+num_inputs = 3
 input_mupif_array = mupif.MupifObjectList([mupif.ConstantProperty(value=random.randint(5, 20), propID=mupif.DataID.ID_None, valueType=mupif.ValueType.Scalar, unit=mupif.U.none, time=None) for m in [i for i in range(1, num_inputs+1)]])
 
 
@@ -25,21 +25,21 @@ class LoopsTestWorkflow(mupif.Workflow):
             "Inputs": [
                 {
                     "Name": "Input data array",
-                    "Type": "mupif.MupifObjectList",
+                    "Type": "mupif.MupifObjectList[mupif.Property]",
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_None",
                     "Units": "",
-                    "Obj_ID": "",
+                    "Obj_ID": "input_array",
                     "Set_at": "timestep"
                 }
             ],
             "Outputs": [
                 {
                     "Name": "Output data array",
-                    "Type": "mupif.MupifObjectList",
+                    "Type": "mupif.MupifObjectList[mupif.Property]",
                     "Type_ID": "mupif.DataID.ID_None",
                     "Units": "",
-                    "Obj_ID": ""
+                    "Obj_ID": "output_array"
                 }
             ],
             "Models": [
@@ -63,12 +63,18 @@ class LoopsTestWorkflow(mupif.Workflow):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=""):
-        self.input_array = obj
+        if obj.isInstance(mupif.MupifObjectList) and objectID == "input_array":
+            self.input_array = obj
 
-    def get(self, objectTypeID, time=None, objectID=''):
-        return self.output_array
+    def get(self, objectTypeID, time=None, objectID=""):
+        if objectTypeID == mupif.DataID.ID_None and objectID == "output_array":
+            return self.output_array
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
+        for inp in [self.input_array]:
+            if inp is None:
+                raise ValueError("A required input was not defined")
+
         # prepare data
         idx = 0
         for obj in self.input_array.objs:
@@ -120,9 +126,9 @@ if __name__ == '__main__':
         }
     }
     w.initialize(metadata=md)
-    w.set(input_mupif_array, 'input_array')
+    w.set(input_mupif_array, objectID='input_array')
     w.solve()
-    output_mupif_array = w.get(mupif.DataID.ID_None, 'input_array')
+    output_mupif_array = w.get(mupif.DataID.ID_None, objectID='output_array')
     w.terminate()
 
     print(input_mupif_array)
