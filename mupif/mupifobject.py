@@ -211,15 +211,12 @@ class MupifObjectList(MupifObject):
     @staticmethod
     def _seqTypes(seq): return [f'{t.__module__}.{t.__class__.__name__}' for t in seq]
 
-    def __init__(self, *args, **kw):
-        if len(args) > 1:
-            raise ValueError('Only one non-keyword argument is accepted')
-        if len(args) == 1:
-            if not isinstance(args[0], (list, tuple)):
-                raise ValueError(f'Argument must be a list or tuple (not a {type(args[0])}).')
-        if 'objs' in kw:  # disables any use of objs in kw..
-            raise ValueError('Both non-keyword sequence and *objs* were specified.')
-        kw['objs'] = args[0]
+    def __init__(self,*args,**kw):
+        if len(args)>1: raise ValueError('Only one non-keyword argument is accepted')
+        if len(args)==1:
+            if not isinstance(args[0],(list,tuple)): raise ValueError(f'Argument must be a list or tuple (not a {type(args[0])}).')
+            if 'objs' in kw: raise ValueError('Both non-keyword sequence and *objs* were specified.')
+            kw['objs'] = args[0]
         super().__init__(**kw)
         tset = set(MupifObjectList._seqTypes(kw['objs']))
         assert len(tset) <= 1
