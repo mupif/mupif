@@ -25,13 +25,13 @@ from __future__ import annotations
 from . import cell
 from . import bbox
 from . import apierror
-from . import mupifobject
+from . import data
 from .dataid import DataID
 from . import cellgeometrytype
 from . import mesh
 from . import mupifquantity
 from .units import Quantity, Unit
-from .dumpable import NumpyArray
+from .baredata import NumpyArray
 
 import meshio
 import sys

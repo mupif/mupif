@@ -3,11 +3,11 @@ import typing
 import pydantic
 
 from . import dataid
-from . import mupifobject
+from . import data
 
 
 @Pyro5.api.expose
-class String(mupifobject.MupifObject):
+class String(data.Data):
     """
 
     """

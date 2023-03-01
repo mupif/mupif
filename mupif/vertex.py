@@ -1,13 +1,13 @@
 from builtins import object
 from . import bbox
-from .dumpable import Dumpable
+from .baredata import BareData
 import Pyro5
 from pydantic.dataclasses import dataclass
 import typing
 
 
 @Pyro5.api.expose
-class Vertex(Dumpable):
+class Vertex(BareData):
     """
     Represent a vertex. Vertices define the geometry of interpolation cells. Vertex is characterized by its position, number and label. Vertex number is locally assigned number, while label is a unique number referring to source application.
 

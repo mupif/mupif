@@ -8,7 +8,7 @@ import numpy as np
 from . import dataid
 from . import mupifquantity
 from . import units
-from . import mupifobject
+from . import data
 from .units import Quantity, Unit, findUnit
 
 

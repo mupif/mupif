@@ -1,4 +1,4 @@
-from . import mupifobject
+from . import data
 import Pyro5.api
 import typing
 import pydantic
@@ -12,7 +12,7 @@ from .mupifquantity import ValueType
 
 
 @Pyro5.api.expose
-class MultiPiecewiseLinFunction(mupifobject.MupifObject):
+class MultiPiecewiseLinFunction(data.Data):
     """
 
     .. automethod:: __init__
@@ -66,7 +66,7 @@ class MultiPiecewiseLinFunction(mupifobject.MupifObject):
 
 
 @Pyro5.api.expose
-class MultiPiecewiseLinFunction2(mupifobject.MupifObject):
+class MultiPiecewiseLinFunction2(data.Data):
 
     x: Quantity
     yy: typing.List[ConstantProperty] = pydantic.Field(default_factory=lambda: [])

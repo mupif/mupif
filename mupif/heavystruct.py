@@ -7,8 +7,8 @@ import numpy as np
 import h5py
 import Pyro5.api
 # metadata support
-# from .mupifobject import MupifObject
-from . import units, pyroutil, dumpable, field
+# from .data import Data
+from . import units, pyroutil, baredata, field
 from . import dataid
 from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice
 from .pyrofile import PyroFile

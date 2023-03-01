@@ -26,7 +26,7 @@ from __future__ import annotations
 import Pyro5.api
 from pydantic.dataclasses import dataclass
 from typing import Union, Tuple
-from . import dumpable
+from . import baredata
 import pydantic
 
 

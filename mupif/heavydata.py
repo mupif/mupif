@@ -8,9 +8,9 @@ import numpy as np
 import h5py
 import Pyro5.api
 # metadata support
-from .mupifobject import MupifObject
+from .data import Data
 from .mupifquantity import ValueType
-from . import units, pyroutil, dumpable
+from . import units, pyroutil, baredata
 from . import dataid
 from .property import Property
 from .pyrofile import PyroFile
@@ -27,7 +27,7 @@ import atexit
 log = logging.getLogger(__name__)
 
 
-from .dumpable import addPydanticInstanceValidator
+from .baredata import addPydanticInstanceValidator
 addPydanticInstanceValidator(h5py.Dataset)
 
 from .units import Quantity, RefQuantity
@@ -135,7 +135,7 @@ HeavyDataBase_ModeChoice = typing.Literal['readonly', 'readwrite', 'overwrite', 
 
 
 @Pyro5.api.expose
-class HeavyDataBase(MupifObject):
+class HeavyDataBase(Data):
     """
     Base class for various HDF5-backed objects with automatic HDF5 transfer when copied to remote location. This class is to be used internally only.
     """
@@ -196,7 +196,7 @@ class HeavyDataBase(MupifObject):
     @pydantic.validate_arguments
     def deepcopy(self):
         """
-        Overrides Dumpable.deepcopy, enriching it with copy of the backing HDF5 file; it should correctly detect whether the call is local or remote.
+        Overrides BareData.deepcopy, enriching it with copy of the backing HDF5 file; it should correctly detect whether the call is local or remote.
         """
         if self._h5obj:
             raise RuntimeError(f'HDF5 file {self.h5path} open (must be closed before deepcopy).')
@@ -284,7 +284,7 @@ class HeavyDataBase(MupifObject):
     def exposeData(self):
         """
         If *self* is registered in a Pyro daemon, the underlying HDF5 file will be exposed as well.
-        This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataBase` object is reconstructed remotely by Pyro (e.g. by using :obj:`Dumpable.copyRemote`).
+        This modifies the :obj:`h5uri` attribute which causes transparent download of the HDF5 file when the :obj:`HeavyDataBase` object is reconstructed remotely by Pyro (e.g. by using :obj:`BareData.copyRemote`).
         """
         if self._h5obj:
             raise RuntimeError('Cannot expose open HDF5 file. Call closeData() first.')

@@ -30,7 +30,7 @@ import Pyro5.api
 import numpy
 import numpy.linalg
 import typing
-from . import dumpable
+from . import baredata
 
 # debug flag
 debug = 0
@@ -40,7 +40,7 @@ tolerance = 0.001
 
 
 @Pyro5.api.expose
-class Cell(dumpable.Dumpable):
+class Cell(baredata.BareData):
     # class Config:
     #     frozen=True
     """

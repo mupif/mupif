@@ -104,7 +104,7 @@ from .bbox import BBox
 from .cell import Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahedron_3d_lin, Brick_3d_lin
 from .constantfield import ConstantField
 from .dataid import DataID
-from .dumpable import NumpyArray, MupifBaseModel, Dumpable
+from .baredata import NumpyArray, ObjectBase, BareData
 from .field import FieldType, Field
 from .function import Function
 from .heavydata import HeavyDataBase, Hdf5RefQuantity, Hdf5OwningRefQuantity, Hdf5HeavyProperty
@@ -118,7 +118,7 @@ from .lookuptable import MemoryLookupTable
 from .mesh import MeshIterator, Mesh, UnstructuredMesh
 from .model import Model, RemoteModel
 from .multipiecewiselinfunction import MultiPiecewiseLinFunction
-from .mupifobject import MupifObjectBase, MupifObject, MupifObjectList
+from .data import WithMetadata, Data, DataList
 from .mupifquantity import ValueType, MupifQuantity
 from .octree import Octant_py, Octree
 from .operatorutil import OperatorInteraction, OperatorEMailInteraction
@@ -131,14 +131,14 @@ from .stringproperty import String
 from .timer import Timer
 from .timestep import TimeStep
 from .units import UnitProxy, Quantity, RefQuantity
-from .vertex import Dumpable, Vertex
+from .vertex import Vertex
 from .workflow import Workflow
 from .workflowmonitor import WorkflowMonitor
 from .temporalfield import TemporalField, DirTemporalField, SingleFileTemporalField
 from . import pbs_tool
 from . import pyrolog
 
-__all__ = ['U','Q','apierror','Dumpable','APIError','bbox','BBox','cell','Dumpable','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','dumpable','NumpyArray','MupifBaseModel','Dumpable','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','mupifobject','MupifObjectBase','MupifObject','MupifObjectList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','Dumpable','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','pbs_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField']
+__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','WorkflowMonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','pbs_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField']
 
 
 # import h5py
@@ -147,7 +147,7 @@ import serpent
 import io
 
 # make flake8 happy
-from . import dumpable, util
+from . import baredata, util
 from . import demo
 
 # can be set to expose PyroFile automatically during serialization, passing the URI to the remote
@@ -156,14 +156,14 @@ defaultPyroDaemon = None
 
 
 #
-# register all types deriving (directly or indirectly) from Dumpable to Pyro5
+# register all types deriving (directly or indirectly) from Baredata to Pyro5
 #
-def _registerDumpable(clss=dumpable.Dumpable):
+def _registerDumpable(clss=baredata.BareData):
     import Pyro5.api
     for sub in clss.__subclasses__():
         # print(f'Registering class {sub.__module__}.{sub.__name__}')
-        Pyro5.api.register_class_to_dict(sub, dumpable.Dumpable.to_dict)
-        Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__, dumpable.Dumpable.from_dict_with_name)
+        Pyro5.api.register_class_to_dict(sub, baredata.BareData.to_dict)
+        Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__, baredata.BareData.from_dict_with_name)
         _registerDumpable(sub)  # recurse
 
 
@@ -174,8 +174,8 @@ def _registerOther():
     from . import dataid
     assert(enum.Enum in serpent._special_classes_registry) # check we are really overwriting this
     for c in dataid.DataID, enum.Enum:
-        Pyro5.api.register_class_to_dict(c, dumpable.enum_to_dict)
-        Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, dumpable.enum_from_dict_with_name)
+        Pyro5.api.register_class_to_dict(c, baredata.enum_to_dict)
+        Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, baredata.enum_from_dict_with_name)
 
     # don't use numpy.ndarray.tobytes as it is not cross-plaform; npy files are
     Pyro5.api.register_class_to_dict(numpy.ndarray, lambda arr: {'__class__': 'numpy.ndarray', 'npy': (numpy.save(buf := io.BytesIO(), arr, allow_pickle=False), buf.getvalue())[1]})
@@ -219,7 +219,7 @@ def _pyroMonkeyPatch():
         # Pyro5.api.Proxy.__exit__ = lambda self,exc_type,exc_value,traceback: self.__getattr__('__exit__')(exc_type,exc_value,traceback)
     
 
-# register all dumpable types
+# register all baredata types
 _registerDumpable()
 _registerOther()
 _pyroMonkeyPatch()
