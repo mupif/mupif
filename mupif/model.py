@@ -343,7 +343,7 @@ ModelSchema = {
 
 
 @Pyro5.api.expose
-class Model(data.Data):
+class Model(data.Process):
     """
     An abstract class representing an application and its interface (API).
 

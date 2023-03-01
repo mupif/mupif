@@ -49,10 +49,10 @@ from .baredata import addPydanticInstanceValidator
 addPydanticInstanceValidator(Quantity)
 addPydanticInstanceValidator(astropy.units.UnitBase,makeKlass=astropy.units.Unit)
 
-from .baredata import ObjectBase
+from .baredata import Utility
 
 
-class RefQuantity(ObjectBase):
+class RefQuantity(Utility):
     'Quantity with data stored somewhere else. Abstract class, to be subclassed.'
     pass
 

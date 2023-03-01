@@ -89,6 +89,13 @@ class ObjectBase(pydantic.BaseModel):
         super().__init__(*args, **kw)
 
 
+
+class Utility(ObjectBase):
+    '''
+    Base class existing for hieararchy structure only. Derived classes provide some
+    functionality which does not fit into Process or BareData/Data.
+    '''
+
 @Pyro5.api.expose
 class BareData(ObjectBase):
     """

@@ -203,6 +203,10 @@ class Data(WithMetadata, BareData):
     """Base class for objects which have metadata and are baredata (serializable)."""
     pass
 
+class Process(BareData,WithMetadata):
+    """Base class for objects which have moetadata but are not baredata (non-serializable)."""
+    pass
+
 
 @Pyro5.api.expose
 class DataList(Data):

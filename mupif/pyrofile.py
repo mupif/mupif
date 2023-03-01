@@ -33,14 +33,14 @@ import logging
 import deprecated
 import pydantic
 import os.path
-from .data import WithMetadata
+from .baredata import Utility
 from typing import Optional
 from .dataid import DataID
 
 log = logging.getLogger(__name__)
 
 
-class PyroFile (WithMetadata):
+class PyroFile(Utility):
     """
     Helper class wrapping file functionality, allowing copying files (both remote and local).
     """
