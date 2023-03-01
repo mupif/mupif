@@ -41,10 +41,6 @@ class WithMetadata(ObjectBase):
 
     metadata: dict = pydantic.Field(default_factory=dict)
 
-    @pydantic.validate_arguments
-    def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
-        return isinstance(self, classinfo)
-
     def getMetadata(self, key, default=None):
         """
         Returns metadata associated to given key

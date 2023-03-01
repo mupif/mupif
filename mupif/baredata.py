@@ -66,7 +66,6 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
     def klass_get_validators(cls): yield klass_validate
     klass.__get_validators__ = klass_get_validators
 
-
 class ObjectBase(pydantic.BaseModel):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
     class Config:
@@ -87,6 +86,12 @@ class ObjectBase(pydantic.BaseModel):
             if k not in self.__class__.__fields__:
                 raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
         super().__init__(*args, **kw)
+
+    @Pyro5.api.expose
+    @pydantic.validate_arguments
+    def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
+        return isinstance(self, classinfo)
+
 
 
 
