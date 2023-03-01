@@ -1,4 +1,4 @@
-from .mupifobject import MupifObject
+from .data import Data
 from .field import Field, FieldType
 from .units import Quantity
 from .heavydata import HeavyDataBase
@@ -34,7 +34,7 @@ class _FieldMetadata(pydantic.BaseModel):
 
 
 @Pyro5.api.expose
-class TemporalField(MupifObject):
+class TemporalField(Data):
     fieldMeta: typing.List[_FieldMetadata] = []
 
     def __init__(self, *a, **kw):

@@ -24,7 +24,7 @@
 import os
 import Pyro5.api
 from . import apierror
-from . import mupifobject
+from . import data
 from .dataid import DataID
 from . import property
 from . import field
@@ -101,13 +101,13 @@ class IOMeta(pydantic.BaseModel):
         'mupif.String',
         'mupif.ParticleSet',
         'mupif.GrainState',
-        'mupif.MupifObjectList[mupif.Property]',
-        'mupif.MupifObjectList[mupif.Field]',
-        'mupif.MupifObjectList[mupif.TemporalField]',
-        'mupif.MupifObjectList[mupif.HeavyStruct]',
-        'mupif.MupifObjectList[mupif.String]',
-        'mupif.MupifObjectList[mupif.ParticleSet]',
-        'mupif.MupifObjectList[mupif.GrainState]'
+        'mupif.DataList[mupif.Property]',
+        'mupif.DataList[mupif.Field]',
+        'mupif.DataList[mupif.TemporalField]',
+        'mupif.DataList[mupif.HeavyStruct]',
+        'mupif.DataList[mupif.String]',
+        'mupif.DataList[mupif.ParticleSet]',
+        'mupif.DataList[mupif.GrainState]'
     ]
     Type_ID: DataID
     Obj_ID: Optional[Union[str, List[str]]] = None
@@ -251,13 +251,13 @@ ModelSchema = {
                         "mupif.String",
                         "mupif.ParticleSet",
                         "mupif.GrainState",
-                        "mupif.MupifObjectList[mupif.Property]",
-                        "mupif.MupifObjectList[mupif.Field]",
-                        "mupif.MupifObjectList[mupif.TemporalField]",
-                        "mupif.MupifObjectList[mupif.HeavyStruct]",
-                        "mupif.MupifObjectList[mupif.String]",
-                        "mupif.MupifObjectList[mupif.ParticleSet]",
-                        "mupif.MupifObjectList[mupif.GrainState]"
+                        "mupif.DataList[mupif.Property]",
+                        "mupif.DataList[mupif.Field]",
+                        "mupif.DataList[mupif.TemporalField]",
+                        "mupif.DataList[mupif.HeavyStruct]",
+                        "mupif.DataList[mupif.String]",
+                        "mupif.DataList[mupif.ParticleSet]",
+                        "mupif.DataList[mupif.GrainState]"
                     ]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
@@ -301,13 +301,13 @@ ModelSchema = {
                         "mupif.String",
                         "mupif.ParticleSet",
                         "mupif.GrainState",
-                        "mupif.MupifObjectList[mupif.Property]",
-                        "mupif.MupifObjectList[mupif.Field]",
-                        "mupif.MupifObjectList[mupif.TemporalField]",
-                        "mupif.MupifObjectList[mupif.HeavyStruct]",
-                        "mupif.MupifObjectList[mupif.String]",
-                        "mupif.MupifObjectList[mupif.ParticleSet]",
-                        "mupif.MupifObjectList[mupif.GrainState]"
+                        "mupif.DataList[mupif.Property]",
+                        "mupif.DataList[mupif.Field]",
+                        "mupif.DataList[mupif.TemporalField]",
+                        "mupif.DataList[mupif.HeavyStruct]",
+                        "mupif.DataList[mupif.String]",
+                        "mupif.DataList[mupif.ParticleSet]",
+                        "mupif.DataList[mupif.GrainState]"
                     ]},
                     "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                     "Obj_ID": {  # optional parameter for additional info, string or list of string
@@ -343,7 +343,7 @@ ModelSchema = {
 
 
 @Pyro5.api.expose
-class Model(mupifobject.MupifObject):
+class Model(data.Data):
     """
     An abstract class representing an application and its interface (API).
 

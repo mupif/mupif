@@ -2,7 +2,7 @@ import unittest
 import pytest
 import tempfile
 import mupif as mp
-from mupif import MupifObjectList as MOL
+from mupif import DataList as MOL
 import mupif as mp
 import math, os, os.path
 import numpy as np
@@ -15,12 +15,12 @@ class TemporalField_TestCase(unittest.TestCase):
     #def setUpClass(cls):
     #    cls.daemon=mp.pyroutil.getDaemon()
     def test_01_ctor(self):
-        mo=mp.MupifObject()
+        mo=mp.Data()
         m1=mp.MupifQuantity(1,'m')
         mol=MOL([mo,mo])
-        self.assertTrue(mol.typeId,'mupif.mupifobject.MupifObject')
+        self.assertTrue(mol.dataID,'mupif.data.Data')
         mol=MOL(objs=[m1,m1])
-        self.assertTrue(mol.typeId,'mupif.mupifobject.MupifQuantity')
+        self.assertTrue(mol.dataID,'mupif.data.MupifQuantity')
         self.assertRaises(pydantic.ValidationError,lambda: MOL([mo,m1]))
         self.assertRaises(pydantic.ValidationError,lambda: MOL(objs=[mo,m1]))
         self.assertRaises(ValueError,lambda: MOL(1.44))

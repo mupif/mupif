@@ -38,10 +38,10 @@ import re, string
 from functools import reduce
 import Pyro5
 import collections
-from mupif import dumpable
+from mupif import baredata
 import functools
 import sys
-from .. import dumpable
+from .. import baredata
 
 from pydantic.dataclasses import dataclass
 import typing
@@ -56,7 +56,7 @@ def makeQuantity(value,unit): return PhysicalQuantity(value=value,unit=unit)
 def makeUnit(names,factor,powers,offset=0.): return PhysicalUnit(names=names,factor=factor,powers=powers,offset=offset)
 
 @Pyro5.api.expose
-class PhysicalQuantity(dumpable.Dumpable):
+class PhysicalQuantity(baredata.BareData):
 
     """
     Physical quantity with units
@@ -144,7 +144,7 @@ class PhysicalQuantity(dumpable.Dumpable):
     print value
     """
 
-    value: dumpable.NumpyArrayFloat64=pydantic.Field(default_factory=lambda: np.array([]))
+    value: baredata.NumpyArrayFloat64=pydantic.Field(default_factory=lambda: np.array([]))
     unit: 'PhysicalUnit'
 
     @pydantic.validator('value',pre=True,always=True)
@@ -460,7 +460,7 @@ class PhysicalQuantity(dumpable.Dumpable):
 
 @Pyro5.api.expose
 @functools.total_ordering
-class PhysicalUnit(dumpable.Dumpable):
+class PhysicalUnit(baredata.BareData):
 
     """
     Physical unit

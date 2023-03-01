@@ -1,4 +1,4 @@
-from . import mupifobject
+from . import data
 import Pyro5.api
 import typing
 import pydantic
@@ -8,7 +8,7 @@ from .units import Unit
 
 
 @Pyro5.api.expose
-class LookupTable(mupifobject.MupifObject):
+class LookupTable(data.Data):
     """
 
     .. automethod:: __init__

@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger()
 
 num_inputs = 3
-input_mupif_array = mupif.MupifObjectList([mupif.ConstantProperty(value=random.randint(5, 20), propID=mupif.DataID.ID_None, valueType=mupif.ValueType.Scalar, unit=mupif.U.none, time=None) for m in [i for i in range(1, num_inputs+1)]])
+input_mupif_array = mupif.DataList([mupif.ConstantProperty(value=random.randint(5, 20), propID=mupif.DataID.ID_None, valueType=mupif.ValueType.Scalar, unit=mupif.U.none, time=None) for m in [i for i in range(1, num_inputs+1)]])
 
 
 @Pyro5.api.expose
@@ -25,7 +25,7 @@ class LoopsTestWorkflow(mupif.Workflow):
             "Inputs": [
                 {
                     "Name": "Input data array",
-                    "Type": "mupif.MupifObjectList[mupif.Property]",
+                    "Type": "mupif.DataList[mupif.Property]",
                     "Required": True,
                     "Type_ID": "mupif.DataID.ID_None",
                     "Units": "",
@@ -36,7 +36,7 @@ class LoopsTestWorkflow(mupif.Workflow):
             "Outputs": [
                 {
                     "Name": "Output data array",
-                    "Type": "mupif.MupifObjectList[mupif.Property]",
+                    "Type": "mupif.DataList[mupif.Property]",
                     "Type_ID": "mupif.DataID.ID_None",
                     "Units": "",
                     "Obj_ID": "output_array"
@@ -63,7 +63,7 @@ class LoopsTestWorkflow(mupif.Workflow):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def set(self, obj, objectID=""):
-        if obj.isInstance(mupif.MupifObjectList) and objectID == "input_array":
+        if obj.isInstance(mupif.DataList) and objectID == "input_array":
             self.input_array = obj
 
     def get(self, objectTypeID, time=None, objectID=""):
@@ -113,7 +113,7 @@ class LoopsTestWorkflow(mupif.Workflow):
             print(''.join(strings))
             time.sleep(1)
 
-        self.output_array = mupif.MupifObjectList([val for val in self.outputs.values()])
+        self.output_array = mupif.DataList([val for val in self.outputs.values()])
 
 
 if __name__ == '__main__':
