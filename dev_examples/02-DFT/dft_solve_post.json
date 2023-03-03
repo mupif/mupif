@@ -1,0 +1,59 @@
+{
+    "ClassName": "DFT_Solve_Post",
+    "ModuleName": "dft_solve_post",
+    "Name": "DFT Solve Post",
+    "ID": "dft_solve_post",
+    "Description": "DFT Solve Post",
+    "Version_date": "1.0.0, Jan 2023",
+    "Inputs": [
+        {
+            "Name": "InpProp",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": "",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        },
+        {
+            "Name": "InpHS",
+            "Type": "mupif.HeavyStruct",
+            "Required": true,
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": "",
+            "Set_at": "timestep"
+        }
+    ],
+    "Outputs": [
+    ],
+    "Solver": {
+        "Software": "Own",
+        "Type": "tester",
+        "Accuracy": "High",
+        "Sensitivity": "Low",
+        "Complexity": "High",
+        "Robustness": "High",
+        "Estim_time_step_s": 1,
+        "Estim_comp_time_s": 1,
+        "Estim_execution_cost_EUR": 0.01,
+        "Estim_personnel_cost_EUR": 0.01,
+        "Required_expertise": "None",
+        "Language": "",
+        "License": "LGPL",
+        "Creator": "",
+        "Version_date": "1.0.0, Jan 2023",
+        "Documentation": "not available"
+    },
+    "Physics": {
+        "Type": "Other",
+        "Entity": "Other"
+    },
+    "Execution_settings": {
+        "Type": "Distributed",
+        "jobManName": "UOI.DFT_Solve_Post",
+        "Class": "DFT_Solve_Post",
+        "Module": "dft_solve_post"
+    }
+}
