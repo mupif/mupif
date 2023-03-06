@@ -21,14 +21,14 @@
 # Boston, MA  02110-1301  USA
 #
 import Pyro5
-from . import mupifobject
+from . import data
 
 import typing
 import pydantic
 
 
 @Pyro5.api.expose
-class Particle(mupifobject.MupifObject):
+class Particle(data.Data):
     """
     Representation of particle. Particle is is object characterized by its position and other attributes.
     Particles are typically managed by ParticleSet. Particle class is convinience mapping to ParticleSet.
@@ -75,7 +75,7 @@ class Particle(mupifobject.MupifObject):
     
 
 @Pyro5.api.expose
-class ParticleSet(mupifobject.MupifObject):
+class ParticleSet(data.Data):
     """
     Class representing a collection of Particles. The set stores particle data (positions) and attributes efficiently in the form of vectors.
     ParticleSet keeps position vector for each particle and optional attributes (user defined) identified by key for each particle.

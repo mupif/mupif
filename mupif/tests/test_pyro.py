@@ -157,14 +157,14 @@ class MupifObject_TestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.daemon=mp.pyroutil.getDaemon() # Pyro5.api.Daemon()
     def test_isInstance(self):
-        'Remote/local call of MupifObjectBase.isInstance'
+        'Remote/local call of WithMetadata.isInstance'
         C=self.__class__
-        obj=mp.MupifObjectBase(metadata={'foo':'bar'})
+        obj=mp.WithMetadata(metadata={'foo':'bar'})
         uri=C.daemon.register(obj)
         pro=Pyro5.api.Proxy(uri)
         self.assertFalse(pro.isInstance(str))
-        self.assertTrue(pro.isInstance(mp.MupifObjectBase))
-        self.assertTrue(pro.isInstance((mp.MupifObjectBase,int)))
+        self.assertTrue(pro.isInstance(mp.WithMetadata))
+        self.assertTrue(pro.isInstance((mp.WithMetadata,int)))
         self.assertFalse(obj.isInstance(str))
-        self.assertTrue(obj.isInstance(mp.MupifObjectBase))
-        self.assertTrue(obj.isInstance((mp.MupifObjectBase,int)))
+        self.assertTrue(obj.isInstance(mp.WithMetadata))
+        self.assertTrue(obj.isInstance((mp.WithMetadata,int)))

@@ -20,54 +20,42 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
-import logging
-from . import mupifobject
-log = logging.getLogger()
-import Pyro5
-
-# WM_METADATA_STATUS='status'
-# WM_METADATA_PROGRESS='progress'
-
-# class WorkflowMonitorKeys(object):
-#     Status = "status"
-#     Progress = "progress"
-#     Date = "date"
-    
-# class WorkflowMonitorStatus(object):
-#    Initialized="Initialized"
-#    Running="Running"
-#    Finished="Finished"
-#    Failed="Failed"
 
 
-@Pyro5.api.expose
-class WorkflowMonitor(mupifobject.MupifObject):
-    """
-    An class implementing workflow monitor; a server keeping track of individual workflow executions and their status.
-    It internally maintains workflows dict, where keys are workflow execution IDs, 
-    and values are dicts containing metadata.
+if 0:
+    import logging
+    from . import data
+    log = logging.getLogger()
+    import Pyro5
 
-    .. automethod:: __init__
-    """
-    def __init__(self):
+    @Pyro5.api.expose
+    class WorkflowMonitor(data.Data):
         """
-        Constructor. Initializes the monitor server
-        """
-        super().__init__()
-        # self.workflows={}
+        An class implementing workflow monitor; a server keeping track of individual workflow executions and their status.
+        It internally maintains workflows dict, where keys are workflow execution IDs, 
+        and values are dicts containing metadata.
 
-    def updateMetadata(self, key, valueDict):
+        .. automethod:: __init__
         """
-        Updates the entry.
-        :param str key: unique execution ID of workflow, application, etc.
-        :param dict valueDict: metadata
-        """
-        if isinstance(valueDict, dict):
-            self.metadata.setdefault(key, {}).update(valueDict)
+        def __init__(self):
+            """
+            Constructor. Initializes the monitor server
+            """
+            super().__init__()
+            # self.workflows={}
 
-    def getAllMetadata(self):
-        """
-        Returns all metadata
-        :return dict: all metadata
-        """
-        return self.metadata
+        def updateMetadata(self, key, valueDict):
+            """
+            Updates the entry.
+            :param str key: unique execution ID of workflow, application, etc.
+            :param dict valueDict: metadata
+            """
+            if isinstance(valueDict, dict):
+                self.metadata.setdefault(key, {}).update(valueDict)
+
+        def getAllMetadata(self):
+            """
+            Returns all metadata
+            :return dict: all metadata
+            """
+            return self.metadata

@@ -95,6 +95,7 @@ WorkflowSchema["properties"].update({
                 "Module": {"type": "string"},
                 "Class": {"type": "string"},
                 "Jobmanager": {"type": "string"},
+                "Instantiate": {"type": "boolean"},
             },
             "required": ["Name"],
             "anyOf": [
@@ -154,7 +155,7 @@ class Workflow(model.Model):
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
 
-    def _allocateModel(self, name, modulename, classname, jobmanagername):
+    def _allocateModel(self, *, name, modulename, classname, jobmanagername):
         if name:
             if jobmanagername:
                 ns = pyroutil.connectNameserver()
@@ -166,9 +167,20 @@ class Workflow(model.Model):
                 model_class = getattr(moduleImport, classname)
                 self._models[name] = model_class()
 
+    def _allocateModelByName(self, *, name, name_new=None):
+        if name_new is None:
+            name_new = name
+        model_info = None
+        for m in self.metadata['Models']:
+            if m['Name'] == name:
+                model_info = m
+        if model_info is not None:
+            self._allocateModel(name=name_new, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+
     def _allocateAllModels(self):
         for model_info in self.metadata['Models']:
-            self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+            if model_info.get('Instantiate', True):
+                self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
 
     def _initializeAllModels(self):
         _md = {

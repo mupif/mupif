@@ -45,20 +45,20 @@ class UnitProxy(object):
 
 U = Q = UnitProxy()
 
-from .dumpable import addPydanticInstanceValidator
+from .baredata import addPydanticInstanceValidator
 addPydanticInstanceValidator(Quantity)
 addPydanticInstanceValidator(astropy.units.UnitBase,makeKlass=astropy.units.Unit)
 
-from .dumpable import MupifBaseModel
+from .baredata import Utility
 
 
-class RefQuantity(MupifBaseModel):
+class RefQuantity(Utility):
     'Quantity with data stored somewhere else. Abstract class, to be subclassed.'
     pass
 
 
 # pyro serialization (this is for single-value type only)
-# embedding within a dumpable is handled in dumpable.py
+# embedding within a baredata is handled in baredata.py
 Pyro5.api.register_class_to_dict(au.Unit, lambda x: {'__class__': 'astropy.units.Unit', 'unit': x.to_string()})
 Pyro5.api.register_dict_to_class('astropy.units.Unit', lambda cname, x: au.Unit(x['unit']))
 Pyro5.api.register_class_to_dict(au.Quantity, lambda x: {'__class__': 'astropy.units.Quantity', 'value': np.array(x.value).tolist(), 'unit': x.unit.to_string()})

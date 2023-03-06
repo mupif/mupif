@@ -1,0 +1,73 @@
+{
+    "ClassName": "DFT_Pre",
+    "ModuleName": "dft_pre",
+    "Name": "DFT Pre",
+    "ID": "dft_pre",
+    "Description": "DFT Pre",
+    "Version_date": "1.0.0, Jan 2023",
+    "Inputs": [
+        {
+            "Name": "InpProp",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": "",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        },
+        {
+            "Name": "InpHS",
+            "Type": "mupif.HeavyStruct",
+            "Required": true,
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": "",
+            "Set_at": "timestep"
+        }
+    ],
+    "Outputs": [
+        {
+            "Name": "OutHS",
+            "Type": "mupif.HeavyStruct",
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": ""
+        },
+        {
+            "Name": "OutStrings",
+            "Type": "mupif.DataList[mupif.String]",
+            "Type_ID": "mupif.DataID.ID_None",
+            "Units": "",
+            "Obj_ID": ""
+        }
+    ],
+    "Solver": {
+        "Software": "Own",
+        "Type": "tester",
+        "Accuracy": "High",
+        "Sensitivity": "Low",
+        "Complexity": "High",
+        "Robustness": "High",
+        "Estim_time_step_s": 1,
+        "Estim_comp_time_s": 1,
+        "Estim_execution_cost_EUR": 0.01,
+        "Estim_personnel_cost_EUR": 0.01,
+        "Required_expertise": "None",
+        "Language": "",
+        "License": "LGPL",
+        "Creator": "",
+        "Version_date": "1.0.0, Jan 2023",
+        "Documentation": "not available"
+    },
+    "Physics": {
+        "Type": "Other",
+        "Entity": "Other"
+    },
+    "Execution_settings": {
+        "Type": "Distributed",
+        "jobManName": "UOI.DFT_Pre",
+        "Class": "DFT_Pre",
+        "Module": "dft_pre"
+    }
+}

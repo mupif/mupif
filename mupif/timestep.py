@@ -1,6 +1,6 @@
 import Pyro5.api
 from pydantic.dataclasses import dataclass
-from . import dumpable
+from . import baredata
 from . import units
 import typing
 import pydantic
@@ -8,7 +8,7 @@ import pydantic
 
 # @dataclass(frozen=True)
 @Pyro5.api.expose
-class TimeStep(dumpable.Dumpable):
+class TimeStep(baredata.BareData):
     """
     Class representing a time step.
     The folowing attributes are used to characterize a time step:

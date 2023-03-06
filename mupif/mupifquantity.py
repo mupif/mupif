@@ -4,7 +4,7 @@ Enumeration defining supported types of field and property values, e.g. scalar, 
 from enum import IntEnum
 
 from . import units
-from . import mupifobject
+from . import data
 import typing
 import pydantic
 import warnings
@@ -41,7 +41,7 @@ class ValueType(IntEnum):
             raise RuntimeError('No ValueType with %i components' % i)
 
 
-class MupifQuantity(mupifobject.MupifObject):
+class MupifQuantity(data.Data):
     """
     Abstract base class for representing a quantity, common parent class for
     :obj:`Field` and :obj:`Property` classes. Quantity means value and an

@@ -25,7 +25,7 @@ from __future__ import annotations
 from . import apierror
 from . import octree
 from . import bbox
-from . import dumpable
+from . import baredata
 from . import vertex
 from . import cell
 from . import units
@@ -105,7 +105,7 @@ class MeshIterator(object):
 
 
 @Pyro5.api.expose
-class Mesh(dumpable.Dumpable):
+class Mesh(baredata.BareData):
     """
     Abstract representation of a computational domain.
     Mesh contains computational cells and vertices.
