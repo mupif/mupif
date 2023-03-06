@@ -3,8 +3,15 @@ import os
 import time as timemod
 
 
+def check_if_job_is_done(jobid):
+    status = get_job_status(jobid=jobid)
+    print("Job %s status is %s" % (str(jobid), status))
+    if status == 'Completed' or status == 'Unknown':
+        return True
+    return False
+
+
 def wait_until_job_is_done(jobid, checking_frequency=10.):
-    status = ''
     job_finished = False
     while job_finished is False:
         status = get_job_status(jobid=jobid)
@@ -16,19 +23,9 @@ def wait_until_job_is_done(jobid, checking_frequency=10.):
 
 
 def submit_job(command):
-    result = ''
-    try:
-        cmmnd = 'qsub %s' % command
-        stream = os.popen(cmmnd)
-        result = str(stream.read())
-    except Exception as e:
-        pass
-    # except subprocess.SubprocessError:
-    #     pass
-    #     print("Job submition has probably failed.")
-
-    result = result.strip()
-
+    cmmnd = 'qsub %s' % command
+    stream = os.popen(cmmnd)
+    result = str(stream.read()).strip()
     print("'%s'" % result)
     if result != '':
         return result
@@ -65,7 +62,7 @@ def get_job_status(jobid):
         if len(lines) >= 3:
             line = lines[2]
             while '  ' in line:
-                line = line.replace('  ',' ')
+                line = line.replace('  ', ' ')
             line = line.strip()
             words = line.split(' ')
             if len(words) >= 2:

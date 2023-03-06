@@ -1,0 +1,246 @@
+{
+    "blocks": [
+        {
+            "classname": "BlockWorkflow",
+            "uid": "workflow",
+            "parent_uid": "None",
+            "ext_slots": [
+                {
+                    "classname": "SlotExt",
+                    "name": "field_temperature",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "ext_slot_3",
+                    "inout": "in",
+                    "uid": "external_output_1"
+                },
+                {
+                    "classname": "SlotExt",
+                    "name": "field_displacement",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "ext_slot_1",
+                    "inout": "in",
+                    "uid": "external_output_2"
+                },
+                {
+                    "classname": "SlotExt",
+                    "name": "max_displacement",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "ext_slot_2",
+                    "inout": "in",
+                    "uid": "external_output_3"
+                },
+                {
+                    "classname": "SlotExt",
+                    "name": "temperature_top",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "ext_slot_1",
+                    "inout": "out",
+                    "uid": "external_input_1"
+                },
+                {
+                    "classname": "SlotExt",
+                    "name": "temperature_bottom",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "ext_slot_2",
+                    "inout": "out",
+                    "uid": "external_input_2"
+                }
+            ],
+            "child_block_sort": "vertical"
+        },
+        {
+            "classname": "BlockModel",
+            "uid": "model_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "slot_1",
+                "slot_2"
+            ],
+            "slot_out_uids": [
+                "slot_3"
+            ],
+            "metadata": {
+                "ClassName": "OOFEM_T_demo",
+                "ModuleName": "oofem_demo_thermal",
+                "Name": "OOFEM demo API thermal",
+                "ID": "OOFEM_Thermal_demo",
+                "Description": "OOFEM thermal demo solver",
+                "Version_date": "1.0.0, Jan 2023",
+                "Inputs": [
+                    {
+                        "Name": "edge temperature",
+                        "Type": "mupif.Property",
+                        "Required": true,
+                        "Type_ID": "mupif.DataID.PID_Temperature",
+                        "Units": "deg_C",
+                        "Obj_ID": [
+                            "temperature_top",
+                            "temperature_bottom"
+                        ],
+                        "Set_at": "timestep",
+                        "ValueType": "Scalar"
+                    }
+                ],
+                "Outputs": [
+                    {
+                        "Name": "temperature",
+                        "Type_ID": "mupif.DataID.FID_Temperature",
+                        "Type": "mupif.Field",
+                        "Units": "degC"
+                    }
+                ],
+                "Solver": {
+                    "Software": "OOFEM",
+                    "Type": "Finite elements",
+                    "Accuracy": "High",
+                    "Sensitivity": "Low",
+                    "Complexity": "High",
+                    "Robustness": "High",
+                    "Estim_time_step_s": 1,
+                    "Estim_comp_time_s": 1,
+                    "Estim_execution_cost_EUR": 0.01,
+                    "Estim_personnel_cost_EUR": 0.01,
+                    "Required_expertise": "None",
+                    "Language": "C++",
+                    "License": "LGPL",
+                    "Creator": "Borek Patzak",
+                    "Version_date": "1.0.0, Dec 2022",
+                    "Documentation": "oofem.org"
+                },
+                "Physics": {
+                    "Type": "Continuum",
+                    "Entity": "Other",
+                    "Equation": [],
+                    "Equation_quantities": [],
+                    "Relation_description": [],
+                    "Relation_formulation": [],
+                    "Representation": "Finite elements"
+                },
+                "Execution_settings": {
+                    "Type": "Distributed",
+                    "jobManName": "OOFEM_Thermal_demo"
+                }
+            },
+            "model_working_directory": ""
+        },
+        {
+            "classname": "BlockModel",
+            "uid": "model_2",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "slot_4"
+            ],
+            "slot_out_uids": [
+                "slot_5",
+                "slot_6"
+            ],
+            "metadata": {
+                "ClassName": "MUPIF_M_demo",
+                "ModuleName": "mupif_demo_mechanical",
+                "Name": "MUPIF demo API mechanical",
+                "ID": "MUPIF_Mechanical_demo",
+                "Description": "MUPIF mechanical demo solver",
+                "Version_date": "1.0.0, Jan 2023",
+                "Inputs": [
+                    {
+                        "Name": "temperature",
+                        "Type_ID": "mupif.DataID.FID_Temperature",
+                        "Type": "mupif.Field",
+                        "Units": "degC",
+                        "Required": true,
+                        "Set_at": "timestep"
+                    }
+                ],
+                "Outputs": [
+                    {
+                        "Name": "displacement",
+                        "Type_ID": "mupif.DataID.FID_Displacement",
+                        "Type": "mupif.Field",
+                        "Units": "m"
+                    },
+                    {
+                        "Name": "max vertical displacement",
+                        "Type": "mupif.Property",
+                        "Type_ID": "mupif.DataID.PID_maxDisplacement",
+                        "Units": "m",
+                        "Obj_ID": "max_displacement",
+                        "ValueType": "Scalar"
+                    }
+                ],
+                "Solver": {
+                    "Software": "MUPIF",
+                    "Type": "Finite elements",
+                    "Accuracy": "High",
+                    "Sensitivity": "Low",
+                    "Complexity": "High",
+                    "Robustness": "High",
+                    "Estim_time_step_s": 1,
+                    "Estim_comp_time_s": 1,
+                    "Estim_execution_cost_EUR": 0.01,
+                    "Estim_personnel_cost_EUR": 0.01,
+                    "Required_expertise": "None",
+                    "Language": "Python",
+                    "License": "LGPL",
+                    "Creator": "Borek Patzak",
+                    "Version_date": "1.0.0, Jan 2023",
+                    "Documentation": "mupif.org"
+                },
+                "Physics": {
+                    "Type": "Continuum",
+                    "Entity": "Other",
+                    "Equation": [],
+                    "Equation_quantities": [],
+                    "Relation_description": [],
+                    "Relation_formulation": [],
+                    "Representation": "Finite elements"
+                },
+                "Execution_settings": {
+                    "Type": "Distributed",
+                    "jobManName": "MUPIF_Mechanical_demo"
+                }
+            },
+            "model_working_directory": ""
+        }
+    ],
+    "datalinks": [
+        {
+            "ds1_uid": "slot_3",
+            "ds2_uid": "slot_4"
+        },
+        {
+            "ds1_uid": "external_input_1",
+            "ds2_uid": "slot_1"
+        },
+        {
+            "ds1_uid": "external_input_2",
+            "ds2_uid": "slot_2"
+        },
+        {
+            "ds1_uid": "external_output_1",
+            "ds2_uid": "slot_3"
+        },
+        {
+            "ds1_uid": "external_output_2",
+            "ds2_uid": "slot_5"
+        },
+        {
+            "ds1_uid": "external_output_3",
+            "ds2_uid": "slot_6"
+        }
+    ],
+    "settings": {
+        "project_name": "TM Demo Workflow",
+        "project_classname": "TMDemoWorkflow",
+        "project_modulename": "tm_demo_workflow",
+        "project_id": "tm_demo_workflow",
+        "project_nshost": "",
+        "project_nsport": "",
+        "script_name_base": "",
+        "connection_type": "Local"
+    }
+}

@@ -1,0 +1,71 @@
+{
+    "ClassName": "MUPIF_T_demo",
+    "ModuleName": "mupif_demo_thermal",
+    "Name": "MUPIF demo API thermal",
+    "ID": "MUPIF_Thermal_demo",
+    "Description": "MUPIF thermal demo solver",
+    "Version_date": "1.0.0, Jan 2023",
+    "Inputs": [
+        {
+            "Name": "temperature_top",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.PID_Temperature",
+            "Units": "deg_C",
+            "Obj_ID": "top_edge",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        },
+        {
+            "Name": "temperature_bottom",
+            "Type": "mupif.Property",
+            "Required": true,
+            "Type_ID": "mupif.DataID.PID_Temperature",
+            "Units": "deg_C",
+            "Obj_ID": "bottom_edge",
+            "Set_at": "timestep",
+            "ValueType": "Scalar"
+        }
+    ],
+    "Outputs": [
+        {
+            "Name": "temperature",
+            "Type_ID": "mupif.DataID.FID_Temperature",
+            "Type": "mupif.Field",
+            "Units": "deg_C"
+        }
+    ],
+    "Solver": {
+        "Software": "MUPIF",
+        "Type": "Finite elements",
+        "Accuracy": "High",
+        "Sensitivity": "Low",
+        "Complexity": "High",
+        "Robustness": "High",
+        "Estim_time_step_s": 1,
+        "Estim_comp_time_s": 1,
+        "Estim_execution_cost_EUR": 0.01,
+        "Estim_personnel_cost_EUR": 0.01,
+        "Required_expertise": "None",
+        "Language": "Python",
+        "License": "LGPL",
+        "Creator": "Borek Patzak",
+        "Version_date": "1.0.0, Jan 2023",
+        "Documentation": "mupif.org"
+    },
+    "Physics": {
+        "Type": "Continuum",
+        "Entity": "Other",
+        "Equation": [],
+        "Equation_quantities": [],
+        "Relation_description": [],
+        "Relation_formulation": [],
+        "Representation": "Finite elements"
+    },
+    "Execution_settings": {
+        "Type": "Distributed",
+        "jobManName": "CVUT.Thermal_demo",
+        "Class": "MUPIF_T_demo",
+        "Module": "mupif_demo_thermal"
+    }
+}

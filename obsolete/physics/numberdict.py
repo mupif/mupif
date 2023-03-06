@@ -31,10 +31,10 @@
 Dictionary storing numerical values
 """
 
-from .. import dumpable
+from .. import baredata
 import pydantic
 
-class NumberDict(dumpable.Dumpable):
+class NumberDict(baredata.BareData):
 
     """
     Dictionary storing numerical values

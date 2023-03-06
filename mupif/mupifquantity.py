@@ -4,10 +4,11 @@ Enumeration defining supported types of field and property values, e.g. scalar, 
 from enum import IntEnum
 
 from . import units
-from . import mupifobject
+from . import data
 import typing
 import pydantic
 import warnings
+import numpy as np
 
 
 class ValueType(IntEnum):
@@ -40,7 +41,7 @@ class ValueType(IntEnum):
             raise RuntimeError('No ValueType with %i components' % i)
 
 
-class MupifQuantity(mupifobject.MupifObject):
+class MupifQuantity(data.Data):
     """
     Abstract base class for representing a quantity, common parent class for
     :obj:`Field` and :obj:`Property` classes. Quantity means value and an
@@ -91,3 +92,15 @@ class MupifQuantity(mupifobject.MupifObject):
         Returns representation of property units.
         """
         return self.quantity.unit
+
+    def dataDigest(self, *args):
+        def numpyHash(*_args):
+            """Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to
+            find an identical mesh which was already stored."""
+            import hashlib
+            # print(f'{_args=}')
+            H = hashlib.sha1()
+            for arr in _args:
+                H.update(arr.view(np.uint8))
+            return H.hexdigest()
+        return numpyHash(self.quantity.value, np.frombuffer(bytes(self.quantity.unit), dtype=np.uint8), *args)

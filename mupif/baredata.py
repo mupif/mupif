@@ -66,9 +66,8 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
     def klass_get_validators(cls): yield klass_validate
     klass.__get_validators__ = klass_get_validators
 
-
-class MupifBaseModel(pydantic.BaseModel):
-    """Basic configuration of pydantic.BaseModel, common to Dumpable and also MupifObjectBase"""
+class ObjectBase(pydantic.BaseModel):
+    """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
     class Config:
         # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
         # see https://github.com/samuelcolvin/pydantic/discussions/2457
@@ -88,13 +87,26 @@ class MupifBaseModel(pydantic.BaseModel):
                 raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
         super().__init__(*args, **kw)
 
+    @Pyro5.api.expose
+    @pydantic.validate_arguments
+    def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
+        return isinstance(self, classinfo)
+
+
+
+
+class Utility(ObjectBase):
+    '''
+    Base class existing for hieararchy structure only. Derived classes provide some
+    functionality which does not fit into Process or BareData/Data.
+    '''
 
 @Pyro5.api.expose
-class Dumpable(MupifBaseModel):
+class BareData(ObjectBase):
     """
-    Base class for all serializable (dumpable) objects; all objects which are sent over the wire via python must be recursively dumpable, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
+    Base class for all serializable (baredata) objects; all objects which are sent over the wire via python must be recursively baredata, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
 
-    Attributes of a dumpable objects are specified via ``dumpAttrs`` class attribute: it is list of attribute names which are to be dumped; the list can be empty, but it is an error if a class about to be dumped does not define it at all. Inheritance of dumpables is handled by recursion, thus multiple inheritance is supported.
+    Attributes of a baredata objects are specified via ``dumpAttrs`` class attribute: it is list of attribute names which are to be dumped; the list can be empty, but it is an error if a class about to be dumped does not define it at all. Inheritance of dumpables is handled by recursion, thus multiple inheritance is supported.
 
     *dumpAttrs* items can take one of the following forms:
 
@@ -126,7 +138,7 @@ class Dumpable(MupifBaseModel):
         return s
 
     def preDumpHook(self):
-        'No-op in Dumpable. Reimplement in derived classes which need special care before being serialized.'
+        'No-op in BareData. Reimplement in derived classes which need special care before being serialized.'
         pass
 
     def to_dict(self, clss=None):
@@ -134,7 +146,7 @@ class Dumpable(MupifBaseModel):
             if isinstance(val, list): return [_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)]
             elif isinstance(val, tuple): return tuple([_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)])
             elif isinstance(val, dict): return dict([(k, _handle_attr('%s[%s]' % (attr, k), v, clssName)) for k, v in val.items()])
-            elif isinstance(val, Dumpable): return val.to_dict()
+            elif isinstance(val, BareData): return val.to_dict()
             elif isinstance(val, enum.Enum): return enum_to_dict(val)
             # explicitly don't handle subtypes
             elif type(val) == numpy.ndarray: return {'__class__': 'numpy.ndarray', 'arr': val.tolist(), 'dtype': str(val.dtype)}
@@ -146,16 +158,16 @@ class Dumpable(MupifBaseModel):
                     'unit': val.unit.to_string()
                 }
             elif val.__class__.__module__.startswith('mupif.'):
-                raise RuntimeError('%s.%s: type %s does not derive from Dumpable.' % (clssName, attr, val.__class__.__name__))
+                raise RuntimeError('%s.%s: type %s does not derive from BareData.' % (clssName, attr, val.__class__.__name__))
             else:
                 return val
         import enum
-        if not isinstance(self, Dumpable): raise RuntimeError("Not a Dumpable.");
+        if not isinstance(self, BareData): raise RuntimeError("Not a BareData.");
         self.preDumpHook()
         ret = {}
         if clss is None:
             ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
-            if Dumpable._pickleInside:
+            if BareData._pickleInside:
                 ret['__pickle__'] = pickle.dumps(self)
                 return ret
             clss = self.__class__
@@ -166,9 +178,9 @@ class Dumpable(MupifBaseModel):
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
-        if clss != Dumpable:
+        if clss != BareData:
             for base in clss.__bases__:
-                if issubclass(base, Dumpable):
+                if issubclass(base, BareData):
                     ret.update(base.to_dict(self, clss=base))
                 else:
                     pass
@@ -189,14 +201,14 @@ class Dumpable(MupifBaseModel):
         return self.to_dict()
 
     def deepcopy(self):
-        if Pyro5.callcontext.current_context.client is None: return Dumpable.from_dict(self.to_dict())
+        if Pyro5.callcontext.current_context.client is None: return BareData.from_dict(self.to_dict())
         else: return self.to_dict()
-        # return Dumpable.from_dict(self.to_dict())
+        # return BareData.from_dict(self.to_dict())
 
     @staticmethod
     def from_dict(dic, clss=None, obj=None):
         def _create(d):
-            if isinstance(d, dict) and '__class__' in d: return Dumpable.from_dict(d)
+            if isinstance(d, dict) and '__class__' in d: return BareData.from_dict(d)
             elif isinstance(d, list): return [_create(d_) for d_ in d]
             elif isinstance(d, tuple): return tuple([_create(d_) for d_ in d])
             elif isinstance(d, dict): return dict([(k, _create(v)) for k, v in d.items()])
@@ -214,7 +226,7 @@ class Dumpable(MupifBaseModel):
             if issubclass(clss, enum.Enum): return enum_from_dict(clss, dic)
             if astropy and clss == astropy.units.Unit: return astropy.units.Unit(dic['unit'])
             if astropy and clss == astropy.units.Quantity:
-                return astropy.units.Quantity(Dumpable.from_dict(dic['value']), astropy.units.Unit(dic['unit']))
+                return astropy.units.Quantity(BareData.from_dict(dic['value']), astropy.units.Unit(dic['unit']))
             if issubclass(clss, numpy.ndarray):
                 if clss != numpy.ndarray: raise RuntimeError('Subclass of numpy.ndarray %s.%s not handled.' % (mod, classname))
                 return numpy.array(dic['arr'], dtype=dic['dtype'])
@@ -233,7 +245,7 @@ class Dumpable(MupifBaseModel):
         #        # handles frozen dataclasses as well, hopefully
         #        if f.name in dic: object.__setattr__(obj,f.name,_create(dic.pop(f.name)))
         # recurse into base classes
-        if clss != Dumpable:
+        if clss != BareData:
             for base in clss.__bases__:
                 obj.from_dict(dic, clss=base, obj=obj)
         else:
@@ -245,7 +257,7 @@ class Dumpable(MupifBaseModel):
     def from_dict_with_name(classname, dic):
         assert classname == dic['__class__']
         # print(f'@@@ {classname} ###')
-        return Dumpable.from_dict(dic)
+        return BareData.from_dict(dic)
 
     def dumpToLocalFile(self, filename):
         pickle.dump(self, open(filename, 'wb'))
@@ -270,7 +282,7 @@ def enum_from_dict_with_name(modClassName, dic):
 if __name__ == '__main__':
     import typing
 
-    class TestDumpable(Dumpable):
+    class TestDumpable(BareData):
         num: int = 0
         dic: dict
         recurse: typing.Optional['TestDumpable'] = None

@@ -186,7 +186,7 @@ app1.initialize(metadata=executionMetadata)
 # app1.printMetadata()
 
 #app1.toJSONFile('aa.json')
-#aa = mp.MupifObject('aa.json')
+#aa = mp.Data('aa.json')
 # aa.printMetadata()
 
 app2.initialize(metadata=executionMetadata)
