@@ -32,14 +32,14 @@
             "Type": "mupif.HeavyStruct",
             "Type_ID": "mupif.DataID.ID_None",
             "Units": "",
-            "Obj_ID": ""
+            "Obj_ID": "out_hs"
         },
         {
             "Name": "OutStrings",
             "Type": "mupif.DataList[mupif.String]",
             "Type_ID": "mupif.DataID.ID_None",
             "Units": "",
-            "Obj_ID": ""
+            "Obj_ID": "out_strings"
         }
     ],
     "Solver": {
