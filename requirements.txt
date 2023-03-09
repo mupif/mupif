@@ -17,6 +17,7 @@ appdirs
 pydantic==1.9.2
 # for documentation
 sphinxcontrib-apidoc
+sphinxcontrib-mermaid
 asyncssh
 setproctitle
 tqdm
