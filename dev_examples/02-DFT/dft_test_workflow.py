@@ -126,7 +126,7 @@ class DFTTestWorkflow(mupif.Workflow):
             dowhile_1_counter += 1
 
             # execution code of model_2 (DFT Solve Post)
-            model_name = self.generateNewModelName(base='model_2')
+            model_name = self._generateNewModelName(base='model_2')
             self._allocateModelByName(name='model_2', name_new=model_name)
             self.getModel(model_name).initialize(metadata=self._getInitializationMetadata())
             self.allocate_model_at_runtime_1_model_names.append(model_name)
