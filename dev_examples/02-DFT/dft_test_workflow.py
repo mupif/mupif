@@ -26,18 +26,18 @@ class DFTTestWorkflow(mupif.Workflow):
                 {"Name": "hs_in", "Type": "mupif.HeavyStruct", "Required": True, "description": "", "Type_ID": "mupif.DataID.ID_None", "Obj_ID": "hs_in", "Units": "", "Set_at": "timestep"}
             ],
             "Outputs": [
-                {"Name": "hs_out", "Type": "*", "description": "", "Type_ID": "null", "Obj_ID": "hs_out", "Units": ""}
+                {"Name": "hs_out", "Type": "mupif.HeavyStruct", "description": "", "Type_ID": "mupif.DataID.ID_None", "Obj_ID": "hs_out", "Units": ""}
             ],
             "Models": [
                 {
                     "Name": "model_1",
                     "Jobmanager": "UOI.DFT_Pre",
-                    "Instantiate": True,
+                    "Instantiate": True
                 },
                 {
                     "Name": "model_2",
                     "Jobmanager": "UOI.DFT_Solve_Post",
-                    "Instantiate": False,
+                    "Instantiate": False
                 }
             ]
         }
@@ -121,21 +121,23 @@ class DFTTestWorkflow(mupif.Workflow):
 
         # execution code of dowhile_1 (DoWhile)
         dowhile_1_counter = 0
-        dowhile_1_compute = dowhile_1_counter < len(self.variable_2.objs)
+        dowhile_1_compute = True
         while dowhile_1_compute:
             dowhile_1_counter += 1
+            dowhile_1_compute = dowhile_1_counter <= len(self.variable_2.objs)
+            if dowhile_1_compute:
+                self.allocate_model_at_runtime_1_model_names = []
+                self.run_in_background_1_model_names = []
 
-            # execution code of model_2 (DFT Solve Post)
-            model_name = self._generateNewModelName(base='model_2')
-            self._allocateModelByName(name='model_2', name_new=model_name)
-            self.getModel(model_name).initialize(metadata=self._getInitializationMetadata())
-            self.allocate_model_at_runtime_1_model_names.append(model_name)
-            self.run_in_background_1_model_names.append(model_name)
-            self.getModel(model_name).set(self.variable_2.objs[int(dowhile_1_counter) - 1] if 0 <= int(dowhile_1_counter) - 1 < len(self.variable_2.objs) else None, '')
-            self.getModel(model_name).set(self.variable_1, '')
-            self.getModel(model_name).solveStep(tstep=tstep, runInBackground=True)
-
-            dowhile_1_compute = dowhile_1_counter < len(self.variable_2.objs)
+                # execution code of model_2 (DFT Solve Post)
+                model_name = self._generateNewModelName(base='model_2')
+                self._allocateModelByName(name='model_2', name_new=model_name)
+                self.getModel(model_name).initialize(metadata=self._getInitializationMetadata())
+                self.allocate_model_at_runtime_1_model_names.append(model_name)
+                self.run_in_background_1_model_names.append(model_name)
+                self.getModel(model_name).set(self.variable_2.objs[int(dowhile_1_counter) - 1] if 0 <= int(dowhile_1_counter) - 1 < len(self.variable_2.objs) else None, '')
+                self.getModel(model_name).set(self.variable_1, '')
+                self.getModel(model_name).solveStep(tstep=tstep, runInBackground=True)
 
         # execution code of wait_for_background_processes_1 (WaitForBackgroundProcesses)
         wait_for_background_processes_1_all_done = False
