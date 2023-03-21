@@ -416,3 +416,13 @@ class Hdf5HeavyProperty(Property, HeavyDataBase):
         ret.valueType = ValueType[ds.attrs['valueType']]
         ret.propID = dataid.DataID[h5loc]
         return ret
+
+
+class HeavyConvertible(pydantic.BaseModel):
+    # returns dataset index in h5grp
+    def copyToHeavy(*,h5grp): raise NotImplementedError('Derived class did not implment the method.')
+    @classmethod
+    def makeFromHeavy(klass,*,h5grp,indices):
+        # TODO: decode whic type is stored in h5grp
+        assert issubclass(klass,HeavyConvertible)
+        return klass.makeFromHdf5(h5group=h5grp,indices=indices)

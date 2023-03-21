@@ -10,7 +10,7 @@ import Pyro5.api
 # from .data import Data
 from . import units, pyroutil, baredata, field
 from . import dataid
-from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice
+from .heavydata import HeavyDataBase, HeavyDataBase_ModeChoice, HeavyConvertible
 from .pyrofile import PyroFile
 import types
 import json
@@ -301,11 +301,15 @@ sampleSchemas_json = '''
 ## XXX: field utility functions
 
 def _mupif_to_hdf5_group__return_index(*,grp,obj):
-    assert isinstance(obj,field.Field)
-    return obj.toHdf5(h5group=grp)
+    assert isinstance(obj,HeavyConvertible)
+    # assert isinstance(obj,field.Field)
+    # return obj.toHdf5(h5group=grp)
+    return obj.copyToHeavy(h5grp=grp)
 
 def _mupif_from_hdf5_group(*,grp,index):
-    return field.Field.makeFromHdf5(h5group=grp,indices=[index])[0]
+    # TODO: determine type to be restored, for now just assume Field
+    return field.Field.makeFromHeavy(h5grp=grp,indices=[index])[0]
+    # return field.Field.makeFromHeavydf5(h5group=grp,indices=[index])[0]
 
 
 def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', namingConvention='get-set'):

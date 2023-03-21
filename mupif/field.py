@@ -32,6 +32,7 @@ from . import mesh
 from . import mupifquantity
 from .units import Quantity, Unit
 from .baredata import NumpyArray
+from .heavydata import HeavyConvertible
 
 import meshio
 import sys
@@ -159,7 +160,7 @@ class AnalyticalField(FieldBase):
 
 
 @Pyro5.api.expose
-class Field(FieldBase):
+class Field(FieldBase,HeavyConvertible):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -601,7 +602,7 @@ class Field(FieldBase):
         if fg is not None:
             self.toHdf5Group(fg, meshLink=None)
 
-    def toHdf5(self, fileName: str = None, groupName='component1/part1', h5group=None):
+    def toHdf5(self, *, fileName: str = None, groupName='component1/part1', h5group=None):
         r"""
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
 
@@ -872,3 +873,7 @@ class Field(FieldBase):
         performing in place conversion.
         """
         raise TypeError('Not supported')
+
+    def copyToHeavy(self,h5grp):
+        return self.toHdf5(h5group=h5grp)
+

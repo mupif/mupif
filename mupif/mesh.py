@@ -29,6 +29,7 @@ from . import baredata
 from . import vertex
 from . import cell
 from . import units
+from .heavydata import HeavyConvertible
 import copy
 import time
 import sys
@@ -526,8 +527,7 @@ class Mesh(baredata.BareData):
 
 
 @Pyro5.api.expose
-# @dataclasses.dataclass
-class UnstructuredMesh(Mesh):
+class UnstructuredMesh(Mesh,HeavyConvertible):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
 
