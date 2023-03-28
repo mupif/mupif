@@ -478,14 +478,14 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
         util.sha1digest([self.origin,self.spacing,self.dims])
     def copyToHeavy(self,*,h5grp):
         mhash=self.dataDigest()
-        if m.hash in h5grp: return h5grp[mhash]
+        if mhash in h5grp: return h5grp[mhash]
         gg=h5grp.create_grroup(name=mhash)
         gg.attrs['unit']=('' if self.unit is None else str(self.unit))
         gg.attrs['__class__']=self.__class__.__name__
         gg.attrs['__module__']=self.__class.__module__
-        gg[origin]=np.array(origin)
-        gg[spacing]=np.array(spacing)
-        gg[dims]=np.array(dims)
+        gg['origin']=np.array(self.origin)
+        gg['spacing']=np.array(self.spacing)
+        gg['dims']=np.array(self.dims)
     # TODO: restore from heavy
     # TODO: cell localizer for uniform rectilinear mesh
     # def getCellLocalizer(self): pass
