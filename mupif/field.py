@@ -721,7 +721,7 @@ class Field(FieldBase,HeavyConvertible):
             time = pickle.loads(time)
         if meshGrp is not None:
             # creates HeavyUnstructuredMesh if that is the meshGrp storage format
-            m = mesh.Mesh.makeFromHdf5Object(meshGrp)
+            m = mesh.UnstructuredMesh.makeFromHdf5Object(meshGrp)
         else:
             if 'mesh' not in f:
                 raise ValueError('HDF5/mesh: missing attribute')
@@ -729,7 +729,7 @@ class Field(FieldBase,HeavyConvertible):
             assert isinstance(link, h5py.SoftLink)
             mPath = link.path
             if mPath not in meshCache:
-                meshCache[mPath] = mesh.Mesh.makeFromHdf5Object(f['mesh'])
+                meshCache[mPath] = mesh.UnstructuredMesh.makeFromHdf5Object(f['mesh'])
             m = meshCache[mPath]
         if not heavy:
             quantity = Quantity(value=np.array(valDs).tolist(), unit=unit)

@@ -29,6 +29,8 @@ from . import octree
 
 import Pyro5
 
+from typing import Union, List, Generator
+
 _formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
 _formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
 
@@ -186,7 +188,7 @@ def getVersion():
     raise RuntimeError('Unable to get version data (did you install via "pip install mupif"?).')
 
 
-def sha1digest(objs: list):
+def sha1digest(objs: Union[List,Generator]):
     import hashlib
     import h5py
     import numpy as np
