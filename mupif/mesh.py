@@ -518,7 +518,7 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
     @classmethod
     def makeFromHdf5group(klass,h5grp):
         assert klass.isHere(h5grp)
-        return klass(origin=np.array(gs['origin']),spacing=np.array(h5grp['spacing']),dims=np.array(h5grp['dims']))
+        return klass(origin=np.array(h5grp['origin']),spacing=np.array(h5grp['spacing']),dims=np.array(h5grp['dims']))
 
 
 @Pyro5.api.expose
