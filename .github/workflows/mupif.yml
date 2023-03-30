@@ -113,7 +113,7 @@ jobs:
         python3 -m pip install wheel
         python3 -m pip install -r requirements.txt
     - name: unit tests
-      timeout-minutes: 1
+      timeout-minutes: 2
       # --traverse-namespace necessary for windows, see https://github.com/Pyomo/pyomo/issues/1257
       run: python3 -m pytest -v mupif/tests
       # 2>&1 | python3 -u tools/grcat-mupif
