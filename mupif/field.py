@@ -694,15 +694,21 @@ class Field(FieldBase,HeavyConvertible):
             val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
             for cell in range(self.getMesh().getNumberOfCells()):
                 val[cell] = self.getCellValue(cell)
-            subGrp = 'vertex_values'
+            subGrp = 'cell_values'
             fieldGrp[subGrp] = val
         else:
             raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+        if isinstance(self.mesh,mesh.UniformRectilinearMesh):
+            import h5py
+            print(f'{tuple(self.mesh.dims)=}')
+            vl=h5py.VirtualLayout(shape=tuple(self.mesh.dims),dtype=numpy.float64)
+            vl[:]=h5py.VirtualSource(fieldGrp[subGrp])
+            fieldGrp.create_virtual_dataset(subGrp+'_3d',vl)
         # for compatibility with Hdf5RefQuantity
         fieldGrp[subGrp].attrs['unit'] = str(self.getUnit())
 
     @staticmethod
-    def makeFromHdf5_groups(*, fieldGrp, meshGrp=None, meshCache=None, heavy=False):
+    def makeFromHdf5_groups(*, fieldGrp, meshGrp=None, meshCache=None, heavy=False, h5own=False):
         import h5py
         f=fieldGrp
         if 'vertex_values' in f:
@@ -736,7 +742,7 @@ class Field(FieldBase,HeavyConvertible):
         else:
             from .heavydata import Hdf5RefQuantity, Hdf5OwningRefQuantity
             # hack
-            if fieldGrp.name == '/':
+            if fieldGrp.name == '/' or h5own:
                 quantity = Hdf5OwningRefQuantity(
                     h5path=valDs.file.filename,
                     h5loc=valDs.name,
@@ -748,7 +754,7 @@ class Field(FieldBase,HeavyConvertible):
         return Field(mesh=m, fieldID=fieldID, quantity=quantity, time=time, valueType=valueType, fieldType=fieldType)
 
     @staticmethod
-    def makeFromHdf5(*, fileName: str = None, group: str = 'component1/part1', h5group=None, indices: typing.Optional[typing.List[int]] = None):
+    def makeFromHdf5(*, fileName: str = None, group: str = 'component1/part1', h5group=None, indices: typing.Optional[typing.List[int]] = None, heavy=False,h5own=False):
         """
         Restore Fields from HDF5 file.
 
@@ -782,7 +788,7 @@ class Field(FieldBase,HeavyConvertible):
         # construct all fields as mupif objects
         ret = []
         for f in fieldObjs:
-            ret.append(Field.makeFromHdf5_groups(fieldGrp=f, meshGrp=None, meshCache=meshes))
+            ret.append(Field.makeFromHdf5_groups(fieldGrp=f, meshGrp=None, meshCache=meshes, heavy=heavy, h5own=h5own))
         if fileName is not None:
             hdf.close()  # necessary for windows
         return ret
@@ -874,6 +880,10 @@ class Field(FieldBase,HeavyConvertible):
             elif r0.IsFilePolyData(): reader=vtk.vtkPolyDataReader()
             elif r0.IsFileRectilinearGrid(): reader=vtk.vtkRectilinearGridReader()
             else: raise RuntimeError(f'Unable to determine VTK data contained in legacy-format file {filename}.')
+            reader.ReadAllScalarsOn()
+            reader.ReadAllVectorsOn()
+            reader.ReadAllTensorsOn()
+            reader.ReadAllFieldsOn()
         elif ext=='.vti': reader=vtk.vtkImageReader()
         elif ext=='.vtp': reader=vtk.vtkPolyDataReader()
         elif ext=='.vtr': reader=vtk.vtkRecrtilinearGridReader()
@@ -891,7 +901,7 @@ class Field(FieldBase,HeavyConvertible):
         if isinstance(dta,vtk.vtkStructuredPoints):
             msh=mesh.UniformRectilinearMesh(dims=dta.GetDimensions(),origin=dta.GetOrigin(),spacing=dta.GetSpacing())
             ret=[]
-            for aarr,fieldType in [(dta.GetCellData(),FieldType.FT_vertexBased),(dta.GetPointData(),FieldType.FT_cellBased)]:
+            for aarr,fieldType in [(dta.GetCellData(),FieldType.FT_cellBased),(dta.GetPointData(),FieldType.FT_vertexBased)]:
                 for ia in range(aarr.GetNumberOfArrays()):
                     name=aarr.GetArrayName(ia)
                     arr=np.array(aarr.GetArray(ia))

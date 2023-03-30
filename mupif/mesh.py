@@ -34,6 +34,7 @@ from .heavydata import HeavyConvertible
 import copy
 import time
 import sys
+import os.path
 import numpy
 import Pyro5
 import dataclasses
@@ -460,6 +461,8 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
     origin:  typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
     spacing: typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
     dims: typing.Any
+    h5path: typing.Optional[str]=None
+    h5group: typing.Optional[str]=None
 
     @pydantic.root_validator(pre=False)
     def convert_to_np_array(cls,vals):
@@ -517,9 +520,55 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
         return True
     @classmethod
     def makeFromHdf5group(klass,h5grp):
-        assert klass.isHere(h5grp)
-        return klass(origin=np.array(h5grp['origin']),spacing=np.array(h5grp['spacing']),dims=np.array(h5grp['dims']))
+        assert klass.isHere(h5grp=h5grp)
+        return klass(origin=np.array(h5grp['origin']),spacing=np.array(h5grp['spacing']),dims=np.array(h5grp['dims']),h5path=h5grp.file.filename,h5group=h5grp.name)
 
+    def writeXDMF(self,xdmf=None,fields=[]):
+        'Write crude XDMF file for inspection — without copying any of the heavy data.'
+        if self.h5path is None: raise RuntimeError('This UniformRectilinearMesh was not loaded from a HDF5 file')
+        if xdmf is None:
+            xdmf=self.h5path+'.xdmf'
+            xdmfH5path=os.path.basename(self.h5path)
+        else:
+            xdmfH5path=os.path.relpath(os.path.abspath(self.h5path),os.path.dirname(os.path.abspath(xdmf)))
+        from xml.etree import ElementTree as ET
+        def _E(tag,subs=[],text=None,**kw):
+            ret=ET.Element(tag,**kw)
+            if text: ret.text=text
+            for s in subs: ret.append(s)
+            return ret
+        base=f'{xdmfH5path}:{self.h5group}'
+        root=_E('Xdmf',Version="2.0",subs=[
+            _E('Domain',[
+                grid:=_E('Grid',GridType='Uniform',subs=[
+                    _E('Topology',TopologyType='3DCoRectMesh',NumberOfElements=' '.join([str(d) for d in self.dims])),
+                    _E('Geometry',GeometryType='Origin_DxDyDz',subs=[
+                        #_E('DataItem',Dimensions='3',NumberType='Float',Precision='8',Format='HDF5',text=f'{base}/origin'),
+                        #_E('DataItem',Dimensions='3',NumberType='Float',Precision='8',Format='HDF5',text=f'{base}/spacing'),
+                        _E('DataItem',Name='Origin',Dimensions='3',NumberType='Float',Precision='8',Format='XML',text=np.array2string(self.origin,separator=' ')[1:-1]),
+                        _E('DataItem',Name='DxDyDz',Dimensions='3',NumberType='Float',Precision='8',Format='XML',text=np.array2string(self.spacing,separator=' ')[1:-1]),
+                    ]),
+                ])
+            ])
+        ])
+        for field in fields:
+            if id(field.mesh)!=id(self): raise ValueError('Field does not have this underlying mesh.')
+            from .heavydata import Hdf5RefQuantity, Hdf5OwningRefQuantity
+            from .field import FieldType
+            from .mupifquantity import ValueType
+            if not isinstance(field.quantity,(Hdf5RefQuantity,Hdf5OwningRefQuantity)): raise ValueError('Field not backed by HDF5 file?')
+            name=field.getFieldIDName()
+            xdmfH5path=os.path.relpath(os.path.abspath(field.quantity.dataset.file.filename),os.path.dirname(os.path.abspath(xdmf)))
+            center={FieldType.FT_vertexBased:'Node',FieldType.FT_cellBased:'Cell'}[field.fieldType]
+            attType={ValueType.Scalar:'Scalar',ValueType.Vector:'Vector',ValueType.Tensor:'Tensor'}[field.valueType]
+            #dim=' '.join([str(i) for i in field.value.shape])
+            dim=' '.join([str(d-(0 if field.fieldType==FieldType.FT_vertexBased else 1)) for d in self.dims])
+            grid.append(_E('Attribute',Name=name,AttributeType=attType,Center=center,subs=[
+                _E('DataItem',Dimensions=dim,NumberType='Float',Precision='8',Format='HDF',text=f'{xdmfH5path}:{field.quantity.dataset.name}_3d')
+            ]))
+        tree=ET.ElementTree(root)
+        ET.indent(tree)
+        tree.write(xdmf,xml_declaration=True,method='xml')
 
 @Pyro5.api.expose
 class UnstructuredMesh(Mesh,HeavyConvertible):
