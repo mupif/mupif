@@ -130,13 +130,7 @@ class Mesh(baredata.BareData):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._setDirty()
-        self._postDump()
-
-    def _postDump(self):
-        """Called when the instance is being reconstructed."""
-        # print('Mesh._postDump…')
-        for i in range(self.getNumberOfCells()):
-            object.__setattr__(self.getCell(i), 'mesh', self)
+        if hasattr(self,'_postDump'): self._postDump()
 
     def _setDirty(self):
         'Invalidate (reset) cached data'
@@ -441,6 +435,26 @@ class Mesh(baredata.BareData):
         return self._cellOctree
 
 
+    def asHdf5Object(self, parentgroup):
+        raise NotImplementedError('This method is abstract, derived classes must override.')
+
+    @classmethod
+    def isHere(klass,*,h5grp): return False
+
+    @staticmethod
+    def makeFromHdf5group(h5grp):
+        def _get_subclasses(cls):
+            ret=set([cls])
+            for sc in cls.__subclasses__():
+                ret|=_get_subclasses(sc)
+            return ret
+        for sub in _get_subclasses(Mesh):
+            if sub.isHere(h5grp=h5grp):
+                return sub.makeFromHdf5group(h5grp=h5grp)
+
+
+
+
 @Pyro5.api.expose
 class UniformRectilinearMesh(Mesh,HeavyConvertible):
     origin:  typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
@@ -474,21 +488,37 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
         viA=self.ijk2i(ijk,shrink=0) # lowest-index vertex
         viB=viA+d12
         return cell.Tetrahedron_3d_lin(mesh=self,number=i,vertices=(viA,viA+1,viA+d2,viA+d2+1,viB,viB+1,viB+d2,viB+d2+1))
-    def dataDigest(self):
-        util.sha1digest([self.origin,self.spacing,self.dims])
+    def dataDigest(self) -> str:
+        return util.sha1digest([self.origin,self.spacing,self.dims])
     def copyToHeavy(self,*,h5grp):
         mhash=self.dataDigest()
         if mhash in h5grp: return h5grp[mhash]
-        gg=h5grp.create_grroup(name=mhash)
+        gg=h5grp.create_group(name=mhash)
         gg.attrs['unit']=('' if self.unit is None else str(self.unit))
         gg.attrs['__class__']=self.__class__.__name__
-        gg.attrs['__module__']=self.__class.__module__
+        gg.attrs['__module__']=self.__class__.__module__
         gg['origin']=np.array(self.origin)
         gg['spacing']=np.array(self.spacing)
         gg['dims']=np.array(self.dims)
-    # TODO: restore from heavy
+        return gg
+
     # TODO: cell localizer for uniform rectilinear mesh
     # def getCellLocalizer(self): pass
+
+    def asHdf5Object(self, parentgroup):
+        return self.copyToHeavy(h5grp=parentgroup)
+
+    @classmethod
+    def isHere(klass,*,h5grp):
+        if '__class__' not in h5grp.attrs: return False
+        if h5grp.attrs['__class__']!=klass.__name__: return False
+        for ds in ['origin','spacing','dims']:
+            if ds not in h5grp: raise IOError(f'Group {ds} missing (required for {klass.__name__}).')
+        return True
+    @classmethod
+    def makeFromHdf5group(klass,h5grp):
+        assert klass.isHere(h5grp)
+        return klass(origin=np.array(gs['origin']),spacing=np.array(h5grp['spacing']),dims=np.array(h5grp['dims']))
 
 
 @Pyro5.api.expose
@@ -517,6 +547,13 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         super().__init__(**kw)
         self._vertexDict = None
         self._cellDict = None
+
+    def _postDump(self):
+        """Called when the instance is being reconstructed."""
+        # print('Mesh._postDump…')
+        for i in range(self.getNumberOfCells()):
+            object.__setattr__(self.getCell(i), 'mesh', self)
+
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
@@ -840,8 +877,17 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         group.attrs['__class__'] = self.__class__.__name__
         group.attrs['__module__'] = self.__class__.__module__
 
+    @classmethod
+    def isHere(klass,*,h5grp):
+        for ds in ['vertex_coords','cell_types','cell_vertices']:
+            if ds not in h5grp: return False
+        from mupif.heavymesh import HeavyUnstructuredMesh
+        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5grp: raise IOError(f'{klass.__name__}: {HeavyUnstructuredMesh.GRP_CELL_OFFSETS} must not be present (is that a HeavyUnstructuredMesh?)')
+        return True
+    
+
     @staticmethod
-    def makeFromHdf5Object(h5obj):
+    def makeFromHdf5group(h5grp):
         """
         Create new :obj:`Mesh` instance from given hdf5 object. Complementary to :obj:`asHdf5Object`.
 
@@ -854,14 +900,15 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         import importlib
         from mupif.vertex import Vertex
         from mupif.cell import Cell
-        from mupif.heavymesh import HeavyUnstructuredMesh
-        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5obj:
-            #print(f'{h5obj=} {h5obj.__class__.__name__}')
-            #print(f'{h5obj.file.filename=} {h5obj.name=}')
-            return HeavyUnstructuredMesh.load(h5path=h5obj.file.filename,h5loc=h5obj.name)[0]
-        klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
+        assert UnstructuredMesh.isHere(h5grp=h5grp)
+        # from mupif.heavymesh import HeavyUnstructuredMesh
+        # assert HeavyUnstructuredMesh.GRP_CELL_OFFSETS not in h5grp:
+        #    #print(f'{h5grp=} {h5grp.__class__.__name__}')
+        #    #print(f'{h5grp.file.filename=} {h5grp.name=}')
+        #    return HeavyUnstructuredMesh.load(h5path=h5grp.file.filename,h5loc=h5grp.name)[0]
+        klass = getattr(importlib.import_module(h5grp.attrs['__module__']), h5grp.attrs['__class__'])
         ret = klass()
-        mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
+        mvc, mct, mci = h5grp['vertex_coords'], h5grp['cell_types'], h5grp['cell_vertices']
         # construct vertices
         vertices = [Vertex(number=vi, label=None, coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
         cells = [

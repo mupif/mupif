@@ -721,7 +721,7 @@ class Field(FieldBase,HeavyConvertible):
             time = pickle.loads(time)
         if meshGrp is not None:
             # creates HeavyUnstructuredMesh if that is the meshGrp storage format
-            m = mesh.UnstructuredMesh.makeFromHdf5Object(meshGrp)
+            m = mesh.Mesh.makeFromHdf5group(meshGrp)
         else:
             if 'mesh' not in f:
                 raise ValueError('HDF5/mesh: missing attribute')
@@ -729,7 +729,7 @@ class Field(FieldBase,HeavyConvertible):
             assert isinstance(link, h5py.SoftLink)
             mPath = link.path
             if mPath not in meshCache:
-                meshCache[mPath] = mesh.UnstructuredMesh.makeFromHdf5Object(f['mesh'])
+                meshCache[mPath] = mesh.Mesh.makeFromHdf5group(f['mesh'])
             m = meshCache[mPath]
         if not heavy:
             quantity = Quantity(value=np.array(valDs).tolist(), unit=unit)
@@ -857,7 +857,51 @@ class Field(FieldBase,HeavyConvertible):
         return ret
 
     @staticmethod
-    def fromMeshioMesh(m): raise NotImplementedError('maybe later')
+    def makeFromVtkFile(
+        filename: str,
+        units: dict[str,Unit]={}, # map field name to unit
+        fieldIDs: dict[str,DataID]={}, # map field name to DataID
+        time: Quantity=Quantity(value=0,unit='s'),
+    ):
+        import vtk
+        ext=os.path.splitext(filename)[1]
+        if ext=='.vtk':
+            r0=vtk.vtkDataReader()
+            r0.SetFileName(filename)
+            if r0.IsFileStructuredPoints(): reader=vtk.vtkStructuredPointsReader()
+            elif r0.IsFileUnstructuredGrid(): reader=vtk.vtkUnstructuredGridReader()
+            elif r0.IsFileStructuredGrid(): reader=vtk.vtkStrcturedGridReader()
+            elif r0.IsFilePolyData(): reader=vtk.vtkPolyDataReader()
+            elif r0.IsFileRectilinearGrid(): reader=vtk.vtkRectilinearGridReader()
+            else: raise RuntimeError(f'Unable to determine VTK data contained in legacy-format file {filename}.')
+        elif ext=='.vti': reader=vtk.vtkImageReader()
+        elif ext=='.vtp': reader=vtk.vtkPolyDataReader()
+        elif ext=='.vtr': reader=vtk.vtkRecrtilinearGridReader()
+        elif ext=='.vts': reader=vtk.vtkStructuredGridReader()
+        elif ext=='.vtu': reader=vtk.vtkUnstructuredGridReader()
+        else: raise ValueError(f'Unhandled VTK extension "{ext}".')
+        reader.SetFileName(filename)
+        reader.Update()
+        dta=reader.GetOutput()
+        def _getFieldID(name):
+            if name in fieldIDs: return fieldIDs[name]
+            try: return DataID['FID_'+name]
+            except KeyError: pass
+            raise RuntimeError(f'Unknown FieldID for field name "{name}" (must be passed through *fieldIDs* or found as DataID["FID_{name}"].)')
+        if isinstance(dta,vtk.vtkStructuredPoints):
+            msh=mesh.UniformRectilinearMesh(dims=dta.GetDimensions(),origin=dta.GetOrigin(),spacing=dta.GetSpacing())
+            ret=[]
+            for aarr,fieldType in [(dta.GetCellData(),FieldType.FT_vertexBased),(dta.GetPointData(),FieldType.FT_cellBased)]:
+                for ia in range(aarr.GetNumberOfArrays()):
+                    name=aarr.GetArrayName(ia)
+                    arr=np.array(aarr.GetArray(ia))
+                    if arr.ndim==1: valueType=mupifquantity.ValueType.Scalar
+                    else: valueType=mupifquantity.ValueType.fromNumberOfComponents(arr.shape[1])
+                    ret.append(Field(mesh=msh,fieldID=_getFieldID(name),value=arr,unit=units.get(name,''),time=time,valueType=valueType,fieldType=fieldType))
+            return ret
+        elif isinstance(dta,vtk.vtkUnstructuredGrid):
+            raise ValueError('Reading UnstructuredMesh via VTK is not supported; use makeFromMeshioMesh instead.')
+        else: raise ValueError('Unhandled VTK type "{dta.__class__}".')
 
     def _sum(self, other, sign1, sign2):
         """

@@ -423,6 +423,6 @@ class HeavyConvertible(pydantic.BaseModel):
     def copyToHeavy(self,*,h5grp): raise NotImplementedError('Derived class did not implment the method.')
     @classmethod
     def makeFromHeavy(klass,*,h5grp,indices):
-        # TODO: decode whic type is stored in h5grp
+        # TODO: decode which type is stored in h5grp
         assert issubclass(klass,HeavyConvertible)
         return klass.makeFromHdf5(h5group=h5grp,indices=indices)
