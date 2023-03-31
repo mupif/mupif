@@ -1,5 +1,6 @@
 import unittest
 import os
+import tempfile
 import mupif as mp
 
 try: import vtk
