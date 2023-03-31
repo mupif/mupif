@@ -879,6 +879,7 @@ class Field(FieldBase,HeavyConvertible):
         fieldIDs: dict[str,DataID]={}, # map field name to DataID
         time: Quantity=Quantity(value=0,unit='s'),
     ):
+        if not os.path.exists(filename): raise RuntimeError(f'File "{filename}" does not exist.')
         import vtk
         ext=os.path.splitext(filename)[1]
         if ext=='.vtk':

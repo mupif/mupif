@@ -37,6 +37,8 @@ class TestFieldHdf5(unittest.TestCase):
 
     @unittest.skipIf(vtk is None,'vtk not importable')
     def test_load_save_load(self):
+        import glob
+        print(f'{glob.glob(thisDir+"/data/*")=}')
         C=self.__class__
         def test_values_f0(f):
             def aae(xyz,exp): self.assertAlmostEqual(f.evaluate(xyz,eps=1e-4).value[0],exp,places=5)
