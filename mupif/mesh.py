@@ -590,7 +590,7 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
                 _E('DataItem',Dimensions=dim,NumberType='Float',Precision='8',Format='HDF',text=f'{xdmfH5path}:{field.quantity.dataset.name}_3d_view')
             ]))
         tree=ET.ElementTree(root)
-        ET.indent(tree)
+        if hasattr(ET,'indent'): ET.indent(tree) # python >= 3.9
         tree.write(xdmf,xml_declaration=True,method='xml')
 
 @Pyro5.api.expose
