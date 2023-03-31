@@ -30,6 +30,7 @@ from . import vertex
 from . import cell
 from . import units
 from . import util
+from . import localizer
 from .heavydata import HeavyConvertible
 import copy
 import time
@@ -464,6 +465,16 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
     h5path: typing.Optional[str]=None
     h5group: typing.Optional[str]=None
 
+    class GridLocalizer(localizer.Localizer):
+        def __init__(self,grid,relPad=0):
+            self.grid=grid
+            self.pad=grid.spacing*relPad
+        def getItemsInBBox(self,box):
+            return self.grid.box_xyz2ijk(np.array(box.coords_ll)-self.pad,np.array(box.coords_ur)+self.pad);
+
+    def getCellLocalizer(self):
+        return UniformRectilinearMesh.GridLocalizer(self)
+
     @pydantic.root_validator(pre=False)
     def convert_to_np_array(cls,vals):
         for f,dtype in [('origin','f'),('spacing','f'),('dims','i')]:
@@ -477,20 +488,35 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
     def getVertex(self, i):
         assert self.dims.shape==(3,)
         return vertex.Vertex(number=i,coords=tuple(self.origin+self.i2ijk(i)*self.spacing))
+    def box_xyz2ijk(self,xyz0,xyz1):
+        dims_1=self.dims-np.ones_like(self.dims)
+        ijk0=np.max([np.floor(np.divide(np.array(xyz0)-self.origin,self.spacing)).astype('int'),np.zeros(3,dtype='int')],axis=0)
+        ijk1=np.min([np.floor(np.divide(np.array(xyz1)-self.origin,self.spacing)+np.ones_like(self.dims)).astype('int'),dims_1],axis=0)
+        ret=[]
+        for i in range(ijk0[0],ijk1[0]):
+            for j in range(ijk0[1],ijk1[1]):
+                for k in range(ijk0[2],ijk1[2]):
+                    ret.append(I:=self.ijk2i((i,j,k),shrink=1))
+                    #print(f'{i=} {j=} {k=} {self.getCell(I).getBBox()=}')
+        #print(f'{self.origin=} {self.spacing=} {self.dims=} {xyz0=} {xyz1=} {ijk0=} {ijk1=} {ret=}')
+        return ret
     def i2ijk(self,i,shrink=0):
         dd=self.dims-shrink*np.ones_like(self.dims)
-        d12,d2=np.prod(dd[1:]),dd[2]
-        return np.array([i//d12,i1:=((i%d12)//d2),i1%d2])
+        d01,d0=np.prod(dd[:2]),dd[0]
+        return np.array([i%d0,(i%d01)//d0,i//d01]) # (i%d01)%d0=(i%(d0*d1))%d0=i%d0
     def ijk2i(self,ijk,shrink=0):
         dd=self.dims-shrink*np.ones_like(self.dims)
-        d12,d2=np.prod(dd[1:]),dd[2]
-        return ijk[0]*d12+ijk[1]*d2+ijk[2]
+        d01,d0=np.prod(dd[:2]),dd[0]
+        return int(ijk[0]+ijk[1]*d0+ijk[2]*d01)
     def getCell(self, i):
-        d12,d2=np.prod(self.dims[1:]),self.dims[2]
+        d01,d0=np.prod(self.dims[:2]),self.dims[0]
         ijk=self.i2ijk(i,shrink=1)
         viA=self.ijk2i(ijk,shrink=0) # lowest-index vertex
-        viB=viA+d12
-        return cell.Tetrahedron_3d_lin(mesh=self,number=i,vertices=(viA,viA+1,viA+d2,viA+d2+1,viB,viB+1,viB+d2,viB+d2+1))
+        viB=viA+d01
+        vertices=(viA,viA+1,viA+d0+1,viA+d0,viB,viB+1,viB+d0+1,viB+d0)
+        #for iv,v in enumerate(vertices):
+        #    print(i,iv,v,self.i2ijk(v),self.getVertex(v).coords)
+        return cell.Brick_3d_lin(mesh=self,label=i,number=i,vertices=vertices)
     def dataDigest(self) -> str:
         return util.sha1digest([self.origin,self.spacing,self.dims])
     def copyToHeavy(self,*,h5grp):
@@ -504,9 +530,6 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
         gg['spacing']=np.array(self.spacing)
         gg['dims']=np.array(self.dims)
         return gg
-
-    # TODO: cell localizer for uniform rectilinear mesh
-    # def getCellLocalizer(self): pass
 
     def asHdf5Object(self, parentgroup):
         return self.copyToHeavy(h5grp=parentgroup)
@@ -541,12 +564,12 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
         root=_E('Xdmf',Version="2.0",subs=[
             _E('Domain',[
                 grid:=_E('Grid',GridType='Uniform',subs=[
-                    _E('Topology',TopologyType='3DCoRectMesh',NumberOfElements=' '.join([str(d) for d in self.dims])),
+                    _E('Topology',TopologyType='3DCoRectMesh',NumberOfElements=' '.join([str(d) for d in reversed(self.dims)])),
                     _E('Geometry',GeometryType='Origin_DxDyDz',subs=[
                         #_E('DataItem',Dimensions='3',NumberType='Float',Precision='8',Format='HDF5',text=f'{base}/origin'),
                         #_E('DataItem',Dimensions='3',NumberType='Float',Precision='8',Format='HDF5',text=f'{base}/spacing'),
-                        _E('DataItem',Name='Origin',Dimensions='3',NumberType='Float',Precision='8',Format='XML',text=np.array2string(self.origin,separator=' ')[1:-1]),
-                        _E('DataItem',Name='DxDyDz',Dimensions='3',NumberType='Float',Precision='8',Format='XML',text=np.array2string(self.spacing,separator=' ')[1:-1]),
+                        _E('DataItem',Name='Origin',Dimensions='3',NumberType='Float',Precision='8',Format='XML',text=np.array2string(self.origin[::-1],separator=' ')[1:-1]),
+                        _E('DataItem',Name='DxDyDz',Dimensions='3',NumberType='Float',Precision='8',Format='XML',text=np.array2string(self.spacing[::-1],separator=' ')[1:-1]),
                     ]),
                 ])
             ])
@@ -561,10 +584,10 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
             xdmfH5path=os.path.relpath(os.path.abspath(field.quantity.dataset.file.filename),os.path.dirname(os.path.abspath(xdmf)))
             center={FieldType.FT_vertexBased:'Node',FieldType.FT_cellBased:'Cell'}[field.fieldType]
             attType={ValueType.Scalar:'Scalar',ValueType.Vector:'Vector',ValueType.Tensor:'Tensor'}[field.valueType]
-            #dim=' '.join([str(i) for i in field.value.shape])
             dim=' '.join([str(d-(0 if field.fieldType==FieldType.FT_vertexBased else 1)) for d in self.dims])
+            if field.getRecordSize()>1: dim+=' '+str(field.getRecordSize())
             grid.append(_E('Attribute',Name=name,AttributeType=attType,Center=center,subs=[
-                _E('DataItem',Dimensions=dim,NumberType='Float',Precision='8',Format='HDF',text=f'{xdmfH5path}:{field.quantity.dataset.name}_3d')
+                _E('DataItem',Dimensions=dim,NumberType='Float',Precision='8',Format='HDF',text=f'{xdmfH5path}:{field.quantity.dataset.name}_3d_view')
             ]))
         tree=ET.ElementTree(root)
         ET.indent(tree)

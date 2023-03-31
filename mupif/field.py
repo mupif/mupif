@@ -332,6 +332,9 @@ class Field(FieldBase,HeavyConvertible):
             # localizer in the newer version returns cell id, not the cell object, check that here
             if isinstance(next(iter(cells)), int):
                 cells = [self.mesh.getCell(ic) for ic in cells]
+            for ic,c in enumerate(cells):
+                for iv,v in enumerate(c.getVertices()):
+                    print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
 
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
@@ -700,10 +703,17 @@ class Field(FieldBase,HeavyConvertible):
             raise RuntimeError("Unknown fieldType %d." % self.fieldType)
         if isinstance(self.mesh,mesh.UniformRectilinearMesh):
             import h5py
-            print(f'{tuple(self.mesh.dims)=}')
-            vl=h5py.VirtualLayout(shape=tuple(self.mesh.dims),dtype=numpy.float64)
-            vl[:]=h5py.VirtualSource(fieldGrp[subGrp])
-            fieldGrp.create_virtual_dataset(subGrp+'_3d',vl)
+            shape=list(self.mesh.dims)
+            src=fieldGrp[subGrp]
+            # extra dimension for the record, if not scalar
+            if self.getRecordSize()>1: shape=[self.getRecordSize()]+shape
+            vl=h5py.VirtualLayout(shape=tuple(reversed(shape)),dtype=numpy.float64)
+            vl[:]=h5py.VirtualSource(src)
+            fieldGrp.create_virtual_dataset(subGrp+'_3d_view',vl)
+            #else:
+            #    vl=h5py.VirtualLayout(shape=tuple(reversed([self.getRecordSize()]+list(self.mesh.dims))),dtype=numpy.float64)
+            #    vl[:]=h5py.VirtualSource(src)
+            #    fieldGrp.create_virtual_dataset(subGrp+'_3d_view',vl)
         # for compatibility with Hdf5RefQuantity
         fieldGrp[subGrp].attrs['unit'] = str(self.getUnit())
 
@@ -905,8 +915,12 @@ class Field(FieldBase,HeavyConvertible):
                 for ia in range(aarr.GetNumberOfArrays()):
                     name=aarr.GetArrayName(ia)
                     arr=np.array(aarr.GetArray(ia))
-                    if arr.ndim==1: valueType=mupifquantity.ValueType.Scalar
-                    else: valueType=mupifquantity.ValueType.fromNumberOfComponents(arr.shape[1])
+                    if arr.ndim==1:
+                        valueType=mupifquantity.ValueType.Scalar
+                        arr=arr[:,np.newaxis]
+                    else:
+                        arr=arr.ravel('F').reshape(arr.shape[0],-1)
+                        valueType=mupifquantity.ValueType.fromNumberOfComponents(arr.shape[-1])
                     ret.append(Field(mesh=msh,fieldID=_getFieldID(name),value=arr,unit=units.get(name,''),time=time,valueType=valueType,fieldType=fieldType))
             return ret
         elif isinstance(dta,vtk.vtkUnstructuredGrid):
