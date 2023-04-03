@@ -29,6 +29,7 @@ from . import data
 from .dataid import DataID
 from . import cellgeometrytype
 from . import mesh
+from . import uniformmesh
 from . import mupifquantity
 from .units import Quantity, Unit
 from .baredata import NumpyArray
@@ -701,15 +702,24 @@ class Field(FieldBase,HeavyConvertible):
             fieldGrp[subGrp] = val
         else:
             raise RuntimeError("Unknown fieldType %d." % self.fieldType)
-        if isinstance(self.mesh,mesh.UniformRectilinearMesh):
+        if isinstance(self.mesh,uniformmesh.UniformRectilinearMesh):
             import h5py
-            shape=list(self.mesh.dims)
             src=fieldGrp[subGrp]
             # extra dimension for the record, if not scalar
+            shape=list(self.mesh.dims)
             if self.getRecordSize()>1: shape=[self.getRecordSize()]+shape
             vl=h5py.VirtualLayout(shape=tuple(reversed(shape)),dtype=numpy.float64)
             vl[:]=h5py.VirtualSource(src)
             fieldGrp.create_virtual_dataset(subGrp+'_3d_view',vl)
+            if not self.mesh.is3d():
+                assert len(self.mesh.dims)==2
+                shape=list(self.mesh.dims)+[1]
+                if self.getRecordSize()>1: shape=[self.getRecordSize()]+shape
+                vl=h5py.VirtualLayout(shape=tuple(reversed(shape)),dtype=numpy.float64)
+                vl[:]=h5py.VirtualSource(src)
+                fieldGrp.create_virtual_dataset(subGrp+'_2d_view',vl)
+
+            # if not self.mesh.is3d(): fieldGrp.create_virtual_dataset(subGrp+'_2d_view',vl)
             #else:
             #    vl=h5py.VirtualLayout(shape=tuple(reversed([self.getRecordSize()]+list(self.mesh.dims))),dtype=numpy.float64)
             #    vl[:]=h5py.VirtualSource(src)
@@ -910,7 +920,8 @@ class Field(FieldBase,HeavyConvertible):
             except KeyError: pass
             raise RuntimeError(f'Unknown FieldID for field name "{name}" (must be passed through *fieldIDs* or found as DataID["FID_{name}"].)')
         if isinstance(dta,vtk.vtkStructuredPoints):
-            msh=mesh.UniformRectilinearMesh(dims=dta.GetDimensions(),origin=dta.GetOrigin(),spacing=dta.GetSpacing())
+            lastIx=(2 if dta.GetDimensions()[2]==1 else 3)
+            msh=uniformmesh.UniformRectilinearMesh(dims=dta.GetDimensions()[:lastIx],origin=dta.GetOrigin()[:lastIx],spacing=dta.GetSpacing()[:lastIx])
             ret=[]
             for aarr,fieldType in [(dta.GetCellData(),FieldType.FT_cellBased),(dta.GetPointData(),FieldType.FT_vertexBased)]:
                 for ia in range(aarr.GetNumberOfArrays()):

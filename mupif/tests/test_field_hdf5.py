@@ -24,6 +24,18 @@ if 0:
     gr.point_data['dVector']=dVec.reshape(dVec.shape[-1],-1).T
     gr.save('data/test_field.structured_points.vtk')
 
+if 0:
+    import pyvista as pv
+    import numpy as np
+    pv.set_jupyter_backend('trame')
+    gr=pv.UniformGrid(dimensions=(5,7,1),spacing=(.5,.7,1.),origin=(5,7,0))
+    dSca=np.zeros(gr.dimensions,order='F')
+    dSca[:,:,::3]=1
+    dSca[:,::2,:]=2
+    dSca[0,:,:]=0
+    gr.point_data['dScalar']=dSca.T.ravel()
+    gr.save('data/test_field.structured_points.2d.vtk')
+
 
 class TestFieldHdf5(unittest.TestCase):
     @classmethod
@@ -48,10 +60,27 @@ class TestFieldHdf5(unittest.TestCase):
             thisDir+'/data/test_field_hdf5.structured_points.vtk',
             fieldIDs={'dScalar':mp.DataID.FID_Pressure,'dVector':mp.DataID.FID_Displacement}
         )
-        for i in range(100):
-            print(i,ff[0].mesh.i2ijk(i))
         test_values_f0(ff[0])
         for f in ff: f.toHdf5(fileName=C.tmp+'/bb.h5',groupName='/')
         ff2=mp.Field.makeFromHdf5(fileName=C.tmp+'/bb.h5',group='/',indices=None,heavy=True,h5own=True)
         test_values_f0(ff2[0])
         ff2[0].mesh.writeXDMF(fields=ff2)
+    @unittest.skipIf(vtk is None,'vtk not impotable')
+    def test_load_save_load_2d(self):
+        C=self.__class__
+        def test_values_f0(f):
+            def aae(xyz,exp): self.assertAlmostEqual(f.evaluate(xyz,eps=1e-4).value[0],exp,places=5)
+            aae((5,7),0)
+            aae((5.5,7.7),1)
+            aae((6,8.4),2)
+            aae((6.5,10.5),1)
+        ff=mp.Field.makeFromVtkFile(
+            thisDir+'/data/test_field_hdf5.structured_points_2d.vtk',
+            fieldIDs={'dScalar':mp.DataID.FID_Pressure}
+        )
+        test_values_f0(ff[0])
+        for f in ff: f.toHdf5(fileName=C.tmp+'/cc.h5',groupName='/')
+        ff2=mp.Field.makeFromHdf5(fileName=C.tmp+'/cc.h5',group='/',indices=None,heavy=True,h5own=True)
+        test_values_f0(ff2[0])
+        ff2[0].mesh.writeXDMF(fields=ff2)
+

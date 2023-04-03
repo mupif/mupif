@@ -130,6 +130,7 @@ from .simplejobmanager import SimpleJobManager
 from .stringproperty import String
 from .timer import Timer
 from .timestep import TimeStep
+from .uniformmesh import UniformRectilinearMesh
 from .units import UnitProxy, Quantity, RefQuantity
 from .vertex import Vertex
 from .workflow import Workflow

@@ -3,6 +3,7 @@ import sys
 sys.path.append('../..')
 
 from mupif import *
+import mupif as mp
 import math
 import numpy as np
 import meshio
@@ -16,7 +17,7 @@ except ImportError: vtk=None
 
 class UniformRectilinearMesh(unittest.TestCase):
     def setUp(self):
-        self.m1=mesh.UniformRectilinearMesh(origin=(-3,-2,-1),spacing=(.3,.2,.1),dims=(5,4,3))
+        self.m1=mp.UniformRectilinearMesh(origin=(-3,-2,-1),spacing=(.3,.2,.1),dims=(5,4,3))
     def test_basic(self):
         self.assertEqual(self.m1.getNumberOfVertices(),60)
         self.assertEqual(self.m1.getNumberOfCells(),24)
