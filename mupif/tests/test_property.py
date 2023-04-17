@@ -5,6 +5,7 @@ sys.path.append('../..')
 from mupif import *
 import tempfile
 import mupif as mp
+import numpy as np
 
 
 class Property_TestCase(unittest.TestCase):
@@ -61,6 +62,29 @@ class Property_TestCase(unittest.TestCase):
                 self.assertEqual(p.getQuantity(),        res.getQuantity())
                 #import shutil
                 #shutil.copy(tmp+'/prop.h5',f'/tmp/mupif_prop_t_{p.getTime().value}.hdf5')
+
+
+class TemporalProperty_TestCase(unittest.TestCase):
+    def setUp(self):
+        self.tp=mp.TemporalProperty(times=[1,2,3,4,5]*mp.U.s,quantity=[10,20,30,40,50]*mp.U['m/s'],valueType=ValueType.Scalar,propID=DataID.PID_Concentration)
+        self.tpVec=mp.TemporalProperty(times=[1,2,3,4,5]*mp.U.s,quantity=[[10,1,.1],[20,2,.2],[30,3,.3],[40,4,.4],[50,5,.5]]*mp.U['m/s'],valueType=ValueType.Scalar,propID=DataID.PID_Concentration)
+    def test_create(self):
+        kw=dict(propID=DataID.PID_Concentration,valueType=ValueType.Scalar)
+        self.assertRaises(ValueError,lambda: TemporalProperty(times=[]*mp.U.s,quantity=[1,2,3]*mp.U.s,**kw))
+        # dimensionmismatch
+        self.assertRaises(ValueError,lambda: TemporalProperty(times=[1,2,3]*mp.U.s,quantity=[1,2]*mp.U.s,**kw))
+        # times not in time units
+        self.assertRaises(ValueError,lambda: TemporalProperty(times=[1,2,3]*mp.U.km,quantity=[1,2]*mp.U.s,**kw))
+        # time not a 1D array
+        self.assertRaises(ValueError,lambda: TemporalProperty(times=[[1,1],[2,2]]*mp.U.km,quantity=[1,2]*mp.U.s,**kw))
+    def test_evaluate(self):
+        self.assertEqual(self.tp.evaluate(time=1*mp.U.s).quantity,10*mp.U['m/s'])
+        self.assertEqual(self.tp.evaluate(time=3500*mp.U.ms).quantity,35*mp.U['m/s'])
+        self.assertTrue(np.all(self.tpVec.evaluate(time=1*mp.U.s).quantity==[10,1,.1]*mp.U['m/s']))
+        self.assertRaises(ValueError,lambda: self.tp.evaluate(time=0*mp.U.s)) # out of range
+        pass
+
+
 
 # python test_Property.py for stand-alone test being run
 if __name__ == '__main__':
