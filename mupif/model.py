@@ -94,6 +94,7 @@ class ExecutionMeta(pydantic.BaseModel):
 class IOMeta(pydantic.BaseModel):
     Type: Literal[
         'mupif.Property',
+        'mupif.TemporalProperty',
         'mupif.Field',
         'mupif.TemporalField',
         'mupif.HeavyStruct',
@@ -102,6 +103,7 @@ class IOMeta(pydantic.BaseModel):
         'mupif.ParticleSet',
         'mupif.GrainState',
         'mupif.DataList[mupif.Property]',
+        'mupif.DataList[mupif.TemporalProperty]',
         'mupif.DataList[mupif.Field]',
         'mupif.DataList[mupif.TemporalField]',
         'mupif.DataList[mupif.HeavyStruct]',
@@ -119,7 +121,7 @@ class IOMeta(pydantic.BaseModel):
 
     @pydantic.root_validator(pre=False)
     def _require_valueType_unless_property(cls, values):
-        if values['Type'] != 'mupif.Property':
+        if values['Type'] != 'mupif.Property' and values['Type'] != 'mupif.TemporalProperty':
             assert 'ValueType' != ''
         return values
 
@@ -244,6 +246,7 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": [
                         "mupif.Property",
+                        "mupif.TemporalProperty",
                         "mupif.Field",
                         "mupif.TemporalField",
                         "mupif.HeavyStruct",
@@ -252,6 +255,7 @@ ModelSchema = {
                         "mupif.ParticleSet",
                         "mupif.GrainState",
                         "mupif.DataList[mupif.Property]",
+                        "mupif.DataList[mupif.TemporalProperty]",
                         "mupif.DataList[mupif.Field]",
                         "mupif.DataList[mupif.TemporalField]",
                         "mupif.DataList[mupif.HeavyStruct]",
@@ -275,13 +279,19 @@ ModelSchema = {
                     {
                         "anyOf": [
                             {"required": ["ValueType"]},
-                            {
-                                "not": {
+                            {"allOf": [
+                                {"not": {
                                     "properties": {
                                         "Type": {"const": "mupif.Property"}
                                     }
-                                }
-                            }
+                                }},
+                                {"not": {
+                                    "properties": {
+                                        "Type": {"const": "mupif.TemporalProperty"}
+                                    }
+                                }}
+                            ]}
+
                         ]
                     }
                 ]
@@ -294,6 +304,7 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": [
                         "mupif.Property",
+                        "mupif.TemporalProperty",
                         "mupif.Field",
                         "mupif.TemporalField",
                         "mupif.HeavyStruct",
@@ -302,6 +313,7 @@ ModelSchema = {
                         "mupif.ParticleSet",
                         "mupif.GrainState",
                         "mupif.DataList[mupif.Property]",
+                        "mupif.DataList[mupif.TemporalProperty]",
                         "mupif.DataList[mupif.Field]",
                         "mupif.DataList[mupif.TemporalField]",
                         "mupif.DataList[mupif.HeavyStruct]",
@@ -323,13 +335,19 @@ ModelSchema = {
                     {
                         "anyOf": [
                             {"required": ["ValueType"]},
-                            {
-                                "not": {
+                            {"allOf": [
+                                {"not": {
                                     "properties": {
                                         "Type": {"const": "mupif.Property"}
                                     }
-                                }
-                            }
+                                }},
+                                {"not": {
+                                    "properties": {
+                                        "Type": {"const": "mupif.TemporalProperty"}
+                                    }
+                                }}
+                            ]}
+
                         ]
                     }
                 ]
