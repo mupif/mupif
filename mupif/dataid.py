@@ -488,3 +488,21 @@ class DataID(IntEnum):
     # PID_FlagVerbose = auto()
     # PID_TinflowInputFile = auto()
     # PID_SolverDeltaT = auto()
+
+    #
+
+    ID_Displacement = auto()
+    ID_Strain = auto()
+    ID_Stress = auto()
+    ID_Temperature = auto()
+    ID_Humidity = auto()
+    ID_MoistureContent = auto()
+    ID_Concentration = auto()
+    ID_Thermal_absorption_volume = auto()
+    ID_Thermal_absorption_surface = auto()
+    ID_Material_number = auto()
+    ID_Permeability = auto()
+    ID_Velocity = auto()
+    ID_Pressure = auto()
+    ID_Porosity = auto()
+    ID_Curvature = auto()
