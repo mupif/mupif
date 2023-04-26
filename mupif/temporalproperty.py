@@ -4,11 +4,12 @@ from .units import Quantity
 from . import units
 from . import dataid
 from . import mupifquantity
+from .dbrec import DbDictable
 import numpy as np
 
 
 @Pyro5.api.expose
-class TemporalProperty(Property):
+class TemporalProperty(Property,DbDictable):
     times: Quantity
 
     def __init__(self, **kw):
@@ -45,7 +46,7 @@ class TemporalProperty(Property):
             q = Quantity(value=[q.value for q in qq], unit=qq[0].unit)
         return Property(quantity=q, propID=self.propID, valueType=self.valueType)
 
-    def to_db_dict(self):
+    def to_db_dict_impl(self):
         return {
             'ClassName': 'TemporalProperty',
             'ValueType': self.valueType.name,

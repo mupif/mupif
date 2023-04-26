@@ -27,6 +27,7 @@ if pyd_v0=='1' and int(pyd_v1)<9:
 # for now, disable numpy validation completely until we figure out what works in what python version reliably
 if 1:
     NumpyArray = NumpyArrayFloat64 = typing.Any
+    NumpyArrayStr = typing.Any
 else:
     # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
     DType = TypeVar('DType')
@@ -52,6 +53,7 @@ else:
         # this should work in python 3.9
         # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
         NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
+        NumpyArrayStr = NumpyArray[np.ndarray,typing.Literal['str']]
     except TypeError:
         # python 3.8, just use the generic form
         NumpyArrayFloat64 = NumpyArray
