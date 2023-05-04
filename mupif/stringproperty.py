@@ -29,6 +29,7 @@ class String(data.Data, DbDictable):
 
     @pydantic.validator('value')
     def value_validator(cls, v):
+        if isinstance(v,np.ndarray) and v.dtype.type==np.dtype('str').type: return v
         return np.array(_StrModel.parse_obj({'value': v}).dict()['value'], dtype='str')
 
     def getValue(self):

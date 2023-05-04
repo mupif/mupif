@@ -161,6 +161,8 @@ class PyroTestClass(object):
         return PydanticTestClass(name='foo')
     def apiError(self):
         raise mp.APIError('Some API error')
+    def strValue(self):
+        return mp.String(value='foobar',dataID=mp.DataID.ID_None)
 
 
 
@@ -187,3 +189,4 @@ class MupifObject_TestCase(unittest.TestCase):
         pro=Pyro5.api.Proxy(uri)
         self.assertRaises(RuntimeError,lambda: pro.apiError())
         self.assertRaises(RuntimeError,lambda: pro.pydanticError())
+        self.assertEqual(pro.strValue().getValue(),'foobar')
