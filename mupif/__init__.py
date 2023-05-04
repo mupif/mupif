@@ -204,7 +204,7 @@ def _registerOther():
     # Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
     # various exception we want to catch in remote calls
-    for exc in ['pydantic.error_wrapper.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
+    for exc in ['pydantic.error_wrappers.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
         Pyro5.api.register_dict_to_class(exc,lambda name,dic: RuntimeError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
 
 

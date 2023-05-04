@@ -14,6 +14,7 @@ import astropy.units as u
 import logging
 import os.path
 import appdirs
+import pydantic
 
 srcNsFile=os.path.dirname(os.path.abspath(mp.__file__))+'/MUPIF_NS'
 cfgNsFile=appdirs.user_config_dir()+'/MUPIF_NS'
@@ -150,6 +151,17 @@ class PyroFile_TestCase(unittest.TestCase):
         self.assertEqual(type(pfp.getDataID()),mp.DataID)
 
 
+class PydanticTestClass(pydantic.BaseModel):
+    name: int
+
+@Pyro5.api.expose
+class PyroTestClass(object):
+    def pydanticError(self):
+        # this shoud throw pydantic.ValidationError, since name is not a str
+        return PydanticTestClass(name='foo')
+    def apiError(self):
+        raise mp.APIError('Some API error')
+
 
 
 class MupifObject_TestCase(unittest.TestCase):
@@ -168,3 +180,10 @@ class MupifObject_TestCase(unittest.TestCase):
         self.assertFalse(obj.isInstance(str))
         self.assertTrue(obj.isInstance(mp.WithMetadata))
         self.assertTrue(obj.isInstance((mp.WithMetadata,int)))
+    def test_exception(self):
+        C=self.__class__
+        obj=PyroTestClass()
+        uri=C.daemon.register(obj)
+        pro=Pyro5.api.Proxy(uri)
+        self.assertRaises(RuntimeError,lambda: pro.apiError())
+        self.assertRaises(RuntimeError,lambda: pro.pydanticError())
