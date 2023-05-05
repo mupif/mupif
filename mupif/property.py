@@ -28,7 +28,7 @@ class Property(mupifquantity.MupifQuantity):
     def __init__(self, *, metadata={}, **kw):
         super().__init__(metadata=metadata, **kw)
         defaults = dict([
-            ('Type', 'mupif.property.Property'),
+            ('Type', 'mupif.Property'),
             ('Type_ID', str(self.propID)),
             ('Units', self.getUnit().to_string()),
             ('ValueType', str(self.valueType))

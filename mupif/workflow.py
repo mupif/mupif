@@ -112,7 +112,9 @@ WorkflowSchema["properties"].update({
                 "Name": {"type": "string"},
                 "EDMEntity": {"type": "string"},
                 "DBName": {"type": "string"},
-                "createFrom": {"type": "string"}
+                "createFrom": {"type": "string"},
+                "createNew": {"type": "object"},
+                "EDMList": {"type": "boolean"}
             },
             "required": ["Name", "EDMEntity", "DBName"]
         }

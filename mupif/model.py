@@ -272,7 +272,9 @@ ModelSchema = {
                     "Description": {"type": "string"},
                     "Units": {"type": "string"},
                     "Required": {"type": "boolean"},
-                    "Set_at": {"type": "string", "enum": ["initialization", "timestep"]}
+                    "Set_at": {"type": "string", "enum": ["initialization", "timestep"]},
+                    "EDMPath": {"type": "string"},
+                    "EDMList": {"type": "boolean"}
                 },
                 "required": ["Type", "Type_ID", "Name", "Units", "Required", "Set_at"],
                 "allOf": [
@@ -328,7 +330,9 @@ ModelSchema = {
                     "Name": {"type": "string"},
                     "ValueType": {"type": "string", "enum": ["Scalar", "Vector", "Tensor", "ScalarArray", "VectorArray", "TensorArray"]},
                     "Description": {"type": "string"},
-                    "Units": {"type": "string"}
+                    "Units": {"type": "string"},
+                    "EDMPath": {"type": "string"},
+                    "EDMList": {"type": "boolean"}
                 },
                 "required": ["Type", "Type_ID", "Name", "Units"],
                 "allOf": [
