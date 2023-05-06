@@ -478,6 +478,8 @@ class DataID(IntEnum):
 
     #
 
+    PID_Width = auto()
+
     # PID_SolverTimeSteps = auto()
     # PID_SolverStartFilm = auto()
     # PID_SolverOutputStep = auto()
