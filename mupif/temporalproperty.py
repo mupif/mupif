@@ -9,7 +9,7 @@ import numpy as np
 
 
 @Pyro5.api.expose
-class TemporalProperty(Property,DbDictable):
+class TemporalProperty(Property, DbDictable):
     times: Quantity
 
     def __init__(self, **kw):

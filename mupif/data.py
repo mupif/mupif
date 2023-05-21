@@ -220,7 +220,7 @@ class DataList(Data):
         super().__init__(**kw)
         tset = set(DataList._seqTypes(kw['objs']))
         assert len(tset) <= 1
-        self.dataID = tset.pop()
+        # self.dataID = tset.pop()
         self.objs = kw['objs']
 
     @pydantic.validator('objs')
