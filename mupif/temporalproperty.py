@@ -37,7 +37,7 @@ class TemporalProperty(Property, DbDictable):
         time2 = time.to(self.times.unit).value
         import numpy.core.multiarray
         interpKw = dict(x=time2, xp=self.times.value, left=np.nan, right=np.nan)
-        print(f'{self.quantity.ndim=}')
+        # print(f'{self.quantity.ndim=}')
         if self.quantity.ndim == 1:
             q = np.interp(fp=self.quantity, **interpKw)
         elif self.quantity.ndim == 2:
@@ -58,6 +58,10 @@ class TemporalProperty(Property, DbDictable):
 
     @staticmethod
     def from_db_dict(d):
+        if 'Value' not in d and 'value' in d:
+            d['Value'] = d['value']
+        if 'Unit' not in d and 'unit' in d:
+            d['Unit'] = d['unit']
         return TemporalProperty(
             times=units.Quantity(value=np.array(d['Times']), unit='s'),
             quantity=units.Quantity(value=np.array(d['Value']), unit=d['Unit']),
