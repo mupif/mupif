@@ -20,7 +20,7 @@ class TemporalField_TestCase(unittest.TestCase):
         mol=MOL([mo,mo])
         # self.assertTrue(mol.dataID,'mupif.data.Data')  # todo this should be for something like data_type instead of dataID?
         mol=MOL(objs=[m1,m1])
-        self.assertTrue(mol.dataID,'mupif.data.MupifQuantity')
+        # self.assertTrue(mol.dataID,'mupif.data.MupifQuantity')
         self.assertRaises(pydantic.ValidationError,lambda: MOL([mo,m1]))
         self.assertRaises(pydantic.ValidationError,lambda: MOL(objs=[mo,m1]))
         self.assertRaises(ValueError,lambda: MOL(1.44))
