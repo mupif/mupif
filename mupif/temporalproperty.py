@@ -58,10 +58,6 @@ class TemporalProperty(Property, DbDictable):
 
     @staticmethod
     def from_db_dict(d):
-        if 'Value' not in d and 'value' in d:
-            d['Value'] = d['value']
-        if 'Unit' not in d and 'unit' in d:
-            d['Unit'] = d['unit']
         return TemporalProperty(
             times=units.Quantity(value=np.array(d['Times']), unit='s'),
             quantity=units.Quantity(value=np.array(d['Value']), unit=d['Unit']),
