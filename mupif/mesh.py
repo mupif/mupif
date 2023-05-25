@@ -437,7 +437,7 @@ class Mesh(baredata.BareData):
         return self._cellOctree
 
 
-    def asHdf5Object(self, parentgroup):
+    def asHdf5Object(self, parentgroup, heavyMesh=None):
         raise NotImplementedError('This method is abstract, derived classes must override.')
 
     @classmethod

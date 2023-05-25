@@ -116,7 +116,8 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
         gg['dims']=np.array(self.dims)
         return gg
 
-    def asHdf5Object(self, parentgroup):
+    def asHdf5Object(self, parentgroup, heavyMesh=None):
+        # heavyMesh ignored for UniformRectilinearMesh
         return self.copyToHeavy(h5grp=parentgroup)
 
     @classmethod
