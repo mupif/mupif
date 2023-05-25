@@ -420,9 +420,9 @@ class Hdf5HeavyProperty(Property, HeavyDataBase):
 
 class HeavyConvertible(pydantic.BaseModel):
     # returns dataset index in h5grp
-    def copyToHeavy(self,*,h5grp): raise NotImplementedError('Derived class did not implment the method.')
+    def copyToHeavy(self,*,h5grp): raise NotImplementedError(f'Derived class {self.__class__.__name__} did not implment the method.')
     @classmethod
     def makeFromHeavy(klass,*,h5grp,indices):
         # TODO: decode which type is stored in h5grp
         assert issubclass(klass,HeavyConvertible)
-        return klass.makeFromHdf5(h5group=h5grp,indices=indices)
+        return klass.makeFromHdf5(h5group=h5grp,indices=indices,heavy=True)

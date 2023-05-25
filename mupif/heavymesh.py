@@ -220,6 +220,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         <DataItem DataType="Float" Dimensions="{dim}" Format="HDF" Precision="8">{xdmfH5path}:{field.quantity.dataset.name}</DataItem>
      </Attribute>''')
         open(xdmf,'wb').write('\n'.join([head]+fieldXmls+[tail]).encode('utf8'))
+
     def fromMeshioMesh(self,mesh,unit=None,progress=False,chunk=10000):
         self._ensureData()
         assert self.getNumberOfVertices()==0

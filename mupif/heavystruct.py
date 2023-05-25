@@ -301,14 +301,16 @@ sampleSchemas_json = '''
 ## XXX: field utility functions
 
 def _mupif_to_hdf5_group__return_index(*,grp,obj):
-    assert isinstance(obj,HeavyConvertible)
+    # assert isinstance(obj,HeavyConvertible)
+    if not isinstance(obj,HeavyConvertible): raise TypeError(f'Object {obj} of type {obj.__class__.__name__} not not a mupif.HeavyConvertible.')
     # assert isinstance(obj,field.Field)
     # return obj.toHdf5(h5group=grp)
     return obj.copyToHeavy(h5grp=grp)
 
-def _mupif_from_hdf5_group(*,grp,index):
+def _mupif_from_hdf5_group(*,grp:h5py.Group,index:int,storedType:str):
     # TODO: determine type to be restored, for now just assume Field
-    return field.Field.makeFromHeavy(h5grp=grp,indices=[index])[0]
+    if storedType=='mupif.Field': return field.Field.makeFromHeavy(h5grp=grp,indices=[index])[0]
+    else: raise TypeError(f'Unhandled stored type {storedType} in HeavyStruct.')
     # return field.Field.makeFromHeavydf5(h5group=grp,indices=[index])[0]
 
 
@@ -551,16 +553,16 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
                 else: raise ValueError(f'{fq}: dtype must be integral type, or variable-length integral type')
                 ret.dtypes+=[(fq,dtype)]
                 mupifObjectGrp='mupif-obj'
-                def getter(self,*,fq=fq,dtype=dtype,ndim=ndim):
+                def getter(self,*,fq=fq,dtype=dtype,ndim=ndim,val=val):
                     if self.row is None:
                         raise NotImplementedError(f'{fq}: broadcasting.')
                     if ndim==0:
                         index=self.ctx.dataset[self.row,fq]
                         grp=self.ctx.h5group[mupifObjectGrp]
-                        return _mupif_from_hdf5_group(grp=grp,index=index)
+                        return _mupif_from_hdf5_group(grp=grp,index=index,storedType=val['mupifType'])
                     else:
                         assert ndim==1
-                        return [_mupif_from_hdf5_group(grp=self.ctx.h5group[mupifObjectGrp],index=ix) for ix in np.array(self.ctx.dataset[self.row,fq])]
+                        return [_mupif_from_hdf5_group(grp=self.ctx.h5group[mupifObjectGrp],index=ix,storedType=val['mupifType']) for ix in np.array(self.ctx.dataset[self.row,fq])]
                 def setter(self,val,metadata={},*,dtype=dtype,fq=fq,ndim=ndim):
                     if self.row is None: raise NotImplementedError(f'{fq}: broadcasting.')
                     if mupifObjectGrp not in self.ctx.h5group: self.ctx.h5group.create_group(mupifObjectGrp)

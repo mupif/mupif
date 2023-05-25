@@ -606,7 +606,7 @@ class Field(FieldBase,HeavyConvertible):
         if fg is not None:
             self.toHdf5Group(fg, meshLink=None)
 
-    def toHdf5(self, *, fileName: str = None, groupName='component1/part1', h5group=None):
+    def toHdf5(self, *, fileName: str = None, groupName='component1/part1', h5group=None, heavyMesh=False):
         r"""
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
 
@@ -667,7 +667,7 @@ class Field(FieldBase,HeavyConvertible):
         # newgrp=f'meshes/{_lowest(gg,"meshes")}'
         if 'meshes' not in gg:
             gg.create_group('meshes')
-        mh5 = self.getMesh().asHdf5Object(parentgroup=gg['meshes'])
+        mh5 = self.getMesh().asHdf5Object(parentgroup=gg['meshes'],heavyMesh=heavyMesh)
 
         if len(self.value) > 0:
             fieldIndex = _lowest(gg, 'fields')
@@ -752,11 +752,14 @@ class Field(FieldBase,HeavyConvertible):
             if 'mesh' not in f:
                 raise ValueError('HDF5/mesh: missing attribute')
             link = f.get('mesh', getlink=True)
-            assert isinstance(link, h5py.SoftLink)
-            mPath = link.path
-            if mPath not in meshCache:
-                meshCache[mPath] = mesh.Mesh.makeFromHdf5group(f['mesh'])
-            m = meshCache[mPath]
+            if isinstance(link, h5py.SoftLink):
+                # assert isinstance(link, (h5py.SoftLink,h5py.HardLink))
+                mPath = link.path
+                if mPath not in meshCache:
+                    meshCache[mPath] = mesh.Mesh.makeFromHdf5group(f['mesh'])
+                m = meshCache[mPath]
+            elif isinstance(link, h5py.HardLink):
+                m = mesh.Mesh.makeFromHdf5group(f['mesh'])
         if not heavy:
             quantity = Quantity(value=np.array(valDs).tolist(), unit=unit)
         else:
@@ -800,7 +803,9 @@ class Field(FieldBase,HeavyConvertible):
         # load mesh and field data from HDF5
         # if indices is None:
         if indices is None:
-            fieldObjs = [obj for obj in grp['fields'].values()]
+            if 'fields' in grp: fieldObjs = [obj for obj in grp['fields'].values()]
+            else:
+                fieldObjs = [grp[f] for f in grp if f.startswith('field_')]
         else:
             fieldObjs = [grp[f'fields/{ix}'] for ix in indices]
         # construct all meshes as mupif objects
@@ -955,5 +960,5 @@ class Field(FieldBase,HeavyConvertible):
         raise TypeError('Not supported')
 
     def copyToHeavy(self,h5grp):
-        return self.toHdf5(h5group=h5grp)
+        return self.toHdf5(h5group=h5grp,heavyMesh=False)
 

@@ -793,7 +793,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         mvc, (mct, mci) = self.getVertices(), self.getCells()
         return util.sha1digest([mvc,mct,mci])
 
-    def asHdf5Object(self, parentgroup):
+    def asHdf5Object(self, parentgroup, heavyMesh=False):
         """
         Return the instance as HDF5 object.
         Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
@@ -802,7 +802,11 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         if mhash in parentgroup:
             return parentgroup[mhash]
         gg = parentgroup.create_group(name=mhash)
-        self.toHdf5Group(gg)
+        if not heavyMesh: self.toHdf5Group(gg)
+        else:
+            from mupif import HeavyUnstructuredMesh
+            # TODO: don't use meshio in-memory mesh as intermediary, convert in chunks directly
+            HeavyUnstructuredMesh.fromMeshioMesh_static(h5grp=gg,mesh=self.toMeshioMesh(),progress=True,chunk=10000)
         return gg
 
     def toHdf5Group(self, group):
@@ -837,11 +841,6 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         from mupif.vertex import Vertex
         from mupif.cell import Cell
         assert UnstructuredMesh.isHere(h5grp=h5grp)
-        # from mupif.heavymesh import HeavyUnstructuredMesh
-        # assert HeavyUnstructuredMesh.GRP_CELL_OFFSETS not in h5grp:
-        #    #print(f'{h5grp=} {h5grp.__class__.__name__}')
-        #    #print(f'{h5grp.file.filename=} {h5grp.name=}')
-        #    return HeavyUnstructuredMesh.load(h5path=h5grp.file.filename,h5loc=h5grp.name)[0]
         klass = getattr(importlib.import_module(h5grp.attrs['__module__']), h5grp.attrs['__class__'])
         ret = klass()
         mvc, mct, mci = h5grp['vertex_coords'], h5grp['cell_types'], h5grp['cell_vertices']
@@ -858,6 +857,3 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         ]
         ret.setup(vertexList=vertices, cellList=cells)
         return ret
-
-    def copyToHeavy(self,*,h5grp):
-        return self.asHdf5Object(parentgroup=h5grp).name
