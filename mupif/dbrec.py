@@ -1,6 +1,7 @@
 from .baredata import BareData
 from typing import Union,Literal,Optional
 import pydantic
+from __future__ import annotations
 
 class DbDictable(BareData):
     def to_db_dict_impl(self): raise NotImplementedError(f'Classes derived from DbDictable must implement to_db_dict_impl. (class {self.__class__.__name__})')
