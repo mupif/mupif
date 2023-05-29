@@ -1,6 +1,7 @@
 import unittest
 import mupif as mp
 import numpy as np
+import numpy.testing
 import sys
 import os.path
 import multiprocessing
@@ -566,34 +567,48 @@ class HeavyStruct_TestCase(unittest.TestCase):
 
 
     def test_40_mupifObject(self):
+        # this schema defines "someSchema" object type, with two entries
         schema='''
             [
               {
-                "_schema": { "name": "test" },
-                "field": { "dtype":"i", "mupifType":"mupif.Field" },
-                "fields": { "dtype":"i", "shape":"variable", "mupifType":"mupif.Field" }
+                "_schema": { "name": "someSchema" },
+                "fieldSingle": { "dtype":"i", "mupifType":"mupif.Field" },
+                "fieldsMany": { "dtype":"i", "shape":"variable", "mupifType":"mupif.Field" }
               }
             ]
         '''
+        C=self.__class__
+        # create some fields, on identical mesh
         box=mp.demo.make_meshio_box_hexa(dim=(1,2,3),sz=.1)
         mesh=mp.Mesh.makeFromMeshioMesh(box)
         f1=mp.Field(mesh=mesh,fieldID=mp.DataID.FID_Displacement,valueType=mp.ValueType.Scalar,time=13*mp.Q.s,quantity=[(.001*i,) for i in range(mesh.getNumberOfVertices())]*mp.U.m,fieldType=mp.FieldType.FT_vertexBased)
         f2=mp.Field(mesh=mesh,fieldID=mp.DataID.FID_Strain,valueType=mp.ValueType.Vector,time=128*mp.Q.s,quantity=[(.1*i,.2*i,.3*i) for i in range(mesh.getNumberOfVertices())]*mp.U['kg/(m*s**2)'],fieldType=mp.FieldType.FT_vertexBased)
 
-        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as tests:
+        # write fields over here
+        h5path=C.tmp+'/fields.h5'
+        with mp.HeavyStruct(mode='create',h5path=h5path,schemaName='someSchema',schemasJson=schema) as tests:
             tests.resize(1)
             t0=tests[0]
-            t0.setField(f2)
-            f2a=t0.getField()
+            t0.setFieldSingle(f2)
+            f2a=t0.getFieldSingle()
             self.assertTrue(isinstance(f2a,mp.Field))
-            t0.setFields([f1,f2])
-            t0.appendFields(f1)
-            t0.appendFields(f2)
-            self.assertEqual(len(t0.getFields()),4)
+            t0.setFieldsMany([f1,f2])
+            t0.appendFieldsMany(f1)
+            t0.appendFieldsMany(f2)
+            self.assertEqual(len(t0.getFieldsMany()),4)
             self.assertEqual(len(t0.ctx.dataset.parent['mupif-obj/fields']),5)
             # check that mesh object is shared
             self.assertEqual(len(t0.ctx.dataset.parent['mupif-obj/meshes']),1)
 
+        # read fields here again
+        with mp.HeavyStruct(mode='readonly',h5path=h5path) as foo:
+            f2a=foo[0].getFieldSingle()
+            ff=foo[0].getFieldsMany()
+            self.assertEqual(len(ff),4) # f1,f2,f1,f2, as written above
+            # check that the field evaluates to the same value
+            valOld,valNew=f2.evaluate((.1,.1,.1)),f2a.evaluate((.1,.1,.1))
+            self.assertEqual(valOld.unit,valNew.unit)
+            np.testing.assert_almost_equal(valOld.value,valNew.value)
 
 
 
