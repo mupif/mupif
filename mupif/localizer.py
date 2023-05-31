@@ -43,7 +43,7 @@ class Localizer(object):
         :param object item: Object to be removed
         """
 
-    def giveItemsInBBox(self, bbox):
+    def getItemsInBBox(self, bbox):
         """
         :param BBox bbox: Bounding box
 

@@ -94,6 +94,7 @@ class ExecutionMeta(pydantic.BaseModel):
 class IOMeta(pydantic.BaseModel):
     Type: Literal[
         'mupif.Property',
+        'mupif.TemporalProperty',
         'mupif.Field',
         'mupif.TemporalField',
         'mupif.HeavyStruct',
@@ -102,6 +103,7 @@ class IOMeta(pydantic.BaseModel):
         'mupif.ParticleSet',
         'mupif.GrainState',
         'mupif.DataList[mupif.Property]',
+        'mupif.DataList[mupif.TemporalProperty]',
         'mupif.DataList[mupif.Field]',
         'mupif.DataList[mupif.TemporalField]',
         'mupif.DataList[mupif.HeavyStruct]',
@@ -119,7 +121,7 @@ class IOMeta(pydantic.BaseModel):
 
     @pydantic.root_validator(pre=False)
     def _require_valueType_unless_property(cls, values):
-        if values['Type'] != 'mupif.Property':
+        if values['Type'] != 'mupif.Property' and values['Type'] != 'mupif.TemporalProperty':
             assert 'ValueType' != ''
         return values
 
@@ -244,6 +246,7 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": [
                         "mupif.Property",
+                        "mupif.TemporalProperty",
                         "mupif.Field",
                         "mupif.TemporalField",
                         "mupif.HeavyStruct",
@@ -252,6 +255,7 @@ ModelSchema = {
                         "mupif.ParticleSet",
                         "mupif.GrainState",
                         "mupif.DataList[mupif.Property]",
+                        "mupif.DataList[mupif.TemporalProperty]",
                         "mupif.DataList[mupif.Field]",
                         "mupif.DataList[mupif.TemporalField]",
                         "mupif.DataList[mupif.HeavyStruct]",
@@ -268,20 +272,28 @@ ModelSchema = {
                     "Description": {"type": "string"},
                     "Units": {"type": "string"},
                     "Required": {"type": "boolean"},
-                    "Set_at": {"type": "string", "enum": ["initialization", "timestep"]}
+                    "Set_at": {"type": "string", "enum": ["initialization", "timestep"]},
+                    "EDMPath": {"type": "string"},
+                    "EDMList": {"type": "boolean"}
                 },
                 "required": ["Type", "Type_ID", "Name", "Units", "Required", "Set_at"],
                 "allOf": [
                     {
                         "anyOf": [
                             {"required": ["ValueType"]},
-                            {
-                                "not": {
+                            {"allOf": [
+                                {"not": {
                                     "properties": {
                                         "Type": {"const": "mupif.Property"}
                                     }
-                                }
-                            }
+                                }},
+                                {"not": {
+                                    "properties": {
+                                        "Type": {"const": "mupif.TemporalProperty"}
+                                    }
+                                }}
+                            ]}
+
                         ]
                     }
                 ]
@@ -294,6 +306,7 @@ ModelSchema = {
                 "properties": {
                     "Type": {"type": "string", "enum": [
                         "mupif.Property",
+                        "mupif.TemporalProperty",
                         "mupif.Field",
                         "mupif.TemporalField",
                         "mupif.HeavyStruct",
@@ -302,6 +315,7 @@ ModelSchema = {
                         "mupif.ParticleSet",
                         "mupif.GrainState",
                         "mupif.DataList[mupif.Property]",
+                        "mupif.DataList[mupif.TemporalProperty]",
                         "mupif.DataList[mupif.Field]",
                         "mupif.DataList[mupif.TemporalField]",
                         "mupif.DataList[mupif.HeavyStruct]",
@@ -316,20 +330,28 @@ ModelSchema = {
                     "Name": {"type": "string"},
                     "ValueType": {"type": "string", "enum": ["Scalar", "Vector", "Tensor", "ScalarArray", "VectorArray", "TensorArray"]},
                     "Description": {"type": "string"},
-                    "Units": {"type": "string"}
+                    "Units": {"type": "string"},
+                    "EDMPath": {"type": "string"},
+                    "EDMList": {"type": "boolean"}
                 },
                 "required": ["Type", "Type_ID", "Name", "Units"],
                 "allOf": [
                     {
                         "anyOf": [
                             {"required": ["ValueType"]},
-                            {
-                                "not": {
+                            {"allOf": [
+                                {"not": {
                                     "properties": {
                                         "Type": {"const": "mupif.Property"}
                                     }
-                                }
-                            }
+                                }},
+                                {"not": {
+                                    "properties": {
+                                        "Type": {"const": "mupif.TemporalProperty"}
+                                    }
+                                }}
+                            ]}
+
                         ]
                     }
                 ]

@@ -10,6 +10,7 @@ from . import mupifquantity
 from . import units
 from . import data
 from .units import Quantity, Unit, findUnit
+from .dbrec import DbDictable
 
 
 @Pyro5.api.expose
@@ -27,7 +28,7 @@ class Property(mupifquantity.MupifQuantity):
     def __init__(self, *, metadata={}, **kw):
         super().__init__(metadata=metadata, **kw)
         defaults = dict([
-            ('Type', 'mupif.property.Property'),
+            ('Type', 'mupif.Property'),
             ('Type_ID', str(self.propID)),
             ('Units', self.getUnit().to_string()),
             ('ValueType', str(self.valueType))
@@ -54,7 +55,7 @@ class Property(mupifquantity.MupifQuantity):
 
 
 @Pyro5.api.expose
-class ConstantProperty(Property):
+class ConstantProperty(Property,DbDictable):
     """
     Property is a characteristic value of a problem, that does not depend on spatial variable, e.g. homogenized conductivity over the whole domain. Typically, properties are obtained by postprocessing results from lover scales by means of homogenization and are parameters of models at higher scales.
 
@@ -144,7 +145,7 @@ class ConstantProperty(Property):
         """
         return ConstantProperty(quantity=self.quantity.inUnitsOf(unit), propID=self.propID, valueType=self.valueType, time=self.time)
 
-    def to_db_dict(self):
+    def to_db_dict_impl(self):
         return {
             'ClassName': 'ConstantProperty',
             'ValueType': self.valueType.name,

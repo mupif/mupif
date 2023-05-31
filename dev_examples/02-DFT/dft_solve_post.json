@@ -7,8 +7,8 @@
     "Version_date": "1.0.0, Jan 2023",
     "Inputs": [
         {
-            "Name": "InpProp",
-            "Type": "mupif.Property",
+            "Name": "InpString",
+            "Type": "mupif.String",
             "Required": true,
             "Type_ID": "mupif.DataID.ID_None",
             "Units": "",

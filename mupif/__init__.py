@@ -105,6 +105,7 @@ from .cell import Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahed
 from .constantfield import ConstantField
 from .dataid import DataID
 from .baredata import NumpyArray, ObjectBase, BareData
+from .dbrec import DbDictable
 from .field import FieldType, Field
 from .function import Function
 from .heavydata import HeavyDataBase, Hdf5RefQuantity, Hdf5OwningRefQuantity, Hdf5HeavyProperty
@@ -124,12 +125,14 @@ from .octree import Octant_py, Octree
 from .operatorutil import OperatorInteraction, OperatorEMailInteraction
 from .particle import Particle, ParticleSet
 from .property import Property, ConstantProperty
+from .temporalproperty import TemporalProperty
 from .pyrofile import PyroFile
 from .remoteapprecord import RemoteAppRecord
 from .simplejobmanager import SimpleJobManager
 from .stringproperty import String
 from .timer import Timer
 from .timestep import TimeStep
+from .uniformmesh import UniformRectilinearMesh
 from .units import UnitProxy, Quantity, RefQuantity
 from .vertex import Vertex
 from .workflow import Workflow
@@ -137,7 +140,7 @@ from .temporalfield import TemporalField, DirTemporalField, SingleFileTemporalFi
 from . import pbs_tool
 from . import pyrolog
 
-__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','pbs_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField']
+__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','pbs_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable']
 
 
 # import h5py
@@ -201,7 +204,7 @@ def _registerOther():
     # Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
     # various exception we want to catch in remote calls
-    for exc in ['pydantic.error_wrapper.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
+    for exc in ['pydantic.error_wrappers.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
         Pyro5.api.register_dict_to_class(exc,lambda name,dic: RuntimeError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
 
 
