@@ -33,7 +33,7 @@ release = '3.x'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    # 'sphinxcontrib.apidoc'
+    'sphinxcontrib.mermaid',
 ]
 
 import sys, os.path
@@ -62,7 +62,7 @@ for a in mupif.__all__:
     except ImportError:
         # otherwise put it into the mupif module directly
         o=getattr(mupif,a)
-        o.__module__='mupif'
+        #o.__module__='mupif'
 
 
 # Add any paths that contain templates here, relative to this directory.

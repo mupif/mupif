@@ -77,7 +77,7 @@ class TestSaveLoad(unittest.TestCase):
     def testFieldHdf5SaveLoad(self):
         f=self.app1.get(mupif.DataID.FID_Temperature,tstep.getTime())
         v=self.tmp+'/aa2.h5'
-        f.toHdf5(v)
+        f.toHdf5(fileName=v)
         ff2=mupif.field.Field.makeFromHdf5(fileName=v)
         self.assertEqual(len(ff2),1)
         f2=ff2[0]

@@ -220,6 +220,7 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         <DataItem DataType="Float" Dimensions="{dim}" Format="HDF" Precision="8">{xdmfH5path}:{field.quantity.dataset.name}</DataItem>
      </Attribute>''')
         open(xdmf,'wb').write('\n'.join([head]+fieldXmls+[tail]).encode('utf8'))
+
     def fromMeshioMesh(self,mesh,unit=None,progress=False,chunk=10000):
         self._ensureData()
         assert self.getNumberOfVertices()==0
@@ -288,6 +289,11 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         hq.dataset.attrs['valueType']=valueType.name
         hq.dataset.attrs['time']=str(fieldTime)
         return Field(mesh=self,fieldType=fieldType,valueType=valueType,quantity=hq,fieldID=fieldID,time=fieldTime)
+
+    @staticmethod
+    def makeFromHdf5group(*,h5grp):
+        return HeavyUnstructuredMesh.load(h5path=h5grp.file.filename,h5loc=h5grp.name)[0]
+
     @staticmethod
     def load(h5path,h5loc='/',open=True):
         import h5py
@@ -311,6 +317,12 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
             hq=Hdf5RefQuantity(dataset=ds)
             fields.append(Field(quantity=hq,mesh=mesh,fieldID=fieldID,fieldType=fieldType,valueType=valueType,time=time))
         return (mesh,fields)
+
+    @classmethod
+    def isHere(klass,*,h5grp):
+        for g in HeavyUnstructuredMesh.GRP_VERTS,HeavyUnstructuredMesh.GRP_CELL_OFFSETS,HeavyUnstructuredMesh.GRP_CELL_CONN:
+            if g not in h5grp: return False
+        return True
 
 
 

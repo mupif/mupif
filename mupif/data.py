@@ -29,6 +29,7 @@ import copy
 import typing
 from .baredata import BareData, ObjectBase
 from typing import Optional
+from . import dataid
 
 import pydantic
 
@@ -207,7 +208,7 @@ class Process(BareData,WithMetadata):
 @Pyro5.api.expose
 class DataList(Data):
     objs: typing.List[Data]
-    dataID: typing.Optional[str] = None
+    dataID: typing.Optional[dataid.DataID] = dataid.DataID.ID_None
     @staticmethod
     def _seqTypes(seq): return [f'{t.__module__}.{t.__class__.__name__}' for t in seq]
 
@@ -220,7 +221,7 @@ class DataList(Data):
         super().__init__(**kw)
         tset = set(DataList._seqTypes(kw['objs']))
         assert len(tset) <= 1
-        self.dataID = tset.pop()
+        # self.dataID = tset.pop()
         self.objs = kw['objs']
 
     @pydantic.validator('objs')
@@ -228,6 +229,9 @@ class DataList(Data):
         # if ft:=[e for e in v if not isinstance(e,Data)]: raise ValueError(f'Some objects in the sequence are not a Data (foreign types: {", ".join([t.__module__+t.__class__.__name__ for t in ft])})')
         if len(tset := set(DataList._seqTypes(v))) > 1:
             raise ValueError(f'Multiple Data subclasses in sequence, must be only one ({", ".join([t for t in tset])}).')
+
+    def getDataID(self):
+        return self.dataID
 
 
 

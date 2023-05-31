@@ -29,9 +29,13 @@ from . import baredata
 from . import vertex
 from . import cell
 from . import units
+from . import util
+from . import localizer
+from .heavydata import HeavyConvertible
 import copy
 import time
 import sys
+import os.path
 import numpy
 import Pyro5
 import dataclasses
@@ -39,6 +43,7 @@ import typing
 from . import cellgeometrytype
 import pickle
 import deprecated
+import numpy as np
 
 import pydantic
 
@@ -127,13 +132,7 @@ class Mesh(baredata.BareData):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._setDirty()
-        self._postDump()
-
-    def _postDump(self):
-        """Called when the instance is being reconstructed."""
-        # print('Mesh._postDump…')
-        for i in range(self.getNumberOfCells()):
-            object.__setattr__(self.getCell(i), 'mesh', self)
+        if hasattr(self,'_postDump'): self._postDump()
 
     def _setDirty(self):
         'Invalidate (reset) cached data'
@@ -235,75 +234,6 @@ class Mesh(baredata.BareData):
             vv = numpy.array([v.getNumber() for v in c.getVertices()], dtype=numpy.int64)
             cc[i, :len(vv)] = vv  # excess elements in the row stay at -1
         return tt, cc
-
-    def dataDigest(self):
-        """Internal function returning hash digest of all internal data, for the purposes of identity test."""
-        def numpyHash(*args):
-            """Return concatenated hash (hexdigest) of all args, which must be numpy arrays. This function is used to
-            find an identical mesh which was already stored."""
-            import hashlib
-            H = hashlib.sha1()
-            for arr in args:
-                H.update(arr.view(numpy.uint8))
-            return H.hexdigest()
-        mvc, (mct, mci) = self.getVertices(), self.getCells()
-        return numpyHash(mvc, mct, mci)
-
-    def asHdf5Object(self, parentgroup):
-        """
-        Return the instance as HDF5 object.
-        Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
-        """
-        mhash = self.dataDigest()
-        if mhash in parentgroup:
-            return parentgroup[mhash]
-        gg = parentgroup.create_group(name=mhash)
-        self.toHdf5Group(gg)
-        return gg
-
-    def toHdf5Group(self, group):
-        mvc, (mct, mci) = self.getVertices(), self.getCells()
-        for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
-            group[name] = data
-        group.attrs['unit']=('' if self.unit is None else str(self.unit))
-        group.attrs['__class__'] = self.__class__.__name__
-        group.attrs['__module__'] = self.__class__.__module__
-
-    @staticmethod
-    def makeFromHdf5Object(h5obj):
-        """
-        Create new :obj:`Mesh` instance from given hdf5 object. Complementary to :obj:`asHdf5Object`.
-
-        Constructs HeavyUnstructuredMesh if data are saved in that format.
-
-        :return: new instance
-        :rtype: :obj:`Mesh` or its subclass
-        """
-        # instantiate the right Mesh subclass
-        import importlib
-        from mupif.vertex import Vertex
-        from mupif.cell import Cell
-        from mupif.heavymesh import HeavyUnstructuredMesh
-        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5obj:
-            #print(f'{h5obj=} {h5obj.__class__.__name__}')
-            #print(f'{h5obj.file.filename=} {h5obj.name=}')
-            return HeavyUnstructuredMesh.load(h5path=h5obj.file.filename,h5loc=h5obj.name)[0]
-        klass = getattr(importlib.import_module(h5obj.attrs['__module__']), h5obj.attrs['__class__'])
-        ret = klass()
-        mvc, mct, mci = h5obj['vertex_coords'], h5obj['cell_types'], h5obj['cell_vertices']
-        # construct vertices
-        vertices = [Vertex(number=vi, label=None, coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
-        cells = [
-            Cell.getClassForCellGeometryType(mct[ci])(
-                mesh=ret,
-                number=ci,
-                label=None,
-                # vertices=tuple(mci[ci])
-                vertices=[vertices[i].number for i in mci[ci]]
-            ) for ci in range(mct.shape[0])
-        ]
-        ret.setup(vertexList=vertices, cellList=cells)
-        return ret
 
     def toMeshioPointsCells(self):
         import numpy as np
@@ -416,24 +346,6 @@ class Mesh(baredata.BareData):
         for i in range(0, self.getNumberOfCells()):
             yield self.getCell(i)
 
-    # def vertices(self):
-    #     """
-    #     Iterator over vertices.
-    #
-    #     :return: Iterator over vertices
-    #     :rtype: MeshIterator
-    #     """
-    #     return MeshIterator(self, VERTICES)
-
-    # def cells(self):
-    #     """
-    #     Iterator over cells.
-    #
-    #     :return: Iterator over cells
-    #     :rtype: MeshIterator
-    #     """
-    #     return MeshIterator(self, CELLS)
-
     def dumpToLocalFile(self, fileName, protocol=pickle.HIGHEST_PROTOCOL):
         """
         Dump Mesh to a file using a Pickle serialization module.
@@ -525,9 +437,28 @@ class Mesh(baredata.BareData):
         return self._cellOctree
 
 
+    def asHdf5Object(self, parentgroup, heavyMesh=None):
+        raise NotImplementedError('This method is abstract, derived classes must override.')
+
+    @classmethod
+    def isHere(klass,*,h5grp): return False
+
+    @staticmethod
+    def makeFromHdf5group(h5grp):
+        def _get_subclasses(cls):
+            ret=set([cls])
+            for sc in cls.__subclasses__():
+                ret|=_get_subclasses(sc)
+            return ret
+        for sub in _get_subclasses(Mesh):
+            if sub.isHere(h5grp=h5grp):
+                return sub.makeFromHdf5group(h5grp=h5grp)
+
+
+
+
 @Pyro5.api.expose
-# @dataclasses.dataclass
-class UnstructuredMesh(Mesh):
+class UnstructuredMesh(Mesh,HeavyConvertible):
     """
     Represents unstructured mesh. Maintains the list of vertices and cells.
 
@@ -552,6 +483,13 @@ class UnstructuredMesh(Mesh):
         super().__init__(**kw)
         self._vertexDict = None
         self._cellDict = None
+
+    def _postDump(self):
+        """Called when the instance is being reconstructed."""
+        # print('Mesh._postDump…')
+        for i in range(self.getNumberOfCells()):
+            object.__setattr__(self.getCell(i), 'mesh', self)
+
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
@@ -847,5 +785,75 @@ class UnstructuredMesh(Mesh):
                     vertices=[vertices[i].number for iv in val[i]]
                 ) for i in range(len(val))
             ])
+        ret.setup(vertexList=vertices, cellList=cells)
+        return ret
+
+    def dataDigest(self):
+        """Internal function returning hash digest of all internal data, for the purposes of identity test."""
+        mvc, (mct, mci) = self.getVertices(), self.getCells()
+        return util.sha1digest([mvc,mct,mci])
+
+    def asHdf5Object(self, parentgroup, heavyMesh=False):
+        """
+        Return the instance as HDF5 object.
+        Complementary to :obj:`makeFromHdf5Object` which will restore the instance from that data.
+        """
+        mhash = self.dataDigest()
+        if mhash in parentgroup:
+            return parentgroup[mhash]
+        gg = parentgroup.create_group(name=mhash)
+        if not heavyMesh: self.toHdf5Group(gg)
+        else:
+            from mupif import HeavyUnstructuredMesh
+            # TODO: don't use meshio in-memory mesh as intermediary, convert in chunks directly
+            HeavyUnstructuredMesh.fromMeshioMesh_static(h5grp=gg,mesh=self.toMeshioMesh(),progress=True,chunk=10000)
+        return gg
+
+    def toHdf5Group(self, group):
+        mvc, (mct, mci) = self.getVertices(), self.getCells()
+        for name, data in ('vertex_coords', mvc), ('cell_types', mct), ('cell_vertices', mci):
+            group[name] = data
+        group.attrs['unit']=('' if self.unit is None else str(self.unit))
+        group.attrs['__class__'] = self.__class__.__name__
+        group.attrs['__module__'] = self.__class__.__module__
+
+    @classmethod
+    def isHere(klass,*,h5grp):
+        for ds in ['vertex_coords','cell_types','cell_vertices']:
+            if ds not in h5grp: return False
+        from mupif.heavymesh import HeavyUnstructuredMesh
+        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5grp: raise IOError(f'{klass.__name__}: {HeavyUnstructuredMesh.GRP_CELL_OFFSETS} must not be present (is that a HeavyUnstructuredMesh?)')
+        return True
+    
+
+    @staticmethod
+    def makeFromHdf5group(h5grp):
+        """
+        Create new :obj:`Mesh` instance from given hdf5 object. Complementary to :obj:`asHdf5Object`.
+
+        Constructs HeavyUnstructuredMesh if data are saved in that format.
+
+        :return: new instance
+        :rtype: :obj:`Mesh` or its subclass
+        """
+        # instantiate the right Mesh subclass
+        import importlib
+        from mupif.vertex import Vertex
+        from mupif.cell import Cell
+        assert UnstructuredMesh.isHere(h5grp=h5grp)
+        klass = getattr(importlib.import_module(h5grp.attrs['__module__']), h5grp.attrs['__class__'])
+        ret = klass()
+        mvc, mct, mci = h5grp['vertex_coords'], h5grp['cell_types'], h5grp['cell_vertices']
+        # construct vertices
+        vertices = [Vertex(number=vi, label=None, coords=tuple(mvc[vi])) for vi in range(mvc.shape[0])]
+        cells = [
+            Cell.getClassForCellGeometryType(mct[ci])(
+                mesh=ret,
+                number=ci,
+                label=None,
+                # vertices=tuple(mci[ci])
+                vertices=[vertices[i].number for i in mci[ci]]
+            ) for ci in range(mct.shape[0])
+        ]
         ret.setup(vertexList=vertices, cellList=cells)
         return ret

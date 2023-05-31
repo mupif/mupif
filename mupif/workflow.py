@@ -112,7 +112,9 @@ WorkflowSchema["properties"].update({
                 "Name": {"type": "string"},
                 "EDMEntity": {"type": "string"},
                 "DBName": {"type": "string"},
-                "createFrom": {"type": "string"}
+                "createFrom": {"type": "string"},
+                "createNew": {"type": "object"},
+                "EDMList": {"type": "boolean"}
             },
             "required": ["Name", "EDMEntity", "DBName"]
         }
@@ -155,6 +157,14 @@ class Workflow(model.Model):
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
 
+    def _generateNewModelName(self, base='m'):
+        i = 0
+        while True:
+            i += 1
+            name = base + '_' + str(i)
+            if name not in self._models.keys():
+                return name
+
     def _allocateModel(self, *, name, modulename, classname, jobmanagername):
         if name:
             if jobmanagername:
@@ -162,28 +172,47 @@ class Workflow(model.Model):
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
                 # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
                 self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI', ''))
+                return self._models[name]
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
                 self._models[name] = model_class()
+                return self._models[name]
+        return None
 
     def _allocateModelByName(self, *, name, name_new=None):
         if name_new is None:
-            name_new = name
+            name_new = self._generateNewModelName(base=name)
+            # name_new = name
+            # if name_new in self._models.keys():
+            #     name_new = self._generateNewModelName(base=name)
+        else:
+            if name_new in self._models.keys():
+                name_new = self._generateNewModelName(base=name)
         model_info = None
         for m in self.metadata['Models']:
             if m['Name'] == name:
                 model_info = m
         if model_info is not None:
-            self._allocateModel(name=name_new, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+            new_model = self._allocateModel(name=name_new, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+            return new_model, name_new
 
     def _allocateAllModels(self):
+        # for model_info in self.metadata['Models']:
+        #     if model_info.get('Instantiate', True):
+        #         self._allocateModelByName(name=model_info.get('Name', ''), name_new=model_info.get('Name', ''))
         for model_info in self.metadata['Models']:
             if model_info.get('Instantiate', True):
                 self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
 
     def _initializeAllModels(self):
-        _md = {
+        _md = self._getInitializationMetadata()
+        for _model in self._models.values():
+            # print("Workflow calls initialize of " + _model.__class__.__name__)
+            _model.initialize(metadata=_md)
+
+    def _getInitializationMetadata(self):
+        return {
             'Execution': {
                 'ID': self.getMetadata('Execution.ID'),
                 'Use_case_ID': self.getMetadata('Execution.Use_case_ID'),
@@ -191,9 +220,6 @@ class Workflow(model.Model):
                 'Log_URI': self.getMetadata('Execution.Log_URI', '')
             }
         }
-        for _model in self._models.values():
-            # print("Workflow calls initialize of " + _model.__class__.__name__)
-            _model.initialize(metadata=_md)
 
     def getModel(self, name):
         if name in self._models.keys():

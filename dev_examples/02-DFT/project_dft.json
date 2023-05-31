@@ -1,0 +1,366 @@
+{
+    "blocks": [
+        {
+            "classname": "BlockWorkflow",
+            "uid": "workflow",
+            "parent_uid": "None",
+            "ext_slots": [
+                {
+                    "classname": "SlotExt",
+                    "name": "hs_out",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "hs_out",
+                    "inout": "in",
+                    "uid": "s24"
+                },
+                {
+                    "classname": "SlotExt",
+                    "name": "prop_in",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "prop_in",
+                    "inout": "out",
+                    "uid": "s4"
+                },
+                {
+                    "classname": "SlotExt",
+                    "name": "hs_in",
+                    "type": "None",
+                    "obj_type": "None",
+                    "obj_id": "hs_in",
+                    "inout": "out",
+                    "uid": "s25"
+                }
+            ],
+            "child_block_sort": "vertical"
+        },
+        {
+            "classname": "BlockModel",
+            "uid": "model_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s37",
+                "s38"
+            ],
+            "slot_out_uids": [
+                "s39",
+                "s40"
+            ],
+            "metadata": {
+                "ClassName": "DFT_Pre",
+                "ModuleName": "dft_pre",
+                "Name": "DFT Pre",
+                "ID": "dft_pre",
+                "Description": "DFT Pre",
+                "Version_date": "1.0.0, Jan 2023",
+                "Inputs": [
+                    {
+                        "Name": "InpProp",
+                        "Type": "mupif.Property",
+                        "Required": true,
+                        "Type_ID": "mupif.DataID.ID_None",
+                        "Units": "",
+                        "Obj_ID": "",
+                        "Set_at": "timestep",
+                        "ValueType": "Scalar"
+                    },
+                    {
+                        "Name": "InpHS",
+                        "Type": "mupif.HeavyStruct",
+                        "Required": true,
+                        "Type_ID": "mupif.DataID.ID_None",
+                        "Units": "",
+                        "Obj_ID": "",
+                        "Set_at": "timestep"
+                    }
+                ],
+                "Outputs": [
+                    {
+                        "Name": "OutHS",
+                        "Type": "mupif.HeavyStruct",
+                        "Type_ID": "mupif.DataID.ID_None",
+                        "Units": "",
+                        "Obj_ID": "out_hs"
+                    },
+                    {
+                        "Name": "OutStrings",
+                        "Type": "mupif.DataList[mupif.String]",
+                        "Type_ID": "mupif.DataID.ID_None",
+                        "Units": "",
+                        "Obj_ID": "out_strings"
+                    }
+                ],
+                "Solver": {
+                    "Software": "Own",
+                    "Type": "tester",
+                    "Accuracy": "High",
+                    "Sensitivity": "Low",
+                    "Complexity": "High",
+                    "Robustness": "High",
+                    "Estim_time_step_s": 1,
+                    "Estim_comp_time_s": 1,
+                    "Estim_execution_cost_EUR": 0.01,
+                    "Estim_personnel_cost_EUR": 0.01,
+                    "Required_expertise": "None",
+                    "Language": "",
+                    "License": "LGPL",
+                    "Creator": "",
+                    "Version_date": "1.0.0, Jan 2023",
+                    "Documentation": "not available"
+                },
+                "Physics": {
+                    "Type": "Other",
+                    "Entity": "Other"
+                },
+                "Execution_settings": {
+                    "Type": "Distributed",
+                    "jobManName": "UOI.DFT_Pre",
+                    "Class": "DFT_Pre",
+                    "Module": "dft_pre"
+                }
+            },
+            "model_working_directory": ""
+        },
+        {
+            "classname": "BlockVariable",
+            "uid": "variable_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s30"
+            ],
+            "slot_out_uids": [
+                "s31"
+            ]
+        },
+        {
+            "classname": "BlockVariable",
+            "uid": "variable_2",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s32"
+            ],
+            "slot_out_uids": [
+                "s33"
+            ]
+        },
+        {
+            "classname": "BlockDataListLength",
+            "uid": "datalist_length_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s2"
+            ],
+            "slot_out_uids": [
+                "s3"
+            ]
+        },
+        {
+            "classname": "BlockValueComparison",
+            "uid": "quantity_comparison_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s8",
+                "s9"
+            ],
+            "slot_out_uids": [
+                "s10",
+                "s11",
+                "s12",
+                "s13",
+                "s14",
+                "s15"
+            ]
+        },
+        {
+            "classname": "BlockGetItemFromDataList",
+            "uid": "get_item_from_datalist_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s34",
+                "s35"
+            ],
+            "slot_out_uids": [
+                "s36"
+            ]
+        },
+        {
+            "classname": "BlockDoWhile",
+            "uid": "dowhile_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s5"
+            ],
+            "slot_out_uids": [
+                "s6"
+            ]
+        },
+        {
+            "classname": "BlockAllocateModelAtRuntime",
+            "uid": "allocate_model_at_runtime_1",
+            "parent_uid": "dowhile_1",
+            "slot_in_uids": [],
+            "slot_out_uids": [
+                "s42"
+            ],
+            "child_block_sort": "vertical"
+        },
+        {
+            "classname": "BlockRunInBackground",
+            "uid": "run_in_background_1",
+            "parent_uid": "allocate_model_at_runtime_1",
+            "slot_in_uids": [],
+            "slot_out_uids": [
+                "s47"
+            ],
+            "child_block_sort": "vertical"
+        },
+        {
+            "classname": "BlockModel",
+            "uid": "model_2",
+            "parent_uid": "run_in_background_1",
+            "slot_in_uids": [
+                "s48",
+                "s49"
+            ],
+            "slot_out_uids": [],
+            "metadata": {
+                "ClassName": "DFT_Solve_Post",
+                "ModuleName": "dft_solve_post",
+                "Name": "DFT Solve Post",
+                "ID": "dft_solve_post",
+                "Description": "DFT Solve Post",
+                "Version_date": "1.0.0, Jan 2023",
+                "Inputs": [
+                    {
+                        "Name": "InpString",
+                        "Type": "mupif.String",
+                        "Required": true,
+                        "Type_ID": "mupif.DataID.ID_None",
+                        "Units": "",
+                        "Obj_ID": "",
+                        "Set_at": "timestep",
+                        "ValueType": "Scalar"
+                    },
+                    {
+                        "Name": "InpHS",
+                        "Type": "mupif.HeavyStruct",
+                        "Required": true,
+                        "Type_ID": "mupif.DataID.ID_None",
+                        "Units": "",
+                        "Obj_ID": "",
+                        "Set_at": "timestep"
+                    }
+                ],
+                "Outputs": [],
+                "Solver": {
+                    "Software": "Own",
+                    "Type": "tester",
+                    "Accuracy": "High",
+                    "Sensitivity": "Low",
+                    "Complexity": "High",
+                    "Robustness": "High",
+                    "Estim_time_step_s": 1,
+                    "Estim_comp_time_s": 1,
+                    "Estim_execution_cost_EUR": 0.01,
+                    "Estim_personnel_cost_EUR": 0.01,
+                    "Required_expertise": "None",
+                    "Language": "",
+                    "License": "LGPL",
+                    "Creator": "",
+                    "Version_date": "1.0.0, Jan 2023",
+                    "Documentation": "not available"
+                },
+                "Physics": {
+                    "Type": "Other",
+                    "Entity": "Other"
+                },
+                "Execution_settings": {
+                    "Type": "Distributed",
+                    "jobManName": "UOI.DFT_Solve_Post",
+                    "Class": "DFT_Solve_Post",
+                    "Module": "dft_solve_post"
+                }
+            },
+            "model_working_directory": ""
+        },
+        {
+            "classname": "BlockWaitForBackgroundProcesses",
+            "uid": "wait_for_background_processes_1",
+            "parent_uid": "workflow",
+            "slot_in_uids": [
+                "s45",
+                "s46"
+            ],
+            "slot_out_uids": []
+        }
+    ],
+    "datalinks": [
+        {
+            "ds1_uid": "s3",
+            "ds2_uid": "s9"
+        },
+        {
+            "ds1_uid": "s8",
+            "ds2_uid": "s6"
+        },
+        {
+            "ds1_uid": "s31",
+            "ds2_uid": "s24"
+        },
+        {
+            "ds1_uid": "s33",
+            "ds2_uid": "s2"
+        },
+        {
+            "ds1_uid": "s35",
+            "ds2_uid": "s6"
+        },
+        {
+            "ds1_uid": "s33",
+            "ds2_uid": "s34"
+        },
+        {
+            "ds1_uid": "s4",
+            "ds2_uid": "s37"
+        },
+        {
+            "ds1_uid": "s25",
+            "ds2_uid": "s38"
+        },
+        {
+            "ds1_uid": "s39",
+            "ds2_uid": "s30"
+        },
+        {
+            "ds1_uid": "s40",
+            "ds2_uid": "s32"
+        },
+        {
+            "ds1_uid": "s31",
+            "ds2_uid": "s49"
+        },
+        {
+            "ds1_uid": "s36",
+            "ds2_uid": "s48"
+        },
+        {
+            "ds1_uid": "s47",
+            "ds2_uid": "s45"
+        },
+        {
+            "ds1_uid": "s15",
+            "ds2_uid": "s5"
+        }
+    ],
+    "settings": {
+        "project_name": "DFT test workflow",
+        "project_classname": "DFTTestWorkflow",
+        "project_modulename": "dft_test_workflow",
+        "project_id": "dft_test_workflow",
+        "project_nshost": "",
+        "project_nsport": "",
+        "script_name_base": "",
+        "connection_type": "Local"
+    }
+}

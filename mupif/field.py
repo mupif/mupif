@@ -29,9 +29,11 @@ from . import data
 from .dataid import DataID
 from . import cellgeometrytype
 from . import mesh
+from . import uniformmesh
 from . import mupifquantity
 from .units import Quantity, Unit
 from .baredata import NumpyArray
+from .heavydata import HeavyConvertible
 
 import meshio
 import sys
@@ -159,7 +161,7 @@ class AnalyticalField(FieldBase):
 
 
 @Pyro5.api.expose
-class Field(FieldBase):
+class Field(FieldBase,HeavyConvertible):
     """
     Representation of field. Field is a scalar, vector, or tensorial
     quantity defined on a spatial domain. The field, however is assumed
@@ -331,6 +333,9 @@ class Field(FieldBase):
             # localizer in the newer version returns cell id, not the cell object, check that here
             if isinstance(next(iter(cells)), int):
                 cells = [self.mesh.getCell(ic) for ic in cells]
+            for ic,c in enumerate(cells):
+                for iv,v in enumerate(c.getVertices()):
+                    print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
 
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
@@ -601,7 +606,7 @@ class Field(FieldBase):
         if fg is not None:
             self.toHdf5Group(fg, meshLink=None)
 
-    def toHdf5(self, fileName: str = None, groupName='component1/part1', h5group=None):
+    def toHdf5(self, *, fileName: str = None, groupName='component1/part1', h5group=None, heavyMesh=False):
         r"""
         Dump field to HDF5, in a simple format suitable for interoperability (TODO: document).
 
@@ -662,7 +667,7 @@ class Field(FieldBase):
         # newgrp=f'meshes/{_lowest(gg,"meshes")}'
         if 'meshes' not in gg:
             gg.create_group('meshes')
-        mh5 = self.getMesh().asHdf5Object(parentgroup=gg['meshes'])
+        mh5 = self.getMesh().asHdf5Object(parentgroup=gg['meshes'],heavyMesh=heavyMesh)
 
         if len(self.value) > 0:
             fieldIndex = _lowest(gg, 'fields')
@@ -693,15 +698,37 @@ class Field(FieldBase):
             val = numpy.empty(shape=(self.getMesh().getNumberOfCells(), self.getRecordSize()), dtype=numpy.float64)
             for cell in range(self.getMesh().getNumberOfCells()):
                 val[cell] = self.getCellValue(cell)
-            subGrp = 'vertex_values'
+            subGrp = 'cell_values'
             fieldGrp[subGrp] = val
         else:
             raise RuntimeError("Unknown fieldType %d." % self.fieldType)
+        if isinstance(self.mesh,uniformmesh.UniformRectilinearMesh):
+            import h5py
+            src=fieldGrp[subGrp]
+            # extra dimension for the record, if not scalar
+            shape=list(self.mesh.dims)
+            if self.getRecordSize()>1: shape=[self.getRecordSize()]+shape
+            vl=h5py.VirtualLayout(shape=tuple(reversed(shape)),dtype=numpy.float64)
+            vl[:]=h5py.VirtualSource(src)
+            fieldGrp.create_virtual_dataset(subGrp+'_3d_view',vl)
+            if not self.mesh.is3d():
+                assert len(self.mesh.dims)==2
+                shape=list(self.mesh.dims)+[1]
+                if self.getRecordSize()>1: shape=[self.getRecordSize()]+shape
+                vl=h5py.VirtualLayout(shape=tuple(reversed(shape)),dtype=numpy.float64)
+                vl[:]=h5py.VirtualSource(src)
+                fieldGrp.create_virtual_dataset(subGrp+'_2d_view',vl)
+
+            # if not self.mesh.is3d(): fieldGrp.create_virtual_dataset(subGrp+'_2d_view',vl)
+            #else:
+            #    vl=h5py.VirtualLayout(shape=tuple(reversed([self.getRecordSize()]+list(self.mesh.dims))),dtype=numpy.float64)
+            #    vl[:]=h5py.VirtualSource(src)
+            #    fieldGrp.create_virtual_dataset(subGrp+'_3d_view',vl)
         # for compatibility with Hdf5RefQuantity
         fieldGrp[subGrp].attrs['unit'] = str(self.getUnit())
 
     @staticmethod
-    def makeFromHdf5_groups(*, fieldGrp, meshGrp=None, meshCache=None, heavy=False):
+    def makeFromHdf5_groups(*, fieldGrp, meshGrp=None, meshCache=None, heavy=False, h5own=False):
         import h5py
         f=fieldGrp
         if 'vertex_values' in f:
@@ -720,22 +747,25 @@ class Field(FieldBase):
             time = pickle.loads(time)
         if meshGrp is not None:
             # creates HeavyUnstructuredMesh if that is the meshGrp storage format
-            m = mesh.Mesh.makeFromHdf5Object(meshGrp)
+            m = mesh.Mesh.makeFromHdf5group(meshGrp)
         else:
             if 'mesh' not in f:
                 raise ValueError('HDF5/mesh: missing attribute')
             link = f.get('mesh', getlink=True)
-            assert isinstance(link, h5py.SoftLink)
-            mPath = link.path
-            if mPath not in meshCache:
-                meshCache[mPath] = mesh.Mesh.makeFromHdf5Object(f['mesh'])
-            m = meshCache[mPath]
+            if isinstance(link, h5py.SoftLink):
+                # assert isinstance(link, (h5py.SoftLink,h5py.HardLink))
+                mPath = link.path
+                if mPath not in meshCache:
+                    meshCache[mPath] = mesh.Mesh.makeFromHdf5group(f['mesh'])
+                m = meshCache[mPath]
+            elif isinstance(link, h5py.HardLink):
+                m = mesh.Mesh.makeFromHdf5group(f['mesh'])
         if not heavy:
             quantity = Quantity(value=np.array(valDs).tolist(), unit=unit)
         else:
             from .heavydata import Hdf5RefQuantity, Hdf5OwningRefQuantity
             # hack
-            if fieldGrp.name == '/':
+            if fieldGrp.name == '/' or h5own:
                 quantity = Hdf5OwningRefQuantity(
                     h5path=valDs.file.filename,
                     h5loc=valDs.name,
@@ -747,7 +777,7 @@ class Field(FieldBase):
         return Field(mesh=m, fieldID=fieldID, quantity=quantity, time=time, valueType=valueType, fieldType=fieldType)
 
     @staticmethod
-    def makeFromHdf5(*, fileName: str = None, group: str = 'component1/part1', h5group=None, indices: typing.Optional[typing.List[int]] = None):
+    def makeFromHdf5(*, fileName: str = None, group: str = 'component1/part1', h5group=None, indices: typing.Optional[typing.List[int]] = None, heavy=False,h5own=False):
         """
         Restore Fields from HDF5 file.
 
@@ -773,7 +803,9 @@ class Field(FieldBase):
         # load mesh and field data from HDF5
         # if indices is None:
         if indices is None:
-            fieldObjs = [obj for obj in grp['fields'].values()]
+            if 'fields' in grp: fieldObjs = [obj for obj in grp['fields'].values()]
+            else:
+                fieldObjs = [grp[f] for f in grp if f.startswith('field_')]
         else:
             fieldObjs = [grp[f'fields/{ix}'] for ix in indices]
         # construct all meshes as mupif objects
@@ -781,7 +813,7 @@ class Field(FieldBase):
         # construct all fields as mupif objects
         ret = []
         for f in fieldObjs:
-            ret.append(Field.makeFromHdf5_groups(fieldGrp=f, meshGrp=None, meshCache=meshes))
+            ret.append(Field.makeFromHdf5_groups(fieldGrp=f, meshGrp=None, meshCache=meshes, heavy=heavy, h5own=h5own))
         if fileName is not None:
             hdf.close()  # necessary for windows
         return ret
@@ -856,7 +888,61 @@ class Field(FieldBase):
         return ret
 
     @staticmethod
-    def fromMeshioMesh(m): raise NotImplementedError('maybe later')
+    def makeFromVtkFile(
+        filename: str,
+        units: dict[str,Unit]={}, # map field name to unit
+        fieldIDs: dict[str,DataID]={}, # map field name to DataID
+        time: Quantity=Quantity(value=0,unit='s'),
+    ):
+        if not os.path.exists(filename): raise RuntimeError(f'File "{filename}" does not exist.')
+        import vtk
+        ext=os.path.splitext(filename)[1]
+        if ext=='.vtk':
+            r0=vtk.vtkDataReader()
+            r0.SetFileName(filename)
+            if r0.IsFileStructuredPoints(): reader=vtk.vtkStructuredPointsReader()
+            elif r0.IsFileUnstructuredGrid(): reader=vtk.vtkUnstructuredGridReader()
+            elif r0.IsFileStructuredGrid(): reader=vtk.vtkStrcturedGridReader()
+            elif r0.IsFilePolyData(): reader=vtk.vtkPolyDataReader()
+            elif r0.IsFileRectilinearGrid(): reader=vtk.vtkRectilinearGridReader()
+            else: raise RuntimeError(f'Unable to determine VTK data contained in legacy-format file {filename}.')
+            reader.ReadAllScalarsOn()
+            reader.ReadAllVectorsOn()
+            reader.ReadAllTensorsOn()
+            reader.ReadAllFieldsOn()
+        elif ext=='.vti': reader=vtk.vtkImageReader()
+        elif ext=='.vtp': reader=vtk.vtkPolyDataReader()
+        elif ext=='.vtr': reader=vtk.vtkRecrtilinearGridReader()
+        elif ext=='.vts': reader=vtk.vtkStructuredGridReader()
+        elif ext=='.vtu': reader=vtk.vtkUnstructuredGridReader()
+        else: raise ValueError(f'Unhandled VTK extension "{ext}".')
+        reader.SetFileName(filename)
+        reader.Update()
+        dta=reader.GetOutput()
+        def _getFieldID(name):
+            if name in fieldIDs: return fieldIDs[name]
+            try: return DataID['FID_'+name]
+            except KeyError: pass
+            raise RuntimeError(f'Unknown FieldID for field name "{name}" (must be passed through *fieldIDs* or found as DataID["FID_{name}"].)')
+        if isinstance(dta,vtk.vtkStructuredPoints):
+            lastIx=(2 if dta.GetDimensions()[2]==1 else 3)
+            msh=uniformmesh.UniformRectilinearMesh(dims=dta.GetDimensions()[:lastIx],origin=dta.GetOrigin()[:lastIx],spacing=dta.GetSpacing()[:lastIx])
+            ret=[]
+            for aarr,fieldType in [(dta.GetCellData(),FieldType.FT_cellBased),(dta.GetPointData(),FieldType.FT_vertexBased)]:
+                for ia in range(aarr.GetNumberOfArrays()):
+                    name=aarr.GetArrayName(ia)
+                    arr=np.array(aarr.GetArray(ia))
+                    if arr.ndim==1:
+                        valueType=mupifquantity.ValueType.Scalar
+                        arr=arr[:,np.newaxis]
+                    else:
+                        arr=arr.ravel('F').reshape(arr.shape[0],-1)
+                        valueType=mupifquantity.ValueType.fromNumberOfComponents(arr.shape[-1])
+                    ret.append(Field(mesh=msh,fieldID=_getFieldID(name),value=arr,unit=units.get(name,''),time=time,valueType=valueType,fieldType=fieldType))
+            return ret
+        elif isinstance(dta,vtk.vtkUnstructuredGrid):
+            raise ValueError('Reading UnstructuredMesh via VTK is not supported; use makeFromMeshioMesh instead.')
+        else: raise ValueError('Unhandled VTK type "{dta.__class__}".')
 
     def _sum(self, other, sign1, sign2):
         """
@@ -872,3 +958,7 @@ class Field(FieldBase):
         performing in place conversion.
         """
         raise TypeError('Not supported')
+
+    def copyToHeavy(self,h5grp):
+        return self.toHdf5(h5group=h5grp,heavyMesh=False)
+
