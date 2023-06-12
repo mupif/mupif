@@ -20,9 +20,11 @@ def jobmanInfo(ns, logLines=10):
             se = jobman.getStatusExtended()
             jm['numJobs'] = dict(max=se.get('maxJobs', -1), curr=len(se['currJobs']), total=se['totalJobs'])
             jm['jobs'] = se['currJobs']
+            jm['status']=True
         except AttributeError:
             jm['jobs'] = jobman.getStatus()
             jm['numJobs'] = dict(max=-1, curr=len(jm['jobs']), total=-1)
+            jm['status'] = False
         for job in jm['jobs']:
             fmt = logging.Formatter(fmt='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s')
             if 'remoteLogUri' in job:
