@@ -44,7 +44,7 @@ def schedulerInfo(ns):
         sch['ns'] = dict(name=name, uri=uri, metadata=metadata)
         s = Pyro5.api.Proxy(uri)
         st = s.getStatistics()
-        sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'])
+        sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'], currentLoad=st['currentLoad'])
         sch['history'] = dict(pooledTasks48=st['pooledTasks48'], processedTasks48=st['processedTasks48'], finishedTasks48=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48'])
         sch['lastExecutions'] = [dict(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
         ret.append(sch)
