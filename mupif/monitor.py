@@ -20,9 +20,11 @@ def jobmanInfo(ns, logLines=10):
             se = jobman.getStatusExtended()
             jm['numJobs'] = dict(max=se.get('maxJobs', -1), curr=len(se['currJobs']), total=se['totalJobs'])
             jm['jobs'] = se['currJobs']
+            jm['status']=True
         except AttributeError:
             jm['jobs'] = jobman.getStatus()
             jm['numJobs'] = dict(max=-1, curr=len(jm['jobs']), total=-1)
+            jm['status'] = False
         for job in jm['jobs']:
             fmt = logging.Formatter(fmt='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s')
             if 'remoteLogUri' in job:
@@ -44,8 +46,8 @@ def schedulerInfo(ns):
         sch['ns'] = dict(name=name, uri=uri, metadata=metadata)
         s = Pyro5.api.Proxy(uri)
         st = s.getStatistics()
-        sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'])
-        sch['history'] = dict(pooledTasks=st['pooledTasks48'], finishedTasks=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48'])
+        sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'], currentLoad=st['currentLoad'])
+        sch['history'] = dict(pooledTasks48=st['pooledTasks48'], processedTasks48=st['processedTasks48'], finishedTasks48=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48'])
         sch['lastExecutions'] = [dict(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
         ret.append(sch)
         if 'getExecutions' not in dir(s):
