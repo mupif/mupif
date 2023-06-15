@@ -230,7 +230,7 @@ class SimpleJobManager (jobmanager.JobManager):
                 self.tickets.append(ticket)
                 return ticket
 
-    def allocateJob(self, *, user, remoteLogUri=None, ticket=None): 
+    def allocateJob(self, user, *, remoteLogUri=None, ticket=None): 
         """
         Allocates a new job.
 
