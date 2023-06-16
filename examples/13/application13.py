@@ -82,7 +82,6 @@ class Application13(mp.Model):
                     self.value_2 = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        time.sleep(60*30)
         log.error("solveStep() of model13")
         self.result = self.value_1 * self.value_2
 
