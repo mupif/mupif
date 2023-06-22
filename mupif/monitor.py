@@ -60,7 +60,9 @@ def schedulerInfo(ns):
             except KeyError:
                 continue
             try:
-                rawTail = pickle.loads(serpent.tobytes(Pyro5.api.Proxy(lg).tail(10, raw=True)))
+                proxy = Pyro5.api.Proxy(lg)
+                proxy._pyroTimeout = 0.2
+                rawTail = pickle.loads(serpent.tobytes(proxy.tail(10, raw=True)))
                 rr[ex['_id']] = dict(tail=rawTail)
             except Pyro5.errors.CommunicationError:
                 log.debug(f'Error getting tail of weid {ex["_id"]}, logger {lg}')

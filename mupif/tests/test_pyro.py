@@ -163,6 +163,8 @@ class PyroTestClass(object):
         raise mp.APIError('Some API error')
     def strValue(self):
         return mp.String(value='foobar',dataID=mp.DataID.ID_None)
+    def getPyroProxyAsReturnValue(self,uri):
+        return Pyro5.api.Proxy(uri)
 
 
 
@@ -190,3 +192,11 @@ class MupifObject_TestCase(unittest.TestCase):
         self.assertRaises(RuntimeError,lambda: pro.apiError())
         self.assertRaises(RuntimeError,lambda: pro.pydanticError())
         self.assertEqual(pro.strValue().getValue(),'foobar')
+    def test_proxy(self):
+        C=self.__class__
+        obj=PyroTestClass()
+        uri=C.daemon.register(obj)
+        pro1=Pyro5.api.Proxy(uri)
+        pro2=pro1.getPyroProxyAsReturnValue(uri)
+        self.assertEqual(pro2.strValue().getValue(),'foobar')
+
