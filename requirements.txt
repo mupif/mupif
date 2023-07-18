@@ -30,3 +30,5 @@ tqdm
 typer
 rich
 pytest-timeout
+requests
+uuid
