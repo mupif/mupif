@@ -17,7 +17,7 @@ deprecated
 appdirs
 # tricky: 1.10.0 … 1.10.2: error importing dataclass_transform
 # <= 1.9.0: error in model copy
-pydantic==1.9.2
+pydantic==1.10.0
 # bug (or incompatibility with pydantic) for typing-extensions 4.6 reported here:
 # https://github.com/pydantic/pydantic/issues/5821
 typing-extensions==4.5.0
