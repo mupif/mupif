@@ -20,7 +20,7 @@ appdirs
 pydantic==1.10.0
 # bug (or incompatibility with pydantic) for typing-extensions 4.6 reported here:
 # https://github.com/pydantic/pydantic/issues/5821
-typing-extensions>=4.7
+typing-extensions<4.6
 # for documentation
 sphinxcontrib-apidoc
 sphinxcontrib-mermaid
