@@ -33,6 +33,12 @@
             "Type_ID": "mupif.DataID.FID_Temperature",
             "Type": "mupif.Field",
             "Units": "deg_C"
+        },
+        {
+            "Name": "temperatureVTK",
+            "Type_ID": "mupif.DataID.ID_VTKFile",
+            "Type": "mupif.PyroFile",
+            "Units": ""
         }
     ],
     "Solver": {

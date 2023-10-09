@@ -515,3 +515,5 @@ class DataID(IntEnum):
     ID_CompositeTransverseShearModulus = auto()
     ID_CompositeLongitudinalPoissonRatio = auto()
     ID_CompositeTransversePoissonRatio = auto()
+
+    ID_VTKFile = auto()

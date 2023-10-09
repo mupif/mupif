@@ -1,7 +1,7 @@
 import Pyro5
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../..')
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../..')
 import mupif as mp
 import logging
 log = logging.getLogger()
@@ -42,6 +42,12 @@ class MUPIF_M_demo(mp.Model):
                     "Units": "m",
                     "Obj_ID": "",
                     "ValueType": "Scalar"
+                },
+                {
+                    "Name": "displacementVTK",
+                    "Type_ID": "mupif.DataID.ID_VTKFile",
+                    "Type": "mupif.PyroFile",
+                    "Units": ""
                 }
             ],
             "Solver": {
@@ -84,6 +90,7 @@ class MUPIF_M_demo(mp.Model):
 
         self.input_temperature = None
         self.output_displacement = None
+        self.output_displacementVTK = None
         self.output_max_vertical_displacement = None
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
@@ -94,6 +101,10 @@ class MUPIF_M_demo(mp.Model):
             if self.output_displacement is None:
                 raise ValueError("Value not defined")
             return self.output_displacement
+        if objectTypeID == mp.DataID.ID_VTKFile:
+            if self.output_displacementVTK is None:
+                raise ValueError("Value not defined")
+            return self.output_displacementVTK
         if objectTypeID == mp.DataID.PID_maxDisplacement and objectID == "":
             if self.output_max_vertical_displacement is None:
                 raise ValueError("Value not defined")
@@ -119,6 +130,7 @@ class MUPIF_M_demo(mp.Model):
         self.output_displacement = model.get(mp.DataID.FID_Displacement, time=tstep.getTargetTime())
         w_max = self.output_displacement.evaluate([1., 0., 0.])[1]
         self.output_max_vertical_displacement = mp.ConstantProperty(quantity=w_max, propID=mp.DataID.PID_maxDisplacement, valueType=mp.ValueType.Scalar, time=None)
+        self.output_displacementVTK = model.get(mp.DataID.ID_VTKFile, time=tstep.getTargetTime())
 
     def finishStep(self, tstep):
         pass
