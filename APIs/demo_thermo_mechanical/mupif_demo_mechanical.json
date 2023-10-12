@@ -29,6 +29,12 @@
             "Units": "m",
             "Obj_ID": "",
             "ValueType": "Scalar"
+        },
+        {
+            "Name": "displacementVTK",
+            "Type_ID": "mupif.DataID.ID_VTKFile",
+            "Type": "mupif.PyroFile",
+            "Units": ""
         }
     ],
     "Solver": {

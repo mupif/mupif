@@ -75,6 +75,7 @@ def vpnInfo(geoIpDb=None,hidePriv=True):
     import subprocess
     import json
     import datetime
+    import os.path
 
     rret = {}
     try:
@@ -100,11 +101,15 @@ def vpnInfo(geoIpDb=None,hidePriv=True):
         activePeers = dict([(peerKey, peerData) for peerKey, peerData in dta['peers'].items() if 'transferRx' in peerData])
         ret['bytes'] = dict(tx=sum([p['transferTx'] for p in activePeers.values()]), rx=sum([p['transferRx'] for p in activePeers.values()]))
         ret['peers'] = []
+        pubkey2name={}
+        if os.path.exists(js:=os.path.expanduser(f'~/persistent/peers-{iface}.json')):
+            pubkey2name=json.load(open(js,'r'))
         for peerKey, peerData in activePeers.items():
             peer = dict(
                 vpnAddr=peerData['allowedIps'][0],
-                bytes=dict(tx=peerData['transferTx'], rx=peerData['transferRx']),
+                bytes=dict(tx=peerData['transferTx'],rx=peerData['transferRx']),
                 publicKey=peerKey,
+                name=pubkey2name.get(peerKey,''),
                 lastHandshake=datetime.datetime.fromtimestamp(peerData.get('latestHandshake', 0)),
                 remote=None
             )
