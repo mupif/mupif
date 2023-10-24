@@ -28,11 +28,17 @@ def jobmanInfo(ns, logLines=10):
         for job in jm['jobs']:
             fmt = logging.Formatter(fmt='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s')
             if 'remoteLogUri' in job:
-                ll = Pyro5.api.Proxy(job['remoteLogUri']).tail(logLines, raw=True)
-                if isinstance(ll, dict):
-                    ll = serpent.tobytes(ll)
-                ll=pickle.loads(ll)
-                job['tail'] = [fmt.format(rec) for rec in ll]
+                try:
+                    ll = Pyro5.api.Proxy(job['remoteLogUri']).tail(logLines, raw=True)
+                    if isinstance(ll, dict):
+                        ll = serpent.tobytes(ll)
+                    ll=pickle.loads(ll)
+                    job['tail'] = [fmt.format(rec) for rec in ll]
+                except:
+                    log.exception("Error getting remote log (non-fatal)")
+                    job['tail']=[f"<ERROR getting remote log from URI \"{job['remoteLogUri']}\">"]
+
+
         jm['signature'] = jobman.getApplicationSignature()
         ret.append(jm)
     return ret
