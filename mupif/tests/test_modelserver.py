@@ -73,7 +73,7 @@ def waitPort(hostPort,timeout=10,dt=.1):
             if time.time()-t0>timeout: raise RuntimeError(f'Timeout {timeout} s connecting to {hostPort[0]}:{hostPort[1]}')
             time.sleep(dt)
 
-class SimpleJobManager_TestCase(unittest.TestCase):
+class ModelServer_TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
 
@@ -100,7 +100,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
             raise
         cls.ns = mupif.pyroutil.connectNameserver(nshost='localhost', nsport=nsPort)
 
-        cls.jobMan = mupif.simplejobmanager.SimpleJobManager(
+        cls.jobMan = mupif.modelserver.ModelServer(
             ns=cls.ns,
             appName="app",
             workDir=cls.tmp,
@@ -124,7 +124,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         self.jobMan.terminateAllJobs()
 
     def test_getApplicationSignature(self):
-        self.assertTrue(self.jobMan.getApplicationSignature() == 'Mupif.JobManager.SimpleJobManager')
+        self.assertEqual(self.jobMan.getApplicationSignature(),'Mupif.JobManager.ModelServer')
 
     def test_getModelMetadata(self):
         self.assertEqual(self.jobMan.getModelMetadata()['ID'],'mupif-tests-testApp')
@@ -165,14 +165,14 @@ class SimpleJobManager_TestCase(unittest.TestCase):
         ticket = self.jobMan.preAllocate(requirements=None)
         (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
         print ("Retcode "+str(retCode))
-        with self.assertRaises(mupif.jobmanager.JobManNoResourcesException) as cm:
+        with self.assertRaises(mupif.modelserverbase.ModelServerNoResourcesException) as cm:
             self.jobMan.allocateJob(user="user", ticket=None)
         (retCode2, jobId2, port2) = self.jobMan.allocateJob(user="user",ticket=ticket)
         print("Retcode2 "+str(retCode2))
 
     def test_jobLog(self):
         cls=self.__class__
-        jobManOut=mp.SimpleJobManager(ns=cls.ns,appName='appOut',workDir=cls.tmp,appClass=StdOutErrModel,maxJobs=1)
+        jobManOut=mp.ModelServer(ns=cls.ns,appName='appOut',workDir=cls.tmp,appClass=StdOutErrModel,maxJobs=1)
         uri=cls.daemon.register(jobManOut)
         jobManOut.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName=jobManOut.appName,exclusiveDaemon=False)
         self.assertEqual(jobManOut.getStatus(),[])
@@ -199,7 +199,7 @@ class SimpleJobManager_TestCase(unittest.TestCase):
 
     def test_timeout(self):
         cls=self.__class__
-        jobManTime=mp.SimpleJobManager(ns=cls.ns,appName='appTimeout',workDir=cls.tmp,appClass=TimeoutModel,maxJobs=1)
+        jobManTime=mp.ModelServer(ns=cls.ns,appName='appTimeout',workDir=cls.tmp,appClass=TimeoutModel,maxJobs=1)
         uri=cls.daemon.register(jobManTime)
         jobManTime.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName=jobManTime.appName,exclusiveDaemon=False)
         self.assertEqual(jobManTime.getStatus(),[])

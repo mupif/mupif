@@ -23,6 +23,7 @@
 import sys
 import importlib
 import logging
+import warnings
 
 """
 This is a MuPIF module (Multi-Physics Integration Framework)
@@ -112,7 +113,7 @@ from .heavydata import HeavyDataBase, Hdf5RefQuantity, Hdf5OwningRefQuantity, Hd
 from .heavystruct import HeavyStruct
 from .heavymesh import HeavyUnstructuredMesh
 from .integrationrule import IntegrationRule, GaussIntegrationRule
-from .jobmanager import JobManException, JobManNoResourcesException, JobManager, RemoteJobManager
+from .modelserverbase import ModelServerException, ModelServerNoResourcesException, ModelServerBase, RemoteModelServer
 from .localizer import Localizer
 from .lookuptable import LookupTable
 from .lookuptable import MemoryLookupTable
@@ -129,7 +130,7 @@ from .property import Property, ConstantProperty
 from .temporalproperty import TemporalProperty
 from .pyrofile import PyroFile
 from .remoteapprecord import RemoteAppRecord
-from .simplejobmanager import SimpleJobManager
+from .modelserver import ModelServer
 from .stringproperty import String
 from .timer import Timer
 from .timestep import TimeStep
@@ -144,7 +145,16 @@ from . import monitor
 
 
 
-__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','jobmanager','JobManException','JobManNoResourcesException','JobManager','RemoteJobManager','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','simplejobmanager','SimpleJobManager','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','piecewiselinfunction','PiecewiseLinFunction','pbs_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable','monitor']
+
+__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','modelserverbase','ModelServerException','ModelServerNoResourcesException','ModelServerBase','RemoteModelServer','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','modelserver','ModelServer','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','piecewiselinfunction','PiecewiseLinFunction','pbs_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable','monitor']
+
+# importing those modules would trigger warning, skip it here
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from . import jobmanager, simplejobmanager
+from .modelserverbase import JobManException, JobManNoResourcesException, JobManager, RemoteJobManager
+from .modelserver import SimpleJobManager
+__all__+=['jobmanager','simplejobmanager','JobManager','RemoteJobManager','SimpleJobManager','JobManException','JobManNoResourcesException']
 
 
 # import h5py
