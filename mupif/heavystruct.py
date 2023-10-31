@@ -48,7 +48,7 @@ HeavyStructSchemaModel={
             '_datasetName':{'type':'string','description':'Nested dataset name for storing objects belonging to this schema'},
             'additionalProperties':{
                 'type':'object',
-                'properties':{'$ref':'#/$defs/heavyprop'},
+                '$ref':'#/$defs/heavyprop',
             },
         }
     },

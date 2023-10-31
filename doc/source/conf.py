@@ -33,6 +33,7 @@ release = '3.x'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
     'sphinx-jsonschema'
 ]
@@ -46,6 +47,8 @@ thisDir=os.path.dirname(os.path.abspath(__file__))
 #apidoc_toc_file='api'
 #apidoc_excluded_paths=[]
 #apidoc_module_first=True
+
+todo_include_todos=True
 
 
 sys.path.append(thisDir+'/../..')

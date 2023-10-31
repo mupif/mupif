@@ -25,6 +25,8 @@ Welcome to MuPIF's documentation!
 
    ref.rst
 
+   obsolete.rst
+
 
 Indices and tables
 ==================
