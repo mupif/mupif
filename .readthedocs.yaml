@@ -9,4 +9,4 @@ sphinx:
   configuration: doc/source/conf.py
 python:
   install:
-    -requirements: requirements.txt
+    - requirements: requirements.txt
