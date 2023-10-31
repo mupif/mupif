@@ -36,11 +36,13 @@ extensions = [
     'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
     'sphinx-jsonschema',
-    #'sphinxcontrib.autodoc_pydantic',
-    'sphinx-pydantic',
+    'sphinxcontrib.autodoc_pydantic',
+    #'sphinx-pydantic',
 ]
 
 import sys, os.path
+
+autodoc_pydantic_model_show_json_error_strategy='coerce'
 
 thisDir=os.path.dirname(os.path.abspath(__file__))
 

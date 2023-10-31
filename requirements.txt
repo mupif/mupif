@@ -27,7 +27,7 @@ sphinx<7.0
 sphinxcontrib-apidoc
 sphinxcontrib-mermaid
 sphinx-jsonschema
-sphinx-pydantic
+autodoc-pydantic<2.0
 setproctitle
 tqdm
 typer
