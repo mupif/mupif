@@ -489,8 +489,8 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertRaises(TypeError,lambda: t0.setLst100(100*['hi']))
             self.assertRaises(BaseException,lambda: t0.setLst100(['this contains the | delimiter and should fail']))
             t0.setLst100(10*['lst100'])
-            print(t0.getLst100())
-            print(10*['lst100'])
+            #print(t0.getLst100())
+            #print(10*['lst100'])
             self.assertRaises(BaseException,lambda: t0.setLst(['contains the ||| delimiter and should fail']))
             self.assertRaises(TypeError,lambda: t0.setLst('this is a string, not a list'))
             t0.setLst(1000*['dynamic-string-list'])
@@ -609,6 +609,12 @@ class HeavyStruct_TestCase(unittest.TestCase):
             valOld,valNew=f2.evaluate((.1,.1,.1)),f2a.evaluate((.1,.1,.1))
             self.assertEqual(valOld.unit,valNew.unit)
             np.testing.assert_almost_equal(valOld.value,valNew.value)
+
+
+    def test_50_schema(self):
+        import jsonschema
+        import json
+        jsonschema.validate(json.loads(mp.heavystruct.sampleSchemas_json),mp.heavystruct.HeavyStructSchemaModel)
 
 
 

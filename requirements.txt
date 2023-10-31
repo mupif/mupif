@@ -24,6 +24,7 @@ typing-extensions==4.8.0
 # for documentation
 sphinxcontrib-apidoc
 sphinxcontrib-mermaid
+sphinx-jsonschema
 asyncssh
 setproctitle
 tqdm

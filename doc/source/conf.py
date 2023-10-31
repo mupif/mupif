@@ -34,6 +34,7 @@ release = '3.x'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.mermaid',
+    'sphinx-jsonschema'
 ]
 
 import sys, os.path
