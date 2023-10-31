@@ -3,8 +3,10 @@
 Schemas
 ========
 
-.. jsonschema:: mupif.model.ModelSchema
 
-.. jsonschema:: mupif.workflow.WorkflowSchema
+
+.. jsonschema:: mupif.meta.ModelMeta_JSONSchema
+
+.. jsonschema:: mupif.meta.WorkflowMeta_JSONSchema
 
 .. jsonschema:: mupif.heavystruct.HeavyStructSchemaModel

@@ -35,7 +35,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
-    'sphinx-jsonschema'
+    'sphinx-jsonschema',
+    #'sphinxcontrib.autodoc_pydantic',
+    'sphinx-pydantic',
 ]
 
 import sys, os.path
@@ -49,6 +51,9 @@ thisDir=os.path.dirname(os.path.abspath(__file__))
 #apidoc_module_first=True
 
 todo_include_todos=True
+
+autodoc_pydantic_model_show_json = True
+autodoc_pydantic_settings_show_json = True
 
 
 sys.path.append(thisDir+'/../..')

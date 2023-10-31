@@ -29,7 +29,7 @@ false=False # for JS compat in schema here
 
 HeavyStructSchemaModel={
     '$schema':'https://json-schema.org/draft/2020-12/schema',
-    '$id':'https://example.com/product.schema.json',
+    '$id':'https://mupif.org/heavystruct-example.schema.json',
     'title':'HeavyStruct',
     'description':'HeavyStruct schema',
     'type':'array',
