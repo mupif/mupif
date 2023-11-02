@@ -64,7 +64,7 @@ class ExecutionMeta(pydantic.BaseModel):
     Use_case_ID: Union[str, int] = ''
     Task_ID: str = ''
     Log_URI: str = ''
-    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"]
+    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = 'Instantiated'
     Progress: float = 0
     Date_time_start: str = ''  # automatically set in Workflow
     Date_time_end: str = ''  # automatically set in Workflow
