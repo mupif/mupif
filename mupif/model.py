@@ -87,7 +87,7 @@ class Model(data.Process):
             ('Hostname', hostname),
             ('Status', 'Instantiated'),
             ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
-            ('Execution', {}),
+            ('Execution', dict([('Status', 'Instantiated')])),
             ('Solver', {}),
             ('Timeout', 0),  # no limit by default
         ])
