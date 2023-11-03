@@ -19,42 +19,42 @@ def local_command(command):
 # ==================================================
 
 
-class PBSType(Enum):
+class SchedulingType(Enum):
     TORQUE = 1
     SLURM = 2
 
 
 class HPCTool:
-    def __init__(self, pbs_type, ssh_login=None):
+    def __init__(self, scheduling_type, ssh_login=None):
         """
-        :param PBSType pbs_type: TORQUE or SLURM
+        :param SchedulingType scheduling_type: TORQUE or SLURM
         :param string ssh_login: e.g. user@url.com If None, then local.
         """
-        self.pbs_type = pbs_type
+        self.scheduling_type = scheduling_type
         self.ssh_login = ssh_login
 
     def check_if_job_is_done(self, jobid):
-        if self.pbs_type == PBSType.TORQUE:
+        if self.scheduling_type == SchedulingType.TORQUE:
             return self._check_if_job_is_done_torque(jobid=jobid)
-        if self.pbs_type == PBSType.SLURM:
+        if self.scheduling_type == SchedulingType.SLURM:
             return self._check_if_job_is_done_slurm(jobid=jobid)
 
     def wait_until_job_is_done(self, jobid, checking_frequency=10.):
-        if self.pbs_type == PBSType.TORQUE:
+        if self.scheduling_type == SchedulingType.TORQUE:
             return self._wait_until_job_is_done_torque(jobid=jobid, checking_frequency=checking_frequency)
-        if self.pbs_type == PBSType.SLURM:
+        if self.scheduling_type == SchedulingType.SLURM:
             return self._wait_until_job_is_done_slurm(jobid=jobid, checking_frequency=checking_frequency)
 
     def submit_job(self, command, directory=None):
-        if self.pbs_type == PBSType.TORQUE:
+        if self.scheduling_type == SchedulingType.TORQUE:
             return self._submit_job_torque(command=command, directory=directory)
-        if self.pbs_type == PBSType.SLURM:
+        if self.scheduling_type == SchedulingType.SLURM:
             return self._submit_job_slurm(command=command, directory=directory)
 
     def get_job_status(self, jobid):
-        if self.pbs_type == PBSType.TORQUE:
+        if self.scheduling_type == SchedulingType.TORQUE:
             return self._get_job_status_torque(jobid=jobid)
-        if self.pbs_type == PBSType.SLURM:
+        if self.scheduling_type == SchedulingType.SLURM:
             return self._get_job_status_slurm(jobid=jobid)
 
     # ==================================================
