@@ -116,3 +116,13 @@ html_context=dict(
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+##### generate data schemas so that readthedocs.io serves them at a known URL
+import mupif as mp
+import os
+import json
+os.makedirs('_static/schema',exist_ok=True)
+open('_static/schema/ModelMeta.json','w').write(mp.meta.ModelMeta.schema_json())
+open('_static/schema/WorkflowMeta.json','w').write(mp.meta.WorkflowMeta.schema_json())
+open('_static/schema/HeavyStruct.json','w').write(json.dumps(mp.heavystruct.HeavyStructSchemaModel))
