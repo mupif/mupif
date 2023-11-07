@@ -38,6 +38,7 @@ extensions = [
     'sphinx-jsonschema',
     'sphinxcontrib.autodoc_pydantic',
     #'sphinx-pydantic',
+    'sphinx_rtd_theme'
 ]
 
 import sys, os.path
@@ -94,17 +95,7 @@ latex_documents=[('index','mupif.tex','MuPIF Documentation',
 
 # -- Options for HTML output -------------------------------------------------
 
-# https://readthedocsorg.readthedocs.io/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
-
-# use ReadTheDocs theme both locally and when building docs at readthedocs.io
-import os
-on_rtd=os.environ.get('READTHEDOCS',None)=='True'
-if not on_rtd:
-    import sphinx_rtd_theme
-    html_theme='sphinx_rtd_theme'
-    html_theme_path=[sphinx_rtd_theme.get_html_theme_path()]
-else:
-    html_theme='default'
+html_theme='sphinx_rtd_theme'
 
 #html_theme_options=dict(
 #    github_banner=True,
