@@ -158,8 +158,8 @@ class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
 
 
-ModelMeta_JSONSchema=ModelMeta.schema_json()
-WorkflowMeta_JSONSchema=WorkflowMeta.schema_json()
+#ModelMeta_JSONSchema=ModelMeta.schema_json()
+#WorkflowMeta_JSONSchema=WorkflowMeta.schema_json()
 
 
 ##

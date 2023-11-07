@@ -35,9 +35,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
-    'sphinx-jsonschema',
-    'sphinxcontrib.autodoc_pydantic',
-    #'sphinx-pydantic',
     'sphinx_rtd_theme'
 ]
 
