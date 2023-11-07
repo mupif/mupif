@@ -46,7 +46,7 @@ Run the following command (it can be re-run later for pulling the latest revisio
 Other recommended packages/softwares
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Paraview (tested 4.2.0), visualization application for vtu data
+-  Paraview (tested >=5.0), visualization application for vtu data
    files, `http://www.paraview.org/`.
 
 -  Windows: Notepad++ (tested 6.6.9),
@@ -144,7 +144,12 @@ The address:port string should be then stored either in the environment variable
 
 You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
 
+Other components
+~~~~~~~~~~~~~~~~~
 
+MuPIF itself is communication building block for the entire network coordinating execution of workflows and models. The entire package is deployed (at CTU) as Docker container with several services (execution scheduler, database, monitor, REST API, web-based workflow editor, …); related files can be accessed at [mupif/intfrastructure-docker](https://github.com/mupif/infrastructure-docker) repository. 
+
+Each project using MuPIF infrastructure can be thus kept separated from others (including the VPN), with pinned component versions and reproducible set-up. All persistent data (including nameserver entries) are stored in mounted volumes, thus surviving restarts of the container.
 
 
 Platform operations
@@ -314,7 +319,7 @@ number, string, boolean and null. With these simple data types, all
 kinds of structured data can be represented. The JSON schema is a
 template defining what fields are expected, and how the values are
 represented. The metadata can be validated against schema. The JSON
-schema itself is written in JSON. The JSON schema standard can be found
+schema itself is written in JSON (or as Pydantic data models, exporting the schema to JSON schema syntax). The JSON schema standard can be found
 in [`11 <#2zd1531og9ob>`__].
 
 Generated documentation of the JSON schemas is in :numref:`sect-schemas-doc`.
@@ -524,6 +529,11 @@ in 3d. Its geometry is described using two points - lover left and upper
 right. The bounding box class provides fast and efficient methods for
 testing whether point is inside and whether an intersection with another
 bounding box exists.
+
+HeavyStruct
+--------------
+
+:obj:`~mupif.heavystruct.HeavyStruct` is self-describing container for hierarchical data, with both remote/local access. The data is described using JSON (which can be validated using JSON schema), stored next to the data. The backing storage format is HDF5 (which is hidden from the user via API). Provisions are present for ontological metadata so that each item can have ontological meaning.
 
 
 APIError
