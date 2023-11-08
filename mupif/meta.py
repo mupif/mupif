@@ -168,6 +168,7 @@ class WorkflowMeta(ModelWorkflowCommonMeta):
 
 
 if 0:
+    import copy
     # Schema for metadata for Model and further passed to Workflow
     ModelSchema = {
         "type": "object",  # Object supplies a dictionary
