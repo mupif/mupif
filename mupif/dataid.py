@@ -40,7 +40,7 @@ class AutoName(Enum):
         return name
 
 
-class DataID(IntEnum):
+class DataID(AutoName):
     """
     This class represents the supported values of IDs of property, field, etc.
     Values of members should be stored by .name, .value should not be used.
