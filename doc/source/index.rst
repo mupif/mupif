@@ -21,8 +21,11 @@ Welcome to MuPIF's documentation!
    acknowledgement.rst
    changelog.rst
    dev.rst
+   schemas.rst
 
    ref.rst
+
+   obsolete.rst
 
 
 Indices and tables

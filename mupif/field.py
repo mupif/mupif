@@ -680,7 +680,7 @@ class Field(FieldBase,HeavyConvertible):
     def toHdf5Group(self, fieldGrp, meshLink=None):
         if meshLink is not None:
             fieldGrp['mesh'] = meshLink
-        fieldGrp.attrs['fieldID'] = self.fieldID
+        fieldGrp.attrs['fieldID'] = self.fieldID.name
         fieldGrp.attrs['valueType'] = self.valueType
         # string/bytes may not contain NULL when stored as string in HDF5
         # see http://docs.h5py.org/en/2.3/strings.html

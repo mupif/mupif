@@ -24,6 +24,62 @@ import itertools
 import numbers
 log = logging.getLogger(__name__)
 
+
+false=False # for JS compat in schema here
+
+HeavyStructSchemaModel={
+    '$schema':'https://json-schema.org/draft/2020-12/schema',
+    '$id':'https://mupif.org/heavystruct-example.schema.json',
+    'title':'HeavyStruct',
+    'description':'HeavyStruct schema',
+    'type':'array',
+    'items':{
+        'type':'object',
+        'required':['_schema','_datasetName'],
+        'properties':{
+            '_schema': {
+                'type':'object',
+                'properties':{
+                    'name':   {'type':'string','description':'Free-form identifier of the schema.'},
+                    'version':{'type':'string','description':'Free-form version of the schema.'},
+                },
+                'required':['name','version']
+            },
+            '_datasetName':{'type':'string','description':'Nested dataset name for storing objects belonging to this schema'},
+            'additionalProperties':{
+                'type':'object',
+                '$ref':'#/$defs/heavyprop',
+            },
+        }
+    },
+    '$defs':{
+        'heavyprop':{
+            'oneOf':[
+                {'type':'object',
+                    'properties':{
+                        'dtype':{'type':'string','pattern':'^(l|d|\\?|f|(a|S)[0-9]*|json|object)$','description':'Numpy datatype'},
+                        'unit':{'type':'string','description':'Unit in the Astropy format'},
+                        'shape':{'oneOf':[{'type':['array','string'],'items':{'type':'integer'}},{'const':'variable'}]},
+                        'choice':{'type':['array'],'items':{'type':'string'}},
+                        'key':{'type':'string'},
+                        'lookup':{'type':'object'},
+                        'delim':{'type':'string'},
+                    },
+                    'additionalProperties':false,
+                },
+                {'type':'object',
+                    'properties':{
+                        'path':{'type':'string'},
+                        'schema':{'type':'string'}
+                    },
+                    'required':['path','schema'],
+                    'additionalProperties':false,
+                }
+            ]
+        }
+    }
+}
+
 sampleSchemas_json = '''
 [
     {
