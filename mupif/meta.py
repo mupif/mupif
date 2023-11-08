@@ -380,9 +380,8 @@ if 0:
     }
 
 
-    WorkflowSchema = copy.deepcopy(model.ModelSchema)
-    del WorkflowSchema["properties"]["Solver"]
-    del WorkflowSchema["properties"]["Physics"]
+    # reduced
+    WorkflowSchema = {}
     WorkflowSchema["properties"].update({
         "Dependencies": {  # This i automatically generated according to self._models List.
             "type": "array",  # List of contained models/workflows
