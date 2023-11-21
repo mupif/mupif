@@ -114,6 +114,11 @@ html_context=dict(
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_css_files=[
+    'custom.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'
+]
+
 
 ##### generate data schemas so that readthedocs.io serves them at a known URL
 import mupif as mp

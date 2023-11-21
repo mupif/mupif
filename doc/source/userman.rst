@@ -15,9 +15,9 @@ MuPIF installatoin requires:
   * Windows: we suggest to install `Anaconda scientific python package <https://store.continuum.io/cshop/anaconda/>`__, which includes Python ≥ 3.8;
   * Linux: use system-installed Python (if ≥ 3.8) or install a separate interpreter via Anaconda;
 
-* Wireguard (VPN software): see [Wireguard Installation](https://www.wireguard.com/install/)
+* Wireguard (VPN software): see `Wireguard Installation <https://www.wireguard.com/install>`__.
 
-* git version control system, as MuPIF itself it pulled from its git repository directly (Linux: install package `git`; Windows: [Git Downloads for Windows](https://git-scm.com/download/win))
+* git version control system, as MuPIF itself it pulled from its git repository directly (Linux: install package `git`; Windows: `Git Downloads for Windows <https://git-scm.com/download/win>`__)
 
 Local installation
 ----------------------
