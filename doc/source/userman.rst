@@ -694,8 +694,8 @@ Sequential
         istep=TimeStep.TimeStep(time, td, targetTime, n=timeStepNumber)
         try:
             m1.solveStep(istep)
-            p = m1.getProperty(PID, m2.getAssemblyTime(istep))
-            m2.setProperty(p)
+            p = m1.get(PID, m2.getAssemblyTime(istep))
+            m2.set(p)
             m2.solveStep(istep)
             # ...
             m3.solveStep(istep)
@@ -741,7 +741,7 @@ Loosely coupled
             while not convergedFlag:
                 m1.solveStep(istep)
                 p1 = m1.get(data_id, m2.getAssemblyTime(istep))
-                m2.setProperty(p1)
+                m2.set(p1)
                 m2.solveStep(istep)
                 p2 = m2.get(data_id2, m1.getAssemblyTime(istep))
                 m1.set(p2)
