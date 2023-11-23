@@ -187,53 +187,54 @@ individual applications.
 
    # Simple example illustrating simulation scenario
 
-   from mupif import *
-   import application1
-   import application2
+    import mupif as mp
+    import model1
+    import model2
 
-   time = 0
-   timestepnumber=0
-   targetTime = 1.0
+    time = 0*mp.U.s
+    timestepnumber = 0
+    targetTime = 1.0*mp.U.s
 
-   app1 = application1.application1(None) # create an instance of application #1
-   app2 = application2.application2(None) # create an instance of application #2
-   app1.initialize() #initialize app1
-   app2.initialize() #initialize app2
+    m1 = model1.Model1()  # create an instance of model #1
+    m2 = model2.Model2()  # create an instance of model #2
 
-   # loop over time steps
-   while (abs(time -targetTime) > 1.e-6):
-      #determine critical time step
-      dt2 = app2.getCriticalTimeStep()
-      dt = min(app1.getCriticalTimeStep(), dt2)
-      #update time
-      time = time+dt
-      if (time > targetTime):
-         #make sure we reach targetTime at the end
-         time = targetTime
-      timestepnumber = timestepnumber+1
+    m1.initialize()
+    m2.initialize()
 
-      # create a time step
-      istep = TimeStep.TimeStep(time, dt, timestepnumber)
+    # loop over time steps
+    while abs(time.inUnitsOf(mp.U.s).getValue() - targetTime.inUnitsOf(mp.U.s).getValue()) > 1.e-6:
+        #determine critical time step
+        dt2 = m2.getCriticalTimeStep()
+        dt = min(m1.getCriticalTimeStep(), dt2)
+        # update time
+        time = time+dt
+        if (time > targetTime):
+            # make sure we reach targetTime at the end
+            time = targetTime
+        timestepnumber = timestepnumber + 1
+
+        # create a time step
+        istep = mp.TimeStep.TimeStep(time, dt, timestepnumber)
    
-      try:
-         #solve problem 1
-         app1.solveStep(istep)
-         #request temperature field from app1
-         c = app1.getProperty(DataID.PID_Concentration, istep)
-         # register temperature field in app2
-         app2.setProperty (c)
-         # solve second sub-problem
-         app2.solveStep(istep)
-         prop = app2.getProperty(DataID.PID_CumulativeConcentration, istep)
-         print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
+        try:
+            #solve problem 1
+            m1.solveStep(istep)
+            #request temperature field from m1
+            c = m1.get(mp.DataID.PID_Concentration, istep)
+            # register temperature field in m2
+            m2.set(c)
+            # solve second sub-problem
+            m2.solveStep(istep)
+            prop = m2.get(mp.DataID.PID_CumulativeConcentration, istep)
+            print ("Time: %5.2f concentraion %5.2f, running average %5.2f" % (istep.getTime(), c.getValue(), prop.getValue()))
 
-      except APIError.APIError as e:
-         logger.error("Following API error occurred: %s" % e )
-         break
+        except APIError.APIError as e:
+            logger.error("Following API error occurred: %s" % e )
+            break
 
-   # terminate
-   app1.terminate();
-   app2.terminate();
+    # terminate the models
+    m1.terminate();
+    m2.terminate();
 
 
 The full listing of this example can be found in
@@ -571,23 +572,19 @@ methods that are designed to steer and communicate with the application.
 This table presents an overview of application interface, the full
 details with complete specification can be found in :obj:`~mupif.model.Model`.
 
-=============================================== ==========================================================================
-Method                                          Description
-\__init__(self, metaData)                       Constructor. Initializes the application.
-Initialize (file, workdir, metaData, \**kwargs) Initialize model, e.g. set input file, set path
-getMesh (self, tstep)                           Returns the computational mesh for given solution step.
-getField(self, fieldID, time)                   Returns the requested field at given time. Field is identified by fieldID.
-setField(field)                                 Registers the given (remote) field in application.
-getProperty(self, propID, time, objectID=0)     Returns property identified by its ID evaluated at given time.
-setProperty(self, property, objectID=0)         Register given property in the application
-setFunction(self, func,objectID=0)              Register given function in the application
-solveStep(self, tstep)                          Solves the problem for given time step.
-finishStep(self, tstep)                         Called after a global convergence within a time step.
-getCriticalTimeStep()                           Returns the actual critical time step increment.
-getAssemblyTime(tStep)                          Returns assembly time within a timestep
-getApplicationSignature()                       Returns the application identification
-terminate()                                     Terminates the application.
-=============================================== ==========================================================================
+======================================================= ==========================================================================
+Method                                                  Description
+\__init__(self, metaData)                               Constructor. Initializes the application.
+initialize(self, workdir, metaData, validateMetaData)   Initializes model and sets workdir and metadata.
+get(self, objectTypeID, time=None, objectID="")         Returns an output of the model, specified by objectTypeID and objectID.
+set(self, obj, objectID="")                             Sets an input of the model, specified by objectID and type of obj.
+solveStep(self, tstep)                                  Solves the problem for given time step.
+finishStep(self, tstep)                                 Called after a global convergence within a time step.
+getCriticalTimeStep()                                   Returns the actual critical time step increment.
+getAssemblyTime(tStep)                                  Returns assembly time within a timestep
+getApplicationSignature()                               Returns the application identification
+terminate()                                             Terminates the application.
+======================================================= ==========================================================================
 
 From the perspective of individual simulation tool, the interface
 implementation can be achieved
@@ -679,34 +676,36 @@ Sequential
 
 .. code-block:: python
 
-   time  = PQ.PhysicalQuantity('0 s')
-   timeStepNumber = 0
-   targetTime = PQ.PhysicalQuantity('10 s')
+    time = 0*mp.U.s
+    timeStepNumber = 0
+    targetTime = 10*mp.U.s
 
-   while (abs(time-targetTime).getValue() > 1.e-6):
-      dt=min(m1.getCriticalTimeStep(),
-                 m2.getCriticalStep(),
-                 m3.getCriticalStep())
-      time = time+dt
-      if (time>targetTime): 
-              time=targetTime
+    while (abs(time-targetTime).getValue() > 1.e-6):
+        dt=min(
+            m1.getCriticalTimeStep(),
+            m2.getCriticalStep(),
+            m3.getCriticalStep()
+        )
+        time = time+dt
+        if (time > targetTime):
+            time = targetTime
 
-      timeStepNumber = timeStepNumber+1
-      istep=TimeStep.TimeStep(time, td, targetTime, n=timeStepNumber)
-      try:
-             m1.solveStep(istep)
-             p = m1.getProperty(PID, m2.getAssemblyTime(istep))
-             m2.setProperty(p)
-             m2.solveStep(istep)
-             # ...
-             m3.solveStep(istep)
-      except APIError.APIError as e:
-             print ("API Error occurred:",e)
-             break
+        timeStepNumber = timeStepNumber + 1
+        istep=TimeStep.TimeStep(time, td, targetTime, n=timeStepNumber)
+        try:
+            m1.solveStep(istep)
+            p = m1.getProperty(PID, m2.getAssemblyTime(istep))
+            m2.setProperty(p)
+            m2.solveStep(istep)
+            # ...
+            m3.solveStep(istep)
+        except APIError.APIError as e:
+            print ("API Error occurred:", e)
+            break
 
-   m1.terminate()
-   m2.terminate()
-   m3.terminate()
+    m1.terminate()
+    m2.terminate()
+    m3.terminate()
 
 
 Loosely coupled
@@ -720,43 +719,45 @@ Loosely coupled
 
 .. code-block:: python
 
-   time  = PQ.PhysicalQuantity('0 s')
-   timeStepNumber = 0
-   targetTime = PQ.PhysicalQuantity('10 s')
+    time = 0*mp.U.s
+    timeStepNumber = 0
+    targetTime = 10*mp.U.s
 
-   while (abs(time-targetTime).getValue() > 1.e-6):
-      dt=min(m1.getCriticalTimeStep(),
-             m2.getCriticalStep(),
-             m3.getCriticalStep())
-      time = time+dt
-      if (time>targetTime):
-         time = targetTime
-         timeStepNumber = timeStepNumber+1
-      istep = TimeStep.TimeStep(time, td, targetTime, n=timestep)
+    while (abs(time-targetTime).getValue() > 1.e-6):
+        dt = min(
+            m1.getCriticalTimeStep(),
+            m2.getCriticalStep(),
+            m3.getCriticalStep()
+        )
+        time = time+dt
+        if (time > targetTime):
+            time = targetTime
+        timeStepNumber = timeStepNumber + 1
+        istep = TimeStep.TimeStep(time, td, targetTime, n=timestep)
 
-      try:
+        try:
 
-         convergedFlag = False
-         while not convergedFlag:
-            m1.solveStep(istep)
-            p1=m1.getProperty(id, m2.getAssemblyTime(istep))
-            m2.setProperty(p1)
-            m2.solveStep(istep)
-            p2=m2.getProperty(id2, m1.getAssemblyTime(istep))
-            m1.setProperty(p2)
+            convergedFlag = False
+            while not convergedFlag:
+                m1.solveStep(istep)
+                p1 = m1.get(data_id, m2.getAssemblyTime(istep))
+                m2.setProperty(p1)
+                m2.solveStep(istep)
+                p2 = m2.get(data_id2, m1.getAssemblyTime(istep))
+                m1.set(p2)
 
-            #check for convergence
-            convergedFlag=checkConvergence()
+                #check for convergence
+                convergedFlag = checkConvergence()
 
-         m3.solveStep()
+            m3.solveStep()
 
-      except APIError.APIError as e:
-         print ("API Error occurred:",e)
-         break
+        except APIError.APIError as e:
+            print ("API Error occurred:", e)
+            break
 
-   m1.terminate()
-   m2.terminate()
-   m3.terminate()
+    m1.terminate()
+    m2.terminate()
+    m3.terminate()
 
 
 Workflow example
@@ -816,57 +817,68 @@ loaded.
 .. code-block:: python
 
 
-    class Example06(Workflow.Workflow):
+    class Example06(mp.Workflow):
 
-        def __init__(self, metaData={}):
+        def __init__(self, metadata=None):
             MD = {
                 'Name': 'Thermo-mechanical stationary problem',
                 'ID': 'Thermo-mechanical-1',
-                # ...
+                'Description': 'stationary thermo-mechanical problem using finite elements on rectangular domain',
+                # 'Dependencies' are generated automatically
+                'Version_date': '1.0.0, Feb 2019',
+                'Inputs': [],
+                'Outputs': [
+                    {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Temperature', 'Name': 'Temperature field',
+                     'Description': 'Temperature field on 2D domain', 'Units': 'degC'},
+                    {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
+                     'Description': 'Displacement field on 2D domain', 'Units': 'm'}
+                ],
+                'Models': [
+                    {
+                        'Name': 'thermal',
+                        'Module': 'mupif.demo',
+                        'Class': 'ThermalModel'
+                    },
+                    {
+                        'Name': 'mechanical',
+                        'Module': 'mupif.demo',
+                        'Class': 'MechanicalModel'
+                    }
+                ]
             }
-            super(Example06, self).__init__(metaData=MD)
-            self.updateMetadata(metaData)
+            super().__init__(metadata=MD)
+            self.updateMetadata(metadata)
 
-            self.thermalSolver = demoapp.thermal()
-            self.mechanicalSolver = demoapp.mechanical()
+        def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
+            super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
-        def initialize(self, file='', workdir='', targetTime=PQ.PhysicalQuantity('0 s'), metaData={}, validateMetaData=True, **kwargs):
-            super(Example06, self).initialize(file=file, workdir=workdir, targetTime=targetTime, metaData=metaData, validateMetaData=validateMetaData, **kwargs)
+            thermalInputFile = mp.PyroFile(filename='inputT.in', mode="rb", dataID=mp.DataID.ID_InputFile)
+            self.getModel('thermal').set(thermalInputFile)
 
-            passingMD = {
-               # ...
-            }
-
-            self.thermalSolver.initialize('inputT10.in', '.', metaData=passingMD)
-            self.mechanicalSolver.initialize('inputM10.in', '.', metaData=passingMD)
+            mechanicalInputFile = mp.PyroFile(filename='inputM.in', mode="rb", dataID=mp.DataID.ID_InputFile)
+            self.getModel('mechanical').set(mechanicalInputFile)
 
         def solveStep(self, istep, stageID=0, runInBackground=False):
-            self.thermalSolver.solveStep(istep, stageID, runInBackground)
-            self.mechanicalSolver.setField(self.thermalSolver.getField(DataID.FID_Temperature, istep.getTime()))
-            self.mechanicalSolver.solveStep(istep, stageID, runInBackground)
+            self.getModel('thermal').solveStep(istep, stageID, runInBackground)
+            self.getModel('mechanical').set(self.getModel('thermal').get(DataID.FID_Temperature, istep.getTime()))
+            self.getModel('mechanical').solveStep(istep, stageID, runInBackground)
 
-        def getField(self, fieldID, time, objectID=0):
-            if fieldID == DataID.FID_Temperature:
-                return self.thermalSolver.getField(fieldID, time, objectID)
-            elif fieldID == DataID.FID_Displacement:
-                return self.mechanicalSolver.getField(fieldID, time, objectID)
+        def get(self, objectTypeID, time=None, objectID=""):
+            if objectTypeID == DataID.FID_Temperature:
+                return self.getModel('thermal').get(objectTypeID, time, objectID)
+            elif objectTypeID == DataID.FID_Displacement:
+                return self.getModel('mechanical').get(objectTypeID, time, objectID)
             else:
-                raise APIError.APIError('Unknown field ID')
+                raise apierror.APIError('Unknown field ID')
 
-        def getCriticalTimeStep(self):
-            return PQ.PhysicalQuantity(1.0, 's')
-
-        def terminate(self):
-            self.thermalSolver.terminate()
-            self.mechanicalSolver.terminate()
-            super(Example06, self).terminate()
+        def getCriticoalTimeStep(self):
+            return 1*mp.U.s
 
         def getApplicationSignature(self):
             return "Example06 workflow 1.0"
 
         def getAPIVersion(self):
-            return "1.0"  
-
+            return "1.0"
 
 
     md = {
@@ -878,15 +890,21 @@ loaded.
     }
 
     demo = Example06()
-    demo.initialize(targetTime=PQ.PhysicalQuantity('1 s'), metaData=md)
+    demo.initialize(metadata=md)
+    demo.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
 
-    tstep = TimeStep.TimeStep(
-        PQ.PhysicalQuantity('1 s'),
-        PQ.PhysicalQuantity('1 s'),
-        PQ.PhysicalQuantity('10 s')
-    )
+    tstep = timestep.TimeStep(time=1*mp.U.s, dt=1*mp.U.s, targetTime=10*mp.U.s)
 
     demo.solveStep(tstep)
+
+    tf = demo.get(DataID.FID_Temperature, tstep.getTime())
+    t_val = tf.evaluate((4.1, 0.9, 0.0))
+
+    mf = demo.get(DataID.FID_Displacement, tstep.getTime())
+    m_val = mf.evaluate((4.1, 0.9, 0.0))
+    print(t_val.getValue()[0], m_val.getValue()[1])
+
+    demo.printMetadata()
     demo.terminate()
 
 As already mentioned, the thermo-mechanical simulation chain can run in
@@ -943,29 +961,33 @@ implementation does not fit, the method can be overloaded.
         def solve(self, runInBackground=False):
             self.setMetadata('Status', 'Running')
             self.setMetadata('Progress', 0.)
-            time = PQ.PhysicalQuantity('0.0 s')
+
+            time = 0.*U.s
             timeStepNumber = 0
-
-            while (abs(time.inUnitsOf(timeUnits).getValue()-
-                   self.targetTime.inUnitsOf(timeUnits).getValue()) > 1.e-6):
-                dt = self.getCriticalTimeStep()
-                time=time+dt
-                if (time > self.targetTime):
-                       time = self.targetTime
+            while abs(time.inUnitsOf(U.s).getValue()-self._exec_targetTime.inUnitsOf(U.s).getValue()) > 1.e-6:
+                time_prev = time
+                if self._exec_dt is not None:
+                    dt = min(self.getCriticalTimeStep(), self._exec_dt)
+                else:
+                    dt = self.getCriticalTimeStep()
+                time = time+dt
+                if time > self._exec_targetTime:
+                    time = self._exec_targetTime
+                    dt = time - time_prev
                 timeStepNumber = timeStepNumber+1
-                istep=TimeStep.TimeStep(time, dt, self.targetTime, n=timeStepNumber)
+                istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
 
-                log.debug("Step %g: t=%g dt=%g"% (timeStepNumber,
-                          time.inUnitsOf(timeUnits).getValue(),
-                          dt.inUnitsOf(timeUnits).getValue()))
+                log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
+                print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
+
+                # Estimate progress
+                self.setMetadata('Progress', 100*time.inUnitsOf(U.s).getValue()/self._exec_targetTime.inUnitsOf(U.s).getValue())
 
                 self.solveStep(istep)
                 self.finishStep(istep)
-           self.setMetadata('Status', 'Finished')
-           self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
 
-           self.terminate()
-
+            self.setMetadata('Status', 'Finished')
+            self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
 
 
 .. _sect-distributed-model:
