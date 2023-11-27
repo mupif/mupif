@@ -67,14 +67,14 @@ class ExecutionMeta(pydantic.BaseModel):
     ID: str
     Use_case_ID: Union[str, int] = ''
     Task_ID: str = ''
-    Log_URI: str = Field('',doc='Internal use only: Pyro URI of the remote logger object, valid only when the workflow is running.')
-    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = Field(default='Instantiated',doc='Set by the workflow scheduler automatically')
-    Progress: float = Field(-1,doc='Floating progress in range 0…1; may be set by the workflow, but is not mandatory. Ignored if negative.')
-    Date_time_start: str = Field('',doc='Automatically set in Workflow')
-    Date_time_end: str = Field('',doc='Automatically set in Workflow')
-    Timeout: int = Field(0,doc='Maximum runtime in seconds; unlimited if non-positive')
-    Username: str = Field('',doc='Automatically set in Model and Workflow')
-    Hostname: str = Field('',doc='Automatically set in Model and Workflow')
+    Log_URI: str = Field('',description='Internal use only: Pyro URI of the remote logger object, valid only when the workflow is running.')
+    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = Field(default='Instantiated',description='Set by the workflow scheduler automatically')
+    Progress: float = Field(-1,description='Floating progress in range 0…1; may be set by the workflow, but is not mandatory. Ignored if negative.')
+    Date_time_start: str = Field('',description='Automatically set in Workflow')
+    Date_time_end: str = Field('',description='Automatically set in Workflow')
+    Timeout: int = Field(0,description='Maximum runtime in seconds; unlimited if non-positive')
+    Username: str = Field('',description='Automatically set in Model and Workflow')
+    Hostname: str = Field('',description='Automatically set in Model and Workflow')
 
 
 class IOMeta(pydantic.BaseModel):
