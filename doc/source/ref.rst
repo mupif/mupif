@@ -30,4 +30,5 @@ MuPIF classes are organized in a hierarchy, which is briefly described here:
 .. automodule:: mupif
    :members:
    :undoc-members:
+   :inherited-members:
    :show-inheritance:
