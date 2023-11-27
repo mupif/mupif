@@ -6,11 +6,11 @@ MuPIF classes are organized in a hierarchy, which is briefly described here:
 .. mermaid::
    
    graph TD;
-      mupif.Object-->BareData
+      mupif.ObjectBase-->BareData
       WithMetadata-->Data
       BareData-->Data
-      mupif.Object-->Process
-      mupif.Object-->Utility
+      mupif.ObjectBase-->Process
+      mupif.ObjectBase-->Utility
       WithMetadata-->Process
 
 **mupif.Object**
