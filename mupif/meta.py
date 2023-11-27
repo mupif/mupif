@@ -23,6 +23,7 @@
 
 
 import pydantic
+from pydantic import Field
 from typing import Optional, Any, Literal, Union, List
 from .dataid import DataID
 
@@ -59,18 +60,21 @@ class SolverMeta(pydantic.BaseModel):
     Robustness:  Literal["Low", "Medium", "High", "Unknown"]
 
 
+# See https://docs.pydantic.dev/1.10/usage/schema/ for possible Field(...) arguments
+# the first positional argument is the default value, doc translates to JSON Schema description field
 class ExecutionMeta(pydantic.BaseModel):
+    '''Execution metadata, for use by the MuPIF infrastructure.'''
     ID: str
     Use_case_ID: Union[str, int] = ''
     Task_ID: str = ''
-    Log_URI: str = ''
-    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = 'Instantiated'
-    Progress: float = 0
-    Date_time_start: str = ''  # automatically set in Workflow
-    Date_time_end: str = ''  # automatically set in Workflow
-    Timeout: int = 0  # maximum runtime in seconds
-    Username: str = ''  # automatically set in Model and Workflow
-    Hostname: str = ''  # automatically set in Model and Workflow
+    Log_URI: str = Field('',doc='Internal use only: Pyro URI of the remote logger object, valid only when the workflow is running.')
+    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = Field(default='Instantiated',doc='Set by the workflow scheduler automatically')
+    Progress: float = Field(float('nan'),doc='Floating progress in range 0…1; may be set by the workflow, but is not mandatory.')
+    Date_time_start: str = Field('',doc='Automatically set in Workflow')
+    Date_time_end: str = Field('',doc='Automatically set in Workflow')
+    Timeout: int = Field(0,doc='Maximum runtime in seconds; unlimited if non-positive')
+    Username: str = Field('',doc='Automatically set in Model and Workflow')
+    Hostname: str = Field('',doc='Automatically set in Model and Workflow')
 
 
 class IOMeta(pydantic.BaseModel):
@@ -130,6 +134,7 @@ class OutputMeta(IOMeta):
 
 
 class ModelInWorkflowMeta(pydantic.BaseModel):
+    'Metadata for Model as part of a workflow'
     Name: str
     Module: str = ''
     Class: str = ''
@@ -143,6 +148,7 @@ class ModelInWorkflowMeta(pydantic.BaseModel):
 
 
 class ModelWorkflowCommonMeta(pydantic.BaseModel):
+    'Metadata common for both Model and Workflow'
     Name: str
     ID: Union[str, int]
     Description: str
