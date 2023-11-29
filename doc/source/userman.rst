@@ -2,6 +2,8 @@ User manual
 ###############
 
 
+.. _sect-platform-installation:
+
 Platform installation
 ========================
 
@@ -1194,7 +1196,7 @@ using the provided monitoring tool. A simple ping test can be executed,
 verifying the connection to the particular server and/or allocated
 application instance.
 
-Setting up a Job Manager
+Setting up a Model Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The skeleton for application server is distributed with the platform and
@@ -1220,35 +1222,27 @@ are provided:
    scenarios). The client can run on both Unix / Windows systems,
    configuring correctly ssh client.
 
-The setup requires to install the platform, as described in `3. Platform
-installation <#_yey1gprpyr1f>`__. Also, the functional application API
-class is needed. :numref:`fig-jobman-tunnels` shows the flowchart with a ModelServer using ssh
-tunnels (VPN is showed further).
-
-
-.. _fig-jobman-tunnels:
-.. figure:: img/jobman-tunnels.*
-
-   *Example04-JobMan-distrib* displaying ports and tunnels in a distributed setup using ssh tunnels.
-
+The setup requires to install the platform, as described in :numref:`sect-platform-installation`, including the VPN.
+Also, the functional application API
+class is needed.
 
 The recommended procedure to set up job manager for your server is to
-create a separate directory, where you will copy the server.py and
-serverConfig.py files from *examples/Example04-JobMan-distrib an*
-directory and customize settings in serverConfig.py.
+create a separate directory, where you will copy the `server.py` file
+from *examples/Example04-JobMan-distrib* directory and customize settings.
 
-Simpler situation exists for VPN network setup where no ssh tunnels
-needs to be allocated and all communication runs on a local-like
-network.
+:numref:`fig-thermo-mech-vpn` shows the distributed model running atop the VPN.
 
 .. _fig-thermo-mech-vpn:
 .. figure:: img/thermo-mech-vpn.*
 
-   *Example16* thermo-mechanical analysis displaying ports and tunnels in a distributed setup using VPN.
+   *Example16* thermo-mechanical analysis displaying ports in a distributed setup using VPN.
 
 
 Configuration
 ~~~~~~~~~~~~~~~~~~~~
+
+.. todo:: UPDATE for last MuPIF release (most settings are no longer applicable).
+
 
 The configuration of the job manager consists of editing the
 configuration file (thermalServerConfig.py). The following variables can
@@ -1307,7 +1301,7 @@ used to verify that the installation procedure was successful. It
 contact the application server and asks for new application instance.
 
 Using Virtual Private Network (VPN)
-----------------------------------------
+--------------------------------------
 
 Generalities
 ~~~~~~~~~~~~~~~~~~~
@@ -1321,12 +1315,11 @@ addresses assigned in the virtual network space, see :numref:`fig-vpn-arch`. The
 itself communicates through existing underlying networks, but this
 aspect is not visible to the nodes; it includes data encryption,
 compression, routing, but also authentication of clients which may
-connect to the VPN. `OpenVPN <https://openvpn.net/>`__ is a major
+connect to the VPN. `Wireguard <https://wireguard.org/>`__ is a major
 implementation of VPN, and is supported on many platforms, including
 Linux, Windows, Android and others.
 
-Using VPN with MuPIF is a trade-off where the infrastructure
-(certificates, VPN server, …) is more difficult to set up, but clients
+Using VPN with MuPIF, the infrastructure must be set up beforhand, but clients
 can communicate in a secure manner without any additional provisions -
 it is thus safe to pass unencrypted data over the VPN, as authentication
 has been done already.
