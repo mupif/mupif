@@ -25,7 +25,8 @@ Local installation
 Full source
 ~~~~~~~~~~~~~
 
-This is the recommended installation method when you can run examples and tests as the entire source is stored on your computer. First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``Musicode`` or ``Deema``; see `MuPIF branches at GitHub <https://github.com/mupif/mupif/branches>`__)::
+This is the recommended installation method. One can run examples and tests and the complete source code is stored on your computer. 
+First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``Musicode`` or ``Deema``; see `MuPIF branches at GitHub <https://github.com/mupif/mupif/branches>`__)::
 
    git clone --branch BRANCH_NAME https://github.com/mupif/mupif.git
 
@@ -105,8 +106,8 @@ Running examples
 ~~~~~~~~~~~~~~~~~~~
 
 In addition, the platform installation comes with many examples, that
-can be used to verify the successful installation as well, but they also
-serve as an educational examples illustrating how to use the platform.
+can be used to verify the successful installation as well, but they primarily 
+serve as an educational examples illustrating the use of the platform. The exmaples are located in examples subdirectory of your MuPIF installation and also are accessible directly from GitHub `https://github.com/mupif/mupif/tree/master/examples`.
 
 To run the examples, go the the examples directory and use the ``runex.py`` script to do the set-up and run the example::
 
@@ -116,15 +117,17 @@ To run the examples, go the the examples directory and use the ``runex.py`` scri
 
 
 
-Infrastructure integration
+MuPIF Basic Infrastructure
 ---------------------------
 
-The MuPIF infrastructure means the distributed computational platform, a virtual private network (VPN). Its core element is the nameserver, which serves to locate resources within the network.
+MuPIF can be run on a single workstation serving the infrastructure locally. However, to take a full profit from its distributed design, a supporting infrastructure has to be set up.
+This typically includes setting up of VPN network to isolate and secure comminication and data exchange. 
+There are additional services, including nameserver for service discovery and scheduler for job scheduling. They are described in subsequent chapters.
+The following chapters describe these resources from user perspective. The administrative prespective, including set up instrauctions is described in `sect-distributed-model`_.
 
 Wireguard VPN
 ~~~~~~~~~~~~~~
-
-Integrating the local computer into the VPN is done via configuration file (received by a secure channel) for Wireguard.
+Integrating the local computer into the already set-up VPN requires a configuration file (to be received over a secure channel) for Wireguard.
 
 * Windows: the configuration file can be imported straght into the Wireguard client.
 * Linux:
@@ -138,18 +141,13 @@ To confirm that the VPN works, look into the config file for your VPN IP address
 Nameserver
 ~~~~~~~~~~~~~~
 
-In order to let MuPIF know which network to use, nameserver address and port should be available. The port is 10000 by default, so use the IP address from the last paragraph, affixing ``:10000`` to the IP address, i.e. ``172.22.2.1:10000``; for IPv6, additionally enclose the address in braces, e.g. ``[fd4e:6fb7:b3af:0000::1]:10000``.
+In order to let MuPIF know which existing connected infractructure to use, the nameserver connection details are needed. They consist of nameserver IP address and port. By default, the VPN IP adress of nameserver is `172.22.2.1` and port is 10000. You should receive details from platform admin.
+The nameserver IP address and port determine so called address:port string, so for example, it corresponds to ``172.22.2.1:10000``; for IPv6, additionally enclose the address in braces, e.g. ``[fd4e:6fb7:b3af:0000::1]:10000``.
 
-The address:port string should be then stored either in the environment variable ``MUPIF_NS`` or in the file ``MUPIF_NS`` in user-config directory (``~/.config/MUPIF_NS`` in Linux, ``C:\Users\<User>\AppData\Local\MUPIF_NS`` in Windows (probably)). This will ensure that MuPIF will talk to the correct nameserver when it runs.
+The address:port string should be then stored either in the environment variable ``MUPIF_NS`` or in the file ``MUPIF_NS`` in user-config directory (``~/.config/MUPIF_NS`` in Linux, ``C:\Users\<User>\AppData\Local\MUPIF_NS`` in Windows (probably)).
+This will ensure that your MuPIF installation will talk to the correct nameserver when it runs.
 
 You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
-
-Other components
-~~~~~~~~~~~~~~~~~
-
-MuPIF itself is communication building block for the entire network coordinating execution of workflows and models. The entire package is deployed (at CTU) as Docker container with several services (execution scheduler, database, monitor, REST API, web-based workflow editor, …); related files can be accessed at [mupif/intfrastructure-docker](https://github.com/mupif/infrastructure-docker) repository. 
-
-Each project using MuPIF infrastructure can be thus kept separated from others (including the VPN), with pinned component versions and reproducible set-up. All persistent data (including nameserver entries) are stored in mounted volumes, thus surviving restarts of the container.
 
 
 Platform operations
@@ -1305,6 +1303,8 @@ nameserver, see :numref:`fig-screen-jobman-test`.
 There is also a simple test script (tools/jobManTest.py), that can be
 used to verify that the installation procedure was successful. It
 contact the application server and asks for new application instance.
+
+.. _VPN:
 
 Using Virtual Private Network (VPN)
 ----------------------------------------
