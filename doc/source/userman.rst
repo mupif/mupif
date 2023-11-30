@@ -152,7 +152,7 @@ This will ensure that your MuPIF installation will talk to the correct nameserve
 You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
 
 
-Simple workflow
+Simple workflow example
 ======================
 
 The executable representation of simulation workflow in MuPIF is a Python script in Python language implemented using basic bulding blocks (called components) defined by MuPIF. 
@@ -160,7 +160,7 @@ These components represent fundamental entities in the
 model space (such as individual models (simulation tools), instances of data types, solution
 steps, etc). The top level abstract classes are defind in MuPIF to represent these components, defining a common interface allowing to
 manipulate individual representations using a single common interface.
-The top level classes and their interfaces are described in Section :ref:`Platform-APIs`.
+The top level classes and their interfaces are described in :numref:`Platform-APIs`.
 
 In this section, we present a simple, minimum working example,
 illustrating the basic concept. The example presented in this section is
