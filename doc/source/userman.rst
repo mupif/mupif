@@ -235,7 +235,7 @@ individual applications.
 
 
 The full listing of this example can be found in
-`examples/Example01 <https://github.com/mupif/mupif/tree/master/mupif/examples>`__.
+`examples/Example01 <https://github.com/mupif/mupif/tree/master/examples>`__.
 The output is illustrated in :numref:`fig-ex1-out`.
 
 
@@ -246,7 +246,7 @@ The output is illustrated in :numref:`fig-ex1-out`.
 
 The platform installation comes with many examples, located in
 *examples* subdirectory of platform installation and also accessible
-`online <https://github.com/mupif/mupif/tree/master/mupif/examples>`__
+`online <https://github.com/mupif/mupif/tree/master/examples>`__
 in the platform repository. They illustrate various aspects, including
 field mapping, vtk output, etc.
 
