@@ -152,28 +152,25 @@ This will ensure that your MuPIF installation will talk to the correct nameserve
 You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
 
 
-Platform operations
+Simple workflow
 ======================
 
-The complex simulation pipeline developed in MuPIF-platform consists of
-top-level script in Python language (called scenario) enriched by newly
-introduced classes. These classes represent fundamental entities in the
-model space (such as simulation tools, properties, fields, solution
-steps, interpolation cells, units, etc). The top level classes are
-defined for these entities, defining a common interface allowing to
+The executable representation of simulation workflow in MuPIF is a Python script in Python language implemented using basic bulding blocks (called components) defined by MuPIF. 
+These components represent fundamental entities in the
+model space (such as individual models (simulation tools), instances of data types, solution
+steps, etc). The top level abstract classes are defind in MuPIF to represent these components, defining a common interface allowing to
 manipulate individual representations using a single common interface.
-The top level classes and their interface is described in platform
-Interface Specification document [1].
+The top level classes and their interfaces are described in Section :ref:`Platform-APIs`.
 
-In this document, we present a simple, minimum working example,
+In this section, we present a simple, minimum working example,
 illustrating the basic concept. The example presented in this section is
-assumed to be executed locally. How to extend these examples into
+assumed to be executed locally. How to extend this and other examples into
 distributed version is discussed in :numref:`sect-distributed-model`.
 
 The following example illustrates the so-called
-weak-coupling, where for each solution step, the first application
-(Application1) evaluates the value of concentration that is passed to
-the second application (Application2) which, based on provided
+weak-coupling, where for each solution step, the first model
+(m1) evaluates the value of concentration that is passed to
+the second model (m2) which, based on provided
 concentration values (DataID.PID_Concentration), evaluates the
 average cumulative concentration
 (DataID.PID_CumulativeConcentration). This is repeated for each
@@ -253,6 +250,7 @@ The platform installation comes with many examples, located in
 in the platform repository. They illustrate various aspects, including
 field mapping, vtk output, etc.
 
+.. _Platform-APIs:
 Platform APIs
 ================
 
