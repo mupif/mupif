@@ -1,78 +1,24 @@
 Introduction
 =============
+MuPIF is a modular, object-oriented integration platform allowing to create complex, 
+distributed, multi physics simulation workflows across the scales and processing chains by 
+combining existing simulation tools. MuPIF is written in Python language and is distributed under LGPL license.
 
-Multi-Physics Integration Framework (MuPIF) is an integration framework, that will facilitate the implementation of multi-physic and multi-level simulations, built from independently developed components. The principal role of the framework is to steer individual components (applications) and to provide high-level data-exchange services. Each application should implement an interface that allows to steer application and execute data requests. The design supports various coupling strategies, discretization techniques, and also the distributed applications. The platform development is hosted on GitHub (https://github.com/mupif/mupif/).
+The approach followed in MuPIF is based on a system of distributed, interacting components 
+designed to represent simulation workflow. The individual components represent, for example, 
+instances of individual models or data types. Following object-oriented design, 
+the abstract classes are introduced to represent a particular kind of components, 
+defining standardized interfaces allowing to manipulate individual instances using generic, 
+abstract interface. Such interface concept allows using any derived class on a very abstract level, 
+using standardized interface, without being concerned with the implementation details of an 
+individual component. This allows, for example, to operate all models using generic interface. 
+Moreover, as the simulation data are represented as components as well, the similar design
+pattern allowing to manipulate data of the same type using standardized interfaces is applied,
+making the platform independent on data format(s). The models exchange the component representation 
+of data, consisting of raw data and operations, this way the models know how to interpret the data transparently. 
+Therefore, the focus is on services provided by components and not on underlying data itself. 
+In this way, the MuPIF platform is not standardizing the structure of data, it is standardizing the fundamental, core operations on the data. 
 
+MuPIF by design supports distributed workflows, taking adavantage of distributed workflow execution and HPC integration.
+The platform provides the transparent communication mechanism that will take care of the network communication between the objects. 
 
-The approach followed in this project is based on an object-oriented approach,
-consisting in designing a system of interacting objects for the purpose of solving a
-software problem. The identification of individual objects and their mutual interaction has
-been based on expertise of project partners, and later refined by analysis of simulation
-scenarios considered in the project. The main advantage of this approach lies in
-independence on particular data format(s), as the exchanged data (fields, properties) are
-represented as abstract classes. Therefore, the focus on services is provided by objects
-(object interfaces) and not on underlying data itself.
-
-The integration framework is implemented in Python3. Python is an interpreted,
-interactive, object-oriented programming language. It runs on many Unix/Linux
-platforms, on the Mac, and on PCs under MS-DOS, Windows, Windows NT, and OS/2.
-The Python language is enriched by new objects/classes to describe and to
-represent complex simulation chains. Such approach allows profiting from the
-capabilities of established scripting environment, including numerical libraries,
-serialization/persistence support, VPN, and remote communication.
-
-The proposed abstract classes are designed to represent the entities in a model space,
-including simulation tools, fields, discretizations, properties, etc. The purpose of these
-abstract classes is to define a common interface that needs to be implemented by any
-derived class. Such interface concept allows using any derived class on a very abstract
-level, using common interface for services, without being concerned with the
-implementation details of an individual software component.
-
-To facilitate execution and development of the simulation workflows, the platform provides the transparent communication mechanism that will take care of the network communication between the objects. An important feature is the transparency, which hides the details of remote communication to the user and allows working with local and remote objects in the same way. The communication layer is built on Pyro4 library, which provides a transparent distributed object system fully integrated into Python. It takes care of the network communication between the objects when they are distributed over different machines on the network. The platform is designed to work on virtually any distributed platform, including grid and cloud infrastructure. 
-
-In addition to this MuPIF reference manual, a user manual from https://github.com/mupif/mupif/tree/master/mupif/doc/userManual can be obtained, showing details on API implementation, installation, networking and providing several examples in local/distributed setups.
-
-
-Alternative introduction
--------------------------
-
-MuPIF (`www.mupif.org <http://www.mupif.org/>`__) is an integration
-framework, that facilitates the implementation of multi-physic and
-multi-level simulation workflows, built from independently developed
-components. MuPIF is open source, distributed under LGPL license.
-
-The approach followed in the MuPIF is based on an system of distributed,
-interacting objects designed to solve given problem. The individual
-objects represent entities in the problem domain, including individual
-simulation packages, but also the data, such as fields and properties.
-The abstract classes are introduced for all entities in the model space
-[1]. They define a common interface, called API, that needs to be
-implemented by any derived class, representing particular implementation
-of specific component. Such interface concept allows using any derived
-class on a very abstract level, using common services defined by
-abstract class, without being concerned with the implementation details
-of an individual software component. The APIs have been developed not
-only for individual models, but also for simulation data, like spatial
-fields, properties, etc.
-
-The complex simulation pipeline developed in MuPIF-platform consists of
-top-level script in Python language [3] (called scenario) enriched by
-newly introduced classes. Later in the project, the top level script
-will be generated using a graphical tool. In principle, any control
-script can be recast into a class implementing Model class interface, so
-that it could itself represent an application in MuPIF platform. Such an
-approach would allow building a hierarchy of nested applications. The
-application steering and data exchange will be realized in a standard
-way by calling individual services (methods). In case of distributed
-environments, a transparent communication layer is provided, as
-described in the subsection on Distributed environments. The software
-design of the platform has been described in [5,6,7].
-
-Even though the platform can be used locally on a single computer
-orchestrating installed applications, the real strength of the MuPIF
-platform is its distributed design, allowing to execute simulation
-scenarios involving remote applications. The concept of so called proxy
-object that represent remote objects allows to hide all the details of
-remote data exchange and execution to the user. In turn, only minimal
-change of local simulation scenarios is required when distributed
-resources are included. The distributed model is described in :numref:`sect-distributed-model`.

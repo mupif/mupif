@@ -8,10 +8,11 @@ from .units import Unit
 from .dataid import DataID
 from .property import ConstantProperty
 from .mupifquantity import ValueType
+from .dbrec import DbDictable
 
 
 @Pyro5.api.expose
-class PiecewiseLinFunction(data.Data):
+class PiecewiseLinFunction(data.Data, DbDictable):
     """
 
     .. automethod:: __init__
@@ -55,3 +56,25 @@ class PiecewiseLinFunction(data.Data):
         x_float = x.inUnitsOf(self.x_unit).value
         value_data = np.interp(x=x_float, xp=self.x, fp=self.y)
         return ConstantProperty(value=value_data, propID=self.data_id, valueType=self.value_type, unit=self.y_unit)
+
+    def to_db_dict_impl(self):
+        return {
+            'ClassName': 'PiecewiseLinFunction',
+            'ValueType': self.value_type.name,
+            'DataID': self.data_id.name,
+            'UnitX': str(self.x_unit),
+            'UnitY': str(self.y_unit),
+            'X': self.x,
+            'Y': self.y
+        }
+
+    @staticmethod
+    def from_db_dict(d):
+        return PiecewiseLinFunction(
+            x=d['X'],
+            y=d['Y'],
+            x_unit=d['UnitX'],
+            y_unit=d['UnitY'],
+            data_id=DataID[d['DataID']],
+            value_type=ValueType[d['ValueType']]
+        )

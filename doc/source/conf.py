@@ -35,10 +35,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
-    'sphinx_rtd_theme'
+    'sphinx_rtd_theme',
+    'sphinx.ext.intersphinx'
 ]
 
 import sys, os.path
+
+# resolve :obj:`astropy:...` to astropy's docs (this is conveniently used in docstrings of astropy objects)
+intersphinx_mapping = {
+   'astropy': ('https://docs.astropy.org/en/stable',None),
+}
 
 autodoc_pydantic_model_show_json_error_strategy='coerce'
 
@@ -114,6 +120,11 @@ html_context=dict(
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_css_files=[
+    'custom.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'
+]
+
 
 ##### generate data schemas so that readthedocs.io serves them at a known URL
 import mupif as mp
@@ -123,3 +134,18 @@ os.makedirs('_static/schema',exist_ok=True)
 open('_static/schema/ModelMeta.json','w').write(mp.meta.ModelMeta.schema_json())
 open('_static/schema/WorkflowMeta.json','w').write(mp.meta.WorkflowMeta.schema_json())
 open('_static/schema/HeavyStruct.json','w').write(json.dumps(mp.heavystruct.HeavyStructSchemaModel))
+
+if 0:
+    ## customize which members to exclude
+    ## see https://stackoverflow.com/a/3757526
+    def autodoc_skip_member(app, what, name, obj, skip, options):
+        print(f'{what=} {name=} {obj=}')
+        if hasattr(obj,'__self__'): print(f'{obj.__self__=}')
+        # don't skip methods in ObjectBase itself
+        if type(obj)==mp.ObjectBase: return False
+        if name in ('Config','copy','dict','isInstance','json'): return True
+        if what=='classmethod': return True
+        return False
+
+    def setup(app):
+        app.connect('autodoc-skip-member', autodoc_skip_member)

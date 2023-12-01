@@ -23,6 +23,7 @@
 
 
 import pydantic
+from pydantic import Field
 from typing import Optional, Any, Literal, Union, List
 from .dataid import DataID
 
@@ -59,18 +60,21 @@ class SolverMeta(pydantic.BaseModel):
     Robustness:  Literal["Low", "Medium", "High", "Unknown"]
 
 
+# See https://docs.pydantic.dev/1.10/usage/schema/ for possible Field(...) arguments
+# the first positional argument is the default value, doc translates to JSON Schema description field
 class ExecutionMeta(pydantic.BaseModel):
+    '''Execution metadata, for use by the MuPIF infrastructure.'''
     ID: str
     Use_case_ID: Union[str, int] = ''
     Task_ID: str = ''
-    Log_URI: str = ''
-    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = 'Instantiated'
-    Progress: float = 0
-    Date_time_start: str = ''  # automatically set in Workflow
-    Date_time_end: str = ''  # automatically set in Workflow
-    Timeout: int = 0  # maximum runtime in seconds
-    Username: str = ''  # automatically set in Model and Workflow
-    Hostname: str = ''  # automatically set in Model and Workflow
+    Log_URI: str = Field('',description='Internal use only: Pyro URI of the remote logger object, valid only when the workflow is running.')
+    Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = Field(default='Instantiated',description='Set by the workflow scheduler automatically')
+    Progress: float = Field(-1,description='Floating progress in range 0…1; may be set by the workflow, but is not mandatory. Ignored if negative.')
+    Date_time_start: str = Field('',description='Automatically set in Workflow')
+    Date_time_end: str = Field('',description='Automatically set in Workflow')
+    Timeout: int = Field(0,description='Maximum runtime in seconds; unlimited if non-positive')
+    Username: str = Field('',description='Automatically set in Model and Workflow')
+    Hostname: str = Field('',description='Automatically set in Model and Workflow')
 
 
 class IOMeta(pydantic.BaseModel):
@@ -84,6 +88,7 @@ class IOMeta(pydantic.BaseModel):
         'mupif.String',
         'mupif.ParticleSet',
         'mupif.GrainState',
+        'mupif.PiecewiseLinFunction',
         'mupif.DataList[mupif.Property]',
         'mupif.DataList[mupif.TemporalProperty]',
         'mupif.DataList[mupif.Field]',
@@ -91,7 +96,8 @@ class IOMeta(pydantic.BaseModel):
         'mupif.DataList[mupif.HeavyStruct]',
         'mupif.DataList[mupif.String]',
         'mupif.DataList[mupif.ParticleSet]',
-        'mupif.DataList[mupif.GrainState]'
+        'mupif.DataList[mupif.GrainState]',
+        'mupif.DataList[mupif.PiecewiseLinFunction]'
     ]
     Type_ID: DataID
     Obj_ID: Optional[Union[str, List[str]]] = None
@@ -128,6 +134,7 @@ class OutputMeta(IOMeta):
 
 
 class ModelInWorkflowMeta(pydantic.BaseModel):
+    'Metadata for Model as part of a workflow'
     Name: str
     Module: str = ''
     Class: str = ''
@@ -141,6 +148,7 @@ class ModelInWorkflowMeta(pydantic.BaseModel):
 
 
 class ModelWorkflowCommonMeta(pydantic.BaseModel):
+    'Metadata common for both Model and Workflow'
     Name: str
     ID: Union[str, int]
     Description: str
@@ -276,7 +284,8 @@ if 0:
                             "mupif.DataList[mupif.HeavyStruct]",
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
-                            "mupif.DataList[mupif.GrainState]"
+                            "mupif.DataList[mupif.GrainState]",
+                            "mupif.DataList[mupif.PiecewiseLinFunction]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                         "Obj_ID": {  # optional parameter for additional info, string or list of string
@@ -337,7 +346,8 @@ if 0:
                             "mupif.DataList[mupif.HeavyStruct]",
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
-                            "mupif.DataList[mupif.GrainState]"
+                            "mupif.DataList[mupif.GrainState]",
+                            "mupif.DataList[mupif.PiecewiseLinFunction]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                         "Obj_ID": {  # optional parameter for additional info, string or list of string
