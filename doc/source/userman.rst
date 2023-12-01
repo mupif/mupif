@@ -2,6 +2,8 @@ User manual
 ###############
 
 
+.. _sect-platform-installation:
+
 Platform installation
 ========================
 
@@ -25,7 +27,8 @@ Local installation
 Full source
 ~~~~~~~~~~~~~
 
-This is the recommended installation method when you can run examples and tests as the entire source is stored on your computer. First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``Musicode`` or ``Deema``; see `MuPIF branches at GitHub <https://github.com/mupif/mupif/branches>`__)::
+This is the recommended installation method. One can run examples and tests and the complete source code is stored on your computer. 
+First clone the remote repository to your computer with (replace ``BRANCH_NAME`` with project-specific branch such as ``Musicode`` or ``Deema``; see `MuPIF branches at GitHub <https://github.com/mupif/mupif/branches>`__)::
 
    git clone --branch BRANCH_NAME https://github.com/mupif/mupif.git
 
@@ -105,8 +108,8 @@ Running examples
 ~~~~~~~~~~~~~~~~~~~
 
 In addition, the platform installation comes with many examples, that
-can be used to verify the successful installation as well, but they also
-serve as an educational examples illustrating how to use the platform.
+can be used to verify the successful installation as well, but they primarily 
+serve as an educational examples illustrating the use of the platform. The exmaples are located in examples subdirectory of your MuPIF installation and also are accessible directly from GitHub `https://github.com/mupif/mupif/tree/master/examples`.
 
 To run the examples, go the the examples directory and use the ``runex.py`` script to do the set-up and run the example::
 
@@ -116,15 +119,17 @@ To run the examples, go the the examples directory and use the ``runex.py`` scri
 
 
 
-Infrastructure integration
+MuPIF Basic Infrastructure
 ---------------------------
 
-The MuPIF infrastructure means the distributed computational platform, a virtual private network (VPN). Its core element is the nameserver, which serves to locate resources within the network.
+MuPIF can be run on a single workstation serving the infrastructure locally. However, to take a full profit from its distributed design, a supporting infrastructure has to be set up.
+This typically includes setting up of VPN network to isolate and secure comminication and data exchange. 
+There are additional services, including nameserver for service discovery and scheduler for job scheduling. They are described in subsequent chapters.
+The following chapters describe these resources from user perspective. The administrative prespective, including set up instrauctions is described in `sect-distributed-model`_.
 
 Wireguard VPN
 ~~~~~~~~~~~~~~
-
-Integrating the local computer into the VPN is done via configuration file (received by a secure channel) for Wireguard.
+Integrating the local computer into the already set-up VPN requires a configuration file (to be received over a secure channel) for Wireguard.
 
 * Windows: the configuration file can be imported straght into the Wireguard client.
 * Linux:
@@ -138,42 +143,34 @@ To confirm that the VPN works, look into the config file for your VPN IP address
 Nameserver
 ~~~~~~~~~~~~~~
 
-In order to let MuPIF know which network to use, nameserver address and port should be available. The port is 10000 by default, so use the IP address from the last paragraph, affixing ``:10000`` to the IP address, i.e. ``172.22.2.1:10000``; for IPv6, additionally enclose the address in braces, e.g. ``[fd4e:6fb7:b3af:0000::1]:10000``.
+In order to let MuPIF know which existing connected infractructure to use, the nameserver connection details are needed. They consist of nameserver IP address and port. By default, the VPN IP adress of nameserver is `172.22.2.1` and port is 10000. You should receive details from platform admin.
+The nameserver IP address and port determine so called address:port string, so for example, it corresponds to ``172.22.2.1:10000``; for IPv6, additionally enclose the address in braces, e.g. ``[fd4e:6fb7:b3af:0000::1]:10000``.
 
-The address:port string should be then stored either in the environment variable ``MUPIF_NS`` or in the file ``MUPIF_NS`` in user-config directory (``~/.config/MUPIF_NS`` in Linux, ``C:\Users\<User>\AppData\Local\MUPIF_NS`` in Windows (probably)). This will ensure that MuPIF will talk to the correct nameserver when it runs.
+The address:port string should be then stored either in the environment variable ``MUPIF_NS`` or in the file ``MUPIF_NS`` in user-config directory (``~/.config/MUPIF_NS`` in Linux, ``C:\Users\<User>\AppData\Local\MUPIF_NS`` in Windows (probably)).
+This will ensure that your MuPIF installation will talk to the correct nameserver when it runs.
 
 You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
 
-Other components
-~~~~~~~~~~~~~~~~~
 
-MuPIF itself is communication building block for the entire network coordinating execution of workflows and models. The entire package is deployed (at CTU) as Docker container with several services (execution scheduler, database, monitor, REST API, web-based workflow editor, …); related files can be accessed at [mupif/intfrastructure-docker](https://github.com/mupif/infrastructure-docker) repository. 
-
-Each project using MuPIF infrastructure can be thus kept separated from others (including the VPN), with pinned component versions and reproducible set-up. All persistent data (including nameserver entries) are stored in mounted volumes, thus surviving restarts of the container.
-
-
-Platform operations
+Simple workflow example
 ======================
 
-The complex simulation pipeline developed in MuPIF-platform consists of
-top-level script in Python language (called scenario) enriched by newly
-introduced classes. These classes represent fundamental entities in the
-model space (such as simulation tools, properties, fields, solution
-steps, interpolation cells, units, etc). The top level classes are
-defined for these entities, defining a common interface allowing to
+The executable representation of simulation workflow in MuPIF is a Python script in Python language implemented using basic bulding blocks (called components) defined by MuPIF. 
+These components represent fundamental entities in the
+model space (such as individual models (simulation tools), instances of data types, solution
+steps, etc). The top level abstract classes are defind in MuPIF to represent these components, defining a common interface allowing to
 manipulate individual representations using a single common interface.
-The top level classes and their interface is described in platform
-Interface Specification document [1].
+The top level classes and their interfaces are described in :numref:`Platform-APIs`.
 
-In this document, we present a simple, minimum working example,
+In this section, we present a simple, minimum working example,
 illustrating the basic concept. The example presented in this section is
-assumed to be executed locally. How to extend these examples into
+assumed to be executed locally. How to extend this and other examples into
 distributed version is discussed in :numref:`sect-distributed-model`.
 
 The following example illustrates the so-called
-weak-coupling, where for each solution step, the first application
-(Application1) evaluates the value of concentration that is passed to
-the second application (Application2) which, based on provided
+weak-coupling, where for each solution step, the first model
+(m1) evaluates the value of concentration that is passed to
+the second model (m2) which, based on provided
 concentration values (DataID.PID_Concentration), evaluates the
 average cumulative concentration
 (DataID.PID_CumulativeConcentration). This is repeated for each
@@ -238,7 +235,7 @@ individual applications.
 
 
 The full listing of this example can be found in
-`examples/Example01 <https://github.com/mupif/mupif/tree/master/mupif/examples>`__.
+`examples/Example01 <https://github.com/mupif/mupif/tree/master/examples>`__.
 The output is illustrated in :numref:`fig-ex1-out`.
 
 
@@ -249,10 +246,11 @@ The output is illustrated in :numref:`fig-ex1-out`.
 
 The platform installation comes with many examples, located in
 *examples* subdirectory of platform installation and also accessible
-`online <https://github.com/mupif/mupif/tree/master/mupif/examples>`__
+`online <https://github.com/mupif/mupif/tree/master/examples>`__
 in the platform repository. They illustrate various aspects, including
 field mapping, vtk output, etc.
 
+.. _Platform-APIs:
 Platform APIs
 ================
 
@@ -1194,7 +1192,7 @@ using the provided monitoring tool. A simple ping test can be executed,
 verifying the connection to the particular server and/or allocated
 application instance.
 
-Setting up a Job Manager
+Setting up a Model Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The skeleton for application server is distributed with the platform and
@@ -1220,35 +1218,27 @@ are provided:
    scenarios). The client can run on both Unix / Windows systems,
    configuring correctly ssh client.
 
-The setup requires to install the platform, as described in `3. Platform
-installation <#_yey1gprpyr1f>`__. Also, the functional application API
-class is needed. :numref:`fig-jobman-tunnels` shows the flowchart with a ModelServer using ssh
-tunnels (VPN is showed further).
-
-
-.. _fig-jobman-tunnels:
-.. figure:: img/jobman-tunnels.*
-
-   *Example04-JobMan-distrib* displaying ports and tunnels in a distributed setup using ssh tunnels.
-
+The setup requires to install the platform, as described in :numref:`sect-platform-installation`, including the VPN.
+Also, the functional application API
+class is needed.
 
 The recommended procedure to set up job manager for your server is to
-create a separate directory, where you will copy the server.py and
-serverConfig.py files from *examples/Example04-JobMan-distrib an*
-directory and customize settings in serverConfig.py.
+create a separate directory, where you will copy the `server.py` file
+from *examples/Example04-JobMan-distrib* directory and customize settings.
 
-Simpler situation exists for VPN network setup where no ssh tunnels
-needs to be allocated and all communication runs on a local-like
-network.
+:numref:`fig-thermo-mech-vpn` shows the distributed model running atop the VPN.
 
 .. _fig-thermo-mech-vpn:
 .. figure:: img/thermo-mech-vpn.*
 
-   *Example16* thermo-mechanical analysis displaying ports and tunnels in a distributed setup using VPN.
+   *Example16* thermo-mechanical analysis displaying ports in a distributed setup using VPN.
 
 
 Configuration
 ~~~~~~~~~~~~~~~~~~~~
+
+.. todo:: UPDATE for last MuPIF release (most settings are no longer applicable).
+
 
 The configuration of the job manager consists of editing the
 configuration file (thermalServerConfig.py). The following variables can
@@ -1306,8 +1296,10 @@ There is also a simple test script (tools/jobManTest.py), that can be
 used to verify that the installation procedure was successful. It
 contact the application server and asks for new application instance.
 
+.. _VPN:
+
 Using Virtual Private Network (VPN)
-----------------------------------------
+--------------------------------------
 
 Generalities
 ~~~~~~~~~~~~~~~~~~~
@@ -1321,12 +1313,11 @@ addresses assigned in the virtual network space, see :numref:`fig-vpn-arch`. The
 itself communicates through existing underlying networks, but this
 aspect is not visible to the nodes; it includes data encryption,
 compression, routing, but also authentication of clients which may
-connect to the VPN. `OpenVPN <https://openvpn.net/>`__ is a major
+connect to the VPN. `Wireguard <https://wireguard.org/>`__ is a major
 implementation of VPN, and is supported on many platforms, including
 Linux, Windows, Android and others.
 
-Using VPN with MuPIF is a trade-off where the infrastructure
-(certificates, VPN server, …) is more difficult to set up, but clients
+Using VPN with MuPIF, the infrastructure must be set up beforhand, but clients
 can communicate in a secure manner without any additional provisions -
 it is thus safe to pass unencrypted data over the VPN, as authentication
 has been done already.
