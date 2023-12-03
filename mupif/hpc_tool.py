@@ -99,20 +99,17 @@ class HPCTool:
                 'S': 'Suspended'
             }
 
-            lines = result.split('\\n')
-            if len(lines) >= 3:
-                line = lines[2]
-                while '  ' in line:
-                    line = line.replace('  ', ' ')
-                line = line.strip()
-                words = line.split(' ')
-                if len(words) >= 2:
-                    state = words[-2]
+            while '  ' in result:
+                result = result.replace('  ', ' ')
+            result = result.strip()
+            words = result.split(' ')
+            if len(words) >= 2:
+                state = words[-2]
 
-                    for key, value in states.items():
-                        if state == key:
-                            return value
-                    return state
+                for key, value in states.items():
+                    if state == key:
+                        return value
+                return state
 
         return 'Unknown'
 
