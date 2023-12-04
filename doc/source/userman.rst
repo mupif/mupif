@@ -178,10 +178,9 @@ In the rest of this section, the fundamental, core classes and their
 interfaces are presented with links to their documentation, generated directly from the source code using PyDoc package. 
 
 .. _fig-abstract-uml:
-.. figure:: img/abstract-uml.png
+.. figure:: img/MuPIF-basic-ontology.png
 
-   UML diagram of important abstract classes with only selected relations are displayed (Using Pynsource package for UML diagram)
-
+   MuPIF core classes and their relations
 
 Common API
 ----------------------------------
