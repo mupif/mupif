@@ -22,3 +22,11 @@ In this way, the MuPIF platform is not standardizing the structure of data, it i
 MuPIF by design supports distributed workflows, taking adavantage of distributed workflow execution and HPC integration.
 The platform provides the transparent communication mechanism that will take care of the network communication between the objects. 
 
+MuPIF comes with a Data Management System (DMS) called MuPIFDB. 
+The DMS is used to track integrated simulation workflows, their executions including execution inputs and outputs.
+It also provides a generic Digital Twin model, which is based on Entity Data Model (EDM). The EDM identifies the individual entities, 
+their attributes and relations between them. The EDM is defined using JSON schema, and the DMS structure is generated from this schema.
+The EDM allows to map entity attributes to simulation workflow inputs (determining the initial conditions) and simulation workflow outputs 
+can be mapped to newly cloned entities representing updated configuration(s). The EDM can be regarded as hypergraph, 
+where nodes represent entity states and edges representing processes.
+At the same time, MuPIF can interface to 3rd party DMS via its generic foreign DMS interface layer. 
