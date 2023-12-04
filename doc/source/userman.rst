@@ -627,7 +627,7 @@ file is parsed when the average value is requested (*get*
 method).
 
 .. _fig-indirect-api:
-.. figure:: img/MiPIF-Indirect-api.*
+.. figure:: img/MuPIF-Indirect-api.*
 
    Typical workflow in indirect approach for API implementation
 
