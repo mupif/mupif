@@ -88,7 +88,7 @@ You should see output something like this::
    mupif/tests/test_Mesh.py ............                                                                                                    [ 47%]
    mupif/tests/test_Metadata.py ....                                                                                                        [ 50%]
    mupif/tests/test_Particle.py ..........                                                                                                  [ 57%]
-   mupif/tests/test_ModelServer.py .......                                                                                             [ 62%]
+   mupif/tests/test_ModelServer.py .......                                                                                                  [ 62%]
    mupif/tests/test_TimeStep.py ....                                                                                                        [ 65%]
    mupif/tests/test_Vertex.py ....                                                                                                          [ 68%]
    mupif/tests/test_VtkReader2.py s                                                                                                         [ 68%]
@@ -552,10 +552,10 @@ field mapping, vtk output, etc.
 Developing Application Program Interface (API)
 =================================================
 
-In order to establish an interface between the platform and external simulation package, one has to implement a *Model* class. 
-This class defines a
+In order to establish an interface between the platform and external model, a new class derived from base *Model* class has to be created, essentially implementing MuPIF *Model* interface.  
+The *Model* class defines a
 generic interface in terms of general purpose, problem independent,
-methods that are designed to steer and communicate with the application.
+methods that are designed to steer and communicate the model.
 This table presents an overview of application interface, the full
 details with complete specification can be found in :obj:`~mupif.model.Model`.
 
@@ -575,25 +575,24 @@ terminate()                                             Terminates the applicati
 
 From the perspective of individual simulation tool, the interface
 implementation can be achieved
-
 by means of either direct (native) or indirect implementation.
 
--  **Native implementation** requires a simulation tool written in
-   Python, or a tool with Python interface. In this case the Model
-   services will be implemented directly using direct calls to suitable
+-  **Native implementation** of a *Model* interface requires model written in
+   Python, or a model with Python interface. In this case the *Model*
+   methods will be implemented directly using direct calls to suitable
    application’s functions and procedures, including necessary internal
    data conversions. In general, each application (in the form of a
    dynamically linked library) can be loaded and called, but care must
    be taken to convert Python data types into target application data
-   types. More convenient is to use a wrapping tool (such as Swig [5] or
-   Boost [6]) that can generate a Python interface to the application,
+   types. More convenient is to use a wrapping tool (such as Swig [11],
+   Boost [12] or PyBind11 [13]) that can generate a Python interface to the application,
    generally taking care of data conversions for the basic types. The
    result of wrapping is a set of Python functions or classes,
    representing their application counterparts. The user calls an
    automatically generated Python function which performs data
    conversion and calls the corresponding native equivalent.
 
--  **Indirect implementation** is based on wrapper class implementing
+-  **Indirect implementation** of a *Model* interface is based on wrapper class implementing
    Model interface that implements the interface indirectly, using, for
    example, simulation tool scripting or I/O capabilities. In this case
    the application is typically standalone application, executed by the
@@ -603,35 +602,32 @@ by means of either direct (native) or indirect implementation.
    stored state, passing input data, and parsing its output(s) to
    collect return data (requested using get methods).
 
-.. _fig-indirect:
-.. figure:: img/indirect.png
-
-   Illustration of indirect approach
-
 The example illustrating the indirect implementation is discussed
-further. Typically, this is a three-phase procedure. In the first step,
-when external properties and fields are being set, the application
-interface has to remember all these values. In the second step, when the
-application is to be executed, the input file is to be modified to
-include the mapped values. After the input file(s) are generated, the
-application itself is executed. In the last, third step, the computed
-properties/fields are requested. They are typically obtained by parsing
-application output and returned.
+further. The basics are the same, one has to define a new class derived from *Model* class, representing the interface to new (external) model. 
+The implementation of this class has to provide implementation of all *Model* services, that require to establish communication channel to external model. 
+Here we assume that no direct communication is available so we need to communicate with an external model indirectly, typically using files. 
+The important fact is that this communication mechanism is only part of specific model class instance and is therefore hidden behing generic *Model* interface. 
+Typical procedure consists of three steps. In the first step,
+when input parameters of the meodel are being set (using *set* method), the class representing a new model 
+has to remember all input parameters. In the second step, when the
+application is to be executed (using *solveStep* method), the tepmplate input file (which is assumed to exist) is used to produce the actual input file with substituted values of input parameters. 
+After the input file(s) are generated, the
+application itself is executed, typically producing output file(s) with results. In the last step, when the actual model output parameters are requested (using the *get* method), 
+the cooresponding values are obtained by parsing output files generated.
 
-In this example, the application should compute the average value from
-mapped values of concentrations over the time. The external application
-is available, that can compute an average value from the input values
-given in a file. The application interface accumulates the mapped values
-of concentrations in a list data structure, this is done is setProperty
-method. During the solution step in a solveStep method, the accumulated
+To ilustrate this concept, we present an example of implementing MuPIF interface to a model 
+computing the average value from property (concentration) time history. Suppose now, that we want to use the existing external application, that can compute an average value from given input values
+read from a file. The application interface accumulates the input values
+of concentrations in a list, this is done is *set*
+method. During the solution (*solveStep* method), the accumulated
 values of concentrations over the time are written into a file, the
-external application is invoked taking the created file as input and
+external application is executed, reading the created file as input and
 producing an output file containing the computed average. The output
-file is parsed when the average value is requested using getProperty
-method.
+file is parsed when the average value is requested (*get*
+method).
 
 .. _fig-indirect-api:
-.. figure:: img/indirect-api.*
+.. figure:: img/MiPIF-Indirect-api.*
 
    Typical workflow in indirect approach for API implementation
 
@@ -1489,4 +1485,10 @@ References
 
 #. The European Materials Modelling Council, https://emmc.info/, 2017.
 
-#. 
+#. The Simplified Wrapper and Interface Generator (SWIG), https://swig.org/, 2023.
+
+#. Boost.Python, a C++ library which enables seamless interoperability between C++ and the Python programming language, http://boostorg.github.io/python/doc/html/index.html, 2023.
+
+#. pybind11 — Seamless operability between C++11 and Python, https://pybind11.readthedocs.io/en/stable/, 2023.
+
+
