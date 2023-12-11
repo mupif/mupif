@@ -289,10 +289,8 @@ example below:
 
 
 The metadata schemata are defined in corresponding modules. In MuPIF,
-the metadata schemata are defined for *Model*, *Workflow*, and all data
-classes (in dataID.py). 
-
-Generated documentation of the JSON schemata for selected components is available in :numref:`sect-schemas-doc`.
+the metadata schemata are defined for *Model*, *Workflow*, and some other data
+classes. Generated documentation of the JSON schemata for selected components is available in :numref:`sect-schemas-doc`.
 
 
 
@@ -638,12 +636,9 @@ Developing user workflows
 Multiscale/multiphysics simulations are natively supported in MuPIF,
 allowing easy data passing from one model to another one, synchronizing
 and steering all models. Simulation workflow of multiscale/multiphysics
-simulations, called also a simulation scenario, defines data flow among
-various models and their steering. Natively, the workflow in MuPIF is
-represented as Python script combining MuPIF components into workflow.
-However, a many benefits can be further gained by implementing a
-workflow as class derived from abstract *Workflow* class. The benefits
-and example are discussed in :numref:`sect-workflow-as-a-class`.
+simulations, called also a simulation scenario, need to define (1) execution model (steering of models) and (2) data model (defines how data are passed/exchanged). Natively, the workflow in MuPIF is
+represented as Python script combining MuPIF components into workflow. 
+ 
 
 Workflow templates
 --------------------
@@ -745,14 +740,15 @@ Loosely coupled
 
 Workflow example
 ---------------------
-
-A thermo-mechanical, multiphysical example *Example06.py* explains
-linking and steering in greater detail. The example presents a local
-(non-distributed) version and can be found under *examples/Example06\**
+To ilustrate the concept, a simple example of steady state, sequential, multiphysic, thermo-mechanical workflow in two dimensional domain is presented. 
+The full implementation is available under *examples/Example06\**
 directory of MuPIF installation.
 
-A cantilever, clamped on the left hand side edge, is subjected to
-stationary temperature loading, see :numref:`fig-cantilever-thermal`. Heat convection is
+The workflow combines thermal model, solving energy balance and yielding termal field and mechanical model, solving momentum balance equations, 
+yielding primarily displacement field and also strain and stress fields, obtained by postprocessing the displacement field. 
+
+In presented example, we consider a domain representing simple cantilever, clamped on the left hand side and subjected to
+thermal loading, see :numref:`fig-cantilever-thermal`. Heat convection is
 prescribed on the top edge with ambient temperature 10°C. Left and
 bottom edges have prescribed temperature 0°C, the right edge has no
 boundary condition. Initial temperature is set to 0°C, heat conductivity
@@ -766,14 +762,27 @@ Poisson's ratio 0.25 and coefficient of linear thermal expansion
 
    Elastic cantilever subjected to thermal boundary conditions.
 
-First, the temperature distribution has to be solved in the whole domain
-from the given initial and boundary conditions. The temperature field is
-passed afterwards to the mechanical analysis, which evaluates the
-corresponding displacement field. Such simulation flow is depicted in
-:numref:`fig-thermo-mech-flow`, linking two models in one time step. The thermal model
-implements *getField(T)* and *solveStep(istep)* methods. In addition,
-the mechanical model needs to set up an initial thermal field
-*setField(T)* prior to execution in the time step.
+The schema of the workflow is depicted in
+:numref:`fig-thermo-mech-flow`. 
+
+A workflow can be regardes as a computational receipe and be represented as a plain Python script. But there are many advantages of representing a workflow as a class. 
+Generally speaking, any workflow can be considered as a (more complex) model, that has specific inputs and outputs. 
+The object oriented design of MuPIF allows to naturally represent this concept, introducing *Workflow* class as a base class for all workflow implementations, derived from *Model* class. 
+This essentially allows to build a hierarchy of
+workflows, where the top level workflow may utilise existing models and workflows. Another important advantage of having workflow represented as a class is
+that the individual workflows can be allocated and executed by a
+jobManager on remote resources in a same way as individual applications.
+
+By following the concept of representing a workflow as a class, the workflow has to define its metadata and implement similar methods as model, including *set* and *get* methods to map inpouts and outputs, and *solveStep* method. The *Workflow* class defines additional method *solve*
+to generate the time loop over the individual time steps, subsequently solved by
+*solveStep* method.
+
+Back to our example. First, the temperature distribution has to be solved in the whole domain
+from the given initial and boundary conditions. Here we assume for simplicity, that the thermal problem is defined in model specific template, that is passed to thermal model (using *set method).
+The template can be further instanciated using selected input parameters (not done here).
+Next, the thermal model is updated/solved (*solveStep* method) and resulting steady state temperature field is requested (*get* method) and 
+passed afterwards to the mechanical model (*set* method), which is updated as well (*solveStep*) and finally, the
+corresponding displacement field is available. 
 
 .. _fig-thermo-mech-flow:
 .. figure:: img/thermo-mech-flow.png
@@ -781,8 +790,8 @@ the mechanical model needs to set up an initial thermal field
    Thermo-mechanical simulation flow
 
 
-The discretizations for thermal and mechanical problems are in this
-particular case different and the platform takes care of field
+One of the adantages, originating from representing spatil fields as data Type), is that the discretizations for thermal and mechanical problems can be 
+different, as the thermal field takes care of field
 interpolation. The mesh for thermal problem consist of 50 linear
 elements with linear approximation and 55 nodes. The mesh for mechanical
 analysis consist of 168 nodes and 160 elements with linear
@@ -793,9 +802,8 @@ approximation. Results for final step are shown in :numref:`fig-thermo-mech-resu
 
    Results of thermo-mechanical simulation
 
-A code below shows a thermo-mechanical simulation in *Example06*.
-Thermal and mechanical solvers are implemented as *demoapp* module and
-loaded.
+A code below documents an execution of  thermo-mechanical simulation in *Example06*.
+The implementation of thermal and mechanical solvers are provided in *demoapp* module.
 
 .. code-block:: python
 
@@ -890,13 +898,9 @@ loaded.
     demo.printMetadata()
     demo.terminate()
 
-As already mentioned, the thermo-mechanical simulation chain can run in
-various configurations, composed of a steering script, nameserver,
-thermal and mechanical applications, using ssh or VPN network
-connection. Table 3 shows MuPIF examples of thermo-mechanical
-configuration. In principle, each component can run on different
-computer, except a steering script.
-
+As already mentioned, the thermo-mechanical simulation workflow can run in
+various configurations, starting from simplest, local setup to distributed one, where each of the models runs on remote resources.  Table 3 shows available examples of thermo-mechanical
+configurations. 
 
 .. |image-therm| image:: img/app-therm.png
 .. |image-mech| image:: img/app-mech.png
@@ -907,71 +911,6 @@ computer, except a steering script.
    Example06 (local),Local,-,Local,Local
    "Example07 (JobMan, VPN, ssh)",Local,Remote,"Remote, JobMan","Remote, JobMan"
    "Example08 (JobMan, VPN, ssh)",Local,Remote,"Remote, JobMan",Local
-
-
-.. _sect-workflow-as-a-class:
-
-Workflow as a class
-------------------------
-
-The object oriented design of MuPIF allows to build a hierarchy of
-workflows, where the top level workflow may utilise the components,
-which may be again workflows. From this point of view, any workflow can
-be regarded as an application, composed from individual components,
-implementing itself an application interface. The application interface,
-as introduced in Chapter on Platform APIs, allows to perform any data
-and steering operation, i.e. to get and set any data, update response
-for the given solution step, etc.
-
-Another important advantage of having workflow represented as a class is
-that the individual workflows can be allocated and executed by a
-jobManager on remote resources in a same way as individual applications.
-
-MuPIF comes with abstract *Workflow* class, derived from *Model* class,
-supposed to be a parent class for any workflow represented as a class.
-It extends the *Model* interface by defining *solve* method, which
-implements a time loop over the individual time steps, solved by
-*solveStep* method defined already in *Model* interface.
-
-The default implementation of *Workflow’s* solve method is shown in a
-listing below. It generates a sequence of time steps satisfying the
-stability requirements till reaching the target time. If the default
-implementation does not fit, the method can be overloaded.
-
-.. code-block:: python
-
-    class Workflow(Model.Model):
-        def solve(self, runInBackground=False):
-            self.setMetadata('Status', 'Running')
-            self.setMetadata('Progress', 0.)
-
-            time = 0.*U.s
-            timeStepNumber = 0
-            while abs(time.inUnitsOf(U.s).getValue()-self._exec_targetTime.inUnitsOf(U.s).getValue()) > 1.e-6:
-                time_prev = time
-                if self._exec_dt is not None:
-                    dt = min(self.getCriticalTimeStep(), self._exec_dt)
-                else:
-                    dt = self.getCriticalTimeStep()
-                time = time+dt
-                if time > self._exec_targetTime:
-                    time = self._exec_targetTime
-                    dt = time - time_prev
-                timeStepNumber = timeStepNumber+1
-                istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
-
-                log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
-                print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
-
-                # Estimate progress
-                self.setMetadata('Progress', 100*time.inUnitsOf(U.s).getValue()/self._exec_targetTime.inUnitsOf(U.s).getValue())
-
-                self.solveStep(istep)
-                self.finishStep(istep)
-
-            self.setMetadata('Status', 'Finished')
-            self.setMetadata('Date_time_end', timeTime.strftime("%Y-%m-%d %H:%M:%S", timeTime.gmtime()))
-
 
 .. _sect-distributed-model:
 
@@ -1091,24 +1030,8 @@ and therefore the individual simulation packages will be distributed
 over the network, running on dedicated servers provided by individual
 partners, forming grid-like infrastructure.
 
-According to requirements specified in D1.2 Software Requirements
-Specification Document for Cloud Computing [2], different functional
-requirements have been defined, with different levels of priorities.
-Typical requirements include services for resource allocation, access
-and license control, etc. In the project, we decided to follow two
-different strategies, how to fulfill these defined requirements. The
-first one is based on developing custom solution for resource allocation
-combined with access control based on standardized SSH technology based
-on public key cryptography for both connection and authentication. It
-uses platform distributed object technology and this allows its full
-integration in the platform. This solution is intended to satisfy only
-the minimum requirements, but its setup and operation is easy. It setup
-does not requires administrative rights and can be set up and run using
-user credentials. The second approach is based on established condor
-middleware. This solution provides more finer control over all aspects.
-On the other hand, its setup is more demanding. The vision is to allow
-the combination of both approaches. Both approaches and their
-requirements are described in following sections.
+The MuPIF also supports integration of HPC recources, providing a support for simple integration of models running on HPC hardware.
+
 
 Internal platform solution - ModelServer resource allocation
 ----------------------------------------------------------------
@@ -1280,6 +1203,49 @@ nameserver, see :numref:`fig-screen-jobman-test`.
 There is also a simple test script (tools/jobManTest.py), that can be
 used to verify that the installation procedure was successful. It
 contact the application server and asks for new application instance.
+
+.. _HPC:
+
+HPC integration
+--------------------------------------
+The massively parallel simulations on HPC are typically run in scheduled execution mode, which ensures optimal allocation and use of resources. 
+In this model, the user creates a job description file, describing what are the inputs, outputs, what to execute and specify resource allocation requirements (number of nodes, memory, required runtime).
+The job is subsequently submitted and later executed by the HPC scheduling system when resources are available. 
+In addition, there is typically no possibility of running permanent services on HPC side. 
+This mode of operation has certain implications on how the HPC model interface is to be implemented.  
+
+The efficient use of HPC resources requires that all needed pre and post processing should be done outside HPC, and only actual model execution be performed using HPC. 
+Individual ModelServers responsible for interacting with simulation workflows must ensure, that resource allocation, preprocessing inputs and postprocessing outputs for 
+or from actual model execution is done without using HPC resources, i.e., must be done before or after submitting the job and only the model execution phase should utilize HPC. 
+This implies the need for running the model APIs on dedicated server (external resource to HPC), which interacts with HPC batch system to schedule the actual model execution.  
+
+Additional considerations should be taken when the model is executed from workflow within time loop involving the data exchange with other models. 
+The efficient utilization of HPC resources generally implies that in such a case, the model API should schedule the execution for individual time step 
+updates of the model, and this may require the model API to support restart capability from saved state, to prevent model utilizing costly HPC resources when 
+waiting for potentially other models involved in the time loop.  
+
+There are different HPC integration levels possible with different requirements. 
+Here we follow the less intrusive (from the HPC perspective) integration, illustrated on :numref:`fig-hpc-integration`. The requirements are following: 
+
+- A dedicated platform user account needs to be set up on HPC side, allowing to perform file transfer and job submission. 
+  On HPC, standardized job scheduling subsystem is required ​(SLURM Workload manager, 2021)​,​ (Wikipedia article on Portable Batch System, 2021)​. 
+
+- External MuPIF node running ModelServer service for models to be executed on HPC (with MuPIF installation). 
+  The node will also run individual model APIs, responsible for input collection, preparation of job scripts and their scheduling on HPCs, monitoring execution and result collection. 
+  The node must have network connectivity to HPC infrastructure allowing to perform file transfer and job submission using HPC credentials.  
+  
+ 
+.. _fig-hpc-integration:
+.. figure:: img/hpc-integration.png
+
+   Schema of 3rd party HPC integration 
+
+ 
+
+The MuPIF platform has been extended to provide dedicated HPC integration layer, that abstracts the various aspects of HPC integration: secure data transfer, 
+job submission and monitoring. Both mainstream job submission systems (PBS, SLURM) are supported. 
+
+
 
 .. _VPN:
 
