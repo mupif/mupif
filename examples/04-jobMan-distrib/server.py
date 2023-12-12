@@ -1,4 +1,4 @@
-5import sys
+import sys
 import os
 d=os.path.dirname(os.path.abspath(__file__))
 sys.path += [d+'/..', d+'/../02-distrib', d+'/../..']
