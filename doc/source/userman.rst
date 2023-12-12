@@ -129,15 +129,8 @@ The following chapters describe these resources from user perspective. The admin
 
 Wireguard VPN
 ~~~~~~~~~~~~~~
-Integrating the local computer into the already set-up VPN requires a configuration file (to be received over a secure channel) for Wireguard.
 
-* Windows: the configuration file can be imported straght into the Wireguard client.
-* Linux:
-
-  * (less user-friendly) the config file is copied into ``/etc/wireguard/somename.conf`` (the name is arbitrary) and the VPN is started with `sudo wg-quick somename`.
-  * (user-friendly) the config file is imported into NetworkManager via ``sudo nmcli connection import type wireguard file configfile.conf`` and subsequently the connection is saved persistently in NetworkManager and can be activated as other network connections. (You will need the wireguard module for NetworkManager installed for this to work)
-
-To confirm that the VPN works, look into the config file for your VPN IP address (e.g. ``Address = 172.22.2.13/24``); replace the last number by ``1`` and test ping onto the machine: ``ping 172.22.2.1``. If the IP address is IPv6 (e.g. ``Address = fd4e:6fb7:b3af:0000::12/32``), also replace the last number by ``1``: ``ping fd4e:6fb7:b3af:0000::1``. If the ping responds, your VPN connection is working.
+Integrating the local computer into the already set-up VPN requires a configuration file (to be received over a secure channel) for Wireguard. This is documented in `sect-vpn-setup`_.
 
 
 Nameserver
@@ -1283,104 +1276,44 @@ enough to accommodate all communication between clients combined.
 
    VPN architecture
 
-Setup
+.. _sect-vpn-setup:
+
+VPN Set-up
 ~~~~~~~~~~~~
 
-.. todo:: Update to Wireguard instead of OpenVPN
+Since wireguard is realtively low-level VPN architecture, it is very flexible in terms of topology. MuPIF uses `Star network topology <https://en.wikipedia.org/wiki/Star_network>`__.
 
-Setting up the VPN comprises the following:
+Becoming a part of the VPN network comprises the following:
 
--  Communication ports reachable by all clients must be set up as a part
-   of the infrastructure (usually on a static & public IP address); this
-   involves opening ports in firewalls, and most network administrators
-   are not very keen to do that. While these are configurable, the
-   default is UDP 1194 for client access; often TCP 443 is also (ab)used
-   (it is commonly and by standard used for HTTPS).
+1. Obtaining Wireguard configuration from the central hub administrators (they coordinate IP address assignment to clients);
 
--  Running the OpenVPN daemon on the server; server configuration is not
-   overly complicated, there are in fact many good tutorials available.
+2. Ensuring that the VPN endpoint (the ``Peer``/``Endpoint`` entry in the config file) is reachable from your machine (it runs at a dedicated port, so ensure your local network is not blocking outbound traffic to that IP/port).
 
--  Distributing OpenVPN configuration files (usually ending .ovpn) to
-   the clients.
+   .. note:: The node does not need to be reachable from outside, thus it is not necessary to open firewall for inbound traffic. The node establishes UDP connection to the hub, and it is kept open via periodic keep-alive packet from node to the hub (every 30s in usual configurations, via ``Peer/PersistentKeepalive`` option).
 
--  Clients have to connect to the VPN whenever they want to communicate
-   with the network - this can be done from the command-line or using
-   graphical interfaces.
+3. Deploying the configuration on the local node.
 
-Whenever a client connects to the OpenVPN server, the following happens:
+   * Windows: the configuration file can be imported straght into the Wireguard client.
+   * Linux, two options:
 
-#. The client is authenticated, either via username/password or
-   certificate.
+     * the config file is copied into ``/etc/wireguard/somename.conf`` (the name is arbitrary) and the VPN is started with `sudo wg-quick somename` (or started persistently with `sudo systemctl enable --now wg-quick@somename`.
+     * the config file is imported into NetworkManager via ``sudo nmcli connection import type wireguard file configfile.conf`` and subsequently the connection is saved persistently in NetworkManager and can be activated as other network connections. (You will need the wireguard module for NetworkManager installed for this to work)
 
-#. The client is handed an IP address from the VPN range, as specified
-   by ifconfig-pool configuration option, or assigned a fixed IP based
-   on the client configuration (client-config-dir), see `OpenVPN
-   Addressing <https://community.openvpn.net/openvpn/wiki/Concepts-Addressing>`__.
+Confirm that VPN connection works by pinging the central hub. The config file contains e.g. ``Address = 172.22.2.13/24``; replace the last number by ``1`` and test ping onto the machine: ``ping 172.22.2.1``. If the IP address is IPv6 (e.g. ``Address = fd4e:6fb7:b3af:0000::12/32``), also replace the last number by ``1``: ``ping fd4e:6fb7:b3af:0000::1``. If the ping responds, your VPN connection is working.
 
-#. The client’s OS assigns the IP address to a virtual network adapter
-   (tun0, tun1 etc in Linux) and sets IP routing accordingly. Depending
-   on server configuration, all non-local traffic (such as to public
-   internet hosts) may be routed through the VPN, or only traffic for
-   VPN will go through the VPN. At this moment, other clients of the VPN
-   become visible to the new client, and vice versa (it is client’s
-   responsibility to firewall the VPN interface, if desired).
+Whenever node connects to the Wireguard endpoint, the following happens:
 
-There are example scripts to generate OpenVPN configuration for MuPIF in
-*tools/vpn*. The script generates certificate authority and keys used
-for authentication of server and clients, and also for traffic
-encryption; those files must be slightly hand-adjusted for real use
-afterwards. The recommended configuration for MuPIF is the following
-(non-exhaustive; the `tutorial from digitalocean <https://www.digitalocean.com/community/tutorials/how-to-set-up-an-openvpn-server-on-ubuntu-16-04>`__ explains most of the procedure).
+#. The node is authenticated via its public key (stored in the hub);
 
-#. Use the usual “subnet” network topology.
+#. New network interface is created on the node, with IP address as specified in the Wireguard config file.
 
-#. IP addresses within the VPN may be assigned from the address pool,
-   but at least some machines should have fixed IP - this can be done
-   using the client-config-dir option. In particular, the Pyro
-   nameserver should have a well-known and stable IP address so that the
-   client configuration does not have to change; the best is to run the
-   OpenVPN server on the same computer where Pyro runs, then the IP
-   address will be stable.
+#. Routing is established such that *only* VPN traffic is routed through the hub.
 
-#. Only in-VPN traffic should be routed through the VPN (thus the
-   redirect-gateway option should not be used); communication of clients
-   with Internet will go through the usual ISP route of each client.
+#. The node is sending periodic keep-alive packets to the hub (``Peer/PersistentKeepalive`` option) so that di-directional connection is always possible.
 
-#. Firewall facing internet should allow UDP traffic on port 1194.
-   Optionally, other port can be used (even non-OpenVPN port, like
-   TCP/443, which is normally used for HTTPS). All traffic on the tun0
-   (or other number) interfaces should be allowed; one can use the “-i
-   tun+” option of iptables to apply a rule to any interface of which
-   name starts with tun.
 
-#. Keepalive option can be used to increase network reliability
-   (functions as both heart-beat & keep-alive).
+.. warning:: Do not install the same Wireguard configuration on multiple machines. Simultaneous connection to the hub would result in connection malfunction. If you need to connect several machines, request several Wireguard configurations.
 
-#. Authentication can be done using username & password, but key-based
-   authentication (client keys must be distributed to clients) is
-   recommended.
-
-#. The server is started either as a daemon (through init.d or systemd)
-   or from the commandline, in which case “Initialization Sequence
-   Completed” will be shown when ready to serve clients.
-
-Client configuration:
-
-#. If the configuration is distributed as .ovpn file with embedded keys,
-   the VPN can be activated from command-line by issuing sudo openvpn
-   --config client.ovpn. The client will say Initialization Sequence
-   Completed after successful connection to the VPN. Use Ctrl-C to
-   terminate the client and disconnect from the VPN.
-
-#. The GUI of NetworkManager can import the configuration and use it,
-   but not in all cases (embedded keys seem to be the problem), in which
-   case the .ovpn file can only contain filenames where the keys/certs
-   are stored, or the configuration can be created by hand through the
-   NetworkManager GUI.
-
-#. Connection to the VPN can be verified by issuing “ip addr show” which
-   should show the tun0 (or similar) interface with an IP assigned from
-   the OpenVPN server pool.
 
 Example of simulation scenario using VPN
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
