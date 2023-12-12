@@ -1,28 +1,15 @@
 Acknowledgements
 ===================
 
-The development of MuPIF has been funded by Grant Agency of the Czech
-Republic - Projects No. P105/10/1402.
 
-The development of the platform has been funded by FP7 under
-NMP-2013-1.4-1 call 1.4-1 "Development of an integrated multi-scale
-modelling environment for nanomaterials and systems by design" with
-Grant agreement no: 604279, entitled `Multiscale Modelling Platform:
-Smart design of nano-enabled products in green
-technologies <http://mmp-project.eu/>`__.
-
-The authors would like to acknowledge the EU support from Horizon 2020
-Project `Composelector <http://composelector.net/>`__, Contract N°:
-721105
+The development of the platform has been funded by several national and EU projects:
 
 
-.. note::
 
-   This is the alternative wording from the reference manual.
-
-   Since 2017, the development of the platform has been funded by H2020 project COMPOSELECTOR: "Multi-scale Composite Material Selection Platform with a Seamless Integration of Materials Models and Multidisciplinary Design Framework" with Grant agreement no: 721105.
-
-   During 2014-2016, the development of the platform was funded by FP7 project under NMP-2013-1.4-1 call 1.4-1 "Development of an integrated multi-scale modelling environment for nanomaterials and systems by design" with Grant agreement no: 604279.
-
-   During 2010-2012, the development of MuPIF was funded by Grant Agency of the Czech Republic, Project "MuPIF - a Multi-Physic Integration Framework" No. P105/10/1402.
+- Musicode - An experimentally-validated multi-scale materials, process and device modelling & design platform enabling non-expert access to open innovation in the Organic and Large Area Electronics Industry, EU H2020 project number 953187, 2021-2024.
+- Composelector - Multi-scale Composite Material Selection Platform with a Seamless Integration of Materials Models and Multidisciplinary Design Framework, EU H2020, Grant agreement no: 721105, 2017-2021.
+- Deema - Design and Optimisation Open Innovation HUB for Composites Modeling and Desig, TACR M-ERA.NET 2 project no. TH75020002, 2021-2024.
+- SUMO - Sustainable design empowered by materials modelling, semantic interoperability and multi-criteria optimization, Czech Science Foundation (GACR) project no. 22-35755K, 2022-2024.
+- MMP - Multiscale Modelling Platform: Smart design of nano-enabled products in green technologies, EU FP7, Grant agreement no: 604279, 2014-2016.
+- MuPIF - a Multi-Physic Integration Framework, Czech Science Foundation (GACR), Project No. P105/10/1402, 2010-2012.
 
