@@ -133,6 +133,8 @@ Wireguard VPN
 Integrating the local computer into the already set-up VPN requires a configuration file (to be received over a secure channel) for Wireguard. This is documented in `sect-vpn-setup`_.
 
 
+.. _sect-nameserver:
+
 Nameserver
 ~~~~~~~~~~~~~~
 
@@ -148,6 +150,7 @@ You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF ru
 
 
 .. _Platform-APIs:
+
 Platform APIs
 ================
 As mentioned above, MuPIF key idea is based on composing simulation workflows from a set of components with standartized interfaces.  
@@ -442,7 +445,7 @@ which must be placed immediately after the try block.
 
 
 First Steps - Simple workflow example
-======================
+===============================================
 
 The executable representation of simulation workflow in MuPIF is a Python script in Python language implemented using basic bulding blocks (called components) defined by MuPIF. 
 These components represent fundamental entities in the
@@ -955,7 +958,7 @@ Distributed aspects of the API
 -----------------------------------
 
 One of the important aspect in distributed model is how the data are
-exchanged between applications running at different locations. The Pyro4
+exchanged between applications running at different locations. The Pyro5
 communication layer allows to exchange data in terms of get and set API
 methods in two ways. The communication layer automatically takes care of
 any object that is passed around through remote method calls. The
@@ -984,9 +987,9 @@ Both approaches have their pros and cons and their relative efficiency
 depends on actual problem, the size of underlying data structures,
 frequency of operations on remote data, etc.
 
-Pyro4 will automatically take care of any Pyro4 objects that you pass
+Pyro5 will automatically take care of any Pyro5 objects that you pass
 around through remote method calls. If the autoproxying is set to on
-(AUTOPROXY = True by default), Pyro4 will replace objects by a proxy
+(AUTOPROXY = True by default), Pyro5 will replace objects by a proxy
 automatically, so the receiving side can call methods on it and be sure
 to talk to the remote object instead of to a local copy. There is no
 need to create a proxy object manually, a user just has to register the
@@ -996,7 +999,7 @@ passed objects (local versus remote).
 
 Typically, one wants to have explicit control whether objects are passed
 as proxies or local copies. The get methods (such as *getProperty*,
-*getField*) should not register the returned object at the Pyro4 daemon.
+*getField*) should not register the returned object at the Pyro5 daemon.
 When used, the remote receiving side obtains the local copy of the
 object. To obtain the remote proxy, one should use *getFieldURI* API
 method, which calls getField method, registers the object at the server
@@ -1006,7 +1009,7 @@ object from URI. This is illustrated in the following code snippet:
 .. code-block:: python
 
    field_uri = Solver.getFieldURI(DataID.FID_Temperature, 0.0)
-   field_proxy = Pyro4.Proxy(uri)
+   field_proxy = Pyro5.Proxy(uri)
 
 Requirements for distributed computing
 -------------------------------------------
@@ -1052,7 +1055,7 @@ Finally, the communication with remote application instances can be
 established using proxies created in the previous step, see :numref:`fig-jobmanager-control-flow`
 illustrating typical work flow in the distributed case.
 
-The job manager has only limited capability to control allocated
+The model server has only limited capability to control allocated
 resources. In the present implementation, the server administrator can
 impose the limit on number of allocated applications. The configuration
 of the jobmanager requires only simple editing of configuration file.
@@ -1065,7 +1068,7 @@ to concurrent thread processing.
 
    Typical control flow with resource allocation using ModelServer.
 
-The status of individual job managers can be monitored with the
+The status of individual model servers can be monitored with the
 jobManStatus.py script, located in tools subdirectory of the platform
 distribution. This script displays the status of individual jobs
 currently running, including their run time and user information. The
@@ -1074,7 +1077,7 @@ information displayed is continuously refreshed, see :numref:`fig-jobman-monitor
 .. _fig-jobman-monitor:
 .. figure:: img/jobman-monitor.png
 
-   Screenshot of Job Manager monitoring tool
+   Screenshot of model server monitoring tool
 
 The internal jobManager does not provide any user authentication service
 at the moment. The user access is assumed to be controlled externally,
@@ -1097,35 +1100,16 @@ Setting up a Model Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The skeleton for application server is distributed with the platform and
-is located in *examples/Example04-JobMan-distrib*. The following files
-are provided:
+is located in *examples/Example04-JobMan-distrib*.
 
--  server.py: The implementation of application server. It starts
-   ModelServer instance and corresponding daemon. Most likely, no changes
-   are required.
+The ``sever.py`` script runs the model server itself; it will become available for incoming connection (at an arbitrary port number, which is reachable from all clients in the VPN; see :numref:`sect-platform-installation` for details) and registers itself in the name server. Model will be then instantiated and executed upon request. (the :obj:`~mupif.ModelServer.runServer` is responsible for executing these steps).
 
--  serverConfig.py: configuration file for the server. The individual
-   entries have to be customized for particular server. Follow the
-   comments in the configuration file. In the example, the server is
-   configured to run on Unix-based system.
+Model server configuration options are :obj:`documented in the reference manual <mupif.ModelServer>`; of particular importance are the following parameters:
 
--  JobMan2cmd.py: python script that is started in a new process to
-   start the application instance and corresponding daemon. Its
-   behaviour can be customized by Config.py.
-
--  test.py: Python script to verify the jobManager functionality.
-
--  clientConfig.py: configuration file for client code (simulation
-   scenarios). The client can run on both Unix / Windows systems,
-   configuring correctly ssh client.
-
-The setup requires to install the platform, as described in :numref:`sect-platform-installation`, including the VPN.
-Also, the functional application API
-class is needed.
-
-The recommended procedure to set up job manager for your server is to
-create a separate directory, where you will copy the `server.py` file
-from *examples/Example04-JobMan-distrib* directory and customize settings.
+- ``ns``: name server is found via :obj:`mupif.pyroutil.connectNameserver` (the logic of using ``MUPIF_NS`` environemnt variable or configuration file is described in :numref:`sect-nameserver`);
+- ``appClass``: model class;
+- ``appName``: name under which the model will be registered in the name server;
+- :obj:`~mupif.ModelServerBase.maxJobs` limiting the number of concurrent instances running;
 
 :numref:`fig-thermo-mech-vpn` shows the distributed model running atop the VPN.
 
@@ -1135,67 +1119,52 @@ from *examples/Example04-JobMan-distrib* directory and customize settings.
    *Example16* thermo-mechanical analysis displaying ports in a distributed setup using VPN.
 
 
-Configuration
-~~~~~~~~~~~~~~~~~~~~
-
-.. todo:: UPDATE for last MuPIF release (most settings are no longer applicable).
-
-
-The configuration of the job manager consists of editing the
-configuration file (thermalServerConfig.py). The following variables can
-be used to customize the server settings:
-
-============================ ============================================================================================================================================================================================================================================================================================================================================================
-Variable                     Description
-server                       hostname or IP address of the application server, i.e.
-                            
-                             server='147.32.130.137'. serverPort where the server listens to. Nats needs to be defined in ssh mode only.
-serverUserName               user name to establish ssh connection to server, i.e. serverUserName='mmp'
-serverPort                   Server port where job manager daemon listens, i.e., serverPort=44361.
-serverNathost, serverNatport Port reported by nameserver used to establish tunnel to destination ModelServer port (jobManPort), i.e. serverNatpo=5555
-jobManName                   Name used to register jobManager at nameserver, i.e, jobManName='Mupif.ModelServer@micress'
-                            
-|                           
-portsForJobs                 List of dedicated ports to be assigned to application processes (recommended to provide more ports than maximum number of application instances, as the ports are not relesead immediately by operating system, see jobManMaxJobs)
-                            
-                             Example: portsForJobs=( 9091, 9092, 9093, 9094)
-maxJobs                      Maximum number of jobs that can be running at the same time, e.g. maxJobs = 20
-jobManWorkDir                Path to ModelServer working directory. In this directory, the subdirectories for individual jobs will be created and these will become working directories for individual applications. Users can upload/download files into these job working directories. Note: the user running job manager should have corresponding I/O (read/write/create) permissions.
-applicationClass             Class name of the application API class. The instance of this class will be created when new application instance is allocated by job manager. The corresponding python file with application API definition need to be imported.
-applicationInitialFile       Initial file read by an application.
-============================ ============================================================================================================================================================================================================================================================================================================================================================
-
-The individual ports can be selected by the server administrator, the
-ports from range 1024-49152 can be used by users / see IANA (Internet
-Assigned Numbers Authority).
-
 To start an application server run (*Example04-JobMan-distrib*)::
 
    $ python3 server.py
 
-The command logs on screen and also in the server.log logfile the
-individual requests.
+The command logs on screen and also in the ``server.log`` logfile the individual requests (as configured within ``setup.py``).
 
-The status of the application server can be monitored on-line from any
-computer using
-tools/jobManStatus.py monitor. To start monitoring, run e.g. the
-following command::
+The status of the all model servers can be shown on-line from any computer by running (provided ``MUPIF_NS`` is set correctly)::
 
-   $ python3 jobManStatus.py -j Mupif.ModelServer@Example -n 127.0.0.1*
+   $ python3 -m mupif.cli servers
 
-The -j option specifies the jobmanager name (as registered in pyro
-nameserver), -h determines the hostname where jobmanager runs, -p
-determines the port where jobmanager is listening, -n is hostname of the
-nameserver, see :numref:`fig-screen-jobman-test`.
 
-.. _fig-screen-jobman-test:
-.. figure:: img/screen-jobman-test.png
+.. json had to be adjusted to be highlighted correcetly: ' → ", True → true
 
-   Testing job manager in a simple setup
 
-There is also a simple test script (tools/jobManTest.py), that can be
-used to verify that the installation procedure was successful. It
-contact the application server and asks for new application instance.
+.. code-block:: json
+
+   [
+       {
+           "ns": {"name": "CVUT.demo01", "uri": "PYRO:obj_aca860f9d7834f2e8f8c81097f4981e2@172.24.1.1:38605", "metadata": {"type:jobmanager"}},
+           "numJobs": {"max": 4, "curr": 0, "total": 4303},
+           "jobs": [],
+           "status": true,
+           "signature": "Mupif.JobManager.ModelServer"
+       }
+   ]
+
+
+
+
+.. monitored on-line from any computer using ``tools/jobManStatus.py`` monitor. To start monitoring, run e.g. the following command::
+
+      $ python3 jobManStatus.py -j Mupif.ModelServer@Example -n 127.0.0.1*
+
+   The -j option specifies the jobmanager name (as registered in pyro
+   nameserver), -h determines the hostname where jobmanager runs, -p
+   determines the port where jobmanager is listening, -n is hostname of the
+   nameserver, see :numref:`fig-screen-jobman-test`.
+
+   .. _fig-screen-jobman-test:
+   .. figure:: img/screen-jobman-test.png
+
+      Testing model server in a simple setup
+
+   There is also a simple test script (tools/jobManTest.py), that can be
+   used to verify that the installation procedure was successful. It
+   contact the application server and asks for new application instance.
 
 .. _HPC:
 
@@ -1353,7 +1322,7 @@ References
    Available at `http://www.python.org <http://www.python.org/>`__
 
 #. Pyro - Python Remote Objects,
-   ` <http://pythonhosted.org/Pyro4>`__\ http://pythonhosted.org/Pyro
+   ` <http://pythonhosted.org/Pyro5>`__\ http://pythonhosted.org/Pyro
 
 #. B. Patzák, D. Rypl, and J. Kruis. MuPIF – a distributed multi-physics
    integration tool. Advances in Engineering Software, 60–61(0):89 – 97,
