@@ -117,18 +117,6 @@ To run the examples, go the the examples directory and use the ``runex.py`` scri
   python3 runex.py       # run all examples
   python3 runex.py 1 4 5 # run some examples
 
-MuPIF resources
----------------------------
-
-- `MuPIF project web page  <https://mupif.org/>`__
-- `MuPIF github repository <https://github.com/mupif/mupif.git>`__
-- `Online User manual and Reference manual <https://mupif.readthedocs.io/en/latest/#>`__ (this document)
-- The Musicode project MuPIF training video recordings are available on YouTube: `Musicode MuPIF training <https://youtu.be/oaN78pB8vxw>`__
-- The mupif/jupyter-demos repository on GitHub contains
-  - `MuPIF Tutorial for beginners <https://github.com/mupif/jupyter-demos/blob/main/Introduction/index.ipynb>`__
-  - `MuPIF Model API development tutorial <https://github.com/mupif/jupyter-demos/blob/main/API-development/index.ipynb>`__
-
-
 MuPIF Basic Infrastructure
 ---------------------------
 
@@ -156,6 +144,16 @@ This will ensure that your MuPIF installation will talk to the correct nameserve
 
 You can re-run the examples once ``MUPIF_NS`` is set and you should see MuPIF running the examples using the VPNs nameserver.
 
+MuPIF resources
+===========================
+
+- `MuPIF project web page  <https://mupif.org/>`__
+- `MuPIF github repository <https://github.com/mupif/mupif.git>`__
+- `Online User manual and Reference manual <https://mupif.readthedocs.io/en/latest/#>`__ (this document)
+- The Musicode project MuPIF training video recordings are available on YouTube: `Musicode MuPIF training <https://youtu.be/oaN78pB8vxw>`__
+- The mupif/jupyter-demos repository on GitHub contains
+  - `MuPIF Tutorial for beginners <https://github.com/mupif/jupyter-demos/blob/main/Introduction/index.ipynb>`__
+  - `MuPIF Model API development tutorial <https://github.com/mupif/jupyter-demos/blob/main/API-development/index.ipynb>`__
 
 Getting started with MuPIF 
 ======================
