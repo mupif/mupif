@@ -30,3 +30,4 @@ The EDM allows to map entity attributes to simulation workflow inputs (determini
 can be mapped to newly cloned entities representing updated configuration(s). The EDM can be regarded as hypergraph, 
 where nodes represent entity states and edges representing processes.
 At the same time, MuPIF can interface to 3rd party DMS via its generic foreign DMS interface layer. 
+
