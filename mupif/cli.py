@@ -20,6 +20,10 @@ def version():
 
 
 @app.command()
+def servers():
+    return jobmans()
+
+@app.command()
 def jobmans():
     import mupif.monitor, mupif.pyroutil
     print(mupif.monitor.jobmanInfo(ns=mupif.pyroutil.connectNameserver()))
