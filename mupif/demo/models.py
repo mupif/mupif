@@ -308,7 +308,7 @@ class ThermalModel(mupif.model.Model):
                 fn = './field_' + str(uuid.uuid4()) + '.vtk'
                 meshiofield.write(fn)
                 field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_VTKFile)
-                if hasattr(context,'_pyroDaemon'): self._pyroDaemon.register(field_file)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
                 return field_file
 
         # Field
@@ -1297,7 +1297,7 @@ class MechanicalModel(mupif.model.Model):
                 fn = './field_' + str(uuid.uuid4()) + '.vtk'
                 meshiofield.write(fn)
                 field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_VTKFile)
-                if hasattr(context,'_pyroDaemon'): self._pyroDaemon.register(field_file)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
                 return field_file
         else:
             raise mupif.apierror.APIError('Unknown field ID')
