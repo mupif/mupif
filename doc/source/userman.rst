@@ -155,13 +155,20 @@ MuPIF resources
   - `MuPIF Tutorial for beginners <https://github.com/mupif/jupyter-demos/blob/main/Introduction/index.ipynb>`__
   - `MuPIF Model API development tutorial <https://github.com/mupif/jupyter-demos/blob/main/API-development/index.ipynb>`__
 
+
+
 Getting started with MuPIF 
-======================
+============================
+
+.. toctree::
+
+   notebooks/mupif-getting_started.ipynb
 
 
 
-Simple workflow example
---------------------------
+Example: workflow with two models
+----------------------------------
+
 The executable representation of simulation workflow in MuPIF is a Python script in Python language implemented using basic bulding blocks (called components) defined by MuPIF. 
 These components represent fundamental entities in the
 model space (such as individual models (simulation tools), instances of data types, solution

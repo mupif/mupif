@@ -27,6 +27,7 @@ sphinx<7.0
 sphinxcontrib-apidoc
 sphinxcontrib-mermaid
 sphinx-rtd-theme
+myst-nb
 setproctitle
 tqdm
 typer
