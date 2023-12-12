@@ -333,9 +333,9 @@ class Field(FieldBase,HeavyConvertible):
             # localizer in the newer version returns cell id, not the cell object, check that here
             if isinstance(next(iter(cells)), int):
                 cells = [self.mesh.getCell(ic) for ic in cells]
-            for ic,c in enumerate(cells):
-                for iv,v in enumerate(c.getVertices()):
-                    print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
+            #for ic,c in enumerate(cells):
+            #    for iv,v in enumerate(c.getVertices()):
+            #        print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
 
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
