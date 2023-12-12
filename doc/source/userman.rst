@@ -1130,9 +1130,6 @@ The status of the all model servers can be shown on-line from any computer by ru
    $ python3 -m mupif.cli servers
 
 
-.. json had to be adjusted to be highlighted correcetly: ' → ", True → true
-
-
 .. code-block:: json
 
    [
