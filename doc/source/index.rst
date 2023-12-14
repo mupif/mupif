@@ -17,7 +17,7 @@ Welcome to MuPIF's documentation!
    :numbered:
    
    intro.rst
-   userman.rst
+   user/index.rst
    acknowledgement.rst
    changelog.rst
    dev.rst
