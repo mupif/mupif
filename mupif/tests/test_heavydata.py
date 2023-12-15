@@ -517,6 +517,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
             t0.setJson(data)
             self.assertEqual(t0.getJson(),data)
 
+
     def test_31_namingConvention(self):
         schema='''
             [{
@@ -564,6 +565,24 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(len(bb),len(a0.refBB_raw))
             for b,name in zip(bb,['zeroth','first','second','first','zeroth']): self.assertEqual(b.name,name)
             self.assertEqual(len(a.refBB),3) # same dataset as a.refB
+
+    def test_33_schema_fragment(self):
+        schema='''
+            [{
+                "_schema": { "name": "test" },
+                "group":{
+                    "prop1":{"dtype":"d","shape":[3,3],"description":"desc1","uri":"http://example.com/1","mapsto":"foo1"},
+                    "prop2":{"dtype":"d","unit":"AA","description":"desc2","uri":"http://example.com/2","mapsto":"foo2"}
+                }
+            }]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as a:
+            a.resize(1)
+            grp=a.getGroup()
+            self.assertEqual(grp.schema_fragment,{'prop1': {'dtype': 'd', 'shape': [3, 3], 'description': 'desc1', 'uri': 'http://example.com/1', 'mapsto': 'foo1'}, 'prop2': {'dtype': 'd', 'unit': 'AA', 'description': 'desc2', 'uri': 'http://example.com/2', 'mapsto': 'foo2'}})
+            self.assertEqual(grp.schema_fragment['prop1']['description'],'desc1')
+            self.assertEqual(grp.schema_fragment['prop2']['mapsto'],'foo2')
+
 
 
     def test_40_mupifObject(self):
