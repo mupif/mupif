@@ -36,8 +36,18 @@ extensions = [
     'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
     'sphinx_rtd_theme',
-    'sphinx.ext.intersphinx'
+    'sphinx.ext.intersphinx',
+    'myst_nb',
 ]
+
+source_suffix={
+    '.rst':'restructuredtext',
+    '.ipynb':'myst-nb',
+}
+
+# don't run notebooks at readthedocs, just put it inline as it is
+nb_execution_mode='off'
+
 
 import sys, os.path
 

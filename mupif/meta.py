@@ -64,7 +64,7 @@ class SolverMeta(pydantic.BaseModel):
 # the first positional argument is the default value, doc translates to JSON Schema description field
 class ExecutionMeta(pydantic.BaseModel):
     '''Execution metadata, for use by the MuPIF infrastructure.'''
-    ID: str
+    ID: str = ''
     Use_case_ID: Union[str, int] = ''
     Task_ID: str = ''
     Log_URI: str = Field('',description='Internal use only: Pyro URI of the remote logger object, valid only when the workflow is running.')

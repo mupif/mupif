@@ -15,7 +15,7 @@ def jobmanInfo(ns, logLines=10):
     for name, (uri, metadata) in query.items():
         jobman = Pyro5.api.Proxy(uri)
         jm = {}
-        jm['ns'] = dict(name=name, uri=uri, metadata=metadata)
+        jm['ns'] = dict(name=name, uri=uri, metadata=list(metadata))
         try:
             se = jobman.getStatusExtended()
             jm['numJobs'] = dict(max=se.get('maxJobs', -1), curr=len(se['currJobs']), total=se['totalJobs'])
@@ -49,7 +49,7 @@ def schedulerInfo(ns):
     ret = []
     for name, (uri, metadata) in query.items():
         sch = {}
-        sch['ns'] = dict(name=name, uri=uri, metadata=metadata)
+        sch['ns'] = dict(name=name, uri=uri, metadata=list(metadata))
         s = Pyro5.api.Proxy(uri)
         st = s.getStatistics()
         sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'], currentLoad=st['currentLoad'])

@@ -509,6 +509,8 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
         T_name = 'Context_'+schemaName+'_'+prefix.replace('.', '_')
     assert namingConvention in ['get-set','property']
 
+    meth['schema_fragment']=property(fget=lambda self,desc=desc: desc)
+
     for key, val in desc.items():
         try:
             # fully-qualified name: for messages and compound field name in h5py
@@ -1069,6 +1071,8 @@ Top contexts (on the level of the schema) define a few special methods:
 
 * ``resize`` which will change the number of rows; new rows will be always set to the default values. When passing the argument ``reset=True`` to ``resize``, all rows will be default-initialized.
 * ``inject`` will replace the current context's data with data from another context (recursively); the routine will take care to resize structures as necessary. Schema names must be matching, and differences in schema versions will be reported as warning (it will be possible to user-define transformation for converting between different schema versions). The data exchange happens using serialized format which can be obtained and consumed using ``to_dump()`` and ``from_dump(…)`` methods.
+
+Each parent group defines a special property ``schema_fragment`` which returns the schema as Python structure; this is to allow custom entries in the schema (such as descriptions or ontology mappings) to be accessed by the user.
 
     '''
 
