@@ -20,6 +20,18 @@ class ValueType(IntEnum):
     VectorArray = 5
     TensorArray = 6
 
+    @staticmethod
+    def getValueFromQuantity(q):
+        shape = q.value.shape
+        dimension = len(shape)
+        if dimension == 0:
+            return ValueType.Scalar
+        if dimension == 1:
+            return ValueType.Vector
+        if dimension == 2:
+            return ValueType.Tensor
+        return None
+
     def getNumberOfComponents(self):  # this function is probably no longer valid
         return {ValueType.Scalar: 1, ValueType.Vector: 3, ValueType.Tensor: 9}[self]
 
