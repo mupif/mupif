@@ -57,7 +57,7 @@ class ThermalModel(mupif.model.Model):
                     {
                         "Name": "Input file",
                         "Type": "mupif.PyroFile",
-                        "Required": True,
+                        "Required": False,
                         "Type_ID": "mupif.DataID.ID_InputFile",
                         "Obj_ID": "input_file_thermal",
                         "Set_at": "initialization",
@@ -702,7 +702,7 @@ class ThermalNonstatModel(ThermalModel):
                 {
                     "Name": "Input file",
                     "Type": "mupif.PyroFile",
-                    "Required": True,
+                    "Required": False,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": "input_file_thermal_nonstat",
                     "Set_at": "initialization",
@@ -1026,7 +1026,7 @@ class MechanicalModel(mupif.model.Model):
                 {
                     "Name": "Input file",
                     "Type": "mupif.PyroFile",
-                    "Required": True,
+                    "Required": False,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": "input_file_mechanical",
                     "Set_at": "initialization",
