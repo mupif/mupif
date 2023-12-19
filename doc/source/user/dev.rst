@@ -371,7 +371,7 @@ configurations.
 Workflow generator
 --------------------
 Workflow structure can be defined in a graphical user interface, which can translate the structure into a Python implementation of MuPIF Workflow class.
-The workflow structure must be represented in a JSON format, which follows a schema definition at https://github.com/mupif/webWE/blob/master/project_schema.json
+The workflow structure must be represented in a JSON format, which follows a schema definition at https://json-schema-viewer.vercel.app/view?url=https://raw.githubusercontent.com/mupif/webWE/master/project_schema.json&expand_buttons=on&show_breadcrumbs=on
 Such schema describes components (workflow, models, variables, loops, conditions, ...) as blocks with input and output dataslots. The data flow is defined by datalinks connecting the dataslots.
 
 With project https://github.com/mupif/webWE a workflow JSON representation can be transformed into a Python code with Node.js application with
