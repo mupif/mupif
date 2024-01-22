@@ -276,7 +276,7 @@ if 0:
                             "mupif.String",
                             "mupif.ParticleSet",
                             "mupif.GrainState",
-                            "mupif.PiecewiseLinFunction",
+                            "mupif.Function",
                             "mupif.DataList[mupif.Property]",
                             "mupif.DataList[mupif.TemporalProperty]",
                             "mupif.DataList[mupif.Field]",

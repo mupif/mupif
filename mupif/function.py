@@ -58,7 +58,8 @@ class Function(data.Data):
     valueType: ValueType
     unit: units.Unit
     # inputs
-    inputs: Dict[str, FunctionInputDefinition]
+    inputs:  dict = pydantic.Field(default_factory=dict)
+    # inputs: Dict[str, FunctionInputDefinition]
 
     def __init__(self, *, metadata={}, **kw):
         """
