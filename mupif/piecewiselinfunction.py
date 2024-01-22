@@ -25,6 +25,14 @@ class PiecewiseLinFunction(Function, DbDictable):
     def __init__(self, *, metadata={}, **kw):
         x = kw['x']
         y = kw['y']
+        if 'valueType' in kw:
+            del kw['valueType']
+        if 'unit' in kw:
+            del kw['unit']
+        if 'inputs' in kw:
+            del kw['inputs']
+        if 'metadata' in kw:
+            del kw['metadata']
         super().__init__(
             metadata=metadata,
             inputs={"x": {
