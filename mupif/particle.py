@@ -22,6 +22,7 @@
 #
 import Pyro5
 from . import data
+from . import DataID
 
 import typing
 import pydantic
@@ -81,7 +82,7 @@ class ParticleSet(data.Data):
     ParticleSet keeps position vector for each particle and optional attributes (user defined) identified by key for each particle.
     """
 
-    id: int
+    id: DataID
     size: int                    #: number of particles in the set
     xc: typing.List[float] = []  #: array of particle x coordinates
     yc: typing.List[float] = []  #: array of particle y coordinates

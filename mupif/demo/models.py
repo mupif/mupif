@@ -2,11 +2,11 @@ import os
 import mupif
 import mupif as mp
 import Pyro5
-from . import meshgen
 import math
 import numpy as np
 import time as timeTime
 import logging
+import uuid
 
 log = logging.getLogger('ex01_models')
 
@@ -40,7 +40,7 @@ class ThermalModel(mupif.model.Model):
                         "Type": "mupif.Property",
                         "Required": False,
                         "Type_ID": "mupif.DataID.PID_Temperature",
-                        "Units": "degC",
+                        "Units": "deg_C",
                         "Obj_ID": [
                             "Cauchy top",
                             "Cauchy bottom",
@@ -57,11 +57,11 @@ class ThermalModel(mupif.model.Model):
                     {
                         "Name": "Input file",
                         "Type": "mupif.PyroFile",
-                        "Required": True,
+                        "Required": False,
                         "Type_ID": "mupif.DataID.ID_InputFile",
                         "Obj_ID": "input_file_thermal",
                         "Set_at": "initialization",
-                        "Units": "none"
+                        "Units": ""
                     }
                 ],
                 "Outputs": [
@@ -69,8 +69,13 @@ class ThermalModel(mupif.model.Model):
                         "Name": "temperature",
                         "Type_ID": "mupif.DataID.FID_Temperature",
                         "Type": "mupif.Field",
-                        "Required": False,
-                        "Units": "degC"
+                        "Units": "deg_C"
+                    },
+                    {
+                        "Name": "temperatureVTK",
+                        "Type_ID": "mupif.DataID.ID_VTKFile",
+                        "Type": "mupif.PyroFile",
+                        "Units": ""
                     }
                 ],
                 "Solver": {
@@ -198,7 +203,7 @@ class ThermalModel(mupif.model.Model):
         # self.ny = 10 # number of elements in y direction
         # self.dx = self.xl / self.nx
         # self.dy = self.yl / self.ny
-        self.mesh = meshgen.meshgen((0., 0.), (self.xl, self.yl), self.nx, self.ny, self.tria)
+        self.mesh = mupif.demo.meshgen((0., 0.), (self.xl, self.yl), self.nx, self.ny, self.tria)
 
         #
         # Model edges
@@ -280,16 +285,15 @@ class ThermalModel(mupif.model.Model):
         # print (self.loc)
 
     def get(self, objectTypeID, time=None, objectID=""):
-
         # Field
-        if objectTypeID == mupif.DataID.FID_Temperature:
+        if objectTypeID == mupif.DataID.FID_Temperature or objectTypeID == mupif.DataID.ID_VTKFile:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
                     values.append((0.,))
                 else:
                     values.append((self.T[self.loc[i]],))
-            return mupif.field.Field(
+            return_field = mupif.field.Field(
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Temperature,
                 valueType=mupif.ValueType.Scalar,
@@ -297,6 +301,15 @@ class ThermalModel(mupif.model.Model):
                 time=time,
                 value=values
             )
+            if objectTypeID == mupif.DataID.FID_Temperature:
+                return return_field
+            if objectTypeID == mupif.DataID.ID_VTKFile:
+                meshiofield = mupif.Field.manyToMeshioMesh([return_field])
+                fn = './field_' + str(uuid.uuid4()) + '.vtk'
+                meshiofield.write(fn)
+                field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_VTKFile)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
+                return field_file
 
         # Field
         elif objectTypeID == mupif.DataID.FID_Material_number:
@@ -621,10 +634,10 @@ class ThermalModel(mupif.model.Model):
                         for edge in self.convectionModelEdges:
                             if edge[0] == edge_index:
                                 idx = self.convectionModelEdges.index(edge)
-                                self.convectionModelEdges[idx] = (edge_index, obj.getValue()[0], edge[2])
+                                self.convectionModelEdges[idx] = (edge_index, obj.getValue(), edge[2])
                                 edge_found = True
                         if not edge_found:
-                            self.convectionModelEdges.append((edge_index, obj.getValue()[0], 1.))
+                            self.convectionModelEdges.append((edge_index, obj.getValue(), 1.))
 
                 # Dirichlet
                 edge_ids = ['Dirichlet bottom', 'Dirichlet right', 'Dirichlet top', 'Dirichlet left']
@@ -635,10 +648,10 @@ class ThermalModel(mupif.model.Model):
                         for edge in self.dirichletModelEdges:
                             if edge[0] == edge_index:
                                 idx = self.dirichletModelEdges.index(edge)
-                                self.dirichletModelEdges[idx] = (edge_index, obj.getValue()[0])
+                                self.dirichletModelEdges[idx] = (edge_index, obj.getValue())
                                 edge_found = True
                         if not edge_found:
-                            self.dirichletModelEdges.append((edge_index, obj.getValue()[0]))
+                            self.dirichletModelEdges.append((edge_index, obj.getValue()))
 
             else:
                 raise mupif.apierror.APIError('Unknown property ID')
@@ -672,7 +685,7 @@ class ThermalNonstatModel(ThermalModel):
                     "Type": "mupif.Property",
                     "Required": False,
                     "Type_ID": "mupif.DataID.PID_Temperature",
-                    "Units": "degC",
+                    "Units": "deg_C",
                     "Obj_ID": [
                         "Cauchy top",
                         "Cauchy bottom",
@@ -689,11 +702,11 @@ class ThermalNonstatModel(ThermalModel):
                 {
                     "Name": "Input file",
                     "Type": "mupif.PyroFile",
-                    "Required": True,
+                    "Required": False,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": "input_file_thermal_nonstat",
                     "Set_at": "initialization",
-                    "Units": "none"
+                    "Units": ""
                 }
             ],
             "Outputs": [
@@ -701,8 +714,13 @@ class ThermalNonstatModel(ThermalModel):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
-                    "Required": False,
-                    "Units": "degC",
+                    "Units": "deg_C",
+                },
+                {
+                    "Name": "temperatureVTK",
+                    "Type_ID": "mupif.DataID.ID_VTKFile",
+                    "Type": "mupif.PyroFile",
+                    "Units": ""
                 }
             ],
             "Solver": {
@@ -1001,18 +1019,18 @@ class MechanicalModel(mupif.model.Model):
                     "Name": "temperature",
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
-                    "Units": "degC",
+                    "Units": "deg_C",
                     "Required": True,
                     "Set_at": "timestep"
                 },
                 {
                     "Name": "Input file",
                     "Type": "mupif.PyroFile",
-                    "Required": True,
+                    "Required": False,
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": "input_file_mechanical",
                     "Set_at": "initialization",
-                    "Units": "none"
+                    "Units": ""
                 },
                 {
                     "Name": "Prescribed displacement",
@@ -1035,8 +1053,13 @@ class MechanicalModel(mupif.model.Model):
                     "Name": "displacement",
                     "Type_ID": "mupif.DataID.FID_Displacement",
                     "Type": "mupif.Field",
-                    "Required": False,
                     "Units": "m",
+                },
+                {
+                    "Name": "displacementVTK",
+                    "Type_ID": "mupif.DataID.ID_VTKFile",
+                    "Type": "mupif.PyroFile",
+                    "Units": ""
                 }
             ],
             "Solver": {
@@ -1099,6 +1122,9 @@ class MechanicalModel(mupif.model.Model):
         self.T = None
 
         self.input_file = None
+
+        ns = mupif.pyroutil.connectNameserver()
+        self.daemon = mupif.pyroutil.getDaemon(ns)
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
@@ -1188,7 +1214,7 @@ class MechanicalModel(mupif.model.Model):
         # self.ny = 10 # number of elements in y direction
         # self.dx = self.xl / self.nx
         # self.dy = self.yl / self.ny
-        self.mesh = meshgen.meshgen((0., 0.), (self.xl, self.yl), self.nx, self.ny)
+        self.mesh = mupif.demo.meshgen((0., 0.), (self.xl, self.yl), self.nx, self.ny)
 
         #
         # Model edges
@@ -1200,7 +1226,7 @@ class MechanicalModel(mupif.model.Model):
         #
 
         # self.dirichletModelEdges=(3,4,1)#
-        self.dirichletBCs = {}  # key is node number, value is prescribed temperature (zero supported only now)
+        self.dirichletBCs = {}  # key is node number, value is prescribed displacement (zero supported only now)
         for ide in self.dirichletModelEdges:
             if ide == 1:
                 for i in range(self.nx + 1):
@@ -1245,7 +1271,7 @@ class MechanicalModel(mupif.model.Model):
         # print "loc:", self.loc
 
     def get(self, objectTypeID, time=None, objectID=""):
-        if objectTypeID == mupif.DataID.FID_Displacement:
+        if objectTypeID == mupif.DataID.FID_Displacement or objectTypeID == mupif.DataID.ID_VTKFile:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
@@ -1256,7 +1282,7 @@ class MechanicalModel(mupif.model.Model):
                     else:
                         values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
 
-            return mupif.field.Field(
+            return_field = mupif.field.Field(
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Displacement,
                 valueType=mupif.ValueType.Vector,
@@ -1264,6 +1290,15 @@ class MechanicalModel(mupif.model.Model):
                 time=time,
                 value=values
             )
+            if objectTypeID == mupif.DataID.FID_Displacement:
+                return return_field
+            if objectTypeID == mupif.DataID.ID_VTKFile:
+                meshiofield = mupif.Field.manyToMeshioMesh([return_field])
+                fn = './field_' + str(uuid.uuid4()) + '.vtk'
+                meshiofield.write(fn)
+                field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_VTKFile)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
+                return field_file
         else:
             raise mupif.apierror.APIError('Unknown field ID')
 

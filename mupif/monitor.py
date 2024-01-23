@@ -15,22 +15,30 @@ def jobmanInfo(ns, logLines=10):
     for name, (uri, metadata) in query.items():
         jobman = Pyro5.api.Proxy(uri)
         jm = {}
-        jm['ns'] = dict(name=name, uri=uri, metadata=metadata)
+        jm['ns'] = dict(name=name, uri=uri, metadata=list(metadata))
         try:
             se = jobman.getStatusExtended()
             jm['numJobs'] = dict(max=se.get('maxJobs', -1), curr=len(se['currJobs']), total=se['totalJobs'])
             jm['jobs'] = se['currJobs']
+            jm['status']=True
         except AttributeError:
             jm['jobs'] = jobman.getStatus()
             jm['numJobs'] = dict(max=-1, curr=len(jm['jobs']), total=-1)
+            jm['status'] = False
         for job in jm['jobs']:
             fmt = logging.Formatter(fmt='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s')
             if 'remoteLogUri' in job:
-                ll = Pyro5.api.Proxy(job['remoteLogUri']).tail(logLines, raw=True)
-                if isinstance(ll, dict):
-                    ll = serpent.tobytes(ll)
-                ll=pickle.loads(ll)
-                job['tail'] = [fmt.format(rec) for rec in ll]
+                try:
+                    ll = Pyro5.api.Proxy(job['remoteLogUri']).tail(logLines, raw=True)
+                    if isinstance(ll, dict):
+                        ll = serpent.tobytes(ll)
+                    ll=pickle.loads(ll)
+                    job['tail'] = [fmt.format(rec) for rec in ll]
+                except:
+                    log.exception("Error getting remote log (non-fatal)")
+                    job['tail']=[f"<ERROR getting remote log from URI \"{job['remoteLogUri']}\">"]
+
+
         jm['signature'] = jobman.getApplicationSignature()
         ret.append(jm)
     return ret
@@ -41,10 +49,11 @@ def schedulerInfo(ns):
     ret = []
     for name, (uri, metadata) in query.items():
         sch = {}
-        sch['ns'] = dict(name=name, uri=uri, metadata=metadata)
+        sch['ns'] = dict(name=name, uri=uri, metadata=list(metadata))
         s = Pyro5.api.Proxy(uri)
         st = s.getStatistics()
-        sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'])
+        sch['numTasks'] = dict(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'], currentLoad=st['currentLoad'])
+        sch['history'] = dict(pooledTasks48=st['pooledTasks48'], processedTasks48=st['processedTasks48'], finishedTasks48=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48'])
         sch['lastExecutions'] = [dict(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
         ret.append(sch)
         if 'getExecutions' not in dir(s):
@@ -57,7 +66,9 @@ def schedulerInfo(ns):
             except KeyError:
                 continue
             try:
-                rawTail = pickle.loads(serpent.tobytes(Pyro5.api.Proxy(lg).tail(10, raw=True)))
+                proxy = Pyro5.api.Proxy(lg)
+                proxy._pyroTimeout = 0.2
+                rawTail = pickle.loads(serpent.tobytes(proxy.tail(10, raw=True)))
                 rr[ex['_id']] = dict(tail=rawTail)
             except Pyro5.errors.CommunicationError:
                 log.debug(f'Error getting tail of weid {ex["_id"]}, logger {lg}')
@@ -70,6 +81,7 @@ def vpnInfo(geoIpDb=None,hidePriv=True):
     import subprocess
     import json
     import datetime
+    import os.path
 
     rret = {}
     try:
@@ -95,11 +107,15 @@ def vpnInfo(geoIpDb=None,hidePriv=True):
         activePeers = dict([(peerKey, peerData) for peerKey, peerData in dta['peers'].items() if 'transferRx' in peerData])
         ret['bytes'] = dict(tx=sum([p['transferTx'] for p in activePeers.values()]), rx=sum([p['transferRx'] for p in activePeers.values()]))
         ret['peers'] = []
+        pubkey2name={}
+        if os.path.exists(js:=os.path.expanduser(f'~/persistent/peers-{iface}.json')):
+            pubkey2name=json.load(open(js,'r'))
         for peerKey, peerData in activePeers.items():
             peer = dict(
                 vpnAddr=peerData['allowedIps'][0],
-                bytes=dict(tx=peerData['transferTx'], rx=peerData['transferRx']),
+                bytes=dict(tx=peerData['transferTx'],rx=peerData['transferRx']),
                 publicKey=peerKey,
+                name=pubkey2name.get(peerKey,''),
                 lastHandshake=datetime.datetime.fromtimestamp(peerData.get('latestHandshake', 0)),
                 remote=None
             )

@@ -21,7 +21,7 @@ services:
            sudo wg-quick up central
            sudo wg show
            # bind the nameserver to the VPN *only*
-           pyro5-ns -n 192.168.132.1 
+           pyro5-ns -n 192.168.132.1 -p 10000
         # expose is only informative
         # this is where wireguard is exposed on the "outer" (LAN) interface
         expose: ['11111'] 
@@ -39,7 +39,7 @@ services:
            sudo wg show
            ping -c2 central       # pings central through client1net
            ping -c2 192.168.132.1 # pings central through the VPN
-           PYTHONPATH=.. python3 mechanicalServer.py --mode=local-noconf
+           MUPIF_NS=192.168.132.1:10000 PYTHONPATH=.. python3 mechanicalServer.py
     client2:
         image: wg
         depends_on: ['central']
@@ -54,7 +54,7 @@ services:
            sudo wg show
            ping -c2 central
            ping -c2 192.168.132.1
-           PYTHONPATH=.. python3 thermalServer.py --mode=local-noconf
+           MUPIF_NS=192.168.132.1:10000 PYTHONPATH=.. python3 thermalServer.py
     client3:
         image: wg
         depends_on: ['central']
@@ -69,4 +69,4 @@ services:
            sudo wg show
            ping -c4 central
            ping -c4 192.168.132.1
-           PYTHONPATH=.. python3 Example07.py --mode=local-noconf
+           MUPIF_NS=192.168.132.1:10000 PYTHONPATH=.. python3 Example07.py

@@ -1,8 +1,8 @@
 import typer
-try:
-    from rich import print
-except ImportError:
-    pass
+import rich
+import warnings
+
+def print_json_data(data): rich.print_json(data=data)
 
 app = typer.Typer()
 
@@ -10,25 +10,30 @@ app = typer.Typer()
 @app.command()
 def vpn():
     import mupif.monitor
-    print(mupif.monitor.vpnInfo())
+    print_json_data(mupif.monitor.vpnInfo())
 
 
 @app.command()
 def version():
     import mupif.util
-    print(mupif.util.getVersion()._asdict())
+    print_json_data(mupif.util.getVersion()._asdict())
 
 
 @app.command()
-def jobmans():
+def servers():
     import mupif.monitor, mupif.pyroutil
-    print(mupif.monitor.jobmanInfo(ns=mupif.pyroutil.connectNameserver()))
+    print_json_data(mupif.monitor.jobmanInfo(ns=mupif.pyroutil.connectNameserver()))
+
+@app.command()
+def jobmans():
+    warnings.warn('"jobmans" command is deprecated, use "servers" instead.',DeprecationWarning,stacklevel=2)
+    return servers()
 
 
 @app.command()
 def schedulers():
     import mupif.monitor, mupif.pyroutil
-    print(mupif.monitor.schedulerInfo(ns=mupif.pyroutil.connectNameserver()))
+    print_json_data(mupif.monitor.schedulerInfo(ns=mupif.pyroutil.connectNameserver()))
 
 
 @app.command()
@@ -76,7 +81,7 @@ app.add_typer(ns_app := typer.Typer(), name='ns',)
 @ns_app.command()
 def list():
     import mupif.monitor
-    print(mupif.monitor.nsInfo())
+    print_json_data(mupif.monitor.nsInfo())
 
 
 def main():

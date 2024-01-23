@@ -26,7 +26,9 @@ class Workflow13(mp.Workflow):
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
                  'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"},
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
-                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"},
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Delay', "Obj_ID": 'delay',
+                 'Description': 'Delay in seconds', 'Units': 's', 'Required': False, "Set_at": "timestep", "ValueType": "Scalar"}
             ],
             "Outputs": [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
@@ -61,10 +63,12 @@ if __name__ == '__main__':
 
     value_1 = 3.
     value_2 = 2.
+    delay = 1.
 
     # inputs
     param_1 = mp.ConstantProperty(value=value_1, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
     param_2 = mp.ConstantProperty(value=value_2, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
+    param_delay = mp.ConstantProperty(value=delay, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=None)
 
     workflow = Workflow13()
 
@@ -81,6 +85,7 @@ if __name__ == '__main__':
     # set the input values to the workfow which passes it to the models
     workflow.set(param_1, objectID='1')
     workflow.set(param_2, objectID='2')
+    workflow.set(param_delay, objectID='delay')
 
     workflow.solve()
     res_property = workflow.get(mp.DataID.PID_Time, 1.*mp.U.s)

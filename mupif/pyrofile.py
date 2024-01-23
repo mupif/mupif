@@ -32,6 +32,8 @@ import shutil
 import logging
 import deprecated
 import pydantic
+import requests
+import uuid
 import os.path
 from .baredata import Utility
 from typing import Optional
@@ -167,3 +169,12 @@ class PyroFile(Utility):
             # log.error(f'← {len(data)} b')
             dst.setChunk(data)
         dst.close()
+
+    @staticmethod
+    def makeFromUrl(url):
+        r = requests.get(url, allow_redirects=True)
+        fn = os.getcwd() + os.pathsep + 'pf_' + str(uuid.uuid4())
+        f = open(fn, 'wb')
+        f.write(r.content)
+        f.close()
+        return PyroFile(filename=fn, mode='rb')

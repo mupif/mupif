@@ -35,7 +35,7 @@ import urllib.parse
 import os.path
 import deprecated
 from . import model
-from . import jobmanager
+from . import modelserverbase
 from . import util
 from . import apierror
 from .pyrofile import PyroFile
@@ -368,7 +368,13 @@ def runAppServer(*, appName, app, ns):
     )
 
 
-def runJobManagerServer(*, ns, jobman):
+
+
+@deprecated.deprecated(reason='Use runModelServer instead')
+def runJobManagerServer(*args,**kw):
+    return runModelServer(*args,**kw)
+
+def runModelServer(*, ns, jobman):
     """
     Registers and runs given jobManager server
 
@@ -425,7 +431,11 @@ def getUserInfo():
     return username, hostname
 
 
-def connectJobManager(ns, jobManName):
+@deprecated.deprecated(reason='Use connectModelServer instead')
+def connectJobManager(*args,**kw):
+    return connectModelServer(*args,**kw)
+
+def connectModelServer(ns, jobManName):
     """
     Connect to jobManager described by given jobManRec and create an optional ssh tunnel
 
@@ -436,10 +446,14 @@ def connectJobManager(ns, jobManName):
     :raises Exception: if creation of a tunnel failed
     """
 
-    return jobmanager.RemoteJobManager(_connectApp(ns, jobManName))
+    return modelserverbase.RemoteModelServer(_connectApp(ns, jobManName))
 
 
-def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
+@deprecated.deprecated(reason='Use allocateApplicationWithModelServer instead')
+def allocateApplicationWithJobManager(*args,**kw):
+    return allocateApplicationWithModelServer(*args,**kw)
+
+def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri):
     """
     Request new application instance to be spawned by  given jobManager.
     
@@ -460,10 +474,10 @@ def allocateApplicationWithJobManager(*, ns, jobMan, remoteLogUri):
             status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri)
         except TypeError:
             status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
-            log.warning('JobManager.allocateJob failed with remoteLogUri, remote logging disabled.')
-        log.info(f'Allocated job, returned record from jobManager: {status},{jobid},{jobport}')
+            log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
+        log.info(f'Allocated job, returned record from modelServer: {status},{jobid},{jobport}')
     except Exception:
-        log.exception("JobManager allocateJob() failed")
+        log.exception("ModelServerBase allocateJob() failed")
         print("| ".join(Pyro5.errors.get_pyro_traceback()))
         raise
     return model.RemoteModel(_connectApp(ns, jobid), jobMan=jobMan, jobID=jobid)
@@ -481,4 +495,4 @@ def allocateNextApplication(*, ns, jobMan, remoteLogUri):
     :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
-    return allocateApplicationWithJobManager(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri)
+    return allocateApplicationWithModelServer(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri)
