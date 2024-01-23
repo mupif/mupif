@@ -1,19 +1,16 @@
+import mupif
 import Pyro5
-import sys
+import subprocess
 import os
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../..')
-import mupif as mp
-import logging
-log = logging.getLogger()
 
 
 @Pyro5.api.expose
-class MUPIF_T_demo(mp.Model):
+class MUPIF_T_demo(mupif.Model):
     def __init__(self, metadata=None):
 
         MD = {
             "ClassName": "MUPIF_T_demo",
-            "ModuleName": "mupif_demo_thermal",
+            "ModuleName": "mupif_demo_thermal_executable",
             "Name": "MUPIF demo API thermal",
             "ID": "MUPIF_Thermal_demo",
             "Description": "MUPIF thermal demo solver",
@@ -46,12 +43,6 @@ class MUPIF_T_demo(mp.Model):
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
                     "Units": "deg_C"
-                },
-                {
-                    "Name": "temperatureVTK",
-                    "Type_ID": "mupif.DataID.ID_VTKFile",
-                    "Type": "mupif.PyroFile",
-                    "Units": ""
                 }
             ],
             "Solver": {
@@ -95,25 +86,20 @@ class MUPIF_T_demo(mp.Model):
         self.input_temperature_top_top_edge = None
         self.input_temperature_bottom_bottom_edge = None
         self.output_temperature = None
-        self.output_temperatureVTK = None
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
 
     def get(self, objectTypeID, time=None, objectID=""):
-        if objectTypeID == mp.DataID.FID_Temperature:
+        if objectTypeID == mupif.DataID.FID_Temperature:
             if self.output_temperature is None:
                 raise ValueError("Value not defined")
             return self.output_temperature
-        if objectTypeID == mp.DataID.ID_VTKFile:
-            if self.output_temperatureVTK is None:
-                raise ValueError("Value not defined")
-            return self.output_temperatureVTK
 
     def set(self, obj, objectID=""):
-        if obj.isInstance(mp.Property) and obj.getDataID() == mp.DataID.PID_Temperature and objectID == "top_edge":
+        if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "top_edge":
             self.input_temperature_top_top_edge = obj
-        if obj.isInstance(mp.Property) and obj.getDataID() == mp.DataID.PID_Temperature and objectID == "bottom_edge":
+        if obj.isInstance(mupif.Property) and obj.getDataID() == mupif.DataID.PID_Temperature and objectID == "bottom_edge":
             self.input_temperature_bottom_bottom_edge = obj
 
     def getApplicationSignature(self):
@@ -126,6 +112,7 @@ class MUPIF_T_demo(mp.Model):
         for inp in [self.input_temperature_top_top_edge, self.input_temperature_bottom_bottom_edge]:
             if inp is None:
                 raise ValueError("A required input was not defined")
+
         # create input file from template
         file = open('inp_mupif_thermal.in', 'rt')
         inp_content = file.read()
@@ -138,23 +125,18 @@ class MUPIF_T_demo(mp.Model):
         file.write(inp_content)
         file.close()
 
-        # execute mupif thermal model
-        model = mp.demo.ThermalModel()
-        model.initialize(metadata={'Execution': self.getMetadata('Execution')})
-        input_file = mp.PyroFile(filename='./temp_mupif_thermal.in', mode="rb", dataID=mp.DataID.ID_InputFile)
-        model.set(input_file)
-        ts = mp.TimeStep(time=0, dt=1, targetTime=1, unit=mp.U.s, number=1)
-        model.solveStep(ts)
-        self.output_temperature = model.get(mp.DataID.FID_Temperature, time=tstep.getTargetTime())
-        self.output_temperatureVTK = model.get(mp.DataID.ID_VTKFile, time=tstep.getTargetTime())
+        # execute the thermal solver
+        result = subprocess.run(['/home/stanislav/Projects/mupif/APIs/demo_thermo_mechanical/exec_thermal.py', 'temp_mupif_thermal.in', 'temperature_field.h5'], capture_output=True, encoding='UTF-8', cwd=os.getcwd())
 
+        # load the output temperature field
+        self.output_temperature = mupif.Field.makeFromHdf5(fileName='temperature_field.h5')[0]
 
 
 if __name__ == '__main__':
     import mupif_demo_thermal
 
-    ns = mp.pyroutil.connectNameserver()
-    jobMan = mp.SimpleJobManager(
+    ns = mupif.pyroutil.connectNameserver()
+    jobMan = mupif.SimpleJobManager(
         ns=ns,
         appClass=mupif_demo_thermal.MUPIF_T_demo,
         appName='CVUT.Thermal_demo',

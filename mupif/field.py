@@ -333,9 +333,9 @@ class Field(FieldBase,HeavyConvertible):
             # localizer in the newer version returns cell id, not the cell object, check that here
             if isinstance(next(iter(cells)), int):
                 cells = [self.mesh.getCell(ic) for ic in cells]
-            for ic,c in enumerate(cells):
-                for iv,v in enumerate(c.getVertices()):
-                    print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
+            #for ic,c in enumerate(cells):
+            #    for iv,v in enumerate(c.getVertices()):
+            #        print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
 
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
@@ -680,7 +680,7 @@ class Field(FieldBase,HeavyConvertible):
     def toHdf5Group(self, fieldGrp, meshLink=None):
         if meshLink is not None:
             fieldGrp['mesh'] = meshLink
-        fieldGrp.attrs['fieldID'] = self.fieldID
+        fieldGrp.attrs['fieldID'] = self.fieldID.name
         fieldGrp.attrs['valueType'] = self.valueType
         # string/bytes may not contain NULL when stored as string in HDF5
         # see http://docs.h5py.org/en/2.3/strings.html

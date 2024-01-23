@@ -22,10 +22,23 @@
 #
 from builtins import object
 import Pyro5.api
+from . import dataid
+from . import units
+from . import data
+from .mupifquantity import ValueType
+from .property import ConstantProperty
+
+import pydantic
+from typing import Dict
+
+
+class FunctionInputDefinition(pydantic.BaseModel):
+    valueType: ValueType
+    unit: units.Unit
 
 
 @Pyro5.api.expose
-class Function(object):
+class Function(data.Data):
     """
     Represents a function.
 
@@ -39,15 +52,25 @@ class Function(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, funcID, objectID=""):
+
+    # return value
+    dataID: dataid.DataID
+    valueType: ValueType
+    unit: units.Unit
+    # inputs
+    inputs:  dict = pydantic.Field(default_factory=dict)
+    # inputs: Dict[str, FunctionInputDefinition]
+
+    def __init__(self, *, metadata={}, **kw):
         """
         Initializes the function.
 
         :param DataID funcID: function ID, e.g. FuncID_ProbabilityDistribution
         :param int objectID: Optional ID of associated subdomain, default 0
         """
+        super().__init__(metadata=metadata, **kw)
 
-    def evaluate(self, d):
+    def evaluate(self, p):
         """
         Evaluates the function for given parameters packed as a dictionary.
 
@@ -55,23 +78,16 @@ class Function(object):
         including other container types. Dictionaries consist of pairs (called items)
         of keys and their corresponding values.
 
-        Example: d={'x':(1,2,3), 't':0.005} initializes dictionary contaning tuple (vector) under 'x' key, double value 0.005 under 't' key. Some common keys: 'x': position vector 't': time
+        Example: p={'x':(1,2,3)*mupif.U.m, 't':0.005*mupif.U.s} initializes parameter dictionary contaning vector quantity under 'x' key and scalar quantity under 't' key.
 
-        :param dictionary d: Dictionaty containing function arguments (number and type depends on particular function)
+        :param dictionary p: Dictionary containing function arguments (number and type depends on particular function)
         :return: Function value evaluated at given position and time
-        :rtype: int, float, tuple
+        :rtype: ConstantProperty
         """
-    def getID(self):
+    def getDataID(self):
         """
         Obtain function's ID.
 
         :return: Returns receiver's ID.
-        :rtype: int
-        """
-    def getObjectID(self):
-        """
-        Get optional ID of associated subdomain.
-
-        :return: Returns receiver's object ID,
         :rtype: int
         """

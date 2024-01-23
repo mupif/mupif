@@ -19,9 +19,9 @@ jobs:
         python-version: [ '3.8', '3.9', '3.10' ]
       # max-parallel: 1 # avoid localhost conflicts
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -55,9 +55,9 @@ jobs:
 #      matrix:
 #        python-version: [3.8]
 #    steps:
-#    - uses: actions/checkout@v2
+#    - uses: actions/checkout@v4
 #    - name: Set up Python ${{ matrix.python-version }}
-#      uses: actions/setup-python@v2
+#      uses: actions/setup-python@v4
 #      with:
 #        python-version: ${{ matrix.python-version }}
 #    - name: Install dependencies
@@ -83,12 +83,12 @@ jobs:
   test-docker-VPN:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     # this should somehow enable persistent docker layer cache
     # so that we don't have to build the full image from scratch (ubuntu:20.04)
     # every time
     # see https://github.com/marketplace/actions/docker-layer-caching
-    - uses: satackey/action-docker-layer-caching@v0.0.11
+    - uses: jpribyl/action-docker-layer-caching@v0.1.1
       continue-on-error: true
     - name: Distributed example on Docker containers in VPN
       run: |
@@ -104,9 +104,9 @@ jobs:
         python-version: [3.8] # , 3.9]
       max-parallel: 1
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies

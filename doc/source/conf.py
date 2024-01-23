@@ -33,10 +33,30 @@ release = '3.x'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
     'sphinxcontrib.mermaid',
+    'sphinx_rtd_theme',
+    'sphinx.ext.intersphinx',
+    'myst_nb',
 ]
 
+source_suffix={
+    '.rst':'restructuredtext',
+    '.ipynb':'myst-nb',
+}
+
+# don't run notebooks at readthedocs, just put it inline as it is
+nb_execution_mode='off'
+
+
 import sys, os.path
+
+# resolve :obj:`astropy:...` to astropy's docs (this is conveniently used in docstrings of astropy objects)
+intersphinx_mapping = {
+   'astropy': ('https://docs.astropy.org/en/stable',None),
+}
+
+autodoc_pydantic_model_show_json_error_strategy='coerce'
 
 thisDir=os.path.dirname(os.path.abspath(__file__))
 
@@ -45,6 +65,11 @@ thisDir=os.path.dirname(os.path.abspath(__file__))
 #apidoc_toc_file='api'
 #apidoc_excluded_paths=[]
 #apidoc_module_first=True
+
+todo_include_todos=True
+
+autodoc_pydantic_model_show_json = True
+autodoc_pydantic_settings_show_json = True
 
 
 sys.path.append(thisDir+'/../..')
@@ -83,17 +108,7 @@ latex_documents=[('index','mupif.tex','MuPIF Documentation',
 
 # -- Options for HTML output -------------------------------------------------
 
-# https://readthedocsorg.readthedocs.io/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
-
-# use ReadTheDocs theme both locally and when building docs at readthedocs.io
-import os
-on_rtd=os.environ.get('READTHEDOCS',None)=='True'
-if not on_rtd:
-    import sphinx_rtd_theme
-    html_theme='sphinx_rtd_theme'
-    html_theme_path=[sphinx_rtd_theme.get_html_theme_path()]
-else:
-    html_theme='default'
+html_theme='sphinx_rtd_theme'
 
 #html_theme_options=dict(
 #    github_banner=True,
@@ -114,3 +129,33 @@ html_context=dict(
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_css_files=[
+    'custom.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css'
+]
+
+
+##### generate data schemas so that readthedocs.io serves them at a known URL
+import mupif as mp
+import os
+import json
+os.makedirs('_static/schema',exist_ok=True)
+open('_static/schema/ModelMeta.json','w').write(mp.meta.ModelMeta.schema_json())
+open('_static/schema/WorkflowMeta.json','w').write(mp.meta.WorkflowMeta.schema_json())
+open('_static/schema/HeavyStruct.json','w').write(json.dumps(mp.heavystruct.HeavyStructSchemaModel))
+
+if 0:
+    ## customize which members to exclude
+    ## see https://stackoverflow.com/a/3757526
+    def autodoc_skip_member(app, what, name, obj, skip, options):
+        print(f'{what=} {name=} {obj=}')
+        if hasattr(obj,'__self__'): print(f'{obj.__self__=}')
+        # don't skip methods in ObjectBase itself
+        if type(obj)==mp.ObjectBase: return False
+        if name in ('Config','copy','dict','isInstance','json'): return True
+        if what=='classmethod': return True
+        return False
+
+    def setup(app):
+        app.connect('autodoc-skip-member', autodoc_skip_member)

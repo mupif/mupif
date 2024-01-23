@@ -489,8 +489,8 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertRaises(TypeError,lambda: t0.setLst100(100*['hi']))
             self.assertRaises(BaseException,lambda: t0.setLst100(['this contains the | delimiter and should fail']))
             t0.setLst100(10*['lst100'])
-            print(t0.getLst100())
-            print(10*['lst100'])
+            #print(t0.getLst100())
+            #print(10*['lst100'])
             self.assertRaises(BaseException,lambda: t0.setLst(['contains the ||| delimiter and should fail']))
             self.assertRaises(TypeError,lambda: t0.setLst('this is a string, not a list'))
             t0.setLst(1000*['dynamic-string-list'])
@@ -516,6 +516,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
             data=['abc',dict(foo='bar',baz='baz',d={'123':456})]
             t0.setJson(data)
             self.assertEqual(t0.getJson(),data)
+
 
     def test_31_namingConvention(self):
         schema='''
@@ -565,6 +566,24 @@ class HeavyStruct_TestCase(unittest.TestCase):
             for b,name in zip(bb,['zeroth','first','second','first','zeroth']): self.assertEqual(b.name,name)
             self.assertEqual(len(a.refBB),3) # same dataset as a.refB
 
+    def test_33_schema_fragment(self):
+        schema='''
+            [{
+                "_schema": { "name": "test" },
+                "group":{
+                    "prop1":{"dtype":"d","shape":[3,3],"description":"desc1","uri":"http://example.com/1","mapsto":"foo1"},
+                    "prop2":{"dtype":"d","unit":"AA","description":"desc2","uri":"http://example.com/2","mapsto":"foo2"}
+                }
+            }]
+        '''
+        with mp.HeavyStruct(mode='create-memory',schemaName='test',schemasJson=schema) as a:
+            a.resize(1)
+            grp=a.getGroup()
+            self.assertEqual(grp.schema_fragment,{'prop1': {'dtype': 'd', 'shape': [3, 3], 'description': 'desc1', 'uri': 'http://example.com/1', 'mapsto': 'foo1'}, 'prop2': {'dtype': 'd', 'unit': 'AA', 'description': 'desc2', 'uri': 'http://example.com/2', 'mapsto': 'foo2'}})
+            self.assertEqual(grp.schema_fragment['prop1']['description'],'desc1')
+            self.assertEqual(grp.schema_fragment['prop2']['mapsto'],'foo2')
+
+
 
     def test_40_mupifObject(self):
         # this schema defines "someSchema" object type, with two entries
@@ -609,6 +628,12 @@ class HeavyStruct_TestCase(unittest.TestCase):
             valOld,valNew=f2.evaluate((.1,.1,.1)),f2a.evaluate((.1,.1,.1))
             self.assertEqual(valOld.unit,valNew.unit)
             np.testing.assert_almost_equal(valOld.value,valNew.value)
+
+
+    def test_50_schema(self):
+        import jsonschema
+        import json
+        jsonschema.validate(json.loads(mp.heavystruct.sampleSchemas_json),mp.heavystruct.HeavyStructSchemaModel)
 
 
 

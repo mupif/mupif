@@ -10,7 +10,7 @@ import application2
 ns = mp.pyroutil.connectNameserver()
 
 # Run job manager on a server
-jobMan = mp.SimpleJobManager(
+jobMan = mp.ModelServer(
     ns=ns,
     appClass=application2.Application2,
     appName='mupif/example04/jobMan',

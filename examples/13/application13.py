@@ -4,6 +4,7 @@ import Pyro5
 import logging
 sys.path.extend(['..', '../..'])
 import mupif as mp
+import time
 
 log = logging.getLogger()
 
@@ -45,7 +46,9 @@ class Application13(mp.Model):
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_1', "Obj_ID": '1',
                  'Description': 'Input value 1', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"},
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Value_2', "Obj_ID": '2',
-                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"}
+                 'Description': 'Input value 2', 'Units': 's', 'Required': True, "Set_at": "timestep", "ValueType": "Scalar"},
+                {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Delay', "Obj_ID": 'delay',
+                 'Description': 'Delay in seconds', 'Units': 's', 'Required': False, "Set_at": "timestep", "ValueType": "Scalar"}
             ],
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
@@ -57,6 +60,7 @@ class Application13(mp.Model):
         self.result = 0.
         self.value_1 = 0.
         self.value_2 = 0.
+        self.delay = 0.
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
@@ -79,10 +83,14 @@ class Application13(mp.Model):
                     self.value_1 = obj.inUnitsOf(mp.U.s).getValue()
                 if objectID == '2':
                     self.value_2 = obj.inUnitsOf(mp.U.s).getValue()
+                if objectID == 'delay':
+                    if obj is not None:
+                        self.delay = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
         log.error("solveStep() of model13")
         self.result = self.value_1 * self.value_2
+        time.sleep(self.delay)
 
     def getCriticalTimeStep(self):
         return 1000.*mp.U.s

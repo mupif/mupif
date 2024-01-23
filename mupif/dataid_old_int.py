@@ -5,42 +5,8 @@ FunctionID is deprecated and will be removed
 """
 from enum import Enum, auto, IntEnum
 
-# Schema for metadata
-DataSchema = {
-    "type": "object",
-    "properties": {
-        "Type": {"type": "string"},  # Automatically generated from MuPIF, e.g. mupif.field.Field
-        "Type_ID": {"type": "string"},  # Automatically generated from MuPIF, e.g. DataID.FID_Temperature
-        "Name": {"type": "string"},  # e.g. "Density of inclusion"
-        "ID": {"type": ["string", "integer"]},  # Unique ID
-        "Description": {"type": "string"},  # Further description
-        "Units": {"type": "string"},  # Automatically generated from MuPIF, e.g. "kg"
-        "ValueType": {"type": "string"},  # Automatically generated
-        "Origin": {"type": "string", "enum": ["Experiment", "User_input", "Simulated"]},
-        "Experimental_details": {"type": "string"},
-        "Experimental_record": {"type": "string"},  # If applies, link to corresponding experimental record
-        "Estimated_std": {"type": "number"},  # Percent of standard deviation
-        "Execution": {
-            "properties": {
-                "ID": {"type": ["string", "integer"]},  # Optional execution ID
-                "Use_case_ID": {"type": ["string", "integer"]},  # If Simulated, give reference to Use_case_ID
-                "Task_ID": {"type": "string"}  # If Simulated, give reference to Task_ID
-            },
-            "required": []
-        }
-    },
-    "required": [
-        "Type", "Type_ID", "Units", "ValueType"
-    ]
-}
 
-
-class AutoName(Enum):
-    def _generate_next_value_(name, start, count, last_values):
-        return name
-
-
-class DataID(AutoName):
+class DataID(IntEnum):
     """
     This class represents the supported values of IDs of property, field, etc.
     Values of members should be stored by .name, .value should not be used.
@@ -420,7 +386,7 @@ class DataID(AutoName):
     PID_HeaterTemperature = auto()
     PID_BeltTemperature = auto()
     PID_BeltVelocity = auto()
-    PID_InletFlowRate = auto()
+    PID_InletVelocity = auto()
     PID_InletTemperature = auto()
     PID_OutletVelocity = auto()
 
@@ -431,24 +397,14 @@ class DataID(AutoName):
     PID_TinflowPolymer = auto()
     PID_PolymerConcentration = auto()
 
-    # for results (ascii or hdf5) and pdf report
-    PID_TinflowResultFile = auto()
-    PID_TinflowReportFile = auto()
+    # only for test/debug
+    PID_TinflowFileProperty = auto()
 
     # SLOTDIE
     PID_FilmThickness = auto()
     PID_FilmTemperature = auto()
 
     # DRYER
-    PID_InletFlowRateChamber1 = auto()
-    PID_InletFlowRateChamber2 = auto()
-    PID_InletFlowRateChamber3 = auto()
-    PID_InletTemperatureChamber1 = auto()
-    PID_InletTemperatureChamber2 = auto()
-    PID_InletTemperatureChamber3 = auto()
-    PID_ExhaustFlowRateChamber1 = auto()
-    PID_ExhaustFlowRateChamber2 = auto()
-    PID_ExhaustFlowRateChamber3 = auto()
     FID_FilmThickness = auto()
     FID_FilmTemperature = auto()
     FID_FilmConcentration = auto()
@@ -456,12 +412,12 @@ class DataID(AutoName):
 
     # GASPROCESS
     PID_SubstrateTemperature = auto()
-    PID_ProcessPressure = auto()
-    PID_InletFlowRateBackground = auto()
-    PID_InletFlowRateSolvent = auto()
+    PID_InletPressure = auto()
+    PID_InletFlowRate = auto()
     PID_DepositionRate = auto()
-    PID_DepositionRateType = auto()
-    FID_DepositionRate = auto()
+    FID_Velocity2D = auto()
+    FID_Velocity3D = auto()
+    FID_PropertyDistribution = auto()
 
     # TinniT Material Database
     PID_Material = auto()
@@ -486,15 +442,22 @@ class DataID(AutoName):
     PID_CriticalDensity = auto()
     PID_AcentricFactor = auto()
 
-    # Special properties for low pressure
-    PID_LennardJonesEnergy = auto()
-    PID_CollisionDiameter = auto()
-    PID_DoFMotion = auto()
-    PID_ThermalAccomodation = auto()
-
     #
 
     PID_Width = auto()
+
+    # PID_SolverTimeSteps = auto()
+    # PID_SolverStartFilm = auto()
+    # PID_SolverOutputStep = auto()
+    # PID_TinflowModelConfig = auto()
+    # PID_FlagNewModel = auto()
+    # PID_FlagRestart = auto()
+    # PID_FlagPostProcess = auto()
+    # PID_FlagVerbose = auto()
+    # PID_TinflowInputFile = auto()
+    # PID_SolverDeltaT = auto()
+
+    #
 
     ID_Displacement = auto()
     ID_Strain = auto()

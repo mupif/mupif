@@ -23,7 +23,13 @@
 
 import os
 import Pyro5
+import numpy
+import copy
+import logging
+import importlib
+import pydantic
 import time as timeTime
+
 from . import model
 from . import timestep
 from . import units
@@ -31,96 +37,10 @@ from . import Property
 from . import DataID
 from . import U
 from . import pyroutil
-import numpy
-import copy
-import logging
-from collections.abc import Iterable
-import importlib
-import pydantic
-from typing import List, Union
+from .meta import WorkflowMeta
 
 log = logging.getLogger()
 
-
-class ModelsMeta(pydantic.BaseModel):
-    Name: str
-    Module: str = ''
-    Class: str = ''
-    Jobmanager: str = ''
-
-    @pydantic.root_validator(pre=False)
-    def _moduleClass_or_jobmanager(cls, values):
-        if values['Jobmanager'] == '':
-            assert values['Module'] != '' and values['Name'] != ''
-        return values
-
-
-class WorkflowMeta(pydantic.BaseModel):
-    Name: str
-    ID: Union[str, int]
-    Description: str
-    # Physics: PhysicsMeta
-    # Solver: SolverMeta
-    Execution: model.ExecutionMeta
-    Inputs: List[model.InputMeta] = []
-    Outputs: List[model.OutputMeta] = []
-    Models: List[ModelsMeta] = []
-
-
-WorkflowSchema = copy.deepcopy(model.ModelSchema)
-del WorkflowSchema["properties"]["Solver"]
-del WorkflowSchema["properties"]["Physics"]
-WorkflowSchema["properties"].update({
-    "Dependencies": {  # This i automatically generated according to self._models List.
-        "type": "array",  # List of contained models/workflows
-        "items": {
-            "type": "object",  # Object supplies a dictionary
-            "properties": {
-                "Label": {"type": "string"},  # Explicit label, given to the model/workflow by its parent workflow.
-                "Name": {"type": "string"},  # Obtained automatically from Model metadata.
-                "ID": {"type": ["string", "integer"]},  # Obtained automatically from Model metadata.
-                "Version_date": {"type": "string"},  # Obtained automatically from Model metadata.
-                "Type": {"type": "string", "enum": ["Model", "Workflow"]},  # Filled automatically.
-                "Dependencies": {"type": "array"}  # Object supplies a dictionary
-            },
-            "required": ["Name", "ID", "Version_date", "Type"]
-        }
-    },
-    "Models": {
-        "type": "array",  # List of contained models/workflows definition
-        "items": {
-            "type": "object",  # Object supplies a dictionary
-            "properties": {
-                "Name": {"type": "string"},  # specifies access to the model using self.getModel('Name')
-                "Module": {"type": "string"},
-                "Class": {"type": "string"},
-                "Jobmanager": {"type": "string"},
-                "Instantiate": {"type": "boolean"},
-            },
-            "required": ["Name"],
-            "anyOf": [
-                {"required": ["Module", "Class"]},  # local module with the workflow class
-                {"required": ["Jobmanager"]}  # remote model
-            ]
-        }
-    },
-    "EDMMapping": {
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "Name": {"type": "string"},
-                "EDMEntity": {"type": "string"},
-                "DBName": {"type": "string"},
-                "createFrom": {"type": "string"},
-                "createNew": {"type": "object"},
-                "EDMList": {"type": "boolean"}
-            },
-            "required": ["Name", "EDMEntity", "DBName"]
-        }
-    },
-})
-WorkflowSchema["required"] = ["Name", "ID", "Description", "Execution", "Inputs", "Outputs", "Models"]
 
 workflow_input_targetTime_metadata = {
     'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'targetTime', 'Description': 'Target time value',
