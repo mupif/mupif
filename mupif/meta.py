@@ -161,9 +161,21 @@ class ModelMeta(ModelWorkflowCommonMeta):
     Physics: PhysicsMeta
     Solver: SolverMeta
 
+class ModelConfiguration(pydantic.BaseModel):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
 
+class WorkflowConfiguration(pydantic.BaseModel):
+     Name: str
+     Cost: str # $, $$, or $$$
+     Description: str
+     Models: List[ModelConfiguration]
+
+     
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
+    ExecutionProfiles:Optional[List[WorkflowConfiguration]]
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()

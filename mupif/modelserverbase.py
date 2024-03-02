@@ -23,6 +23,7 @@
 
 import logging
 import os
+import socket
 import Pyro5
 import tempfile
 import warnings
@@ -158,6 +159,10 @@ class ModelServerBase(object):
         """
         """
     def getNSName(self):
+        worker_name = "%s_%d@%s" % (self.applicationName, os.getpid(), socket.gethostname())
+        return worker_name
+    
+    def getName(self):
         return self.applicationName
 
     # implemented in SimpleJobManager
