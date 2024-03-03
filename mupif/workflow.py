@@ -153,7 +153,7 @@ class Workflow(model.Model):
             if model_info.get('Instantiate', True):
                 name=model_info.get('Name', '')
                 if (executionProfile < 0):
-                    self._allocateModel(name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+                    self._allocateModel(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
                 else:
                     executionProfile = self.metadata['ExecutionProfiles'][executionProfile]
                     mep = None
