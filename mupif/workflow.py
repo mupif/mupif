@@ -99,6 +99,28 @@ class Workflow(model.Model):
                 self._models[name] = model_class()
                 return self._models[name]
         return None
+    
+    def _allocateModelWithMetadata(self, *, name, modulename, classname, modelConfiguration):
+        if name:
+            if modelConfiguration:
+                ns = pyroutil.connectNameserver()
+                metadata = modelConfiguration['RequiredModelMetadata'].copy()
+                optionalMetaData = modelConfiguration['OptionalModelMetadata'].copy()
+                metadata.add(name)
+                #print ("_allocateModelWithMetadata:")
+                #print(name, metadata, optionalMetaData)
+                self._jobmans[name] = pyroutil.connectModelServerWithMetadata(ns, metadata, optionalMetaData )
+                #print (self._jobmans[name])
+                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI', ''))
+                #print (self._models[name])
+                return self._models[name]
+            elif classname and modulename:
+                moduleImport = importlib.import_module(modulename)
+                model_class = getattr(moduleImport, classname)
+                self._models[name] = model_class()
+                return self._models[name]
+        return None
 
     def _allocateModelByName(self, *, name, name_new=None):
         if name_new is None:
@@ -121,9 +143,28 @@ class Workflow(model.Model):
         # for model_info in self.metadata['Models']:
         #     if model_info.get('Instantiate', True):
         #         self._allocateModelByName(name=model_info.get('Name', ''), name_new=model_info.get('Name', ''))
+        executionProfile = -1
+        print (self.metadata['Execution'])
+        if 'ExecutionProfileIndx' in self.metadata['Execution']:
+            executionProfile = self.metadata['Execution']['ExecutionProfileIndx']
+
+        print("Workflow::executionProfile #%d"%(executionProfile,))
         for model_info in self.metadata['Models']:
             if model_info.get('Instantiate', True):
-                self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+                name=model_info.get('Name', '')
+                if (executionProfile < 0):
+                    self._allocateModel(name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+                else:
+                    executionProfile = self.metadata['ExecutionProfiles'][executionProfile]
+                    mep = None
+                    for ep in executionProfile['Models']:
+                        if (ep['Name'] == name):
+                            mep = ep
+                            break
+                    if (mep):
+                        self._allocateModelWithMetadata(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), modelConfiguration=mep)
+                    else:
+                        log.fatal("Workflow::_allocateModels: model (%s) execution profile missing for configuration %d"%(name, executionProfile))
 
     def _initializeAllModels(self):
         _md = self._getInitializationMetadata()
@@ -315,7 +356,7 @@ class Workflow(model.Model):
 
     def printListOfModels(self):
         print("List of child models:")
-        print([m.__class__.__name__ for m in self.getListOfModels()])
+        print([(m.__class__.__name__, m.getApplicationSignature()) for m in self.getListOfModels()])
 
     def generateModelDependencies(self):
         dependencies = []
