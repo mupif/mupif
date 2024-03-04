@@ -291,49 +291,45 @@ def _connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestT
             raise Exception('_connectAppWithMetadata: NS yplookup failed')
         # now to select optimal candidate
         # if optionalMData are empty select random one
-        print(candidates)
-        if (not optionalMData):
-            name = random.choice(list(candidates.keys()))
-            uri = candidates[name][0]
-        else:
-            # try to match the candidate satisfying also optionalMData
-            candidateScore = -1 #negative to ensure the first option overrides
-            for key, value in candidates.items():
-                # c[0] URI, c[1] metadata
+        candidateScores = {}
+        print("Candidates:", candidates)
+        # assign each candidate a score 
+        for key, value in candidates.items():
+            name = key
+            if (not optionalMData):
+                candidateScores[name]=1 # all candidates will have the same score if no optional metedata 
+            else:
+                # value[0] URI, value[1] metadata
                 # select the optimal one as the one matching max number of optionalMData entries
                 score = len(optionalMData.intersection(value[1]))
-                if (score>candidateScore):
-                    name = key
-                    uri = value[0]
-                    candidateScore = score
-            
-        log.debug(f"Application {name}, found URI {uri} on {getNSConnectionInfo(ns,name)} from a nameServer {ns._pyroUri}")
-        app2 = Pyro5.api.Proxy(uri)
+                candidateScores[name]=score
+        
+        # now sort candidates (mekes sense onbly if optional metadata exist)
+        if (not optionalMData):
+            orderedCandidates = candidates
+        else:
+            orderedCandidates = collections.OrderedDict(sorted(candidates.items(), key=lambda item: item[1], reverse=True))
+        
+        #ok now go over orderedCandidates and try to connect 
+        for key, val in orderedCandidates.items():
+            name = key
+            uri=val[0]
+            app = Pyro5.api.Proxy(uri)
+            log.info(f"Trying to Connect to application {name} with {uri}")
+            try:
+                app._pyroTimeout = connectionTestTimeOut
+                sig = app.getApplicationSignature()
+                app._pyroTimeout = None
+                log.info("Connected to " + sig + " with the application " + name)
+                return app
+            except Exception as e:
+                log.exception(f"Cannot connect to application {name}. Is the server running?")
+                continue
+        # we ended here withou succesfull connection
+        raise Exception("PyroUtil::Cannot connect to any suitable candidate")
+    
     except Exception as e:
-        log.error(f"Cannot find registered server {name} on {ns}")
         raise
-
-    try:
-        log.info(f"Connecting to application {name} with {app2._pyroUri}")
-        # By default, Pyro waits an indefinite amount of time for the call to return. 
-        # When testing connection to an remote object via _connectApp, the object getSignature method is called.
-        # The connection timeout is set for this call. after this, the timeout is reset to default.
-        # When timeout is passed, Pyro4.errors.CommunicationError is thrown.
-        # This is essential to detect the case when, for example, object has been registered at namesever, 
-        # but is not operational at the moment.
-        app2._pyroTimeout = connectionTestTimeOut
-        sig = app2.getApplicationSignature()
-        app2._pyroTimeout = None
-        log.debug("Connected to " + sig + " with the application " + name)
-    except Pyro5.core.errors.CommunicationError as e:
-        log.exception("Communication error (network config?).")
-        print("|".join(Pyro5.errors.get_pyro_traceback()))
-        raise
-    except Exception as e:
-        log.exception(f"Cannot connect to application {name}. Is the server running?")
-        raise
-
-    return app2
 
 def connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestTimeOut=10.):
     return _connectAppWithMetadata(ns, requiredMData, optionalMData, connectionTestTimeOut)

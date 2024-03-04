@@ -39,7 +39,7 @@ class Example15(mp.Workflow):
                     'Models': [
                         {
                             'Name': 'model',
-                            'RequiredModelMetadata': {'Runtime_minutes'},
+                            'RequiredModelMetadata': set(), # empty set
                             'OptionalModelMetadata': {'Accuracy_high'}
                         }
                     ]
