@@ -23,6 +23,7 @@
 import logging
 import argparse
 import os
+import sys
 import pathlib
 from . import pyrolog
 from . import octree
@@ -68,11 +69,16 @@ def setupLoggingAtStartup():
         pyroHandler = pyrolog.PyroLogHandler(uri=pyroOut, tag='<unspecified>')
         root.addHandler(pyroHandler)
 
-    try:
-        import colorlog
+    # don't colorize output with piped output
+    doColor=sys.stderr.isatty()
+
+    try: import colorlog
+    except ImportError: doColor=False
+
+    if doColor:
         streamHandler = colorlog.StreamHandler()
         streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-    except ImportError:
+    else:
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
 
