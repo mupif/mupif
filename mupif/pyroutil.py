@@ -347,7 +347,7 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
+def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None):
     """
     Runs a simple application server
 
@@ -360,6 +360,8 @@ def runServer(*, appName, app, ns: Pyro5.api.Proxy, daemon=None, metadata=None):
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
     """
+    if ns is None: ns = connectNameserver()
+
     exclusiveDaemon = False
     if not daemon:
         # in server, daemon thread should keep the process alive
