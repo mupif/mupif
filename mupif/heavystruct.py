@@ -1111,7 +1111,7 @@ Each parent group defines a special property ``schema_fragment`` which returns t
     def __init__(self, **kw):
         super().__init__(**kw)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def openData(self,mode=typing.Optional[HeavyDataBase_ModeChoice]):
         '''
         Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyStruct` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyStruct.closeData` is called (directly or via context manager).

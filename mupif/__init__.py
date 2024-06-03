@@ -244,7 +244,7 @@ _pyroMonkeyPatch()
 
 # this is for pydantic
 from . import field
-field.Field.update_forward_refs()
+field.Field.model_rebuild()
 
 # configure logging
 util.setupLoggingAtStartup()

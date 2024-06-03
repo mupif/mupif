@@ -113,7 +113,7 @@ class FieldBase(mupifquantity.MupifQuantity):
         """
         return self.time
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def evaluate(self, positions, eps: float = 0.0):
         """
         Evaluates the receiver at given spatial position(s).
@@ -136,7 +136,7 @@ class AnalyticalField(FieldBase):
         # quantity with null array; only the unit is relevant
         super().__init__(quantity=np.array([])*Unit(unit), **kw)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def evaluate(
             self,
             positions: typing.Union[
@@ -282,7 +282,7 @@ class Field(FieldBase,HeavyConvertible):
         """
         return self.time
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def evaluate(
             self,
             positions: typing.Union[
@@ -824,7 +824,7 @@ class Field(FieldBase,HeavyConvertible):
         return Field.manyToMeshioMesh([self])
 
     @staticmethod
-    # @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    # @pydantic.validate_call(config=dict(arbitrary_types_allowed=True))
     def manyToMeshioMesh(
         fields: typing.Sequence[Field]
     ) -> typing.List[Field]:

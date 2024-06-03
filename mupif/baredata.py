@@ -36,7 +36,7 @@ else:
     class NumpyArray(np.ndarray, Generic[DType]):
         """Wrapper class for numpy arrays that stores and validates type information.
         This can be used in place of a numpy array, but when used in a pydantic BaseModel
-        or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
+        or with pydantic.validate_call, its dtype will be *coerced* at runtime to the
         declared type.
         """
         @classmethod
@@ -76,9 +76,7 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
 
 class ObjectBase(pydantic.BaseModel):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
-    # TODO[pydantic]: The following keys were removed: `copy_on_model_validation`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = pydantic.ConfigDict(copy_on_model_validation='none', extra='allow')
+    model_config = pydantic.ConfigDict(extra='allow')
 
     def __init__(self, *args, **kw):
         # print(f'### __init__ with {args=} {kw=}')
@@ -86,12 +84,12 @@ class ObjectBase(pydantic.BaseModel):
             raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
         # print(kw.keys())
         for k in kw.keys():
-            if k not in self.__class__.__fields__:
-                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
+            if k not in self.__class__.model_fields:
+                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.model_fields.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
         super().__init__(*args, **kw)
 
     @Pyro5.api.expose
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
         return isinstance(self, classinfo)
 
@@ -121,9 +119,7 @@ class BareData(ObjectBase):
 
     """
     _pickleInside = False
-    # TODO[pydantic]: The following keys were removed: `copy_on_model_validation`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = pydantic.ConfigDict(copy_on_model_validation='none', extra='allow')
+    model_config = pydantic.ConfigDict(extra='allow')
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):
@@ -139,6 +135,7 @@ class BareData(ObjectBase):
         pass
 
     def to_dict(self, clss=None):
+        log.error(f'{self.__class__.__name__}.to_dict({self=})')
         def _handle_attr(attr, val, clssName):
             if isinstance(val, list): return [_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)]
             elif isinstance(val, tuple): return tuple([_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)])
@@ -164,14 +161,16 @@ class BareData(ObjectBase):
         ret = {}
         if clss is None:
             ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
-            if BareData._pickleInside:
+            # XXX: this changed after pydantic V2, so _pickleInside is True even if it is just class attribute?!
+            # XXX: and then, FieldInfo has not attribute field_info
+            if BareData._pickleInside and False:
                 ret['__pickle__'] = pickle.dumps(self)
                 return ret
             clss = self.__class__
         if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
-            for attr,modelField in clss.__fields__.items():
-                if modelField.field_info.exclude: continue # skip excluded fields
+            for attr,modelField in clss.model_fields.items():
+                if modelField.exclude: continue # skip excluded fields
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
@@ -288,7 +287,7 @@ if __name__ == '__main__':
             print('This is my custom constructor')
             super().__init__(**kw)
             self._myextra = 1
-    TestDumpable.update_forward_refs()
+    TestDumpable.model_rebuild()
     td0 = TestDumpable(num=0, dic=dict(a=1, b=2, c=[1, 2, 3]))
     td1 = TestDumpable(num=1, dic=dict(), recurse=td0)
     import pprint

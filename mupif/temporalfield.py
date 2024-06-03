@@ -25,7 +25,7 @@ class _FieldMetadata(pydantic.BaseModel):
     location: _FieldLocation
     user: dict = pydantic.Field(default_factory=dict)
 
-    @pydantic.validator("time")
+    @pydantic.field_validator("time")
     def time_validator(cls, v):
         t = au.Unit(v)
         t.to(au.s)  # raises exception if not time dimension

@@ -137,7 +137,7 @@ def locateNameserver(nshost=None, nsport=0, server=False, return_src=False):
 def connectNameServer(*args, **kw): return connectNameserver(*args, **kw)
 
 
-@pydantic.validate_arguments
+@pydantic.validate_call
 def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: float = 3.0) -> Pyro5.client.Proxy:
     """
     Connects to a NameServer.

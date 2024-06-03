@@ -186,7 +186,7 @@ class HeavyDataBase(Data):
             raise RuntimeError(f'Dataset {h5loc} already exists (shape {"×".join(self._h5obj[h5loc].shape)}).')
         return self._h5obj.create_dataset(h5loc, shape=shape, **kw)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def moveStorage(self, new_h5path):
         """
         Moves underlying storage in the filesystem to the new path *new_h5path*, and sets the ``h5path`` attribute to the new path.
@@ -196,7 +196,7 @@ class HeavyDataBase(Data):
         shutil.move(self.h5path, new_h5path)
         self.h5path = new_h5path
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def deepcopy(self):
         """
         Overrides BareData.deepcopy, enriching it with copy of the backing HDF5 file; it should correctly detect whether the call is local or remote.
@@ -215,7 +215,7 @@ class HeavyDataBase(Data):
             self.exposeData()
             return super().deepcopy()
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def openStorage(self, mode: typing.Optional[HeavyDataBase_ModeChoice] = None):
         """
         """
@@ -319,7 +319,7 @@ class HeavyDataBase(Data):
                 # sys.stderr.write(f'Unregistering {i}\n')
                 daemon.unregister(i)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def cloneHandle(self, newPath: str = ''):
         """Return clone of the handle; the underlying storage is copied into *newPath* (or a temporary file, if not given). All handle attributes (besides :obj:`h5path`) are preserved."""
         if self._h5obj:
@@ -366,7 +366,7 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
         return ret
 
     @staticmethod
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def makeFromQuantity(q: units.Quantity, h5path: str = '', h5loc: Optional[str] = '/quantity'):
         ret = Hdf5OwningRefQuantity(h5path=h5path, h5loc=h5loc, mode='create')
         ret.allocateDataset(shape=q.value.shape, unit=q.unit)

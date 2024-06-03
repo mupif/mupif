@@ -31,7 +31,7 @@ class TimeStep(baredata.BareData):
     dt: units.Quantity  #: Step length (time increment)
     targetTime: units.Quantity  #: target simulation time (time at the end of simulation, not of a single TimeStep)
 
-    @pydantic.validator('time', 'dt', 'targetTime', pre=True)
+    @pydantic.field_validator('time', 'dt', 'targetTime', mode='before')
     def conv_times(cls, t, values):
         if isinstance(t, units.Quantity):
             return t

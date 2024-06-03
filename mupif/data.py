@@ -149,7 +149,7 @@ class WithMetadata(ObjectBase):
             else:
                 self.setMetadata(new_key, value)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def _updateMetadata(self, dictionary: Optional[dict]):
         """ 
         Updates metadata's dictionary with a given dictionary
@@ -225,7 +225,7 @@ class DataList(Data):
         # self.dataID = tset.pop()
         self.objs = kw['objs']
 
-    @pydantic.validator('objs')
+    @pydantic.field_validator('objs')
     def objs_validator(cls, v):
         # if ft:=[e for e in v if not isinstance(e,Data)]: raise ValueError(f'Some objects in the sequence are not a Data (foreign types: {", ".join([t.__module__+t.__class__.__name__ for t in ft])})')
         if len(tset := set(DataList._seqTypes(v))) > 1:
