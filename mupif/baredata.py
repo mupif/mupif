@@ -10,6 +10,7 @@ import Pyro5
 import sys
 
 import pydantic
+import pydantic_core
 # from pydantic.dataclasses import dataclass
 
 try:
@@ -63,13 +64,15 @@ else:
 
 
 def addPydanticInstanceValidator(klass, makeKlass=None):
-    def klass_validate(cls, v):
+    def klass_validate(v):
         if isinstance(v, klass): return v
         if makeKlass: return makeKlass(v)
-        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__}')
+        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__})')
     @classmethod
-    def klass_get_validators(cls): yield klass_validate
-    klass.__get_validators__ = klass_get_validators
+    def klass_get_pydantic_core_schema(cls, source, handler: pydantic.GetCoreSchemaHandler) -> pydantic.GetCoreSchemaHandler:
+        return pydantic_core.core_schema.no_info_plain_validator_function(klass_validate)
+        # yield klass_validate
+    klass.__get_pydantic_core_schema__ = klass_get_pydantic_core_schema
 
 class ObjectBase(pydantic.BaseModel):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""

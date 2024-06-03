@@ -170,7 +170,8 @@ class WithMetadata(ObjectBase):
         Validates metadata's dictionary with a given dictionary
         :param dict template: Schema for json template
         """
-        if type(template) == pydantic.main.ModelMetaclass:
+        # different validators for pydantic-based and plain models (which are no longer used, really)
+        if hasattr(template,'__pydantic_complete__'):
             template(**self.metadata)
         else:
             jsonschema.validate(self.metadata, template)
