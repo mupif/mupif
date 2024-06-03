@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Annotated
 import typing
 import sys
 import numpy as np
@@ -38,11 +38,8 @@ import astropy
 
 class Hdf5RefQuantity(RefQuantity):
     'Quantity stored in HDF5 dataset, the HDF5 file being managed somewhere else.'
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = pydantic.ConfigDict(fields={'dataset': {'exclude': True}})
     # unit: astropy.units.UnitBase
-    dataset: typing.Optional[h5py.Dataset] = None
+    dataset: Annotated[typing.Optional[h5py.Dataset], pydantic.Field(exclude=True)] = None
 
     def __init__(self, *, unit=None, **kw):
         super().__init__(**kw)
