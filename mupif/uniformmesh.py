@@ -31,7 +31,7 @@ import pydantic
 class UniformRectilinearMesh(Mesh,HeavyConvertible):
     origin:  typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
     spacing: typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
-    dims: typing.Any
+    dims: typing.Any = None
     h5path: typing.Optional[str]=None
     h5group: typing.Optional[str]=None
 

@@ -24,6 +24,8 @@ import subprocess
 import shutil
 
 import atexit
+import pydantic
+
 log = logging.getLogger(__name__)
 
 
@@ -36,8 +38,9 @@ import astropy
 
 class Hdf5RefQuantity(RefQuantity):
     'Quantity stored in HDF5 dataset, the HDF5 file being managed somewhere else.'
-    class Config:
-        fields = {'dataset': {'exclude': True}}  # do not try to serialize dataset
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = pydantic.ConfigDict(fields={'dataset': {'exclude': True}})
     # unit: astropy.units.UnitBase
     dataset: typing.Optional[h5py.Dataset] = None
 

@@ -53,6 +53,8 @@ import logging
 import itertools
 import os.path
 from .units import Unit
+from typing_extensions import Annotated
+
 log = logging.getLogger()
 
 # debug flag
@@ -128,7 +130,7 @@ class FieldBase(mupifquantity.MupifQuantity):
 @Pyro5.api.expose
 class AnalyticalField(FieldBase):
     expr: str
-    dim: pydantic.conint(ge=2, le=3) = 3
+    dim: Annotated[int, pydantic.Field(ge=2, le=3)] = 3
 
     def __init__(self, *, unit, **kw):
         # quantity with null array; only the unit is relevant

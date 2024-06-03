@@ -56,7 +56,7 @@ class Cell(baredata.BareData):
     #: Local cell number; local numbering should start from 0 and should be continuous.
     number: int
     #: Cell label, arbitrary unique number.
-    label: typing.Optional[int]
+    label: typing.Optional[int] = None
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 

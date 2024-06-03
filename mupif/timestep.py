@@ -23,9 +23,7 @@ class TimeStep(baredata.BareData):
 
     .. automethod:: __init__
     """
-
-    class Config:
-        frozen = True
+    model_config = pydantic.ConfigDict(frozen=True)
 
     number: int = 1
     unit: typing.Optional[units.Unit] = None

@@ -18,7 +18,6 @@ except Exception:
     astropy = None
 
 from typing import Generic, TypeVar
-from pydantic.fields import ModelField
 
 pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
 if pyd_v0=='1' and int(pyd_v1)<9:
@@ -29,7 +28,9 @@ if 1:
     NumpyArray = NumpyArrayFloat64 = typing.Any
     NumpyArrayStr = typing.Any
 else:
+    # TODO: update to pydantic v2?
     # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
+    from pydantic.fields import ModelField
     DType = TypeVar('DType')
     class NumpyArray(np.ndarray, Generic[DType]):
         """Wrapper class for numpy arrays that stores and validates type information.
@@ -38,6 +39,8 @@ else:
         declared type.
         """
         @classmethod
+        # TODO[pydantic]: We couldn't refactor `__get_validators__`, please create the `__get_pydantic_core_schema__` manually.
+        # Check https://docs.pydantic.dev/latest/migration/#defining-custom-types for more information.
         def __get_validators__(cls):
             yield cls.validate
         @classmethod
@@ -70,14 +73,9 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
 
 class ObjectBase(pydantic.BaseModel):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
-    class Config:
-        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
-        # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = 'none'
-        # this unfortunately also allows arbitrary **kw passed to the ctor
-        # but we filter that in the custom __init__ function just below
-        # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra = 'allow'
+    # TODO[pydantic]: The following keys were removed: `copy_on_model_validation`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = pydantic.ConfigDict(copy_on_model_validation='none', extra='allow')
 
     def __init__(self, *args, **kw):
         # print(f'### __init__ with {args=} {kw=}')
@@ -120,15 +118,9 @@ class BareData(ObjectBase):
 
     """
     _pickleInside = False
-
-    class Config:
-        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
-        # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = 'none'
-        # this unfortunately also allows arbitrary **kw passed to the ctor
-        # but we filter that in the custom __init__ function just below
-        # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra = 'allow'
+    # TODO[pydantic]: The following keys were removed: `copy_on_model_validation`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = pydantic.ConfigDict(copy_on_model_validation='none', extra='allow')
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):

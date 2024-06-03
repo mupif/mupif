@@ -15,7 +15,7 @@ class Vertex(BareData):
     .. automethod:: __repr__
     """
     number: int  #: Local vertex number
-    label: typing.Optional[int]  #: Vertex label
+    label: typing.Optional[int] = None  #: Vertex label
     coords: typing.Union[typing.Tuple[float, float], typing.Tuple[float, float, float]]  #: 3D position vector of a vertex
 
     # class Config:

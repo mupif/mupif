@@ -175,7 +175,7 @@ class WorkflowConfiguration(pydantic.BaseModel):
      
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
-    ExecutionProfiles:Optional[List[WorkflowConfiguration]]
+    ExecutionProfiles:Optional[List[WorkflowConfiguration]] = None
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()
