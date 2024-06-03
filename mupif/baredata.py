@@ -6,7 +6,7 @@ import importlib
 import typing
 import numpy
 import numpy as np
-import Pyro5
+import Pyro5.api
 import sys
 
 import pydantic
@@ -67,11 +67,10 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
     def klass_validate(v):
         if isinstance(v, klass): return v
         if makeKlass: return makeKlass(v)
-        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__})')
+        else: raise ValueError(f'Instance of {klass.__name__} required (not a {type(v).__name__}).')
     @classmethod
     def klass_get_pydantic_core_schema(cls, source, handler: pydantic.GetCoreSchemaHandler) -> pydantic.GetCoreSchemaHandler:
         return pydantic_core.core_schema.no_info_plain_validator_function(klass_validate)
-        # yield klass_validate
     klass.__get_pydantic_core_schema__ = klass_get_pydantic_core_schema
 
 class ObjectBase(pydantic.BaseModel):
@@ -135,7 +134,6 @@ class BareData(ObjectBase):
         pass
 
     def to_dict(self, clss=None):
-        log.error(f'{self.__class__.__name__}.to_dict({self=})')
         def _handle_attr(attr, val, clssName):
             if isinstance(val, list): return [_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)]
             elif isinstance(val, tuple): return tuple([_handle_attr('%s[%d]' % (attr, i), v, clssName) for i, v in enumerate(val)])
@@ -291,7 +289,7 @@ if __name__ == '__main__':
     td0 = TestDumpable(num=0, dic=dict(a=1, b=2, c=[1, 2, 3]))
     td1 = TestDumpable(num=1, dic=dict(), recurse=td0)
     import pprint
-    d1 = td1.dict()
+    d1 = td1.model_dump()
     pprint.pprint(d1)
     td1a = TestDumpable.construct(**d1)
-    pprint.pprint(td1a.dict())
+    pprint.pprint(td1a.model_dump())

@@ -32,12 +32,12 @@ class TimeStep(baredata.BareData):
     targetTime: units.Quantity  #: target simulation time (time at the end of simulation, not of a single TimeStep)
 
     @pydantic.field_validator('time', 'dt', 'targetTime', mode='before')
-    def conv_times(cls, t, values):
+    def conv_times(cls, t, info: pydantic.ValidationInfo):
         if isinstance(t, units.Quantity):
             return t
-        if 'unit' not in values or values['unit'] is None:
+        if 'unit' not in info.data or info.data['unit'] is None:
             raise ValueError(f'When giving time as {type(t).__name__} (not a Quantity), unit must be given.')
-        return units.Quantity(value=t, unit=values['unit'])
+        return units.Quantity(value=t, unit=info.data['unit'])
 
     def getTime(self):
         """
