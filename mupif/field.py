@@ -443,7 +443,7 @@ class Field(FieldBase,HeavyConvertible):
                     vv[mesh.cellLabel2Number(f.mesh.getCell(v).label)] = f.getRecord(v)
 
         self.mesh = mesh
-        self.value = vv
+        self.quantity = Quantity(value=vv, unit=self.quantity.unit)
 
     def getMartixForTensor(self, values):
         """
