@@ -324,7 +324,7 @@ class HeavyDataBase(Data):
         if not newPath:
             _fd, newPath = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
         shutil.copy(self.h5path, newPath)
-        ret = self.copy(deep=True)  # this is provided by pydantic
+        ret = self.model_copy(deep=True)  # this is provided by pydantic
         ret.h5path = newPath
         return ret
 
