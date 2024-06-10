@@ -75,6 +75,7 @@ class ExecutionMeta(pydantic.BaseModel):
     Timeout: int = Field(0,description='Maximum runtime in seconds; unlimited if non-positive')
     Username: str = Field('',description='Automatically set in Model and Workflow')
     Hostname: str = Field('',description='Automatically set in Model and Workflow')
+    ExecutionProfileIndex: int = -1
 
 
 class IOMeta(pydantic.BaseModel):
@@ -169,16 +170,23 @@ class ModelConfiguration(pydantic.BaseModel):
      RequiredModelMetadata: List[str]
      OptionalModelMetadata: List[str]
 
+# TODO: should be *Meta
+class ModelConfiguration(pydantic.BaseModel):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
+
+# TODO: should be *Meta
 class WorkflowConfiguration(pydantic.BaseModel):
      Name: str
      Cost: str # $, $$, or $$$
      Description: str
      Models: List[ModelConfiguration]
 
-     
+
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
-    ExecutionProfiles:Optional[List[WorkflowConfiguration]] = None
+    ExecutionProfiles: Optional[List[WorkflowConfiguration]] = None
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()

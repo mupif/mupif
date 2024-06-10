@@ -304,7 +304,7 @@ def _connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestT
                 score = len(optionalMData.intersection(value[1]))
                 candidateScores[name]=score
         
-        # now sort candidates (mekes sense onbly if optional metadata exist)
+        # now sort candidates (makes sense onbly if optional metadata exist)
         if (not optionalMData):
             orderedCandidates = candidates
         else:

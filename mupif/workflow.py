@@ -144,9 +144,9 @@ class Workflow(model.Model):
         #     if model_info.get('Instantiate', True):
         #         self._allocateModelByName(name=model_info.get('Name', ''), name_new=model_info.get('Name', ''))
         executionProfile = -1
-        print (self.metadata['Execution'])
-        if 'ExecutionProfileIndx' in self.metadata['Execution']:
-            executionProfile = self.metadata['Execution']['ExecutionProfileIndx']
+        # print (self.metadata['Execution'])
+        if 'ExecutionProfileIndex' in self.metadata['Execution']:
+            executionProfile = self.metadata['Execution']['ExecutionProfileIndex']
 
         print("Workflow::executionProfile #%d"%(executionProfile,))
         for model_info in self.metadata['Models']:
@@ -164,7 +164,7 @@ class Workflow(model.Model):
                     if (mep):
                         self._allocateModelWithMetadata(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), modelConfiguration=mep)
                     else:
-                        log.fatal("Workflow::_allocateModels: model (%s) execution profile missing for configuration %d"%(name, executionProfile))
+                        log.fatal("Workflow::_allocateAllModels: model (%s) execution profile missing for configuration %d"%(name, executionProfile))
 
     def _initializeAllModels(self):
         _md = self._getInitializationMetadata()
