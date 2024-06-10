@@ -145,8 +145,8 @@ class Workflow(model.Model):
         #         self._allocateModelByName(name=model_info.get('Name', ''), name_new=model_info.get('Name', ''))
         executionProfile = -1
         # print (self.metadata['Execution'])
-        if 'ExecutionProfileIndx' in self.metadata['Execution']:
-            executionProfile = self.metadata['Execution']['ExecutionProfileIndx']
+        if 'ExecutionProfileIndex' in self.metadata['Execution']:
+            executionProfile = self.metadata['Execution']['ExecutionProfileIndex']
 
         print("Workflow::executionProfile #%d"%(executionProfile,))
         for model_info in self.metadata['Models']:

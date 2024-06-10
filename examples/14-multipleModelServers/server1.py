@@ -3,11 +3,8 @@ sys.path += ['..', '../..']
 import mupif as mp
 import mupif.demo
 
-# locate nameserver
-ns = mp.pyroutil.connectNameserver()
-
 jobMan = mp.SimpleJobManager(
-    ns=ns,
+    ns = mp.pyroutil.connectNameserver(),
     appClass=mp.demo.ThermalModel,
     appName='model',
 ).runServer()

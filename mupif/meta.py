@@ -75,6 +75,7 @@ class ExecutionMeta(pydantic.BaseModel):
     Timeout: int = Field(0,description='Maximum runtime in seconds; unlimited if non-positive')
     Username: str = Field('',description='Automatically set in Model and Workflow')
     Hostname: str = Field('',description='Automatically set in Model and Workflow')
+    ExecutionProfileIndex: int = -1
 
 
 class IOMeta(pydantic.BaseModel):

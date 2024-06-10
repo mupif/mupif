@@ -34,7 +34,8 @@ allEx=[
     ExCfg('9','09-operatorEmail',['Example09.py'],skip=True),
     ExCfg('11','11',['workflow.py']),
     ExCfg('11d','11',['dist-ex11.py','dist-m1.py','dist-m2.py'],skip=True),
-    ExCfg(13,'13',['main.py','server.py','application13.py'])
+    ExCfg('13','13',['main.py','server.py','application13.py']),
+    ExCfg('14','14-multipleModelServers',['test.py','server.py','server1.py']),
 ]
 
 
@@ -82,6 +83,10 @@ def runEx(ex):
 # no examples means all examples
 if not args.exnum: args.exnum=[e.num for e in allEx if not e.skip]
 
+if unknown:=[n for n in args.exnum if n not in [e.num for e in allEx]]:
+    raise RuntimeError('Unrecognized example numbers: '+', '.join(unknown)+'.')
+
+
 runEex=[e for e in allEx if e.num in args.exnum]
 failed=[]
 for ex in runEex:
@@ -93,7 +98,7 @@ for ex in runEex:
 if failed:
     log.critical('** The following examples failed:')
     for f in failed:
-        log.critical(f'**    {f.num} {f.dir}')
+        log.critical(f'**    {f.num}: {f.dir}')
     sys.exit(1)
 else:
     log.info('** All examples finished without error.')
