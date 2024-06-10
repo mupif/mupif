@@ -31,6 +31,7 @@ import json
 import atexit
 import signal
 import collections
+import random
 import urllib.parse
 import os.path
 import deprecated
@@ -272,6 +273,68 @@ def connectApp(ns, name, connectionTestTimeOut=10.):
     return _connectApp(ns, name, connectionTestTimeOut)
 
 
+def _connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestTimeOut=10.):
+    """
+    Connects to a remote service with required (and optional) metadata.
+
+    :param Pyro5.naming.Nameserver ns: Instance of a nameServer
+    :param set[str] requiredMData: list of compulsory, required metadata the service should match
+    :param set[str] optionalMData: list of optional metadata of the service 
+    :param connectionTestTimeOut timeout for connection test
+    :return: Application
+    :rtype: Instance of an application
+    :raises Exception: When cannot find registered server or Cannot connect to application or Timeout passes
+    """
+    try:
+        candidates = ns.yplookup(meta_all=requiredMData)
+        if not candidates:
+            raise Exception('_connectAppWithMetadata: NS yplookup failed')
+        # now to select optimal candidate
+        # if optionalMData are empty select random one
+        candidateScores = {}
+        print("Candidates:", candidates)
+        # assign each candidate a score 
+        for key, value in candidates.items():
+            name = key
+            if (not optionalMData):
+                candidateScores[name]=1 # all candidates will have the same score if no optional metedata 
+            else:
+                # value[0] URI, value[1] metadata
+                # select the optimal one as the one matching max number of optionalMData entries
+                score = len(optionalMData.intersection(value[1]))
+                candidateScores[name]=score
+        
+        # now sort candidates (makes sense onbly if optional metadata exist)
+        if (not optionalMData):
+            orderedCandidates = candidates
+        else:
+            orderedCandidates = collections.OrderedDict(sorted(candidates.items(), key=lambda item: item[1], reverse=True))
+        
+        #ok now go over orderedCandidates and try to connect 
+        for key, val in orderedCandidates.items():
+            name = key
+            uri=val[0]
+            app = Pyro5.api.Proxy(uri)
+            log.info(f"Trying to Connect to application {name} with {uri}")
+            try:
+                app._pyroTimeout = connectionTestTimeOut
+                sig = app.getApplicationSignature()
+                app._pyroTimeout = None
+                log.info("Connected to " + sig + " with the application " + name)
+                return app
+            except Exception as e:
+                log.exception(f"Cannot connect to application {name}. Is the server running?")
+                continue
+        # we ended here withou succesfull connection
+        raise Exception("PyroUtil::Cannot connect to any suitable candidate")
+    
+    except Exception as e:
+        raise
+
+def connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestTimeOut=10.):
+    return _connectAppWithMetadata(ns, requiredMData, optionalMData, connectionTestTimeOut)
+
+
 def getNSAppName(jobname, appname):
     """
     Get application name.
@@ -386,11 +449,26 @@ def runModelServer(*, ns, jobman):
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
+    modelMD=jobman.getModelMetadata()
+    #print(modelMD)
+    estRunTime=modelMD['Solver']['Estim_comp_time_s']
+    Runtime=""
+    if (estRunTime < 60):
+        Runtime = "Runtime_seconds"
+    elif (estRunTime< 60*60):
+        Runtime = "Runtime_minutes"
+    elif (estRunTime<60*60*24):
+        Runtime = "Runtime_hours"
+    else:
+        Runtime = "Runtime_days"
+
+    # use jobnman.getNSName() as nameserver registration name, which is constructed from modelServer base name and is unique
+    # inject modelServer base name into metadata as well as selected model characteristics, so later modelServer with given metadata can be looked up.
     return runServer(
         ns=ns,
         appName=jobman.getNSName(),
         app=jobman,
-        metadata={_NS_METADATA.jobmanager}
+        metadata={_NS_METADATA.jobmanager, jobman.getName(), "Accuracy_%s"%(modelMD['Solver']['Accuracy'],), "Robustness_%s"%(modelMD['Solver']['Robustness'],), Runtime}
     )
 
 
@@ -448,7 +526,20 @@ def connectModelServer(ns, jobManName):
     :raises Exception: if creation of a tunnel failed
     """
 
-    return modelserverbase.RemoteModelServer(_connectApp(ns, jobManName))
+    return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, {jobManName}))
+
+def connectModelServerWithMetadata(ns, metadata, optionalMetadata={}):
+    """
+    Connect to jobManager described by given jobManRec and create an optional ssh tunnel
+
+    :param jobManName name under which jobmanager is registered on NS
+
+    :return: (JobManager proxy, jobManager Tunnel)
+    :rtype: jobmanager.RemoteJobManager
+    :raises Exception: if creation of a tunnel failed
+    """
+
+    return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, metadata, optionalMetadata))
 
 
 @deprecated.deprecated(reason='Use allocateApplicationWithModelServer instead')

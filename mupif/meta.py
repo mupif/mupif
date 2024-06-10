@@ -162,8 +162,23 @@ class ModelMeta(ModelWorkflowCommonMeta):
     Solver: SolverMeta
 
 
+# TODO: should be *Meta
+class ModelConfiguration(pydantic.BaseModel):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
+
+# TODO: should be *Meta
+class WorkflowConfiguration(pydantic.BaseModel):
+     Name: str
+     Cost: str # $, $$, or $$$
+     Description: str
+     Models: List[ModelConfiguration]
+
+     
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
+    ExecutionProfiles:Optional[List[WorkflowConfiguration]]
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()
