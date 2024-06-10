@@ -89,9 +89,7 @@ class Example15(mp.Workflow):
     
 if __name__ == '__main__':
 
-    ns = Pyro5.api.locate_ns()
-    print(ns)
-
+    ns = mp.pyroutil.connectNameserver()
     pyroutil.connectAppWithMetadata(ns, requiredMData={'model'}).getApplicationSignature()
 
     print(pyroutil.connectAppWithMetadata(ns, requiredMData={'model'}, optionalMData={'Runtime_seconds'}).getModelMetadata()['ID'])

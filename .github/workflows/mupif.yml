@@ -43,11 +43,6 @@ jobs:
         set -euo pipefail
         python -m pytest --durations=10 -v --cov=./ --cov-report=xml mupif/tests 2>&1 | tools/grcat-mupif
         codecov -F unittests
-    - name: example 14 EXTRA
-      timeout-minutes: 2 # normally about 35s
-      run: |
-        set -euo pipefail
-        cd examples; ./runex.py 14 2>&1 | ../tools/grcat-mupif
     - name: examples (native)
       timeout-minutes: 2 # normally about 35s
       run: |
