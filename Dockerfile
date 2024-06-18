@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM debian:bookworm-20240612
 LABEL maintainer="vaclav.smilauer@fsv.cvut.cz"
 LABEL version="0.1"
 LABEL description="Containerized MuPIF for testing"
