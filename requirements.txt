@@ -8,8 +8,8 @@ jsonpickle
 jsonschema
 h5py
 matplotlib
-astropy==5.2.2 ; python <  "3.9"
-astropy>=6.0   ; python >= "3.9"
+astropy==5.2.2 ; python_version <  "3.9"
+astropy>=6.0   ; python_version >= "3.9"
 deprecated
 appdirs
 pydantic>2.6
