@@ -108,13 +108,15 @@ class IOMeta(pydantic.BaseModel):
     Units: str
     Required: bool = False
 
-    @pydantic.root_validator(pre=False)
+    @pydantic.model_validator(mode='before')
+    @classmethod
     def _require_valueType_unless_property(cls, values):
         if values['Type'] != 'mupif.Property' and values['Type'] != 'mupif.TemporalProperty':
             assert 'ValueType' != ''
         return values
 
-    @pydantic.root_validator(pre=True)
+    @pydantic.model_validator(mode='before')
+    @classmethod
     def _convert_type_id_to_value(cls, values):
         tid = values['Type_ID']
         if isinstance(tid, str):
@@ -141,11 +143,9 @@ class ModelInWorkflowMeta(pydantic.BaseModel):
     Class: str = ''
     Jobmanager: str = ''
 
-    @pydantic.root_validator(pre=False)
-    def _moduleClass_or_jobmanager(cls, values):
-        if values['Jobmanager'] == '':
-            assert values['Module'] != '' and values['Name'] != ''
-        return values
+    @pydantic.model_validator(mode='after')
+    def _moduleClass_or_jobmanager(self):
+        if self.Jobmanager == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For non-Jobmanager metadata, Module and Name must not be empty ({self.Module=}, {self.Name=})')
 
 
 class ModelWorkflowCommonMeta(pydantic.BaseModel):
@@ -162,6 +162,10 @@ class ModelMeta(ModelWorkflowCommonMeta):
     Physics: PhysicsMeta
     Solver: SolverMeta
 
+class ModelConfiguration(pydantic.BaseModel):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
 
 # TODO: should be *Meta
 class ModelConfiguration(pydantic.BaseModel):
@@ -176,10 +180,10 @@ class WorkflowConfiguration(pydantic.BaseModel):
      Description: str
      Models: List[ModelConfiguration]
 
-     
+
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
-    ExecutionProfiles:Optional[List[WorkflowConfiguration]]
+    ExecutionProfiles: Optional[List[WorkflowConfiguration]] = None
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()

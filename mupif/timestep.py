@@ -23,9 +23,7 @@ class TimeStep(baredata.BareData):
 
     .. automethod:: __init__
     """
-
-    class Config:
-        frozen = True
+    model_config = pydantic.ConfigDict(frozen=True)
 
     number: int = 1
     unit: typing.Optional[units.Unit] = None
@@ -33,13 +31,13 @@ class TimeStep(baredata.BareData):
     dt: units.Quantity  #: Step length (time increment)
     targetTime: units.Quantity  #: target simulation time (time at the end of simulation, not of a single TimeStep)
 
-    @pydantic.validator('time', 'dt', 'targetTime', pre=True)
-    def conv_times(cls, t, values):
+    @pydantic.field_validator('time', 'dt', 'targetTime', mode='before')
+    def conv_times(cls, t, info: pydantic.ValidationInfo):
         if isinstance(t, units.Quantity):
             return t
-        if 'unit' not in values or values['unit'] is None:
+        if 'unit' not in info.data or info.data['unit'] is None:
             raise ValueError(f'When giving time as {type(t).__name__} (not a Quantity), unit must be given.')
-        return units.Quantity(value=t, unit=values['unit'])
+        return units.Quantity(value=t, unit=info.data['unit'])
 
     def getTime(self):
         """

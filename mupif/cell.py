@@ -38,6 +38,9 @@ debug = 0
 # in element tolerance
 tolerance = 0.001
 
+# cache
+_cell_subclasses = {}
+
 
 @Pyro5.api.expose
 class Cell(baredata.BareData):
@@ -56,7 +59,7 @@ class Cell(baredata.BareData):
     #: Local cell number; local numbering should start from 0 and should be continuous.
     number: int
     #: Cell label, arbitrary unique number.
-    label: typing.Optional[int]
+    label: typing.Optional[int] = None
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
@@ -78,7 +81,8 @@ class Cell(baredata.BareData):
         """
         Return class object (not instance) for given cell geometry type. Does introspection of all subclasses of Cell caches the result.
         """
-        if not Cell._subclasses:
+        global _cell_subclasses
+        if not _cell_subclasses:
             # cache all subclasses (recursive)
             def get_subclasses(cls):
                 ret = []
@@ -87,8 +91,8 @@ class Cell(baredata.BareData):
                     ret.extend(get_subclasses(sc))
                 return ret
             for sc in get_subclasses(Cell):
-                Cell._subclasses[sc.getGeometryType()] = sc
-        return Cell._subclasses[cgt]
+                _cell_subclasses[sc.getGeometryType()] = sc
+        return _cell_subclasses[cgt]
 
     def copy(self):
         """

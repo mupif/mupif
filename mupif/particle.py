@@ -137,7 +137,7 @@ class ParticleSet(data.Data):
         return self.inclusionsize
     
 
-Particle.update_forward_refs()
+Particle.model_rebuild()
 
 
 if __name__ == "__main__":

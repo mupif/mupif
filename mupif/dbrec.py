@@ -6,7 +6,7 @@ import pydantic
 class DbDictable(BareData):
     def to_db_dict_impl(self): raise NotImplementedError(f'Classes derived from DbDictable must implement to_db_dict_impl. (class {self.__class__.__name__})')
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def to_db_dict(self,dialect:Optional[Literal['edm']]=None):
         ret=self.to_db_dict_impl()
         edmRepl={'Unit':'unit','Value':'value'}
@@ -14,7 +14,7 @@ class DbDictable(BareData):
         else: return ret
 
     @staticmethod
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def from_db_dict(d,dialect:Optional[Literal['edm']]=None):
         import mupif as mp
         edmRepl={'unit':'Unit','value':'Value'}

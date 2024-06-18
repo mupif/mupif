@@ -136,7 +136,7 @@ class ModelServer (modelserverbase.ModelServerBase):
 
         def pickle(self):
             # protocol=0 so that there are no NULLs
-            return pickle.dumps(self.dict(), protocol=0)
+            return pickle.dumps(self.model_dump(), protocol=0)
 
         @classmethod
         def unpickle(cls, data): return cls(**pickle.loads(bytes(data, encoding='ascii')))
