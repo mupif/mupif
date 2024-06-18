@@ -4,12 +4,8 @@ import mupif as mp
 import mupif.demo
 
 # locate nameserver
-ns = mp.pyroutil.connectNameserver()
-
-# Run job manager on a server
 jobMan = mp.SimpleJobManager(
-    ns=ns,
-    appClass=mp.demo.MechanicalModel,
+    ns=mp.pyroutil.connectNameserver(),
+    appClass=mp.demo.ThermalModel,
     appName='model',
 ).runServer()
-

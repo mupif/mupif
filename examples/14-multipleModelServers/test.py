@@ -1,4 +1,3 @@
-import Pyro5
 import sys
 sys.path.extend(['.', '..', '../..'])
 import mupif as mp
@@ -103,7 +102,7 @@ if __name__ == '__main__':
             'ID': '1',
             'Use_case_ID': '1_1',
             'Task_ID': '1',
-            'ExecutionProfileIndx': 1
+            'ExecutionProfileIndex': 1
         }
     }
     demo.initialize(metadata=md)
@@ -119,7 +118,7 @@ if __name__ == '__main__':
             'ID': '1',
             'Use_case_ID': '1_1',
             'Task_ID': '1',
-            'ExecutionProfileIndx': 0
+            'ExecutionProfileIndex': 0
         }
     }
     demo2 = Example15()
