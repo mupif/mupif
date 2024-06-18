@@ -47,6 +47,7 @@ def getExec(main):
     return tuple(ret)
 
 nsBg=mp.pyroutil.runNameserverBg()
+log.info(f'Nameserver running on {nsBg.host}:{nsBg.port}')
 import time
 time.sleep(.5)
 
