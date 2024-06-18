@@ -297,7 +297,7 @@ class ThermalModel(mupif.model.Model):
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Temperature,
                 valueType=mupif.ValueType.Scalar,
-                unit=mupif.U.C,
+                unit=mupif.U.deg_C,
                 time=time,
                 value=values
             )

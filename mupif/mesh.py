@@ -122,7 +122,7 @@ class Mesh(baredata.BareData):
     """
 
     mapping: typing.Any = None
-    unit: typing.Union[str,units.Unit]=None
+    unit: typing.Optional[typing.Union[str,units.Unit]]=None
 
     def __repr__(self): return str(self)
 
