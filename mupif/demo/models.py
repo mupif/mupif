@@ -69,7 +69,8 @@ class ThermalModel(mupif.model.Model):
                         "Name": "temperature",
                         "Type_ID": "mupif.DataID.FID_Temperature",
                         "Type": "mupif.Field",
-                        "Units": "deg_C"
+                        "Units": "deg_C",
+                        "ValueType": "Scalar"
                     },
                     {
                         "Name": "temperatureVTK",
@@ -715,6 +716,7 @@ class ThermalNonstatModel(ThermalModel):
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
                     "Units": "deg_C",
+                    "ValueType": "Scalar"
                 },
                 {
                     "Name": "temperatureVTK",
@@ -1021,7 +1023,8 @@ class MechanicalModel(mupif.model.Model):
                     "Type": "mupif.Field",
                     "Units": "deg_C",
                     "Required": True,
-                    "Set_at": "timestep"
+                    "Set_at": "timestep",
+                    "ValueType": "Scalar"
                 },
                 {
                     "Name": "Input file",
@@ -1045,7 +1048,7 @@ class MechanicalModel(mupif.model.Model):
                         "Dirichlet right"
                     ],
                     "Set_at": "initialization",
-                    "ValueType": "Scalar"
+                    "ValueType": "Vector"
                 }
             ],
             "Outputs": [
@@ -1054,6 +1057,7 @@ class MechanicalModel(mupif.model.Model):
                     "Type_ID": "mupif.DataID.FID_Displacement",
                     "Type": "mupif.Field",
                     "Units": "m",
+                    "ValueType": "Vector"
                 },
                 {
                     "Name": "displacementVTK",

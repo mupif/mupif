@@ -304,7 +304,7 @@ if 0:
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
                             "mupif.DataList[mupif.GrainState]",
-                            "mupif.DataList[mupif.PiecewiseLinFunction]"
+                            "mupif.DataList[mupif.Function]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                         "Obj_ID": {  # optional parameter for additional info, string or list of string
@@ -357,7 +357,7 @@ if 0:
                             "mupif.String",
                             "mupif.ParticleSet",
                             "mupif.GrainState",
-                            "mupif.PiecewiseLinFunction",
+                            "mupif.Function",
                             "mupif.DataList[mupif.Property]",
                             "mupif.DataList[mupif.TemporalProperty]",
                             "mupif.DataList[mupif.Field]",
@@ -366,7 +366,7 @@ if 0:
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
                             "mupif.DataList[mupif.GrainState]",
-                            "mupif.DataList[mupif.PiecewiseLinFunction]"
+                            "mupif.DataList[mupif.Function]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                         "Obj_ID": {  # optional parameter for additional info, string or list of string
