@@ -231,6 +231,12 @@ class DataList(Data):
         if len(tset := set(DataList._seqTypes(v))) > 1:
             raise ValueError(f'Multiple Data subclasses in sequence, must be only one ({", ".join([t for t in tset])}).')
 
+    def getItems(self):
+        return self.objs
+
+    def getItem(self, i):
+        return self.objs[i]
+
     def getDataID(self):
         return self.dataID
 

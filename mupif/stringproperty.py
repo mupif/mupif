@@ -25,7 +25,17 @@ class String(data.Data, DbDictable):
 
     value: NumpyArrayStr
     dataID: dataid.DataID
-    valueType: ValueType = ValueType.Scalar
+    valueType: ValueType = None
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.valueType is None:
+            if len(self.value.shape) == 0:
+                self.valueType = ValueType.Scalar
+            elif len(self.value.shape) == 1:
+                self.valueType = ValueType.Vector
+            elif len(self.value.shape) == 2:
+                self.valueType = ValueType.Tensor
 
     @pydantic.field_validator('value')
     def value_validator(cls, v):
@@ -34,6 +44,9 @@ class String(data.Data, DbDictable):
 
     def getValue(self):
         return self.value
+
+    def getValueType(self):
+        return self.valueType
 
     def getDataID(self):
         return self.dataID
