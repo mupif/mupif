@@ -1,0 +1,46 @@
+{
+    "Name": "Simple multiplicator",
+    "ID": "N/A",
+    "Description": "Computes multiplication of two given values",
+    "Version_date": "12/2021",
+    "Physics": {
+        "Type": "Other",
+        "Entity": "Other"
+    },
+    "Solver": {
+        "Software": "Python script",
+        "Language": "Python3",
+        "License": "LGPL",
+        "Creator": "Stanislav",
+        "Version_date": "12/2021",
+        "Type": "Multiplicator",
+        "Documentation": "Nowhere",
+        "Estim_time_step_s": 1,
+        "Estim_comp_time_s": 0.01,
+        "Estim_execution_cost_EUR": 0.01,
+        "Estim_personnel_cost_EUR": 0.01,
+        "Required_expertise": "None",
+        "Accuracy": "High",
+        "Sensitivity": "Low",
+        "Complexity": "Low",
+        "Robustness": "High"
+    },
+    "Inputs": [
+        {"Type": "mupif.Property", "Type_ID": "mupif.DataID.PID_Time", "Name": "Value_1", "Obj_ID": "1",
+         "Description": "Input value 1", "Units": "s", "Required": true, "Set_at": "timestep", "ValueType": "Scalar"},
+        {"Type": "mupif.Property", "Type_ID": "mupif.DataID.PID_Time", "Name": "Value_2", "Obj_ID": "2",
+         "Description": "Input value 2", "Units": "s", "Required": true, "Set_at": "timestep", "ValueType": "Scalar"},
+        {"Type": "mupif.Property", "Type_ID": "mupif.DataID.PID_Time", "Name": "Delay", "Obj_ID": "delay",
+         "Description": "Delay in seconds", "Units": "s", "Required": false, "Set_at": "timestep", "ValueType": "Scalar"}
+    ],
+    "Outputs": [
+        {"Type": "mupif.Property", "Type_ID": "mupif.DataID.PID_Time", "Name": "Multiplication_result",
+         "Description": "Result of multiplication", "Units": "s^2", "ValueType": "Scalar"}
+    ],
+    "Execution_settings": {
+        "Type": "Distributed",
+        "jobManName": "CVUT.demo01",
+        "Class": "Application13",
+        "Module": "application13"
+    }
+}

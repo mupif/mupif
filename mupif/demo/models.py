@@ -69,7 +69,8 @@ class ThermalModel(mupif.model.Model):
                         "Name": "temperature",
                         "Type_ID": "mupif.DataID.FID_Temperature",
                         "Type": "mupif.Field",
-                        "Units": "deg_C"
+                        "Units": "deg_C",
+                        "ValueType": "Scalar"
                     },
                     {
                         "Name": "temperatureVTK",
@@ -86,7 +87,7 @@ class ThermalModel(mupif.model.Model):
                     "Complexity": "Low",
                     "Robustness": "High",
                     "Estim_time_step_s": 1,
-                    "Estim_comp_time_s": 1.e-3,
+                    "Estim_comp_time_s": 10.,
                     "Estim_execution_cost_EUR": 0.01,
                     "Estim_personnel_cost_EUR": 0.01,
                     "Required_expertise": "None",
@@ -297,7 +298,7 @@ class ThermalModel(mupif.model.Model):
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Temperature,
                 valueType=mupif.ValueType.Scalar,
-                unit=mupif.U.C,
+                unit=mupif.U.deg_C,
                 time=time,
                 value=values
             )
@@ -715,6 +716,7 @@ class ThermalNonstatModel(ThermalModel):
                     "Type_ID": "mupif.DataID.FID_Temperature",
                     "Type": "mupif.Field",
                     "Units": "deg_C",
+                    "ValueType": "Scalar"
                 },
                 {
                     "Name": "temperatureVTK",
@@ -731,7 +733,7 @@ class ThermalNonstatModel(ThermalModel):
                 "Complexity": "Low",
                 "Robustness": "High",
                 "Estim_time_step_s": 1,
-                "Estim_comp_time_s": 1.e-3,
+                "Estim_comp_time_s": 100.,
                 "Estim_execution_cost_EUR": 0.01,
                 "Estim_personnel_cost_EUR": 0.01,
                 "Required_expertise": "None",
@@ -1021,7 +1023,8 @@ class MechanicalModel(mupif.model.Model):
                     "Type": "mupif.Field",
                     "Units": "deg_C",
                     "Required": True,
-                    "Set_at": "timestep"
+                    "Set_at": "timestep",
+                    "ValueType": "Scalar"
                 },
                 {
                     "Name": "Input file",
@@ -1045,7 +1048,7 @@ class MechanicalModel(mupif.model.Model):
                         "Dirichlet right"
                     ],
                     "Set_at": "initialization",
-                    "ValueType": "Scalar"
+                    "ValueType": "Vector"
                 }
             ],
             "Outputs": [
@@ -1054,6 +1057,7 @@ class MechanicalModel(mupif.model.Model):
                     "Type_ID": "mupif.DataID.FID_Displacement",
                     "Type": "mupif.Field",
                     "Units": "m",
+                    "ValueType": "Vector"
                 },
                 {
                     "Name": "displacementVTK",
@@ -1070,7 +1074,7 @@ class MechanicalModel(mupif.model.Model):
                 "Complexity": "Low",
                 "Robustness": "High",
                 "Estim_time_step_s": 1,
-                "Estim_comp_time_s": 1.e-3,
+                "Estim_comp_time_s": 100.,
                 "Estim_execution_cost_EUR": 0.01,
                 "Estim_personnel_cost_EUR": 0.01,
                 "Required_expertise": "None",

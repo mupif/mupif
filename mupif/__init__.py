@@ -33,6 +33,11 @@ __version__ = '2.3.0'
 __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
 
+import pydantic
+pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
+if pyd_v0!='2': raise RuntimeError(f'Pydantic version 2.x is required for mupif (upgrade via "pip3 install \'pydantic>=2.0.0\'" or similar); current pydantic version is {pydantic.__version__}')
+
+
 #
 # import everything recursively, inject into this module
 #
@@ -220,7 +225,7 @@ def _registerOther():
     # Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
     # various exception we want to catch in remote calls
-    for exc in ['pydantic.error_wrappers.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
+    for exc in ['pydantic.error_wrappers.ValidationError','pydantic_core._pydantic_core.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
         Pyro5.api.register_dict_to_class(exc,lambda name,dic: RuntimeError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
 
 
@@ -244,7 +249,7 @@ _pyroMonkeyPatch()
 
 # this is for pydantic
 from . import field
-field.Field.update_forward_refs()
+field.Field.model_rebuild()
 
 # configure logging
 util.setupLoggingAtStartup()

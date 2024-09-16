@@ -24,9 +24,9 @@ class Example06(mp.Workflow):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Temperature', 'Name': 'Temperature field',
-                 'Description': 'Temperature field on 2D domain', 'Units': 'degC'},
+                 'Description': 'Temperature field on 2D domain', 'Units': 'degC', 'ValueType': 'Scalar'},
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
-                 'Description': 'Displacement field on 2D domain', 'Units': 'm'}
+                 'Description': 'Displacement field on 2D domain', 'Units': 'm', 'ValueType': 'Vector'}
             ],
             'Models': [
                 {

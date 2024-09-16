@@ -257,7 +257,7 @@ class Octree(localizer.Localizer):
     #    """
     #    self.root.delete(item)
 
-    @pydantic.validate_arguments(config=dict(allow_arbitrary_types=True))
+    @pydantic.validate_call(config=dict(allow_arbitrary_types=True))
     def getItemsInBBox(self, bbox: bbox.BBox):
         """
         Returns the set of objects inside the given bounding box. 

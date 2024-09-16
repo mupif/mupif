@@ -149,7 +149,7 @@ class WithMetadata(ObjectBase):
             else:
                 self.setMetadata(new_key, value)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def _updateMetadata(self, dictionary: Optional[dict]):
         """ 
         Updates metadata's dictionary with a given dictionary
@@ -170,7 +170,8 @@ class WithMetadata(ObjectBase):
         Validates metadata's dictionary with a given dictionary
         :param dict template: Schema for json template
         """
-        if type(template) == pydantic.main.ModelMetaclass:
+        # different validators for pydantic-based and plain models (which are no longer used, really)
+        if issubclass(template, pydantic.BaseModel):
             template(**self.metadata)
         else:
             jsonschema.validate(self.metadata, template)
@@ -224,11 +225,17 @@ class DataList(Data):
         # self.dataID = tset.pop()
         self.objs = kw['objs']
 
-    @pydantic.validator('objs')
+    @pydantic.field_validator('objs')
     def objs_validator(cls, v):
         # if ft:=[e for e in v if not isinstance(e,Data)]: raise ValueError(f'Some objects in the sequence are not a Data (foreign types: {", ".join([t.__module__+t.__class__.__name__ for t in ft])})')
         if len(tset := set(DataList._seqTypes(v))) > 1:
             raise ValueError(f'Multiple Data subclasses in sequence, must be only one ({", ".join([t for t in tset])}).')
+
+    def getItems(self):
+        return self.objs
+
+    def getItem(self, i):
+        return self.objs[i]
 
     def getDataID(self):
         return self.dataID

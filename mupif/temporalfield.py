@@ -20,13 +20,12 @@ class _FieldLocation(pydantic.BaseModel):
 
 
 class _FieldMetadata(pydantic.BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
     time: au.Quantity
     location: _FieldLocation
     user: dict = pydantic.Field(default_factory=dict)
 
-    @pydantic.validator("time")
+    @pydantic.field_validator("time")
     def time_validator(cls, v):
         t = au.Unit(v)
         t.to(au.s)  # raises exception if not time dimension

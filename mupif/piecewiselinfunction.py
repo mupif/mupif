@@ -53,6 +53,9 @@ class PiecewiseLinFunction(Function, DbDictable):
         if self.valueType is not ValueType.Scalar:
             raise ValueError("Only Scalar Y is now allowed")
 
+    def getInputDescription(self):
+        return self.inputs
+
     def evaluate(self, p):
         value_data = np.interp(x=p['x'], xp=self.x, fp=self.y)
         return ConstantProperty(value=value_data, propID=self.dataID, valueType=self.valueType, unit=self.unit)

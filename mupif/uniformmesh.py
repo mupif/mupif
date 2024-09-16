@@ -31,7 +31,7 @@ import pydantic
 class UniformRectilinearMesh(Mesh,HeavyConvertible):
     origin:  typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
     spacing: typing.Any=pydantic.Field(default_factory=lambda: np.array([1,1,1]))
-    dims: typing.Any
+    dims: typing.Any = None
     h5path: typing.Optional[str]=None
     h5group: typing.Optional[str]=None
 
@@ -47,7 +47,8 @@ class UniformRectilinearMesh(Mesh,HeavyConvertible):
     def getCellLocalizer(self):
         return UniformRectilinearMesh.GridLocalizer(self)
 
-    @pydantic.root_validator(pre=False)
+    @pydantic.model_validator(mode='before')
+    @classmethod
     def convert_to_np_array(cls,vals):
         for f,dtype in [('origin','f'),('spacing','f'),('dims','i')]:
             if f in vals: vals[f]=np.array(vals[f],dtype=dtype)

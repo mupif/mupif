@@ -1,5 +1,5 @@
 import Pyro5.api
-from .property import Property
+from .property import Property, ConstantProperty
 from .units import Quantity
 from . import units
 from . import dataid
@@ -44,7 +44,7 @@ class TemporalProperty(Property, DbDictable):
             # interpolate by component; assemble new quality by elements
             qq = [np.interp(fp=self.quantity[:, i], **interpKw) for i in range(self.quantity.shape[1])]
             q = Quantity(value=[q.value for q in qq], unit=qq[0].unit)
-        return Property(quantity=q, propID=self.propID, valueType=self.valueType)
+        return ConstantProperty(quantity=q, propID=self.propID, valueType=self.valueType)
 
     def to_db_dict_impl(self):
         return {

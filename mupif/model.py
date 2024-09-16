@@ -50,10 +50,6 @@ type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, DataID)))
 
 
-
-
-
-
 @Pyro5.api.expose
 class Model(data.Process):
     """
@@ -191,7 +187,7 @@ class Model(data.Process):
             return uri
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        """ 
+        """
         Solves the problem for given time step.
 
         Proceeds the solution from actual state to given time.
@@ -333,7 +329,7 @@ class Model(data.Process):
         return self.pyroURI
 
     def printMetadata(self, nonEmpty=False):
-        """ 
+        """
         Print all metadata
         :param bool nonEmpty: Optionally print only non-empty values
         :return: None

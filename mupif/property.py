@@ -64,7 +64,7 @@ class ConstantProperty(Property,DbDictable):
     .. automethod:: __init__
     """
 
-    time: typing.Optional[Quantity]
+    time: typing.Optional[Quantity] = None
 
     def __str__(self):
         return str(self.quantity) + '{' + str(self.propID) + ',' + str(self.valueType) + '}@' + str(self.time)

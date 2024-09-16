@@ -6,10 +6,11 @@ import importlib
 import typing
 import numpy
 import numpy as np
-import Pyro5
+import Pyro5.api
 import sys
 
 import pydantic
+import pydantic_core
 # from pydantic.dataclasses import dataclass
 
 try:
@@ -18,7 +19,6 @@ except Exception:
     astropy = None
 
 from typing import Generic, TypeVar
-from pydantic.fields import ModelField
 
 pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
 if pyd_v0=='1' and int(pyd_v1)<9:
@@ -29,15 +29,19 @@ if 1:
     NumpyArray = NumpyArrayFloat64 = typing.Any
     NumpyArrayStr = typing.Any
 else:
+    # TODO: update to pydantic v2?
     # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
+    from pydantic.fields import ModelField
     DType = TypeVar('DType')
     class NumpyArray(np.ndarray, Generic[DType]):
         """Wrapper class for numpy arrays that stores and validates type information.
         This can be used in place of a numpy array, but when used in a pydantic BaseModel
-        or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
+        or with pydantic.validate_call, its dtype will be *coerced* at runtime to the
         declared type.
         """
         @classmethod
+        # TODO[pydantic]: We couldn't refactor `__get_validators__`, please create the `__get_pydantic_core_schema__` manually.
+        # Check https://docs.pydantic.dev/latest/migration/#defining-custom-types for more information.
         def __get_validators__(cls):
             yield cls.validate
         @classmethod
@@ -60,24 +64,18 @@ else:
 
 
 def addPydanticInstanceValidator(klass, makeKlass=None):
-    def klass_validate(cls, v):
+    def klass_validate(v):
         if isinstance(v, klass): return v
         if makeKlass: return makeKlass(v)
-        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__}')
+        else: raise ValueError(f'Instance of {klass.__name__} required (not a {type(v).__name__}).')
     @classmethod
-    def klass_get_validators(cls): yield klass_validate
-    klass.__get_validators__ = klass_get_validators
+    def klass_get_pydantic_core_schema(cls, source, handler: pydantic.GetCoreSchemaHandler) -> pydantic.GetCoreSchemaHandler:
+        return pydantic_core.core_schema.no_info_plain_validator_function(klass_validate)
+    klass.__get_pydantic_core_schema__ = klass_get_pydantic_core_schema
 
 class ObjectBase(pydantic.BaseModel):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
-    class Config:
-        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
-        # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = 'none'
-        # this unfortunately also allows arbitrary **kw passed to the ctor
-        # but we filter that in the custom __init__ function just below
-        # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra = 'allow'
+    model_config = pydantic.ConfigDict(extra='allow')
 
     def __init__(self, *args, **kw):
         # print(f'### __init__ with {args=} {kw=}')
@@ -85,12 +83,12 @@ class ObjectBase(pydantic.BaseModel):
             raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
         # print(kw.keys())
         for k in kw.keys():
-            if k not in self.__class__.__fields__:
-                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
+            if k not in self.__class__.model_fields:
+                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.model_fields.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
         super().__init__(*args, **kw)
 
     @Pyro5.api.expose
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
         return isinstance(self, classinfo)
 
@@ -120,15 +118,7 @@ class BareData(ObjectBase):
 
     """
     _pickleInside = False
-
-    class Config:
-        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
-        # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = 'none'
-        # this unfortunately also allows arbitrary **kw passed to the ctor
-        # but we filter that in the custom __init__ function just below
-        # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra = 'allow'
+    model_config = pydantic.ConfigDict(extra='allow')
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):
@@ -169,14 +159,16 @@ class BareData(ObjectBase):
         ret = {}
         if clss is None:
             ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
-            if BareData._pickleInside:
+            # XXX: this changed after pydantic V2, so _pickleInside is True even if it is just class attribute?!
+            # XXX: and then, FieldInfo has not attribute field_info
+            if BareData._pickleInside and False:
                 ret['__pickle__'] = pickle.dumps(self)
                 return ret
             clss = self.__class__
         if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
-            for attr,modelField in clss.__fields__.items():
-                if modelField.field_info.exclude: continue # skip excluded fields
+            for attr,modelField in clss.model_fields.items():
+                if modelField.exclude: continue # skip excluded fields
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
@@ -293,11 +285,11 @@ if __name__ == '__main__':
             print('This is my custom constructor')
             super().__init__(**kw)
             self._myextra = 1
-    TestDumpable.update_forward_refs()
+    TestDumpable.model_rebuild()
     td0 = TestDumpable(num=0, dic=dict(a=1, b=2, c=[1, 2, 3]))
     td1 = TestDumpable(num=1, dic=dict(), recurse=td0)
     import pprint
-    d1 = td1.dict()
+    d1 = td1.model_dump()
     pprint.pprint(d1)
     td1a = TestDumpable.construct(**d1)
-    pprint.pprint(td1a.dict())
+    pprint.pprint(td1a.model_dump())

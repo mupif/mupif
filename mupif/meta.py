@@ -75,6 +75,7 @@ class ExecutionMeta(pydantic.BaseModel):
     Timeout: int = Field(0,description='Maximum runtime in seconds; unlimited if non-positive')
     Username: str = Field('',description='Automatically set in Model and Workflow')
     Hostname: str = Field('',description='Automatically set in Model and Workflow')
+    ExecutionProfileIndex: int = -1
 
 
 class IOMeta(pydantic.BaseModel):
@@ -107,13 +108,14 @@ class IOMeta(pydantic.BaseModel):
     Units: str
     Required: bool = False
 
-    @pydantic.root_validator(pre=False)
-    def _require_valueType_unless_property(cls, values):
-        if values['Type'] != 'mupif.Property' and values['Type'] != 'mupif.TemporalProperty':
-            assert 'ValueType' != ''
-        return values
+    @pydantic.model_validator(mode='after')
+    def _require_valueType_for_some(self):
+        valueTypeRequired=['mupif.Property','mupif.TemporalProperty','mupif.Field','mupif.TemporalField','mupif.Function']
+        if self.Type in valueTypeRequired+['mupif.DataList['+t+']' for t in valueTypeRequired]:
+            assert self.ValueType != ''
 
-    @pydantic.root_validator(pre=True)
+    @pydantic.model_validator(mode='before')
+    @classmethod
     def _convert_type_id_to_value(cls, values):
         tid = values['Type_ID']
         if isinstance(tid, str):
@@ -140,11 +142,9 @@ class ModelInWorkflowMeta(pydantic.BaseModel):
     Class: str = ''
     Jobmanager: str = ''
 
-    @pydantic.root_validator(pre=False)
-    def _moduleClass_or_jobmanager(cls, values):
-        if values['Jobmanager'] == '':
-            assert values['Module'] != '' and values['Name'] != ''
-        return values
+    @pydantic.model_validator(mode='after')
+    def _moduleClass_or_jobmanager(self):
+        if self.Jobmanager == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For non-Jobmanager metadata, Module and Name must not be empty ({self.Module=}, {self.Name=})')
 
 
 class ModelWorkflowCommonMeta(pydantic.BaseModel):
@@ -161,9 +161,28 @@ class ModelMeta(ModelWorkflowCommonMeta):
     Physics: PhysicsMeta
     Solver: SolverMeta
 
+class ModelConfiguration(pydantic.BaseModel):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
+
+# TODO: should be *Meta
+class ModelConfiguration(pydantic.BaseModel):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
+
+# TODO: should be *Meta
+class WorkflowConfiguration(pydantic.BaseModel):
+     Name: str
+     Cost: str # $, $$, or $$$
+     Description: str
+     Models: List[ModelConfiguration]
+
 
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
+    ExecutionProfiles: Optional[List[WorkflowConfiguration]] = None
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()
@@ -285,7 +304,7 @@ if 0:
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
                             "mupif.DataList[mupif.GrainState]",
-                            "mupif.DataList[mupif.PiecewiseLinFunction]"
+                            "mupif.DataList[mupif.Function]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                         "Obj_ID": {  # optional parameter for additional info, string or list of string
@@ -338,7 +357,7 @@ if 0:
                             "mupif.String",
                             "mupif.ParticleSet",
                             "mupif.GrainState",
-                            "mupif.PiecewiseLinFunction",
+                            "mupif.Function",
                             "mupif.DataList[mupif.Property]",
                             "mupif.DataList[mupif.TemporalProperty]",
                             "mupif.DataList[mupif.Field]",
@@ -347,7 +366,7 @@ if 0:
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
                             "mupif.DataList[mupif.GrainState]",
-                            "mupif.DataList[mupif.PiecewiseLinFunction]"
+                            "mupif.DataList[mupif.Function]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                         "Obj_ID": {  # optional parameter for additional info, string or list of string

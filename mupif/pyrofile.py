@@ -142,7 +142,7 @@ class PyroFile(Utility):
 
     # MUST be called as mp.PyroFile.copy(src,dst)
     @staticmethod
-    # @pydantic.validate_arguments # does not work yet, see https://stackoverflow.com/q/70965979
+    # @pydantic.validate_call # does not work yet, see https://stackoverflow.com/q/70965979
     def copy(src: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
              dst: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
              compress=True):
