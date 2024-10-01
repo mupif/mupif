@@ -117,7 +117,7 @@ class IOMeta(pydantic.BaseModel):
     @pydantic.model_validator(mode='before')
     @classmethod
     def _convert_type_id_to_value(cls, values):
-        tid = values['Type_ID']
+        tid = values.get('Type_ID',values.get('TypeID'))
         if isinstance(tid, str):
             prefix = 'mupif.DataID.'
             if tid.startswith(prefix):
@@ -157,7 +157,6 @@ class ModelWorkflowCommonMeta(pydantic.BaseModel):
     Outputs: List[OutputMeta] = []
 
 class ModelMeta(ModelWorkflowCommonMeta):
-    pass
     Physics: PhysicsMeta
     Solver: SolverMeta
 
