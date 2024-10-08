@@ -476,7 +476,7 @@ class HeavyStruct_TestCase(unittest.TestCase):
                 "str10":{ "dtype":"a10" },
                 "str":{ "dtype":"S" },
                 "lst100":{ "dtype":"a100", "delim":"|" },
-                "lst": { "dtype":"s", "delim":"|||" }
+                "lst": { "dtype":"S", "delim":"|||" }
               }
             ]
         '''
