@@ -22,7 +22,7 @@
 #
 
 import os
-import Pyro5
+import Pyro5.api
 import numpy
 import copy
 import logging
@@ -37,6 +37,7 @@ from . import Property
 from . import DataID
 from . import U
 from . import pyroutil
+from . import pyrolog
 from .meta import WorkflowMeta
 
 log = logging.getLogger()
@@ -91,7 +92,13 @@ class Workflow(model.Model):
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
                 # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI', ''))
+                # if not given in Execution.Log_URI (this is what workflow execution script in mupifDB does), forward remote logs to the local logger
+                if self.hasMetadata('Execution.Log_URI'): remoteLogUri=self.getMetadata('Execution.LogURI')
+                else:
+                    daemon = pyroutil.getDaemon(proxy=ns)
+                    remoteLogUri=str(daemon.register(pyrolog.PyroLogReceiver()))
+                    log.debug(f'Model {name=} will remotely use our logger at {remoteLogUri=}')
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=remoteLogUri)
                 return self._models[name]
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
