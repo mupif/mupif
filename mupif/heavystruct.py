@@ -841,7 +841,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
             return d
         if self.row is not None: return _onerow(self.row)
         else: return [_onerow(r) for r in range(self.ctx.dataset.shape[0])]
-    def T_from_dump(self,dump,*,ret=ret):
+    def T_from_dump(self,dump,*,ret=ret,extend=False):
         _T_assertWritable(self,msg=f'when applying dump')
         def _onerow(row,di):
             rowdata=self.ctx.dataset[row]
@@ -870,9 +870,14 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
             _onerow(self.row,dump)
         else:
             assert isinstance(dump,list)
-            self.resize(len(dump),reset=True)
+            if not extend:
+                offset=0
+                self.resize(len(dump),reset=True)
+            else:
+                offset=self.ctx.dataset.shape[0]
+                self.resize(offset+len(dump),reset=False)
             _T_assertDataset(self,msg=f'when applying dump')
-            for row,di in enumerate(dump): _onerow(row,di)
+            for row,di in enumerate(dump): _onerow(offset+row,di)
 
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')
