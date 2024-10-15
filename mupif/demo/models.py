@@ -8,7 +8,7 @@ import time as timeTime
 import logging
 import uuid
 
-log = logging.getLogger('ex01_models')
+log = logging.getLogger('demo-models')
 
 
 def getline(f):
