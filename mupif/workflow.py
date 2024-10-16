@@ -93,7 +93,7 @@ class Workflow(model.Model):
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
                 # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
                 # if not given in Execution.Log_URI (this is what workflow execution script in mupifDB does), forward remote logs to the local logger
-                if self.hasMetadata('Execution.Log_URI'): remoteLogUri=self.getMetadata('Execution.LogURI')
+                if self.hasMetadata('Execution.Log_URI'): remoteLogUri=self.getMetadata('Execution.Log_URI')
                 else:
                     daemon = pyroutil.getDaemon(proxy=ns)
                     remoteLogUri=str(daemon.register(pyrolog.PyroLogReceiver()))
