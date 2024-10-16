@@ -526,7 +526,8 @@ def connectModelServer(ns, jobManName):
     :raises Exception: if creation of a tunnel failed
     """
 
-    return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, {jobManName}))
+    return modelserverbase.RemoteModelServer(_connectApp(ns, jobManName))
+    # return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, {jobManName}))
 
 def connectModelServerWithMetadata(ns, metadata, optionalMetadata={}):
     """
