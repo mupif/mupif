@@ -159,8 +159,10 @@ class ModelServerBase(object):
         """
         """
     def getNSName(self):
-        worker_name = "%s_%d@%s" % (self.applicationName, os.getpid(), socket.gethostname())
-        return worker_name
+        return self.getName()
+        ## TODO: Execution profiles need to return variable NS name, but we need to stay compatible with old ModelServers now
+        ## TODO: see also comment
+        return f"{self.applicationName}_{os.getpid()}@{socket.gethostname()}"
     
     def getName(self):
         return self.applicationName

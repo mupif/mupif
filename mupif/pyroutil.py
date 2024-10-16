@@ -285,6 +285,7 @@ def _connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestT
     :rtype: Instance of an application
     :raises Exception: When cannot find registered server or Cannot connect to application or Timeout passes
     """
+    raise NotImplementedError('Execution profiles not yet implemented correctly.')
     try:
         candidates = ns.yplookup(meta_all=requiredMData)
         if not candidates:
@@ -527,6 +528,8 @@ def connectModelServer(ns, jobManName):
     """
 
     return modelserverbase.RemoteModelServer(_connectApp(ns, jobManName))
+    ### TODO: this would be for modelservers once we are compatible with execution profiles
+    ### TODO: see also ModelServerBase.getNSName() which must be changed accordingly
     # return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, {jobManName}))
 
 def connectModelServerWithMetadata(ns, metadata, optionalMetadata={}):
@@ -539,6 +542,7 @@ def connectModelServerWithMetadata(ns, metadata, optionalMetadata={}):
     :rtype: jobmanager.RemoteJobManager
     :raises Exception: if creation of a tunnel failed
     """
+    raise NotImplementedError('Execution profiles not yet implemented correctly.')
 
     return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, metadata, optionalMetadata))
 

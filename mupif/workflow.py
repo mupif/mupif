@@ -155,13 +155,14 @@ class Workflow(model.Model):
         if 'ExecutionProfileIndex' in self.metadata['Execution']:
             executionProfile = self.metadata['Execution']['ExecutionProfileIndex']
 
-        print("Workflow::executionProfile #%d"%(executionProfile,))
+        log.info("Workflow::executionProfile #%d"%(executionProfile,))
         for model_info in self.metadata['Models']:
             if model_info.get('Instantiate', True):
                 name=model_info.get('Name', '')
                 if (executionProfile < 0):
                     self._allocateModel(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
                 else:
+                    raise NotImplementedError('Execution profiles are not yet implemented correctly.')
                     executionProfile = self.metadata['ExecutionProfiles'][executionProfile]
                     mep = None
                     for ep in executionProfile['Models']:
