@@ -51,6 +51,7 @@ class PyroLogReceiver(object):
     """
     def __init__(self, tailHandler=None):
         self.log = logging.getLogger('PyroLogReceiver')
+        if tailHandler is None: tailHandler=TailLogHandler()
         self.tailHandler = tailHandler
 
     def handleRecord(self, recPickle):
@@ -68,7 +69,7 @@ class TailLogHandler(logging.Handler):
     """
     When installed as handler, keeps last *capacity* messages, which can be obtained via *tail*.
     """
-    def __init__(self, capacity=100):
+    def __init__(self, capacity=1000):
         super().__init__()
         self.buf = collections.deque([], maxlen=capacity)
 
