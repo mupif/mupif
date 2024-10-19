@@ -252,3 +252,7 @@ util.setupLoggingAtStartup()
 # switch on optional components
 try: util.accelOn()
 except ImportError: util.accelOff()
+
+# 2024: backwards compat; workaround errors with a certain version combination of numpy+astropy
+# can be removed later
+if not hasattr(numpy,'product'): numpy.product = numpy.prod
