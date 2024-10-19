@@ -100,7 +100,9 @@ def autoImports():
 # 2024: backwards compat; workaround errors with a certain version combination of numpy+astropy
 # which would be triggered by the unit import just below; can be removed later
 import numpy
-if not hasattr(numpy,'product'): numpy.product = numpy.prod
+if not hasattr(numpy,'product'):
+    numpy.product = numpy.prod
+    numpy.cumproduct = numpy.cumprod
 
 
 # these are imported explicitly (not classes but rather instances)
@@ -154,12 +156,13 @@ from .temporalfield import TemporalField, DirTemporalField, SingleFileTemporalFi
 from . import pbs_tool
 from . import hpc_tool
 from . import pyrolog
+from . import pyroutil
 from . import monitor
 
 
 
 
-__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','modelserverbase','ModelServerException','ModelServerNoResourcesException','ModelServerBase','RemoteModelServer','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','modelserver','ModelServer','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','piecewiselinfunction','PiecewiseLinFunction','pbs_tool','hpc_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable','monitor','WithMetadata','Data','Process','DataList','Utility','RefQuantity','FieldBase','HeavyConvertible']
+__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','modelserverbase','ModelServerException','ModelServerNoResourcesException','ModelServerBase','RemoteModelServer','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','modelserver','ModelServer','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','piecewiselinfunction','PiecewiseLinFunction','pbs_tool','hpc_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable','monitor','WithMetadata','Data','Process','DataList','Utility','RefQuantity','FieldBase','HeavyConvertible']
 
 # importing those modules would trigger warning, skip it here
 with warnings.catch_warnings():
@@ -239,7 +242,7 @@ def _pyroMonkeyPatch():
     import Pyro5.api
     # workaround for https://github.com/irmen/Pyro5/issues/44
     if not hasattr(Pyro5.api.Proxy, '__len__'):
-        Pyro5.api.Proxy.__bool__: lambda self: True
+        Pyro5.api.Proxy.__bool__= lambda self: True
         Pyro5.api.Proxy.__len__ = lambda self: self.__getattr__('__len__')()
         Pyro5.api.Proxy.__getitem__ = lambda self, index: self.__getattr__('__getitem__')(index)
         Pyro5.api.Proxy.__setitem__ = lambda self, index, val: self.__getattr__('__setitem__')(index, val)
