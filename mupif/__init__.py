@@ -97,6 +97,12 @@ def autoImports():
     return ret
 
 
+# 2024: backwards compat; workaround errors with a certain version combination of numpy+astropy
+# which would be triggered by the unit import just below; can be removed later
+import numpy
+if not hasattr(numpy,'product'): numpy.product = numpy.prod
+
+
 # these are imported explicitly (not classes but rather instances)
 from .units import U
 from .units import Q
@@ -258,6 +264,3 @@ util.setupLoggingAtStartup()
 try: util.accelOn()
 except ImportError: util.accelOff()
 
-# 2024: backwards compat; workaround errors with a certain version combination of numpy+astropy
-# can be removed later
-if not hasattr(numpy,'product'): numpy.product = numpy.prod
