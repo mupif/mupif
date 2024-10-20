@@ -59,20 +59,20 @@ def schedulerInfo(ns):
         if 'getExecutions' not in dir(s):
             log.warning('getExecutions not defined')
             continue  # old workflow monitor?
-        rr = {}
-        for ex in s.getExecutions(status='Running'):
-            try:
-                wf, lg = ex['workflowURI'], ex['loggerURI']
-            except KeyError:
-                continue
-            try:
-                proxy = Pyro5.api.Proxy(lg)
-                proxy._pyroTimeout = 0.2
-                rawTail = pickle.loads(serpent.tobytes(proxy.tail(10, raw=True)))
-                rr[ex['_id']] = dict(tail=rawTail)
-            except Pyro5.errors.CommunicationError:
-                log.debug(f'Error getting tail of weid {ex["_id"]}, logger {lg}')
-        ret[-1]['running'] = rr
+        # rr = {}
+        # for ex in s.getExecutions(status='Running'):
+        #     try:
+        #         wf, lg = ex['workflowURI'], ex['loggerURI']
+        #     except KeyError:
+        #         continue
+        #     try:
+        #         proxy = Pyro5.api.Proxy(lg)
+        #         proxy._pyroTimeout = 0.2
+        #         rawTail = pickle.loads(serpent.tobytes(proxy.tail(10, raw=True)))
+        #         rr[ex['_id']] = dict(tail=rawTail)
+        #     except Pyro5.errors.CommunicationError:
+        #         log.debug(f'Error getting tail of weid {ex["_id"]}, logger {lg}')
+        # ret[-1]['running'] = rr
     return ret
 
 
