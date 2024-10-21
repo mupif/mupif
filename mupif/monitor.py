@@ -9,7 +9,7 @@ import serpent
 log = logging.getLogger()
 
 
-def jobmanInfo(ns, logLines=10):
+def jobmanInfo(ns, logLines=0):
     query = ns.yplookup(meta_any={"type:jobmanager"})
     ret = []
     for name, (uri, metadata) in query.items():
@@ -27,7 +27,7 @@ def jobmanInfo(ns, logLines=10):
             jm['status'] = False
         for job in jm['jobs']:
             fmt = logging.Formatter(fmt='%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(message)s')
-            if 'remoteLogUri' in job:
+            if logLines>0 and 'remoteLogUri' in job:
                 try:
                     ll = Pyro5.api.Proxy(job['remoteLogUri']).tail(logLines, raw=True)
                     if isinstance(ll, dict):
@@ -37,8 +37,7 @@ def jobmanInfo(ns, logLines=10):
                 except:
                     log.exception("Error getting remote log (non-fatal)")
                     job['tail']=[f"<ERROR getting remote log from URI \"{job['remoteLogUri']}\">"]
-
-
+            else: job['tail']=[]
         jm['signature'] = jobman.getApplicationSignature()
         ret.append(jm)
     return ret
