@@ -146,6 +146,7 @@ class ModelInWorkflowMeta(pydantic.BaseModel):
     @pydantic.model_validator(mode='after')
     def _moduleClass_or_jobmanager(self):
         if self.Jobmanager == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For non-Jobmanager metadata, Module and Name must not be empty ({self.Module=}, {self.Name=})')
+        return self
 
 
 class ModelWorkflowCommonMeta(pydantic.BaseModel):
