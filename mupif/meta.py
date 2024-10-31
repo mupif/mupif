@@ -113,6 +113,7 @@ class IOMeta(pydantic.BaseModel):
         valueTypeRequired=['mupif.Property','mupif.TemporalProperty','mupif.Field','mupif.TemporalField','mupif.Function']
         if self.Type in valueTypeRequired+['mupif.DataList['+t+']' for t in valueTypeRequired]:
             assert self.ValueType != ''
+        return self
 
     @pydantic.model_validator(mode='before')
     @classmethod
