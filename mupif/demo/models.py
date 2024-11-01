@@ -21,7 +21,7 @@ def getline(f):
 
 
 @Pyro5.api.expose
-class ThermalModel(mupif.model.Model):
+class ThermalModel(mupif.model.Model,extra='allow'):
     """ Simple stationary heat transport solver on rectangular domains"""
 
     def __init__(self, metadata=None):
@@ -61,7 +61,8 @@ class ThermalModel(mupif.model.Model):
                         "Type_ID": "mupif.DataID.ID_InputFile",
                         "Obj_ID": "input_file_thermal",
                         "Set_at": "initialization",
-                        "Units": ""
+                        "Units": "",
+                        "ValueType": "",
                     }
                 ],
                 "Outputs": [
@@ -76,7 +77,8 @@ class ThermalModel(mupif.model.Model):
                         "Name": "temperatureVTK",
                         "Type_ID": "mupif.DataID.ID_VTKFile",
                         "Type": "mupif.PyroFile",
-                        "Units": ""
+                        "Units": "",
+                        "ValueType": "",
                     }
                 ],
                 "Solver": {
@@ -668,7 +670,7 @@ class ThermalModel(mupif.model.Model):
 
 
 @Pyro5.api.expose
-class ThermalNonstatModel(ThermalModel):
+class ThermalNonstatModel(ThermalModel,extra='allow'):
     """ Simple non-stationary (transient) heat transport solver on rectangular domains"""
 
     def __init__(self):
@@ -707,7 +709,8 @@ class ThermalNonstatModel(ThermalModel):
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": "input_file_thermal_nonstat",
                     "Set_at": "initialization",
-                    "Units": ""
+                    "Units": "",
+                    "ValueType": "",
                 }
             ],
             "Outputs": [
@@ -722,7 +725,8 @@ class ThermalNonstatModel(ThermalModel):
                     "Name": "temperatureVTK",
                     "Type_ID": "mupif.DataID.ID_VTKFile",
                     "Type": "mupif.PyroFile",
-                    "Units": ""
+                    "Units": "",
+                    "ValueType": "",
                 }
             ],
             "Solver": {
@@ -1005,7 +1009,7 @@ class ThermalNonstatModel(ThermalModel):
 
 
 @Pyro5.api.expose
-class MechanicalModel(mupif.model.Model):
+class MechanicalModel(mupif.model.Model,extra='allow'):
     """ Simple mechanical solver on 2D rectanglar domain (plane stress problem) """
 
     def __init__(self):
@@ -1033,7 +1037,8 @@ class MechanicalModel(mupif.model.Model):
                     "Type_ID": "mupif.DataID.ID_InputFile",
                     "Obj_ID": "input_file_mechanical",
                     "Set_at": "initialization",
-                    "Units": ""
+                    "Units": "",
+                    "ValueType": "",
                 },
                 {
                     "Name": "Prescribed displacement",
@@ -1063,7 +1068,8 @@ class MechanicalModel(mupif.model.Model):
                     "Name": "displacementVTK",
                     "Type_ID": "mupif.DataID.ID_VTKFile",
                     "Type": "mupif.PyroFile",
-                    "Units": ""
+                    "Units": "",
+                    "ValueType": "",
                 }
             ],
             "Solver": {

@@ -12,6 +12,8 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
+    value: float=0.
+
     def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application storing time steps',
@@ -51,7 +53,6 @@ class Application1(mp.Model):
         # calls constructor from Application module
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.value = 0.
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
@@ -86,6 +87,9 @@ class Application2(mp.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
+    value: float = 0.
+    count: int = 0
+    contrib: mp.ConstantProperty=mp.ConstantProperty(quantity = 1*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, time=0.*mp.U.s)
     def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application cummulating time steps',
@@ -124,10 +128,6 @@ class Application2(mp.Model):
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.value = 0.0
-        self.count = 0.0
-        self.contrib = mp.ConstantProperty(
-            value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0.*mp.U.s)
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir, metadata, validateMetaData, **kwargs)

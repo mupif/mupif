@@ -31,6 +31,7 @@ from . import cellgeometrytype
 from . import mesh
 from . import uniformmesh
 from . import mupifquantity
+from . import meta
 from .units import Quantity, Unit
 from .baredata import NumpyArray
 from .heavydata import HeavyConvertible
@@ -54,6 +55,7 @@ import itertools
 import os.path
 from .units import Unit
 from typing_extensions import Annotated
+from typing import Optional,Literal
 
 log = logging.getLogger()
 
@@ -68,11 +70,20 @@ class FieldType(IntEnum):
     FT_vertexBased = 1
     FT_cellBased = 2
 
+# XXX: this should really derive from Property metadata
+class FieldMeta(meta.BaseMeta):
+    Units: Optional[str]=None
+    Type: Literal['mupif.field.Field']='mupif.field.Field'
+    Type_ID: Optional[str]=None
+    FieldType: Optional[str]=None
+    ValueType: Optional[str]=None
 
 @Pyro5.api.expose
 class FieldBase(mupifquantity.MupifQuantity):
     fieldID: DataID
     time: Quantity = 0*Unit('s')
+
+    metadata: FieldMeta=FieldMeta()
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -180,6 +191,7 @@ class Field(FieldBase,HeavyConvertible):
     mesh: mesh.Mesh
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
+
 
     def __repr__(self): return str(self)
 

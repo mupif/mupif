@@ -7,10 +7,12 @@ from mupif import *
 import mupif as mp
 import logging
 log = logging.getLogger()
+from typing import Any
 
 
 class Example07(mp.Workflow):
-   
+    daemon: Any=None
+
     def __init__(self, metadata=None):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 

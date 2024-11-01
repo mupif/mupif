@@ -12,6 +12,10 @@ log.info('Timer started')
 
 
 class Example04(mp.Workflow):
+
+    contrib: mp.ConstantProperty = mp.ConstantProperty(quantity=0*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, time=0*mp.U.s)
+    retprop: mp.ConstantProperty =  mp.ConstantProperty(quantity=0*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, time=0*mp.U.s)
+
    
     def __init__(self, metadata=None):
         MD = {
@@ -36,14 +40,9 @@ class Example04(mp.Workflow):
                 }
             ]
         }
-
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
 
-        self.contrib = mp.ConstantProperty(
-            value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
-        self.retprop = mp.ConstantProperty(
-            value=0., propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s, time=0*mp.U.s)
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
@@ -85,8 +84,6 @@ class Example04(mp.Workflow):
 if __name__ == '__main__':
     targetTime = 1.*mp.U.s
 
-    demo = Example04()
-
     executionMetadata = {
         'Execution': {
             'ID': '1',
@@ -95,7 +92,8 @@ if __name__ == '__main__':
         }
     }
 
-    demo.initialize(metadata=executionMetadata)
+    demo = Example04(metadata=executionMetadata)
+    demo.initialize()
     demo.set(mp.ConstantProperty(value=targetTime, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
     kpi = demo.get(mp.DataID.PID_Time, targetTime)

@@ -23,13 +23,13 @@
 
 import Pyro5.api
 import json
-import jsonschema
 import pprint
 import copy
 import typing
 from .baredata import BareData, ObjectBase
 from typing import Optional
 from . import dataid
+from . import meta
 
 import pydantic
 
@@ -40,7 +40,11 @@ class WithMetadata(ObjectBase):
     Class representing a base Mupif object, with metadata.
     """
 
-    metadata: dict = pydantic.Field(default_factory=dict)
+    metadata: meta.BaseMeta=meta.BaseMeta() # dict = pydantic.Field(default_factory=dict)
+
+
+
+    # def _ensureMetadata(self,**kw):
 
     def getMetadata(self, key, default=None):
         """
@@ -66,7 +70,9 @@ class WithMetadata(ObjectBase):
         """
         :rtype: dict
         """
-        return copy.deepcopy(self.metadata)
+        # return copy.deepcopy(self.metadata)
+        if self.metadata is None: return None
+        return self.metadata.model_dump(mode='json')
     
     def hasMetadata(self, key):
         """
@@ -101,13 +107,7 @@ class WithMetadata(ObjectBase):
         :return: None
         :rtype: None
         """
-        print('ClassName:\'%s\'' % self.__class__.__name__)
-        d = {}
-        if nonEmpty:
-            for k, v in self.getAllMetadata().items():
-                if v != '':
-                    d[k] = v
-        pprint.pprint(d if nonEmpty else self.getAllMetadata(), indent=4, width=300)
+        pprint.pprint(self.getAllMetadata())
 
     def setMetadata(self, key, val):
         """ 
@@ -117,6 +117,7 @@ class WithMetadata(ObjectBase):
         """
         keys = key.split('.')
         elem = self.metadata
+        # print(f'{self.metadata=}')
         i = 0
         i_last = len(keys)-1
         for keyword in keys:
@@ -131,50 +132,30 @@ class WithMetadata(ObjectBase):
                 else:
                     elem[keyword] = {}
                     elem = elem[keyword]
+                if elem is None:
+                    raise KeyError(f'None object encountered {i=} {keyword=} when resolving {key=}')
             else:
                 elem[keyword] = val
             i += 1
 
-    def _iterInDictOfMetadataForUpdate(self, dictionary, base_key):
-        if dictionary is None:
-            return
-        for key, value in dictionary.items():
-            if base_key != "":
-                new_key = "%s.%s" % (base_key, key)
-            else:
-                new_key = "%s" % key
-
-            if isinstance(value, dict):
-                self._iterInDictOfMetadataForUpdate(value, new_key)
-            else:
-                self.setMetadata(new_key, value)
-
     @pydantic.validate_call
-    def _updateMetadata(self, dictionary: Optional[dict]):
+    def updateMetadata(self, md: meta.BaseMeta|dict|None):
         """ 
         Updates metadata's dictionary with a given dictionary
-        :param dict dictionary: Dictionary of metadata
         """
-        self._iterInDictOfMetadataForUpdate(dictionary, "")
+        if md is None: return
+        # merge metadata
+        if self.metadata: self.metadata=self.metadata.__class__.model_validate(meta._mergedDicts(self.metadata,md))
+        # no metadata yet: create the correct instance type, assign
+        else: meta._setOptionalField(self,'metadata',md)
 
-    def updateMetadata(self, dictionary: Optional[dict]):
-        """
-        Updates metadata's dictionary with a given dictionary
-        :param dict dictionary: Dictionary of metadata
-        """
-        if dictionary:
-            self._updateMetadata(dictionary=dictionary)
-
-    def validateMetadata(self, template):
+    def validateMetadata(self, template=None):
         """
         Validates metadata's dictionary with a given dictionary
         :param dict template: Schema for json template
         """
-        # different validators for pydantic-based and plain models (which are no longer used, really)
-        if issubclass(template, pydantic.BaseModel):
-            template(**self.metadata)
-        else:
-            jsonschema.validate(self.metadata, template)
+        ## XXX: this can be entirely skipped, it will always pass
+        self.metadata.__class__.model_validate(self.metadata.model_dump())
         
     def __str__(self):
         """

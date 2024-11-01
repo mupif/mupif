@@ -73,11 +73,10 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
         return pydantic_core.core_schema.no_info_plain_validator_function(klass_validate)
     klass.__get_pydantic_core_schema__ = klass_get_pydantic_core_schema
 
-class ObjectBase(pydantic.BaseModel):
+class ObjectBase(pydantic.BaseModel,extra='forbid'):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
-    model_config = pydantic.ConfigDict(extra='allow')
 
-    def __init__(self, *args, **kw):
+    def XXX__init__(self, *args, **kw):
         # print(f'### __init__ with {args=} {kw=}')
         if args:
             raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')

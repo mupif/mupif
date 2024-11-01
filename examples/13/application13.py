@@ -1,6 +1,6 @@
 import sys
 import os
-import Pyro5
+import Pyro5.api
 import logging
 sys.path.extend(['..', '../..'])
 import mupif as mp
