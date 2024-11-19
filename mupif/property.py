@@ -9,6 +9,7 @@ from . import dataid
 from . import mupifquantity
 from . import units
 from . import data
+from . import meta
 from .units import Quantity, Unit, findUnit
 from .dbrec import DbDictable
 
@@ -25,17 +26,31 @@ class Property(mupifquantity.MupifQuantity):
 
     propID: dataid.DataID
 
+    metadata: typing.Optional[meta.IOMeta]=None
+
     def __init__(self, *, metadata={}, **kw):
-        super().__init__(metadata=metadata, **kw)
-        defaults = dict([
-            ('Type', 'mupif.Property'),
-            ('Type_ID', str(self.propID)),
-            ('Units', self.getUnit().to_string()),
-            ('ValueType', str(self.valueType))
-        ])
-        for k, v in defaults.items():
-            if k not in metadata:
-                self.updateMetadata(dict(k=v))
+        #from rich.pretty import pprint
+        super().__init__(**kw)
+        defaults = dict(
+            Type='mupif.Property',
+            Type_ID=str(self.propID),
+            Units=self.getUnit().to_string(),
+            ValueType=self.valueType,
+        )
+        #print('*** Property.__init__: pre-defaults metadata'); pprint(self.metadata)
+        #print('*** Property.__init__: defaults'); pprint(defaults)
+        self.updateMetadata(defaults)
+        #print('*** Property.__init__: post-defaults metadata'); pprint(self.metadata)
+        self.updateMetadata(metadata)
+        #  print('*** Property.__init__: after setting user-provided metadata'); pprint(self.metadata)
+        # self.metadata.Type='mupif.Property'
+        #if self.metadata.Type_ID is None: self.metadata.Type_ID=str(self.propID)
+        #if self.metadata.Units is None: self.metadata.Units=self.getUnit().to_string()
+        #if self.metadata.ValueType is None: self.metadata.ValueType=self.valueType
+
+        #for k, v in defaults.items():
+        #    if k not in metadata:
+        #        self.updateMetadata(dict(k=v))
 
     def getPropertyID(self):
         """

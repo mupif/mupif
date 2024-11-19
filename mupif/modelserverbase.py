@@ -24,7 +24,7 @@
 import logging
 import os
 import socket
-import Pyro5
+import Pyro5.api
 import tempfile
 import warnings
 from . import pyroutil

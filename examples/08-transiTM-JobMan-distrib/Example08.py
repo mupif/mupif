@@ -12,9 +12,11 @@ log = logging.getLogger()
 start = timeT.time()
 log.info('Timer started')
 import mupif as mp
+from typing import Any
 
 
 class Example08(mp.Workflow):
+    daemon: Any=None
    
     def __init__(self, metadata=None):
         """

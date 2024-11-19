@@ -387,7 +387,6 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(root[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
-            self.test_99_daemon_stop()
             raise
     def test_23_read_remote_proxy(self):
         C=self.__class__
@@ -405,7 +404,6 @@ class HeavyStruct_TestCase(unittest.TestCase):
             # self.assertEqual(a0id.getAtomicMass(),1)
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
-            self.test_99_daemon_stop()
             raise
     def test_24_write_remote_proxy(self):
         C=self.__class__
@@ -439,7 +437,6 @@ class HeavyStruct_TestCase(unittest.TestCase):
             handle.closeData()
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
-            self.test_99_daemon_stop()
             raise
     def test_25_daemon_auto_register_unregister(self):
         C=self.__class__

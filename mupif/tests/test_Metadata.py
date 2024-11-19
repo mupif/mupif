@@ -16,7 +16,6 @@ class _TestModel1(model.Model):
             'ID': 'N/A',
             'Description': 'Model with missing metadata',
         }
-        
         super().__init__(metadata=metadata1)
         self.updateMetadata(metadata)
 
@@ -91,8 +90,9 @@ class Metadata_TestCase(unittest.TestCase):
         self.tm2 = _TestModel2()
 
     def test_Init(self):
-        with self.assertRaises((jsonschema.exceptions.ValidationError,pydantic.ValidationError)):
-            self.tm1.initialize()
+        with self.assertRaises(pydantic.ValidationError):
+            # this fails because ID must not be None
+            self.tm1.initialize(metadata={'ID':None})
         self.tm2.initialize(metadata=Metadata_TestCase.executionMetadata)
 
     def test_Name(self):
@@ -101,7 +101,7 @@ class Metadata_TestCase(unittest.TestCase):
     def test_SolverLanguage(self):
         self.assertEqual(self.tm2.getMetadata('Solver.Language'), 'Python3')
 
-    def test_propery(self):
+    def test_property(self):
         self.tm2.initialize(metadata=Metadata_TestCase.executionMetadata)
         import pprint
         pprint.pprint(self.tm2.metadata)

@@ -1,9 +1,11 @@
 import sys
 import math
+
 sys.path.append('../..')
 
 import mupif
 from mupif import *
+from typing import Optional
 
 
 def meshgen_grid2d(origin, size, nx, ny, tria=False, debug=False):
@@ -63,15 +65,6 @@ class AppGridAvg(model.Model):
     """
     Simple application that computes an arithmetical average of mapped property
     """
-
-    # value: float=0.0
-    # count: float=0.0
-    # contrib: float=0.0
-    # mesh: mupif.Mesh=pydantic.Field(default_factory=mupif.UnstructuredMesh)
-    # xl: float=10.0
-    # yl: float=10.0
-    # nx: int=50
-    # nt: int=50
 
     def __init__(self):
         super().__init__()
@@ -155,7 +148,7 @@ class AppIntegrateField(model.Model):
     Simple application that computes integral value of field over 
     its domain and area/volume of the domain
     """
-    extField: mupif.Field = None
+    extField: Optional[mupif.Field] = None
     volume: float = 0.
     integral: float = 0.
 

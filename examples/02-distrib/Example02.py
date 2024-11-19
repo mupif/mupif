@@ -10,6 +10,7 @@ import logging
 log = logging.getLogger()
 
 import mupif as mp
+import numpy as np
 
 
 import threading
@@ -20,6 +21,8 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
+    value: float = np.nan
+
     def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application storing time steps',
@@ -60,7 +63,6 @@ class Application1(mp.Model):
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.value = 0.
 
     def get(self, objectTypeID, time=None, objectID=""):
         md = {

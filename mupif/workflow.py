@@ -28,6 +28,7 @@ import copy
 import logging
 import importlib
 import pydantic
+from typing import Optional,Any
 import time as timeTime
 
 from . import model
@@ -64,6 +65,10 @@ class Workflow(model.Model):
 
     .. automethod:: __init__
     """
+
+    metadata: Optional[WorkflowMeta]=None
+    workflowMonitor: Any=None
+
     def __init__(self, *, metadata=None):
         """
         Constructor. Initializes the workflow

@@ -25,3 +25,5 @@ typer
 rich
 pytest-timeout
 requests
+# pseudo-dependency to fail on python < 3.9 early
+MUPIF_REQUIRES_PYTHON_AT_LEAST_VERSION_3.9; python_version < '3.9'

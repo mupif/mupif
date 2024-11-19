@@ -3,6 +3,7 @@ import sys
 import logging
 sys.path.append('../..')
 import mupif as mp
+import numpy as np
 
 log = logging.getLogger()
 
@@ -11,6 +12,9 @@ class Application1(mp.Model):
     """
     Simple application that generates a property with a value equal to actual time
     """
+
+    value: mp.Quantity = np.nan*mp.U.s
+
     def __init__(self, metadata=None):
         MD = {
             'Name': 'Simple application returning simulation time',
@@ -46,7 +50,7 @@ class Application1(mp.Model):
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.value = 0.
+
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)

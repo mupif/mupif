@@ -9,6 +9,7 @@ import mupif as mp
 from mupif.units import U as u
 import logging
 log = logging.getLogger()
+from typing import Any
 
 @Pyro5.api.expose
 class Model2 (mp.Model):
@@ -46,11 +47,11 @@ class Model2 (mp.Model):
             'Inputs': [
                 {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',
                  'Description': 'Initial grain state', 'Units': 'None',
-                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep"}
+                 'Origin': 'Simulated', 'Required': True, "Set_at": "timestep", 'ValueType': ''}
             ],
             'Outputs': [
                 {'Type': 'mupif.GrainState', 'Type_ID': 'mupif.DataID.ID_GrainState', 'Name': 'Grain state',
-                 'Description': 'Updated grain state with dopant', 'Units': 'None', 'Origin': 'Simulated'}]
+                 'Description': 'Updated grain state with dopant', 'Units': 'None', 'Origin': 'Simulated', 'ValueType': ''}]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
