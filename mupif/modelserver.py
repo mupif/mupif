@@ -27,6 +27,7 @@ import subprocess
 import multiprocessing
 import time as timeTime
 import Pyro5
+import Pyro5.errors
 import logging
 import sys
 import pickle
@@ -35,12 +36,15 @@ import collections
 import uuid
 import warnings
 from . import modelserverbase
+from .modelserverbase import ModelServerBase
 from . import pyroutil
 from .pyrofile import PyroFile
+from .baredata import BareData
 import os
 import typing
 import pydantic
 import shutil
+from typing import List
 
 sys.excepthook = Pyro5.errors.excepthook
 Pyro5.config.DETAILED_TRACEBACK = False
@@ -420,20 +424,15 @@ class ModelServer (modelserverbase.ModelServerBase):
         """
         return 'Mupif.JobManager.ModelServer'
 
-    def getStatus(self):
-        """
-        See :func:`JobManager.getStatus`
-        """
+
+    def getStatus(self) -> List[ModelServerBase.JobStatus]:
         self._updateActiveJobs()
-        status = []
         tnow = timeTime.time()
         with self.lock:
-            for key, job in self.activeJobs.items():
-                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri, remoteLogUri=job.remoteLogUri))
-        return status
+            return [ModelServerBase.JobStatus(key=key,running=tnow-job.starttime,user=job.user,uri=job.uri,remoteLogUri=job.remoteLogUri) for key,job in self.activeJobs.items()]
 
-    def getStatusExtended(self):
-        return dict(currJobs=self.getStatus(), totalJobs=self.jobCounter, maxJobs=self.maxJobs)
+    def getStatusExtended(self) -> ModelServerBase.ModelServerStatus:
+        return ModelServerBase.ModelServerStatus(currJobs=self.getStatus(), totalJobs=self.jobCounter, maxJobs=self.maxJobs)
 
     def getModelMetadata(self):
         return self.modelMetadata

@@ -21,8 +21,8 @@ except Exception:
 from typing import Generic, TypeVar
 
 pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
-if pyd_v0=='1' and int(pyd_v1)<9:
-    raise RuntimeError(f'Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar); current pydantic version is {pydantic.__version__}')
+if pyd_v0!='2' and int(pyd_v1)<0:
+    raise RuntimeError(f'Pydantic version 2.0.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=2.0.0\'" or similar); current pydantic version is {pydantic.__version__}')
 
 # for now, disable numpy validation completely until we figure out what works in what python version reliably
 if 1:
@@ -76,23 +76,10 @@ def addPydanticInstanceValidator(klass, makeKlass=None):
 class ObjectBase(pydantic.BaseModel,extra='forbid'):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
 
-    def XXX__init__(self, *args, **kw):
-        # print(f'### __init__ with {args=} {kw=}')
-        if args:
-            raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
-        # print(kw.keys())
-        for k in kw.keys():
-            if k not in self.__class__.model_fields:
-                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.model_fields.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
-        super().__init__(*args, **kw)
-
     @Pyro5.api.expose
     @pydantic.validate_call
     def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
         return isinstance(self, classinfo)
-
-
-
 
 class Utility(ObjectBase):
     '''

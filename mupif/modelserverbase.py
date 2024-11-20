@@ -21,13 +21,17 @@
 # Boston, MA  02110-1301  USA
 #
 
+from __future__ import annotations
+
 import logging
 import os
 import socket
 import Pyro5.api
 import tempfile
 import warnings
+from typing import List,Optional
 from . import pyroutil
+from .baredata import BareData
 log = logging.getLogger()
 
 # error codes
@@ -149,15 +153,29 @@ class ModelServerBase(object):
         Terminates job manager itself.
         """
 
+    class JobStatus(BareData):
+        key: str
+        running: float
+        user: str
+        uri: str
+        remoteLogUri: str|None
+        tail: List[str]=[]
+
+    class ModelServerStatus(BareData):
+        currJobs: List[ModelServerBase.JobStatus]
+        totalJobs: int
+        maxJobs: int
+
     def getJobStatus(self, jobID):
         """
         Returns the status of the job.
 
         :param str jobID: jobID
         """
-    def getStatus(self):
+    def getStatus(self) -> List[JobStatus]:
         """
         """
+
     def getNSName(self):
         return self.getName()
         ## TODO: Execution profiles need to return variable NS name, but we need to stay compatible with old ModelServers now
