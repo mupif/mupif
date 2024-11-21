@@ -42,7 +42,10 @@ class BaseMeta(baredata.BareData,extra='allow'):
     '''
     # dictiontary interface is transitional for backwards compatibility, and will be removed at some point.
     def __contains__(self, x: str) -> bool: return x in self.__class__.model_fields
-    def __getitem__(self, x: str) -> Any: return getattr(self,x)
+    def __getitem__(self, x: str) -> Any:
+        try: return getattr(self,x)
+        except AttributeError as a:
+            raise KeyError() from a
     def __setitem__(self, key: str, value: Any) -> None: setattr(self,key,value)
     def get(self, attr, default): return (self[attr] if attr in self else default)
 
