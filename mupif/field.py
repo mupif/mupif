@@ -916,7 +916,7 @@ class Field(FieldBase,HeavyConvertible):
             r0.SetFileName(filename)
             if r0.IsFileStructuredPoints(): reader=vtk.vtkStructuredPointsReader()
             elif r0.IsFileUnstructuredGrid(): reader=vtk.vtkUnstructuredGridReader()
-            elif r0.IsFileStructuredGrid(): reader=vtk.vtkStrcturedGridReader()
+            elif r0.IsFileStructuredGrid(): reader=vtk.vtkStructuredGridReader()
             elif r0.IsFilePolyData(): reader=vtk.vtkPolyDataReader()
             elif r0.IsFileRectilinearGrid(): reader=vtk.vtkRectilinearGridReader()
             else: raise RuntimeError(f'Unable to determine VTK data contained in legacy-format file {filename}.')
