@@ -70,7 +70,7 @@ class TestFieldHdf5(unittest.TestCase):
         C=self.__class__
         def test_values_f0(f):
             def aae(xyz,exp): self.assertAlmostEqual(f.evaluate(xyz,eps=1e-4).value[0],exp,places=5)
-            aae((5,7),0)
+            aae((5.,7.),0)
             aae((5.5,7.7),1)
             aae((6,8.4),2)
             aae((6.5,10.5),1)

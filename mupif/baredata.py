@@ -11,7 +11,6 @@ import sys
 
 import pydantic
 import pydantic_core
-# from pydantic.dataclasses import dataclass
 
 try:
     import astropy.units
@@ -23,44 +22,6 @@ from typing import Generic, TypeVar
 pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
 if pyd_v0!='2' and int(pyd_v1)<0:
     raise RuntimeError(f'Pydantic version 2.0.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=2.0.0\'" or similar); current pydantic version is {pydantic.__version__}')
-
-# for now, disable numpy validation completely until we figure out what works in what python version reliably
-if 1:
-    NumpyArray = NumpyArrayFloat64 = typing.Any
-    NumpyArrayStr = typing.Any
-else:
-    # TODO: update to pydantic v2?
-    # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
-    from pydantic.fields import ModelField
-    DType = TypeVar('DType')
-    class NumpyArray(np.ndarray, Generic[DType]):
-        """Wrapper class for numpy arrays that stores and validates type information.
-        This can be used in place of a numpy array, but when used in a pydantic BaseModel
-        or with pydantic.validate_call, its dtype will be *coerced* at runtime to the
-        declared type.
-        """
-        @classmethod
-        # TODO[pydantic]: We couldn't refactor `__get_validators__`, please create the `__get_pydantic_core_schema__` manually.
-        # Check https://docs.pydantic.dev/latest/migration/#defining-custom-types for more information.
-        def __get_validators__(cls):
-            yield cls.validate
-        @classmethod
-        def validate(cls, val, field: ModelField):
-            dtype_field = field.sub_fields[0]
-            actual_dtype = dtype_field.type_.__args__[0]
-            # If numpy cannot create an array with the request dtype, an error will be raised
-            # and correctly bubbled up.
-            np_array = np.array(val, dtype=actual_dtype)
-            return np_array
-
-    try:
-        # this should work in python 3.9
-        # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
-        NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
-        NumpyArrayStr = NumpyArray[np.ndarray,typing.Literal['str']]
-    except TypeError:
-        # python 3.8, just use the generic form
-        NumpyArrayFloat64 = NumpyArray
 
 
 def addPydanticInstanceValidator(klass, makeKlass=None):
@@ -91,16 +52,6 @@ class Utility(ObjectBase):
 class BareData(ObjectBase):
     """
     Base class for all serializable (baredata) objects; all objects which are sent over the wire via python must be recursively baredata, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
-
-    Attributes of a baredata objects are specified via ``dumpAttrs`` class attribute: it is list of attribute names which are to be dumped; the list can be empty, but it is an error if a class about to be dumped does not define it at all. Inheritance of dumpables is handled by recursion, thus multiple inheritance is supported.
-
-    *dumpAttrs* items can take one of the following forms:
-
-    * ``'attr'``: dumped in a simple way
-    * ``(attr,val)``: not dumped at all, but set to ``val`` when reconstructed. ``val`` can be callable, in which case it is called with the object as the only argument.
-    * ``(attr,store,val)``: dumped with ``store`` (can be callable, in which case it is called with the object as the only argument) and restored with ``val`` (can likewise be callable).
-
-    The ``(attr,val)`` form of ``dumpAttrs`` item can be (ab)used to create a post-processing function, e.g. by saying ``('_postprocess',lambda self: self._postDump())``. Put it at the end of ``dumpAttrs`` to have it called when the reconstruction is about to finish. See :obj:`~mupif.mesh.Mesh` for this usage.
 
     """
     _pickleInside = False

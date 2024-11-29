@@ -8,10 +8,10 @@ import numpy as np
 
 from . import dataid
 from . import data
-from .baredata import NumpyArrayStr
-from .dbrec import DbDictable
-from .mupifquantity import ValueType
 
+from .dbrec import DbDictable
+from .ndtypes import NumpyArrayStr
+from .mupifquantity import ValueType
 
 class _StrModel(pydantic.BaseModel):
     value: Union[str, Seq[str], Seq[Seq[str]], Seq[Seq[Seq[str]]], Seq[Seq[Seq[Seq[str]]]]]

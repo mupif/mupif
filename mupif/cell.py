@@ -31,6 +31,8 @@ import numpy
 import numpy.linalg
 import typing
 from . import baredata
+from .ndtypes import *
+import pydantic
 
 # debug flag
 debug = 0
@@ -272,7 +274,9 @@ class Triangle_2d_lin(Cell):
         l3 = 1.-l1-l2
         return l1*c1[0]+l2*c2[0]+l3*c3[0], l1*c1[1]+l2*c2[1]+l3*c3[1]
 
-    def interpolate(self, point, vertexValues):
+
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr23, vertexValues: NDArr3x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -281,8 +285,9 @@ class Triangle_2d_lin(Cell):
         :return: Interpolated value at a given point
         :rtype: tuple
         """
-        ac = self.glob2loc(point)
-        return tuple([vertexValues[0][i]*ac[0]+vertexValues[1][i]*ac[1]+vertexValues[2][i]*ac[2] for i in range(len(vertexValues[0]))])
+
+        ac = np.c_[self.glob2loc(point)].T
+        return np.sum(vertexValues*ac,axis=0)
 
     def containsPoint(self, point):
         """
@@ -420,7 +425,10 @@ class Triangle_2d_quad(Cell):
 
         return x, y
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr23, vertexValues: NDArr6x123) -> NDArr123:
+
+    # def interpolate(self, point, vertexValues):
         """
         Interpolates given vertex values to a given point.
 
@@ -716,7 +724,8 @@ class Quad_2d_lin(Cell):
         else:
             return n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1], n1*c1[2]+n2*c2[2]+n3*c3[2]+n4*c4[2]
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr23, vertexValues: NDArr4x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -866,7 +875,8 @@ class Tetrahedron_3d_lin(Cell):
             l1*c1[2]+l2*c2[2]+l3*c3[2]+l4*c4[2]
         )
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr3, vertexValues: NDArr4x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -876,8 +886,8 @@ class Tetrahedron_3d_lin(Cell):
         :rtype: tuple
         """
 
-        ac = self.glob2loc(point)
-        return tuple([vertexValues[0][i]*ac[0]+vertexValues[1][i]*ac[1]+vertexValues[2][i]*ac[2]+vertexValues[3][i]*ac[3] for i in range(len(vertexValues[0]))])
+        ac = np.c_[self.glob2loc(point)].T
+        return np.sum(np.array(vertexValues)*ac,axis=0)
 
     def containsPoint(self, point):
         """
@@ -1074,7 +1084,8 @@ class Brick_3d_lin(Cell):
             z = z+n[i]*v.coords[2]
         return x, y, z
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr3, vertexValues: NDArr8x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
