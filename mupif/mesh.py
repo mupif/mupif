@@ -534,7 +534,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         """
         return len(self.cellList)
 
-    def getVertex(self, i: int) -> Vertex:
+    def getVertex(self, i: int) -> vertex.Vertex:
         """
         See :func:`Mesh.getVertex`
         """
