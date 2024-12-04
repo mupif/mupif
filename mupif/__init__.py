@@ -119,7 +119,8 @@ from .cell import Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahed
 from .constantfield import ConstantField
 from .dataid import DataID
 from .data import WithMetadata, Data, Process, DataList
-from .baredata import NumpyArray, ObjectBase, BareData, Utility
+from .baredata import ObjectBase, BareData, Utility
+from .ndtypes import NumpyArray
 from .dbrec import DbDictable
 from .field import FieldType, Field, FieldBase
 from .function import Function

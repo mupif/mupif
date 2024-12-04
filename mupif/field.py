@@ -33,7 +33,6 @@ from . import uniformmesh
 from . import mupifquantity
 from . import meta
 from .units import Quantity, Unit
-from .baredata import NumpyArray
 from .heavydata import HeavyConvertible
 
 import meshio
@@ -56,6 +55,10 @@ import os.path
 from .units import Unit
 from typing_extensions import Annotated
 from typing import Optional,Literal
+
+import pydantic
+from .ndtypes import *
+
 
 log = logging.getLogger()
 
@@ -151,11 +154,7 @@ class AnalyticalField(FieldBase):
     def evaluate(
             self,
             positions: typing.Union[
-                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-                typing.List[typing.Tuple[float, float]],  # list of 2d coords
-                typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float],  # single 2d coord
-                NumpyArray,
+                NDArr3,NDArr2,NDArr3xX,NDArr2xX,
                 Quantity
             ],
             eps: float = 0.0):
@@ -298,11 +297,7 @@ class Field(FieldBase,HeavyConvertible):
     def evaluate(
             self,
             positions: typing.Union[
-                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-                typing.List[typing.Tuple[float, float]],  # list of 2d coords
-                typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float],  # single 2d coord
-                NumpyArray,
+                NDArr3,NDArr2,NDArr3xX,NDArr2xX,
                 Quantity,
             ],
             eps: float = 0.0):
@@ -316,16 +311,18 @@ class Field(FieldBase,HeavyConvertible):
         :rtype: units.Quantity with given value or tuple of values
         """
         # test if positions is a list of positions
-        if isinstance(positions, list):
+        if isinstance(positions, list) or (isinstance(positions,np.ndarray) and positions.ndim>1):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
             return Quantity(value=ans, unit=self.getUnit())
         else:
             # single position passed
+            # print(f'{positions.shape=} {positions.ndim=}')
             return Quantity(value=self._evaluate(positions, eps), unit=self.getUnit())
 
-    def _evaluate(self, position, eps):
+    @pydantic.validate_call
+    def _evaluate(self, position: NDArr123|Quantity, eps):
         """
         Evaluates the receiver at a single spatial position.
 
@@ -347,9 +344,6 @@ class Field(FieldBase,HeavyConvertible):
             # localizer in the newer version returns cell id, not the cell object, check that here
             if isinstance(next(iter(cells)), int):
                 cells = [self.mesh.getCell(ic) for ic in cells]
-            #for ic,c in enumerate(cells):
-            #    for iv,v in enumerate(c.getVertices()):
-            #        print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
 
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
@@ -358,7 +352,7 @@ class Field(FieldBase,HeavyConvertible):
                             if debug:
                                 log.debug(icell.getVertices())
                             try:
-                                answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
+                                answer = icell.interpolate(position, np.vstack([self.value[i.number] for i in icell.getVertices()]))
                             except IndexError:
                                 raise RuntimeError('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                                 # raise

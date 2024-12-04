@@ -37,7 +37,7 @@ import time
 import sys
 import os.path
 import numpy
-import Pyro5
+import Pyro5.api
 import dataclasses
 import typing
 from . import cellgeometrytype
@@ -160,7 +160,7 @@ class Mesh(baredata.BareData):
 
         .. note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh duplication in every cell!
         """
-    def getNumberOfVertices(self):
+    def getNumberOfVertices(self) -> int:
         """
         Get number of vertices (nodes).
 
@@ -178,7 +178,7 @@ class Mesh(baredata.BareData):
         """
         return 0
 
-    def getVertex(self, i):
+    def getVertex(self, i: int) -> vertex.Vertex:
         """
         Returns i-th vertex.
 
@@ -186,6 +186,7 @@ class Mesh(baredata.BareData):
         :return: vertex
         :rtype: Vertex
         """
+        raise NotImplementedError('Mesh.getVertex: abstract interface')
 
     def getVertices(self):
         """
@@ -408,14 +409,6 @@ class Mesh(baredata.BareData):
         else:
             if debug:
                 print('Start at: ', time.time()-t0)
-            if 0:
-                ccc = self.cells()
-                bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
-                i=0
-                for cell in ccc:
-                    bb.merge(cell.getBBox())  # extend it with all other cells
-                    if i%1000==0: print(f'{i}')
-                    i+=1
             bb=self.getGlobalBBox()
             minc, maxc = bb.coords_ll, bb.coords_ur
 
@@ -529,7 +522,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         ans.setup(vertexList, cellList)
         return ans
 
-    def getNumberOfVertices(self):
+    def getNumberOfVertices(self) -> int:
         """
         See :func:`Mesh.getNumberOfVertices`
         """
@@ -541,7 +534,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         """
         return len(self.cellList)
 
-    def getVertex(self, i):
+    def getVertex(self, i: int) -> vertex.Vertex:
         """
         See :func:`Mesh.getVertex`
         """

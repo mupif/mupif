@@ -12,6 +12,8 @@ astropy>=6.0
 deprecated
 appdirs
 pydantic>2.6
+numpydantic
+nptyping
 typing-extensions>=4.10
 # for documentation
 sphinx<7.0
