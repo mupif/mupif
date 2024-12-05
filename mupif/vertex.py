@@ -1,9 +1,9 @@
 from builtins import object
 from . import bbox
 from .baredata import BareData
-import Pyro5
-from pydantic.dataclasses import dataclass
+import Pyro5.api
 import typing
+from .ndtypes import *
 
 
 @Pyro5.api.expose
@@ -16,21 +16,21 @@ class Vertex(BareData):
     """
     number: int  #: Local vertex number
     label: typing.Optional[int] = None  #: Vertex label
-    coords: typing.Union[typing.Tuple[float, float], typing.Tuple[float, float, float]]  #: 3D position vector of a vertex
+    coords: NDArr23  #: 3D position vector of a vertex
 
     # class Config:
     #     frozen=True
 
     def __hash__(self): return id(self)
 
-    def getCoordinates(self):
+    def getCoordinates(self) -> NDArr23:
         """
         :return: Receiver's coordinates
         :rtype: tuple
         """
         return self.coords
 
-    def getNumber(self):
+    def getNumber(self) -> int:
         """
         :return: Number of the instance
         :rtype: int
@@ -50,4 +50,4 @@ class Vertex(BareData):
         :rtype: string
         """
         # print(f'__repr__ on {self.number=}, {self.label=}, {self.coords=}')
-        return '['+repr(self.number)+','+repr(self.label)+','+repr(self.coords)+']'
+        return '['+repr(self.number)+','+repr(self.label)+','+repr(self.coords.tolist())+']'

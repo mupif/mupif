@@ -20,10 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
+from __future__ import annotations
+
 from . import bbox
 from . import util
 import math
 from . import cellgeometrytype
+from .cellgeometrytype import CGT
 import numpy as np
 import Pyro5.api
 
@@ -65,13 +68,14 @@ class Cell(baredata.BareData):
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
 
+    
+    mesh: 'Mesh' = pydantic.Field(exclude=True)
+
     def __repr__(self):
         return f'{self.__class__.__name__}(number={self.number}{", label="+str(self.label) if self.label is not None else ""}, vertices={str(self.vertices)})'
 
-    def __init__(self, *, mesh=None, **kw):
-        super().__init__(**kw)
-        #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized
-        self.mesh = mesh
+    #def __init__(self, *, mesh=None, **kw):
+    #    super().__init__(**kw)
 
     def __hash__(self): return id(self)
 
@@ -121,7 +125,8 @@ class Cell(baredata.BareData):
         """
         return len(self.vertices)
 
-    def containsPoint(self, point):
+
+    def containsPoint(self, point) -> bool:
         """
         Check if a cell contains a point.
 
@@ -129,8 +134,10 @@ class Cell(baredata.BareData):
         :return: Returns True if cell contains a given point
         :rtype: bool
         """
+        raise NotImplementedError('abstract')
 
-    def interpolate(self, point, vertexValues):
+
+    def interpolate(self, point, vertexValues) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -139,15 +146,17 @@ class Cell(baredata.BareData):
         :return: Interpolated value at a given point
         :rtype: tuple
         """
+        raise NotImplementedError('abstract')
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
+        raise NotImplementedError('abstract')
 
     def getBBox(self, relPad=1e-5):
         """
@@ -182,17 +191,10 @@ class Cell(baredata.BareData):
         :return: jacobian
         :rtype: float
         """
-        # raise apierror.APIError("getTransformationJacobian not implemented")
+        raise NotImplementedError('abstract')
 
     def getMeshioGeometryStr(self) -> str:
-        meshioTypeMap = {
-            cellgeometrytype.CGT_TRIANGLE_1: 'triangle',
-            cellgeometrytype.CGT_QUAD: 'quad',
-            cellgeometrytype.CGT_TETRA: 'tetra',
-            cellgeometrytype.CGT_HEXAHEDRON: 'hexahedron',
-            cellgeometrytype.CGT_TRIANGLE_2: 'triangle6'
-        }
-        return meshioTypeMap[self.getGeometryType()]
+        return cellgeometrytype.cgt2meshioName[self.getGeometryType()]
 
 
 ##############################################################
@@ -226,14 +228,14 @@ class Triangle_2d_lin(Cell):
         return Triangle_2d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return cellgeometrytype.CGT_TRIANGLE_1
+        return cellgeometrytype.CGT.TRIANGLE_1
 
     def glob2loc(self, coords):
         """
@@ -312,6 +314,7 @@ class Triangle_2d_lin(Cell):
         :return: jacobian
         :rtype: float
         """
+        # FIXME: should work on *coords* passed, not getting them from the instance (that's what the other types do)
         c1 = self.mesh.getVertex(self.vertices[0]).coords
         c2 = self.mesh.getVertex(self.vertices[1]).coords
         c3 = self.mesh.getVertex(self.vertices[2]).coords
@@ -356,7 +359,7 @@ class Triangle_2d_quad(Cell):
         return Triangle_2d_quad(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
@@ -443,7 +446,7 @@ class Triangle_2d_quad(Cell):
         return np.array(tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i] for i in range(len(vertexValues[0]))]))
         # this is not the same... why? return np.sum(n*vertexValues,axis=0)
 
-    def containsPoint(self, point):
+    def containsPoint(self, point: NDArr23):
         """
         Check if a cell contains a point.
 
@@ -811,7 +814,7 @@ class Tetrahedron_3d_lin(Cell):
         return Tetrahedron_3d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
@@ -913,7 +916,7 @@ class Tetrahedron_3d_lin(Cell):
                 return False
         return True
 
-    def getTransformationJacobian(self, coords):
+    def getTransformationJacobian(self, coords) -> float:
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
 
@@ -953,7 +956,7 @@ class Brick_3d_lin(Cell):
         return Brick_3d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
@@ -1112,7 +1115,7 @@ class Brick_3d_lin(Cell):
 
         return tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i]+n[6]*vertexValues[6][i]+n[7]*vertexValues[7][i] for i in range(len(vertexValues[0]))])
 
-    def containsPoint(self, point):
+    def containsPoint(self, point) -> bool:
         """
         Check if a cell contains a point.
 

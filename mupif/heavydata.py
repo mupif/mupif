@@ -142,6 +142,7 @@ class HeavyDataBase(Data):
     h5path: str = ''
     h5uri: typing.Optional[str] = None
     mode: HeavyDataBase_ModeChoice = 'readonly'
+    pyroIds: typing.List[str]=pydantic.Field([],exclude=True)
 
     def __init__(self, **kw):
         super().__init__(**kw)  # calls the real ctor
@@ -390,6 +391,7 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
 
 
 class Hdf5HeavyProperty(Property, HeavyDataBase):
+    dataset: Annotated[typing.Optional[h5py.Dataset], pydantic.Field(exclude=True)] = None
     def __init__(self, **kw):
         super().__init__(mode='create', **kw)
 

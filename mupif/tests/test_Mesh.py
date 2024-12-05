@@ -8,6 +8,7 @@ import math
 import numpy as np
 import meshio
 import types
+from numpy.testing import assert_array_equal
 
 def mkVertex(number,label,coords): return vertex.Vertex(number=number,label=label,coords=coords)
 def mkCell(mesh,number,label,vertices): return cell.Cell(mesh=mesh,number=number,label=label,vertices=vertices)
@@ -65,15 +66,15 @@ class Mesh_TestCase(unittest.TestCase):
 
     def test_getVertex(self):
         self.res=self.mesh1.getVertex(1)
-        self.assertEqual(self.res.getCoordinates(),(2.,0.))
+        assert_array_equal(self.res.getCoordinates(),(2.,0.))
         self.assertEqual(self.res.getNumber(),1)
 
         self.res2=self.mesh2.getVertex(1)
-        self.assertEqual(self.res2.getCoordinates(),(2.,0.,2.))
+        assert_array_equal(self.res2.getCoordinates(),(2.,0.,2.))
         self.assertEqual(self.res2.getNumber(),1)       
 
         self.res2=self.mesh2.getVertex(0)
-        self.assertEqual(self.res2.getCoordinates(),(0.,0.,2.))
+        assert_array_equal(self.res2.getCoordinates(),(0.,0.,2.))
         self.assertEqual(self.res2.getNumber(),0)
 
     def test_getCell(self):

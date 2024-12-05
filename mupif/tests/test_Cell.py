@@ -19,59 +19,36 @@ class Triangle_2d_lin_TestCase(unittest.TestCase):
         self.mesh.setup((mkVertex(0,0,(0.,0.)), mkVertex(1,1,(2.,0.)), mkVertex(2,2,(0.,5.))), [])
         self.cell = cell.Triangle_2d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2))
 
-    def tearDown(self):
-        self.mesh = None
-        self.cell = None
-
     def test_geometryType(self):
         self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_TRIANGLE_1)
 
     def test_glob2loc(self):
         #test vertices
-        gc1 = self.cell.glob2loc((0.,0.))
-        assert_array_equal(gc1, (1.0, 0.,0.))
-
-        gc1 = self.cell.glob2loc((2.,0.))
-        assert_array_equal(gc1, (0., 1.,0.))
-
-        gc1 = self.cell.glob2loc((0.,5.))
-        assert_array_equal(gc1, (0.,0., 1.0))
-        
+        assert_array_equal(self.cell.glob2loc((0.,0.)), (1.0, 0.,0.))
+        assert_array_equal(self.cell.glob2loc((2.,0.)), (0., 1.,0.))
+        assert_array_equal(self.cell.glob2loc((0.,5.)), (0.,0., 1.0))
         #test midside nodes
-        gc1 = self.cell.glob2loc((1.,0.))
-        assert_array_equal(gc1, (0.5, 0.5,0.))
-
-        gc1 = self.cell.glob2loc((1.,2.5))
-        assert_array_equal(gc1, (0., 0.5,0.5))
-
-        gc1 = self.cell.glob2loc((0.,2.5))
-        assert_array_equal(gc1, (0.5,0., 0.5))
-
+        assert_array_equal(self.cell.glob2loc((1.,0.)), (0.5, 0.5,0.))
+        assert_array_equal(self.cell.glob2loc((1.,2.5)), (0., 0.5,0.5))
+        assert_array_equal(self.cell.glob2loc((0.,2.5)), (0.5,0., 0.5))
         #test center
         gc1 = self.cell.glob2loc((2.0/3.0,5.0/3.0))
         self.assertAlmostEqual(gc1[0], 1./3., delta=1.e-5)
         self.assertAlmostEqual(gc1[1], 1./3., delta=1.e-5)
         self.assertAlmostEqual(gc1[2], 1./3., delta=1.e-5)
-        
     def test_loc2glob(self):
         gc = self.cell.loc2glob((0.2, 0.2))
         self.assertAlmostEqual(gc[0], 0.2*2, delta=1.e-5)
         self.assertAlmostEqual(gc[1], 0.6*5, delta=1.e-5)
-       
-
     def test_interpolate(self):
         r = self.cell.interpolate((1.0,0.0), ((3.0,), (5.0,),(11.,)))
         self.assertAlmostEqual(r[0], 4.0, delta=1.e-5)
         r = self.cell.interpolate((0.0,1.0), ((3.0,), (5.0,), (11.,)))
         self.assertAlmostEqual(r[0], 4./5.*3.0+1./5.*11., delta=1.e-5)
-        
     def test_containsPoint(self):
-        b = self.cell.containsPoint((0.1, 0.0))
-        self.assertTrue(b)
-        b = self.cell.containsPoint((0., 0.2))
-        self.assertTrue(b)
-        b = self.cell.containsPoint((0., 5.1))
-        self.assertFalse(b)
+        self.assertTrue(self.cell.containsPoint((0.1, 0.0)))
+        self.assertTrue(self.cell.containsPoint((0., 0.2)))
+        self.assertFalse(self.cell.containsPoint((0., 5.1)))
 
     def test_getTransformationJacobian(self):
         J = self.cell.getTransformationJacobian([])
@@ -91,10 +68,6 @@ class Triangle_2d_quad_TestCase(unittest.TestCase):
         self.mesh = mesh.UnstructuredMesh()
         self.mesh.setup((mkVertex(0,0,(0.,0.)), mkVertex(1,1,(2.,0.)), mkVertex(2,2,(0.,5.)), mkVertex(3,3,(1.,0.)), mkVertex(4,4,(1.,2.5)), mkVertex(5,5,(0.,2.5))), [])
         self.cell = cell.Triangle_2d_quad(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3,4,5))
-
-    def tearDown(self):
-        self.mesh = None
-        self.cell = None
 
     def test_geometryType(self):
         self.assertEqual(self.cell.getGeometryType(), cellgeometrytype.CGT_TRIANGLE_2)
@@ -153,22 +126,11 @@ class Quad_2d_lin_TestCase(unittest.TestCase):
         self.mesh=mesh.UnstructuredMesh()
         self.mesh.setup((mkVertex(0,0,(0.,0.)), mkVertex(1,1,(2.,0.)), mkVertex(2,2,(4.,2.)), mkVertex(3,3,(0.,5.))), [])
         self.cell = cell.Quad_2d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3))
-
-    def tearDown(self):
-        self.mesh = None
-        self.cell = None
-        
     def test_copy(self):
         self.c = self.cell.copy()
-        gc1 = self.c.glob2loc((0.,0.))
-        self.assertTrue(gc1[0])
-        assert_array_equal(gc1[1],(1.0,1.0))
-        gc3 = self.c.glob2loc((4.,2.))
-        self.assertTrue(gc3[0])
-        assert_array_equal(gc3[1],(-1.0,-1.0))
-        gc1 = self.c.glob2loc((1.,0.))
-        self.assertTrue(gc1[0])
-        assert_array_equal(gc1[1],(0.,1.))
+        assert_g2l_equal(self,self.c.glob2loc((0.,0.)),(True,(1.0,1.0)))
+        assert_g2l_equal(self,self.c.glob2loc((4.,2.)),(True,(-1.0,-1.0)))
+        assert_g2l_equal(self,self.c.glob2loc((1.,0.)),(True,(0.,1.)))
         r = self.c.interpolate((2.,2.),((0.,),(14.,),(16.,),(-30.,)))
         self.assertAlmostEqual(r[0],2,delta=1.e-5)
         self.assertEqual(self.c.containsPoint((0.,5.)),True)
@@ -303,10 +265,6 @@ class Brick_3d_lin_TestCase(unittest.TestCase):
         self.mesh=mesh.UnstructuredMesh()
         self.mesh.setup((mkVertex(0,0,(0.,0.,0.)), mkVertex(1,1,(0.,3.,0.)), mkVertex(2,2,(5.,3.,0.)), mkVertex(3,3,(5.,0.,0.)), mkVertex(4,4,(0.,0.,-2.)), mkVertex(5,5,(0.,3.,-2.)), mkVertex(6,6,(5.,3.,-2.)),mkVertex(7,7,(5.,0.,-2.))), [])
         self.cell = cell.Brick_3d_lin(mesh=self.mesh, number=0, label=1, vertices=(0,1,2,3,4,5,6,7))
-        
-    def tearDown(self):
-        self.mesh = None
-        self.cell = None
         
     def test_copy(self):
         c = self.cell.copy()

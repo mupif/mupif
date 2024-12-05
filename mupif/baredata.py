@@ -55,7 +55,7 @@ class BareData(ObjectBase):
 
     """
     _pickleInside = False
-    model_config = pydantic.ConfigDict(extra='allow')
+    model_config = pydantic.ConfigDict(extra='forbid')
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):
