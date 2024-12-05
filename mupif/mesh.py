@@ -493,8 +493,8 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
 
-    @pydantic.validate_call
-    def setup(self, vertexList: typing.List['vertex.Vertex'], cellList: typing.List['cell.Cell']) -> None:
+    # @pydantic.validate_call
+    def setup(self, vertexList: typing.List[vertex.Vertex], cellList: typing.List[cell.Cell]) -> None:
         """
         Initializes the receicer according to given vertex and cell lists.
 
