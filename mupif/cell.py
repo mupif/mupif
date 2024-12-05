@@ -69,7 +69,7 @@ class Cell(baredata.BareData):
     vertices: typing.Tuple[int,...]
 
     
-    mesh: 'Mesh' = pydantic.Field(exclude=True)
+    mesh: typing.Optional['Mesh'] = pydantic.Field(None,exclude=True)
 
     def __repr__(self):
         return f'{self.__class__.__name__}(number={self.number}{", label="+str(self.label) if self.label is not None else ""}, vertices={str(self.vertices)})'
