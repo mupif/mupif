@@ -494,7 +494,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
     def __hash__(self): return id(self)
 
     @pydantic.validate_call
-    def setup(self, vertexList: typing.List[vertex.Vertex], cellList: typing.List[cell.Cell]) -> None:
+    def setup(self, vertexList: typing.List['vertex.Vertex'], cellList: typing.List['cell.Cell']) -> None:
         """
         Initializes the receicer according to given vertex and cell lists.
 
@@ -849,7 +849,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         ret.setup(vertexList=vertices, cellList=cells)
         return ret
 
-# we use 'Mesh' type annotation in Cell definition, bfore the Mesh class is fully defined
+# we use 'Mesh' type annotation in Cell definition, before the Mesh class is fully defined
 # (this avoids circular import issues)
 Mesh.model_rebuild()
 UnstructuredMesh.model_rebuild()
