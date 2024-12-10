@@ -47,15 +47,6 @@ Pyro5.config.DETAILED_TRACEBACK = False
 
 log = logging.getLogger(__name__)
 
-try:
-    import colorlog
-    log.propagate = False
-    handler = colorlog.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-    log.addHandler(handler)
-except ImportError:
-    pass
 
 
 @Pyro5.api.expose
@@ -144,7 +135,8 @@ class ModelServer (modelserverbase.ModelServerBase):
     @staticmethod
     def _spawnedProcessPopen():
         import sys
-        import mupif  # this will use MUPIF_LOG_PYRO, but mupif would be imported by unpickling anyway
+        # the process receives MUPIF_LOG_PYRO (URI) and MUPIF_LOG_PYRONAME (jobID); used at import time in mupif.util.setupLogginAtStartup
+        import mupif # import eplicitly, though the unpickle would do it automatically as well
         args = ModelServer.SpawnedProcessArgs.unpickle(sys.argv[-1])
         log.info(f'New subprocess: nameserver {args.nsUri}, cwd {args.cwd}')
         os.chdir(args.cwd)
@@ -299,6 +291,7 @@ class ModelServer (modelserverbase.ModelServerBase):
                         env['MUPIF_LOG_PYRO'] = remoteLogUri
                     # to be tuned?
                     env['MUPIF_LOG_LEVEL'] = 'DEBUG'
+                    env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
                     proc = subprocess.Popen([sys.executable, '-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
                     tMax = 10

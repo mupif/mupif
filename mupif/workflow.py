@@ -93,11 +93,11 @@ class Workflow(model.Model):
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
                 # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
                 # if not given in Execution.Log_URI (this is what workflow execution script in mupifDB does), forward remote logs to the local logger
-                if self.hasMetadata('Execution.Log_URI'): remoteLogUri=self.getMetadata('Execution.Log_URI')
-                else:
+                remoteLogUri=self.metadata.Execution.Log_URI
+                if not remoteLogUri:
                     daemon = pyroutil.getDaemon(proxy=ns)
                     remoteLogUri=str(daemon.register(pyrolog.PyroLogReceiver()))
-                    log.debug(f'Model {name=} will remotely use our logger at {remoteLogUri=}')
+                    log.info(f'Model {name=} will remotely use our logger at {remoteLogUri}.')
                 self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=remoteLogUri)
                 return self._models[name]
             elif classname and modulename:
@@ -205,7 +205,7 @@ class Workflow(model.Model):
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
         
             log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
-            print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
+            # print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
 
             # Estimate progress
             self.setMetadata('Progress', 100*time.inUnitsOf(U.s).getValue()/self._exec_targetTime.inUnitsOf(U.s).getValue())
