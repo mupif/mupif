@@ -83,7 +83,7 @@ def runNameserverBg(nshost=None, nsport=None):
             nsDaemon.close()
             if nsBroadcast is not None:
                 nsBroadcast.close()
-    thread = threading.Thread(target=_nsBg, daemon=True).start()
+    thread = threading.Thread(target=_nsBg, daemon=True, name='mupif-nameserver').start()
     h, p = nsDaemon.locationStr.rsplit(':', 1)  # handles both ipv4 and ipv6
     log.info(f'Nameserver up at {h}:{p}')
     NameserverBg = collections.namedtuple('NameserverBg', ['host', 'port', 'thread'])

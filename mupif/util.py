@@ -24,6 +24,8 @@ import logging
 import argparse
 import os
 import sys
+import threading
+import multiprocessing
 import pathlib
 from . import pyrolog
 from . import octree
@@ -32,10 +34,12 @@ import Pyro5
 
 from typing import Union, List, Generator
 
-_formatLog = '%(asctime)s [%(process)d|%(threadName)s] %(levelname)s:%(filename)s:%(lineno)d %(message)s'
+#%(origin)s
+_formatLog = '{asctime} [{processName}|{process}] {levelname}:{filename}:{lineno} {message}'
 _formatTime = '%H:%M:%S'  # '%Y-%m-%d %H:%M:%S'
 
 log = logging.getLogger(__name__)
+
 
 
 def setupLoggingAtStartup():
@@ -57,32 +61,30 @@ def setupLoggingAtStartup():
     """
     root = logging.getLogger()
 
+    if pName:=os.environ.get('MUPIF_LOG_PROCESSNAME',None):
+        multiprocessing.current_process().name=pName
+
+    # plain logging, perhaps could be guarded by "if sys.stderr.isatty()":
+    #    streamHandler = logging.StreamHandler()
+    #    streamHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
+
+    import rich.logging
+    streamHandler = rich.logging.RichHandler(markup=True,omit_repeated_times=False, enable_link_path=True)
+    streamHandler.setFormatter(logging.Formatter(style='{',fmt='[bold]{processName}|{process}[/bold] {message}', datefmt='%H:%M:%S'))
+    root.addHandler(streamHandler)
+
     if (level := os.environ.get('MUPIF_LOG_LEVEL', None)) is not None:
         root.setLevel(level)
 
     if (out := os.environ.get('MUPIF_LOG_FILE', None)) is not None:
         fileHandler = logging.FileHandler(out, mode='w')
-        fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
+        fileHandler.setFormatter(logging.Formatter(_formatLog, _formatTime, style='{'))
         root.addHandler(fileHandler)
 
     if (pyroOut := os.environ.get('MUPIF_LOG_PYRO', None)) is not None:
-        pyroHandler = pyrolog.PyroLogHandler(uri=pyroOut, tag='<unspecified>')
+        pyroHandler = pyrolog.PyroLogHandler(uri=pyroOut)
         root.addHandler(pyroHandler)
 
-    # don't colorize output with piped output
-    doColor=sys.stderr.isatty()
-
-    try: import colorlog
-    except ImportError: doColor=False
-
-    if doColor:
-        streamHandler = colorlog.StreamHandler()
-        streamHandler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-    else:
-        streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
-
-    root.addHandler(streamHandler)
 
 
 def redirectLog(out):
@@ -96,7 +98,7 @@ def redirectLog(out):
     for hdlr in root.handlers[:]:
         root.removeHandler(hdlr)
     h = logging.FileHandler(out, mode='w')
-    h.setFormatter(logging.Formatter(_formatLog, _formatTime))
+    h.setFormatter(logging.Formatter(_formatLog, _formatTime, style='{'))
     root.addHandler(h)
 
 

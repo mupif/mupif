@@ -1,7 +1,8 @@
 #!/usr/bin/env -S python3 -u
-import subprocess, argparse, os, os.path, sys, time, typing, atexit, logging
+import subprocess, argparse, os, os.path, sys, time, typing, atexit, logging, multiprocessing
 thisDir=os.path.dirname(os.path.abspath(__file__))
 sys.path.append(thisDir+'/..')
+multiprocessing.current_process().name='EX'
 import mupif as mp
 log=logging.getLogger('runex')
 log.setLevel(logging.DEBUG)
@@ -59,14 +60,14 @@ def runEx(ex):
     env['MUPIF_NS']=f'{nsBg.host}:{nsBg.port}'
     bg=[]
     try:
-        for script in ex.scripts[1:]:
+        for iScript,script in enumerate(ex.scripts[1:]):
             cmd=[*getExec(main=False),script]+netOpts
-            print(f'** Running {cmd} in {exDir} (background)')
-            bg.append(subprocess.Popen(cmd,cwd=exDir,env=env,bufsize=0))
+            log.info(f'Running {cmd} in {exDir} (background)')
+            bg.append(subprocess.Popen(cmd,cwd=exDir,env=env|{'MUPIF_LOG_PROCESSNAME':f'EX-{ex.num}/{iScript}'},bufsize=0))
         time.sleep(len(ex.scripts[1:])) # sleep one second per background server
         args=[*getExec(main=True),ex.scripts[0]]+netOpts
-        log.info(f'** Running {args} in {exDir}')
-        ret=subprocess.run(args,cwd=exDir,env=env,bufsize=0).returncode
+        log.info(f'Running {args} in {exDir}')
+        ret=subprocess.run(args,cwd=exDir,env=env|{'MUPIF_LOG_PROCESSNAME':f'EX-{ex.num}/0'},bufsize=0).returncode
         return ret
     except:
         log.exception(f'Exception running example {ex.num}')
