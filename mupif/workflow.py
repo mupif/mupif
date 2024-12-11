@@ -447,7 +447,7 @@ class Workflow(model.Model):
     @staticmethod
     def checkModelRemoteResourcesByMetadata(models_md):
         for model_info in models_md:
-            if model_info.get('Jobmanager', ''):
-                if Workflow.checkModelRemoteResource(jobmanagername=model_info.get('Jobmanager', '')) is False:
+            if model_info.Jobmanager:
+                if Workflow.checkModelRemoteResource(jobmanagername=model_info.Jobmanager) is False:
                     return False
         return True
