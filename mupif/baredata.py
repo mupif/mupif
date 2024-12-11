@@ -96,8 +96,8 @@ class BareData(ObjectBase):
         ret = {}
         if clss is None:
             # old-style: no support for nested classes, but backwards-compatible decoding (can be removed in non-mixed envs, and just use module:qualname always)
-            if (k:=self.__class__).__name__!=k.__qualname__: ret['__class__'] = k.__module__+':'+k.__name__
-            else: ret['__class__'] = k.__module__+'.'+k.__qualname__
+            if (k:=self.__class__).__name__ != k.__qualname__: ret['__class__'] = k.__module__+':'+k.__qualname__
+            else: ret['__class__'] = k.__module__+'.'+k.__name__
             # XXX: this changed after pydantic V2, so _pickleInside is True even if it is just class attribute?!
             # XXX: and then, FieldInfo has not attribute field_info
             if BareData._pickleInside and False:
