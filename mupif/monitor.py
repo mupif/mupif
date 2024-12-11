@@ -14,7 +14,7 @@ import concurrent.futures
 from mupif.modelserverbase import JOBMAN_NO_RESOURCES
 from .baredata import BareData
 from .modelserverbase import ModelServerBase,ModelServerStatus
-from typing import List,Dict,Any
+from typing import List,Dict,Any,Optional
 import pydantic
 
 log = logging.getLogger()
@@ -113,7 +113,7 @@ class SchedulerInfo(BareData):
         wid: str
         status: str
         started: str
-        finished: str
+        finished: Optional[str]
     lastExecutions: List[LastExecution]
     class LogTail(BareData):
         tail: List[Any]
