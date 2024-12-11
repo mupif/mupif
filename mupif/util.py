@@ -68,10 +68,17 @@ def setupLoggingAtStartup():
     #    streamHandler = logging.StreamHandler()
     #    streamHandler.setFormatter(logging.Formatter(_formatLog, _formatTime))
 
-    import rich.logging
-    streamHandler = rich.logging.RichHandler(markup=True,omit_repeated_times=False, enable_link_path=True)
-    streamHandler.setFormatter(logging.Formatter(style='{',fmt='[bold]{processName}|{process}[/bold] {message}', datefmt='%H:%M:%S'))
-    root.addHandler(streamHandler)
+    if 0:
+        import rich.logging
+        handler = rich.logging.RichHandler(markup=True,omit_repeated_times=False, enable_link_path=True)
+        handler.setFormatter(logging.Formatter(style='{',fmt='[bold]{processName}|{process}[/bold] {message}', datefmt='%H:%M:%S'))
+    else:
+        import colorlog
+        handler = colorlog.StreamHandler()
+        # handler.setLevel(logging.DEBUG)
+        handler.setFormatter(colorlog.ColoredFormatter(style='{',fmt='{asctime} {log_color}{levelname:.4} {processName:>25}|{process:<7} {filename:>.12}:{lineno:<3} {message}', datefmt='%H:%M:%S'))
+    root.addHandler(handler)
+
 
     if (level := os.environ.get('MUPIF_LOG_LEVEL', None)) is not None:
         root.setLevel(level)

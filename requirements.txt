@@ -25,6 +25,7 @@ setproctitle
 tqdm
 typer
 rich
+colorlog
 pytest-timeout
 requests
 # pseudo-dependency to fail on python < 3.9 early
