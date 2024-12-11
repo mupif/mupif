@@ -196,6 +196,9 @@ def _registerDumpable(clss=baredata.BareData):
     for sub in clss.__subclasses__():
         # print(f'Registering class {sub.__module__}.{sub.__name__}')
         Pyro5.api.register_class_to_dict(sub, baredata.BareData.to_dict)
+        # new-style serialization
+        Pyro5.api.register_dict_to_class(sub.__module__+':'+sub.__qualname__, baredata.BareData.from_dict_with_name)
+        # old-style serialization (supported in addition to the old one, see notes in baredata.py
         Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__, baredata.BareData.from_dict_with_name)
         _registerDumpable(sub)  # recurse
 

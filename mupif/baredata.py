@@ -95,7 +95,9 @@ class BareData(ObjectBase):
         self.preDumpHook()
         ret = {}
         if clss is None:
-            ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
+            # old-style: no support for nested classes, but backwards-compatible decoding (can be removed in non-mixed envs, and just use module:qualname always)
+            if (k:=self.__class__).__name__!=k.__qualname__: ret['__class__'] = k.__module__+':'+k.__name__
+            else: ret['__class__'] = k.__module__+'.'+k.__qualname__
             # XXX: this changed after pydantic V2, so _pickleInside is True even if it is just class attribute?!
             # XXX: and then, FieldInfo has not attribute field_info
             if BareData._pickleInside and False:
@@ -150,9 +152,15 @@ class BareData(ObjectBase):
             if type(data) == dict: data = serpent.tobytes(data)  # serpent serializes bytes in a funny way
             return pickle.loads(data)
         if clss is None:
-            import importlib
-            mod, classname = dic.pop('__class__').rsplit('.', 1)
-            clss = getattr(importlib.import_module(mod), classname)
+            import importlib, operator
+            if ':' in (k:=dic.pop('__class__')):
+                # new-style syntax, always contains : to separate module from qualname
+                mod, qualname = k.split(':')
+                clss = operator.attrgetter(qualname)(importlib.import_module(mod))
+            else:
+                # old-style syntax
+                mod, classname = k.rsplit('.', 1)
+                clss = getattr(importlib.import_module(mod), classname)
             # some special cases here
             if issubclass(clss, enum.Enum): return enum_from_dict(clss, dic)
             if astropy and clss == astropy.units.Unit: return astropy.units.Unit(dic['unit'])
@@ -187,7 +195,6 @@ class BareData(ObjectBase):
     @staticmethod
     def from_dict_with_name(classname, dic):
         assert classname == dic['__class__']
-        # print(f'@@@ {classname} ###')
         return BareData.from_dict(dic)
 
     def dumpToLocalFile(self, filename):
