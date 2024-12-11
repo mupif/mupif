@@ -127,7 +127,7 @@ def schedulerInfo(ns,timeout:float=5) -> List[SchedulerInfo]:
     ns2._pyroMaxRetries=1
     query = ns2.yplookup(meta_any={"type:scheduler"})
     t1=time.time()
-    with concurrent.futures.ThreadPoolExecutor(len(query),thread_name_prefix='mupif-schedulers-info') as exe:
+    with concurrent.futures.ThreadPoolExecutor(max(1,len(query)),thread_name_prefix='mupif-schedulers-info') as exe:
         return list(exe.map(_query_scheduler,*zip(*[(name,uri,metadata,timeout-(t1-t0)) for name,(uri,metadata) in query.items()])))
 
 def _query_scheduler(name,uri,metadata,timeout) -> SchedulerInfo|None:
