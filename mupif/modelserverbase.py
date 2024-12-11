@@ -175,9 +175,7 @@ class ModelServerBase(object):
 
         :param str jobID: jobID
         """
-    def getStatus(self) -> List[JobStatus]:
-        """
-        """
+    def getStatus(self) -> List[ModelServerStatus.JobStatus]: return []
 
     def getNSName(self):
         return self.getName()
