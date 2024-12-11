@@ -36,7 +36,7 @@ import collections
 import uuid
 import warnings
 from . import modelserverbase
-from .modelserverbase import ModelServerBase
+from .modelserverbase import ModelServerBase, ModelServerStatus
 from . import pyroutil
 from .pyrofile import PyroFile
 from .baredata import BareData
@@ -418,14 +418,14 @@ class ModelServer (modelserverbase.ModelServerBase):
         return 'Mupif.JobManager.ModelServer'
 
 
-    def getStatus(self) -> List[ModelServerBase.JobStatus]:
+    def getStatus(self) -> List[ModelServerStatus.JobStatus]:
         self._updateActiveJobs()
         tnow = timeTime.time()
         with self.lock:
-            return [ModelServerBase.JobStatus(key=key,running=tnow-job.starttime,user=job.user,uri=job.uri,remoteLogUri=job.remoteLogUri) for key,job in self.activeJobs.items()]
+            return [ModelServerStatus.JobStatus(key=key,running=tnow-job.starttime,user=job.user,uri=job.uri,remoteLogUri=job.remoteLogUri) for key,job in self.activeJobs.items()]
 
-    def getStatusExtended(self) -> ModelServerBase.ModelServerStatus:
-        return ModelServerBase.ModelServerStatus(currJobs=self.getStatus(), totalJobs=self.jobCounter, maxJobs=self.maxJobs)
+    def getStatusExtended(self) -> ModelServerStatus:
+        return ModelServerStatus(currJobs=self.getStatus(), totalJobs=self.jobCounter, maxJobs=self.maxJobs)
 
     def getModelMetadata(self):
         return self.modelMetadata

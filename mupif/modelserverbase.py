@@ -73,6 +73,22 @@ Pyro5.api.register_class_to_dict(c, {'__class__': c.__module__+'.'+c.__name__})
 Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, c)
 
 
+
+
+
+class ModelServerStatus(BareData):
+    class JobStatus(BareData):
+        key: str
+        running: float
+        user: str
+        uri: str
+        remoteLogUri: str|None
+        tail: List[str]=[]
+    currJobs: List[JobStatus]
+    totalJobs: int
+    maxJobs: int
+
+
 @Pyro5.api.expose
 class ModelServerBase(object):
     """
@@ -152,19 +168,6 @@ class ModelServerBase(object):
         """
         Terminates job manager itself.
         """
-
-    class JobStatus(BareData):
-        key: str
-        running: float
-        user: str
-        uri: str
-        remoteLogUri: str|None
-        tail: List[str]=[]
-
-    class ModelServerStatus(BareData):
-        currJobs: List[ModelServerBase.JobStatus]
-        totalJobs: int
-        maxJobs: int
 
     def getJobStatus(self, jobID):
         """

@@ -13,7 +13,7 @@ import concurrent.futures
 
 from mupif.modelserverbase import JOBMAN_NO_RESOURCES
 from .baredata import BareData
-from .modelserverbase import ModelServerBase
+from .modelserverbase import ModelServerBase,ModelServerStatus
 from typing import List,Dict,Any
 import pydantic
 
@@ -32,7 +32,7 @@ class ModelserverInfo(BareData):
         curr: int
         total: int
     numJobs: NumJobs
-    jobs: List[ModelServerBase.JobStatus]
+    jobs: List[ModelServerStatus.JobStatus]
     status: bool
     signature: str
 
@@ -65,7 +65,8 @@ def _query_modelserver(name,uri,metadata,logLines,timeout) -> ModelserverInfo|No
         signature = msrv.getApplicationSignature()
         try:
             msi=ModelserverInfo(ns=ns,numJobs=ModelserverInfo.NumJobs(max=(se:=msrv.getStatusExtended()).maxJobs,curr=len(se.currJobs),total=se.totalJobs),jobs=se.currJobs,status=True,signature=signature)
-        except AttributeError:
+        except AttributeError as e:
+            log.exception('Error querying modelserver?:')
             msi=ModelserverInfo(ns=ns,numJobs=ModelserverInfo.NumJobs(max=-1,curr=len(jobs:=msrv.getStatus()),total=-1),jobs=jobs,status=False,signature=signature)
     except (Pyro5.errors.TimeoutError,Pyro5.errors.CommunicationError):
         return None
@@ -74,7 +75,7 @@ def _query_modelserver(name,uri,metadata,logLines,timeout) -> ModelserverInfo|No
     with concurrent.futures.ThreadPoolExecutor(len(msi.jobs),thread_name_prefix=f'mupif-modelserver-{name}-log') as exe:
         logs=list(exe.map(_query_job_log,*zip(*[(job.remoteLogUri,logLines,timeout2) for job in msi.jobs])))
     assert len(logs)==len(msi.jobs)
-    for job,log in zip(msi.jobs,logs): job.tail=log
+    for job,log_ in zip(msi.jobs,logs): job.tail=log_
     return msi
 
 
