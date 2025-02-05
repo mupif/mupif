@@ -22,17 +22,64 @@
 #
 
 
+from __future__ import annotations
+
 import pydantic
-from pydantic import Field
-from typing import Optional, Any, Literal, Union, List
+from pydantic import Field, BeforeValidator
+from typing import Optional, Any, Literal, Union, List, Literal, Annotated, Union
 from .dataid import DataID
+from . import baredata
+
+
 
 prefix = "mupif."
 type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, DataID)))
 
 
-class PhysicsMeta(pydantic.BaseModel):
+class BaseMeta(baredata.BareData,extra='allow'):
+    '''Base empty class for metadata, allowing any extra fields.
+    '''
+    # dictiontary interface is transitional for backwards compatibility, and will be removed at some point.
+    def __contains__(self, x: str) -> bool: return x in self.__class__.model_fields
+    def __getitem__(self, x: str) -> Any:
+        try: return getattr(self,x)
+        except AttributeError as a:
+            raise KeyError() from a
+    def __setitem__(self, key: str, value: Any) -> None: setattr(self,key,value)
+    def get(self, attr, default): return (self[attr] if attr in self else default)
+
+# allows setting an optional field from dictionary
+# pydantic validation creates the correct instance type as necessary
+
+@pydantic.validate_call
+def _setOptionalField(obj: Any, field: str, kw: Any):
+    if getattr(obj,field) is not None: raise RuntimeError('{obj}.{field}: must be None ({obj.field=})')
+    model_fields=type(obj).model_fields
+    if field in model_fields:
+        # dump to dict so that we can re-validate using the class prescribed in the model
+        if isinstance(kw,BaseMeta): kw=kw.model_dump()
+        setattr(obj,field,pydantic.RootModel[model_fields[field].annotation].model_validate(kw).root)
+    else:
+        # if field is not in the model, just set it directly (taking advantage of the extra='allow' param to BaseMeta)
+        setattr(obj,field,kw)
+
+@pydantic.validate_call
+def _mergedDicts(a1: None|dict|BaseMeta, a2: None|dict|BaseMeta) -> dict:
+    def _b(a): return ({} if a is None else (a if isinstance(a,dict) else a.model_dump()))
+    return _b(a1)|_b(a2)
+
+
+def _ValueType_str(x):
+    # import locally to avoid circular import
+    from .mupifquantity import ValueType
+    # print(f'******* {x=}')
+    return x.name if isinstance(x,ValueType) else x
+
+ValueType_AsStr=Annotated[Literal['Scalar', 'Vector', 'Tensor', 'ScalarArray', 'VectorArray', 'TensorArray', ''],BeforeValidator(_ValueType_str)]
+
+
+class PhysicsMeta(BaseMeta):
     Type: Literal['Electronic', 'Atomistic', 'Molecular', 'Mesoscopic', 'Continuum', 'Other']
     Entity: Literal['Atom', 'Electron', 'Grains', 'Finite volume', 'Other']
     Entity_description: str = ''
@@ -41,11 +88,12 @@ class PhysicsMeta(pydantic.BaseModel):
     Relation_description: List[str] = []
 
 
-class SolverMeta(pydantic.BaseModel):
+class SolverMeta(BaseMeta):
     Software: str
     Language: str
     License: str
     Creator: str
+    Type: str
     Version_date: str
     Solver_additional_params: str = ''
     Documentation: str
@@ -62,11 +110,11 @@ class SolverMeta(pydantic.BaseModel):
 
 # See https://docs.pydantic.dev/1.10/usage/schema/ for possible Field(...) arguments
 # the first positional argument is the default value, doc translates to JSON Schema description field
-class ExecutionMeta(pydantic.BaseModel):
+class ExecutionMeta(BaseMeta):
     '''Execution metadata, for use by the MuPIF infrastructure.'''
     ID: str = ''
     Use_case_ID: Union[str, int] = ''
-    Task_ID: str = ''
+    Task_ID: Optional[str] = None
     Log_URI: str = Field('',description='Internal use only: Pyro URI of the remote logger object, valid only when the workflow is running.')
     Status: Literal["Instantiated", "Initialized", "Running", "Finished", "Failed"] = Field(default='Instantiated',description='Set by the workflow scheduler automatically')
     Progress: float = Field(-1,description='Floating progress in range 0…1; may be set by the workflow, but is not mandatory. Ignored if negative.')
@@ -75,9 +123,10 @@ class ExecutionMeta(pydantic.BaseModel):
     Timeout: int = Field(0,description='Maximum runtime in seconds; unlimited if non-positive')
     Username: str = Field('',description='Automatically set in Model and Workflow')
     Hostname: str = Field('',description='Automatically set in Model and Workflow')
+    ExecutionProfileIndex: int = -1
 
 
-class IOMeta(pydantic.BaseModel):
+class IOMeta(BaseMeta):
     Type: Literal[
         'mupif.Property',
         'mupif.TemporalProperty',
@@ -99,28 +148,34 @@ class IOMeta(pydantic.BaseModel):
         'mupif.DataList[mupif.GrainState]',
         'mupif.DataList[mupif.PiecewiseLinFunction]'
     ]
-    Type_ID: DataID
+    Type_ID: Optional[DataID]
     Obj_ID: Optional[Union[str, List[str]]] = None
-    Name: str
-    ValueType: Literal['Scalar', 'Vector', 'Tensor', 'ScalarArray', 'VectorArray', 'TensorArray', ''] = ''
+    Name: Optional[str]=None
+    ValueType: ValueType_AsStr
     Description: str = ''
-    Units: str
+    Units: Optional[str]
     Required: bool = False
+    Origin: str=''
 
-    @pydantic.root_validator(pre=False)
-    def _require_valueType_unless_property(cls, values):
-        if values['Type'] != 'mupif.Property' and values['Type'] != 'mupif.TemporalProperty':
-            assert 'ValueType' != ''
-        return values
+    @pydantic.model_validator(mode='after')
+    def _require_valueType_for_some(self):
+        valueTypeRequired=['mupif.Property','mupif.TemporalProperty','mupif.Field','mupif.TemporalField','mupif.Function']
+        if self.Type in valueTypeRequired+['mupif.DataList['+t+']' for t in valueTypeRequired]:
+            assert self.ValueType != ''
+        return self
 
-    @pydantic.root_validator(pre=True)
+    @pydantic.model_validator(mode='before')
+    @classmethod
     def _convert_type_id_to_value(cls, values):
-        tid = values['Type_ID']
+        if values is None: return # for pydantic models
+        from rich.pretty import pprint
+        # pprint(('BEGIN convert_type_id_to_value',cls,values))
+        tid = values.get('Type_ID',values.get('TypeID'))
         if isinstance(tid, str):
-            prefix = 'mupif.DataID.'
-            if tid.startswith(prefix):
-                tid = tid[len(prefix):]
+            if tid.startswith(prefix:='mupif.DataID.'): tid = tid[len(prefix):]
+            if tid.startswith(prefix:='DataID.'): tid = tid[len(prefix):]
             values['Type_ID'] = DataID[tid]
+        # pprint(('END convert_type_id_to_value',cls,values))
         return values
 
 
@@ -133,37 +188,50 @@ class OutputMeta(IOMeta):
 
 
 
-class ModelInWorkflowMeta(pydantic.BaseModel):
+class ModelInWorkflowMeta(BaseMeta):
     'Metadata for Model as part of a workflow'
     Name: str
     Module: str = ''
     Class: str = ''
     Jobmanager: str = ''
 
-    @pydantic.root_validator(pre=False)
-    def _moduleClass_or_jobmanager(cls, values):
-        if values['Jobmanager'] == '':
-            assert values['Module'] != '' and values['Name'] != ''
-        return values
+    @pydantic.model_validator(mode='after')
+    def _moduleClass_or_jobmanager(self):
+        if self.Jobmanager == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For non-Jobmanager metadata, Module and Name must not be empty ({self.Module=}, {self.Name=})')
+        return self
 
 
-class ModelWorkflowCommonMeta(pydantic.BaseModel):
+class ModelWorkflowCommonMeta(BaseMeta):
     'Metadata common for both Model and Workflow'
-    Name: str
-    ID: Union[str, int]
-    Description: str
-    Execution: ExecutionMeta
+    Name: Optional[str]=None
+    ID: Union[str, int]=''
+    Description: str=''
+    Execution: Optional[ExecutionMeta]=None
     Inputs: List[InputMeta] = []
     Outputs: List[OutputMeta] = []
 
 class ModelMeta(ModelWorkflowCommonMeta):
-    pass
-    Physics: PhysicsMeta
-    Solver: SolverMeta
+    Physics: Optional[PhysicsMeta]=None
+    Solver: Optional[SolverMeta]=None
+
+# TODO: should be *Meta
+class ModelConfiguration(BaseMeta):
+     Name: str
+     RequiredModelMetadata: List[str]
+     OptionalModelMetadata: List[str]
+
+# TODO: should be *Meta
+class WorkflowConfiguration(BaseMeta):
+     Name: str
+     Cost: Literal['$','$$','$$$'] # $, $$, or $$$
+     Description: str
+     Models: List[ModelConfiguration]
 
 
 class WorkflowMeta(ModelWorkflowCommonMeta):
     Models: List[ModelInWorkflowMeta] = []
+    ExecutionProfiles: Optional[List[WorkflowConfiguration]] = None
+
 
 
 #ModelMeta_JSONSchema=ModelMeta.schema_json()
@@ -285,7 +353,7 @@ if 0:
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
                             "mupif.DataList[mupif.GrainState]",
-                            "mupif.DataList[mupif.PiecewiseLinFunction]"
+                            "mupif.DataList[mupif.Function]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. PID_Concentration
                         "Obj_ID": {  # optional parameter for additional info, string or list of string
@@ -338,7 +406,7 @@ if 0:
                             "mupif.String",
                             "mupif.ParticleSet",
                             "mupif.GrainState",
-                            "mupif.PiecewiseLinFunction",
+                            "mupif.Function",
                             "mupif.DataList[mupif.Property]",
                             "mupif.DataList[mupif.TemporalProperty]",
                             "mupif.DataList[mupif.Field]",
@@ -347,7 +415,7 @@ if 0:
                             "mupif.DataList[mupif.String]",
                             "mupif.DataList[mupif.ParticleSet]",
                             "mupif.DataList[mupif.GrainState]",
-                            "mupif.DataList[mupif.PiecewiseLinFunction]"
+                            "mupif.DataList[mupif.Function]"
                         ]},
                         "Type_ID": {"type": "string", "enum": type_ids},  # e.g. mupif.DataID.FID_Temperature
                         "Obj_ID": {  # optional parameter for additional info, string or list of string

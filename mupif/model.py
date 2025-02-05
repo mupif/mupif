@@ -40,7 +40,7 @@ from . import pyroutil
 from . import pyrofile
 from . import U
 from .dataid import DataID
-from .meta import ModelMeta
+from . import meta
 
 
 log = logging.getLogger()
@@ -50,12 +50,8 @@ type_ids = []
 type_ids.extend(prefix+s for s in list(map(str, DataID)))
 
 
-
-
-
-
 @Pyro5.api.expose
-class Model(data.Process):
+class Model(data.Process,extra='allow'):
     """
     An abstract class representing an application and its interface (API).
 
@@ -73,28 +69,27 @@ class Model(data.Process):
     exclusiveDaemon: bool = False
     pyroNS: Optional[str] = None
     pyroURI: Optional[str] = None
-    appName: str = None
+    appName: Optional[str] = None
     workDir: str = ''
-    _jobID: str = None
+    _jobID: Optional[str] = None
 
-    def __init__(self, *, metadata=None, **kw):
-        super().__init__(metadata={}, **kw)
-        self.updateMetadata(dictionary=metadata)
+    metadata: Optional[meta.ModelMeta]=None
+
+    def __init__(self, *, metadata: None|dict|meta.BaseMeta=None, **kw):
+        super().__init__(**kw)
 
         (username, hostname) = pyroutil.getUserInfo()
-        defaults = dict([
-            ('Username', username),
-            ('Hostname', hostname),
-            ('Status', 'Instantiated'),
-            ('Date_time_start', time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())),
-            ('Execution', dict([('Status', 'Instantiated')])),
-            ('Solver', {}),
-            ('Timeout', 0),  # no limit by default
-        ])
-        # use defaults for metadata, unless given explicitly
-        for k, v in defaults.items():
-            if k not in self.metadata:
-                self.setMetadata(k, v)
+        defaults = dict(
+            Username=username,
+            Hostname=hostname,
+            Status='Instantiated',
+            Date_time_start =time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+            Execution = {'Status':'Instantiated'},
+            Timeout = 0,  # no limit by default
+        )
+        # override defaults with user-provided metadata
+        self.updateMetadata(meta._mergedDicts(defaults,metadata))
+
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         """
@@ -105,11 +100,10 @@ class Model(data.Process):
         :param bool validateMetaData: Defines if the metadata validation will be called
         :param named_arguments kwargs: Arbitrary further parameters
         """
-        # print("Calling initialize() of " + self.__class__.__name__)
         self.updateMetadata(metadata)
 
         self.setMetadata('Name', self.getApplicationSignature())
-        self.setMetadata('Status', 'Initialized')
+        self.updateMetadata({'Execution':{'Status':'Initialized'}})
 
         if workdir == '':
             self.workDir = os.getcwd()
@@ -117,11 +111,11 @@ class Model(data.Process):
             self.workDir = workdir
 
         if validateMetaData:
-            self.validateMetadata(ModelMeta)  # Schema)
+            self.validateMetadata(meta.ModelMeta)
             # log.info('Metadata successfully validated')
 
     def updateAndPassMetadata(self, dictionary: dict):
-        self.updateMetadata(dictionary=dictionary)
+        self.updateMetadata(md=dictionary)
 
     def registerPyro(self, *, daemon, ns, uri, appName=None, exclusiveDaemon=False, externalDaemon=None):
         """
@@ -191,7 +185,7 @@ class Model(data.Process):
             return uri
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        """ 
+        """
         Solves the problem for given time step.
 
         Proceeds the solution from actual state to given time.
@@ -333,7 +327,7 @@ class Model(data.Process):
         return self.pyroURI
 
     def printMetadata(self, nonEmpty=False):
-        """ 
+        """
         Print all metadata
         :param bool nonEmpty: Optionally print only non-empty values
         :return: None

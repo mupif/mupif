@@ -89,7 +89,7 @@ def main():
     tunnelApp = None
     
     # get local port of jabmanager (from uri)
-    jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
+    jobmannatport = int(re.search(r'(\d+)$',str(jobManUri)).group(0))
     
     # create tunnel to JobManager running on (remote) server
     try:

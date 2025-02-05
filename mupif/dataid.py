@@ -6,7 +6,8 @@ FunctionID is deprecated and will be removed
 from enum import Enum, auto, IntEnum
 
 # Schema for metadata
-DataSchema = {
+if 0:
+    DataSchema = {
     "type": "object",
     "properties": {
         "Type": {"type": "string"},  # Automatically generated from MuPIF, e.g. mupif.field.Field
@@ -32,7 +33,7 @@ DataSchema = {
     "required": [
         "Type", "Type_ID", "Units", "ValueType"
     ]
-}
+    }
 
 
 class AutoName(Enum):

@@ -154,10 +154,10 @@ sampleSchemas_json = '''
                     "dtype": "l"
                 },
                 "type": {
-                    "dtype": "a"
+                    "dtype": "S"
                 },
                 "name": {
-                    "dtype": "a"
+                    "dtype": "S"
                 },
                 "position": {
                     "dtype": "d",
@@ -188,7 +188,7 @@ sampleSchemas_json = '''
         "_datasetName": "molecules",
         "identity": {
             "chemicalName": {
-                "dtype": "a"
+                "dtype": "S"
             },
             "molecularWeight": {
                 "dtype": "d",
@@ -290,7 +290,7 @@ sampleSchemas_json = '''
         },
         "implementation": {
             "forceFieldType": {
-                "dtype": "a"
+                "dtype": "S"
             }
         },
         "atoms": {
@@ -306,7 +306,7 @@ sampleSchemas_json = '''
         "_datasetName": "grains",
         "identity": {
             "material": {
-                "dtype": "a"
+                "dtype": "S"
             }
         },
         "properties": {
@@ -343,7 +343,7 @@ sampleSchemas_json = '''
         },
         "implementation": {
             "boundaryCondition": {
-                "dtype": "a"
+                "dtype": "S"
             }
         },
         "molecules": {
@@ -841,7 +841,7 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
             return d
         if self.row is not None: return _onerow(self.row)
         else: return [_onerow(r) for r in range(self.ctx.dataset.shape[0])]
-    def T_from_dump(self,dump,*,ret=ret):
+    def T_from_dump(self,dump,*,ret=ret,extend=False):
         _T_assertWritable(self,msg=f'when applying dump')
         def _onerow(row,di):
             rowdata=self.ctx.dataset[row]
@@ -870,9 +870,14 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
             _onerow(self.row,dump)
         else:
             assert isinstance(dump,list)
-            self.resize(len(dump),reset=True)
+            if not extend:
+                offset=0
+                self.resize(len(dump),reset=True)
+            else:
+                offset=self.ctx.dataset.shape[0]
+                self.resize(offset+len(dump),reset=False)
             _T_assertDataset(self,msg=f'when applying dump')
-            for row,di in enumerate(dump): _onerow(row,di)
+            for row,di in enumerate(dump): _onerow(offset+row,di)
 
     def T_iter(self):
         _T_assertDataset(self,msg=f'when iterating')
@@ -1038,7 +1043,7 @@ Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``look
 
     ``dtype`` specifies datatype for the entry value using the ``numpy.dtype`` notation (see `Data type objects <https://numpy.org/doc/stable/reference/arrays.dtypes.html>`__), for example ``f8`` for 8-byte (64-bit) floating-point number.
 
-    Strings are stored as utf-8 encoded byte arrays (thus their storage length might be larger than number of characters). use ``"dtype":"a"`` for variable-length strings (``a`` implies ``"shape":"variable"``), and ``"dtype":"a10"`` for string of maximum 10 bytes.
+    Strings are stored as utf-8 encoded byte arrays (thus their storage length might be larger than number of characters). use ``"dtype":"S"`` for variable-length strings (``a`` implies ``"shape":"variable"``), and ``"dtype":"a10"`` for string of maximum 10 bytes.
 
     String fields may specify *delim*, which is a delimiter sequence. The value will be presented as a tuple of strings to the user, interally stored as string joined by the *delim*. *delim* may be a single character or several characters. Values being set may not contain the delimiter itself. If the string is fixed-size, summary length of the string must not exceed the storage space. The value returned to the user is a tuple (read-only) to prevent in-place item modification.
 
@@ -1051,7 +1056,7 @@ Reserved names are those starting with ``_`` (underscore) plus ``dtype``, ``look
     * ``NaN`` (not-a-number) for floating-point types (scalars and arrays),
     * ``0`` (zero) for integer types (scalars and arrays),
     * empty array for dynamic arrays,
-    * empty string for both static-sized (``"dtype":"a10"``) and dynamic-sized (``"dtype":"a"``) strings.
+    * empty string for both static-sized (``"dtype":"a10"``) and dynamic-sized (``"dtype":"S"``) strings.
 
     Assignments of incompatible data (which cannot be converted to the underlying storage type), including mismatched shape of arrays, will raise exception.
 
@@ -1111,7 +1116,7 @@ Each parent group defines a special property ``schema_fragment`` which returns t
     def __init__(self, **kw):
         super().__init__(**kw)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def openData(self,mode=typing.Optional[HeavyDataBase_ModeChoice]):
         '''
         Return top context for the underlying HDF5 data. The context is automatically published through Pyro5 daemon, if the :obj:`HeavyStruct` instance is also published (this is true recursively, for all subcontexts). The contexts are unregistered when :obj:`HeavyStruct.closeData` is called (directly or via context manager).

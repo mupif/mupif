@@ -60,6 +60,6 @@ class Particle_TestCase(unittest.TestCase):
 
 
 # python test_Metadata.py for stand-alone test being run
-if __name__=='__main__': unittest.main()
-
+if __name__=='__main__':
+	unittest.main()
  

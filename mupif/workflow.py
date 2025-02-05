@@ -22,12 +22,13 @@
 #
 
 import os
-import Pyro5
+import Pyro5.api
 import numpy
 import copy
 import logging
 import importlib
 import pydantic
+from typing import Optional,Any
 import time as timeTime
 
 from . import model
@@ -37,6 +38,7 @@ from . import Property
 from . import DataID
 from . import U
 from . import pyroutil
+from . import pyrolog
 from .meta import WorkflowMeta
 
 log = logging.getLogger()
@@ -63,6 +65,10 @@ class Workflow(model.Model):
 
     .. automethod:: __init__
     """
+
+    metadata: Optional[WorkflowMeta]=None
+    workflowMonitor: Any=None
+
     def __init__(self, *, metadata=None):
         """
         Constructor. Initializes the workflow
@@ -91,7 +97,35 @@ class Workflow(model.Model):
                 ns = pyroutil.connectNameserver()
                 self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
                 # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
+                # if not given in Execution.Log_URI (this is what workflow execution script in mupifDB does), forward remote logs to the local logger
+                remoteLogUri=self.metadata.Execution.Log_URI
+                if not remoteLogUri:
+                    daemon = pyroutil.getDaemon(proxy=ns)
+                    remoteLogUri=str(daemon.register(pyrolog.PyroLogReceiver()))
+                    log.info(f'Model {name=} will remotely use our logger at {remoteLogUri}.')
+                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=remoteLogUri)
+                return self._models[name]
+            elif classname and modulename:
+                moduleImport = importlib.import_module(modulename)
+                model_class = getattr(moduleImport, classname)
+                self._models[name] = model_class()
+                return self._models[name]
+        return None
+    
+    def _allocateModelWithMetadata(self, *, name, modulename, classname, modelConfiguration):
+        if name:
+            if modelConfiguration:
+                ns = pyroutil.connectNameserver()
+                metadata = modelConfiguration['RequiredModelMetadata'].copy()
+                optionalMetaData = modelConfiguration['OptionalModelMetadata'].copy()
+                metadata.add(name)
+                #print ("_allocateModelWithMetadata:")
+                #print(name, metadata, optionalMetaData)
+                self._jobmans[name] = pyroutil.connectModelServerWithMetadata(ns, metadata, optionalMetaData )
+                #print (self._jobmans[name])
+                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
                 self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI', ''))
+                #print (self._models[name])
                 return self._models[name]
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
@@ -121,9 +155,29 @@ class Workflow(model.Model):
         # for model_info in self.metadata['Models']:
         #     if model_info.get('Instantiate', True):
         #         self._allocateModelByName(name=model_info.get('Name', ''), name_new=model_info.get('Name', ''))
+        executionProfile = -1
+        # print (self.metadata['Execution'])
+        if 'ExecutionProfileIndex' in self.metadata['Execution']:
+            executionProfile = self.metadata['Execution']['ExecutionProfileIndex']
+
+        log.info("Workflow::executionProfile #%d"%(executionProfile,))
         for model_info in self.metadata['Models']:
             if model_info.get('Instantiate', True):
-                self._allocateModel(name=model_info.get('Name', ''), modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+                name=model_info.get('Name', '')
+                if (executionProfile < 0):
+                    self._allocateModel(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+                else:
+                    raise NotImplementedError('Execution profiles are not yet implemented correctly.')
+                    executionProfile = self.metadata['ExecutionProfiles'][executionProfile]
+                    mep = None
+                    for ep in executionProfile['Models']:
+                        if (ep['Name'] == name):
+                            mep = ep
+                            break
+                    if (mep):
+                        self._allocateModelWithMetadata(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), modelConfiguration=mep)
+                    else:
+                        log.fatal("Workflow::_allocateAllModels: model (%s) execution profile missing for configuration %d"%(name, executionProfile))
 
     def _initializeAllModels(self):
         _md = self._getInitializationMetadata()
@@ -198,7 +252,7 @@ class Workflow(model.Model):
             istep = timestep.TimeStep(time=time, dt=dt, targetTime=self._exec_targetTime, number=timeStepNumber)
         
             log.debug("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
-            print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
+            # print("Step %g: t=%g dt=%g" % (timeStepNumber, time.inUnitsOf(U.s).getValue(), dt.inUnitsOf(U.s).getValue()))
 
             # Estimate progress
             self.setMetadata('Progress', 100*time.inUnitsOf(U.s).getValue()/self._exec_targetTime.inUnitsOf(U.s).getValue())
@@ -315,7 +369,7 @@ class Workflow(model.Model):
 
     def printListOfModels(self):
         print("List of child models:")
-        print([m.__class__.__name__ for m in self.getListOfModels()])
+        print([(m.__class__.__name__, m.getApplicationSignature()) for m in self.getListOfModels()])
 
     def generateModelDependencies(self):
         dependencies = []
@@ -393,7 +447,7 @@ class Workflow(model.Model):
     @staticmethod
     def checkModelRemoteResourcesByMetadata(models_md):
         for model_info in models_md:
-            if model_info.get('Jobmanager', ''):
-                if Workflow.checkModelRemoteResource(jobmanagername=model_info.get('Jobmanager', '')) is False:
+            if model_info.Jobmanager:
+                if Workflow.checkModelRemoteResource(jobmanagername=model_info.Jobmanager) is False:
                     return False
         return True

@@ -33,6 +33,11 @@ __version__ = '2.3.0'
 __author__ = 'Borek Patzak, Vit Smilauer, Stanislav Sulc, Martin Horak'
 
 
+import pydantic
+pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
+if pyd_v0!='2': raise RuntimeError(f'Pydantic version 2.x is required for mupif (upgrade via "pip3 install \'pydantic>=2.0.0\'" or similar); current pydantic version is {pydantic.__version__}')
+
+
 #
 # import everything recursively, inject into this module
 #
@@ -92,6 +97,14 @@ def autoImports():
     return ret
 
 
+# 2024: backwards compat; workaround errors with a certain version combination of numpy+astropy
+# which would be triggered by the unit import just below; can be removed later
+import numpy
+if not hasattr(numpy,'product'):
+    numpy.product = numpy.prod
+    numpy.cumproduct = numpy.cumprod
+
+
 # these are imported explicitly (not classes but rather instances)
 from .units import U
 from .units import Q
@@ -106,7 +119,8 @@ from .cell import Cell, Triangle_2d_lin, Triangle_2d_quad, Quad_2d_lin, Tetrahed
 from .constantfield import ConstantField
 from .dataid import DataID
 from .data import WithMetadata, Data, Process, DataList
-from .baredata import NumpyArray, ObjectBase, BareData, Utility
+from .baredata import ObjectBase, BareData, Utility
+from .ndtypes import NumpyArray
 from .dbrec import DbDictable
 from .field import FieldType, Field, FieldBase
 from .function import Function
@@ -143,12 +157,13 @@ from .temporalfield import TemporalField, DirTemporalField, SingleFileTemporalFi
 from . import pbs_tool
 from . import hpc_tool
 from . import pyrolog
+from . import pyroutil
 from . import monitor
 
 
 
 
-__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','cellgeometrytype','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','modelserverbase','ModelServerException','ModelServerNoResourcesException','ModelServerBase','RemoteModelServer','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','metadatakeys','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','modelserver','ModelServer','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','workflowmonitor','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','piecewiselinfunction','PiecewiseLinFunction','pbs_tool','hpc_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable','monitor','WithMetadata','Data','Process','DataList','Utility','RefQuantity','FieldBase','HeavyConvertible']
+__all__ = ['U','Q','apierror','BareData','APIError','bbox','BBox','cell','BareData','Cell','Triangle_2d_lin','Triangle_2d_quad','Quad_2d_lin','Tetrahedron_3d_lin','Brick_3d_lin','constantfield','ConstantField','data','dataid','DataID','baredata','NumpyArray','ObjectBase','BareData','field','FieldType','Field','function','Function','heavydata','HeavyDataBase','HeavyStruct','Hdf5RefQuantity','Hdf5OwningRefQuantity','HeavyUnstructuredMesh','integrationrule','IntegrationRule','GaussIntegrationRule','modelserverbase','ModelServerException','ModelServerNoResourcesException','ModelServerBase','RemoteModelServer','localizer','Localizer','mesh','MeshIterator','Mesh','UnstructuredMesh','model','Model','RemoteModel','data','WithMetadata','Data','DataList','mupifquantity','ValueType','MupifQuantity','octree','Octant_py','Octree','operatorutil','OperatorInteraction','OperatorEMailInteraction','particle','Particle','ParticleSet','property','Property','ConstantProperty','stringproperty','String','pyrofile','PyroFile','pyroutil','Quantity','remoteapprecord','RemoteAppRecord','modelserver','ModelServer','TemporalProperty','timer','Timer','timestep','TimeStep','units','UnitProxy','util','vertex','BareData','Vertex','workflow','Workflow','lookuptable','LookupTable','MemoryLookupTable','multipiecewiselinfunction','MultiPiecewiseLinFunction','piecewiselinfunction','PiecewiseLinFunction','pbs_tool','hpc_tool','pyrolog','TemporalField','DirTemporalField','SingleFileTemporalField','dbrec','DbDictable','monitor','WithMetadata','Data','Process','DataList','Utility','RefQuantity','FieldBase','HeavyConvertible','cellgeometrytype']
 
 # importing those modules would trigger warning, skip it here
 with warnings.catch_warnings():
@@ -181,6 +196,9 @@ def _registerDumpable(clss=baredata.BareData):
     for sub in clss.__subclasses__():
         # print(f'Registering class {sub.__module__}.{sub.__name__}')
         Pyro5.api.register_class_to_dict(sub, baredata.BareData.to_dict)
+        # new-style serialization
+        Pyro5.api.register_dict_to_class(sub.__module__+':'+sub.__qualname__, baredata.BareData.from_dict_with_name)
+        # old-style serialization (supported in addition to the old one, see notes in baredata.py
         Pyro5.api.register_dict_to_class(sub.__module__+'.'+sub.__name__, baredata.BareData.from_dict_with_name)
         _registerDumpable(sub)  # recurse
 
@@ -220,7 +238,7 @@ def _registerOther():
     # Pyro5.api.register_dict_to_class('tuple',lambda _,d: tuple(d['val']))
 
     # various exception we want to catch in remote calls
-    for exc in ['pydantic.error_wrappers.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
+    for exc in ['pydantic.error_wrappers.ValidationError','pydantic_core._pydantic_core.ValidationError','jsonschema.exceptions.ValidationError','mupif.apierror.APIError']:
         Pyro5.api.register_dict_to_class(exc,lambda name,dic: RuntimeError(f'Remote exception name={name}. Traceback:\n'+''.join(dic['attributes']['_pyroTraceback'])))
 
 
@@ -228,7 +246,7 @@ def _pyroMonkeyPatch():
     import Pyro5.api
     # workaround for https://github.com/irmen/Pyro5/issues/44
     if not hasattr(Pyro5.api.Proxy, '__len__'):
-        Pyro5.api.Proxy.__bool__: lambda self: True
+        Pyro5.api.Proxy.__bool__= lambda self: True
         Pyro5.api.Proxy.__len__ = lambda self: self.__getattr__('__len__')()
         Pyro5.api.Proxy.__getitem__ = lambda self, index: self.__getattr__('__getitem__')(index)
         Pyro5.api.Proxy.__setitem__ = lambda self, index, val: self.__getattr__('__setitem__')(index, val)
@@ -244,7 +262,7 @@ _pyroMonkeyPatch()
 
 # this is for pydantic
 from . import field
-field.Field.update_forward_refs()
+field.Field.model_rebuild()
 
 # configure logging
 util.setupLoggingAtStartup()
@@ -252,3 +270,4 @@ util.setupLoggingAtStartup()
 # switch on optional components
 try: util.accelOn()
 except ImportError: util.accelOff()
+

@@ -11,12 +11,12 @@ on:
 
 jobs:
   test-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         # needs quotes so that float 3.10 does not get interpreted as 3.1
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.10', '3.11', '3.12' ]
       # max-parallel: 1 # avoid localhost conflicts
     steps:
     - uses: actions/checkout@v4
@@ -81,7 +81,10 @@ jobs:
 #        cd examples; wenv python runex.py 1 2 3 5 6 8 2>&1 | dos2unix | ../tools/grcat-mupif
 
   test-docker-VPN:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: [ '3.11' ]
     steps:
     - uses: actions/checkout@v4
     # this should somehow enable persistent docker layer cache
@@ -101,7 +104,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.8] # , 3.9]
+        python-version: [ '3.11' ]
       max-parallel: 1
     steps:
     - uses: actions/checkout@v4

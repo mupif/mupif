@@ -2,6 +2,8 @@ import unittest
 import tempfile
 from mupif import *
 import mupif
+import numpy as np
+import numpy.testing
 
 
 def mkVertex(number, label, coords): return vertex.Vertex(number=number, label=label, coords=coords)
@@ -121,16 +123,16 @@ class Field_TestCase(unittest.TestCase):
         self.assertEqual(self.f4.getTime().getValue(), 16)
         
     def test_evaluate(self):
-        self.assertEqual(self.f1.evaluate((1., 2.5, 0.)).getValue(), (93.5,))
-        self.assertEqual(self.f1.evaluate((3., 1., 0.)).getValue(), (53.,))
-        self.assertEqual(self.f6.evaluate((2., 2., 2.)).getValue(), (24.,))
-        self.assertEqual(self.f6.evaluate((1.5, 1.5, 1.5)).getValue(), (18.,))
+        np.testing.assert_array_equal(self.f1.evaluate((1., 2.5, 0.)).getValue(), (93.5,))
+        np.testing.assert_array_equal(self.f1.evaluate((3., 1., 0.)).getValue(), (53.,))
+        np.testing.assert_array_equal(self.f6.evaluate((2., 2., 2.)).getValue(), (24.,))
+        np.testing.assert_array_equal(self.f6.evaluate((1.5, 1.5, 1.5)).getValue(), (18.,))
 
         import astropy.units as au
         self.assertRaises(RuntimeError, lambda: self.f1.evaluate((1., 2.5, 0)*au.m))
         self.f1.getMesh().unit = au.m
-        self.assertEqual(self.f1.evaluate((1., 2.5, 0.)*au.m).getValue(), (93.5,))
-        self.assertEqual(self.f1.evaluate((1000, 2500, 0)*au.mm).getValue(), (93.5,))
+        np.testing.assert_array_equal(self.f1.evaluate((1., 2.5, 0.)*au.m).getValue(), (93.5,))
+        np.testing.assert_array_equal(self.f1.evaluate((1000, 2500, 0)*au.mm).getValue(), (93.5,))
         self.assertRaises(au.UnitConversionError, lambda: self.f1.evaluate((1, 2, 3)*au.s))
 
     def test_getVertexValue(self):

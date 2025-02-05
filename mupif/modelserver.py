@@ -27,6 +27,7 @@ import subprocess
 import multiprocessing
 import time as timeTime
 import Pyro5
+import Pyro5.errors
 import logging
 import sys
 import pickle
@@ -35,27 +36,21 @@ import collections
 import uuid
 import warnings
 from . import modelserverbase
+from .modelserverbase import ModelServerBase, ModelServerStatus
 from . import pyroutil
 from .pyrofile import PyroFile
+from .baredata import BareData
 import os
 import typing
 import pydantic
 import shutil
+from typing import List
 
 sys.excepthook = Pyro5.errors.excepthook
 Pyro5.config.DETAILED_TRACEBACK = False
 
 log = logging.getLogger(__name__)
 
-try:
-    import colorlog
-    log.propagate = False
-    handler = colorlog.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(colorlog.ColoredFormatter('%(asctime)s %(log_color)s%(levelname)s:%(filename)s:%(lineno)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-    log.addHandler(handler)
-except ImportError:
-    pass
 
 
 @Pyro5.api.expose
@@ -136,7 +131,7 @@ class ModelServer (modelserverbase.ModelServerBase):
 
         def pickle(self):
             # protocol=0 so that there are no NULLs
-            return pickle.dumps(self.dict(), protocol=0)
+            return pickle.dumps(self.model_dump(), protocol=0)
 
         @classmethod
         def unpickle(cls, data): return cls(**pickle.loads(bytes(data, encoding='ascii')))
@@ -144,7 +139,8 @@ class ModelServer (modelserverbase.ModelServerBase):
     @staticmethod
     def _spawnedProcessPopen():
         import sys
-        import mupif  # this will use MUPIF_LOG_PYRO, but mupif would be imported by unpickling anyway
+        # the process receives MUPIF_LOG_PYRO (URI) and MUPIF_LOG_PYRONAME (jobID); used at import time in mupif.util.setupLogginAtStartup
+        import mupif # import eplicitly, though the unpickle would do it automatically as well
         args = ModelServer.SpawnedProcessArgs.unpickle(sys.argv[-1])
         log.info(f'New subprocess: nameserver {args.nsUri}, cwd {args.cwd}')
         os.chdir(args.cwd)
@@ -299,6 +295,7 @@ class ModelServer (modelserverbase.ModelServerBase):
                         env['MUPIF_LOG_PYRO'] = remoteLogUri
                     # to be tuned?
                     env['MUPIF_LOG_LEVEL'] = 'DEBUG'
+                    env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
                     proc = subprocess.Popen([sys.executable, '-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
                     tMax = 10
@@ -420,20 +417,15 @@ class ModelServer (modelserverbase.ModelServerBase):
         """
         return 'Mupif.JobManager.ModelServer'
 
-    def getStatus(self):
-        """
-        See :func:`JobManager.getStatus`
-        """
+
+    def getStatus(self) -> List[ModelServerStatus.JobStatus]:
         self._updateActiveJobs()
-        status = []
         tnow = timeTime.time()
         with self.lock:
-            for key, job in self.activeJobs.items():
-                status.append(dict(key=key, running=tnow-job.starttime, user=job.user, uri=job.uri, remoteLogUri=job.remoteLogUri))
-        return status
+            return [ModelServerStatus.JobStatus(key=key,running=tnow-job.starttime,user=job.user,uri=job.uri,remoteLogUri=job.remoteLogUri) for key,job in self.activeJobs.items()]
 
-    def getStatusExtended(self):
-        return dict(currJobs=self.getStatus(), totalJobs=self.jobCounter, maxJobs=self.maxJobs)
+    def getStatusExtended(self) -> ModelServerStatus:
+        return ModelServerStatus(currJobs=self.getStatus(), totalJobs=self.jobCounter, maxJobs=self.maxJobs)
 
     def getModelMetadata(self):
         return self.modelMetadata

@@ -31,8 +31,8 @@ from . import cellgeometrytype
 from . import mesh
 from . import uniformmesh
 from . import mupifquantity
+from . import meta
 from .units import Quantity, Unit
-from .baredata import NumpyArray
 from .heavydata import HeavyConvertible
 
 import meshio
@@ -53,6 +53,13 @@ import logging
 import itertools
 import os.path
 from .units import Unit
+from typing_extensions import Annotated
+from typing import Optional,Literal
+
+import pydantic
+from .ndtypes import *
+
+
 log = logging.getLogger()
 
 # debug flag
@@ -66,11 +73,20 @@ class FieldType(IntEnum):
     FT_vertexBased = 1
     FT_cellBased = 2
 
+# XXX: this should really derive from Property metadata
+class FieldMeta(meta.BaseMeta):
+    Units: Optional[str]=None
+    Type: Literal['mupif.field.Field']='mupif.field.Field'
+    Type_ID: Optional[str]=None
+    FieldType: Optional[str]=None
+    ValueType: Optional[str]=None
 
 @Pyro5.api.expose
 class FieldBase(mupifquantity.MupifQuantity):
     fieldID: DataID
     time: Quantity = 0*Unit('s')
+
+    metadata: FieldMeta=FieldMeta()
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -111,7 +127,7 @@ class FieldBase(mupifquantity.MupifQuantity):
         """
         return self.time
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def evaluate(self, positions, eps: float = 0.0):
         """
         Evaluates the receiver at given spatial position(s).
@@ -128,21 +144,17 @@ class FieldBase(mupifquantity.MupifQuantity):
 @Pyro5.api.expose
 class AnalyticalField(FieldBase):
     expr: str
-    dim: pydantic.conint(ge=2, le=3) = 3
+    dim: Annotated[int, pydantic.Field(ge=2, le=3)] = 3
 
     def __init__(self, *, unit, **kw):
         # quantity with null array; only the unit is relevant
         super().__init__(quantity=np.array([])*Unit(unit), **kw)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def evaluate(
             self,
             positions: typing.Union[
-                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-                typing.List[typing.Tuple[float, float]],  # list of 2d coords
-                typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float],  # single 2d coord
-                NumpyArray,
+                NDArr3,NDArr2,NDArr3xX,NDArr2xX,
                 Quantity
             ],
             eps: float = 0.0):
@@ -178,6 +190,7 @@ class Field(FieldBase,HeavyConvertible):
     mesh: mesh.Mesh
     #: whether the field is vertex-based or cell-based
     fieldType: FieldType = FieldType.FT_vertexBased
+
 
     def __repr__(self): return str(self)
 
@@ -280,15 +293,11 @@ class Field(FieldBase,HeavyConvertible):
         """
         return self.time
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def evaluate(
             self,
             positions: typing.Union[
-                typing.List[typing.Tuple[float, float, float]],  # list of 3d coords
-                typing.List[typing.Tuple[float, float]],  # list of 2d coords
-                typing.Tuple[float, float, float],  # single 3d coords
-                typing.Tuple[float, float],  # single 2d coord
-                NumpyArray,
+                NDArr3,NDArr2,NDArr3xX,NDArr2xX,
                 Quantity,
             ],
             eps: float = 0.0):
@@ -302,16 +311,18 @@ class Field(FieldBase,HeavyConvertible):
         :rtype: units.Quantity with given value or tuple of values
         """
         # test if positions is a list of positions
-        if isinstance(positions, list):
+        if isinstance(positions, list) or (isinstance(positions,np.ndarray) and positions.ndim>1):
             ans = []
             for pos in positions:
                 ans.append(self._evaluate(pos, eps))
             return Quantity(value=ans, unit=self.getUnit())
         else:
             # single position passed
+            # print(f'{positions.shape=} {positions.ndim=}')
             return Quantity(value=self._evaluate(positions, eps), unit=self.getUnit())
 
-    def _evaluate(self, position, eps):
+    @pydantic.validate_call
+    def _evaluate(self, position: NDArr123|Quantity, eps):
         """
         Evaluates the receiver at a single spatial position.
 
@@ -333,9 +344,6 @@ class Field(FieldBase,HeavyConvertible):
             # localizer in the newer version returns cell id, not the cell object, check that here
             if isinstance(next(iter(cells)), int):
                 cells = [self.mesh.getCell(ic) for ic in cells]
-            #for ic,c in enumerate(cells):
-            #    for iv,v in enumerate(c.getVertices()):
-            #        print(f'{ic=} {iv=} {v.coords=} {self.value[iv]=}')
 
             if self.fieldType == FieldType.FT_vertexBased:
                 for icell in cells:
@@ -344,7 +352,7 @@ class Field(FieldBase,HeavyConvertible):
                             if debug:
                                 log.debug(icell.getVertices())
                             try:
-                                answer = icell.interpolate(position, [self.value[i.number] for i in icell.getVertices()])
+                                answer = icell.interpolate(position, np.vstack([self.value[i.number] for i in icell.getVertices()]))
                             except IndexError:
                                 raise RuntimeError('Field::evaluate failed, inconsistent data at cell %d' % icell.label)
                                 # raise
@@ -441,7 +449,7 @@ class Field(FieldBase,HeavyConvertible):
                     vv[mesh.cellLabel2Number(f.mesh.getCell(v).label)] = f.getRecord(v)
 
         self.mesh = mesh
-        self.value = vv
+        self.quantity = Quantity(value=vv, unit=self.quantity.unit)
 
     def getMartixForTensor(self, values):
         """
@@ -822,7 +830,7 @@ class Field(FieldBase,HeavyConvertible):
         return Field.manyToMeshioMesh([self])
 
     @staticmethod
-    # @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    # @pydantic.validate_call(config=dict(arbitrary_types_allowed=True))
     def manyToMeshioMesh(
         fields: typing.Sequence[Field]
     ) -> typing.List[Field]:
@@ -902,7 +910,7 @@ class Field(FieldBase,HeavyConvertible):
             r0.SetFileName(filename)
             if r0.IsFileStructuredPoints(): reader=vtk.vtkStructuredPointsReader()
             elif r0.IsFileUnstructuredGrid(): reader=vtk.vtkUnstructuredGridReader()
-            elif r0.IsFileStructuredGrid(): reader=vtk.vtkStrcturedGridReader()
+            elif r0.IsFileStructuredGrid(): reader=vtk.vtkStructuredGridReader()
             elif r0.IsFilePolyData(): reader=vtk.vtkPolyDataReader()
             elif r0.IsFileRectilinearGrid(): reader=vtk.vtkRectilinearGridReader()
             else: raise RuntimeError(f'Unable to determine VTK data contained in legacy-format file {filename}.')

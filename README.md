@@ -1,6 +1,16 @@
 # MuPIF
 
-MuPIF is modular, object-oriented integration platform allowing to create complex, distributed, multiphysics simulation workflows across the scales and processing chains by combining existing simulation tools. 
+MuPIF platform is an open-source, modular, and object-oriented simulation platform designed to create complex, distributed, multiphysics simulation workflows. It integrates existing simulation tools to handle various scales and processing chains.
+
+Key features of MuPIF include:
+
+* Distributed Design: Allows execution of simulation scenarios involving remote applications and data.
+* Data Management System (DMS): Builds digital twin representations of physical systems, enhancing predictive simulations.
+* Interoperability: Standardizes application and data component interfaces, enabling seamless integration of different simulation models and data types.
+* Graphical Workflow Editor: Facilitates low-code workflow development and makes implementation more accessible.
+* Security: Supports SSL or VPN-based secure communication and data exchange.
+
+MuPIF is written in Python and can be used on various operating systems, making it a versatile tool for researchers and engineers.
  
 [![Build Status](https://travis-ci.org/mupif/mupif.svg?branch=master)](https://travis-ci.org/mupif/mupif)
 [![codecov](https://codecov.io/gh/mupif/mupif/branch/master/graph/badge.svg)](https://codecov.io/gh/mupif/mupif)

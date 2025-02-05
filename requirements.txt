@@ -1,5 +1,4 @@
-numpy
-# scipy
+numpy>=2.0
 meshio
 pytest
 pytest-cov
@@ -9,19 +8,12 @@ jsonpickle
 jsonschema
 h5py
 matplotlib
-# astropy 5.3 throw an exception at Quantity.__bool__,
-# which is triggered by pydantic's deepcopy (smart variant or something like that)
-# until this is solved, force version 5.2:
-astropy==5.2
+astropy>=6.0
 deprecated
 appdirs
-# tricky: 1.10.0 … 1.10.2: error importing dataclass_transform
-# <= 1.9.0: error in model copy
-pydantic==1.10.13
-# must not be 4.6.x: incompatibility with pydantic reported here:
-# https://github.com/pydantic/pydantic/issues/5821
-typing-extensions==4.8.0; python_version >= '3.10'
-typing-extensions==4.5.0; python_version < '3.10'
+pydantic>2.6
+numpydantic
+typing-extensions>=4.10
 # for documentation
 sphinx<7.0
 sphinxcontrib-apidoc
@@ -32,6 +24,8 @@ setproctitle
 tqdm
 typer
 rich
+colorlog
 pytest-timeout
 requests
-uuid
+# pseudo-dependency to fail on python < 3.9 early
+MUPIF_REQUIRES_PYTHON_AT_LEAST_VERSION_3.9; python_version < '3.9'

@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Annotated
 import typing
 import sys
 import numpy as np
@@ -24,6 +24,8 @@ import subprocess
 import shutil
 
 import atexit
+import pydantic
+
 log = logging.getLogger(__name__)
 
 
@@ -36,10 +38,8 @@ import astropy
 
 class Hdf5RefQuantity(RefQuantity):
     'Quantity stored in HDF5 dataset, the HDF5 file being managed somewhere else.'
-    class Config:
-        fields = {'dataset': {'exclude': True}}  # do not try to serialize dataset
     # unit: astropy.units.UnitBase
-    dataset: typing.Optional[h5py.Dataset] = None
+    dataset: Annotated[typing.Optional[h5py.Dataset], pydantic.Field(exclude=True)] = None
 
     def __init__(self, *, unit=None, **kw):
         super().__init__(**kw)
@@ -142,6 +142,7 @@ class HeavyDataBase(Data):
     h5path: str = ''
     h5uri: typing.Optional[str] = None
     mode: HeavyDataBase_ModeChoice = 'readonly'
+    pyroIds: typing.List[str]=pydantic.Field([],exclude=True)
 
     def __init__(self, **kw):
         super().__init__(**kw)  # calls the real ctor
@@ -183,7 +184,7 @@ class HeavyDataBase(Data):
             raise RuntimeError(f'Dataset {h5loc} already exists (shape {"×".join(self._h5obj[h5loc].shape)}).')
         return self._h5obj.create_dataset(h5loc, shape=shape, **kw)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def moveStorage(self, new_h5path):
         """
         Moves underlying storage in the filesystem to the new path *new_h5path*, and sets the ``h5path`` attribute to the new path.
@@ -193,7 +194,7 @@ class HeavyDataBase(Data):
         shutil.move(self.h5path, new_h5path)
         self.h5path = new_h5path
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def deepcopy(self):
         """
         Overrides BareData.deepcopy, enriching it with copy of the backing HDF5 file; it should correctly detect whether the call is local or remote.
@@ -212,7 +213,7 @@ class HeavyDataBase(Data):
             self.exposeData()
             return super().deepcopy()
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def openStorage(self, mode: typing.Optional[HeavyDataBase_ModeChoice] = None):
         """
         """
@@ -316,7 +317,7 @@ class HeavyDataBase(Data):
                 # sys.stderr.write(f'Unregistering {i}\n')
                 daemon.unregister(i)
 
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def cloneHandle(self, newPath: str = ''):
         """Return clone of the handle; the underlying storage is copied into *newPath* (or a temporary file, if not given). All handle attributes (besides :obj:`h5path`) are preserved."""
         if self._h5obj:
@@ -324,7 +325,7 @@ class HeavyDataBase(Data):
         if not newPath:
             _fd, newPath = tempfile.mkstemp(suffix='.h5', prefix='mupif-tmp-', text=False)
         shutil.copy(self.h5path, newPath)
-        ret = self.copy(deep=True)  # this is provided by pydantic
+        ret = self.model_copy(deep=True)  # this is provided by pydantic
         ret.h5path = newPath
         return ret
 
@@ -363,7 +364,7 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
         return ret
 
     @staticmethod
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def makeFromQuantity(q: units.Quantity, h5path: str = '', h5loc: Optional[str] = '/quantity'):
         ret = Hdf5OwningRefQuantity(h5path=h5path, h5loc=h5loc, mode='create')
         ret.allocateDataset(shape=q.value.shape, unit=q.unit)
@@ -390,6 +391,7 @@ class Hdf5OwningRefQuantity(Hdf5RefQuantity, HeavyDataBase):
 
 
 class Hdf5HeavyProperty(Property, HeavyDataBase):
+    dataset: Annotated[typing.Optional[h5py.Dataset], pydantic.Field(exclude=True)] = None
     def __init__(self, **kw):
         super().__init__(mode='create', **kw)
 

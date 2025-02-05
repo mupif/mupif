@@ -21,12 +21,17 @@
 # Boston, MA  02110-1301  USA
 #
 
+from __future__ import annotations
+
 import logging
 import os
-import Pyro5
+import socket
+import Pyro5.api
 import tempfile
 import warnings
+from typing import List,Optional
 from . import pyroutil
+from .baredata import BareData
 log = logging.getLogger()
 
 # error codes
@@ -66,6 +71,22 @@ class ModelServerNoResourcesException(ModelServerException):
 c = ModelServerNoResourcesException
 Pyro5.api.register_class_to_dict(c, {'__class__': c.__module__+'.'+c.__name__})
 Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, c)
+
+
+
+
+
+class ModelServerStatus(BareData):
+    class JobStatus(BareData):
+        key: str
+        running: float
+        user: str
+        uri: str
+        remoteLogUri: str|None
+        tail: List[str]=[]
+    currJobs: List[JobStatus]
+    totalJobs: int
+    maxJobs: int
 
 
 @Pyro5.api.expose
@@ -154,10 +175,15 @@ class ModelServerBase(object):
 
         :param str jobID: jobID
         """
-    def getStatus(self):
-        """
-        """
+    def getStatus(self) -> List[ModelServerStatus.JobStatus]: return []
+
     def getNSName(self):
+        return self.getName()
+        ## TODO: Execution profiles need to return variable NS name, but we need to stay compatible with old ModelServers now
+        ## TODO: see also comment
+        return f"{self.applicationName}_{os.getpid()}@{socket.gethostname()}"
+    
+    def getName(self):
         return self.applicationName
 
     # implemented in SimpleJobManager

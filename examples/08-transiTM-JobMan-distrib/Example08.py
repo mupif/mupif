@@ -12,9 +12,11 @@ log = logging.getLogger()
 start = timeT.time()
 log.info('Timer started')
 import mupif as mp
+from typing import Any
 
 
 class Example08(mp.Workflow):
+    daemon: Any=None
    
     def __init__(self, metadata=None):
         """
@@ -31,7 +33,7 @@ class Example08(mp.Workflow):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
-                 'Description': 'Displacement field on 2D domain', 'Units': 'm'}
+                 'Description': 'Displacement field on 2D domain', 'Units': 'm', 'ValueType': 'Vector'}
             ],
             'Models': [
                 {
@@ -69,12 +71,12 @@ class Example08(mp.Workflow):
         # self.getModel('mechanical').printMetadata()
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
-        
+
         log.info("Solving thermal problem")
         log.info(self.getModel('thermal').getApplicationSignature())
-        
-        log.debug("Step: %g %g %g" % (istep.getTime().getValue(), istep.getTimeIncrement().getValue(), istep.number))
-        
+
+        log.info(f"Step: {istep.getTime().getValue()} {istep.getTimeIncrement().getValue()} {istep.number}")
+
         # suppress show meshio warnings that writing VTK ASCII is for debugging only
         import logging
         level0 = logging.getLogger().level
@@ -114,5 +116,6 @@ if __name__ == '__main__':
     demo.initialize(metadata=workflowMD)
     demo.set(mp.ConstantProperty(value=10. * mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
-    demo.printMetadata()
+    from rich.pretty import pprint
+    pprint(demo.metadata)
     demo.terminate()

@@ -38,6 +38,7 @@ import os.path
 from .baredata import Utility
 from typing import Optional
 from .dataid import DataID
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -52,13 +53,17 @@ class PyroFile(Utility):
     compressFlag: bool = False
     dataID: Optional[DataID] = DataID.ID_None
 
+    _fileobj: Any=None
+    _compressor: Any=None
+    _decompressor: Any=None
+
     def __init__(self, **kw):
         super().__init__(**kw)
         if self.mode not in ('rb', 'wb'):
             raise ValueError(f"mode must be 'rb' or 'wb' (not '{self.mode}').")
-        self.fileobj = open(self.filename, self.mode)
-        self.compressor = None
-        self.decompressor = None
+        self._fileobj = open(self.filename, self.mode)
+        self._compressor = None
+        self._decompressor = None
 
     @Pyro5.api.expose
     def getDataID(self):
@@ -66,7 +71,7 @@ class PyroFile(Utility):
 
     @Pyro5.api.expose
     def rewind(self):
-        self.fileobj.seek(0)
+        self._fileobj.seek(0)
 
     @Pyro5.api.expose
     def getChunk(self):
@@ -78,7 +83,7 @@ class PyroFile(Utility):
         """
         comp = zlib.compressobj() if self.compressFlag else None
         while True:
-            data = self.fileobj.read(self.bufSize)
+            data = self._fileobj.read(self.bufSize)
             # log.error(f'ø {len(data)} b')
             if not data:
                 self.rewind()  # we still rewind in copy as well, but it can't hurt
@@ -108,11 +113,11 @@ class PyroFile(Utility):
         if type(buffer) == dict:
             buffer = serpent.tobytes(buffer)
         if self.compressFlag:
-            if not self.decompressor:
-                self.decompressor = zlib.decompressobj()
-            self.fileobj.write(self.decompressor.decompress(buffer))
+            if not self._decompressor:
+                self._decompressor = zlib.decompressobj()
+            self._fileobj.write(self._decompressor.decompress(buffer))
         else:
-            self.fileobj.write(buffer)
+            self._fileobj.write(buffer)
 
     @Pyro5.api.expose
     @deprecated.deprecated('PyroFile.setBuffSize is deprecated, use setBufSize instead')
@@ -138,11 +143,11 @@ class PyroFile(Utility):
         """
         Closes the associated file handle.
         """
-        self.fileobj.close()
+        self._fileobj.close()
 
     # MUST be called as mp.PyroFile.copy(src,dst)
     @staticmethod
-    # @pydantic.validate_arguments # does not work yet, see https://stackoverflow.com/q/70965979
+    # @pydantic.validate_call # does not work yet, see https://stackoverflow.com/q/70965979
     def copy(src: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
              dst: typing.Union[PyroFile, Pyro5.api.Proxy, str, pathlib.Path],
              compress=True):

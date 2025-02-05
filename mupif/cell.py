@@ -20,10 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301  USA
 #
+from __future__ import annotations
+
 from . import bbox
 from . import util
 import math
 from . import cellgeometrytype
+from .cellgeometrytype import CGT
 import numpy as np
 import Pyro5.api
 
@@ -31,12 +34,17 @@ import numpy
 import numpy.linalg
 import typing
 from . import baredata
+from .ndtypes import *
+import pydantic
 
 # debug flag
 debug = 0
 
 # in element tolerance
 tolerance = 0.001
+
+# cache
+_cell_subclasses = {}
 
 
 @Pyro5.api.expose
@@ -56,17 +64,18 @@ class Cell(baredata.BareData):
     #: Local cell number; local numbering should start from 0 and should be continuous.
     number: int
     #: Cell label, arbitrary unique number.
-    label: typing.Optional[int]
+    label: typing.Optional[int] = None
     #: Cell vertices (local numbers)
     vertices: typing.Tuple[int,...]
+
+    
+    mesh: typing.Optional['Mesh'] = pydantic.Field(None,exclude=True)
 
     def __repr__(self):
         return f'{self.__class__.__name__}(number={self.number}{", label="+str(self.label) if self.label is not None else ""}, vertices={str(self.vertices)})'
 
-    def __init__(self, *, mesh=None, **kw):
-        super().__init__(**kw)
-        #: The mesh to which a cell belongs to; not a part of the data schema, since not serialized
-        self.mesh = mesh
+    #def __init__(self, *, mesh=None, **kw):
+    #    super().__init__(**kw)
 
     def __hash__(self): return id(self)
 
@@ -78,7 +87,8 @@ class Cell(baredata.BareData):
         """
         Return class object (not instance) for given cell geometry type. Does introspection of all subclasses of Cell caches the result.
         """
-        if not Cell._subclasses:
+        global _cell_subclasses
+        if not _cell_subclasses:
             # cache all subclasses (recursive)
             def get_subclasses(cls):
                 ret = []
@@ -87,8 +97,8 @@ class Cell(baredata.BareData):
                     ret.extend(get_subclasses(sc))
                 return ret
             for sc in get_subclasses(Cell):
-                Cell._subclasses[sc.getGeometryType()] = sc
-        return Cell._subclasses[cgt]
+                _cell_subclasses[sc.getGeometryType()] = sc
+        return _cell_subclasses[cgt]
 
     def copy(self):
         """
@@ -115,7 +125,8 @@ class Cell(baredata.BareData):
         """
         return len(self.vertices)
 
-    def containsPoint(self, point):
+
+    def containsPoint(self, point) -> bool:
         """
         Check if a cell contains a point.
 
@@ -123,8 +134,10 @@ class Cell(baredata.BareData):
         :return: Returns True if cell contains a given point
         :rtype: bool
         """
+        raise NotImplementedError('abstract')
 
-    def interpolate(self, point, vertexValues):
+
+    def interpolate(self, point, vertexValues) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -133,15 +146,17 @@ class Cell(baredata.BareData):
         :return: Interpolated value at a given point
         :rtype: tuple
         """
+        raise NotImplementedError('abstract')
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
+        raise NotImplementedError('abstract')
 
     def getBBox(self, relPad=1e-5):
         """
@@ -168,7 +183,7 @@ class Cell(baredata.BareData):
         self._bbox = bbox.BBox(tuple(mn), tuple(mx))
         return self._bbox
 
-    def getTransformationJacobian(self, coords):
+    def getTransformationJacobian(self, coords: NDArr123) -> float:
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
 
@@ -176,17 +191,10 @@ class Cell(baredata.BareData):
         :return: jacobian
         :rtype: float
         """
-        # raise apierror.APIError("getTransformationJacobian not implemented")
+        raise NotImplementedError('abstract')
 
-    def getMeshioGeometryStr(self):
-        meshioTypeMap = {
-            cellgeometrytype.CGT_TRIANGLE_1: 'triangle',
-            cellgeometrytype.CGT_QUAD: 'quad',
-            cellgeometrytype.CGT_TETRA: 'tetra',
-            cellgeometrytype.CGT_HEXAHEDRON: 'hexahedron',
-            cellgeometrytype.CGT_TRIANGLE_2: 'triangle6'
-        }
-        return meshioTypeMap[self.getGeometryType()]
+    def getMeshioGeometryStr(self) -> str:
+        return cellgeometrytype.cgt2meshioName[self.getGeometryType()]
 
 
 ##############################################################
@@ -220,14 +228,14 @@ class Triangle_2d_lin(Cell):
         return Triangle_2d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
         :return: Returns geometry type of receiver
         :rtype: CellGeometryType
         """
-        return cellgeometrytype.CGT_TRIANGLE_1
+        return cellgeometrytype.CGT.TRIANGLE_1
 
     def glob2loc(self, coords):
         """
@@ -268,7 +276,9 @@ class Triangle_2d_lin(Cell):
         l3 = 1.-l1-l2
         return l1*c1[0]+l2*c2[0]+l3*c3[0], l1*c1[1]+l2*c2[1]+l3*c3[1]
 
-    def interpolate(self, point, vertexValues):
+
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr23, vertexValues: NDArr3x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -277,8 +287,9 @@ class Triangle_2d_lin(Cell):
         :return: Interpolated value at a given point
         :rtype: tuple
         """
-        ac = self.glob2loc(point)
-        return tuple([vertexValues[0][i]*ac[0]+vertexValues[1][i]*ac[1]+vertexValues[2][i]*ac[2] for i in range(len(vertexValues[0]))])
+
+        ac = np.c_[self.glob2loc(point)].T
+        return np.sum(vertexValues*ac,axis=0)
 
     def containsPoint(self, point):
         """
@@ -303,6 +314,7 @@ class Triangle_2d_lin(Cell):
         :return: jacobian
         :rtype: float
         """
+        # FIXME: should work on *coords* passed, not getting them from the instance (that's what the other types do)
         c1 = self.mesh.getVertex(self.vertices[0]).coords
         c2 = self.mesh.getVertex(self.vertices[1]).coords
         c3 = self.mesh.getVertex(self.vertices[2]).coords
@@ -347,7 +359,7 @@ class Triangle_2d_quad(Cell):
         return Triangle_2d_quad(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
@@ -356,7 +368,7 @@ class Triangle_2d_quad(Cell):
         """
         return cellgeometrytype.CGT_TRIANGLE_2
 
-    def glob2loc(self, coords):
+    def glob2loc(self, coords: NDArr2) -> NDArr3:
         """
         Converts global coordinate to local (area) coordinate.
 
@@ -397,9 +409,10 @@ class Triangle_2d_quad(Cell):
             # failed convergence
             return None
 
-        return lcoords_guess[0], lcoords_guess[1], 1.0 - lcoords_guess[0] - lcoords_guess[1]
+        return np.array([lcoords_guess[0], lcoords_guess[1], 1.0 - lcoords_guess[0] - lcoords_guess[1]])
 
-    def loc2glob(self, lc):
+    @pydantic.validate_call
+    def loc2glob(self, lc: NDArr23) -> NDArr2:
         """
         Converts local (parametric) coordinates to global ones.
 
@@ -414,9 +427,12 @@ class Triangle_2d_quad(Cell):
             x += n[i] * self.mesh.getVertex(self.vertices[i]).coords[0]
             y += n[i] * self.mesh.getVertex(self.vertices[i]).coords[1]
 
-        return x, y
+        return np.array([x, y])
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr23, vertexValues: NDArr6x123) -> NDArr123:
+
+    # def interpolate(self, point, vertexValues):
         """
         Interpolates given vertex values to a given point.
 
@@ -427,9 +443,10 @@ class Triangle_2d_quad(Cell):
         """
         lc = self.glob2loc(point)
         n = self._evalN(lc)
-        return tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i] for i in range(len(vertexValues[0]))])
+        return np.array(tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i] for i in range(len(vertexValues[0]))]))
+        # this is not the same... why? return np.sum(n*vertexValues,axis=0)
 
-    def containsPoint(self, point):
+    def containsPoint(self, point: NDArr23):
         """
         Check if a cell contains a point.
 
@@ -478,7 +495,8 @@ class Triangle_2d_quad(Cell):
 
         return jacobianMatrix
 
-    def _evalN(self, lc):
+    @pydantic.validate_call
+    def _evalN(self, lc: NDArr23) -> NDArr6:
         """
         Evaluates shape functions at given point (given in parametric coordinates).
 
@@ -498,7 +516,8 @@ class Triangle_2d_quad(Cell):
                 4. * l2 * l3,
                 4. * l3 * l1)
 
-    def _evalDerivatives(self, lc):
+    @pydantic.validate_call
+    def _evalDerivatives(self, lc: NDArr2) -> NDArr6x2:
         """
         Evaluates shape function derivatives at given point (given in parametric coordinates).
 
@@ -528,7 +547,7 @@ class Triangle_2d_quad(Cell):
 
         return dn
 
-    def _evalArea(self):
+    def _evalArea(self) -> float:
         p = self.mesh.getVertex(self.vertices[0]).coords
         x1 = p[0]
         y1 = p[1]
@@ -578,7 +597,8 @@ class Quad_2d_lin(Cell):
         """
         return cellgeometrytype.CGT_QUAD
 
-    def _evalN(self, lc):
+    @pydantic.validate_call
+    def _evalN(self, lc: NDArr2) -> NDArr4:
         """
         Evaluates shape functions at given point (given in parametric coordinates).
 
@@ -588,12 +608,15 @@ class Quad_2d_lin(Cell):
         """
         # print "lc :",lc
 
-        return (0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ),
+        return np.array([
+                0.25 * ( 1. + lc[0] ) * ( 1. + lc[1] ),
                 0.25 * ( 1. - lc[0] ) * ( 1. + lc[1] ),
                 0.25 * ( 1. - lc[0] ) * ( 1. - lc[1] ),
-                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] ))
+                0.25 * ( 1. + lc[0] ) * ( 1. - lc[1] )
+        ])
 
-    def glob2loc(self, coords):
+    @pydantic.validate_call
+    def glob2loc(self, coords: NDArr123) -> typing.Tuple[bool,NDArr2]:
         """
         Converts global coordinate to local (area) coordinate.
 
@@ -681,7 +704,7 @@ class Quad_2d_lin(Cell):
                 ksi1 = ksi2
                 eta1 = eta2
 
-        answer = (ksi1, eta1)
+        answer = np.array([ksi1, eta1])
         # test if inside
         inside = True
         for pc in answer:
@@ -689,7 +712,8 @@ class Quad_2d_lin(Cell):
                 inside = False
         return inside, answer
 
-    def loc2glob(self, lc):
+    @pydantic.validate_call
+    def loc2glob(self, lc: NDArr2) -> NDArr23:
         """
         Converts local (parametric) coordinates to global ones.
 
@@ -708,11 +732,12 @@ class Quad_2d_lin(Cell):
         n4 = 0.25*(1.0+lc[0])*(1.0-lc[1])
 
         if len(c1) == 2:
-            return n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1]
+            return np.array([n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1]])
         else:
-            return n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1], n1*c1[2]+n2*c2[2]+n3*c3[2]+n4*c4[2]
+            return np.array([n1*c1[0]+n2*c2[0]+n3*c3[0]+n4*c4[0], n1*c1[1]+n2*c2[1]+n3*c3[1]+n4*c4[1], n1*c1[2]+n2*c2[2]+n3*c3[2]+n4*c4[2]])
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr23, vertexValues: NDArr4x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -730,7 +755,7 @@ class Quad_2d_lin(Cell):
                        0.25*(1.0-ac[0])*(1.0-ac[1])*vertexValues[2][i] +
                        0.25*(1.0+ac[0])*(1.0-ac[1])*vertexValues[3][i]) for i in range(len(vertexValues[0]))])
 
-    def containsPoint(self, point):
+    def containsPoint(self, point: NDArr123) -> bool:
         """
         Check if a cell contains a point.
 
@@ -741,7 +766,7 @@ class Quad_2d_lin(Cell):
         (inside, ac) = self.glob2loc(point)
         return inside
 
-    def getTransformationJacobian(self, coords):
+    def getTransformationJacobian(self, coords: NDArr2):
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
 
@@ -789,7 +814,7 @@ class Tetrahedron_3d_lin(Cell):
         return Tetrahedron_3d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
@@ -798,7 +823,7 @@ class Tetrahedron_3d_lin(Cell):
         """
         return cellgeometrytype.CGT_TETRA
 
-    def glob2loc(self, coords):
+    def glob2loc(self, coords: NDArr3) -> NDArr4:
         """
         Converts global coordinate to local (area) coordinate.
 
@@ -838,7 +863,7 @@ class Tetrahedron_3d_lin(Cell):
 
         return l1, l2, l3, l4
 
-    def loc2glob(self, lc):
+    def loc2glob(self, lc: NDArr4) -> NDArr3:
         """
         Converts local (parametric) coordinates to global ones
 
@@ -856,13 +881,14 @@ class Tetrahedron_3d_lin(Cell):
         l3 = lc[2]
         l4 = 1. - l1 - l2 - l3
 
-        return (
+        return np.array([
             l1*c1[0]+l2*c2[0]+l3*c3[0]+l4*c4[0],
             l1*c1[1]+l2*c2[1]+l3*c3[1]+l4*c4[1],
             l1*c1[2]+l2*c2[2]+l3*c3[2]+l4*c4[2]
-        )
+        ])
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr3, vertexValues: NDArr4x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -872,10 +898,10 @@ class Tetrahedron_3d_lin(Cell):
         :rtype: tuple
         """
 
-        ac = self.glob2loc(point)
-        return tuple([vertexValues[0][i]*ac[0]+vertexValues[1][i]*ac[1]+vertexValues[2][i]*ac[2]+vertexValues[3][i]*ac[3] for i in range(len(vertexValues[0]))])
+        ac = np.c_[self.glob2loc(point)].T
+        return np.sum(np.array(vertexValues)*ac,axis=0)
 
-    def containsPoint(self, point):
+    def containsPoint(self, point: NDArr3) -> bool:
         """
         Check if a cell contains a point.
 
@@ -890,7 +916,7 @@ class Tetrahedron_3d_lin(Cell):
                 return False
         return True
 
-    def getTransformationJacobian(self, coords):
+    def getTransformationJacobian(self, coords) -> float:
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
 
@@ -930,7 +956,7 @@ class Brick_3d_lin(Cell):
         return Brick_3d_lin(mesh=self.mesh, number=self.number, label=self.label, vertices=tuple(self.vertices))
 
     @classmethod
-    def getGeometryType(cls):
+    def getGeometryType(cls) -> CGT:
         """
         Returns geometry type of receiver.
 
@@ -939,7 +965,7 @@ class Brick_3d_lin(Cell):
         """
         return cellgeometrytype.CGT_HEXAHEDRON
 
-    def glob2loc(self, coords):
+    def glob2loc(self, coords) -> typing.Tuple[bool,NDArr3]:
         """
         Converts global coordinate to local (area) coordinate.
 
@@ -1033,25 +1059,29 @@ class Brick_3d_lin(Cell):
             if answer[i] > (1. + tolerance):
                 return 0, tuple(answer)
         # inside
-        return 1, tuple(answer)
+        return 1, np.array(answer)
 
-    def _evalN(self, lc):
+    @pydantic.validate_call
+    def _evalN(self, lc: NDArr3) -> NDArr8:
         """
         Evaluates shape functions at given point (given in parametric coordinates)
         :param tuple lc: A local coordinate
         :return: shape function
         :rtype: tuple of float
         """
-        return (0.125 * (1. - lc[0]) * (1. - lc[1]) * (1. + lc[2]),
+        return np.array([
+                0.125 * (1. - lc[0]) * (1. - lc[1]) * (1. + lc[2]),
                 0.125 * (1. - lc[0]) * (1. + lc[1]) * (1. + lc[2]),
                 0.125 * (1. + lc[0]) * (1. + lc[1]) * (1. + lc[2]),
                 0.125 * (1. + lc[0]) * (1. - lc[1]) * (1. + lc[2]),
                 0.125 * (1. - lc[0]) * (1. - lc[1]) * (1. - lc[2]),
                 0.125 * (1. - lc[0]) * (1. + lc[1]) * (1. - lc[2]),
                 0.125 * (1. + lc[0]) * (1. + lc[1]) * (1. - lc[2]),
-                0.125 * (1. + lc[0]) * (1. - lc[1]) * (1. - lc[2]))
+                0.125 * (1. + lc[0]) * (1. - lc[1]) * (1. - lc[2]),
+        ])
 
-    def loc2glob(self, lc):
+    @pydantic.validate_call
+    def loc2glob(self, lc: NDArr3) -> NDArr3:
         """
         Converts local (parametric) coordinates to global ones
 
@@ -1068,9 +1098,10 @@ class Brick_3d_lin(Cell):
             x = x+n[i]*v.coords[0]
             y = y+n[i]*v.coords[1]
             z = z+n[i]*v.coords[2]
-        return x, y, z
+        return np.array([x, y, z])
 
-    def interpolate(self, point, vertexValues):
+    @pydantic.validate_call
+    def interpolate(self, point: NDArr3, vertexValues: NDArr8x123) -> NDArr123:
         """
         Interpolates given vertex values to a given point.
 
@@ -1084,7 +1115,7 @@ class Brick_3d_lin(Cell):
 
         return tuple([n[0]*vertexValues[0][i]+n[1]*vertexValues[1][i]+n[2]*vertexValues[2][i]+n[3]*vertexValues[3][i]+n[4]*vertexValues[4][i]+n[5]*vertexValues[5][i]+n[6]*vertexValues[6][i]+n[7]*vertexValues[7][i] for i in range(len(vertexValues[0]))])
 
-    def containsPoint(self, point):
+    def containsPoint(self, point) -> bool:
         """
         Check if a cell contains a point.
 
@@ -1095,7 +1126,7 @@ class Brick_3d_lin(Cell):
         (inside, ac) = self.glob2loc(point)
         return inside
 
-    def getTransformationJacobian(self, coords):
+    def getTransformationJacobian(self, coords: NDArr3) -> float:
         """
         Returns the transformation jacobian (the determinant of jacobian) of the receiver
 

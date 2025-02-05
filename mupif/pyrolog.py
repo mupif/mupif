@@ -21,15 +21,13 @@ class PyroLogHandler(logging.StreamHandler):
     The *tag* is currently unused, but something similar should be used (and added to the formatter on
     the remote side) so that records are identified with their originating machine and model.
     """
-    def __init__(self, *, uri, tag):
-        self.tag = tag
+    def __init__(self, *, uri):
         self.uri = uri
         self.remoteLog = Pyro5.api.Proxy(uri)
         self.lock = threading.Lock()
         super().__init__()
 
     def emit(self, record):
-        record.tag = self.tag
         with self.lock:
             self.remoteLog._pyroClaimOwnership()
             self.remoteLog.handleRecord(pickle.dumps(record))
@@ -51,13 +49,15 @@ class PyroLogReceiver(object):
     """
     def __init__(self, tailHandler=None):
         self.log = logging.getLogger('PyroLogReceiver')
+        if tailHandler is None: tailHandler=TailLogHandler()
         self.tailHandler = tailHandler
 
     def handleRecord(self, recPickle):
         if isinstance(recPickle, dict):
             recPickle = serpent.tobytes(recPickle)
         rec = pickle.loads(recPickle)
-        # print(f'{rec.tag=}')
+        if Pyro5.callcontext.current_context.client:
+            rec.processName=Pyro5.callcontext.current_context.client_sock_addr[0]+':'+rec.processName
         self.log.handle(rec)
 
     def tail(self, num=-1, raw=False):
@@ -68,7 +68,7 @@ class TailLogHandler(logging.Handler):
     """
     When installed as handler, keeps last *capacity* messages, which can be obtained via *tail*.
     """
-    def __init__(self, capacity=100):
+    def __init__(self, capacity=1000):
         super().__init__()
         self.buf = collections.deque([], maxlen=capacity)
 
@@ -95,24 +95,51 @@ if __name__ == '__main__':
     # 2. run the client with "python pyrolog PYRO:obj_a9592911d4af4e99b5c73ecf9c5e7a87@127.0.0.1:46119";
     #    It will log 3 messages to the remote end.
     #
+
     Pyro5.configure.PYRO_SERVERTYPE = 'multiplex'
     Pyro5.configure.SERIALIZER = 'serpent'
-    if sys.argv[1] == '--server':
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--server',action='store_true',help='Run as server',default=False)
+    parser.add_argument('URI_PATH',nargs='?',default='/tmp/mupif-pyro-uri.txt')
+    args=parser.parse_args()
+    from contextlib import contextmanager
+    import os
+
+    @contextmanager
+    def uriFile(path,uri):
+        import os
+        f=open(path,'w')
+        f.write(uri)
+        f.close()
+        try: yield
+        finally: os.remove(path)
+    if args.server:
+        os.environ['MUPIF_LOG_PROCESSNAME']='log-server'
         import mupif as mp
         daemon = mp.pyroutil.getDaemon()
         recvr = PyroLogReceiver()
         uri = daemon.register(recvr)
-        print(f'Receiver URI {uri}')
-        while True:
-            time.sleep(1)
+        log=logging.getLogger()
+        log.warning(f'Writing URI {str(uri)} to {args.URI_PATH}')
+        with uriFile(args.URI_PATH,str(uri)):
+            while True: time.sleep(1)
     else:
-        logging.basicConfig(level=logging.DEBUG)
-        pyroHandler = PyroLogHandler(uri=sys.argv[1], tag='foobar')
+        # importing mupif with those env vars will set process name nad logging level
+        # but we could do that witout mupif as well by hand
+        # via logging.basicConfig(level=logging.DEBUG) and multiprocessing.current_process().name='remote-logger'
+        os.environ['MUPIF_LOG_PROCESSNAME']='remote-logger'
+        os.environ['MUPIF_LOG_LEVEL']='DEBUG'
+        import mupif as mp
         log = logging.getLogger()
+        log.info(f'Reading remote log URI from {args.URI_PATH}')
+        uri=open(args.URI_PATH,'r').read()
+        log.info(f'URI is {uri}')
+        pyroHandler = PyroLogHandler(uri=uri)
         log.addHandler(pyroHandler)
-        log.info('This is being logged over Pyro (info)')
+        log.info('This is being logged over Pyro as info')
         time.sleep(.5)
-        log.warning('This is being logged over Pyro (warning)')
+        log.warning('This is being logged over Pyro as warning')
         time.sleep(.5)
-        log.error('This is being logged over Pyro (error)')
+        log.error('This is being logged over Pyro as error')
         time.sleep(.5)

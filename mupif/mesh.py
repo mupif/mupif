@@ -37,13 +37,14 @@ import time
 import sys
 import os.path
 import numpy
-import Pyro5
+import Pyro5.api
 import dataclasses
 import typing
 from . import cellgeometrytype
 import pickle
 import deprecated
 import numpy as np
+from abc import abstractmethod
 
 import pydantic
 
@@ -122,7 +123,7 @@ class Mesh(baredata.BareData):
     """
 
     mapping: typing.Any = None
-    unit: typing.Union[str,units.Unit]=None
+    unit: typing.Optional[typing.Union[str,units.Unit]]=None
 
     def __repr__(self): return str(self)
 
@@ -140,7 +141,7 @@ class Mesh(baredata.BareData):
         self._cellOctree=None
 
     @classmethod
-    def loadFromLocalFile(cls, fileName):
+    def loadFromLocalFile(cls, fileName) -> typing.Self:
         """
         Alternative constructor which loads an instance from a Pickle module.
 
@@ -151,7 +152,7 @@ class Mesh(baredata.BareData):
         """
         return pickle.load(open(fileName, 'rb'))
 
-    def copy(self):
+    def copy(self) -> typing.Self:
         """
         Returns a copy of the receiver.
 
@@ -160,7 +161,9 @@ class Mesh(baredata.BareData):
 
         .. note:: DeepCopy will not work, as individual cells contain mesh link attributes, leading to underlying mesh duplication in every cell!
         """
-    def getNumberOfVertices(self):
+        raise NotImplementedError('abstract')
+
+    def getNumberOfVertices(self) -> int:
         """
         Get number of vertices (nodes).
 
@@ -169,7 +172,7 @@ class Mesh(baredata.BareData):
         """
         return 0
 
-    def getNumberOfCells(self):
+    def getNumberOfCells(self) -> int:
         """
         Return number of cells (finite elements).
 
@@ -178,7 +181,7 @@ class Mesh(baredata.BareData):
         """
         return 0
 
-    def getVertex(self, i):
+    def getVertex(self, i: int) -> vertex.Vertex:
         """
         Returns i-th vertex.
 
@@ -186,6 +189,7 @@ class Mesh(baredata.BareData):
         :return: vertex
         :rtype: Vertex
         """
+        raise NotImplementedError('abstract')
 
     def getVertices(self):
         """
@@ -202,7 +206,7 @@ class Mesh(baredata.BareData):
             ret[i] = numpy.array(self.getVertex(i).getCoordinates())
         return ret
 
-    def getCell(self, i):
+    def getCell(self, i) -> cell.Cell:
         """
         Returns i-th cell.
 
@@ -210,6 +214,7 @@ class Mesh(baredata.BareData):
         :return: cell
         :rtype: Cell
         """
+        raise NotImplementedError('abstract')
 
     def getCells(self):
         """
@@ -318,7 +323,7 @@ class Mesh(baredata.BareData):
         """
         return self.mapping
 
-    def vertexLabel2Number(self, label):
+    def vertexLabel2Number(self, label: int) -> int:
         """
         Returns local vertex number corresponding to given label. If no label found, throws an exception.
 
@@ -327,8 +332,9 @@ class Mesh(baredata.BareData):
         :rtype: int
         :except: Label not found
         """
+        raise NotImplementedError('abstract')
 
-    def cellLabel2Number(self, label):
+    def cellLabel2Number(self, label: int) -> int:
         """
         Returns local cell number corresponding to given label. If no label found, throws an exception.
 
@@ -337,6 +343,7 @@ class Mesh(baredata.BareData):
         :rtype: int
         :except: Label not found
         """
+        raise NotImplementedError('abstract')
 
     def vertices(self):
         for i in range(0, self.getNumberOfVertices()):
@@ -408,14 +415,6 @@ class Mesh(baredata.BareData):
         else:
             if debug:
                 print('Start at: ', time.time()-t0)
-            if 0:
-                ccc = self.cells()
-                bb = ccc.__iter__().__next__().getBBox()  # use the first bbox as base
-                i=0
-                for cell in ccc:
-                    bb.merge(cell.getBBox())  # extend it with all other cells
-                    if i%1000==0: print(f'{i}')
-                    i+=1
             bb=self.getGlobalBBox()
             minc, maxc = bb.coords_ll, bb.coords_ur
 
@@ -437,11 +436,11 @@ class Mesh(baredata.BareData):
         return self._cellOctree
 
 
-    def asHdf5Object(self, parentgroup, heavyMesh=None):
+    def asHdf5Object(self, parentgroup, heavyMesh=False):
         raise NotImplementedError('This method is abstract, derived classes must override.')
 
     @classmethod
-    def isHere(klass,*,h5grp): return False
+    def isHere(cls,*,h5grp) -> bool: return False
 
     @staticmethod
     def makeFromHdf5group(h5grp):
@@ -476,8 +475,8 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
     .. automethod:: __buildCellLabelMap__
     """
 
-    vertexList: typing.List[vertex.Vertex]=pydantic.Field(default_factory=lambda: [])
-    cellList: typing.List[cell.Cell]=pydantic.Field(default_factory=lambda: [])
+    vertexList: typing.List[vertex.Vertex]=[]
+    cellList: typing.List[cell.Cell]=[]
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -488,34 +487,25 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         """Called when the instance is being reconstructed."""
         # print('Mesh._postDump…')
         for i in range(self.getNumberOfCells()):
-            object.__setattr__(self.getCell(i), 'mesh', self)
+            self.getCell(i).mesh=self
 
 
     # this is necessary for putting the mesh into set (in localizer)
     def __hash__(self): return id(self)
 
-    def setup(self, vertexList, cellList):
+    # @pydantic.validate_call
+    def setup(self, vertexList: typing.List[vertex.Vertex], cellList: typing.List[cell.Cell]) -> None:
         """
         Initializes the receicer according to given vertex and cell lists.
 
         :param list vertexList: A tuple of vertices
         :param list cellList: A tuple of cells
         """
-        if isinstance(vertexList, list):
-            self.vertexList = vertexList
-        elif isinstance(vertexList, tuple):  # temporary fix for compatibility
-            self.vertexList = list(vertexList)
-        else:
-            raise TypeError("Incompatible type of given vertexList.")
+        self.vertexList = vertexList
+        self.cellList = cellList
 
-        if isinstance(cellList, list):
-            self.cellList = cellList
-        elif isinstance(cellList, tuple):  # temporary fix for compatibility
-            self.cellList = list(cellList)
-        else:
-            raise TypeError("Incompatible type of given cellList.")
 
-    def copy(self):
+    def copy(self) -> typing.Self:
         """
         See :func:`mesh.copy`
         """
@@ -529,25 +519,25 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         ans.setup(vertexList, cellList)
         return ans
 
-    def getNumberOfVertices(self):
+    def getNumberOfVertices(self) -> int:
         """
         See :func:`Mesh.getNumberOfVertices`
         """
         return len(self.vertexList)
 
-    def getNumberOfCells(self):
+    def getNumberOfCells(self) -> int:
         """
         See :func:`Mesh.getNumberOfCells`
         """
         return len(self.cellList)
 
-    def getVertex(self, i):
+    def getVertex(self, i: int) -> vertex.Vertex:
         """
         See :func:`Mesh.getVertex`
         """
         return self.vertexList[i]
 
-    def getCell(self, i):
+    def getCell(self, i) -> cell.Cell:
         """
         See :func:`Mesh.getCell`
         """
@@ -589,7 +579,7 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
             self.__buildVertexLabelMap__()
         return self._vertexDict[label]
 
-    def cellLabel2Number(self, label):
+    def cellLabel2Number(self, label: int) -> int:
         """
         See :func:`Mesh.cellLabel2Number`
         """
@@ -597,7 +587,8 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
             self.__buildCellLabelMap__()
         return self._cellDict[label]
 
-    def merge(self, mesh):
+    @pydantic.validate_call
+    def merge(self, mesh: Mesh):
         """
         Merges receiver with a given mesh. This is based on merging mesh entities (vertices, cells) based on their
         labels, as they refer to global IDs of each entity, that should be unique.
@@ -818,11 +809,11 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         group.attrs['__module__'] = self.__class__.__module__
 
     @classmethod
-    def isHere(klass,*,h5grp):
+    def isHere(cls,*,h5grp) -> bool:
         for ds in ['vertex_coords','cell_types','cell_vertices']:
             if ds not in h5grp: return False
         from mupif.heavymesh import HeavyUnstructuredMesh
-        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5grp: raise IOError(f'{klass.__name__}: {HeavyUnstructuredMesh.GRP_CELL_OFFSETS} must not be present (is that a HeavyUnstructuredMesh?)')
+        if HeavyUnstructuredMesh.GRP_CELL_OFFSETS in h5grp: raise IOError(f'{cls.__name__}: {HeavyUnstructuredMesh.GRP_CELL_OFFSETS} must not be present (is that a HeavyUnstructuredMesh?)')
         return True
     
 
@@ -857,3 +848,10 @@ class UnstructuredMesh(Mesh,HeavyConvertible):
         ]
         ret.setup(vertexList=vertices, cellList=cells)
         return ret
+
+# we use 'Mesh' type annotation in Cell definition, before the Mesh class is fully defined
+# (this avoids circular import issues)
+Mesh.model_rebuild()
+UnstructuredMesh.model_rebuild()
+# call modeL-rebuild on all derived classes of Cell
+for C in cell.Cell.__subclasses__(): C.model_rebuild()

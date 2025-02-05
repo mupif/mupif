@@ -128,7 +128,7 @@ def main():
     # locate remote jobManager application, request remote proxy
     jobManUri = ns.lookup(jobmanname)
     # get local port of jobmanager (from uri)
-    jobmannatport = int(re.search('(\d+)$',str(jobManUri)).group(0))
+    jobmannatport = int(re.search(r'(\d+)$',str(jobManUri)).group(0))
     host = pyroutil.getIPfromUri(jobManUri)
     
     # extablish secure ssh tunnel connection

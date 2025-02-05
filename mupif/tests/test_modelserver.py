@@ -137,7 +137,7 @@ class ModelServer_TestCase(unittest.TestCase):
     def test_getStatus(self):
         self.assertListEqual(self.jobMan.getStatus(), [])
         (retCode, jobId, port) = self.jobMan.allocateJob(user="user", ticket=None)
-        retCode2 = self.jobMan.getStatus() 
+        retCode2 = self.jobMan.getStatus()
         print(retCode2)
         self.assertTrue(len(retCode2) == 1)
     
@@ -181,10 +181,10 @@ class ModelServer_TestCase(unittest.TestCase):
         stat=jobManOut.getStatus()
         self.assertEqual(len(stat),1)
         state=jobManOut.getStatusExtended()
-        self.assertEqual(len(state['currJobs']),1)
-        self.assertEqual(state['totalJobs'],1)
-        jobId=stat[0]['key']
-        uri=stat[0]['uri']
+        self.assertEqual(len(state.currJobs),1)
+        self.assertEqual(state.totalJobs,1)
+        jobId=stat[0].key
+        uri=stat[0].uri
         mod=Pyro5.api.Proxy(uri)
         mod.solveStep()
         mod.terminate()

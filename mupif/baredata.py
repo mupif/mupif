@@ -6,11 +6,11 @@ import importlib
 import typing
 import numpy
 import numpy as np
-import Pyro5
+import Pyro5.api
 import sys
 
 import pydantic
-# from pydantic.dataclasses import dataclass
+import pydantic_core
 
 try:
     import astropy.units
@@ -18,84 +18,29 @@ except Exception:
     astropy = None
 
 from typing import Generic, TypeVar
-from pydantic.fields import ModelField
 
 pyd_v0,pyd_v1=pydantic.__version__.split('.')[0:2]
-if pyd_v0=='1' and int(pyd_v1)<9:
-    raise RuntimeError(f'Pydantic version 1.9.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=1.9.0\'" or similar); current pydantic version is {pydantic.__version__}')
-
-# for now, disable numpy validation completely until we figure out what works in what python version reliably
-if 1:
-    NumpyArray = NumpyArrayFloat64 = typing.Any
-    NumpyArrayStr = typing.Any
-else:
-    # from https://gist.github.com/danielhfrank/00e6b8556eed73fb4053450e602d2434
-    DType = TypeVar('DType')
-    class NumpyArray(np.ndarray, Generic[DType]):
-        """Wrapper class for numpy arrays that stores and validates type information.
-        This can be used in place of a numpy array, but when used in a pydantic BaseModel
-        or with pydantic.validate_arguments, its dtype will be *coerced* at runtime to the
-        declared type.
-        """
-        @classmethod
-        def __get_validators__(cls):
-            yield cls.validate
-        @classmethod
-        def validate(cls, val, field: ModelField):
-            dtype_field = field.sub_fields[0]
-            actual_dtype = dtype_field.type_.__args__[0]
-            # If numpy cannot create an array with the request dtype, an error will be raised
-            # and correctly bubbled up.
-            np_array = np.array(val, dtype=actual_dtype)
-            return np_array
-
-    try:
-        # this should work in python 3.9
-        # not sure about this?! the first arg is not in the gist, but I get "TypeError: Too few arguments for NumpyArray"
-        NumpyArrayFloat64 = NumpyArray[np.ndarray,typing.Literal['float64']]
-        NumpyArrayStr = NumpyArray[np.ndarray,typing.Literal['str']]
-    except TypeError:
-        # python 3.8, just use the generic form
-        NumpyArrayFloat64 = NumpyArray
+if pyd_v0!='2' and int(pyd_v1)<0:
+    raise RuntimeError(f'Pydantic version 2.0.0 or later is required for mupif (upgrade via "pip3 install \'pydantic>=2.0.0\'" or similar); current pydantic version is {pydantic.__version__}')
 
 
 def addPydanticInstanceValidator(klass, makeKlass=None):
-    def klass_validate(cls, v):
+    def klass_validate(v):
         if isinstance(v, klass): return v
         if makeKlass: return makeKlass(v)
-        else: raise TypeError(f'Instance of {klass.__name__} required (not a {type(v).__name__}')
+        else: raise ValueError(f'Instance of {klass.__name__} required (not a {type(v).__name__}).')
     @classmethod
-    def klass_get_validators(cls): yield klass_validate
-    klass.__get_validators__ = klass_get_validators
+    def klass_get_pydantic_core_schema(cls, source, handler: pydantic.GetCoreSchemaHandler) -> pydantic.GetCoreSchemaHandler:
+        return pydantic_core.core_schema.no_info_plain_validator_function(klass_validate)
+    klass.__get_pydantic_core_schema__ = klass_get_pydantic_core_schema
 
-class ObjectBase(pydantic.BaseModel):
+class ObjectBase(pydantic.BaseModel,extra='forbid'):
     """Basic configuration of pydantic.BaseModel, common to BareData and also WithMetadata"""
-    class Config:
-        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
-        # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = 'none'
-        # this unfortunately also allows arbitrary **kw passed to the ctor
-        # but we filter that in the custom __init__ function just below
-        # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra = 'allow'
-
-    def __init__(self, *args, **kw):
-        # print(f'### __init__ with {args=} {kw=}')
-        if args:
-            raise RuntimeError(f'{self.__class__.__module__}.{self.__class__.__name__}: non-keyword args not allowed in the constructor.')
-        # print(kw.keys())
-        for k in kw.keys():
-            if k not in self.__class__.__fields__:
-                raise ValueError(f'{self.__class__.__module__}.{self.__class__.__name__}: field "{k}" is not declared.\n  Valid fields are: {", ".join(self.__class__.__fields__.keys())}.\n  Keywords passed were: {", ".join(kw.keys())}.')
-        super().__init__(*args, **kw)
 
     @Pyro5.api.expose
-    @pydantic.validate_arguments
+    @pydantic.validate_call
     def isInstance(self, classinfo: typing.Union[type, typing.Tuple[type, ...]]):
         return isinstance(self, classinfo)
-
-
-
 
 class Utility(ObjectBase):
     '''
@@ -108,27 +53,9 @@ class BareData(ObjectBase):
     """
     Base class for all serializable (baredata) objects; all objects which are sent over the wire via python must be recursively baredata, basic structures thereof (tuple, list, dict) or primitive types. There are some types handled in a special way, such as enum.IntEnum. Instance is reconstructed by classing the ``__new__`` method of the class (bypassing constructor) and processing ``dumpAttrs``:
 
-    Attributes of a baredata objects are specified via ``dumpAttrs`` class attribute: it is list of attribute names which are to be dumped; the list can be empty, but it is an error if a class about to be dumped does not define it at all. Inheritance of dumpables is handled by recursion, thus multiple inheritance is supported.
-
-    *dumpAttrs* items can take one of the following forms:
-
-    * ``'attr'``: dumped in a simple way
-    * ``(attr,val)``: not dumped at all, but set to ``val`` when reconstructed. ``val`` can be callable, in which case it is called with the object as the only argument.
-    * ``(attr,store,val)``: dumped with ``store`` (can be callable, in which case it is called with the object as the only argument) and restored with ``val`` (can likewise be callable).
-
-    The ``(attr,val)`` form of ``dumpAttrs`` item can be (ab)used to create a post-processing function, e.g. by saying ``('_postprocess',lambda self: self._postDump())``. Put it at the end of ``dumpAttrs`` to have it called when the reconstruction is about to finish. See :obj:`~mupif.mesh.Mesh` for this usage.
-
     """
     _pickleInside = False
-
-    class Config:
-        # this is to prevent deepcopies of objects, as some need to be shared (such as Cell.mesh and Field.mesh)
-        # see https://github.com/samuelcolvin/pydantic/discussions/2457
-        copy_on_model_validation = 'none'
-        # this unfortunately also allows arbitrary **kw passed to the ctor
-        # but we filter that in the custom __init__ function just below
-        # see https://github.com/samuelcolvin/pydantic/discussions/2459
-        extra = 'allow'
+    model_config = pydantic.ConfigDict(extra='forbid')
 
     # don't pickle attributes starting with underscore
     def __getstate__(self):
@@ -168,15 +95,19 @@ class BareData(ObjectBase):
         self.preDumpHook()
         ret = {}
         if clss is None:
-            ret['__class__'] = self.__class__.__module__+'.'+self.__class__.__name__
-            if BareData._pickleInside:
+            # old-style: no support for nested classes, but backwards-compatible decoding (can be removed in non-mixed envs, and just use module:qualname always)
+            if (k:=self.__class__).__name__ != k.__qualname__: ret['__class__'] = k.__module__+':'+k.__qualname__
+            else: ret['__class__'] = k.__module__+'.'+k.__name__
+            # XXX: this changed after pydantic V2, so _pickleInside is True even if it is just class attribute?!
+            # XXX: and then, FieldInfo has not attribute field_info
+            if BareData._pickleInside and False:
                 ret['__pickle__'] = pickle.dumps(self)
                 return ret
             clss = self.__class__
         if issubclass(clss, pydantic.BaseModel):
             # only dump fields which are registered properly
-            for attr,modelField in clss.__fields__.items():
-                if modelField.field_info.exclude: continue # skip excluded fields
+            for attr,modelField in clss.model_fields.items():
+                if modelField.exclude: continue # skip excluded fields
                 ret[attr] = _handle_attr(attr, getattr(self, attr), clss.__name__)
         else:
             raise RuntimeError('Class %s.%s is not a pydantic.BaseModel' % (clss.__module__, clss.__name__))
@@ -221,9 +152,15 @@ class BareData(ObjectBase):
             if type(data) == dict: data = serpent.tobytes(data)  # serpent serializes bytes in a funny way
             return pickle.loads(data)
         if clss is None:
-            import importlib
-            mod, classname = dic.pop('__class__').rsplit('.', 1)
-            clss = getattr(importlib.import_module(mod), classname)
+            import importlib, operator
+            if ':' in (k:=dic.pop('__class__')):
+                # new-style syntax, always contains : to separate module from qualname
+                mod, qualname = k.split(':')
+                clss = operator.attrgetter(qualname)(importlib.import_module(mod))
+            else:
+                # old-style syntax
+                mod, classname = k.rsplit('.', 1)
+                clss = getattr(importlib.import_module(mod), classname)
             # some special cases here
             if issubclass(clss, enum.Enum): return enum_from_dict(clss, dic)
             if astropy and clss == astropy.units.Unit: return astropy.units.Unit(dic['unit'])
@@ -258,7 +195,6 @@ class BareData(ObjectBase):
     @staticmethod
     def from_dict_with_name(classname, dic):
         assert classname == dic['__class__']
-        # print(f'@@@ {classname} ###')
         return BareData.from_dict(dic)
 
     def dumpToLocalFile(self, filename):
@@ -293,11 +229,11 @@ if __name__ == '__main__':
             print('This is my custom constructor')
             super().__init__(**kw)
             self._myextra = 1
-    TestDumpable.update_forward_refs()
+    TestDumpable.model_rebuild()
     td0 = TestDumpable(num=0, dic=dict(a=1, b=2, c=[1, 2, 3]))
     td1 = TestDumpable(num=1, dic=dict(), recurse=td0)
     import pprint
-    d1 = td1.dict()
+    d1 = td1.model_dump()
     pprint.pprint(d1)
     td1a = TestDumpable.construct(**d1)
-    pprint.pprint(td1a.dict())
+    pprint.pprint(td1a.model_dump())

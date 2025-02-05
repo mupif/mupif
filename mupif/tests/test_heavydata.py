@@ -317,12 +317,20 @@ class HeavyStruct_TestCase(unittest.TestCase):
         dmp[0]['identity.molecularWeight']=(1000.,'u') # change mass of mol0 to 1000 u
         dmp[1]['identity.molecularWeight']=(1,u.kg)  # change mass of mol1 to 1 kg
         with mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json,mode='create-memory') as mols2:
+            self.assertEqual(len(mols2),0)
             mols2.from_dump(dmp)
+            self.assertEqual(len(mols2),2)
             self.assertEqual(mols2[0].getAtoms()[0].getIdentity().getElement(),'AA')
             self.assertEqual(mols2[0].getAtoms()[1].getIdentity().getElement(),'BB')
             # this are the modified parts
             self.assertEqual(mols2[0].getIdentity().getMolecularWeight(),1000*u.Unit('u'))
             self.assertEqual(mols2[1].getIdentity().getMolecularWeight(),1000*u.Unit('g'))
+            # check from_dump extending existing data
+            dmp[0]['identity.molecularWeight']=(2000.,'u')
+            mols2.from_dump(dmp,extend=True)
+            self.assertEqual(len(mols2),4)
+            self.assertEqual(mols2[0].getIdentity().getMolecularWeight(),1000*u.Unit('u'))
+            self.assertEqual(mols2[2].getIdentity().getMolecularWeight(),2000*u.Unit('u'))
 
         # inject fragments of data
         mols3=mp.HeavyStruct(schemaName='org.mupif.sample.molecule',schemasJson=sampleSchemas_json).openData(mode='create-memory')
@@ -379,7 +387,6 @@ class HeavyStruct_TestCase(unittest.TestCase):
             self.assertEqual(root[0].getMolecules()[0].getAtoms()[0].getIdentity().getElement(),'Q')
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
-            self.test_99_daemon_stop()
             raise
     def test_23_read_remote_proxy(self):
         C=self.__class__
@@ -397,7 +404,6 @@ class HeavyStruct_TestCase(unittest.TestCase):
             # self.assertEqual(a0id.getAtomicMass(),1)
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
-            self.test_99_daemon_stop()
             raise
     def test_24_write_remote_proxy(self):
         C=self.__class__
@@ -431,7 +437,6 @@ class HeavyStruct_TestCase(unittest.TestCase):
             handle.closeData()
         except Exception:
             sys.stderr.write(''.join(Pyro5.errors.get_pyro_traceback()))
-            self.test_99_daemon_stop()
             raise
     def test_25_daemon_auto_register_unregister(self):
         C=self.__class__
@@ -474,9 +479,9 @@ class HeavyStruct_TestCase(unittest.TestCase):
                 },
                 "_datasetName": "test",
                 "str10":{ "dtype":"a10" },
-                "str":{ "dtype":"a" },
+                "str":{ "dtype":"S" },
                 "lst100":{ "dtype":"a100", "delim":"|" },
-                "lst": { "dtype":"a", "delim":"|||" }
+                "lst": { "dtype":"S", "delim":"|||" }
               }
             ]
         '''

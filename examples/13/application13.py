@@ -1,6 +1,6 @@
 import sys
 import os
-import Pyro5
+import Pyro5.api
 import logging
 sys.path.extend(['..', '../..'])
 import mupif as mp
@@ -16,8 +16,8 @@ class Application13(mp.Model):
     """
     def __init__(self, metadata=None, **kwargs):
         MD = {
-            'Name': 'Simple multiplicator',
-            'ID': 'N/A',
+            'Name': 'Demo multiplicator',
+            'ID': 'demo_multiplicator',
             'Description': 'Computes multiplication of two given values',
             'Version_date': '12/2021',
             'Physics': {
@@ -38,7 +38,7 @@ class Application13(mp.Model):
                 'Estim_personnel_cost_EUR': 0.01,
                 'Required_expertise': 'None',
                 'Accuracy': 'High',
-                'Sensitivity': 'High',
+                'Sensitivity': 'Low',
                 'Complexity': 'Low',
                 'Robustness': 'High'
             },
@@ -53,7 +53,13 @@ class Application13(mp.Model):
             'Outputs': [
                 {'Type': 'mupif.Property', 'Type_ID': 'mupif.DataID.PID_Time', 'Name': 'Multiplication_result',
                  'Description': 'Result of multiplication', 'Units': 's^2', "ValueType": "Scalar"}
-            ]
+            ],
+            "Execution_settings": {
+                "Type": "Distributed",
+                "jobManName": "CVUT.demo01",
+                "Class": "Application13",
+                "Module": "application13"
+            }
         }
         super().__init__(metadata=MD, **kwargs)
         self.updateMetadata(metadata)

@@ -7,10 +7,12 @@ from mupif import *
 import mupif as mp
 import logging
 log = logging.getLogger()
+from typing import Any
 
 
 class Example07(mp.Workflow):
-   
+    daemon: Any=None
+
     def __init__(self, metadata=None):
         """
         Initializes the workflow. As the workflow is non-stationary, we allocate individual 
@@ -25,7 +27,7 @@ class Example07(mp.Workflow):
             'Inputs': [],
             'Outputs': [
                 {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
-                 'Description': 'Displacement field on 2D domain', 'Units': 'm'}
+                 'Description': 'Displacement field on 2D domain', 'Units': 'm', 'ValueType': 'Vector'}
             ],
             'Models': [
                 {
@@ -107,7 +109,8 @@ if __name__ == '__main__':
     demo.initialize(metadata=md)
     demo.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
     demo.solve()
-    demo.printMetadata()
+    from rich.pretty import pprint
+    pprint(demo.metadata)
     demo.printListOfModels()
     demo.terminate()
     log.info("Test OK")
