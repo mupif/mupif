@@ -521,6 +521,7 @@ class DataID(AutoName):
     ID_CompositeTransversePoissonRatio = auto()
 
     ID_VTKFile = auto()
+    ID_Image = auto()
 
     ID_EnergyGap = auto()
     ID_EnergeticDisorder = auto()

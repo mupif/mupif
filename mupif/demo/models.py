@@ -1064,7 +1064,7 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
                     "Name": "Prescribed displacement",
                     "Type": "mupif.Property",
                     "Required": False,
-                    "Type_ID": "mupif.DataID.FID_Displacement",
+                    "Type_ID": "mupif.DataID.ID_Displacement",
                     "Units": "m",
                     "Obj_ID": [
                         "Dirichlet top",
@@ -1179,7 +1179,7 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
                 self.temperatureField = obj
 
         if obj.isInstance(mp.Property):
-            if obj.getPropertyID() == mupif.DataID.FID_Displacement:
+            if obj.getPropertyID() == mupif.DataID.ID_Displacement:
                 # Dirichlet
                 edge_ids = ['Dirichlet bottom', 'Dirichlet right', 'Dirichlet top', 'Dirichlet left']
                 for edge_id in edge_ids:
