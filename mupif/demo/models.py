@@ -79,6 +79,13 @@ class ThermalModel(mupif.model.Model,extra='allow'):
                         "Type": "mupif.PyroFile",
                         "Units": "",
                         "ValueType": "",
+                    },
+                    {
+                        "Name": "temperatureImage",
+                        "Type_ID": "mupif.DataID.ID_Image",
+                        "Type": "mupif.PyroFile",
+                        "Units": "",
+                        "ValueType": "",
                     }
                 ],
                 "Solver": {
@@ -289,7 +296,7 @@ class ThermalModel(mupif.model.Model,extra='allow'):
 
     def get(self, objectTypeID, time=None, objectID=""):
         # Field
-        if objectTypeID == mupif.DataID.FID_Temperature or objectTypeID == mupif.DataID.ID_VTKFile:
+        if objectTypeID == mupif.DataID.FID_Temperature or objectTypeID == mupif.DataID.ID_VTKFile or objectTypeID == mupif.DataID.ID_Image:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
@@ -311,6 +318,12 @@ class ThermalModel(mupif.model.Model,extra='allow'):
                 fn = './field_' + str(uuid.uuid4()) + '.vtk'
                 meshiofield.write(fn)
                 field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_VTKFile)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
+                return field_file
+            if objectTypeID == mupif.DataID.ID_Image:
+                fn = './field_' + str(uuid.uuid4()) + '.png'
+                return_field.plot2D(fileName=fn)
+                field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_Image)
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
                 return field_file
 
@@ -727,6 +740,13 @@ class ThermalNonstatModel(ThermalModel,extra='allow'):
                     "Type": "mupif.PyroFile",
                     "Units": "",
                     "ValueType": "",
+                },
+                {
+                    "Name": "temperatureImage",
+                    "Type_ID": "mupif.DataID.ID_Image",
+                    "Type": "mupif.PyroFile",
+                    "Units": "",
+                    "ValueType": "",
                 }
             ],
             "Solver": {
@@ -1070,6 +1090,13 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
                     "Type": "mupif.PyroFile",
                     "Units": "",
                     "ValueType": "",
+                },
+                {
+                    "Name": "displacementImage",
+                    "Type_ID": "mupif.DataID.ID_Image",
+                    "Type": "mupif.PyroFile",
+                    "Units": "",
+                    "ValueType": "",
                 }
             ],
             "Solver": {
@@ -1281,7 +1308,7 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
         # print "loc:", self.loc
 
     def get(self, objectTypeID, time=None, objectID=""):
-        if objectTypeID == mupif.DataID.FID_Displacement or objectTypeID == mupif.DataID.ID_VTKFile:
+        if objectTypeID == mupif.DataID.FID_Displacement or objectTypeID == mupif.DataID.ID_VTKFile or objectTypeID == mupif.DataID.ID_Image:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
@@ -1307,6 +1334,12 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
                 fn = './field_' + str(uuid.uuid4()) + '.vtk'
                 meshiofield.write(fn)
                 field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_VTKFile)
+                if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
+                return field_file
+            if objectTypeID == mupif.DataID.ID_Image:
+                fn = './field_' + str(uuid.uuid4()) + '.png'
+                return_field.plot2D(fileName=fn)
+                field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_Image)
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
                 return field_file
         else:
