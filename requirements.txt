@@ -11,7 +11,8 @@ matplotlib
 astropy>=6.0
 deprecated
 appdirs
-pydantic>2.6
+# pydantic > 2.6
+pydantic==2.9.2
 numpydantic
 typing-extensions>=4.10
 # for documentation
