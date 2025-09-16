@@ -3,7 +3,7 @@ Module defining DataID as enumeration, e.g. concentration, velocity.
 class Enum allows accessing members by .name and .value
 FunctionID is deprecated and will be removed
 """
-from enum import Enum, auto, IntEnum
+from enum import Enum, auto
 
 # Schema for metadata
 if 0:
