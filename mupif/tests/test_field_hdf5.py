@@ -65,7 +65,8 @@ class TestFieldHdf5(unittest.TestCase):
         ff2=mp.Field.makeFromHdf5(fileName=C.tmp+'/bb.h5',group='/',indices=None,heavy=True,h5own=True)
         test_values_f0(ff2[0])
         ff2[0].mesh.writeXDMF(fields=ff2)
-    @unittest.skipIf(vtk is None,'vtk not impotable')
+
+    @unittest.skipIf(vtk is None,'vtk not importable')
     def test_load_save_load_2d(self):
         C=self.__class__
         def test_values_f0(f):

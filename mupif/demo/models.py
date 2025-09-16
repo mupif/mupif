@@ -1089,14 +1089,25 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
                     "Type_ID": "mupif.DataID.ID_VTKFile",
                     "Type": "mupif.PyroFile",
                     "Units": "",
-                    "ValueType": "",
+                    "ValueType": "Scalar",
                 },
                 {
                     "Name": "displacementImage",
                     "Type_ID": "mupif.DataID.ID_Image",
                     "Type": "mupif.PyroFile",
                     "Units": "",
-                    "ValueType": "",
+                    "ValueType": "Scalar",
+                },
+                {
+                    "Name": "Maximal displacement",
+                    "Type_ID": "mupif.DataID.ID_Displacement",
+                    "Type": "mupif.Property",
+                    "Units": "m",
+                    "ValueType": "Scalar",
+                    "Obj_ID": [
+                        "max_horizontal",
+                        "max_vertical",
+                    ],
                 }
             ],
             "Solver": {
@@ -1308,7 +1319,7 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
         # print "loc:", self.loc
 
     def get(self, objectTypeID, time=None, objectID=""):
-        if objectTypeID == mupif.DataID.FID_Displacement or objectTypeID == mupif.DataID.ID_VTKFile or objectTypeID == mupif.DataID.ID_Image:
+        if objectTypeID == mupif.DataID.FID_Displacement or objectTypeID == mupif.DataID.ID_VTKFile or objectTypeID == mupif.DataID.ID_Image or objectTypeID == mupif.DataID.ID_Displacement:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
                 if time.getValue() == 0.0:  # put zeros everywhere
@@ -1337,11 +1348,49 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
                 return field_file
             if objectTypeID == mupif.DataID.ID_Image:
+                scale = 1
+                maxH = 0
+                maxV = 0
+                # numVertices = return_field.getMesh().getNumberOfVertices()
+                for i in range(return_field.getMesh().getNumberOfVertices()):
+                    val = return_field.getVertexValue(i).getValue()
+                    if abs(val[0]) > maxH: maxH = abs(val[0])
+                    if abs(val[1]) > maxV: maxV = abs(val[1])
+
+                maxVal = max(maxV, maxH)
+                if maxVal > 0:
+                    scale = 1/maxVal
+
                 fn = './field_' + str(uuid.uuid4()) + '.png'
-                return_field.plot2D(fileName=fn)
+                return_field.plot2D(fileName=fn, warpField=return_field, warpScale=scale, fieldComponent=1)
                 field_file = mp.PyroFile(filename=fn, mode="rb", dataID=mp.DataID.ID_Image)
                 if hasattr(self,'_pyroDaemon'): self._pyroDaemon.register(field_file)
                 return field_file
+            if objectTypeID == mupif.DataID.ID_Displacement:
+                maxH = 0
+                maxV = 0
+                # numVertices = return_field.getMesh().getNumberOfVertices()
+                for i in range(return_field.getMesh().getNumberOfVertices()):
+                    val = return_field.getVertexValue(i).getValue()
+                    if abs(val[0]) > abs(maxH): maxH = val[0]
+                    if abs(val[1]) > abs(maxV): maxV = val[1]
+                if objectID == 'max_vertical':
+                    return mupif.ConstantProperty(
+                        value=maxV,
+                        propID=mupif.DataID.ID_Displacement,
+                        valueType=mupif.ValueType.Scalar,
+                        unit=mp.U['m'],
+                        time=time
+                    )
+                if objectID == 'max_horizontal':
+                    return mupif.ConstantProperty(
+                        value=maxH,
+                        propID=mupif.DataID.ID_Displacement,
+                        valueType=mupif.ValueType.Scalar,
+                        unit=mp.U['m'],
+                        time=time
+                    )
+
         else:
             raise mupif.apierror.APIError('Unknown field ID')
 
