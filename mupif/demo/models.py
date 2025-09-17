@@ -299,16 +299,17 @@ class ThermalModel(mupif.model.Model,extra='allow'):
         if objectTypeID == mupif.DataID.FID_Temperature or objectTypeID == mupif.DataID.ID_VTKFile or objectTypeID == mupif.DataID.ID_Image:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
-                if time.getValue() == 0.0:  # put zeros everywhere
-                    values.append((0.,))
-                else:
-                    values.append((self.T[self.loc[i]],))
-            return_field = mupif.field.Field(
+                # if time is not None and time.getValue() == 0.0:  # put zeros everywhere
+                #     values.append((0.,))
+                # else:
+                #     values.append((self.T[self.loc[i]],))
+                values.append((self.T[self.loc[i]],))
+            return_field = mupif.Field(
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Temperature,
                 valueType=mupif.ValueType.Scalar,
                 unit=mupif.U.deg_C,
-                time=time,
+                time=time if time is not None else 0.0*mupif.U.s,
                 value=values
             )
             if objectTypeID == mupif.DataID.FID_Temperature:
@@ -336,14 +337,14 @@ class ThermalModel(mupif.model.Model,extra='allow'):
                 else:
                     values.append((0,))
             # print (values)
-            return mupif.field.Field(
+            return mupif.Field(
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Material_number,
                 valueType=mupif.ValueType.Scalar,
                 unit=mp.U.none,
                 time=time,
                 value=values,
-                fieldType=mupif.field.FieldType.FT_cellBased
+                fieldType=mupif.FieldType.FT_cellBased
             )
 
         # Property
@@ -1322,20 +1323,24 @@ class MechanicalModel(mupif.model.Model,extra='allow'):
         if objectTypeID == mupif.DataID.FID_Displacement or objectTypeID == mupif.DataID.ID_VTKFile or objectTypeID == mupif.DataID.ID_Image or objectTypeID == mupif.DataID.ID_Displacement:
             values = []
             for i in range(self.mesh.getNumberOfVertices()):
-                if time.getValue() == 0.0:  # put zeros everywhere
-                    values.append((0., 0., 0.))
+                # if time is not None and time.getValue() == 0.0:  # put zeros everywhere
+                #     values.append((0., 0., 0.))
+                # else:
+                #     if i in self.dirichletBCs:
+                #         values.append(self.dirichletBCs[i])
+                #     else:
+                #         values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
+                if i in self.dirichletBCs:
+                    values.append(self.dirichletBCs[i])
                 else:
-                    if i in self.dirichletBCs:
-                        values.append(self.dirichletBCs[i])
-                    else:
-                        values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
+                    values.append((self.T[self.loc[i, 0], 0], self.T[self.loc[i, 1], 0], 0.0))
 
-            return_field = mupif.field.Field(
+            return_field = mupif.Field(
                 mesh=self.mesh,
                 fieldID=mupif.DataID.FID_Displacement,
                 valueType=mupif.ValueType.Vector,
                 unit=mp.U.m,
-                time=time,
+                time=time if time is not None else 0.0*mupif.U.s,
                 value=values
             )
             if objectTypeID == mupif.DataID.FID_Displacement:
