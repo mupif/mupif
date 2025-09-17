@@ -2,7 +2,8 @@
 import os
 import sys
 import argparse
-sys.path.extend([os.path.dirname(os.path.abspath(__file__))+'/..', os.path.dirname(os.path.abspath(__file__))+'/../..'])
+dirname = os.path.dirname(os.path.realpath(__file__))
+sys.path.extend([dirname+'/.', dirname+'/..', dirname+'/../..'])
 import mupif as mp
 
 # locate nameserver
