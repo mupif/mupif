@@ -195,10 +195,10 @@ class Workflow(model.Model):
             }
         }
 
-    def getModel(self, name):
+    def getModel(self, name)-> model.Model:
         if name in self._models.keys():
             return self._models[name]
-        return None
+        raise ValueError("Model not found: %s" % name)
 
     def getJobManager(self, name):
         if name in self._jobmans.keys():

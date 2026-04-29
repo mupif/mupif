@@ -21,6 +21,7 @@
 import os
 import re
 import Pyro5
+import Pyro5.api
 import socket
 import getpass
 import subprocess

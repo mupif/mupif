@@ -21,6 +21,7 @@
 # Boston, MA  02110-1301  USA
 #
 import Pyro5
+import Pyro5.api
 from . import data
 from . import DataID
 
