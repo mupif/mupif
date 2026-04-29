@@ -2,6 +2,7 @@ import os
 import mupif
 import mupif as mp
 import Pyro5
+import Pyro5.api
 import math
 import numpy as np
 import time as timeTime
@@ -485,7 +486,7 @@ class ThermalModel(mupif.model.Model,extra='allow'):
                 boundary_lhs[1, 1] = h * (1. / 3.) * length
 
             # boundary_rhs=h*Te*N.T
-            boundary_rhs = np.zeros((2, 1))
+            boundary_rhs = np.zeros(2)
             boundary_rhs[0] = h * (1. / 2.) * length * Te
             boundary_rhs[1] = h * (1. / 2.) * length * Te
 
@@ -997,7 +998,7 @@ class ThermalNonstatModel(ThermalModel,extra='allow'):
 
             # print h, Te, length
             # boundary_rhs=h*Te*N.T
-            boundary_rhs = np.zeros((2, 1))
+            boundary_rhs = np.zeros(2)
             boundary_rhs[0] = h * (1. / 2.) * length * Te
             boundary_rhs[1] = h * (1. / 2.) * length * Te
 
