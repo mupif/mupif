@@ -67,6 +67,7 @@ class Application13(mp.Model):
         self.value_1 = 0.
         self.value_2 = 0.
         self.delay = 0.
+        self.timeStamp = 0
 
     def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
         super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
@@ -94,9 +95,10 @@ class Application13(mp.Model):
                         self.delay = obj.inUnitsOf(mp.U.s).getValue()
 
     def solveStep(self, tstep, stageID=0, runInBackground=False):
-        log.error("solveStep() of model13")
         self.result = self.value_1 * self.value_2
-        time.sleep(self.delay)
+        self.timeStamp = time.monotonic()
+        if runInBackground == False:
+            time.sleep(self.delay)
 
     def getCriticalTimeStep(self):
         return 1000.*mp.U.s
@@ -106,3 +108,11 @@ class Application13(mp.Model):
 
     def getApplicationSignature(self):
         return "Application13"
+
+    def finishStep(self, tstep):
+        pass
+
+    def isSolved(self):
+        if time.monotonic() - self.timeStamp > self.delay:
+            return True
+        return False
