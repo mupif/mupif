@@ -1,19 +1,19 @@
-numpy>=2.0
-meshio
-pytest
-pytest-cov
+numpy==2.2.2
+meshio==5.3.5
+pytest==9.1.1
+pytest-cov==7.1.0
 Pyro5
 serpent
 jsonpickle
 jsonschema
-h5py
+h5py==3.16.0
 matplotlib
 astropy>=6.0
 deprecated
 appdirs
 # pydantic > 2.6
 pydantic==2.9.2
-numpydantic
+numpydantic==1.6.5
 typing-extensions>=4.10
 # for documentation
 sphinx<7.0

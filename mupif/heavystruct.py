@@ -90,7 +90,7 @@ sampleSchemas_json = '''
         "_datasetName": "atoms",
         "identity": {
             "element": {
-                "dtype": "a2"
+                "dtype": "S2"
             },
             "atomicNumber": {
                 "dtype": "l",
@@ -414,6 +414,12 @@ def _cookSchema(desc, prefix='', schemaName='', fakeModule='', datasetName='', n
             ddoc['shape'] = f'[{"×".join([str(s) for s in shape])}]'
         unit = units.Unit(v['unit']) if 'unit' in v else None
         dtype = v['dtype']
+
+        # ---- Fix for new version of NumPy -----------------
+        if isinstance(dtype, str) and dtype.startswith('a'):
+            dtype = 'S' + dtype[1:]
+        # ---------------------------------------------------
+        
         default = None
         if dtype == 'json':
             dtype=h5py.string_dtype(encoding='utf-8')

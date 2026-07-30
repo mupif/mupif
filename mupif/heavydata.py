@@ -182,6 +182,10 @@ class HeavyDataBase(Data):
             self.openStorage()
         if h5loc in self._h5obj:
             raise RuntimeError(f'Dataset {h5loc} already exists (shape {"×".join(self._h5obj[h5loc].shape)}).')
+        # ---- Fix for new version of h5py -----------------
+        if 'dtype' not in kw and 'data' not in kw:
+            kw['dtype'] = 'f4'
+        # ---------------------------------------------------
         return self._h5obj.create_dataset(h5loc, shape=shape, **kw)
 
     @pydantic.validate_call

@@ -280,6 +280,10 @@ class HeavyUnstructuredMesh(HeavyDataBase,Mesh):
         else: shape=(n,valueType.getNumberOfComponents())
         kw=dict(chunks=True,compression='gzip',compression_opts=9)
         if not h5path:
+            # ---- Fix for new version of h5py -----------------
+            if 'dtype' not in kw and 'data' not in kw:
+                kw['dtype'] = 'f4'
+            # ---------------------------------------------------
             ds=self._h5grp.create_dataset(self.GRP_FIELDS+'/'+fieldID.name,shape=shape,**kw)
             hq=Hdf5RefQuantity(dataset=ds,unit=unit)
         else:
