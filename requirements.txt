@@ -2,31 +2,31 @@ numpy==2.2.2
 meshio==5.3.5
 pytest==9.1.1
 pytest-cov==7.1.0
-Pyro5
-serpent
-jsonpickle
-jsonschema
+Pyro5==5.17
+serpent==1.43
+jsonpickle==4.1.2
+jsonschema==4.26.0
 h5py==3.16.0
-matplotlib
-astropy>=6.0
-deprecated
-appdirs
+matplotlib==3.11.1
+astropy==8.0.1
+deprecated==1.3.1
+appdirs==1.4.4
 # pydantic > 2.6
 pydantic==2.9.2
 numpydantic==1.6.5
-typing-extensions>=4.10
+typing-extensions==4.16.0
 # for documentation
 sphinx<7.0
 sphinxcontrib-apidoc
 sphinxcontrib-mermaid
 sphinx-rtd-theme
-myst-nb
-setproctitle
-tqdm
-typer
-rich
-colorlog
-pytest-timeout
-requests
+myst-nb==1.4.0
+setproctitle==1.3.7
+tqdm==4.70.0
+typer==0.27.0
+rich==15.0.0
+colorlog==6.12.0
+pytest-timeout==2.4.0
+requests==2.34.2
 # pseudo-dependency to fail on python < 3.9 early
 MUPIF_REQUIRES_PYTHON_AT_LEAST_VERSION_3.9; python_version < '3.9'
