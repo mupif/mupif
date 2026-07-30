@@ -11,6 +11,7 @@ COPY ./requirements.txt $MUPIF/
 RUN rm /usr/lib/python3.11/EXTERNALLY-MANAGED
 RUN pip3 install --only-binary=:all: --upgrade -r $MUPIF/requirements.txt
 COPY . $MUPIF/
-RUN cd $MUPIF; python3 setup.py install
+# RUN cd $MUPIF; python3 setup.py install
+RUN cd $MUPIF; pip3 install .
 # this adds wireguard (only used in docker-compose-wireguard.yml)
 COPY ./tools/vpn/wireguard/*.conf /etc/wireguard/
