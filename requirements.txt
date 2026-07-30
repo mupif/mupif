@@ -30,5 +30,5 @@ rich==15.0.0
 colorlog==6.12.0
 pytest-timeout==2.4.0
 requests==2.34.2
-# pseudo-dependency to fail on python < 3.9 early
-MUPIF_REQUIRES_PYTHON_AT_LEAST_VERSION_3.9; python_version < '3.9'
+# pseudo-dependency to fail on python < 3.10 early
+MUPIF_REQUIRES_PYTHON_AT_LEAST_VERSION_3.10; python_version < '3.10'
