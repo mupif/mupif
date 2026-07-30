@@ -7,7 +7,7 @@ serpent==1.43
 jsonpickle==4.1.2
 jsonschema==4.26.0
 h5py==3.16.0
-matplotlib==3.11.1
+matplotlib==3.10.9
 astropy==8.0.1
 deprecated==1.3.1
 appdirs==1.4.4
