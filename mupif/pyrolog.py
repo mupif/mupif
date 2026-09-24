@@ -28,9 +28,23 @@ class PyroLogHandler(logging.StreamHandler):
         super().__init__()
 
     def emit(self, record):
-        with self.lock:
-            self.remoteLog._pyroClaimOwnership()
-            self.remoteLog.handleRecord(pickle.dumps(record))
+        try:
+            # Format exception information into string and strip raw traceback objects
+            if record.exc_info:
+                if not record.exc_text:
+                    record.exc_text = self.format(record)
+                record.exc_info = None
+
+            # Render message if arguments exist, ensuring arguments aren't unpicklable
+            if record.args:
+                record.msg = record.getMessage()
+                record.args = None
+
+            with self.lock:
+                self.remoteLog._pyroClaimOwnership()
+                self.remoteLog.handleRecord(pickle.dumps(record))
+        except Exception:
+            self.handleError(record)
 
 
 @Pyro5.api.expose
