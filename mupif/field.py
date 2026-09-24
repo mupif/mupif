@@ -481,6 +481,7 @@ class Field(FieldBase,HeavyConvertible):
         :return: handle to matplotlib figure
         """
         import matplotlib
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         if 0:
             try:
