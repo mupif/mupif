@@ -66,8 +66,23 @@ def _setOptionalField(obj: Any, field: str, kw: Any):
 
 @pydantic.validate_call
 def _mergedDicts(a1: None|dict|BaseMeta, a2: None|dict|BaseMeta) -> dict:
+    """
+    Merge metadata *a2* into *a1* (either may be a dict, a metadata model or None), recursively.
+
+    Values of *a2* take precedence; nested dictionaries are merged key by key, so that an update of
+    one nested field (e.g. ``{'Execution':{'Status':'Initialized'}}`` in :meth:`Model.initialize`)
+    keeps the other fields of that dictionary (e.g. ``Execution.ID`` or ``Execution.Log_URI`` set by
+    the caller just before). Other values, lists included, are replaced.
+
+    :return: new dictionary (the arguments are not modified)
+    """
     def _b(a): return ({} if a is None else (a if isinstance(a,dict) else a.model_dump()))
-    return _b(a1)|_b(a2)
+    def _merge(d1: dict, d2: dict) -> dict:
+        ret=dict(d1)
+        for k,v in d2.items():
+            ret[k]=_merge(ret[k],v) if (isinstance(v,dict) and isinstance(ret.get(k),dict)) else v
+        return ret
+    return _merge(_b(a1),_b(a2))
 
 
 def _ValueType_str(x):
