@@ -92,36 +92,87 @@ def jobmanInfo(ns, logLines=10, timeout=1) -> List[ModelserverInfo]:
 
 
 class SchedulerInfo(BareData):
+    """
+    State of one scheduler registered in the nameserver (metadata ``type:scheduler``), as returned by :func:`schedulerInfo`.
+
+    Built from the scheduler's ``getStatistics()``. Fields marked *optional* are reported only by
+    schedulers of newer mupifDB versions (the refactored scheduler with load statistics); they
+    are None or empty for older ones, so that readers can tell "unknown" from 0.
+    """
     ns: NsInfo
     class NumTasks(BareData):
-        running: int
-        scheduled: int
-        processed: int
-        finished: int
-        failed: int
-        currentLoad: float
+        """Current numbers of executions of the scheduler."""
+        #: workflow processes running now
+        running: int=0
+        #: executions taken by the scheduler, not started yet
+        scheduled: int=0
+        #: executions which reached a final status (= finished + failed), in total
+        processed: int=0
+        finished: int=0
+        failed: int=0
+        #: percentage of the capacity in use
+        currentLoad: float=0.
+        #: (optional) executions waiting to run = pending + scheduled
+        waiting: Optional[int]=None
+        #: (optional) executions in the database queue (Pending); the queue is shared by all
+        #: schedulers of a deployment, do not add it up over schedulers
+        pending: Optional[int]=None
+        #: (optional) executions Running according to the database (shared like pending); differs
+        #: from running if some Running executions are not processes of the scheduler
+        dbRunning: Optional[int]=None
+        #: (optional) executions the scheduler can run at once
+        capacity: Optional[int]=None
+        #: drain mode: the scheduler takes no new executions
+        draining: bool=False
     class History(BareData):
-        pooledTasks48: List[int]
-        processedTasks48: List[int]
-        finishedTasks48: List[int]
-        failedTasks48: List[int]
-        load48: List[float]
-    numTasks: NumTasks
-    history: History
+        """
+        History of the scheduler, oldest period first, the last element is the current period.
+
+        ``*48``: 48 periods of an hour, ``*120m``: 120 periods of a minute. ``pooled``,
+        ``processed``, ``finished`` and ``failed`` count events in the period; ``load``,
+        ``running`` and ``waiting`` are the peak level in the period (newer schedulers; older
+        ones report the load at the last change in the period). Period *i* of *n* starts at
+        ``periodStart - (n-1-i)*periodLength`` (seconds since the epoch).
+        """
+        pooledTasks48: List[int]=[]
+        processedTasks48: List[int]=[]
+        finishedTasks48: List[int]=[]
+        failedTasks48: List[int]=[]
+        load48: List[float]=[]
+        #: (optional) peak running / waiting executions by hours
+        running48: List[int]=[]
+        waiting48: List[int]=[]
+        #: (optional) peak running / waiting executions by minutes
+        running120m: List[int]=[]
+        waiting120m: List[int]=[]
+        #: (optional) start of the current period (seconds since the epoch) and length of the periods (seconds)
+        periodStart48: Optional[float]=None
+        periodLength48: Optional[int]=None
+        periodStart120m: Optional[float]=None
+        periodLength120m: Optional[int]=None
+    numTasks: NumTasks=NumTasks()
+    history: History=History()
     class LastExecution(BareData):
         weid: str
         wid: str
         status: str
         started: str
         finished: Optional[str]
-    lastExecutions: List[LastExecution]
+    lastExecutions: List[LastExecution]=[]
     class LogTail(BareData):
         tail: List[Any]
     running: Dict[str,LogTail]={}
 
 
 
-def schedulerInfo(ns,timeout:float=5) -> List[SchedulerInfo]:
+def schedulerInfo(ns,timeout:float=5) -> List[SchedulerInfo|None]:
+    """
+    Query all schedulers registered in the nameserver (metadata ``type:scheduler``).
+
+    :param ns: nameserver proxy
+    :param timeout: time for the whole query in seconds
+    :return: one entry per registered scheduler (None if it did not answer)
+    """
     t0=time.time()
     ns2=Pyro5.api.Proxy(ns._pyroUri)
     ns2._pyroTimeout=timeout
@@ -130,6 +181,25 @@ def schedulerInfo(ns,timeout:float=5) -> List[SchedulerInfo]:
     t1=time.time()
     with concurrent.futures.ThreadPoolExecutor(max(1,len(query)),thread_name_prefix='mupif-schedulers-info') as exe:
         return list(exe.map(_query_scheduler,*zip(*[(name,uri,metadata,timeout-(t1-t0)) for name,(uri,metadata) in query.items()])))
+
+
+def _schedulerInfoFromStatistics(nsInfo:NsInfo,st:dict) -> SchedulerInfo:
+    """
+    Convert the result of a scheduler's ``getStatistics()`` to :class:`SchedulerInfo`.
+
+    Keys of the original format are required; keys added later are read with defaults, so that
+    schedulers of any version can be shown.
+    """
+    return SchedulerInfo(
+        ns=nsInfo,
+        numTasks=SchedulerInfo.NumTasks(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'], currentLoad=st['currentLoad'],
+            waiting=st.get('waitingTasks'), pending=st.get('pendingTasks'), dbRunning=st.get('dbRunningTasks'), capacity=st.get('capacity'), draining=bool(st.get('draining',False))),
+        history=SchedulerInfo.History(pooledTasks48=st['pooledTasks48'], processedTasks48=st['processedTasks48'], finishedTasks48=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48'],
+            running48=st.get('running48',[]), waiting48=st.get('waiting48',[]), running120m=st.get('running120m',[]), waiting120m=st.get('waiting120m',[]),
+            periodStart48=st.get('periodStart48'), periodLength48=st.get('periodLength48'), periodStart120m=st.get('periodStart120m'), periodLength120m=st.get('periodLength120m')),
+        lastExecutions=[SchedulerInfo.LastExecution(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
+    )
+
 
 def _query_scheduler(name,uri,metadata,timeout) -> SchedulerInfo|None:
     if timeout<0: return None
@@ -141,12 +211,7 @@ def _query_scheduler(name,uri,metadata,timeout) -> SchedulerInfo|None:
         st=s.getStatistics()
     except (Pyro5.errors.TimeoutError,Pyro5.errors.CommunicationError):
         return None
-    ret=SchedulerInfo(
-        ns=NsInfo(name=name,uri=uri,metadata=list(metadata)),
-        numTasks=SchedulerInfo.NumTasks(running=st['runningTasks'], scheduled=st['scheduledTasks'], processed=st['processedTasks'], finished=st['finishedTasks'], failed=st['failedTasks'], currentLoad=st['currentLoad']),
-        history=SchedulerInfo.History(pooledTasks48=st['pooledTasks48'], processedTasks48=st['processedTasks48'], finishedTasks48=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48']),
-        lastExecutions=[SchedulerInfo.LastExecution(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
-    )
+    ret=_schedulerInfoFromStatistics(NsInfo(name=name,uri=uri,metadata=list(metadata)),st)
     t1=time.time()
     s._pyroTimeout=timeout-(t1-t0)
     if s._pyroTimeout<=0: return ret # no time to get live logs
