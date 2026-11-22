@@ -98,8 +98,16 @@ class SchedulerInfo(BareData):
     Built from the scheduler's ``getStatistics()``. Fields marked *optional* are reported only by
     schedulers of newer mupifDB versions (the refactored scheduler with load statistics); they
     are None or empty for older ones, so that readers can tell "unknown" from 0.
+
+    A scheduler which is registered but does not answer is reported too, with
+    :attr:`available` False and the reason in :attr:`error` (it used to be a bare None, which
+    did not tell which scheduler was down).
     """
     ns: NsInfo
+    #: whether the scheduler answered; if not, only :attr:`ns` and :attr:`error` are meaningful
+    available: bool=True
+    #: why the scheduler is not available (None if it is)
+    error: Optional[str]=None
     class NumTasks(BareData):
         """Current numbers of executions of the scheduler."""
         #: workflow processes running now
@@ -165,13 +173,14 @@ class SchedulerInfo(BareData):
 
 
 
-def schedulerInfo(ns,timeout:float=5) -> List[SchedulerInfo|None]:
+def schedulerInfo(ns,timeout:float=5) -> List[SchedulerInfo]:
     """
     Query all schedulers registered in the nameserver (metadata ``type:scheduler``).
 
     :param ns: nameserver proxy
     :param timeout: time for the whole query in seconds
-    :return: one entry per registered scheduler (None if it did not answer)
+    :return: one entry per registered scheduler, also for those which did not answer
+             (:attr:`SchedulerInfo.available` False)
     """
     t0=time.time()
     ns2=Pyro5.api.Proxy(ns._pyroUri)
@@ -201,26 +210,33 @@ def _schedulerInfoFromStatistics(nsInfo:NsInfo,st:dict) -> SchedulerInfo:
     )
 
 
-def _query_scheduler(name,uri,metadata,timeout) -> SchedulerInfo|None:
-    if timeout<0: return None
+def _query_scheduler(name,uri,metadata,timeout) -> SchedulerInfo:
+    nsInfo=NsInfo(name=name,uri=str(uri),metadata=list(metadata))
+    if timeout<0: return SchedulerInfo(ns=nsInfo,available=False,error='not queried: the nameserver lookup used up the timeout')
     t0=time.time()
     s = Pyro5.api.Proxy(uri)
     s._pyroTimeout=timeout
     s._pyroMaxRetries=1
     try:
         st=s.getStatistics()
-    except (Pyro5.errors.TimeoutError,Pyro5.errors.CommunicationError):
-        return None
-    ret=_schedulerInfoFromStatistics(NsInfo(name=name,uri=uri,metadata=list(metadata)),st)
+    except (Pyro5.errors.TimeoutError,Pyro5.errors.CommunicationError) as e:
+        return SchedulerInfo(ns=nsInfo,available=False,error=f'unreachable: {e}')
+    except Exception as e:
+        # e.g. an error inside the scheduler; reported, but must not break the whole query
+        log.warning(f'Scheduler {name} at {uri}: getStatistics() failed: {e}')
+        return SchedulerInfo(ns=nsInfo,available=False,error=f'error: {e}')
+    ret=_schedulerInfoFromStatistics(nsInfo,st)
     t1=time.time()
     s._pyroTimeout=timeout-(t1-t0)
     if s._pyroTimeout<=0: return ret # no time to get live logs
+    # live log tails of the running executions: only offered by schedulers which expose
+    # getExecutions() (older versions); the refactored scheduler does not, which is not an error
+    if 'getExecutions' not in getattr(s,'_pyroMethods',set()): return ret
     try:
         running=s.getExecutions(status='Running')
-        if len(running)<1: return ret
-        t1=time.time()
-        weid_uri_timeout=[(r['_id'],r['loggerURI'],timeout-(t1-t0)) for r in running if ('_id' in r and 'loggerUri' in r)]
-        with concurrent.futures.ThreadPoolExecutor(len(running),thread_name_prefix=f'mupif-scheduler-{name}-log') as exe:
+        weid_uri_timeout=[(r['_id'],r['loggerURI'],timeout-(t1-t0)) for r in running if ('_id' in r and 'loggerURI' in r)]
+        if not weid_uri_timeout: return ret
+        with concurrent.futures.ThreadPoolExecutor(len(weid_uri_timeout),thread_name_prefix=f'mupif-scheduler-{name}-log') as exe:
             tails=list(exe.map(_query_scheduler_running_tail,*zip(*weid_uri_timeout)))
         for wut,tail in zip(weid_uri_timeout,tails):
             if tail is None: continue
