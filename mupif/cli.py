@@ -55,8 +55,10 @@ def schedmon(timeout:float=1):
             ssi = mp.monitor.schedulerInfo(ns,timeout=timeout)
             tree = rich.tree.Tree(f'Schedulers at {datetime.datetime.now().isoformat(timespec="seconds", sep=" ")} [cyan](timeout {timeout}s)[/cyan]')
             for si in ssi:
-                if si is None:
-                    tree.add(rich.text.Text.from_markup(f'[red]Unable to retrieve scheduler data with timeout={timeout}[/red]'))
+                if si is None or not si.available:
+                    # registered in the nameserver, but did not answer
+                    what = f'{si.ns.name} at {si.ns.uri}: {si.error}' if si is not None else f'timeout={timeout}'
+                    tree.add(rich.text.Text(f'Unable to retrieve scheduler data ({what})', style='red'))
                     continue
                 tree2 = tree.add(f'{si.ns.name} at {si.ns.uri}')
                 nt = si.numTasks
