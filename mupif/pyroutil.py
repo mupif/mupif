@@ -61,6 +61,9 @@ from typing import Optional
 class _NS_METADATA:
     jobmanager = "type:jobmanager"
     appserver = "type:appserver"
+    #: the model server's preAllocate tickets work remotely (they expire, and are recognised when sent
+    #: back over Pyro); clients must not call preAllocate remotely on servers without this tag
+    tickets = "mupif:tickets-v2"
     network = "network:"  # plus JSON
 
 
@@ -502,6 +505,7 @@ def runModelServer(*, ns, jobman):
         appName=jobman.getNSName(),
         app=jobman,
         metadata={_NS_METADATA.jobmanager, jobman.getName(), "Accuracy_%s"%(modelMD['Solver']['Accuracy'],), "Robustness_%s"%(modelMD['Solver']['Robustness'],), Runtime}
+                 | ({_NS_METADATA.tickets} if getattr(jobman, 'remoteTickets', False) else set())
     )
 
 

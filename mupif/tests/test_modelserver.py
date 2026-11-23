@@ -209,6 +209,44 @@ class ModelServer_TestCase(unittest.TestCase):
         stat=jobManTime.getStatus()
         self.assertEqual(len(stat),0) # not in active jobs anymore
 
+    def test_preallocateTicketExpires(self):
+        'An unused ticket stops holding its slot after ticketExpireTimeout (it used to hold it forever).'
+        self.assertEqual(self.jobMan.getNumberOfFreeJobs(),2)
+        ticket=self.jobMan.preAllocate()
+        self.assertIsInstance(ticket,str)
+        self.assertEqual(self.jobMan.getNumberOfFreeJobs(),1)
+        old=mp.ModelServer.ticketExpireTimeout
+        mp.ModelServer.ticketExpireTimeout=0.2
+        try:
+            time.sleep(0.3)
+            self.assertEqual(self.jobMan.getNumberOfFreeJobs(),2)
+            # an expired ticket gives no privilege: with both slots taken, it is refused
+            self.jobMan.allocateJob(user='user')
+            self.jobMan.allocateJob(user='user')
+            with self.assertRaises(mupif.modelserverbase.ModelServerNoResourcesException):
+                self.jobMan.allocateJob(user='user',ticket=ticket)
+        finally:
+            mp.ModelServer.ticketExpireTimeout=old
+
+    def test_preallocateOverPyro(self):
+        'A ticket obtained and used over Pyro (where it travels as a string) is recognised and used up.'
+        cls=self.__class__
+        srv=mp.ModelServer(ns=cls.ns,appName='appTicket',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        uri=cls.daemon.register(srv)
+        srv.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName='appTicket',exclusiveDaemon=False)
+        try:
+            remote=Pyro5.api.Proxy(uri)
+            ticket=remote.preAllocate()
+            self.assertEqual(remote.getNumberOfFreeJobs(),0)
+            (retCode,jobId,port)=remote.allocateJob('user',ticket=ticket)
+            self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
+            # the ticket is used up: the slot is taken by the job, not by the job and the ticket
+            self.assertEqual(srv.tickets,{})
+            remote.terminateJob(jobId)
+            self.assertEqual(remote.getNumberOfFreeJobs(),1)
+        finally:
+            srv.terminate(force=True)
+
     def test_jobIdUsesRegisteredName(self):
         'Jobs of a server registered under an instance name are named after that name, so that jobs of two instances do not collide.'
         cls=self.__class__

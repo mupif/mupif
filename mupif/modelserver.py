@@ -75,6 +75,8 @@ class ModelServer (modelserverbase.ModelServerBase):
         remoteLogUri: str
 
     ticketExpireTimeout = 10
+    #: preAllocate tickets work over Pyro (advertised as the nameserver tag ``mupif:tickets-v2``)
+    remoteTickets = True
 
     def __init__(
             self,
@@ -97,7 +99,11 @@ class ModelServer (modelserverbase.ModelServerBase):
         super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs)
         self.ns = ns
 
-        self.tickets = []  # list of tickets issued when pre-allocating resources; tickets generated using uuid
+        # pre-allocation tickets (see preAllocate): ticket (str) -> time.monotonic() when issued.
+        # Before mupif:tickets-v2 tickets were uuid1 objects whose .time (100-ns ticks since 1582)
+        # was compared with time.time(), so they never expired; and a ticket sent back over Pyro
+        # arrived as a string and was not recognised, so every remote preAllocate leaked a slot.
+        self.tickets: dict[str, float] = {}
         self.jobCounter = 0
         self.lock = threading.Lock()
         self.applicationClass = appClass
@@ -155,23 +161,24 @@ class ModelServer (modelserverbase.ModelServerBase):
         os.rename(args.uriFileName+'~', args.uriFileName)
 
     def __checkTicket(self, ticket):
-        """ Returns true, if ticket is valid, false otherwise"""
-        currentTime = time.time()
-        if ticket in self.tickets:
-            if (currentTime-ticket.time) < ModelServer.ticketExpireTimeout:
-                return True
-        return False
+        """
+        Tell whether *ticket* is a valid (issued and not expired) pre-allocation ticket.
+
+        Called with :attr:`lock` held. The ticket is compared as a string: tickets travel over Pyro,
+        whose serializer turns a :class:`uuid.UUID` into a string (see :meth:`preAllocate`).
+        """
+        issued = self.tickets.get(str(ticket))
+        return issued is not None and time.monotonic()-issued < ModelServer.ticketExpireTimeout
 
     def __getNumberOfActiveTickets(self):
         """
-            Returns the number of active pre-allocation tickets. 
+        Drop expired pre-allocation tickets and return the number of those left.
+
+        Called with :attr:`lock` held (it changes :attr:`tickets`).
         """
-        currentTime = time.time()
-        for i in range(len(self.tickets) - 1, -1, -1):
-            # check if ticket expired
-            if (currentTime-self.tickets[i].time) > ModelServer.ticketExpireTimeout: 
-                # remove it
-                del(self.tickets[i])
+        now = time.monotonic()
+        for t in [t for t, issued in self.tickets.items() if now-issued >= ModelServer.ticketExpireTimeout]:
+            del self.tickets[t]
         return len(self.tickets)
 
     def _updateActiveJobs(self):
@@ -206,7 +213,9 @@ class ModelServer (modelserverbase.ModelServerBase):
             self._updateActiveJobs()
 
     def getNumberOfFreeJobs(self):
-        return self.maxJobs - len(self.activeJobs) - self.__getNumberOfActiveTickets()
+        """Return the number of jobs which can be allocated now: free slots minus valid pre-allocation tickets."""
+        with self.lock:
+            return self.maxJobs - len(self.activeJobs) - self.__getNumberOfActiveTickets()
 
     def preAllocate(self, requirements=None):
         """
@@ -216,6 +225,13 @@ class ModelServer (modelserverbase.ModelServerBase):
             additional parameters (such as number of cpus, etc). 
             The returned ticket is valid only for fixed time period (suggest 10[s]), then should expire.
             Thread safe
+
+            The ticket is a string (a UUID) valid for :attr:`ticketExpireTimeout` seconds; pass it
+            to :meth:`allocateJob`. Servers whose tickets work over Pyro advertise the nameserver
+            tag ``mupif:tickets-v2`` (older ones must not be sent preAllocate remotely: the ticket
+            is never recognised nor expired there, and the slot is lost until restart).
+
+            :return: the ticket, or None if there is no free slot
         """
         self._updateActiveJobs()
         with self.lock:
@@ -223,8 +239,8 @@ class ModelServer (modelserverbase.ModelServerBase):
             if (len(self.activeJobs) + prealocatedJobs) >= self.maxJobs:
                 return None
             else:
-                ticket = uuid.uuid1()
-                self.tickets.append(ticket)
+                ticket = str(uuid.uuid4())
+                self.tickets[ticket] = time.monotonic()
                 return ticket
 
     def allocateJob(self, user, *, remoteLogUri=None, ticket=None): 
@@ -249,7 +265,7 @@ class ModelServer (modelserverbase.ModelServerBase):
             validTicket = ticket and self.__checkTicket(ticket)
             if validTicket or ((len(self.activeJobs)+ntickets) < self.maxJobs):
                 if validTicket:
-                    self.tickets.remove(ticket)  # remove ticket
+                    del self.tickets[str(ticket)]  # the ticket is used up
                 # update job counter
                 self.jobCounter = self.jobCounter+1
                 # the job registers itself in the nameserver under its jobID, so the ID must be unique
