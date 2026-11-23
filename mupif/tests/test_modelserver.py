@@ -265,6 +265,36 @@ class ModelServer_TestCase(unittest.TestCase):
         # terminate removed its own registration
         with self.assertRaises(Pyro5.errors.NamingError): cls.ns.lookup('appInst#2')
 
+    def test_modelServerNSName(self):
+        'Registered name: base name if free or stale, an instance name if a live server holds it or an instance id is given.'
+        cls=self.__class__
+        nsName=mp.pyroutil.modelServerNSName
+        srv=mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        # free name
+        self.assertEqual(nsName(cls.ns,srv),'appNaming')
+        # stale entry (nothing answers there): taken over
+        cls.ns.register('appNaming','PYRO:gone@127.0.0.1:1')
+        self.assertEqual(nsName(cls.ns,srv,aliveTimeout=1),'appNaming')
+        # a live server holds the base name: this one gets an instance name
+        live=mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        uri=cls.daemon.register(live)
+        cls.ns.register('appNaming',uri)
+        try:
+            import socket
+            self.assertEqual(nsName(cls.ns,srv),f'appNaming~{socket.gethostname()}-{os.getpid()}')
+        finally:
+            cls.ns.remove('appNaming')
+            cls.daemon.unregister(live)
+        # explicit instance id, from the argument or from the environment
+        self.assertEqual(nsName(cls.ns,mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp,instance='node2')),'appNaming~node2')
+        os.environ['MUPIF_MODELSERVER_INSTANCE']='node3'
+        try:
+            self.assertEqual(nsName(cls.ns,mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp)),'appNaming~node3')
+        finally:
+            del os.environ['MUPIF_MODELSERVER_INSTANCE']
+        with self.assertRaises(ValueError):
+            mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp,instance='node 2')
+
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
         cls=self.__class__

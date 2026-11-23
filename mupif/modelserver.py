@@ -89,14 +89,15 @@ class ModelServer (modelserverbase.ModelServerBase):
             maxJobs=1,
             daemon=None,
             includeFiles=None,
+            instance=None,
             # overrideNsPort=0
     ):
         """
         Constructor.
 
-        See :func:`ModelServer.__init__`
+        See :func:`ModelServerBase.__init__`
         """
-        super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs)
+        super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs, instance=instance)
         self.ns = ns
 
         # pre-allocation tickets (see preAllocate): ticket (str) -> time.monotonic() when issued.

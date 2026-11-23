@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 import os
-import socket
+import re
 import Pyro5.api
 import tempfile
 import warnings
@@ -101,15 +101,23 @@ class ModelServerBase(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, *, appName, workDir=None, maxJobs=1):
+    def __init__(self, *, appName, workDir=None, maxJobs=1, instance=None):
         """
         Constructor. Initializes the receiver.
 
-        :param str appName: Name of receiver (used also by NS)
+        :param str appName: Name of receiver (used also by NS); the base name, shared by all instances of this model server
         :param str workDir: Absolute path for storing data, if necessary (if None, temporary directory will be created)
         :param int maxJobs: Maximum number of jobs to run simultaneously
+        :param str instance: Optional id of this instance, when several instances of the model server run at once
+            (default: the environment variable ``MUPIF_MODELSERVER_INSTANCE``); the server then registers as
+            ``<appName>~<instance>``, see :func:`mupif.pyroutil.modelServerNSName`. Letters, digits, ``.``, ``_`` and ``-`` only.
         """
         self.applicationName = appName
+        #: id of this instance (None: not given; see modelServerNSName)
+        self.instance = instance or os.environ.get('MUPIF_MODELSERVER_INSTANCE') or None
+        if self.instance is not None and not re.fullmatch(r'[A-Za-z0-9._-]+', self.instance):
+            # the id becomes part of the nameserver name, job IDs ("N@name") and job directory names
+            raise ValueError(f'Invalid model server instance id {self.instance!r}: use letters, digits, ".", "_" and "-" only.')
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
         self.doneJobs = {}  # dictionary of done jobs (for retrieving log files, for example)

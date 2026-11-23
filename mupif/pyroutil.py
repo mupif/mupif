@@ -475,9 +475,72 @@ def runAppServer(*, appName, app, ns):
 def runJobManagerServer(*args,**kw):
     return runModelServer(*args,**kw)
 
+#: separates the base name of a model server from its instance id in the registered name (``CVUT.demo01~node2``);
+#: chosen because it needs no escaping in job IDs (``N@<name>``), file names of job work directories and URLs
+INSTANCE_SEPARATOR = '~'
+
+
+def _isAlive(uri, timeout: float) -> bool:
+    """Tell whether the object at *uri* answers ``getApplicationSignature()`` within *timeout* seconds."""
+    try:
+        proxy = Pyro5.api.Proxy(uri)
+        proxy._pyroTimeout = timeout
+        proxy._pyroMaxRetries = 1
+        proxy.getApplicationSignature()
+        return True
+    except Exception:
+        return False
+
+
+def modelServerNSName(ns, jobman, aliveTimeout: float = 5.) -> str:
+    """
+    Choose the name under which a model server is registered in the nameserver.
+
+    Several instances of one model server (same base name, :meth:`ModelServerBase.getName`) may
+    run at once, e.g. on different hosts, to share the load. Each needs its own nameserver entry;
+    clients find all of them by the base name, which every instance carries as a metadata tag
+    (see :func:`runModelServer` and :mod:`mupif.modelplacement`). To stay compatible with clients
+    that look a model server up by its exact base name (older mupif, other platforms), the name is:
+
+    * ``<base>~<instance>`` if the server was given an instance id (``instance`` argument of the
+      model server, or the environment variable ``MUPIF_MODELSERVER_INSTANCE``);
+    * else ``<base>`` if that name is free, or registered by a server which does not answer any
+      more (a stale entry left by a crashed server: it is overwritten, as before);
+    * else ``<base>~<host>-<pid>``: another live instance holds the base name. Before, the second
+      server silently replaced the first in the nameserver, and the first became unreachable.
+
+    So a single model server keeps its old name, and the first of several instances stays reachable
+    by clients that use exact names.
+
+    :param ns: nameserver proxy
+    :param jobman: the model server
+    :param aliveTimeout: seconds to wait for the holder of the base name to answer
+    :return: the name to register
+    """
+    base = jobman.getName()
+    instance = getattr(jobman, 'instance', None)
+    if instance:
+        return f'{base}{INSTANCE_SEPARATOR}{instance}'
+    try:
+        uri = ns.lookup(base)
+    except Pyro5.errors.NamingError:
+        return base
+    if not _isAlive(uri, aliveTimeout):
+        log.warning(f'Model server name {base} is registered by an object which does not answer ({uri}): taking the name over')
+        return base
+    name = f'{base}{INSTANCE_SEPARATOR}{socket.gethostname()}-{os.getpid()}'
+    log.warning(f'Model server name {base} is held by another running instance ({uri}): registering this one as {name}')
+    return name
+
+
 def runModelServer(*, ns, jobman):
     """
     Registers and runs given jobManager server
+
+    The server is registered under the name chosen by :func:`modelServerNSName` (its base name, or
+    an instance name if another instance holds the base name), tagged with ``type:jobmanager``, its
+    base name and characteristics of its model (accuracy, robustness, run time), so that clients
+    can find every instance offering a model by these tags.
 
     :param str server: Host name of the server (internal host name)
     :param int port: Port number on the server where daemon will listen (internal port number)
@@ -498,11 +561,13 @@ def runModelServer(*, ns, jobman):
     else:
         Runtime = "Runtime_days"
 
-    # use jobnman.getNSName() as nameserver registration name, which is constructed from modelServer base name and is unique
-    # inject modelServer base name into metadata as well as selected model characteristics, so later modelServer with given metadata can be looked up.
+    # register under a name unique among the running instances (see modelServerNSName); runServer
+    # passes it to jobman.registerPyro, after which jobman.getNSName() returns it.
+    # Tag the registration with the base name (shared by all instances) and selected model
+    # characteristics, so that every server offering a model with given characteristics can be found.
     return runServer(
         ns=ns,
-        appName=jobman.getNSName(),
+        appName=modelServerNSName(ns, jobman),
         app=jobman,
         metadata={_NS_METADATA.jobmanager, jobman.getName(), "Accuracy_%s"%(modelMD['Solver']['Accuracy'],), "Robustness_%s"%(modelMD['Solver']['Robustness'],), Runtime}
                  | ({_NS_METADATA.tickets} if getattr(jobman, 'remoteTickets', False) else set())
