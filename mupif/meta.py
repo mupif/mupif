@@ -204,15 +204,24 @@ class OutputMeta(IOMeta):
 
 
 class ModelInWorkflowMeta(BaseMeta):
-    'Metadata for Model as part of a workflow'
+    '''
+    Metadata for Model as part of a workflow.
+
+    A model is either local (``Module`` and ``Class``) or allocated on a model server. A model server
+    is compatible with the model if its nameserver registration carries the ``Jobmanager`` name (the
+    base name of the server: all its instances qualify) or, if ``ModelID`` is given, the tag
+    ``ModelID:<ModelID>`` (servers registered under any name which serve the model with this ID).
+    Execution profiles may add further requirements; see :mod:`mupif.modelplacement`.
+    '''
     Name: str
     Module: str = ''
     Class: str = ''
-    Jobmanager: str = ''
+    Jobmanager: str = Field('', description='Base name of the model server(s) offering the model.')
+    ModelID: str = Field('', description='ID of the model (its metadata ID): any model server serving a model with this ID is compatible, whatever its name.')
 
     @pydantic.model_validator(mode='after')
     def _moduleClass_or_jobmanager(self):
-        if self.Jobmanager == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For non-Jobmanager metadata, Module and Name must not be empty ({self.Module=}, {self.Name=})')
+        if self.Jobmanager == '' and self.ModelID == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For metadata without Jobmanager or ModelID, Module and Name must not be empty ({self.Module=}, {self.Name=})')
         return self
 
 
@@ -500,12 +509,14 @@ if 0:
                     "Module": {"type": "string"},
                     "Class": {"type": "string"},
                     "Jobmanager": {"type": "string"},
+                    "ModelID": {"type": "string"},
                     "Instantiate": {"type": "boolean"},
                 },
                 "required": ["Name"],
                 "anyOf": [
                     {"required": ["Module", "Class"]},  # local module with the workflow class
-                    {"required": ["Jobmanager"]}  # remote model
+                    {"required": ["Jobmanager"]},  # remote model
+                    {"required": ["ModelID"]}  # remote model, on any model server serving this model ID
                 ]
             }
         },

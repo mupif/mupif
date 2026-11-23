@@ -64,6 +64,9 @@ class _NS_METADATA:
     #: the model server's preAllocate tickets work remotely (they expire, and are recognised when sent
     #: back over Pyro); clients must not call preAllocate remotely on servers without this tag
     tickets = "mupif:tickets-v2"
+    #: prefix of the tag carrying the ID of the model a model server serves (its model metadata ``ID``):
+    #: model servers registered under different names but serving the same model share this tag
+    modelID = "ModelID:"
     network = "network:"  # plus JSON
 
 
@@ -548,30 +551,45 @@ def runModelServer(*, ns, jobman):
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
-    modelMD=jobman.getModelMetadata()
-    #print(modelMD)
-    estRunTime=modelMD['Solver']['Estim_comp_time_s']
-    Runtime=""
-    if (estRunTime < 60):
-        Runtime = "Runtime_seconds"
-    elif (estRunTime< 60*60):
-        Runtime = "Runtime_minutes"
-    elif (estRunTime<60*60*24):
-        Runtime = "Runtime_hours"
-    else:
-        Runtime = "Runtime_days"
-
     # register under a name unique among the running instances (see modelServerNSName); runServer
-    # passes it to jobman.registerPyro, after which jobman.getNSName() returns it.
-    # Tag the registration with the base name (shared by all instances) and selected model
-    # characteristics, so that every server offering a model with given characteristics can be found.
-    return runServer(
-        ns=ns,
-        appName=modelServerNSName(ns, jobman),
-        app=jobman,
-        metadata={_NS_METADATA.jobmanager, jobman.getName(), "Accuracy_%s"%(modelMD['Solver']['Accuracy'],), "Robustness_%s"%(modelMD['Solver']['Robustness'],), Runtime}
-                 | ({_NS_METADATA.tickets} if getattr(jobman, 'remoteTickets', False) else set())
-    )
+    # passes it to jobman.registerPyro, after which jobman.getNSName() returns it
+    return runServer(ns=ns, appName=modelServerNSName(ns, jobman), app=jobman, metadata=modelServerTags(jobman))
+
+
+def modelServerTags(jobman) -> set[str]:
+    """
+    Return the nameserver metadata tags of a model server registration.
+
+    Clients find model servers by these tags (see :mod:`mupif.modelplacement`); all instances of a
+    model server carry the same tags:
+
+    * ``type:jobmanager``;
+    * the base name (:meth:`ModelServerBase.getName`), which workflows give as ``Jobmanager``;
+    * ``ModelID:<ID>``, the ID from the model metadata, if set: shared by servers registered under
+      different names which serve the same model;
+    * ``Accuracy_<x>``, ``Robustness_<x>`` (from the model's ``Solver`` metadata) and
+      ``Runtime_seconds|minutes|hours|days`` (from ``Solver.Estim_comp_time_s``), which execution
+      profiles may require;
+    * ``mupif:tickets-v2`` if the server's preAllocate tickets work remotely.
+
+    :param jobman: the model server
+    """
+    modelMD = jobman.getModelMetadata()
+    estRunTime = modelMD['Solver']['Estim_comp_time_s']
+    if estRunTime < 60:
+        runtime = "Runtime_seconds"
+    elif estRunTime < 60*60:
+        runtime = "Runtime_minutes"
+    elif estRunTime < 60*60*24:
+        runtime = "Runtime_hours"
+    else:
+        runtime = "Runtime_days"
+    tags = {_NS_METADATA.jobmanager, jobman.getName(), f"Accuracy_{modelMD['Solver']['Accuracy']}", f"Robustness_{modelMD['Solver']['Robustness']}", runtime}
+    if modelMD.get('ID', '') != '':
+        tags.add(_NS_METADATA.modelID+str(modelMD['ID']))
+    if getattr(jobman, 'remoteTickets', False):
+        tags.add(_NS_METADATA.tickets)
+    return tags
 
 
 def getIPfromUri(uri):
