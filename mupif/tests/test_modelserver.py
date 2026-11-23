@@ -380,6 +380,46 @@ class ModelServer_TestCase(unittest.TestCase):
                 srv.terminate(force=True)
             daemon.shutdown()
 
+    def test_templateKeepsNoSlot(self):
+        'A template model (Instantiate false) takes no job at initialization: the single slot is free for the copy the workflow asks for.'
+        cls=self.__class__
+        import threading
+        # a threaded daemon of its own, as in test_workflowPlacesModelsOnInstances
+        serverType,Pyro5.config.SERVERTYPE=Pyro5.config.SERVERTYPE,'thread'
+        try: daemon=Pyro5.api.Daemon(host='127.0.0.1')
+        finally: Pyro5.config.SERVERTYPE=serverType
+        threading.Thread(target=daemon.requestLoop,daemon=True).start()
+        srv=mp.ModelServer(ns=cls.ns,appName='appTpl',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        uri=daemon.register(srv)
+        srv.registerPyro(daemon=daemon,ns=cls.ns,uri=uri,appName='appTpl',exclusiveDaemon=False)
+        cls.ns.register('appTpl',uri,metadata={'type:jobmanager','appTpl'})
+
+        class Wf(mp.Workflow):
+            def __init__(self,metadata=None):
+                super().__init__(metadata={'Name':'wf','ID':'wf','Description':'','Inputs':[],'Outputs':[],
+                                           'Models':[{'Name':'m','Jobmanager':'appTpl','Instantiate':False}]})
+            def generateModelDependencies(self): pass
+
+        nsPrev=os.environ.get('MUPIF_NS')
+        os.environ['MUPIF_NS']=f'{cls.ns._pyroUri.host}:{cls.ns._pyroUri.port}'
+        wf=Wf()
+        try:
+            wf.initialize(metadata={'Execution':{'ID':'1','Use_case_ID':'1','Task_ID':'1'}})
+            # the template was allocated here too before: its idle job blocked the only slot
+            self.assertEqual(srv.getStatus(),[])
+            self.assertEqual(wf.getModelServers(),{})
+            # the copy, as a loop of the workflow allocates it
+            wf._allocateModelByName(name='m',name_new='m_1')
+            self.assertEqual(len(srv.getStatus()),1)
+            self.assertEqual(wf.getModelServers(),{'m_1':'appTpl'})
+        finally:
+            if nsPrev is None: del os.environ['MUPIF_NS']
+            else: os.environ['MUPIF_NS']=nsPrev
+            try: wf.terminate()
+            except Exception: pass
+            srv.terminate(force=True)
+            daemon.shutdown()
+
     def test_removeStaleModelServers(self):
         'Entries of crashed instances (not answering) of the base name are removed; live ones and other models stay.'
         cls=self.__class__
