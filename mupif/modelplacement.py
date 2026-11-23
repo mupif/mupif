@@ -265,12 +265,14 @@ class Load:
         return f'{self.free} free' + (f' of {self.max}' if self.max else '')
 
 
-def serverLoad(uri: str, timeout: float = 5.) -> Optional[Load]:
+def serverLoad(uri: str, timeout: float = 5., logLevel: int = logging.WARNING) -> Optional[Load]:
     """
     Ask a model server for its free and total job slots.
 
     :param uri: Pyro URI of the server
     :param timeout: seconds to wait for the answer
+    :param logLevel: level of the message when the server cannot be reached (a long-running caller
+                     asking repeatedly, such as the mupifDB scheduler, reports it once itself)
     :return: the load, or None if the server cannot be reached
     """
     try:
@@ -279,7 +281,7 @@ def serverLoad(uri: str, timeout: float = 5.) -> Optional[Load]:
         proxy._pyroMaxRetries = 1
         free = int(proxy.getNumberOfFreeJobs())
     except Exception as e:
-        log.warning(f'Cannot get the free job slots of model server {uri}: {e}')
+        log.log(logLevel, f'Cannot get the free job slots of model server {uri}: {e}')
         return None
     try:
         status = proxy.getStatusExtended()
