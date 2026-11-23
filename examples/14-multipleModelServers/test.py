@@ -1,134 +1,109 @@
+"""
+Several model servers for one workflow model: instances, model ID and execution profiles.
+
+Run with ``python runex.py 14``, which starts ``server.py`` twice (two instances of
+``example14.mechanical``) and ``server1.py`` (``example14.mechanical-alt``, same model); every
+server runs one job at a time. The workflow's model accepts the model server
+``example14.mechanical`` (``Jobmanager``) or any server of the model ``Mechanical-1``
+(``ModelID``), i.e. all three servers. Shown:
+
+* default execution profile: workflows started together are spread over the servers, the least
+  loaded first; when all are busy, the next workflow gets ``ModelServerNoResourcesException``;
+* profile 0 prefers servers tagged ``example14.mechanical-alt`` (optional metadata);
+* profile 1 requires the tag ``example14.mechanical``: only the two instances of that name.
+"""
 import sys
 sys.path.extend(['.', '..', '../..'])
 import mupif as mp
-from mupif import pyroutil
 import logging
 log = logging.getLogger()
 
 
-class Example15(mp.Workflow):
-   
+class Example14(mp.Workflow):
+
     def __init__(self, metadata=None):
-        """
-        Initializes the workflow. As the workflow is non-stationary, we allocate individual 
-        applications and store them within a class.
-        """
         MD = {
-            'Name': 'Thermo-mechanical non-stationary problem',
-            'ID': 'Thermo-mechanical-1',
-            'Description': 'Non-stationary thermo-mechanical problem using finite elements on rectangular domain',
-            # 'Dependencies' are generated automatically
-            'Version_date': '1.0.0, Feb 2019',
+            'Name': 'Several model servers',
+            'ID': 'example14',
+            'Description': 'Placement of a model on one of several compatible model servers',
+            'Version_date': '1.0.0, Nov 2026',
             'Inputs': [],
-            'Outputs': [
-                {'Type': 'mupif.Field', 'Type_ID': 'mupif.DataID.FID_Displacement', 'Name': 'Displacement field',
-                 'Description': 'Displacement field on 2D domain', 'Units': 'm', 'ValueType': 'Vector'}
-            ],
+            'Outputs': [],
             'Models': [
                 {
                     'Name': 'model',
-                    'Jobmanager': 'Mupif.JobManager@ThermalSolver-ex07'
+                    # all instances of this model server ...
+                    'Jobmanager': 'example14.mechanical',
+                    # ... and any other server of the same model
+                    'ModelID': 'Mechanical-1',
                 }
             ],
             'ExecutionProfiles': [
                 {
-                    'Name': 'Execution profile 1',
+                    'Name': 'Prefer the alternative server',
                     'Cost': '$$',
-                    'Description': 'Description of Execution profile 1',
-                    'Models': [
-                        {
-                            'Name': 'model',
-                            'RequiredModelMetadata': set(), # empty set
-                            'OptionalModelMetadata': {'Accuracy_high'}
-                        }
-                    ]
+                    'Description': 'Any compatible server, the alternative one if it is free',
+                    'Models': [{'Name': 'model', 'RequiredModelMetadata': [], 'OptionalModelMetadata': ['example14.mechanical-alt']}]
                 },
                 {
-                    'Name': 'Execution profile 2',
+                    'Name': 'Main servers only',
                     'Cost': '$',
-                    'Description': 'Description of Execution profile 2',
-                    'Models': [
-                        {
-                            'Name': 'model',
-                            'RequiredModelMetadata': {'Runtime_seconds'},
-                            'OptionalModelMetadata': {'Accuracy_high'}
-                        }
-                    ]
-                }
+                    'Description': 'Only the instances of example14.mechanical',
+                    'Models': [{'Name': 'model', 'RequiredModelMetadata': ['example14.mechanical'], 'OptionalModelMetadata': []}]
+                },
             ]
         }
         super().__init__(metadata=MD)
         self.updateMetadata(metadata)
-        self.daemon = None
-
-    def initialize(self, workdir='', metadata=None, validateMetaData=True, **kwargs):
-        super().initialize(workdir=workdir, metadata=metadata, validateMetaData=validateMetaData, **kwargs)
-
-        # locate nameserver
-        ns = pyroutil.connectNameserver()
-        self.daemon = pyroutil.getDaemon(ns)
-        print(self._models)
-
-        log.info("Working thermal solver on server " + self.getModel('model').getApplicationSignature())
 
     def solveStep(self, istep, stageID=0, runInBackground=False):
         pass
-        
 
     def getCriticalTimeStep(self):
-        # determine critical time step
         return 1*mp.U.s
 
     def getApplicationSignature(self):
-        return "Workflow 1.0"
+        return "Example14 workflow 1.0"
 
     def getAPIVersion(self):
         return "1.0"
 
-    
+
+def start(profile=-1):
+    'Start a workflow with the given execution profile; return it and the model server of its model.'
+    wf = Example14()
+    wf.initialize(metadata={'Execution': {'ID': '1', 'Use_case_ID': '1_1', 'Task_ID': '1', 'ExecutionProfileIndex': profile}})
+    server = wf.getModelServers()['model']
+    print(f'profile {profile}: model allocated on {server}')
+    return wf, server
+
+
 if __name__ == '__main__':
-
     ns = mp.pyroutil.connectNameserver()
-    pyroutil.connectAppWithMetadata(ns, requiredMData={'model'}).getApplicationSignature()
+    servers = sorted(ns.yplookup(meta_all={'type:jobmanager', 'ModelID:Mechanical-1'}))
+    print('model servers of Mechanical-1:', servers)
+    assert len(servers) == 3, servers
 
-    print(pyroutil.connectAppWithMetadata(ns, requiredMData={'model'}, optionalMData={'Runtime_seconds'}).getModelMetadata()['ID'])
-    print(pyroutil.connectAppWithMetadata(ns, requiredMData={'model'}, optionalMData={'Runtime_minutes'}).getModelMetadata()['ID'])
-    print(pyroutil.connectAppWithMetadata(ns, requiredMData={'model', 'Accuracy_Medium'}, optionalMData={'Runtime_minutes'}).getModelMetadata()['ID'])
-    print(pyroutil.connectAppWithMetadata(ns, requiredMData={'model', 'Runtime_minutes'}, optionalMData={'Accuracy_high'}).getModelMetadata()['ID'])
+    # default profile: three workflows at once occupy the three servers
+    running = [start() for i in range(3)]
+    assert sorted(s for _, s in running) == servers
+    try:
+        start()
+        raise AssertionError('all model servers are busy, the allocation should have failed')
+    except mp.modelserverbase.ModelServerNoResourcesException:
+        print('fourth workflow: no free model server, as expected')
+    for wf, _ in running:
+        wf.terminate()
 
-    demo = Example15()
-    md = {
-        'Execution': {
-            'ID': '1',
-            'Use_case_ID': '1_1',
-            'Task_ID': '1',
-            'ExecutionProfileIndex': 1
-        }
-    }
-    demo.initialize(metadata=md)
-    demo.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
-    demo.solve()
-    demo.printListOfModels()
-    demo.terminate()
+    # profile 0: the preferred server
+    wf, server = start(0)
+    assert server == 'example14.mechanical-alt', server
+    wf.terminate()
+
+    # profile 1: only the instances of example14.mechanical
+    wf, server = start(1)
+    assert server.startswith('example14.mechanical') and server != 'example14.mechanical-alt', server
+    wf.terminate()
+
     log.info("Test OK")
     print("OK")
-
-    md = {
-        'Execution': {
-            'ID': '1',
-            'Use_case_ID': '1_1',
-            'Task_ID': '1',
-            'ExecutionProfileIndex': 0
-        }
-    }
-    demo2 = Example15()
-    demo2.initialize(metadata=md)
-    demo2.set(mp.ConstantProperty(value=1.*mp.U.s, propID=mp.DataID.PID_Time, valueType=mp.ValueType.Scalar, unit=mp.U.s), objectID='targetTime')
-    demo2.solve()
-    demo2.printListOfModels()
-    demo2.terminate()
-    log.info("Test OK")
-    print("OK")
-
-
-

@@ -75,6 +75,13 @@ class ModelServer (modelserverbase.ModelServerBase):
         remoteLogUri: str
 
     ticketExpireTimeout = 10
+    #: seconds allocateJob waits for a spawned job to report its URI; a job not ready by then is killed
+    jobStartTimeout = 10
+    #: seconds between two checks that the server is still registered in the nameserver (see
+    #: pyroutil.watchRegistration); 0: not checked
+    registrationCheckInterval = 30.
+    #: preAllocate tickets work over Pyro (advertised as the nameserver tag ``mupif:tickets-v2``)
+    remoteTickets = True
 
     def __init__(
             self,
@@ -87,17 +94,22 @@ class ModelServer (modelserverbase.ModelServerBase):
             maxJobs=1,
             daemon=None,
             includeFiles=None,
+            instance=None,
             # overrideNsPort=0
     ):
         """
         Constructor.
 
-        See :func:`ModelServer.__init__`
+        See :func:`ModelServerBase.__init__`
         """
-        super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs)
+        super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs, instance=instance)
         self.ns = ns
 
-        self.tickets = []  # list of tickets issued when pre-allocating resources; tickets generated using uuid
+        # pre-allocation tickets (see preAllocate): ticket (str) -> time.monotonic() when issued.
+        # Before mupif:tickets-v2 tickets were uuid1 objects whose .time (100-ns ticks since 1582)
+        # was compared with time.time(), so they never expired; and a ticket sent back over Pyro
+        # arrived as a string and was not recognised, so every remote preAllocate leaked a slot.
+        self.tickets: dict[str, float] = {}
         self.jobCounter = 0
         self.lock = threading.Lock()
         self.applicationClass = appClass
@@ -155,23 +167,24 @@ class ModelServer (modelserverbase.ModelServerBase):
         os.rename(args.uriFileName+'~', args.uriFileName)
 
     def __checkTicket(self, ticket):
-        """ Returns true, if ticket is valid, false otherwise"""
-        currentTime = time.time()
-        if ticket in self.tickets:
-            if (currentTime-ticket.time) < ModelServer.ticketExpireTimeout:
-                return True
-        return False
+        """
+        Tell whether *ticket* is a valid (issued and not expired) pre-allocation ticket.
+
+        Called with :attr:`lock` held. The ticket is compared as a string: tickets travel over Pyro,
+        whose serializer turns a :class:`uuid.UUID` into a string (see :meth:`preAllocate`).
+        """
+        issued = self.tickets.get(str(ticket))
+        return issued is not None and time.monotonic()-issued < ModelServer.ticketExpireTimeout
 
     def __getNumberOfActiveTickets(self):
         """
-            Returns the number of active pre-allocation tickets. 
+        Drop expired pre-allocation tickets and return the number of those left.
+
+        Called with :attr:`lock` held (it changes :attr:`tickets`).
         """
-        currentTime = time.time()
-        for i in range(len(self.tickets) - 1, -1, -1):
-            # check if ticket expired
-            if (currentTime-self.tickets[i].time) > ModelServer.ticketExpireTimeout: 
-                # remove it
-                del(self.tickets[i])
+        now = time.monotonic()
+        for t in [t for t, issued in self.tickets.items() if now-issued >= ModelServer.ticketExpireTimeout]:
+            del self.tickets[t]
         return len(self.tickets)
 
     def _updateActiveJobs(self):
@@ -206,7 +219,9 @@ class ModelServer (modelserverbase.ModelServerBase):
             self._updateActiveJobs()
 
     def getNumberOfFreeJobs(self):
-        return self.maxJobs - len(self.activeJobs) - self.__getNumberOfActiveTickets()
+        """Return the number of jobs which can be allocated now: free slots minus valid pre-allocation tickets."""
+        with self.lock:
+            return self.maxJobs - len(self.activeJobs) - self.__getNumberOfActiveTickets()
 
     def preAllocate(self, requirements=None):
         """
@@ -216,6 +231,13 @@ class ModelServer (modelserverbase.ModelServerBase):
             additional parameters (such as number of cpus, etc). 
             The returned ticket is valid only for fixed time period (suggest 10[s]), then should expire.
             Thread safe
+
+            The ticket is a string (a UUID) valid for :attr:`ticketExpireTimeout` seconds; pass it
+            to :meth:`allocateJob`. Servers whose tickets work over Pyro advertise the nameserver
+            tag ``mupif:tickets-v2`` (older ones must not be sent preAllocate remotely: the ticket
+            is never recognised nor expired there, and the slot is lost until restart).
+
+            :return: the ticket, or None if there is no free slot
         """
         self._updateActiveJobs()
         with self.lock:
@@ -223,8 +245,8 @@ class ModelServer (modelserverbase.ModelServerBase):
             if (len(self.activeJobs) + prealocatedJobs) >= self.maxJobs:
                 return None
             else:
-                ticket = uuid.uuid1()
-                self.tickets.append(ticket)
+                ticket = str(uuid.uuid4())
+                self.tickets[ticket] = time.monotonic()
                 return ticket
 
     def allocateJob(self, user, *, remoteLogUri=None, ticket=None): 
@@ -249,10 +271,14 @@ class ModelServer (modelserverbase.ModelServerBase):
             validTicket = ticket and self.__checkTicket(ticket)
             if validTicket or ((len(self.activeJobs)+ntickets) < self.maxJobs):
                 if validTicket:
-                    self.tickets.remove(ticket)  # remove ticket
+                    del self.tickets[str(ticket)]  # the ticket is used up
                 # update job counter
                 self.jobCounter = self.jobCounter+1
-                jobID = str(self.jobCounter)+"@"+self.applicationName
+                # the job registers itself in the nameserver under its jobID, so the ID must be unique
+                # among all running model servers: use the registered (instance) name, not the base
+                # name shared by all instances of this model server; for a single instance
+                # registered under its base name this is the same as before ("N@appName")
+                jobID = str(self.jobCounter)+"@"+self.getNSName()
                 log.debug('trying to allocate '+jobID)
                 # run the new application instance served by corresponding pyro daemon in a new process
 
@@ -274,6 +300,8 @@ class ModelServer (modelserverbase.ModelServerBase):
                     log.exception(e)
                     raise
                     # return JOBMAN_ERR, None
+                # the job process, once spawned: killed again if the allocation fails (see _discardJob)
+                proc = None
                 try:
                     args = ModelServer.SpawnedProcessArgs(
                         uriFileName=targetWorkDir+'/_mupif_uri',
@@ -298,7 +326,7 @@ class ModelServer (modelserverbase.ModelServerBase):
                     env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
                     proc = subprocess.Popen([sys.executable, '-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
-                    tMax = 10
+                    tMax = self.jobStartTimeout
                     while time.time()-t0 < tMax:
                         if os.path.exists(args.uriFileName):
                             uri = open(args.uriFileName, 'r').read()
@@ -313,13 +341,16 @@ class ModelServer (modelserverbase.ModelServerBase):
                     log.info('Received URI: %s' % uri)
                     jobPort = int(uri.split(':')[-1])
                     log.info(f'Job runs on port {jobPort}')
+
+                    # get model metadta remotely
+                    model = Pyro5.api.Proxy(uri)
+                    timeout = model.getMetadata('Timeout')
                 except Exception as e:
                     log.exception(e)
+                    # the job is not handed out nor recorded in activeJobs: nobody would ever
+                    # terminate it, and it would keep running (and keep its nameserver entry)
+                    self._discardJob(proc, jobID)
                     raise
-
-                # get model metadta remotely
-                model = Pyro5.api.Proxy(uri)
-                timeout = model.getMetadata('Timeout')
 
                 # check if uri is ok
                 # either by doing some sort of regexp or query ns for it
@@ -334,6 +365,35 @@ class ModelServer (modelserverbase.ModelServerBase):
                 log.error(f'ModelServer: no more resources, activeJobs:{len(self.activeJobs)} + nTickets:{self.__getNumberOfActiveTickets()} >= maxJobs:{self.maxJobs}')
                 raise modelserverbase.ModelServerNoResourcesException("ModelServer: no more resources")
                 # return (JOBMAN_NO_RESOURCES,None)
+
+    def _discardJob(self, proc, jobID):
+        """
+        Kill a job whose allocation failed, and remove its nameserver entry; never raises.
+
+        allocateJob used to leave such a job running: e.g. a job which registered itself only after
+        allocateJob had stopped waiting for it (jobStartTimeout) ran on, unknown to the server,
+        with its nameserver entry, until killed by hand.
+
+        :param proc: the job process (None if it was not spawned)
+        :param jobID: the job's ID (its nameserver name)
+        """
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(2)
+            except subprocess.TimeoutExpired:
+                log.warning(f'{jobID} still running 2 s after SIGTERM, killing it.')
+                proc.kill()
+                try:
+                    proc.wait(2)
+                except subprocess.TimeoutExpired:
+                    log.error(f'{jobID} (pid {proc.pid}) did not end after SIGKILL')
+        try:
+            # job IDs are unique to this server instance (N@<registered name>), so the entry is the job's
+            self.ns._pyroClaimOwnership()
+            self.ns.remove(jobID)
+        except Exception:
+            log.exception(f'Could not remove {jobID} from the nameserver')
 
     def terminateJob(self, jobID):
         """
@@ -388,14 +448,19 @@ class ModelServer (modelserverbase.ModelServerBase):
         log.info('No more jobs will be accepted.')
         if not force and self.activeJobs:
             raise RuntimeError(f'There are {len(self.activeJobs)} active jobs; call terminate(force=True) to kill them.')
+        nsName = self.getNSName()
+        # stop watching the registration first, or it would register the server again
+        if getattr(self, '_nsWatchStop', None) is not None:
+            self._nsWatchStop.set()
         try:
             self.terminateAllJobs()
             self.ns._pyroClaimOwnership()
-            self.ns.remove(self.applicationName)
-            log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
+            # remove the entry of this instance only: another instance of the same model server
+            # may have taken over the name meanwhile (see pyroutil.removeOwnRegistration)
+            pyroutil.removeOwnRegistration(self.ns, nsName, self.pyroURI)
+            log.debug("Removing job manager %s from a nameServer %s" % (nsName, self.ns))
         except Exception as e:
-            log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
-            log.exception(f"Can not remove job {self.applicationName} from nameserver {self.ns}")
+            log.exception(f"Can not remove job manager {nsName} from nameserver {self.ns}")
         if self.pyroDaemon:
             try:
                 self.pyroDaemon.unregister(self)

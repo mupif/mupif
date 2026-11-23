@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 import os
-import socket
+import re
 import Pyro5.api
 import tempfile
 import warnings
@@ -68,9 +68,33 @@ class ModelServerNoResourcesException(ModelServerException):
 
 
 
-c = ModelServerNoResourcesException
-Pyro5.api.register_class_to_dict(c, {'__class__': c.__module__+'.'+c.__name__})
-Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, c)
+def _registerExceptionWithPyro(c):
+    """
+    Let Pyro transfer exception class *c* from a model server to its client.
+
+    Pyro only recreates its own and builtin exceptions on the client; other classes need a
+    converter each way. The converter to a dict used to be given as a dict (not a function), so
+    serializing the exception failed on the server ("Error serializing exception: 'dict' object is
+    not callable") and the client got a generic PyroError which only named the class in its message.
+    Clients of older mupif versions, whose converter from the dict is the class itself, get an
+    instance of the right class too (with unusual arguments).
+    """
+    name = c.__module__+'.'+c.__name__
+
+    def toDict(e):
+        # _pyroTraceback (the remote traceback) is among the attributes, as in Pyro's own conversion
+        return {'__class__': name, '__exception__': True, 'args': list(e.args), 'attributes': dict(vars(e))}
+
+    def fromDict(classname, d):
+        e = c(*d.get('args', ()))
+        for k, v in (d.get('attributes') or {}).items():
+            setattr(e, k, v)
+        return e
+    Pyro5.api.register_class_to_dict(c, toDict)
+    Pyro5.api.register_dict_to_class(name, fromDict)
+
+
+_registerExceptionWithPyro(ModelServerNoResourcesException)
 
 
 
@@ -101,15 +125,23 @@ class ModelServerBase(object):
 
     .. automethod:: __init__
     """
-    def __init__(self, *, appName, workDir=None, maxJobs=1):
+    def __init__(self, *, appName, workDir=None, maxJobs=1, instance=None):
         """
         Constructor. Initializes the receiver.
 
-        :param str appName: Name of receiver (used also by NS)
+        :param str appName: Name of receiver (used also by NS); the base name, shared by all instances of this model server
         :param str workDir: Absolute path for storing data, if necessary (if None, temporary directory will be created)
         :param int maxJobs: Maximum number of jobs to run simultaneously
+        :param str instance: Optional id of this instance, when several instances of the model server run at once
+            (default: the environment variable ``MUPIF_MODELSERVER_INSTANCE``); the server then registers as
+            ``<appName>~<instance>``, see :func:`mupif.pyroutil.modelServerNSName`. Letters, digits, ``.``, ``_`` and ``-`` only.
         """
         self.applicationName = appName
+        #: id of this instance (None: not given; see modelServerNSName)
+        self.instance = instance or os.environ.get('MUPIF_MODELSERVER_INSTANCE') or None
+        if self.instance is not None and not re.fullmatch(r'[A-Za-z0-9._-]+', self.instance):
+            # the id becomes part of the nameserver name, job IDs ("N@name") and job directory names
+            raise ValueError(f'Invalid model server instance id {self.instance!r}: use letters, digits, ".", "_" and "-" only.')
         self.maxJobs = maxJobs
         self.activeJobs = {}  # dictionary of active jobs
         self.doneJobs = {}  # dictionary of done jobs (for retrieving log files, for example)
@@ -178,12 +210,26 @@ class ModelServerBase(object):
     def getStatus(self) -> List[ModelServerStatus.JobStatus]: return []
 
     def getNSName(self):
-        return self.getName()
-        ## TODO: Execution profiles need to return variable NS name, but we need to stay compatible with old ModelServers now
-        ## TODO: see also comment
-        return f"{self.applicationName}_{os.getpid()}@{socket.gethostname()}"
-    
+        """
+        Return the name under which this model server is registered in the nameserver.
+
+        It is the base name (:meth:`getName`) unless the server was registered under another name:
+        several instances of the same model server may run at once, and each needs its own
+        nameserver entry (see :func:`mupif.pyroutil.runModelServer`, which chooses the name and
+        passes it to :meth:`registerPyro`). The name is unique among the registered servers, so it
+        also identifies this instance in job IDs and when the server removes itself from the
+        nameserver. Before registration, the base name is returned.
+        """
+        # self.appName is set by registerPyro to the name actually registered in the nameserver
+        return self.appName or self.getName()
+
     def getName(self):
+        """
+        Return the base name of the model server: the name given at construction (``appName``).
+
+        All instances of one model server share the base name; workflows refer to it in the
+        ``Jobmanager`` field of their model metadata. See :meth:`getNSName` for the registered name.
+        """
         return self.applicationName
 
     # implemented in SimpleJobManager

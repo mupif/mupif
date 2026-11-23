@@ -25,6 +25,7 @@ import os
 import Pyro5.api
 import numpy
 import copy
+import dataclasses
 import logging
 import importlib
 import pydantic
@@ -39,6 +40,7 @@ from . import DataID
 from . import U
 from . import pyroutil
 from . import pyrolog
+from . import modelplacement
 from .meta import WorkflowMeta
 
 log = logging.getLogger()
@@ -80,6 +82,8 @@ class Workflow(model.Model):
         self.workflowMonitor = None  # No monitor by default
         self._models = {}
         self._jobmans = {}
+        #: model name -> registered name of the model server it was allocated on (see getModelServers)
+        self._modelServers: dict[str, str] = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
 
@@ -91,48 +95,81 @@ class Workflow(model.Model):
             if name not in self._models.keys():
                 return name
 
-    def _allocateModel(self, *, name, modulename, classname, jobmanagername):
+    def _allocateModel(self, *, name, modulename, classname, jobmanagername, requirement=None):
+        """
+        Allocate one model: on a model server if it is remote, else instantiate it locally.
+
+        :param name: name of the model in the workflow
+        :param modulename: module of a local model
+        :param classname: class of a local model
+        :param jobmanagername: base name of the model server (``Jobmanager`` in the metadata); used
+            when *requirement* is not given (callers of older mupif versions)
+        :param requirement: what a model server must offer (see :mod:`mupif.modelplacement`)
+        :return: the model, or None if *name* is empty or nothing says how to allocate it
+        """
         if name:
-            if jobmanagername:
-                ns = pyroutil.connectNameserver()
-                self._jobmans[name] = pyroutil.connectJobManager(ns, jobmanagername)
-                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
-                # if not given in Execution.Log_URI (this is what workflow execution script in mupifDB does), forward remote logs to the local logger
-                remoteLogUri=self.metadata.Execution.Log_URI
-                if not remoteLogUri:
-                    daemon = pyroutil.getDaemon(proxy=ns)
-                    remoteLogUri=str(daemon.register(pyrolog.PyroLogReceiver()))
-                    log.info(f'Model {name=} will remotely use our logger at {remoteLogUri}.')
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=remoteLogUri)
-                return self._models[name]
+            if requirement is not None or jobmanagername:
+                if requirement is None:
+                    requirement = modelplacement.ModelRequirement(model=name, identity=frozenset({jobmanagername}), fallbackName=jobmanagername)
+                return self._allocateRemoteModel(name=name, requirement=requirement)
             elif classname and modulename:
                 moduleImport = importlib.import_module(modulename)
                 model_class = getattr(moduleImport, classname)
                 self._models[name] = model_class()
                 return self._models[name]
         return None
-    
-    def _allocateModelWithMetadata(self, *, name, modulename, classname, modelConfiguration):
-        if name:
-            if modelConfiguration:
-                ns = pyroutil.connectNameserver()
-                metadata = modelConfiguration['RequiredModelMetadata'].copy()
-                optionalMetaData = modelConfiguration['OptionalModelMetadata'].copy()
-                metadata.add(name)
-                #print ("_allocateModelWithMetadata:")
-                #print(name, metadata, optionalMetaData)
-                self._jobmans[name] = pyroutil.connectModelServerWithMetadata(ns, metadata, optionalMetaData )
-                #print (self._jobmans[name])
-                # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
-                self._models[name] = pyroutil.allocateApplicationWithJobManager(ns=ns, jobMan=self._jobmans[name], remoteLogUri=self.getMetadata('Execution.Log_URI', ''))
-                #print (self._models[name])
-                return self._models[name]
-            elif classname and modulename:
-                moduleImport = importlib.import_module(modulename)
-                model_class = getattr(moduleImport, classname)
-                self._models[name] = model_class()
-                return self._models[name]
-        return None
+
+    def _allocateRemoteModel(self, *, name, requirement: modelplacement.ModelRequirement):
+        """
+        Allocate a model on the best model server compatible with *requirement*.
+
+        All compatible servers are found (instances of the model server, other servers of the same
+        model ID, filtered by the execution profile), ranked (free slots, preferred tags, load) and
+        tried in that order until one accepts the model; see :mod:`mupif.modelplacement`. The
+        choice and every skipped server are logged. The server used is remembered
+        (:meth:`getModelServers`).
+
+        :raises ModelServerNoResourcesException: no compatible server has a free slot now
+        :raises RuntimeError: no compatible server is registered or reachable
+        """
+        ns = pyroutil.connectNameserver()
+        # remoteLogUri must be known before the model is spawned (too late in _model.initialize)
+        # if not given in Execution.Log_URI (this is what workflow execution script in mupifDB does), forward remote logs to the local logger
+        remoteLogUri = self.metadata.Execution.Log_URI
+        if not remoteLogUri:
+            daemon = pyroutil.getDaemon(proxy=ns)
+            remoteLogUri = str(daemon.register(pyrolog.PyroLogReceiver()))
+            log.info(f'Model {name=} will remotely use our logger at {remoteLogUri}.')
+        candidates = modelplacement.findModelServers(ns, requirement)
+        loads = {c.nsName: modelplacement.serverLoad(c.uri) for c in candidates}
+        ranked = modelplacement.rankCandidates(candidates, loads)
+
+        def allocate(c: modelplacement.Candidate):
+            jobMan = pyroutil.connectModelServer(ns, c.nsName)
+            return jobMan, pyroutil.allocateApplicationWithModelServer(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri)
+
+        (jobMan, mod), placement = modelplacement.allocateOnCandidates(requirement, ranked, allocate, loads)
+        self._jobmans[name] = jobMan
+        self._models[name] = mod
+        self._modelServers[name] = placement.nsName
+        return mod
+
+    def getModelServers(self) -> dict[str, str]:
+        """
+        Return the model servers the remote models of this workflow were allocated on.
+
+        :return: model name -> registered (nameserver) name of the model server
+        """
+        return dict(self._modelServers)
+
+    def getExecutionProfileIndex(self) -> int:
+        """Return the index of the execution profile selected by ``Execution.ExecutionProfileIndex`` (negative: the default profile)."""
+        idx = self.getMetadata('Execution.ExecutionProfileIndex', -1)
+        return -1 if idx is None else int(idx)
+
+    def _modelRequirements(self) -> dict[str, modelplacement.ModelRequirement]:
+        """Return the requirements of the remote models under the selected execution profile (see :func:`modelplacement.modelRequirements`)."""
+        return modelplacement.modelRequirements(self.metadata, self.getExecutionProfileIndex())
 
     def _allocateModelByName(self, *, name, name_new=None):
         if name_new is None:
@@ -148,36 +185,29 @@ class Workflow(model.Model):
             if m['Name'] == name:
                 model_info = m
         if model_info is not None:
-            new_model = self._allocateModel(name=name_new, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
+            # the requirement of the model under the selected execution profile, under the new name
+            requirement = self._modelRequirements().get(name)
+            if requirement is not None:
+                requirement = dataclasses.replace(requirement, model=name_new)
+            new_model = self._allocateModel(name=name_new, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''), requirement=requirement)
             return new_model, name_new
 
     def _allocateAllModels(self):
-        # for model_info in self.metadata['Models']:
-        #     if model_info.get('Instantiate', True):
-        #         self._allocateModelByName(name=model_info.get('Name', ''), name_new=model_info.get('Name', ''))
-        executionProfile = -1
-        # print (self.metadata['Execution'])
-        if 'ExecutionProfileIndex' in self.metadata['Execution']:
-            executionProfile = self.metadata['Execution']['ExecutionProfileIndex']
+        """
+        Allocate the models of the workflow marked ``Instantiate`` (the default).
 
-        log.info("Workflow::executionProfile #%d"%(executionProfile,))
+        Remote models are placed on model servers according to the execution profile selected by
+        ``Execution.ExecutionProfileIndex`` (the default profile if negative or not set): see
+        :mod:`mupif.modelplacement`.
+
+        :raises ValueError: if the selected execution profile does not exist
+        """
+        requirements = self._modelRequirements()
+        log.info(f'Workflow: allocating models with execution profile {modelplacement.profileName(self.metadata, self.getExecutionProfileIndex())}')
         for model_info in self.metadata['Models']:
             if model_info.get('Instantiate', True):
-                name=model_info.get('Name', '')
-                if (executionProfile < 0):
-                    self._allocateModel(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''))
-                else:
-                    raise NotImplementedError('Execution profiles are not yet implemented correctly.')
-                    executionProfile = self.metadata['ExecutionProfiles'][executionProfile]
-                    mep = None
-                    for ep in executionProfile['Models']:
-                        if (ep['Name'] == name):
-                            mep = ep
-                            break
-                    if (mep):
-                        self._allocateModelWithMetadata(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), modelConfiguration=mep)
-                    else:
-                        log.fatal("Workflow::_allocateAllModels: model (%s) execution profile missing for configuration %d"%(name, executionProfile))
+                name = model_info.get('Name', '')
+                self._allocateModel(name=name, modulename=model_info.get('Module', ''), classname=model_info.get('Class', ''), jobmanagername=model_info.get('Jobmanager', ''), requirement=requirements.get(name))
 
     def _initializeAllModels(self):
         _md = self._getInitializationMetadata()
@@ -429,25 +459,44 @@ class Workflow(model.Model):
             _model.updateAndPassMetadata(dictionary=dictionary)
 
     @staticmethod
+    def _hasFreeModelServer(ns, requirement: modelplacement.ModelRequirement) -> bool:
+        """Tell whether some model server compatible with *requirement* has a free job slot now."""
+        for c in modelplacement.findModelServers(ns, requirement):
+            load = modelplacement.serverLoad(c.uri)
+            if load is not None and load.free > 0:
+                log.info(f'Model server {c.nsName} has {load.free} free job slot(s)')
+                return True
+        log.warning(f'No free job slot on model servers for model {requirement.model} ({requirement.describe()})')
+        return False
+
+    @staticmethod
     def checkModelRemoteResource(jobmanagername):
+        """
+        Tell whether some instance of the model server *jobmanagername* has a free job slot now.
+
+        :param jobmanagername: base name of the model server
+        """
         try:
             ns = pyroutil.connectNameserver()
-            jobman = pyroutil.connectJobManager(ns, jobmanagername)
-            free_jobs = jobman.getNumberOfFreeJobs()
-            if free_jobs:
-                log.info("Jobmanager " + jobmanagername + " has " + str(free_jobs) + " free jobs")
-                return True
-            else:
-                log.warning("No available job slots for jobmanager " + jobmanagername)
-                return False
+            req = modelplacement.ModelRequirement(model=jobmanagername, identity=frozenset({jobmanagername}), fallbackName=jobmanagername)
+            return Workflow._hasFreeModelServer(ns, req)
         except Exception as e:
             log.exception(e)
             return False
 
     @staticmethod
     def checkModelRemoteResourcesByMetadata(models_md):
-        for model_info in models_md:
-            if model_info.Jobmanager:
-                if Workflow.checkModelRemoteResource(jobmanagername=model_info.Jobmanager) is False:
+        """
+        Tell whether every remote model has a compatible model server with a free job slot now (default execution profile).
+
+        :param models_md: ``Models`` of the workflow metadata
+        """
+        try:
+            ns = pyroutil.connectNameserver()
+            for req in modelplacement.modelRequirements({'Models': models_md}).values():
+                if not Workflow._hasFreeModelServer(ns, req):
                     return False
+        except Exception as e:
+            log.exception(e)
+            return False
         return True

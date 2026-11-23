@@ -204,15 +204,32 @@ class OutputMeta(IOMeta):
 
 
 class ModelInWorkflowMeta(BaseMeta):
-    'Metadata for Model as part of a workflow'
+    '''
+    Metadata for Model as part of a workflow.
+
+    A model is either local (``Module`` and ``Class``) or allocated on a model server. A model server
+    is compatible with the model if its nameserver registration carries the ``Jobmanager`` name (the
+    base name of the server: all its instances qualify) or, if ``ModelID`` is given, the tag
+    ``ModelID:<ModelID>`` (servers registered under any name which serve the model with this ID).
+    Execution profiles may add further requirements; see :mod:`mupif.modelplacement`.
+
+    ``Instantiate`` false marks a template: the model is not allocated when the workflow is
+    initialized; the workflow allocates copies of it itself (``Workflow._allocateModelByName``),
+    e.g. one per loop iteration. The key used to be ignored: it was not declared here, and the
+    dictionary interface of the metadata (``get``, ``in``) only sees declared fields, so every model
+    was allocated at initialization, the template keeping a model-server slot for the whole run.
+    '''
     Name: str
     Module: str = ''
     Class: str = ''
-    Jobmanager: str = ''
+    Jobmanager: str = Field('', description='Base name of the model server(s) offering the model.')
+    ModelID: str = Field('', description='ID of the model (its metadata ID): any model server serving a model with this ID is compatible, whatever its name.')
+    # None (as stored by mupifDB for workflows registered without the key) means the default
+    Instantiate: Annotated[bool, BeforeValidator(lambda v: True if v is None else v)] = Field(True, description='Allocate the model when the workflow is initialized; false: a template the workflow allocates itself later (Workflow._allocateModelByName), e.g. once per loop iteration.')
 
     @pydantic.model_validator(mode='after')
     def _moduleClass_or_jobmanager(self):
-        if self.Jobmanager == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For non-Jobmanager metadata, Module and Name must not be empty ({self.Module=}, {self.Name=})')
+        if self.Jobmanager == '' and self.ModelID == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For metadata without Jobmanager or ModelID, Module and Name must not be empty ({self.Module=}, {self.Name=})')
         return self
 
 
@@ -231,9 +248,16 @@ class ModelMeta(ModelWorkflowCommonMeta):
 
 # TODO: should be *Meta
 class ModelConfiguration(BaseMeta):
+     '''
+     Requirements of one model in an execution profile (see :mod:`mupif.modelplacement`): nameserver
+     tags of model servers, e.g. ``Accuracy_High``, ``Runtime_seconds``, ``ModelID:<id>``.
+     '''
+     #: name of the model in the workflow (``Models[].Name``)
      Name: str
-     RequiredModelMetadata: List[str]
-     OptionalModelMetadata: List[str]
+     #: tags a model server must all carry to run the model
+     RequiredModelMetadata: List[str] = []
+     #: tags preferring a model server (the more, the better)
+     OptionalModelMetadata: List[str] = []
 
 # TODO: should be *Meta
 class WorkflowConfiguration(BaseMeta):
@@ -500,12 +524,14 @@ if 0:
                     "Module": {"type": "string"},
                     "Class": {"type": "string"},
                     "Jobmanager": {"type": "string"},
+                    "ModelID": {"type": "string"},
                     "Instantiate": {"type": "boolean"},
                 },
                 "required": ["Name"],
                 "anyOf": [
                     {"required": ["Module", "Class"]},  # local module with the workflow class
-                    {"required": ["Jobmanager"]}  # remote model
+                    {"required": ["Jobmanager"]},  # remote model
+                    {"required": ["ModelID"]}  # remote model, on any model server serving this model ID
                 ]
             }
         },

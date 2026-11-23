@@ -36,7 +36,7 @@ allEx=[
     ExCfg('11','11',['workflow.py']),
     ExCfg('11d','11',['dist-ex11.py','dist-m1.py','dist-m2.py'],skip=True),
     ExCfg('13','13',['main.py','server.py','application13.py']),
-    ExCfg('14','14-multipleModelServers',['test.py','server.py','server1.py'],skip=True),
+    ExCfg('14','14-multipleModelServers',['test.py','server.py','server.py','server1.py']),
 ]
 
 

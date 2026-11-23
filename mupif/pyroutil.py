@@ -61,6 +61,12 @@ from typing import Optional
 class _NS_METADATA:
     jobmanager = "type:jobmanager"
     appserver = "type:appserver"
+    #: the model server's preAllocate tickets work remotely (they expire, and are recognised when sent
+    #: back over Pyro); clients must not call preAllocate remotely on servers without this tag
+    tickets = "mupif:tickets-v2"
+    #: prefix of the tag carrying the ID of the model a model server serves (its model metadata ``ID``):
+    #: model servers registered under different names but serving the same model share this tag
+    modelID = "ModelID:"
     network = "network:"  # plus JSON
 
 
@@ -278,60 +284,37 @@ def _connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestT
     """
     Connects to a remote service with required (and optional) metadata.
 
+    All services registered with all the required tags are candidates; those carrying more of the
+    optional tags are tried first (random order among equal ones), and the first one answering
+    ``getApplicationSignature()`` is returned. For model servers, prefer
+    :func:`connectModelServerWithMetadata`, which also considers their load.
+
     :param Pyro5.naming.Nameserver ns: Instance of a nameServer
     :param set[str] requiredMData: list of compulsory, required metadata the service should match
-    :param set[str] optionalMData: list of optional metadata of the service 
+    :param set[str] optionalMData: list of optional metadata of the service
     :param connectionTestTimeOut timeout for connection test
     :return: Application
     :rtype: Instance of an application
     :raises Exception: When cannot find registered server or Cannot connect to application or Timeout passes
     """
-    raise NotImplementedError('Execution profiles not yet implemented correctly.')
-    try:
-        candidates = ns.yplookup(meta_all=requiredMData)
-        if not candidates:
-            raise Exception('_connectAppWithMetadata: NS yplookup failed')
-        # now to select optimal candidate
-        # if optionalMData are empty select random one
-        candidateScores = {}
-        print("Candidates:", candidates)
-        # assign each candidate a score 
-        for key, value in candidates.items():
-            name = key
-            if (not optionalMData):
-                candidateScores[name]=1 # all candidates will have the same score if no optional metedata 
-            else:
-                # value[0] URI, value[1] metadata
-                # select the optimal one as the one matching max number of optionalMData entries
-                score = len(optionalMData.intersection(value[1]))
-                candidateScores[name]=score
-        
-        # now sort candidates (makes sense onbly if optional metadata exist)
-        if (not optionalMData):
-            orderedCandidates = candidates
-        else:
-            orderedCandidates = collections.OrderedDict(sorted(candidates.items(), key=lambda item: item[1], reverse=True))
-        
-        #ok now go over orderedCandidates and try to connect 
-        for key, val in orderedCandidates.items():
-            name = key
-            uri=val[0]
-            app = Pyro5.api.Proxy(uri)
-            log.info(f"Trying to Connect to application {name} with {uri}")
-            try:
-                app._pyroTimeout = connectionTestTimeOut
-                sig = app.getApplicationSignature()
-                app._pyroTimeout = None
-                log.info("Connected to " + sig + " with the application " + name)
-                return app
-            except Exception as e:
-                log.exception(f"Cannot connect to application {name}. Is the server running?")
-                continue
-        # we ended here withou succesfull connection
-        raise Exception("PyroUtil::Cannot connect to any suitable candidate")
-    
-    except Exception as e:
-        raise
+    optional = frozenset(optionalMData or ())
+    candidates = ns.yplookup(meta_all=set(requiredMData), return_metadata=True)
+    if not candidates:
+        raise Exception(f'_connectAppWithMetadata: no service registered with metadata {sorted(requiredMData)}')
+    # more optional tags first; random among equal scores (spreads clients over equal services)
+    ordered = sorted(candidates.items(), key=lambda item: (-len(optional & frozenset(item[1][1] or ())), random.random()))
+    for name, (uri, _) in ordered:
+        app = Pyro5.api.Proxy(uri)
+        log.info(f"Trying to Connect to application {name} with {uri}")
+        try:
+            app._pyroTimeout = connectionTestTimeOut
+            sig = app.getApplicationSignature()
+            app._pyroTimeout = None
+            log.info("Connected to " + sig + " with the application " + name)
+            return app
+        except Exception:
+            log.exception(f"Cannot connect to application {name}. Is the server running?")
+    raise Exception("PyroUtil::Cannot connect to any suitable candidate")
 
 def connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestTimeOut=10.):
     return _connectAppWithMetadata(ns, requiredMData, optionalMData, connectionTestTimeOut)
@@ -349,7 +332,81 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
-def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None):
+def removeOwnRegistration(ns, name: str, uri) -> bool:
+    """
+    Remove a nameserver entry, but only if it still points to the given object.
+
+    A server removes its registration when it exits. If, meanwhile, another server registered
+    under the same name (an old server overwrites a name it finds registered, see :func:`runServer`),
+    removing the name unconditionally would make that other server unreachable although it is still
+    running. Checking the URI first avoids this. The check and the removal are two nameserver calls,
+    so a registration made exactly between them could still be removed; this is unlikely enough.
+
+    :param ns: nameserver proxy
+    :param name: registered name
+    :param uri: URI of the object registered by the caller; if None (not known, e.g. the object was
+                registered by other means), the name is removed unconditionally, as before
+    :return: whether the entry was removed
+    """
+    if uri is not None:
+        try:
+            current = ns.lookup(name)
+        except Pyro5.errors.NamingError:
+            return False
+        if str(current) != str(uri):
+            log.warning(f'Not removing {name} from the nameserver: it is registered by another object now ({current}, ours was {uri})')
+            return False
+    try:
+        ns.remove(name)
+    except Pyro5.errors.NamingError:
+        return False
+    return True
+
+
+def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, interval: float = 30.) -> None:
+    """
+    Keep a nameserver registration in place until *stop* is set (run in a thread of the server).
+
+    Every *interval* seconds the entry *name* is looked up. If it is missing (the nameserver was
+    restarted, or a client removed the entry of a server it could not reach -- the mupifDB
+    scheduler removes model servers unreachable for a while), the server registers again with the
+    same URI and metadata. If the name points to another object which answers, it is left alone
+    (logged once); if that object does not answer, the entry is taken back. A nameserver which
+    cannot be reached is tried again at the next check. Never raises.
+
+    :param nsUri: URI of the nameserver (a proxy of its own is used: proxies belong to one thread)
+    :param name: registered name
+    :param uri: URI of the server
+    :param metadata: tags to register with
+    :param stop: set when the server leaves the nameserver itself, so that it is not registered again
+    :param interval: seconds between two checks
+    """
+    ns = Pyro5.api.Proxy(nsUri)
+    ns._pyroTimeout = 10
+    takenBy = None
+    while not stop.wait(interval):
+        try:
+            try:
+                current = ns.lookup(name)
+            except Pyro5.errors.NamingError:
+                current = None
+            if current is not None and str(current) == str(uri):
+                takenBy = None
+                continue
+            if current is not None and _isAlive(current, 5.):
+                if str(current) != takenBy:
+                    log.warning(f'{name} in the nameserver points to another running server ({current}); not registering {uri} again')
+                    takenBy = str(current)
+                continue
+            if stop.is_set():
+                break
+            ns.register(name, uri, metadata=metadata)
+            log.warning(f'{name} was missing in the nameserver (or registered by a server which does not answer): registered again')
+        except Exception as e:
+            log.debug(f'Checking the registration of {name} failed (nameserver unreachable?): {e}')
+
+
+def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None, watchInterval: float = 0):
     """
     Runs a simple application server
 
@@ -358,6 +415,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated.
+    :param watchInterval: if positive, check the registration every so many seconds and register again when it is missing (see :func:`watchRegistration`); the check stops when the server leaves the nameserver (process exit, SIGTERM, or ``app._nsWatchStop`` set by the server)
 
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
@@ -395,10 +453,18 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
 
     log.debug(f'Running {appName} at {uri} (nameserver: {ns._pyroUri})')
 
+    # set when the server leaves the nameserver, so that the watch does not register it again
+    watchStop = threading.Event()
+    if watchInterval > 0:
+        app._nsWatchStop = watchStop
+        threading.Thread(target=watchRegistration, args=(ns._pyroUri, appName, uri, metadata, watchStop, watchInterval),
+                         daemon=True, name=f'ns-watch:{appName}').start()
+
     def _remove_from_ns(sig=None, stack=None):
+        watchStop.set()
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
         ns._pyroClaimOwnership()
-        ns.remove(appName)
+        removeOwnRegistration(ns, appName, uri)
         log.warning('done')
         # important: when handling a signal, reset the handler and re-emit it
         # otherwise e.g. TERM would not cause the process to terminate
@@ -441,9 +507,72 @@ def runAppServer(*, appName, app, ns):
 def runJobManagerServer(*args,**kw):
     return runModelServer(*args,**kw)
 
+#: separates the base name of a model server from its instance id in the registered name (``CVUT.demo01~node2``);
+#: chosen because it needs no escaping in job IDs (``N@<name>``), file names of job work directories and URLs
+INSTANCE_SEPARATOR = '~'
+
+
+def _isAlive(uri, timeout: float) -> bool:
+    """Tell whether the object at *uri* answers ``getApplicationSignature()`` within *timeout* seconds."""
+    try:
+        proxy = Pyro5.api.Proxy(uri)
+        proxy._pyroTimeout = timeout
+        proxy._pyroMaxRetries = 1
+        proxy.getApplicationSignature()
+        return True
+    except Exception:
+        return False
+
+
+def modelServerNSName(ns, jobman, aliveTimeout: float = 5.) -> str:
+    """
+    Choose the name under which a model server is registered in the nameserver.
+
+    Several instances of one model server (same base name, :meth:`ModelServerBase.getName`) may
+    run at once, e.g. on different hosts, to share the load. Each needs its own nameserver entry;
+    clients find all of them by the base name, which every instance carries as a metadata tag
+    (see :func:`runModelServer` and :mod:`mupif.modelplacement`). To stay compatible with clients
+    that look a model server up by its exact base name (older mupif, other platforms), the name is:
+
+    * ``<base>~<instance>`` if the server was given an instance id (``instance`` argument of the
+      model server, or the environment variable ``MUPIF_MODELSERVER_INSTANCE``);
+    * else ``<base>`` if that name is free, or registered by a server which does not answer any
+      more (a stale entry left by a crashed server: it is overwritten, as before);
+    * else ``<base>~<host>-<pid>``: another live instance holds the base name. Before, the second
+      server silently replaced the first in the nameserver, and the first became unreachable.
+
+    So a single model server keeps its old name, and the first of several instances stays reachable
+    by clients that use exact names.
+
+    :param ns: nameserver proxy
+    :param jobman: the model server
+    :param aliveTimeout: seconds to wait for the holder of the base name to answer
+    :return: the name to register
+    """
+    base = jobman.getName()
+    instance = getattr(jobman, 'instance', None)
+    if instance:
+        return f'{base}{INSTANCE_SEPARATOR}{instance}'
+    try:
+        uri = ns.lookup(base)
+    except Pyro5.errors.NamingError:
+        return base
+    if not _isAlive(uri, aliveTimeout):
+        log.warning(f'Model server name {base} is registered by an object which does not answer ({uri}): taking the name over')
+        return base
+    name = f'{base}{INSTANCE_SEPARATOR}{socket.gethostname()}-{os.getpid()}'
+    log.warning(f'Model server name {base} is held by another running instance ({uri}): registering this one as {name}')
+    return name
+
+
 def runModelServer(*, ns, jobman):
     """
     Registers and runs given jobManager server
+
+    The server is registered under the name chosen by :func:`modelServerNSName` (its base name, or
+    an instance name if another instance holds the base name), tagged with ``type:jobmanager``, its
+    base name and characteristics of its model (accuracy, robustness, run time), so that clients
+    can find every instance offering a model by these tags.
 
     :param str server: Host name of the server (internal host name)
     :param int port: Port number on the server where daemon will listen (internal port number)
@@ -451,27 +580,80 @@ def runModelServer(*, ns, jobman):
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
-    modelMD=jobman.getModelMetadata()
-    #print(modelMD)
-    estRunTime=modelMD['Solver']['Estim_comp_time_s']
-    Runtime=""
-    if (estRunTime < 60):
-        Runtime = "Runtime_seconds"
-    elif (estRunTime< 60*60):
-        Runtime = "Runtime_minutes"
-    elif (estRunTime<60*60*24):
-        Runtime = "Runtime_hours"
-    else:
-        Runtime = "Runtime_days"
+    # entries of instances of this model server which crashed (no answer) would stay forever and be
+    # tried by every client; remove them (only if they still point to the dead server)
+    removeStaleModelServers(ns, jobman.getName())
+    # register under a name unique among the running instances (see modelServerNSName); runServer
+    # passes it to jobman.registerPyro, after which jobman.getNSName() returns it. The registration
+    # is watched and restored if it disappears (see watchRegistration).
+    return runServer(ns=ns, appName=modelServerNSName(ns, jobman), app=jobman, metadata=modelServerTags(jobman),
+                     watchInterval=getattr(jobman, 'registrationCheckInterval', 30.))
 
-    # use jobnman.getNSName() as nameserver registration name, which is constructed from modelServer base name and is unique
-    # inject modelServer base name into metadata as well as selected model characteristics, so later modelServer with given metadata can be looked up.
-    return runServer(
-        ns=ns,
-        appName=jobman.getNSName(),
-        app=jobman,
-        metadata={_NS_METADATA.jobmanager, jobman.getName(), "Accuracy_%s"%(modelMD['Solver']['Accuracy'],), "Robustness_%s"%(modelMD['Solver']['Robustness'],), Runtime}
-    )
+
+def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list[str]:
+    """
+    Remove nameserver entries of model servers of base name *baseName* which do not answer.
+
+    A model server killed (SIGKILL, crash, host down) leaves its entry behind. Under the base name
+    the next server of that name takes it over (:func:`modelServerNSName`), but an entry under an
+    instance name (``<base>~<host>-<pid>``) stayed for ever. Called by a model server when it
+    starts; the mupifDB scheduler removes servers unreachable for a while, too. An entry is removed
+    only if it still points to the server which did not answer (:func:`removeOwnRegistration`).
+
+    :param ns: nameserver proxy
+    :param baseName: base name of the model server (its tag in the nameserver)
+    :param aliveTimeout: seconds to wait for each server to answer
+    :return: names of the removed entries
+    """
+    removed = []
+    try:
+        entries = ns.yplookup(meta_all={_NS_METADATA.jobmanager, baseName}, return_metadata=True)
+    except Exception:
+        log.exception(f'Cannot list the model servers {baseName} in the nameserver')
+        return removed
+    for name, (uri, _) in entries.items():
+        if _isAlive(uri, aliveTimeout):
+            continue
+        if removeOwnRegistration(ns, name, uri):
+            log.warning(f'Removed {name} from the nameserver: the model server registered there ({uri}) does not answer')
+            removed.append(name)
+    return removed
+
+
+def modelServerTags(jobman) -> set[str]:
+    """
+    Return the nameserver metadata tags of a model server registration.
+
+    Clients find model servers by these tags (see :mod:`mupif.modelplacement`); all instances of a
+    model server carry the same tags:
+
+    * ``type:jobmanager``;
+    * the base name (:meth:`ModelServerBase.getName`), which workflows give as ``Jobmanager``;
+    * ``ModelID:<ID>``, the ID from the model metadata, if set: shared by servers registered under
+      different names which serve the same model;
+    * ``Accuracy_<x>``, ``Robustness_<x>`` (from the model's ``Solver`` metadata) and
+      ``Runtime_seconds|minutes|hours|days`` (from ``Solver.Estim_comp_time_s``), which execution
+      profiles may require;
+    * ``mupif:tickets-v2`` if the server's preAllocate tickets work remotely.
+
+    :param jobman: the model server
+    """
+    modelMD = jobman.getModelMetadata()
+    estRunTime = modelMD['Solver']['Estim_comp_time_s']
+    if estRunTime < 60:
+        runtime = "Runtime_seconds"
+    elif estRunTime < 60*60:
+        runtime = "Runtime_minutes"
+    elif estRunTime < 60*60*24:
+        runtime = "Runtime_hours"
+    else:
+        runtime = "Runtime_days"
+    tags = {_NS_METADATA.jobmanager, jobman.getName(), f"Accuracy_{modelMD['Solver']['Accuracy']}", f"Robustness_{modelMD['Solver']['Robustness']}", runtime}
+    if modelMD.get('ID', '') != '':
+        tags.add(_NS_METADATA.modelID+str(modelMD['ID']))
+    if getattr(jobman, 'remoteTickets', False):
+        tags.add(_NS_METADATA.tickets)
+    return tags
 
 
 def getIPfromUri(uri):
@@ -528,24 +710,36 @@ def connectModelServer(ns, jobManName):
     :raises Exception: if creation of a tunnel failed
     """
 
+    # an exact lookup, so that callers asking for a particular server get it; to choose among all
+    # instances of a model server, see connectModelServerWithMetadata and mupif.modelplacement
     return modelserverbase.RemoteModelServer(_connectApp(ns, jobManName))
-    ### TODO: this would be for modelservers once we are compatible with execution profiles
-    ### TODO: see also ModelServerBase.getNSName() which must be changed accordingly
-    # return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, {jobManName}))
 
-def connectModelServerWithMetadata(ns, metadata, optionalMetadata={}):
+def connectModelServerWithMetadata(ns, metadata, optionalMetadata=frozenset()):
     """
-    Connect to jobManager described by given jobManRec and create an optional ssh tunnel
+    Connect to the best model server registered with all tags in *metadata*.
 
-    :param jobManName name under which jobmanager is registered on NS
+    Candidates are ranked as for workflow models (:func:`mupif.modelplacement.rankCandidates`):
+    servers with a free job slot first, then more of the *optionalMetadata* tags, then less loaded;
+    the first one which answers is returned. To place the models of a workflow, the workflow uses
+    :mod:`mupif.modelplacement` directly (with fallback when the allocation itself fails).
 
-    :return: (JobManager proxy, jobManager Tunnel)
-    :rtype: jobmanager.RemoteJobManager
-    :raises Exception: if creation of a tunnel failed
+    :param metadata: tags the server must carry (e.g. its base name, ``ModelID:<id>``, ``Runtime_seconds``)
+    :param optionalMetadata: tags preferring a server
+    :rtype: modelserverbase.RemoteModelServer
+    :raises RuntimeError: if no compatible server is registered or answers
     """
-    raise NotImplementedError('Execution profiles not yet implemented correctly.')
-
-    return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, metadata, optionalMetadata))
+    from . import modelplacement as mpl
+    required = frozenset(metadata) | {mpl.JOBMANAGER_TAG}
+    optional = frozenset(optionalMetadata or ())
+    res = ns.yplookup(meta_all=set(required), return_metadata=True)
+    candidates = [mpl.Candidate(nsName=n, uri=str(u), tags=frozenset(t or ()), score=len(frozenset(t or ()) & optional)) for n, (u, t) in res.items()]
+    loads = {c.nsName: mpl.serverLoad(c.uri) for c in candidates}
+    for c in mpl.rankCandidates(candidates, loads):
+        try:
+            return modelserverbase.RemoteModelServer(_connectApp(ns, c.nsName))
+        except Exception:
+            log.exception(f'Cannot connect to model server {c.nsName}; trying the next one')
+    raise RuntimeError(f'No model server registered with metadata {sorted(required)} is reachable.')
 
 
 @deprecated.deprecated(reason='Use allocateApplicationWithModelServer instead')
@@ -575,6 +769,10 @@ def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri):
             status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
             log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
         log.info(f'Allocated job, returned record from modelServer: {status},{jobid},{jobport}')
+    except modelserverbase.ModelServerNoResourcesException as e:
+        # an expected outcome (the server is busy): the caller retries elsewhere or later, no traceback
+        log.warning(f'ModelServerBase allocateJob(): no free job slot ({e})')
+        raise
     except Exception:
         log.exception("ModelServerBase allocateJob() failed")
         print("| ".join(Pyro5.errors.get_pyro_traceback()))
