@@ -75,6 +75,8 @@ class ModelServer (modelserverbase.ModelServerBase):
         remoteLogUri: str
 
     ticketExpireTimeout = 10
+    #: seconds allocateJob waits for a spawned job to report its URI; a job not ready by then is killed
+    jobStartTimeout = 10
     #: preAllocate tickets work over Pyro (advertised as the nameserver tag ``mupif:tickets-v2``)
     remoteTickets = True
 
@@ -295,6 +297,8 @@ class ModelServer (modelserverbase.ModelServerBase):
                     log.exception(e)
                     raise
                     # return JOBMAN_ERR, None
+                # the job process, once spawned: killed again if the allocation fails (see _discardJob)
+                proc = None
                 try:
                     args = ModelServer.SpawnedProcessArgs(
                         uriFileName=targetWorkDir+'/_mupif_uri',
@@ -319,7 +323,7 @@ class ModelServer (modelserverbase.ModelServerBase):
                     env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
                     proc = subprocess.Popen([sys.executable, '-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
-                    tMax = 10
+                    tMax = self.jobStartTimeout
                     while time.time()-t0 < tMax:
                         if os.path.exists(args.uriFileName):
                             uri = open(args.uriFileName, 'r').read()
@@ -334,13 +338,16 @@ class ModelServer (modelserverbase.ModelServerBase):
                     log.info('Received URI: %s' % uri)
                     jobPort = int(uri.split(':')[-1])
                     log.info(f'Job runs on port {jobPort}')
+
+                    # get model metadta remotely
+                    model = Pyro5.api.Proxy(uri)
+                    timeout = model.getMetadata('Timeout')
                 except Exception as e:
                     log.exception(e)
+                    # the job is not handed out nor recorded in activeJobs: nobody would ever
+                    # terminate it, and it would keep running (and keep its nameserver entry)
+                    self._discardJob(proc, jobID)
                     raise
-
-                # get model metadta remotely
-                model = Pyro5.api.Proxy(uri)
-                timeout = model.getMetadata('Timeout')
 
                 # check if uri is ok
                 # either by doing some sort of regexp or query ns for it
@@ -355,6 +362,35 @@ class ModelServer (modelserverbase.ModelServerBase):
                 log.error(f'ModelServer: no more resources, activeJobs:{len(self.activeJobs)} + nTickets:{self.__getNumberOfActiveTickets()} >= maxJobs:{self.maxJobs}')
                 raise modelserverbase.ModelServerNoResourcesException("ModelServer: no more resources")
                 # return (JOBMAN_NO_RESOURCES,None)
+
+    def _discardJob(self, proc, jobID):
+        """
+        Kill a job whose allocation failed, and remove its nameserver entry; never raises.
+
+        allocateJob used to leave such a job running: e.g. a job which registered itself only after
+        allocateJob had stopped waiting for it (jobStartTimeout) ran on, unknown to the server,
+        with its nameserver entry, until killed by hand.
+
+        :param proc: the job process (None if it was not spawned)
+        :param jobID: the job's ID (its nameserver name)
+        """
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(2)
+            except subprocess.TimeoutExpired:
+                log.warning(f'{jobID} still running 2 s after SIGTERM, killing it.')
+                proc.kill()
+                try:
+                    proc.wait(2)
+                except subprocess.TimeoutExpired:
+                    log.error(f'{jobID} (pid {proc.pid}) did not end after SIGKILL')
+        try:
+            # job IDs are unique to this server instance (N@<registered name>), so the entry is the job's
+            self.ns._pyroClaimOwnership()
+            self.ns.remove(jobID)
+        except Exception:
+            log.exception(f'Could not remove {jobID} from the nameserver')
 
     def terminateJob(self, jobID):
         """

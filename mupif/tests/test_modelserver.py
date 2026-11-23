@@ -48,6 +48,16 @@ class TimeoutModel(mp.Model):
         import time
         time.sleep(10)
 
+@Pyro5.api.expose
+class SlowStartModel(mp.Model):
+    'A model whose job takes longer to start than the model server waits for it.'
+    def __init__(self,metadata=None):
+        super().__init__()
+        import time, os
+        # quick in the model server's own process (it instantiates the class for its metadata);
+        # slow in the job process, which the server tells by the environment of the spawned job
+        if os.environ.get('MUPIF_LOG_PROCESSNAME','').endswith('@appSlow'): time.sleep(5)
+
 # find free port so that previously hung test does not block us
 def availablePort(p0,p1,host='127.0.0.1'):
     import socket
@@ -245,6 +255,25 @@ class ModelServer_TestCase(unittest.TestCase):
             remote.terminateJob(jobId)
             self.assertEqual(remote.getNumberOfFreeJobs(),1)
         finally:
+            srv.terminate(force=True)
+
+    def test_failedAllocationLeavesNoJob(self):
+        'A job which does not start in time is killed (it used to run on unknown to the server, an orphan).'
+        import psutil
+        cls=self.__class__
+        srv=mp.ModelServer(ns=cls.ns,appName='appSlow',workDir=cls.tmp,appClass=SlowStartModel,maxJobs=1)
+        srv.jobStartTimeout=1
+        uri=cls.daemon.register(srv)
+        srv.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName='appSlow',exclusiveDaemon=False)
+        def jobs(): return [p for p in psutil.process_iter(['cmdline']) if any('1@appSlow' in c for c in (p.info['cmdline'] or []))]
+        try:
+            with self.assertRaises(RuntimeError): srv.allocateJob(user='user')
+            self.assertEqual(jobs(),[])
+            with self.assertRaises(Pyro5.errors.NamingError): cls.ns.lookup('1@appSlow')
+            # the slot is free again
+            self.assertEqual(srv.getNumberOfFreeJobs(),1)
+        finally:
+            for p in jobs(): p.kill()
             srv.terminate(force=True)
 
     def test_jobIdUsesRegisteredName(self):
