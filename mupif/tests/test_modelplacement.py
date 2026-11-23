@@ -258,3 +258,30 @@ def test_allocate_noneAccepts():
         mpl.allocateOnCandidates(REQ, [cand('a')], allocate)
     with pytest.raises(RuntimeError, match='No model server compatible'):
         mpl.allocateOnCandidates(REQ, [], allocate)
+
+
+# --- the workflow side -----------------------------------------------------------------------------
+
+class ProfiledWorkflow(mp.Workflow):
+    def __init__(self, metadata=None):
+        super().__init__(metadata={'Name': 'wf', 'ID': 'wf', 'Description': '', 'Inputs': [], 'Outputs': [],
+                                   'Models': WORKFLOW_MD['Models'], 'ExecutionProfiles': WORKFLOW_MD['ExecutionProfiles']})
+        self.updateMetadata(metadata)
+
+
+def test_workflow_profileSelection():
+    wf = ProfiledWorkflow()
+    # no profile selected: the default one
+    assert wf.getExecutionProfileIndex() == -1
+    assert wf._modelRequirements()['thermal'].required == set()
+    wf = ProfiledWorkflow(metadata={'Execution': {'ExecutionProfileIndex': 0}})
+    assert wf.getExecutionProfileIndex() == 0
+    assert wf._modelRequirements()['thermal'].required == {'Runtime_seconds'}
+    assert wf.getModelServers() == {}
+
+
+def test_workflow_unknownProfile():
+    # an execution profile the workflow does not have is an error before anything is allocated
+    wf = ProfiledWorkflow(metadata={'Execution': {'ExecutionProfileIndex': 3}})
+    with pytest.raises(ValueError, match='Execution profile #3'):
+        wf._allocateAllModels()

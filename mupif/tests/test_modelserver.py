@@ -295,6 +295,62 @@ class ModelServer_TestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp,instance='node 2')
 
+    def test_workflowPlacesModelsOnInstances(self):
+        'A workflow allocates its model on the least loaded instance of the model server, and reports where.'
+        cls=self.__class__
+        # the servers get a daemon of their own, serving requests in threads: allocateJob blocks
+        # until the spawned job is up, and the job logs to the workflow's log receiver, which is in
+        # the (single-threaded) class daemon; sharing it would deadlock (as it never happens when
+        # model servers run in their own processes)
+        import threading
+        serverType,Pyro5.config.SERVERTYPE=Pyro5.config.SERVERTYPE,'thread'
+        try: daemon=Pyro5.api.Daemon(host='127.0.0.1')
+        finally: Pyro5.config.SERVERTYPE=serverType
+        threading.Thread(target=daemon.requestLoop,daemon=True).start()
+        servers={}
+        for nsName in ('appWf','appWf~2'):
+            srv=mp.ModelServer(ns=cls.ns,appName='appWf',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=2)
+            uri=daemon.register(srv)
+            srv.registerPyro(daemon=daemon,ns=cls.ns,uri=uri,appName=nsName,exclusiveDaemon=False)
+            # the tags runModelServer would give (testApp has no Solver metadata for modelServerTags)
+            cls.ns.register(nsName,uri,metadata={'type:jobmanager','appWf','mupif:tickets-v2'})
+            servers[nsName]=srv
+
+        class Wf(mp.Workflow):
+            def __init__(self,metadata=None):
+                super().__init__(metadata={'Name':'wf','ID':'wf','Description':'','Inputs':[],'Outputs':[],'Models':[{'Name':'m','Jobmanager':'appWf'}]})
+            # testApp has too little metadata (no Solver) for the dependency record; not tested here
+            def generateModelDependencies(self): pass
+
+        nsPrev=os.environ.get('MUPIF_NS')
+        os.environ['MUPIF_NS']=f'{cls.ns._pyroUri.host}:{cls.ns._pyroUri.port}'
+        workflows=[]
+        def start():
+            wf=Wf()
+            workflows.append(wf)
+            wf.initialize(metadata={'Execution':{'ID':'1','Use_case_ID':'1','Task_ID':'1'}})
+            return wf.getModelServers()['m']
+        try:
+            # one slot of the base-name instance is taken: the other instance is less loaded
+            servers['appWf'].allocateJob(user='other')
+            self.assertEqual(start(),'appWf~2')
+            # both at 50 %: either; then the remaining one
+            first=start()
+            self.assertIn(first,servers)
+            self.assertEqual(start(),'appWf~2' if first=='appWf' else 'appWf')
+            # all four slots taken: no resources (the scheduler would retry later)
+            with self.assertRaises(mp.modelserverbase.ModelServerNoResourcesException):
+                start()
+        finally:
+            if nsPrev is None: del os.environ['MUPIF_NS']
+            else: os.environ['MUPIF_NS']=nsPrev
+            for wf in workflows:
+                try: wf.terminate()
+                except Exception: pass
+            for srv in servers.values():
+                srv.terminate(force=True)
+            daemon.shutdown()
+
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
         cls=self.__class__

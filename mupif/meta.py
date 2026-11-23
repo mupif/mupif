@@ -240,9 +240,16 @@ class ModelMeta(ModelWorkflowCommonMeta):
 
 # TODO: should be *Meta
 class ModelConfiguration(BaseMeta):
+     '''
+     Requirements of one model in an execution profile (see :mod:`mupif.modelplacement`): nameserver
+     tags of model servers, e.g. ``Accuracy_High``, ``Runtime_seconds``, ``ModelID:<id>``.
+     '''
+     #: name of the model in the workflow (``Models[].Name``)
      Name: str
-     RequiredModelMetadata: List[str]
-     OptionalModelMetadata: List[str]
+     #: tags a model server must all carry to run the model
+     RequiredModelMetadata: List[str] = []
+     #: tags preferring a model server (the more, the better)
+     OptionalModelMetadata: List[str] = []
 
 # TODO: should be *Meta
 class WorkflowConfiguration(BaseMeta):
