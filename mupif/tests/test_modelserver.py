@@ -209,6 +209,39 @@ class ModelServer_TestCase(unittest.TestCase):
         stat=jobManTime.getStatus()
         self.assertEqual(len(stat),0) # not in active jobs anymore
 
+    def test_jobIdUsesRegisteredName(self):
+        'Jobs of a server registered under an instance name are named after that name, so that jobs of two instances do not collide.'
+        cls=self.__class__
+        inst=mp.ModelServer(ns=cls.ns,appName='appInst',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        self.assertEqual(inst.getNSName(),'appInst') # not registered yet: the base name
+        uri=cls.daemon.register(inst)
+        inst.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName='appInst#2',exclusiveDaemon=False)
+        cls.ns.register('appInst#2',uri)
+        self.assertEqual(inst.getName(),'appInst')
+        self.assertEqual(inst.getNSName(),'appInst#2')
+        try:
+            (retCode,jobId,port)=inst.allocateJob(user='user')
+            self.assertEqual(jobId,'1@appInst#2')
+        finally:
+            inst.terminate(force=True)
+        # terminate removed its own registration
+        with self.assertRaises(Pyro5.errors.NamingError): cls.ns.lookup('appInst#2')
+
+    def test_removeOwnRegistration(self):
+        'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
+        cls=self.__class__
+        ours,theirs='PYRO:ours@127.0.0.1:1','PYRO:theirs@127.0.0.1:2'
+        cls.ns.register('shared-name',theirs)
+        self.assertFalse(mp.pyroutil.removeOwnRegistration(cls.ns,'shared-name',ours))
+        self.assertEqual(str(cls.ns.lookup('shared-name')),theirs)
+        self.assertTrue(mp.pyroutil.removeOwnRegistration(cls.ns,'shared-name',theirs))
+        with self.assertRaises(Pyro5.errors.NamingError): cls.ns.lookup('shared-name')
+        # nothing registered: nothing to remove
+        self.assertFalse(mp.pyroutil.removeOwnRegistration(cls.ns,'shared-name',theirs))
+        # unknown URI: removed unconditionally (the behaviour before the check was added)
+        cls.ns.register('shared-name',theirs)
+        self.assertTrue(mp.pyroutil.removeOwnRegistration(cls.ns,'shared-name',None))
+
 
 
 

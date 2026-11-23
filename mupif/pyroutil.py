@@ -349,6 +349,37 @@ def getNSAppName(jobname, appname):
     return 'Mupif'+'.'+jobname+'.'+appname
 
 
+def removeOwnRegistration(ns, name: str, uri) -> bool:
+    """
+    Remove a nameserver entry, but only if it still points to the given object.
+
+    A server removes its registration when it exits. If, meanwhile, another server registered
+    under the same name (an old server overwrites a name it finds registered, see :func:`runServer`),
+    removing the name unconditionally would make that other server unreachable although it is still
+    running. Checking the URI first avoids this. The check and the removal are two nameserver calls,
+    so a registration made exactly between them could still be removed; this is unlikely enough.
+
+    :param ns: nameserver proxy
+    :param name: registered name
+    :param uri: URI of the object registered by the caller; if None (not known, e.g. the object was
+                registered by other means), the name is removed unconditionally, as before
+    :return: whether the entry was removed
+    """
+    if uri is not None:
+        try:
+            current = ns.lookup(name)
+        except Pyro5.errors.NamingError:
+            return False
+        if str(current) != str(uri):
+            log.warning(f'Not removing {name} from the nameserver: it is registered by another object now ({current}, ours was {uri})')
+            return False
+    try:
+        ns.remove(name)
+    except Pyro5.errors.NamingError:
+        return False
+    return True
+
+
 def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None):
     """
     Runs a simple application server
@@ -398,7 +429,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     def _remove_from_ns(sig=None, stack=None):
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
         ns._pyroClaimOwnership()
-        ns.remove(appName)
+        removeOwnRegistration(ns, appName, uri)
         log.warning('done')
         # important: when handling a signal, reset the handler and re-emit it
         # otherwise e.g. TERM would not cause the process to terminate

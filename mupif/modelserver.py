@@ -252,7 +252,11 @@ class ModelServer (modelserverbase.ModelServerBase):
                     self.tickets.remove(ticket)  # remove ticket
                 # update job counter
                 self.jobCounter = self.jobCounter+1
-                jobID = str(self.jobCounter)+"@"+self.applicationName
+                # the job registers itself in the nameserver under its jobID, so the ID must be unique
+                # among all running model servers: use the registered (instance) name, not the base
+                # name shared by all instances of this model server; for a single instance
+                # registered under its base name this is the same as before ("N@appName")
+                jobID = str(self.jobCounter)+"@"+self.getNSName()
                 log.debug('trying to allocate '+jobID)
                 # run the new application instance served by corresponding pyro daemon in a new process
 
@@ -388,14 +392,16 @@ class ModelServer (modelserverbase.ModelServerBase):
         log.info('No more jobs will be accepted.')
         if not force and self.activeJobs:
             raise RuntimeError(f'There are {len(self.activeJobs)} active jobs; call terminate(force=True) to kill them.')
+        nsName = self.getNSName()
         try:
             self.terminateAllJobs()
             self.ns._pyroClaimOwnership()
-            self.ns.remove(self.applicationName)
-            log.debug("Removing job manager %s from a nameServer %s" % (self.applicationName, self.ns))
+            # remove the entry of this instance only: another instance of the same model server
+            # may have taken over the name meanwhile (see pyroutil.removeOwnRegistration)
+            pyroutil.removeOwnRegistration(self.ns, nsName, self.pyroURI)
+            log.debug("Removing job manager %s from a nameServer %s" % (nsName, self.ns))
         except Exception as e:
-            log.debug("Can not remove job manager %s from a nameServer %s" % (self.applicationName, self.ns))
-            log.exception(f"Can not remove job {self.applicationName} from nameserver {self.ns}")
+            log.exception(f"Can not remove job manager {nsName} from nameserver {self.ns}")
         if self.pyroDaemon:
             try:
                 self.pyroDaemon.unregister(self)

@@ -178,12 +178,26 @@ class ModelServerBase(object):
     def getStatus(self) -> List[ModelServerStatus.JobStatus]: return []
 
     def getNSName(self):
-        return self.getName()
-        ## TODO: Execution profiles need to return variable NS name, but we need to stay compatible with old ModelServers now
-        ## TODO: see also comment
-        return f"{self.applicationName}_{os.getpid()}@{socket.gethostname()}"
-    
+        """
+        Return the name under which this model server is registered in the nameserver.
+
+        It is the base name (:meth:`getName`) unless the server was registered under another name:
+        several instances of the same model server may run at once, and each needs its own
+        nameserver entry (see :func:`mupif.pyroutil.runModelServer`, which chooses the name and
+        passes it to :meth:`registerPyro`). The name is unique among the registered servers, so it
+        also identifies this instance in job IDs and when the server removes itself from the
+        nameserver. Before registration, the base name is returned.
+        """
+        # self.appName is set by registerPyro to the name actually registered in the nameserver
+        return self.appName or self.getName()
+
     def getName(self):
+        """
+        Return the base name of the model server: the name given at construction (``appName``).
+
+        All instances of one model server share the base name; workflows refer to it in the
+        ``Jobmanager`` field of their model metadata. See :meth:`getNSName` for the registered name.
+        """
         return self.applicationName
 
     # implemented in SimpleJobManager
