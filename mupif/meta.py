@@ -212,12 +212,20 @@ class ModelInWorkflowMeta(BaseMeta):
     base name of the server: all its instances qualify) or, if ``ModelID`` is given, the tag
     ``ModelID:<ModelID>`` (servers registered under any name which serve the model with this ID).
     Execution profiles may add further requirements; see :mod:`mupif.modelplacement`.
+
+    ``Instantiate`` false marks a template: the model is not allocated when the workflow is
+    initialized; the workflow allocates copies of it itself (``Workflow._allocateModelByName``),
+    e.g. one per loop iteration. The key used to be ignored: it was not declared here, and the
+    dictionary interface of the metadata (``get``, ``in``) only sees declared fields, so every model
+    was allocated at initialization, the template keeping a model-server slot for the whole run.
     '''
     Name: str
     Module: str = ''
     Class: str = ''
     Jobmanager: str = Field('', description='Base name of the model server(s) offering the model.')
     ModelID: str = Field('', description='ID of the model (its metadata ID): any model server serving a model with this ID is compatible, whatever its name.')
+    # None (as stored by mupifDB for workflows registered without the key) means the default
+    Instantiate: Annotated[bool, BeforeValidator(lambda v: True if v is None else v)] = Field(True, description='Allocate the model when the workflow is initialized; false: a template the workflow allocates itself later (Workflow._allocateModelByName), e.g. once per loop iteration.')
 
     @pydantic.model_validator(mode='after')
     def _moduleClass_or_jobmanager(self):

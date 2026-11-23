@@ -287,6 +287,39 @@ def test_workflow_unknownProfile():
         wf._allocateAllModels()
 
 
+# --- Instantiate: templates allocated by the workflow later --------------------------------------
+
+class TemplateWorkflow(mp.Workflow):
+    'Two local models: "a" allocated at initialization, "b" a template (Instantiate false).'
+    def __init__(self, metadata=None):
+        super().__init__(metadata={'Name': 'wf', 'ID': 'wf', 'Description': '', 'Inputs': [], 'Outputs': [], 'Models': [
+            {'Name': 'a', 'Module': 'mupif.tests.testApp', 'Class': 'testApp'},
+            {'Name': 'b', 'Module': 'mupif.tests.testApp', 'Class': 'testApp', 'Instantiate': False}]})
+
+
+def test_instantiate_meta():
+    # the key is declared: the dictionary interface sees it (it used to return the default True)
+    m = mp.meta.ModelInWorkflowMeta(Name='b', Jobmanager='X', Instantiate=False)
+    assert m.get('Instantiate', True) is False and 'Instantiate' in m
+    assert mp.meta.ModelInWorkflowMeta(Name='a', Jobmanager='X').Instantiate is True
+    # None (stored by mupifDB for workflows registered without the key) is the default
+    assert mp.meta.ModelInWorkflowMeta(Name='a', Jobmanager='X', Instantiate=None).Instantiate is True
+    wf = TemplateWorkflow()
+    assert [m.get('Instantiate', True) for m in wf.metadata['Models']] == [True, False]
+    assert [m['Instantiate'] for m in wf.getAllMetadata()['Models']] == [True, False]
+
+
+def test_template_not_allocated_at_initialization():
+    'A model with Instantiate false is not allocated with the others, only when the workflow asks for a copy.'
+    wf = TemplateWorkflow()
+    wf._allocateAllModels()
+    assert list(wf._models) == ['a']
+    model, name = wf._allocateModelByName(name='b', name_new='b_1')
+    assert name == 'b_1' and wf.getModel('b_1') is model
+    with pytest.raises(ValueError):
+        wf.getModel('b')
+
+
 # --- connecting by metadata ------------------------------------------------------------------------
 
 def test_connectModelServerWithMetadata(monkeypatch):
