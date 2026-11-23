@@ -285,3 +285,28 @@ def test_workflow_unknownProfile():
     wf = ProfiledWorkflow(metadata={'Execution': {'ExecutionProfileIndex': 3}})
     with pytest.raises(ValueError, match='Execution profile #3'):
         wf._allocateAllModels()
+
+
+# --- connecting by metadata ------------------------------------------------------------------------
+
+def test_connectModelServerWithMetadata(monkeypatch):
+    loads = {'PYRO:a@h1:1': mpl.Load(free=1, max=4), 'PYRO:b@h2:1': mpl.Load(free=4, max=4), 'PYRO:c@h3:1': mpl.Load(free=2, max=2)}
+    monkeypatch.setattr(mpl, 'serverLoad', lambda uri, timeout=5.: loads.get(uri))
+    connected = []
+
+    def connectApp(ns, name):
+        connected.append(name)
+        if name == 'CVUT.demo01~node2':
+            raise RuntimeError('does not answer')
+        return f'proxy:{name}'
+    monkeypatch.setattr(pyroutil, '_connectApp', connectApp)
+    monkeypatch.setattr(mp.modelserverbase, 'RemoteModelServer', lambda proxy: proxy)
+    ns = FakeNS(NS_ENTRIES)
+    # instances of CVUT.demo01: node2 is idle but does not answer, so the other one
+    assert pyroutil.connectModelServerWithMetadata(ns, {'CVUT.demo01'}) == 'proxy:CVUT.demo01'
+    assert connected == ['CVUT.demo01~node2', 'CVUT.demo01']
+    # any server of model demo01, preferring Runtime_minutes: Other.demo01, though busier than node2
+    connected.clear()
+    assert pyroutil.connectModelServerWithMetadata(ns, {'ModelID:demo01'}, {'Runtime_minutes'}) == 'proxy:Other.demo01'
+    with pytest.raises(RuntimeError):
+        pyroutil.connectModelServerWithMetadata(ns, {'No.such.server'})

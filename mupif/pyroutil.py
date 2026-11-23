@@ -284,60 +284,37 @@ def _connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestT
     """
     Connects to a remote service with required (and optional) metadata.
 
+    All services registered with all the required tags are candidates; those carrying more of the
+    optional tags are tried first (random order among equal ones), and the first one answering
+    ``getApplicationSignature()`` is returned. For model servers, prefer
+    :func:`connectModelServerWithMetadata`, which also considers their load.
+
     :param Pyro5.naming.Nameserver ns: Instance of a nameServer
     :param set[str] requiredMData: list of compulsory, required metadata the service should match
-    :param set[str] optionalMData: list of optional metadata of the service 
+    :param set[str] optionalMData: list of optional metadata of the service
     :param connectionTestTimeOut timeout for connection test
     :return: Application
     :rtype: Instance of an application
     :raises Exception: When cannot find registered server or Cannot connect to application or Timeout passes
     """
-    raise NotImplementedError('Execution profiles not yet implemented correctly.')
-    try:
-        candidates = ns.yplookup(meta_all=requiredMData)
-        if not candidates:
-            raise Exception('_connectAppWithMetadata: NS yplookup failed')
-        # now to select optimal candidate
-        # if optionalMData are empty select random one
-        candidateScores = {}
-        print("Candidates:", candidates)
-        # assign each candidate a score 
-        for key, value in candidates.items():
-            name = key
-            if (not optionalMData):
-                candidateScores[name]=1 # all candidates will have the same score if no optional metedata 
-            else:
-                # value[0] URI, value[1] metadata
-                # select the optimal one as the one matching max number of optionalMData entries
-                score = len(optionalMData.intersection(value[1]))
-                candidateScores[name]=score
-        
-        # now sort candidates (makes sense onbly if optional metadata exist)
-        if (not optionalMData):
-            orderedCandidates = candidates
-        else:
-            orderedCandidates = collections.OrderedDict(sorted(candidates.items(), key=lambda item: item[1], reverse=True))
-        
-        #ok now go over orderedCandidates and try to connect 
-        for key, val in orderedCandidates.items():
-            name = key
-            uri=val[0]
-            app = Pyro5.api.Proxy(uri)
-            log.info(f"Trying to Connect to application {name} with {uri}")
-            try:
-                app._pyroTimeout = connectionTestTimeOut
-                sig = app.getApplicationSignature()
-                app._pyroTimeout = None
-                log.info("Connected to " + sig + " with the application " + name)
-                return app
-            except Exception as e:
-                log.exception(f"Cannot connect to application {name}. Is the server running?")
-                continue
-        # we ended here withou succesfull connection
-        raise Exception("PyroUtil::Cannot connect to any suitable candidate")
-    
-    except Exception as e:
-        raise
+    optional = frozenset(optionalMData or ())
+    candidates = ns.yplookup(meta_all=set(requiredMData), return_metadata=True)
+    if not candidates:
+        raise Exception(f'_connectAppWithMetadata: no service registered with metadata {sorted(requiredMData)}')
+    # more optional tags first; random among equal scores (spreads clients over equal services)
+    ordered = sorted(candidates.items(), key=lambda item: (-len(optional & frozenset(item[1][1] or ())), random.random()))
+    for name, (uri, _) in ordered:
+        app = Pyro5.api.Proxy(uri)
+        log.info(f"Trying to Connect to application {name} with {uri}")
+        try:
+            app._pyroTimeout = connectionTestTimeOut
+            sig = app.getApplicationSignature()
+            app._pyroTimeout = None
+            log.info("Connected to " + sig + " with the application " + name)
+            return app
+        except Exception:
+            log.exception(f"Cannot connect to application {name}. Is the server running?")
+    raise Exception("PyroUtil::Cannot connect to any suitable candidate")
 
 def connectAppWithMetadata(ns, requiredMData, optionalMData=[], connectionTestTimeOut=10.):
     return _connectAppWithMetadata(ns, requiredMData, optionalMData, connectionTestTimeOut)
@@ -646,24 +623,36 @@ def connectModelServer(ns, jobManName):
     :raises Exception: if creation of a tunnel failed
     """
 
+    # an exact lookup, so that callers asking for a particular server get it; to choose among all
+    # instances of a model server, see connectModelServerWithMetadata and mupif.modelplacement
     return modelserverbase.RemoteModelServer(_connectApp(ns, jobManName))
-    ### TODO: this would be for modelservers once we are compatible with execution profiles
-    ### TODO: see also ModelServerBase.getNSName() which must be changed accordingly
-    # return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, {jobManName}))
 
-def connectModelServerWithMetadata(ns, metadata, optionalMetadata={}):
+def connectModelServerWithMetadata(ns, metadata, optionalMetadata=frozenset()):
     """
-    Connect to jobManager described by given jobManRec and create an optional ssh tunnel
+    Connect to the best model server registered with all tags in *metadata*.
 
-    :param jobManName name under which jobmanager is registered on NS
+    Candidates are ranked as for workflow models (:func:`mupif.modelplacement.rankCandidates`):
+    servers with a free job slot first, then more of the *optionalMetadata* tags, then less loaded;
+    the first one which answers is returned. To place the models of a workflow, the workflow uses
+    :mod:`mupif.modelplacement` directly (with fallback when the allocation itself fails).
 
-    :return: (JobManager proxy, jobManager Tunnel)
-    :rtype: jobmanager.RemoteJobManager
-    :raises Exception: if creation of a tunnel failed
+    :param metadata: tags the server must carry (e.g. its base name, ``ModelID:<id>``, ``Runtime_seconds``)
+    :param optionalMetadata: tags preferring a server
+    :rtype: modelserverbase.RemoteModelServer
+    :raises RuntimeError: if no compatible server is registered or answers
     """
-    raise NotImplementedError('Execution profiles not yet implemented correctly.')
-
-    return modelserverbase.RemoteModelServer(_connectAppWithMetadata(ns, metadata, optionalMetadata))
+    from . import modelplacement as mpl
+    required = frozenset(metadata) | {mpl.JOBMANAGER_TAG}
+    optional = frozenset(optionalMetadata or ())
+    res = ns.yplookup(meta_all=set(required), return_metadata=True)
+    candidates = [mpl.Candidate(nsName=n, uri=str(u), tags=frozenset(t or ()), score=len(frozenset(t or ()) & optional)) for n, (u, t) in res.items()]
+    loads = {c.nsName: mpl.serverLoad(c.uri) for c in candidates}
+    for c in mpl.rankCandidates(candidates, loads):
+        try:
+            return modelserverbase.RemoteModelServer(_connectApp(ns, c.nsName))
+        except Exception:
+            log.exception(f'Cannot connect to model server {c.nsName}; trying the next one')
+    raise RuntimeError(f'No model server registered with metadata {sorted(required)} is reachable.')
 
 
 @deprecated.deprecated(reason='Use allocateApplicationWithModelServer instead')
