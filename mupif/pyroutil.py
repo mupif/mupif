@@ -682,6 +682,10 @@ def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri):
             status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
             log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
         log.info(f'Allocated job, returned record from modelServer: {status},{jobid},{jobport}')
+    except modelserverbase.ModelServerNoResourcesException as e:
+        # an expected outcome (the server is busy): the caller retries elsewhere or later, no traceback
+        log.warning(f'ModelServerBase allocateJob(): no free job slot ({e})')
+        raise
     except Exception:
         log.exception("ModelServerBase allocateJob() failed")
         print("| ".join(Pyro5.errors.get_pyro_traceback()))

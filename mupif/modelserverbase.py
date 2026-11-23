@@ -68,9 +68,33 @@ class ModelServerNoResourcesException(ModelServerException):
 
 
 
-c = ModelServerNoResourcesException
-Pyro5.api.register_class_to_dict(c, {'__class__': c.__module__+'.'+c.__name__})
-Pyro5.api.register_dict_to_class(c.__module__+'.'+c.__name__, c)
+def _registerExceptionWithPyro(c):
+    """
+    Let Pyro transfer exception class *c* from a model server to its client.
+
+    Pyro only recreates its own and builtin exceptions on the client; other classes need a
+    converter each way. The converter to a dict used to be given as a dict (not a function), so
+    serializing the exception failed on the server ("Error serializing exception: 'dict' object is
+    not callable") and the client got a generic PyroError which only named the class in its message.
+    Clients of older mupif versions, whose converter from the dict is the class itself, get an
+    instance of the right class too (with unusual arguments).
+    """
+    name = c.__module__+'.'+c.__name__
+
+    def toDict(e):
+        # _pyroTraceback (the remote traceback) is among the attributes, as in Pyro's own conversion
+        return {'__class__': name, '__exception__': True, 'args': list(e.args), 'attributes': dict(vars(e))}
+
+    def fromDict(classname, d):
+        e = c(*d.get('args', ()))
+        for k, v in (d.get('attributes') or {}).items():
+            setattr(e, k, v)
+        return e
+    Pyro5.api.register_class_to_dict(c, toDict)
+    Pyro5.api.register_dict_to_class(name, fromDict)
+
+
+_registerExceptionWithPyro(ModelServerNoResourcesException)
 
 
 

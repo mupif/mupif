@@ -310,3 +310,15 @@ def test_connectModelServerWithMetadata(monkeypatch):
     assert pyroutil.connectModelServerWithMetadata(ns, {'ModelID:demo01'}, {'Runtime_minutes'}) == 'proxy:Other.demo01'
     with pytest.raises(RuntimeError):
         pyroutil.connectModelServerWithMetadata(ns, {'No.such.server'})
+
+
+def test_noResourcesExceptionOverPyro():
+    'The no-resources exception survives Pyro serialization as itself (it used to become a generic PyroError).'
+    import Pyro5.serializers
+    ser = Pyro5.serializers.serializers['serpent']
+    e = mp.modelserverbase.ModelServerNoResourcesException('ModelServer: no more resources')
+    e._pyroTraceback = ['remote traceback\n']
+    back = ser.loads(ser.dumps(e))
+    assert type(back) is mp.modelserverbase.ModelServerNoResourcesException
+    assert back.args == ('ModelServer: no more resources',) and back._pyroTraceback == ['remote traceback\n']
+    assert mpl.isNoResourcesError(back)
