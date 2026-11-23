@@ -363,7 +363,50 @@ def removeOwnRegistration(ns, name: str, uri) -> bool:
     return True
 
 
-def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None):
+def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, interval: float = 30.) -> None:
+    """
+    Keep a nameserver registration in place until *stop* is set (run in a thread of the server).
+
+    Every *interval* seconds the entry *name* is looked up. If it is missing (the nameserver was
+    restarted, or a client removed the entry of a server it could not reach -- the mupifDB
+    scheduler removes model servers unreachable for a while), the server registers again with the
+    same URI and metadata. If the name points to another object which answers, it is left alone
+    (logged once); if that object does not answer, the entry is taken back. A nameserver which
+    cannot be reached is tried again at the next check. Never raises.
+
+    :param nsUri: URI of the nameserver (a proxy of its own is used: proxies belong to one thread)
+    :param name: registered name
+    :param uri: URI of the server
+    :param metadata: tags to register with
+    :param stop: set when the server leaves the nameserver itself, so that it is not registered again
+    :param interval: seconds between two checks
+    """
+    ns = Pyro5.api.Proxy(nsUri)
+    ns._pyroTimeout = 10
+    takenBy = None
+    while not stop.wait(interval):
+        try:
+            try:
+                current = ns.lookup(name)
+            except Pyro5.errors.NamingError:
+                current = None
+            if current is not None and str(current) == str(uri):
+                takenBy = None
+                continue
+            if current is not None and _isAlive(current, 5.):
+                if str(current) != takenBy:
+                    log.warning(f'{name} in the nameserver points to another running server ({current}); not registering {uri} again')
+                    takenBy = str(current)
+                continue
+            if stop.is_set():
+                break
+            ns.register(name, uri, metadata=metadata)
+            log.warning(f'{name} was missing in the nameserver (or registered by a server which does not answer): registered again')
+        except Exception as e:
+            log.debug(f'Checking the registration of {name} failed (nameserver unreachable?): {e}')
+
+
+def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None, watchInterval: float = 0):
     """
     Runs a simple application server
 
@@ -372,6 +415,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated.
+    :param watchInterval: if positive, check the registration every so many seconds and register again when it is missing (see :func:`watchRegistration`); the check stops when the server leaves the nameserver (process exit, SIGTERM, or ``app._nsWatchStop`` set by the server)
 
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
@@ -409,7 +453,15 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
 
     log.debug(f'Running {appName} at {uri} (nameserver: {ns._pyroUri})')
 
+    # set when the server leaves the nameserver, so that the watch does not register it again
+    watchStop = threading.Event()
+    if watchInterval > 0:
+        app._nsWatchStop = watchStop
+        threading.Thread(target=watchRegistration, args=(ns._pyroUri, appName, uri, metadata, watchStop, watchInterval),
+                         daemon=True, name=f'ns-watch:{appName}').start()
+
     def _remove_from_ns(sig=None, stack=None):
+        watchStop.set()
         log.warning(f'removing {appName} from {ns._pyroUri} (signal {sig})')
         ns._pyroClaimOwnership()
         removeOwnRegistration(ns, appName, uri)
@@ -528,9 +580,44 @@ def runModelServer(*, ns, jobman):
     :param int nsport: Nameserver port
     :param jobman: Jobmanager
     """
+    # entries of instances of this model server which crashed (no answer) would stay forever and be
+    # tried by every client; remove them (only if they still point to the dead server)
+    removeStaleModelServers(ns, jobman.getName())
     # register under a name unique among the running instances (see modelServerNSName); runServer
-    # passes it to jobman.registerPyro, after which jobman.getNSName() returns it
-    return runServer(ns=ns, appName=modelServerNSName(ns, jobman), app=jobman, metadata=modelServerTags(jobman))
+    # passes it to jobman.registerPyro, after which jobman.getNSName() returns it. The registration
+    # is watched and restored if it disappears (see watchRegistration).
+    return runServer(ns=ns, appName=modelServerNSName(ns, jobman), app=jobman, metadata=modelServerTags(jobman),
+                     watchInterval=getattr(jobman, 'registrationCheckInterval', 30.))
+
+
+def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list[str]:
+    """
+    Remove nameserver entries of model servers of base name *baseName* which do not answer.
+
+    A model server killed (SIGKILL, crash, host down) leaves its entry behind. Under the base name
+    the next server of that name takes it over (:func:`modelServerNSName`), but an entry under an
+    instance name (``<base>~<host>-<pid>``) stayed for ever. Called by a model server when it
+    starts; the mupifDB scheduler removes servers unreachable for a while, too. An entry is removed
+    only if it still points to the server which did not answer (:func:`removeOwnRegistration`).
+
+    :param ns: nameserver proxy
+    :param baseName: base name of the model server (its tag in the nameserver)
+    :param aliveTimeout: seconds to wait for each server to answer
+    :return: names of the removed entries
+    """
+    removed = []
+    try:
+        entries = ns.yplookup(meta_all={_NS_METADATA.jobmanager, baseName}, return_metadata=True)
+    except Exception:
+        log.exception(f'Cannot list the model servers {baseName} in the nameserver')
+        return removed
+    for name, (uri, _) in entries.items():
+        if _isAlive(uri, aliveTimeout):
+            continue
+        if removeOwnRegistration(ns, name, uri):
+            log.warning(f'Removed {name} from the nameserver: the model server registered there ({uri}) does not answer')
+            removed.append(name)
+    return removed
 
 
 def modelServerTags(jobman) -> set[str]:

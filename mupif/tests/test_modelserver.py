@@ -380,6 +380,66 @@ class ModelServer_TestCase(unittest.TestCase):
                 srv.terminate(force=True)
             daemon.shutdown()
 
+    def test_removeStaleModelServers(self):
+        'Entries of crashed instances (not answering) of the base name are removed; live ones and other models stay.'
+        cls=self.__class__
+        live=mp.ModelServer(ns=cls.ns,appName='appStale',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        uri=cls.daemon.register(live)
+        cls.ns.register('appStale',uri,metadata={'type:jobmanager','appStale'})
+        cls.ns.register('appStale~gone',f'PYRO:gone@127.0.0.1:1',metadata={'type:jobmanager','appStale'})
+        cls.ns.register('other~gone',f'PYRO:gone@127.0.0.1:1',metadata={'type:jobmanager','other'})
+        try:
+            self.assertEqual(mp.pyroutil.removeStaleModelServers(cls.ns,'appStale',aliveTimeout=1),['appStale~gone'])
+            self.assertEqual(str(cls.ns.lookup('appStale')),str(uri))
+            with self.assertRaises(Pyro5.errors.NamingError): cls.ns.lookup('appStale~gone')
+            cls.ns.lookup('other~gone')
+        finally:
+            for n in ('appStale','other~gone'): cls.ns.remove(n)
+            cls.daemon.unregister(live)
+
+    def test_watchRegistration(self):
+        'A server registers again when its entry disappears or points to a dead server, but not over a live one, and not after it stopped.'
+        import threading
+        cls=self.__class__
+        own='PYRO:own@127.0.0.1:2'
+        def waitFor(cond,timeout=5):
+            t0=time.time()
+            while not cond():
+                if time.time()-t0>timeout: return False
+                time.sleep(0.05)
+            return True
+        def current():
+            try: return str(cls.ns.lookup('appWatch'))
+            except Pyro5.errors.NamingError: return None
+        cls.ns.register('appWatch',own,metadata={'type:jobmanager','appWatch'})
+        stop=threading.Event()
+        t=threading.Thread(target=mp.pyroutil.watchRegistration,args=(cls.ns._pyroUri,'appWatch',own,{'type:jobmanager','appWatch'},stop,0.1),daemon=True)
+        t.start()
+        try:
+            # removed (nameserver restart, or a client gave up on the server): registered again, with its tags
+            cls.ns.remove('appWatch')
+            self.assertTrue(waitFor(lambda: current()==own))
+            self.assertEqual(set(cls.ns.lookup('appWatch',return_metadata=True)[1]),{'type:jobmanager','appWatch'})
+            # taken over by a server which does not answer: taken back
+            cls.ns.register('appWatch','PYRO:gone@127.0.0.1:1')
+            self.assertTrue(waitFor(lambda: current()==own))
+            # taken over by a live server: left alone
+            other=mp.ModelServer(ns=cls.ns,appName='appWatch',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+            otherUri=str(cls.daemon.register(other))
+            cls.ns.register('appWatch',otherUri)
+            time.sleep(0.5)
+            self.assertEqual(current(),otherUri)
+            cls.daemon.unregister(other)
+            # stopped (the server left the nameserver itself): not registered again
+            stop.set()
+            t.join(2)
+            cls.ns.remove('appWatch')
+            time.sleep(0.3)
+            self.assertIsNone(current())
+        finally:
+            stop.set()
+            if current() is not None: cls.ns.remove('appWatch')
+
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
         cls=self.__class__

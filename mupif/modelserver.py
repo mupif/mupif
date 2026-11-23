@@ -77,6 +77,9 @@ class ModelServer (modelserverbase.ModelServerBase):
     ticketExpireTimeout = 10
     #: seconds allocateJob waits for a spawned job to report its URI; a job not ready by then is killed
     jobStartTimeout = 10
+    #: seconds between two checks that the server is still registered in the nameserver (see
+    #: pyroutil.watchRegistration); 0: not checked
+    registrationCheckInterval = 30.
     #: preAllocate tickets work over Pyro (advertised as the nameserver tag ``mupif:tickets-v2``)
     remoteTickets = True
 
@@ -446,6 +449,9 @@ class ModelServer (modelserverbase.ModelServerBase):
         if not force and self.activeJobs:
             raise RuntimeError(f'There are {len(self.activeJobs)} active jobs; call terminate(force=True) to kill them.')
         nsName = self.getNSName()
+        # stop watching the registration first, or it would register the server again
+        if getattr(self, '_nsWatchStop', None) is not None:
+            self._nsWatchStop.set()
         try:
             self.terminateAllJobs()
             self.ns._pyroClaimOwnership()
