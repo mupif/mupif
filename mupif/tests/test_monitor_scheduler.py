@@ -10,6 +10,10 @@ OLD = dict(runningTasks=1, scheduledTasks=2, processedTasks=10, finishedTasks=8,
 NEW = dict(OLD, draining=True, capacity=3, waitingTasks=7, pendingTasks=5, dbRunningTasks=2,
            running48=[1] * 48, waiting48=[7] * 48, running120m=[1] * 120, waiting120m=[7] * 120,
            periodStart48=3600. * 1000, periodLength48=3600, periodStart120m=60. * 60000, periodLength120m=60)
+#: getStatistics() of a scheduler reporting the model servers of its executions (execution profiles)
+PLACED = dict(NEW, lastJobs=[['e1', 'w1', 'Running', '2026-01-01T10:00:00', None, {'m': 'CVUT.demo01~node2'}],
+                             ['e2', 'w1', 'Running', '2026-01-01T10:00:01', None, {}]],
+              modelServerJobs={'CVUT.demo01~node2': 1})
 NS = monitor.NsInfo(name='mupif.scheduler', uri='PYRO:obj@host:1', metadata=['type:scheduler'])
 
 
@@ -20,6 +24,8 @@ def test_old_format():
     assert si.numTasks.waiting is None and si.numTasks.capacity is None and si.numTasks.draining is False
     assert si.history.running48 == [] and si.history.periodStart48 is None
     assert si.lastExecutions[0].weid == 'e1'
+    # model servers not reported: unknown
+    assert si.lastExecutions[0].modelServers is None and si.modelServerJobs is None
 
 
 def test_new_format():
@@ -30,6 +36,16 @@ def test_new_format():
     assert (si.history.periodStart120m, si.history.periodLength120m) == (60. * 60000, 60)
     data = si.model_dump(mode='json')
     assert monitor.SchedulerInfo.model_validate(data) == si
+
+
+def test_model_servers():
+    """The model servers of the last executions and the running executions per model server are read."""
+    si = monitor._schedulerInfoFromStatistics(NS, PLACED)
+    assert si.lastExecutions[0].modelServers == {'m': 'CVUT.demo01~node2'}
+    # known to run, servers not known yet
+    assert si.lastExecutions[1].modelServers == {}
+    assert si.modelServerJobs == {'CVUT.demo01~node2': 1}
+    assert monitor.SchedulerInfo.model_validate(si.model_dump(mode='json')) == si
 
 
 class _Proxy:

@@ -166,7 +166,13 @@ class SchedulerInfo(BareData):
         status: str
         started: str
         finished: Optional[str]
+        #: (optional) model name -> model server (registered name) the execution's models run on;
+        #: None if the scheduler does not report it, empty while not known yet
+        modelServers: Optional[Dict[str,str]]=None
     lastExecutions: List[LastExecution]=[]
+    #: (optional) model server (registered name) -> executions of this scheduler running models on
+    #: it now; None if the scheduler does not report it
+    modelServerJobs: Optional[Dict[str,int]]=None
     class LogTail(BareData):
         tail: List[Any]
     running: Dict[str,LogTail]={}
@@ -206,7 +212,9 @@ def _schedulerInfoFromStatistics(nsInfo:NsInfo,st:dict) -> SchedulerInfo:
         history=SchedulerInfo.History(pooledTasks48=st['pooledTasks48'], processedTasks48=st['processedTasks48'], finishedTasks48=st['finishedTasks48'], failedTasks48=st['failedTasks48'], load48=st['load48'],
             running48=st.get('running48',[]), waiting48=st.get('waiting48',[]), running120m=st.get('running120m',[]), waiting120m=st.get('waiting120m',[]),
             periodStart48=st.get('periodStart48'), periodLength48=st.get('periodLength48'), periodStart120m=st.get('periodStart120m'), periodLength120m=st.get('periodLength120m')),
-        lastExecutions=[SchedulerInfo.LastExecution(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4]) for l in st['lastJobs']]
+        # a 6th element (model servers) is reported by schedulers placing models on several model servers
+        lastExecutions=[SchedulerInfo.LastExecution(weid=l[0], wid=l[1], status=l[2], started=l[3], finished=l[4], modelServers=(l[5] if len(l)>5 else None)) for l in st['lastJobs']],
+        modelServerJobs=st.get('modelServerJobs'),
     )
 
 
