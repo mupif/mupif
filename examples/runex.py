@@ -53,6 +53,23 @@ log.info(f'Nameserver running on {nsBg.host}:{nsBg.port}')
 import time
 time.sleep(.5)
 
+def cleanNameserver():
+    '''
+    Remove from the nameserver everything the example registered, so that the next example starts
+    with an empty nameserver.
+
+    Background servers are stopped with Popen.terminate(). On POSIX it sends SIGTERM, and the
+    servers remove their registrations in a handler (pyroutil.runServer). On Windows it is
+    TerminateProcess: no handler (nor atexit) runs, and the entries stay. Example 14 then found the
+    stale model servers of examples 07 and 08, which serve the same model (ModelID:Mechanical-1).
+    '''
+    import Pyro5.api
+    ns=Pyro5.api.Proxy(f'PYRO:Pyro.NameServer@{nsBg.host}:{nsBg.port}')
+    for name in ns.list():
+        if name=='Pyro.NameServer': continue
+        log.debug(f'Removing {name} left in the nameserver')
+        ns.remove(name)
+
 def runEx(ex):
     env=os.environ.copy()
     exDir=thisDir+'/'+ex.dir
@@ -80,6 +97,7 @@ def runEx(ex):
         time.sleep(.5)
         for b in bg:
             if b.returncode is None: b.kill()
+        cleanNameserver()
         if failed: raise RuntimeError('Failed background processes:\n\n'+'\n * '.join([str(b.args) for b in failed]))
 
 # no examples means all examples
