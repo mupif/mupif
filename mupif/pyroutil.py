@@ -406,7 +406,7 @@ def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, in
             log.debug(f'Checking the registration of {name} failed (nameserver unreachable?): {e}')
 
 
-def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None, watchInterval: float = 0):
+def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, metadata=None, watchInterval: float = 0, fallbackName: Optional[str] = None):
     """
     Runs a simple application server
 
@@ -416,6 +416,11 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :param daemon: Reference to already running daemon, if available. Optional parameter.
     :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated.
     :param watchInterval: if positive, check the registration every so many seconds and register again when it is missing (see :func:`watchRegistration`); the check stops when the server leaves the nameserver (process exit, SIGTERM, or ``app._nsWatchStop`` set by the server)
+    :param fallbackName: if given, *appName* is registered only if nobody holds it (atomically, in the
+        nameserver: ``register(..., safe=True)``); if it is taken, the server is registered as
+        *fallbackName* instead (unconditionally). Used by :func:`runModelServer` so that two instances
+        of a model server started at the same moment, which both found the base name free, do not
+        both register under it (the second would silently replace the first).
 
     :raises Exception: if can not run Pyro5 daemon
     :returns: URI
@@ -438,18 +443,35 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
         log.warning(f'Application name {appName} is already registered on name server, overwriting.')
     
     uri = daemon.register(app)
-    try:
-        # the same interface shared by both Model and JobManager
 
-        # TODO: exclusiveDaemon semantics is unclear now; getDaemon can be cached
-        # TODO: thus the server should never delete its own daemon?
-        # TODO: we should have a way for daemon to stop when the last object deregisters...
-        app.registerPyro(daemon=daemon, ns=ns, uri=uri, appName=appName, exclusiveDaemon=exclusiveDaemon)
-    except Exception:
-        log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
-        raise
+    def _registerPyro(name):
+        try:
+            # the same interface shared by both Model and JobManager
 
-    ns.register(appName, uri, metadata=metadata)
+            # TODO: exclusiveDaemon semantics is unclear now; getDaemon can be cached
+            # TODO: thus the server should never delete its own daemon?
+            # TODO: we should have a way for daemon to stop when the last object deregisters...
+            app.registerPyro(daemon=daemon, ns=ns, uri=uri, appName=name, exclusiveDaemon=exclusiveDaemon)
+        except Exception:
+            log.exception(f'Can not register app with daemon {daemon.locationStr} on nameServer')
+            raise
+
+    # the app learns its name (registerPyro) before it is registered in the nameserver, so that it is
+    # complete when the first client finds it
+    _registerPyro(appName)
+    if fallbackName is None:
+        ns.register(appName, uri, metadata=metadata)
+    else:
+        try:
+            # safe=True: the check whether the name is free and the registration are done together
+            # under the nameserver's lock, so of several servers registering the same name at once
+            # exactly one gets it
+            ns.register(appName, uri, safe=True, metadata=metadata)
+        except Pyro5.errors.NamingError:
+            log.warning(f'{appName} was registered by another server meanwhile: registering this one as {fallbackName}')
+            appName = fallbackName
+            _registerPyro(appName)
+            ns.register(appName, uri, metadata=metadata)
 
     log.debug(f'Running {appName} at {uri} (nameserver: {ns._pyroUri})')
 
@@ -544,6 +566,11 @@ def modelServerNSName(ns, jobman, aliveTimeout: float = 5.) -> str:
     So a single model server keeps its old name, and the first of several instances stays reachable
     by clients that use exact names.
 
+    A stale entry under the base name is removed here (only if it still points to the dead server),
+    so that the base name is free for :func:`runModelServer`, which registers it only if it is free:
+    the lookup here and the registration are separate nameserver calls, and another instance may
+    register the base name in between (see the *fallbackName* argument of :func:`runServer`).
+
     :param ns: nameserver proxy
     :param jobman: the model server
     :param aliveTimeout: seconds to wait for the holder of the base name to answer
@@ -559,10 +586,16 @@ def modelServerNSName(ns, jobman, aliveTimeout: float = 5.) -> str:
         return base
     if not _isAlive(uri, aliveTimeout):
         log.warning(f'Model server name {base} is registered by an object which does not answer ({uri}): taking the name over')
+        removeOwnRegistration(ns, base, uri)
         return base
-    name = f'{base}{INSTANCE_SEPARATOR}{socket.gethostname()}-{os.getpid()}'
+    name = _hostPidInstanceName(base)
     log.warning(f'Model server name {base} is held by another running instance ({uri}): registering this one as {name}')
     return name
+
+
+def _hostPidInstanceName(base: str) -> str:
+    'Instance name of a model server of base name *base* given no instance id: ``<base>~<host>-<pid>``, unique to this process.'
+    return f'{base}{INSTANCE_SEPARATOR}{socket.gethostname()}-{os.getpid()}'
 
 
 def runModelServer(*, ns, jobman):
@@ -586,8 +619,13 @@ def runModelServer(*, ns, jobman):
     # register under a name unique among the running instances (see modelServerNSName); runServer
     # passes it to jobman.registerPyro, after which jobman.getNSName() returns it. The registration
     # is watched and restored if it disappears (see watchRegistration).
-    return runServer(ns=ns, appName=modelServerNSName(ns, jobman), app=jobman, metadata=modelServerTags(jobman),
-                     watchInterval=getattr(jobman, 'registrationCheckInterval', 30.))
+    name = modelServerNSName(ns, jobman)
+    # the base name was free when modelServerNSName looked, but another instance started at the same
+    # moment may have registered it since (e.g. several servers launched together by a script; seen
+    # on Windows CI): take the base name only if it is still free, else fall back to an instance name
+    fallbackName = _hostPidInstanceName(name) if name == jobman.getName() else None
+    return runServer(ns=ns, appName=name, app=jobman, metadata=modelServerTags(jobman),
+                     watchInterval=getattr(jobman, 'registrationCheckInterval', 30.), fallbackName=fallbackName)
 
 
 def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list[str]:

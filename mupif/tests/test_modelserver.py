@@ -304,6 +304,8 @@ class ModelServer_TestCase(unittest.TestCase):
         # stale entry (nothing answers there): taken over
         cls.ns.register('appNaming','PYRO:gone@127.0.0.1:1')
         self.assertEqual(nsName(cls.ns,srv,aliveTimeout=1),'appNaming')
+        # ... and removed, so that runModelServer can register the name only-if-free
+        with self.assertRaises(Pyro5.errors.NamingError): cls.ns.lookup('appNaming')
         # a live server holds the base name: this one gets an instance name
         live=mp.ModelServer(ns=cls.ns,appName='appNaming',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
         uri=cls.daemon.register(live)
@@ -419,6 +421,39 @@ class ModelServer_TestCase(unittest.TestCase):
             except Exception: pass
             srv.terminate(force=True)
             daemon.shutdown()
+
+    def test_registerFallbackName(self):
+        'With fallbackName, runServer takes the name only if free; if another server registered it meanwhile, it uses the fallback.'
+        cls=self.__class__
+        import signal, unittest.mock
+        # runServer installs exit hooks (atexit, SIGTERM) removing the registration; keep them out of the test process
+        sigterm=signal.getsignal(signal.SIGTERM)
+        live=mp.ModelServer(ns=cls.ns,appName='appRace',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        srv=mp.ModelServer(ns=cls.ns,appName='appRace',workDir=cls.tmp,appClass=testApp.testApp,maxJobs=1)
+        liveUri=cls.daemon.register(live)
+        try:
+            with unittest.mock.patch('mupif.pyroutil.atexit.register'):
+                # free name: registered under it
+                uri=mp.pyroutil.runServer(ns=cls.ns,daemon=cls.daemon,appName='appRace',app=srv,fallbackName='appRace~2')
+                self.assertEqual(str(cls.ns.lookup('appRace')),str(uri))
+                self.assertEqual(srv.getNSName(),'appRace')
+                cls.ns.remove('appRace')
+                cls.daemon.unregister(srv)
+                # what happens when two instances start together: both found the base name free,
+                # the other one registered it first; this one must not replace it
+                cls.ns.register('appRace',liveUri)
+                uri=mp.pyroutil.runServer(ns=cls.ns,daemon=cls.daemon,appName='appRace',app=srv,fallbackName='appRace~2')
+                self.assertEqual(str(cls.ns.lookup('appRace')),str(liveUri))
+                self.assertEqual(str(cls.ns.lookup('appRace~2')),str(uri))
+                self.assertEqual(srv.getNSName(),'appRace~2')
+        finally:
+            signal.signal(signal.SIGTERM,sigterm)
+            for n in ('appRace','appRace~2'):
+                try: cls.ns.remove(n)
+                except Exception: pass
+            for o in (live,srv):
+                try: cls.daemon.unregister(o)
+                except Exception: pass
 
     def test_removeStaleModelServers(self):
         'Entries of crashed instances (not answering) of the base name are removed; live ones and other models stay.'
