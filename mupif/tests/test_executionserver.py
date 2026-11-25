@@ -18,7 +18,7 @@ import Pyro5.nameserver
 
 import mupif as mp
 from mupif import modelpackage as mpk
-from mupif.tests import fakepixi
+from mupif.tests import fakeapptainer, fakepixi
 from mupif.tests.test_modelserver import availablePort, waitPort
 
 pytestmark = pytest.mark.skipif(sys.platform.startswith('win') or 'GITHUB_ACTION' in os.environ,
@@ -34,11 +34,11 @@ class PkgModel(testApp):
     def where(self):
         return {'file': __file__, 'pythonpath': os.environ.get('PYTHONPATH', ''),
                 'activated': os.environ.get('FAKE_PIXI_ACTIVATED'), 'lic': os.environ.get('LIC'),
-                'path': os.environ.get('PATH', '')}
+                'path': os.environ.get('PATH', ''), 'sif': os.environ.get('FAKE_APPTAINER_SIF')}
 '''
 
 
-def makePackage(directory, id, runtime='python', requires='[]', version='1.0', fail=False):
+def makePackage(directory, id, runtime='python', requires='[]', version='1.0', fail=False, runtimeExtra=''):
     os.makedirs(directory / 'pkgmodel', exist_ok=True)
     (directory / mpk.MANIFEST_NAME).write_text(f'''
 ID = "{id}"
@@ -47,6 +47,7 @@ Entrypoint = "pkgmodel.model:PkgModel"
 RequiresHost = {requires}
 [Runtime]
 Type = "{runtime}"
+{runtimeExtra}
 ''')
     (directory / 'pkgmodel' / '__init__.py').write_text('')
     (directory / 'pkgmodel' / 'model.py').write_text(MODEL)
@@ -72,8 +73,20 @@ def env(tmp_path_factory):
         makePackage(reg / 'lic', 'pkg-lic', requires='["solverX"]')
         makePackage(reg / 'abq', 'pkg-abaqus', requires='["abaqus"]')
         makePackage(reg / 'broken', 'pkg-broken', runtime='pixi', fail=True)
+        # container images: a SIF file on a "shared file system" (verified by its digest), a GPU one
+        import hashlib
+        sif = tmp / 'images' / 'model.sif'
+        sif.parent.mkdir()
+        sif.write_bytes(b'fake SIF')
+        sifDigest = 'sha256:' + hashlib.sha256(b'fake SIF').hexdigest()
+        makePackage(reg / 'cont', 'pkg-apptainer', runtime='apptainer', requires='["solverX"]',
+                    runtimeExtra=f'Image = "file://{sif}"\nImageDigest = "{sifDigest}"')
+        makePackage(reg / 'gpu', 'pkg-gpu', runtime='apptainer', runtimeExtra=f'Image = "docker://r/m@sha256:{"b" * 64}"\nGpu = true')
         daemon = mp.pyroutil.getDaemon(proxy=ns)
-        yield dict(tmp=tmp, ns=ns, registry=mpk.DirectoryRegistry(reg), pixi=fakepixi.install(tmp), daemon=daemon)
+        bindir = tmp / 'bin'
+        bindir.mkdir()
+        yield dict(tmp=tmp, ns=ns, registry=mpk.DirectoryRegistry(reg), pixi=fakepixi.install(tmp), apptainer=fakeapptainer.install(bindir),
+                   apptainerCalls=lambda: fakeapptainer.calls(bindir), daemon=daemon)
     finally:
         nsloop.terminate()
         nsloop.join()
@@ -81,10 +94,10 @@ def env(tmp_path_factory):
 
 @pytest.fixture
 def server(env, request):
-    """An execution server with 2 slots, python and pixi runtimes, host capability solverX."""
+    """An execution server with 2 slots, python, pixi and apptainer runtimes, host capability solverX."""
     name = 'exec-' + request.node.name.replace('_', '-')
     srv = mp.ExecutionServer(ns=env['ns'], appName=name, registry=env['registry'], cacheDir=env['tmp'] / ('cache-' + name),
-                             workDir=str(env['tmp']), maxJobs=2, allowPythonRuntime=True, pixi=env['pixi'],
+                             workDir=str(env['tmp']), maxJobs=2, allowPythonRuntime=True, pixi=env['pixi'], apptainer=env['apptainer'],
                              hostCapabilities={'solverX': {'Version': '3', 'Env': {'LIC': '27000@lic'}, 'Path': ['/opt/solverX/bin']}})
     uri = env['daemon'].register(srv)
     srv.registerPyro(daemon=env['daemon'], ns=env['ns'], uri=uri, appName=name, exclusiveDaemon=False)
@@ -163,12 +176,61 @@ def test_broken_package_refused_fast_the_second_time(server):
 
 def test_runtime_not_supported(env):
     srv = mp.ExecutionServer(ns=env['ns'], appName='exec-pixi-only', registry=env['registry'], cacheDir=env['tmp'] / 'cache-pixi-only',
-                             workDir=str(env['tmp']), pixi=env['pixi'])
+                             workDir=str(env['tmp']), pixi=env['pixi'], apptainer=str(env['tmp'] / 'none'))
     assert srv.runtimes == {'pixi'}
     with pytest.raises(mp.ModelServerCannotRunException, match="runtime 'python'"):
         srv.allocateJob(user='user', modelID='pkg-python')
     with pytest.raises(ValueError):
         mp.ExecutionServer(ns=env['ns'], appName='x', registry=env['registry'], cacheDir=env['tmp'] / 'c', runtimes=['pixi'], pixi=str(env['tmp'] / 'none'))
+
+
+def test_apptainer_package_runs_in_its_image(env, server):
+    'A container package: image verified and kept in the package cache, job run by apptainer exec with the capability bound in.'
+    jobID, model = run(server, 'pkg-apptainer')
+    where = model.where()
+    pkgDir = server.cache.packageDir(env['registry'].resolve('pkg-apptainer'))
+    assert where['sif'] == str(pkgDir / '.apptainer' / 'image.sif') and (pkgDir / '.apptainer' / 'image.sif').read_bytes() == b'fake SIF'
+    # the package directory is /mupif/package in the container (the fake maps it back to the host path)
+    assert where['pythonpath'] == str(pkgDir)
+    assert where['lic'] == '27000@lic' and where['path'].split(os.pathsep)[0] == '/opt/solverX/bin'
+    execs = [c for c in env['apptainerCalls']() if c[0] == 'exec']
+    assert '--bind' in execs[-1] and '/opt/solverX/bin:/opt/solverX/bin:ro' in execs[-1] and '--nv' not in execs[-1]
+    server.terminateJob(jobID)
+    assert server.getStatus() == []
+
+
+def test_gpu_package_needs_gpu_capability(env, server):
+    with pytest.raises(mp.ModelServerCannotRunException, match="'gpu'"):
+        server.allocateJob(user='user', modelID='pkg-gpu')
+    gpuServer = mp.ExecutionServer(ns=env['ns'], appName='exec-gpu', registry=env['registry'], cacheDir=env['tmp'] / 'cache-gpu',
+                                   workDir=str(env['tmp']), apptainer=env['apptainer'], pixi=str(env['tmp'] / 'none'), hostCapabilities={'gpu': {}})
+    jobID, model = run(gpuServer, 'pkg-gpu')
+    try:
+        assert '--nv' in [c for c in env['apptainerCalls']() if c[0] == 'exec'][-1]
+    finally:
+        gpuServer.terminateJob(jobID)
+
+
+@pytest.mark.skipif(not os.environ.get('MUPIF_TEST_APPTAINER_IMAGE'), reason='set MUPIF_TEST_APPTAINER_IMAGE to a SIF image with mupif (of this version) to run a real container')
+def test_real_apptainer(env, tmp_path):
+    'With the real apptainer and an image containing mupif: the model, from the package, runs in the container.'
+    import hashlib
+    sif = os.environ['MUPIF_TEST_APPTAINER_IMAGE']
+    with open(sif, 'rb') as f:
+        digest = 'sha256:' + hashlib.file_digest(f, 'sha256').hexdigest()
+    makePackage(tmp_path / 'reg' / 'real', 'pkg-real', runtime='apptainer', runtimeExtra=f'Image = "file://{sif}"\nImageDigest = "{digest}"')
+    srv = mp.ExecutionServer(ns=env['ns'], appName='exec-real', registry=mpk.DirectoryRegistry(tmp_path / 'reg'), cacheDir=tmp_path / 'cache',
+                             workDir=str(tmp_path), pixi=str(tmp_path / 'none'))
+    assert 'apptainer' in srv.runtimes
+    srv.jobStartTimeout = 60
+    jobID, model = run(srv, 'pkg-real')
+    try:
+        where = model.where()
+        # the package is mounted at /mupif/package; the interpreter is the image's
+        assert where['file'] == '/mupif/package/pkgmodel/model.py' and where['pythonpath'] == '/mupif/package'
+        assert model.getMetadata('ID') == 'mupif-tests-testApp'
+    finally:
+        srv.terminateJob(jobID)
 
 
 def test_full_server_refuses_before_getting_package(env, server):
@@ -185,14 +247,14 @@ def test_over_pyro_and_tags(env, server):
     remote = Pyro5.api.Proxy(server.pyroURI)
     retCode, jobID, port = remote.allocateJob('user', modelID='pkg-python')
     assert remote.getJobPackage(jobID)['ID'] == 'pkg-python'
-    assert remote.getCapabilities() == {'runtimes': ['pixi', 'python'], 'hostCapabilities': {'solverX': '3'}}
+    assert remote.getCapabilities() == {'runtimes': ['apptainer', 'pixi', 'python'], 'hostCapabilities': {'solverX': '3'}}
     # refusals arrive as an error naming the exception (Pyro may not rebuild the class)
     with pytest.raises(Exception) as ei:
         remote.allocateJob('user', modelID='pkg-abaqus')
     assert 'ModelServerCannotRunException' in (type(ei.value).__name__ + str(ei.value) + ''.join(getattr(ei.value, '_pyroTraceback', [])))
     remote.terminateJob(jobID)
     tags = mp.pyroutil.executionServerTags(server)
-    assert {'type:executionserver', server.getName(), 'runtime:pixi', 'runtime:python', 'host:solverX', 'mupif:tickets-v2'} <= tags
+    assert {'type:executionserver', server.getName(), 'runtime:pixi', 'runtime:python', 'runtime:apptainer', 'host:solverX', 'mupif:tickets-v2'} <= tags
     assert 'type:jobmanager' not in tags
 
 

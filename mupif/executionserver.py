@@ -56,7 +56,12 @@ which cannot be redistributed in a package. They are configured per server::
                                  'Env': {'LM_LICENSE_FILE': '27000@licsrv'}}}
 
 A package lists the names it needs (``RequiresHost``); its jobs get the ``Env`` and ``Path`` of
-exactly those capabilities.
+exactly those capabilities. Jobs in containers (runtime ``apptainer``) also get the capability's
+directories bound into the container (``Bind``, default: the ``Path`` entries), e.g. the whole
+installation directory of the solver; the tool must then be able to run in the container's userland.
+
+A package of runtime ``apptainer`` with ``Gpu = true`` needs the host capability ``gpu`` (configure
+``hostCapabilities={'gpu': {}}`` on hosts with NVIDIA GPUs and their driver).
 
 **Registration**: execution servers are registered in the nameserver with ``type:executionserver``
 (see :func:`mupif.pyroutil.executionServerTags`), not ``type:jobmanager``, so that clients which do
@@ -81,7 +86,7 @@ import Pyro5.errors
 
 from . import modelserverbase
 from . import pyroutil
-from .launcher import Launcher, LocalPythonLauncher, PixiLauncher
+from .launcher import ApptainerLauncher, Launcher, LocalPythonLauncher, PixiLauncher
 from .modelpackage import ModelPackageManifest, ModelPackageNotFound, ModelRegistry, PackageRef
 from .modelserver import ModelServer
 from .packagecache import PackageBuildError, PackageCache
@@ -98,6 +103,13 @@ class HostCapability(pydantic.BaseModel):
     Env: dict[str, str] = {}
     #: directories prepended to ``PATH`` of those jobs
     Path: list[str] = []
+    #: directories bound (read-only, at the same path) into the containers of those jobs (runtime
+    #: ``apptainer``); default: the ``Path`` entries
+    Bind: list[str] = []
+
+    def binds(self) -> list[str]:
+        """Return the directories to bind into containers: :attr:`Bind`, else :attr:`Path`."""
+        return list(self.Bind or self.Path)
 
 
 @Pyro5.api.expose
@@ -110,11 +122,12 @@ class ExecutionServer(ModelServer):
     :param registry: where model packages are found
     :param cacheDir: directory of the package cache (packages and their environments; may be large)
     :param hostCapabilities: name -> :class:`HostCapability` (or a dict of its fields)
-    :param runtimes: package runtimes run here; default: ``pixi`` if pixi is found, plus ``python``
-                     if *allowPythonRuntime*
+    :param runtimes: package runtimes run here; default: ``pixi`` if pixi is found, ``apptainer`` if
+                     apptainer is found, plus ``python`` if *allowPythonRuntime*
     :param allowPythonRuntime: run packages of runtime ``python`` (in the server's own environment;
                                their dependencies are not isolated from the server's)
     :param pixi: pixi executable (default: see :meth:`mupif.launcher.PixiLauncher.findPixi`)
+    :param apptainer: apptainer executable (default: see :meth:`mupif.launcher.ApptainerLauncher.findApptainer`)
     :param maxCacheBytes: size of the cache above which least recently used packages are removed
     :param failureTimeout: seconds a package which could not be prepared is not tried again
     :param prefetch: models to prepare in the background when the server starts (:meth:`runServer`
@@ -135,6 +148,7 @@ class ExecutionServer(ModelServer):
             runtimes: Optional[Iterable[str]] = None,
             allowPythonRuntime: bool = False,
             pixi: Optional[str] = None,
+            apptainer: Optional[str] = None,
             maxCacheBytes: Optional[int] = None,
             failureTimeout: float = 600.,
             prefetch: Iterable[str] = (),
@@ -152,11 +166,17 @@ class ExecutionServer(ModelServer):
         if self.pixi is not None and not (os.path.isfile(self.pixi) and os.access(self.pixi, os.X_OK)):
             log.warning(f'{self.pixi} is not an executable file: runtime pixi not available')
             self.pixi = None
+        self.apptainer = apptainer if apptainer is not None else ApptainerLauncher.findApptainer()
+        if self.apptainer is not None and not (os.path.isfile(self.apptainer) and os.access(self.apptainer, os.X_OK)):
+            log.warning(f'{self.apptainer} is not an executable file: runtime apptainer not available')
+            self.apptainer = None
         if runtimes is None:
-            runtimes = (['pixi'] if self.pixi else []) + (['python'] if allowPythonRuntime else [])
+            runtimes = (['pixi'] if self.pixi else []) + (['apptainer'] if self.apptainer else []) + (['python'] if allowPythonRuntime else [])
         self.runtimes: frozenset[str] = frozenset(runtimes)
         if 'pixi' in self.runtimes and not self.pixi:
             raise ValueError('Runtime pixi requested, but pixi was not found (pass pixi=..., set PIXI_EXE or put it into PATH)')
+        if 'apptainer' in self.runtimes and not self.apptainer:
+            raise ValueError('Runtime apptainer requested, but apptainer was not found (pass apptainer=..., set APPTAINER_EXE or put it into PATH)')
         # prepared launchers, by package digest: preparing a launcher (e.g. reading the pixi
         # activation) is done once per server process
         self._launchers: dict[str, Launcher] = {}
@@ -260,6 +280,9 @@ class ExecutionServer(ModelServer):
         if manifest.Runtime.Type not in self.runtimes:
             raise modelserverbase.ModelServerCannotRunException(f'{self.getNSName()}: cannot run {manifest.key()}: runtime {manifest.Runtime.Type!r} not supported here (supported: {sorted(self.runtimes)})')
         missing = [c for c in manifest.RequiresHost if c not in self.hostCapabilities]
+        # GPUs in containers (--nv) need hosts which have them, declared as a capability
+        if manifest.Runtime.Gpu and 'gpu' not in self.hostCapabilities and 'gpu' not in missing:
+            missing.append('gpu')
         if missing:
             raise modelserverbase.ModelServerCannotRunException(f'{self.getNSName()}: cannot run {manifest.key()}: host capabilities {missing} not available here (available: {sorted(self.hostCapabilities)})')
 
@@ -272,14 +295,20 @@ class ExecutionServer(ModelServer):
             manifest = ref.manifest
             extraEnv: dict[str, str] = {}
             extraPath: list[str] = []
+            binds: list[str] = []
             # only the capabilities the model asks for (least privilege: e.g. a licence of one
             # solver is not handed to every model)
             for name in manifest.RequiresHost:
                 cap = self.hostCapabilities[name]
                 extraEnv.update(cap.Env)
                 extraPath.extend(cap.Path)
+                binds.extend(cap.binds())
             if manifest.Runtime.Type == 'pixi':
                 launcher = PixiLauncher(packageDir, environment=manifest.Runtime.Environment, pixi=self.pixi, extraEnv=extraEnv, extraPath=extraPath)
+            elif manifest.Runtime.Type == 'apptainer':
+                rt = manifest.Runtime
+                launcher = ApptainerLauncher(packageDir, image=rt.Image, imageDigest=rt.ImageDigest, gpu=rt.Gpu, python=rt.Python,
+                                             binds=binds, apptainer=self.apptainer, extraEnv=extraEnv, extraPath=extraPath)
             elif manifest.Runtime.Type == 'python':
                 launcher = LocalPythonLauncher(pythonPath=[str(packageDir)], extraEnv=extraEnv, extraPath=extraPath)
             else:  # excluded by _checkRunnable
