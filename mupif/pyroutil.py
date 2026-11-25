@@ -184,32 +184,70 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     return ns
 
 
-# global variable holding daemon objects, keyed by hostname (local IP address)
-_daemons = {}
+#: shared daemons (see :func:`getDaemon`), keyed by host name (local IP address): (daemon, thread
+#: running its request loop). Exclusive daemons are never stored here.
+_daemons: dict[str, tuple[Pyro5.api.Daemon, threading.Thread]] = {}
+#: guards :data:`_daemons`: threads asking for the shared daemon at the same moment get the same one
+_daemonsLock = threading.Lock()
+
+
+def _daemonRunning(daemon: Pyro5.api.Daemon, thread: threading.Thread) -> bool:
+    """
+    Tell whether a daemon still serves requests: its request loop runs and it is not closed.
+
+    ``Daemon.shutdown()`` waits for the request loop to end and then closes the daemon, which sets
+    its ``transportServer`` to None.
+    """
+    return thread.is_alive() and daemon.transportServer is not None
 
 
 def getDaemon(proxy: Pyro5.api.Proxy = None, exclusive=False) -> Pyro5.api.Daemon:
     """
-    Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will listen on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
+    Return a daemon running its request loop in a thread, listening on the local address from which
+    *proxy* (normally the nameserver) is reached.
 
-    Passing *proxy=None* will return the (possibly cached) daemon listening on the IPv4 loopback interface.
+    The *proxy* object is used to find out the local network address the daemon will listen on; the
+    remote object must be connectible when this function is called. Passing *proxy=None* gives a
+    daemon listening on the IPv4 loopback interface.
 
-    Do *not* call ``shutdown`` on the daemon returned as this would break the caching involved.
+    * **Shared** (default): one daemon per local address and process, created by the first call and
+      returned by the following ones (its thread is a daemon thread: it ends with the process). Do
+      *not* call ``shutdown`` on it: other code of the process uses it too. Should it be shut down
+      nevertheless, the next call starts a new one instead of returning the dead daemon.
+    * **Exclusive**: a new daemon owned by the caller, who may shut it down (servers do, when they
+      terminate: :func:`runServer`); its thread keeps the process alive. It is never returned to
+      other callers.
+
+      Exclusive daemons used to be stored as the shared daemon of their address: every later call
+      of the process then got the daemon of a server, and once that server terminated (shutting its
+      daemon down), a dead daemon -- objects registered on it were unreachable.
+
+    :param proxy: a proxy of a remote object reachable from this process (or None: loopback)
+    :param exclusive: return a new daemon owned by the caller
     """
     if proxy is not None:
         proxy._pyroBind()
         host = proxy._pyroConnection.sock.getsockname()[0]
     else:
         host = '127.0.0.1'
-    global _daemons
-    if not exclusive and ((d := _daemons.get(host, None)) is not None):
-        log.debug(f're-using existing daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
+    if exclusive:
+        d = Pyro5.api.Daemon(host=host)
+        threading.Thread(target=d.requestLoop, daemon=False, name=f'pyro-daemon-exclusive:{d.locationStr}').start()
+        log.debug(f'started new exclusive daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
         return d
-    dNew = _daemons[host] = Pyro5.api.Daemon(host=host)
-    th = threading.Thread(target=dNew.requestLoop, daemon=(not exclusive))
-    th.start()
-    log.debug(f'started new {"NON-" if exclusive else ""}exclusive daemon for {host}: {dNew.locationStr} [pid={os.getpid()}]')
-    return dNew
+    with _daemonsLock:
+        cached = _daemons.get(host)
+        if cached is not None:
+            if _daemonRunning(*cached):
+                log.debug(f're-using existing daemon for {host}: {cached[0].locationStr} [pid={os.getpid()}]')
+                return cached[0]
+            log.warning(f'The shared daemon for {host} ({cached[0].locationStr}) was shut down: starting a new one [pid={os.getpid()}]')
+        d = Pyro5.api.Daemon(host=host)
+        th = threading.Thread(target=d.requestLoop, daemon=True, name=f'pyro-daemon:{d.locationStr}')
+        th.start()
+        _daemons[host] = (d, th)
+        log.debug(f'started new shared daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
+        return d
 
 
 def getNSmetadata(ns, name):

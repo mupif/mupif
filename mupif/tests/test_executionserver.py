@@ -219,9 +219,8 @@ def test_registration(env):
     runExecutionServer registers the server with its tags; clients looking for model servers
     (type:jobmanager) do not see it; terminate removes it.
 
-    Run in a child process: runServer gives the server an exclusive daemon, which replaces the
-    daemon cached by pyroutil.getDaemon for the host and is shut down by terminate, breaking other
-    tests of this process which use the cached daemon.
+    Run in a child process: runServer installs process-wide handlers (SIGTERM, atexit) removing the
+    server from the nameserver, which must not stay behind in the test process.
     """
     import json
     import subprocess

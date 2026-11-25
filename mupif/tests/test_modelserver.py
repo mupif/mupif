@@ -563,6 +563,34 @@ class ModelServer_TestCase(unittest.TestCase):
             try: cls.ns.remove('appWatchTags')
             except Exception: pass
 
+    def test_exclusiveDaemonNotShared(self):
+        'An exclusive daemon (a server owns it, and shuts it down when terminating) is never returned as the shared daemon.'
+        cls=self.__class__
+        shared=mp.pyroutil.getDaemon(proxy=cls.ns)
+        excl=mp.pyroutil.getDaemon(proxy=cls.ns,exclusive=True)
+        self.assertIsNot(excl,shared)
+        # it used to replace the shared daemon of its address: later callers got it ...
+        self.assertIs(mp.pyroutil.getDaemon(proxy=cls.ns),shared)
+        # ... and after its owner shut it down, a dead daemon
+        excl.shutdown()
+        d=mp.pyroutil.getDaemon(proxy=cls.ns)
+        self.assertIs(d,shared)
+        uri=d.register(testApp.testApp())
+        try: self.assertEqual(Pyro5.api.Proxy(uri).getMetadata('ID'),'mupif-tests-testApp')
+        finally: d.unregister(uri.object)
+
+    def test_sharedDaemonShutDownIsReplaced(self):
+        'A shared daemon shut down nevertheless is not returned any more: a new one is started.'
+        cls=self.__class__
+        d=mp.pyroutil.getDaemon()  # loopback: not the daemon the other tests of this class use
+        d.shutdown()
+        d2=mp.pyroutil.getDaemon()
+        self.assertIsNot(d2,d)
+        self.assertIs(mp.pyroutil.getDaemon(),d2)
+        uri=d2.register(testApp.testApp())
+        try: self.assertEqual(Pyro5.api.Proxy(uri).getMetadata('ID'),'mupif-tests-testApp')
+        finally: d2.unregister(uri.object)
+
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
         cls=self.__class__
