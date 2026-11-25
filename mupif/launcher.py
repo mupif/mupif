@@ -36,7 +36,10 @@ every launcher; a launcher only decides **which interpreter, in which environmen
   ``sys.path`` (the model must be importable by the server). This is what model servers always did.
 * :class:`PixiLauncher` -- the interpreter of the pixi environment of a model package (see
   :mod:`mupif.modelpackage`), so that the model brings its own dependencies; used by execution
-  servers (:mod:`mupif.executionserver`).
+  servers (:mod:`mupif.executionserver`);
+* :class:`ApptainerLauncher` -- the interpreter of a container image of a model package, run by
+  Apptainer (Singularity): the whole userland comes with the model; no root needed, available on
+  most HPC systems.
 
 A launcher may also add environment variables and directories to ``PATH`` of the job: this is how an
 execution server hands *host capabilities* (e.g. the installation directory and licence server of a
@@ -252,3 +255,170 @@ class PixiLauncher(Launcher):
         env['PYTHONPATH'] = str(self.packageDir)
         # host capabilities last, so that they are not overridden by the activation
         return super().env(env)
+
+
+class ApptainerLauncher(Launcher):
+    """
+    Run a job in the container image of a model package, with Apptainer (or Singularity).
+
+    :meth:`prepare` obtains the image once into ``<packageDir>/.apptainer/image.sif``:
+
+    * ``docker://...@sha256:<hex>``, ``oras://...@sha256:<hex>`` -- ``apptainer pull`` (pinned by
+      digest: the registry content is verified by it); Apptainer's layer cache is not used
+      (``--disable-cache``), the SIF in the package cache is what is kept;
+    * ``https://...``, ``file:///...`` -- downloaded or copied, and verified against *imageDigest*
+      (sha256 of the SIF file); a mismatch is an error and nothing is kept.
+
+    A job runs ``apptainer exec`` with:
+
+    * ``--contain --cleanenv``: the container sees its own userland, a private ``/tmp`` and home,
+      and none of the server's environment variables (its ``PYTHONPATH`` would mix the server's
+      packages into the image's Python);
+    * the job's work directory bound at the same path (the job reports its URI and works there);
+    * the package directory bound read-only at ``/mupif/package``, which is ``PYTHONPATH``: the
+      model's entry point may come with the package or be installed in the image;
+    * the job's ``MUPIF_*`` variables and the host capabilities' variables passed in
+      (``APPTAINERENV_<name>``), the capabilities' ``PATH`` entries prepended
+      (``APPTAINERENV_PREPEND_PATH``), their directories (*binds*) bound read-only at the same path;
+    * ``--nv`` if *gpu*.
+
+    The container shares the host's network (Apptainer's default), so the model's Pyro daemon is
+    reachable as from any job. It does not get a PID namespace (``--pid``): the model's Python would
+    be process 1 there, which ignores the model server's SIGTERM; without it, ``apptainer exec``
+    forwards the signal to the model.
+
+    :param packageDir: the package directory (in the execution server's cache)
+    :param image: the image (see :class:`mupif.modelpackage.RuntimeSpec`)
+    :param imageDigest: ``sha256:<hex>`` of the SIF file, for ``https://`` and ``file:///`` images
+    :param gpu: pass ``--nv``
+    :param python: the interpreter in the image
+    :param binds: host directories bound read-only into the container at the same path
+    :param apptainer: the apptainer executable (default: ``$APPTAINER_EXE``, else ``apptainer`` or
+                      ``singularity`` in ``PATH``)
+    :param pullTimeout: seconds obtaining the image may take
+    :param extraEnv: variables passed into the container (host capabilities)
+    :param extraPath: directories prepended to ``PATH`` in the container (host capabilities)
+    """
+    name = 'apptainer'
+    #: where the package directory is mounted in the container
+    CONTAINER_PACKAGE_DIR = '/mupif/package'
+
+    def __init__(self, packageDir, *, image: str, imageDigest: str = '', gpu: bool = False, python: str = 'python3',
+                 binds: Sequence[str] = (), apptainer: Optional[str] = None, pullTimeout: float = 3600., **kw):
+        super().__init__(**kw)
+        self.packageDir = Path(packageDir)
+        self.image = image
+        self.imageDigest = imageDigest
+        self.gpu = gpu
+        self.python = python
+        self.binds = list(binds)
+        self.apptainer = apptainer or self.findApptainer()
+        self.pullTimeout = pullTimeout
+        for path in [str(self.packageDir), *self.binds]:
+            self._checkBindPath(path)
+
+    @staticmethod
+    def findApptainer() -> Optional[str]:
+        """Return the apptainer (or singularity) executable, or None if there is none."""
+        for cand in (os.environ.get('APPTAINER_EXE'), shutil.which('apptainer'), shutil.which('singularity')):
+            if cand and os.path.isfile(cand) and os.access(cand, os.X_OK):
+                return cand
+        return None
+
+    @staticmethod
+    def _checkBindPath(path: str) -> None:
+        """Refuse paths which cannot be written in a ``--bind`` specification (``src:dst:opts``, comma-separated)."""
+        if ':' in path or ',' in path:
+            raise ValueError(f'Path {path!r} cannot be bound into a container (contains ":" or ",")')
+
+    @property
+    def sif(self) -> Path:
+        """The image file of the package."""
+        return self.packageDir / '.apptainer' / 'image.sif'
+
+    def describe(self) -> str:
+        return f'apptainer image {self.image} of {self.packageDir}'
+
+    def prepare(self) -> None:
+        """Obtain and verify the image (see the class documentation); does nothing once done."""
+        if self.sif.exists():
+            return
+        if not self.apptainer:
+            raise RuntimeError('apptainer not found (set APPTAINER_EXE, or put apptainer into PATH)')
+        self.sif.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.sif.with_name(f'.image-{os.getpid()}-{id(self)}.sif')
+        try:
+            if self.image.startswith(('docker://', 'oras://')):
+                self._pull(tmp)
+            else:
+                self._fetchVerified(tmp)
+            os.rename(tmp, self.sif)
+        finally:
+            if tmp.exists():
+                tmp.unlink()
+        log.info(f'Prepared {self.describe()}: {self.sif} ({self.sif.stat().st_size} bytes)')
+
+    def _hostEnv(self, base: Mapping[str, str]) -> dict[str, str]:
+        """The environment of the apptainer process itself: without variables meant for containers of the server."""
+        return {k: v for k, v in base.items() if not k.startswith(('APPTAINERENV_', 'SINGULARITYENV_'))}
+
+    def _pull(self, dest: Path) -> None:
+        cmd = [self.apptainer, 'pull', '--disable-cache', str(dest), self.image]
+        log.info(f'Pulling {self.image}')
+        res = subprocess.run(cmd, env=self._hostEnv(os.environ), capture_output=True, text=True, timeout=self.pullTimeout)
+        if res.returncode != 0:
+            raise RuntimeError(f'apptainer pull {self.image} failed with exit status {res.returncode}:\n{res.stderr[-4000:]}')
+
+    def _fetchVerified(self, dest: Path) -> None:
+        """Download or copy a SIF file into *dest*, verifying its sha256 (*imageDigest*)."""
+        import hashlib
+        import urllib.parse
+        h = hashlib.sha256()
+        with open(dest, 'wb') as out:
+            if self.image.startswith('file:///'):
+                src = urllib.parse.unquote(urllib.parse.urlparse(self.image).path)
+                with open(src, 'rb') as f:
+                    while chunk := f.read(2**20):
+                        h.update(chunk)
+                        out.write(chunk)
+            else:
+                import requests
+                with requests.get(self.image, stream=True, timeout=(10, 300)) as r:
+                    r.raise_for_status()
+                    for chunk in r.iter_content(2**20):
+                        h.update(chunk)
+                        out.write(chunk)
+        got = 'sha256:' + h.hexdigest()
+        if got != self.imageDigest:
+            raise RuntimeError(f'Image {self.image} has digest {got}, the package requires {self.imageDigest}; refusing it')
+
+    def command(self, bootstrap: Sequence[str], *, workDir: Optional[str] = None) -> list[str]:
+        if not self.apptainer:
+            raise RuntimeError('apptainer not found (set APPTAINER_EXE, or put apptainer into PATH)')
+        if workDir is None:
+            raise ValueError('ApptainerLauncher needs the work directory of the job')
+        self._checkBindPath(workDir)
+        cmd = [self.apptainer, 'exec', '--contain', '--cleanenv']
+        if self.gpu:
+            cmd.append('--nv')
+        cmd += ['--bind', f'{workDir}:{workDir}', '--bind', f'{self.packageDir}:{self.CONTAINER_PACKAGE_DIR}:ro']
+        for b in self.binds:
+            cmd += ['--bind', f'{b}:{b}:ro']
+        return cmd + [str(self.sif), self.python, *bootstrap]
+
+    def env(self, base: Mapping[str, str]) -> dict[str, str]:
+        """
+        The environment of ``apptainer exec``; what the job sees is passed as ``APPTAINERENV_*``.
+
+        Passed into the container: the job's ``MUPIF_*`` variables (logging), :attr:`extraEnv`,
+        ``PYTHONPATH`` (the package directory in the container) and :attr:`extraPath`, prepended
+        to the container's ``PATH``.
+        """
+        env = self._hostEnv(base)
+        inside = {k: v for k, v in base.items() if k.startswith('MUPIF_')}
+        inside.update(self.extraEnv)
+        inside['PYTHONPATH'] = self.CONTAINER_PACKAGE_DIR
+        if self.extraPath:
+            inside['PREPEND_PATH'] = os.pathsep.join(self.extraPath)
+        env.update({f'APPTAINERENV_{k}': v for k, v in inside.items()})
+        return env

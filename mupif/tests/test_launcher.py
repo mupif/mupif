@@ -129,3 +129,90 @@ def test_model_server_gives_launcher_job_env_and_work_dir(tmp_path):
         srv._allocateJob('user', remoteLogUri='PYRO:log@h:1', spec=ModelServer.JobSpec(appClass=testApp.testApp, launcher=srv.launcher))
     assert seen['env'] == {'MUPIF_LOG_PYRO': 'PYRO:log@h:1', 'MUPIF_LOG_LEVEL': 'DEBUG', 'MUPIF_LOG_PROCESSNAME': '1@rec'}
     assert seen['workDir'] == srv.getJobWorkDir('1@rec')
+
+
+# --- ApptainerLauncher, with the fake apptainer of mupif.tests.fakeapptainer
+
+import hashlib
+
+from mupif.launcher import ApptainerLauncher
+from mupif.tests import fakeapptainer
+
+H = 'a' * 64
+
+
+@pytest.fixture
+def fakeApptainer(tmp_path):
+    d = tmp_path / 'bin'
+    d.mkdir()
+    return d, fakeapptainer.install(d)
+
+
+def test_apptainer_pulls_registry_image_once(tmp_path, pkg, fakeApptainer):
+    bindir, exe = fakeApptainer
+    la = ApptainerLauncher(pkg, image=f'docker://ghcr.io/x/m@sha256:{H}', apptainer=exe)
+    la.prepare()
+    la.prepare()
+    assert la.sif.read_text() == f'fake image docker://ghcr.io/x/m@sha256:{H}'
+    # pulled once, to a temporary file next to the image (renamed into place when complete)
+    (pull,) = fakeapptainer.calls(bindir)
+    assert pull[:2] == ['pull', '--disable-cache'] and pull[3] == f'docker://ghcr.io/x/m@sha256:{H}'
+    assert os.path.dirname(pull[2]) == str(la.sif.parent) and pull[2] != str(la.sif)
+    # a new launcher (server restarted) finds the image in the package cache entry
+    ApptainerLauncher(pkg, image=f'docker://ghcr.io/x/m@sha256:{H}', apptainer=exe).prepare()
+    assert len(fakeapptainer.calls(bindir)) == 1
+
+
+def test_apptainer_pull_failure(tmp_path, pkg, fakeApptainer):
+    la = ApptainerLauncher(pkg, image=f'docker://ghcr.io/x/missing@sha256:{H}', apptainer=fakeApptainer[1])
+    with pytest.raises(RuntimeError, match='failed to get image'):
+        la.prepare()
+    assert not la.sif.exists() and list(la.sif.parent.iterdir()) == []
+
+
+def test_apptainer_sif_file_verified(tmp_path, pkg, fakeApptainer):
+    sif = tmp_path / 'shared' / 'model.sif'
+    sif.parent.mkdir()
+    sif.write_bytes(b'SIF image content')
+    good = 'sha256:' + hashlib.sha256(b'SIF image content').hexdigest()
+    la = ApptainerLauncher(pkg, image=f'file://{sif}', imageDigest=good, apptainer=fakeApptainer[1])
+    la.prepare()
+    assert la.sif.read_bytes() == b'SIF image content'
+    # changed on the shared file system since it was published: refused, nothing kept
+    other = tmp_path / 'pkg2'
+    other.mkdir()
+    sif.write_bytes(b'tampered')
+    la2 = ApptainerLauncher(other, image=f'file://{sif}', imageDigest=good, apptainer=fakeApptainer[1])
+    with pytest.raises(RuntimeError, match='refusing'):
+        la2.prepare()
+    assert not la2.sif.exists() and list(la2.sif.parent.iterdir()) == []
+
+
+def test_apptainer_command_and_env(tmp_path, pkg, fakeApptainer):
+    exe = fakeApptainer[1]
+    la = ApptainerLauncher(pkg, image=f'oras://r/m@sha256:{H}', gpu=True, python='/opt/py/bin/python', binds=['/opt/abaqus'],
+                           apptainer=exe, extraEnv={'LM_LICENSE_FILE': '27000@lic'}, extraPath=['/opt/abaqus/bin'])
+    cmd = la.command(BOOTSTRAP, workDir='/work/1@x')
+    assert cmd == [exe, 'exec', '--contain', '--cleanenv', '--nv', '--bind', '/work/1@x:/work/1@x', '--bind', f'{pkg}:/mupif/package:ro',
+                   '--bind', '/opt/abaqus:/opt/abaqus:ro', str(la.sif), '/opt/py/bin/python', *BOOTSTRAP]
+    env = la.env({'PATH': '/usr/bin', 'PYTHONPATH': '/server/site', 'MUPIF_LOG_LEVEL': 'DEBUG', 'MUPIF_LOG_PYRO': 'PYRO:l@h:1',
+                  'APPTAINERENV_LEAK': 'x', 'HOME': '/home/u'})
+    # the apptainer process runs with the server's environment, without variables meant for containers
+    assert env['PATH'] == '/usr/bin' and env['HOME'] == '/home/u' and 'APPTAINERENV_LEAK' not in env
+    inside = {k[len('APPTAINERENV_'):]: v for k, v in env.items() if k.startswith('APPTAINERENV_')}
+    assert inside == {'MUPIF_LOG_LEVEL': 'DEBUG', 'MUPIF_LOG_PYRO': 'PYRO:l@h:1', 'LM_LICENSE_FILE': '27000@lic',
+                      'PYTHONPATH': '/mupif/package', 'PREPEND_PATH': '/opt/abaqus/bin'}
+    with pytest.raises(ValueError):
+        la.command(BOOTSTRAP)  # the work directory must be given
+    with pytest.raises(ValueError):
+        ApptainerLauncher(pkg, image=f'oras://r/m@sha256:{H}', binds=['/a:b'], apptainer=exe)
+
+
+def test_apptainer_job_runs(tmp_path, pkg, fakeApptainer):
+    'Through the fake: the job sees the package on PYTHONPATH, the variables passed in, not the server ones.'
+    la = ApptainerLauncher(pkg, image=f'docker://r/m@sha256:{H}', apptainer=fakeApptainer[1], extraEnv={'LIC': 'x'})
+    la.prepare()
+    code = 'import os, sys; print(os.environ.get("PYTHONPATH"), os.environ.get("LIC"), os.environ.get("SECRET"), os.environ.get("MUPIF_LOG_LEVEL"))'
+    out = subprocess.run(la.command(['-c', code], workDir=str(tmp_path)), env=la.env(dict(os.environ, SECRET='s', MUPIF_LOG_LEVEL='INFO')),
+                         capture_output=True, text=True)
+    assert out.stdout.split() == [str(pkg), 'x', 'None', 'INFO'], out.stderr
