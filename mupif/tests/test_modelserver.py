@@ -581,15 +581,28 @@ class ModelServer_TestCase(unittest.TestCase):
 
     def test_sharedDaemonShutDownIsReplaced(self):
         'A shared daemon shut down nevertheless is not returned any more: a new one is started.'
-        cls=self.__class__
-        d=mp.pyroutil.getDaemon()  # loopback: not the daemon the other tests of this class use
-        d.shutdown()
-        d2=mp.pyroutil.getDaemon()
-        self.assertIsNot(d2,d)
-        self.assertIs(mp.pyroutil.getDaemon(),d2)
-        uri=d2.register(testApp.testApp())
-        try: self.assertEqual(Pyro5.api.Proxy(uri).getMetadata('ID'),'mupif-tests-testApp')
-        finally: d2.unregister(uri.object)
+        import threading
+        cache=mp.pyroutil._daemons
+        saved=cache.get('127.0.0.1')
+        # the daemon cached for the address is used by the other tests of this class: put one of our
+        # own in its place, shut it down, and put the original back at the end
+        d=Pyro5.api.Daemon(host='127.0.0.1')
+        th=threading.Thread(target=d.requestLoop,daemon=True)
+        th.start()
+        cache['127.0.0.1']=(d,th)
+        d2=None
+        try:
+            d.shutdown()
+            d2=mp.pyroutil.getDaemon()
+            self.assertIsNot(d2,d)
+            self.assertIs(mp.pyroutil.getDaemon(),d2)
+            uri=d2.register(testApp.testApp())
+            try: self.assertEqual(Pyro5.api.Proxy(uri).getMetadata('ID'),'mupif-tests-testApp')
+            finally: d2.unregister(uri.object)
+        finally:
+            if d2 is not None: d2.shutdown()
+            if saved is None: cache.pop('127.0.0.1',None)
+            else: cache['127.0.0.1']=saved
 
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
