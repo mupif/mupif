@@ -276,6 +276,32 @@ class ModelServer_TestCase(unittest.TestCase):
             for p in jobs(): p.kill()
             srv.terminate(force=True)
 
+    def test_entrypointJob(self):
+        'A job may get its model class as "module:Class" (imported by the job): a server without appClass runs it.'
+        cls=self.__class__
+        class EntrypointServer(mp.ModelServer):
+            def _jobSpec(self):
+                return mp.ModelServer.JobSpec(entrypoint='mupif.tests.testApp:testApp',launcher=self.launcher)
+        srv=EntrypointServer(ns=cls.ns,appName='appEntry',workDir=cls.tmp,appClass=None,maxJobs=1)
+        self.assertEqual(srv.getModelMetadata(),{})
+        uri=cls.daemon.register(srv)
+        srv.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName='appEntry',exclusiveDaemon=False)
+        try:
+            (retCode,jobId,port)=srv.allocateJob(user='user')
+            self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
+            mod=Pyro5.api.Proxy(srv.getStatus()[0].uri)
+            self.assertEqual(mod.getMetadata('ID'),'mupif-tests-testApp')
+            srv.terminateJob(jobId)
+        finally:
+            srv.terminate(force=True)
+
+    def test_jobSpecNeedsOneModel(self):
+        'A job spec with both or neither of appClass and entrypoint is refused before anything starts.'
+        spec=mp.ModelServer.JobSpec
+        for bad in (spec(),spec(appClass=testApp.testApp,entrypoint='mupif.tests.testApp:testApp')):
+            with self.assertRaises(ValueError): self.jobMan._allocateJob('user',spec=bad)
+        self.assertEqual(self.jobMan.getStatus(),[])
+
     def test_jobIdUsesRegisteredName(self):
         'Jobs of a server registered under an instance name are named after that name, so that jobs of two instances do not collide.'
         cls=self.__class__
@@ -534,3 +560,14 @@ class ModelServer_TestCase(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
+
+def test_resolveEntrypoint():
+    'Entry points "module:Class", also nested classes; malformed ones are refused.'
+    from mupif.modelserver import resolveEntrypoint
+    assert resolveEntrypoint('mupif.tests.testApp:testApp') is testApp.testApp
+    assert resolveEntrypoint('mupif.modelserver:ModelServer.JobSpec') is mp.ModelServer.JobSpec
+    for bad in ('mupif.tests.testApp','mupif.tests.testApp:',':testApp',''):
+        with pytest.raises(ValueError): resolveEntrypoint(bad)
+    with pytest.raises(AttributeError): resolveEntrypoint('mupif.tests.testApp:NoSuchClass')
+    with pytest.raises(ImportError): resolveEntrypoint('mupif.no_such_module:X')
