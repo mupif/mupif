@@ -125,6 +125,25 @@ class PackageCache:
         """Tell whether the package of *ref* is ready (a request would start without building)."""
         return (self.directory / _hex(ref.digest) / 'ready').exists()
 
+    def readyPackages(self) -> dict[str, str]:
+        """
+        Return the ready packages in the cache: digest -> ``<ID>@<Version>``.
+
+        Read from the ``ready`` files, so it includes packages prepared by earlier runs of the
+        server (an execution server advertises them when it starts).
+        """
+        ret = {}
+        for entry in self.directory.iterdir():
+            ready = entry / 'ready'
+            if entry.is_dir() and not entry.name.startswith('.') and ready.exists():
+                try:
+                    key, dig = ready.read_text().split()
+                except (OSError, ValueError):
+                    continue
+                if dig == 'sha256:' + entry.name:
+                    ret[dig] = key
+        return ret
+
     @contextlib.contextmanager
     def _locked(self, hexd: str):
         """Hold the lock of one package: the thread lock, then the lock file (other processes)."""

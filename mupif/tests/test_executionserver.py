@@ -235,3 +235,47 @@ def test_registration(env):
     assert 'exec-reg' not in res['jobmanagers']
     assert res['signature'] == 'Mupif.ExecutionServer'
     assert res['afterTerminate'] is False
+
+
+def test_ready_models_advertised(env, server):
+    'A model ready on the server (after its first job) is advertised by ModelID tags, updated in the nameserver.'
+    ns = env['ns']
+    name = server.getNSName()
+    ns.register(name, server.pyroURI, metadata=mp.pyroutil.executionServerTags(server))
+    try:
+        assert server.readyModels() == []
+        assert not any(t.startswith('ModelID:') for t in ns.lookup(name, return_metadata=True)[1])
+        jobID, _ = run(server, 'pkg-python')
+        server.terminateJob(jobID)
+        assert server.readyModels() == ['pkg-python@1.0']
+        tags = set(ns.lookup(name, return_metadata=True)[1])
+        assert {'ModelID:pkg-python', 'ModelID:pkg-python@1.0', 'type:executionserver'} <= tags
+        # clients find it by the model ID among execution servers
+        assert name in ns.yplookup(meta_all={'type:executionserver', 'ModelID:pkg-python'})
+    finally:
+        ns.remove(name)
+
+
+def test_ready_packages_of_earlier_runs_and_prefetch(env, server):
+    'A new server on the same cache knows the packages prepared before; the prefetch list prepares packages ahead of requests.'
+    jobID, _ = run(server, 'pkg-python')
+    server.terminateJob(jobID)
+    again = mp.ExecutionServer(ns=env['ns'], appName='exec-again', registry=env['registry'], cacheDir=server.cache.directory,
+                               workDir=str(env['tmp']), allowPythonRuntime=True, pixi=env['pixi'],
+                               prefetch=['pkg-pixi@1.0', 'pkg-abaqus', 'no-such-model'])
+    assert again.readyModels() == ['pkg-python@1.0']
+    th = again.startPrefetch()
+    th.join(60)
+    # pkg-abaqus is not runnable here and no-such-model does not exist: logged, skipped
+    assert again.readyModels() == ['pkg-pixi@1.0', 'pkg-python@1.0']
+
+
+def test_pruned_package_no_longer_advertised(env, server):
+    server.cache.maxBytes = 0  # every package not in use is pruned after each allocation
+    j1, _ = run(server, 'pkg-python')
+    server.terminateJob(j1)
+    j2, _ = run(server, 'pkg-pixi')  # pkg-python is pruned (not in use), pkg-pixi kept (in use)
+    try:
+        assert server.readyModels() == ['pkg-pixi@1.0']
+    finally:
+        server.terminateJob(j2)

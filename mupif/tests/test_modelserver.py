@@ -541,6 +541,28 @@ class ModelServer_TestCase(unittest.TestCase):
             stop.set()
             if current() is not None: cls.ns.remove('appWatch')
 
+    def test_watchRegistrationCurrentTags(self):
+        'Given a function, the watch registers again with the tags current at that moment (execution servers: models ready meanwhile).'
+        import threading
+        cls=self.__class__
+        own='PYRO:own@127.0.0.1:3'
+        tags={'type:executionserver','appWatchTags'}
+        cls.ns.register('appWatchTags',own,metadata=tags)
+        stop=threading.Event()
+        t=threading.Thread(target=mp.pyroutil.watchRegistration,args=(cls.ns._pyroUri,'appWatchTags',own,lambda: set(tags),stop,0.1),daemon=True)
+        t.start()
+        try:
+            tags.add('ModelID:m')
+            cls.ns.remove('appWatchTags')
+            t0=time.time()
+            while 'appWatchTags' not in cls.ns.list() and time.time()-t0<5: time.sleep(0.05)
+            self.assertEqual(set(cls.ns.lookup('appWatchTags',return_metadata=True)[1]),{'type:executionserver','appWatchTags','ModelID:m'})
+        finally:
+            stop.set()
+            t.join(2)
+            try: cls.ns.remove('appWatchTags')
+            except Exception: pass
+
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
         cls=self.__class__

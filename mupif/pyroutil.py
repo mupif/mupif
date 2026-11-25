@@ -380,7 +380,9 @@ def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, in
     :param nsUri: URI of the nameserver (a proxy of its own is used: proxies belong to one thread)
     :param name: registered name
     :param uri: URI of the server
-    :param metadata: tags to register with
+    :param metadata: tags to register with, or a function returning them (called at every
+                     registration, so that a server whose tags change is registered with the current
+                     ones; see :mod:`mupif.executionserver`)
     :param stop: set when the server leaves the nameserver itself, so that it is not registered again
     :param interval: seconds between two checks
     """
@@ -403,7 +405,7 @@ def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, in
                 continue
             if stop.is_set():
                 break
-            ns.register(name, uri, metadata=metadata)
+            ns.register(name, uri, metadata=metadata() if callable(metadata) else metadata)
             log.warning(f'{name} was missing in the nameserver (or registered by a server which does not answer): registered again')
         except Exception as e:
             log.debug(f'Checking the registration of {name} failed (nameserver unreachable?): {e}')
@@ -417,7 +419,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
-    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated. May be a function returning the tags: called at every (re-)registration, for servers whose tags change while they run.
     :param watchInterval: if positive, check the registration every so many seconds and register again when it is missing (see :func:`watchRegistration`); the check stops when the server leaves the nameserver (process exit, SIGTERM, or ``app._nsWatchStop`` set by the server)
     :param fallbackName: if given, *appName* is registered only if nobody holds it (atomically, in the
         nameserver: ``register(..., safe=True)``); if it is taken, the server is registered as
@@ -429,6 +431,10 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :returns: URI
     """
     if ns is None: ns = connectNameserver()
+    # a function: the watch (below) calls it at every re-registration, to register the current tags
+    watchMetadata = metadata
+    if callable(metadata):
+        metadata = metadata()
 
     exclusiveDaemon = False
     if not daemon:
@@ -482,7 +488,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     watchStop = threading.Event()
     if watchInterval > 0:
         app._nsWatchStop = watchStop
-        threading.Thread(target=watchRegistration, args=(ns._pyroUri, appName, uri, metadata, watchStop, watchInterval),
+        threading.Thread(target=watchRegistration, args=(ns._pyroUri, appName, uri, watchMetadata, watchStop, watchInterval),
                          daemon=True, name=f'ns-watch:{appName}').start()
 
     def _remove_from_ns(sig=None, stack=None):
@@ -677,7 +683,9 @@ def runExecutionServer(*, ns, server):
     removeStaleModelServers(ns, server.getName(), typeTag=_NS_METADATA.executionserver)
     name = modelServerNSName(ns, server)
     fallbackName = _hostPidInstanceName(name) if name == server.getName() else None
-    return runServer(ns=ns, appName=name, app=server, metadata=executionServerTags(server),
+    # tags change while the server runs (models becoming ready): the registration watch re-registers
+    # with the current ones
+    return runServer(ns=ns, appName=name, app=server, metadata=lambda: executionServerTags(server),
                      watchInterval=getattr(server, 'registrationCheckInterval', 30.), fallbackName=fallbackName)
 
 
@@ -690,13 +698,19 @@ def executionServerTags(server) -> set[str]:
     * the base name of the server;
     * ``runtime:<type>`` for every package runtime it supports (``pixi``, ``python``);
     * ``host:<name>`` for every host capability it offers (e.g. a licensed solver);
-    * ``mupif:tickets-v2``.
+    * ``mupif:tickets-v2``;
+    * ``ModelID:<id>`` and ``ModelID:<id>@<version>`` for every model package *ready* on the server
+      (in its cache, environment installed): a job of it starts at once, so clients prefer such
+      servers (see :mod:`mupif.modelplacement`). These tags change while the server runs.
 
     :param server: the execution server (:class:`mupif.executionserver.ExecutionServer`)
     """
     tags = {_NS_METADATA.executionserver, server.getName(), _NS_METADATA.tickets}
     tags |= {f'runtime:{r}' for r in server.runtimes}
     tags |= {f'host:{c}' for c in server.hostCapabilities}
+    for key in server.readyModels():
+        tags.add(_NS_METADATA.modelID + key.split('@', 1)[0])
+        tags.add(_NS_METADATA.modelID + key)
     return tags
 
 

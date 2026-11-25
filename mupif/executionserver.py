@@ -40,7 +40,13 @@ a client asks for a job of a model given by its ID (and optionally version), and
    in the package's environment (:mod:`mupif.launcher`).
 
 The client receives the usual ``(JOBMAN_OK, jobID, port)`` and talks to the job as to any remote
-model. :meth:`ExecutionServer.getJobPackage` tells which package (ID, version, digest) a job runs,
+model.
+
+**Ready models are advertised**: once a package is ready (also packages prepared by earlier runs of
+the server, found in the cache), the server adds ``ModelID:<id>`` and ``ModelID:<id>@<version>`` to
+its nameserver tags; clients prefer servers on which the model starts at once. Packages can be
+prepared ahead of the first request by the *prefetch* list of the server, e.g. popular models
+(``prefetch=['oofem-thermal', 'other-model@2.1']``), in the background when the server starts. :meth:`ExecutionServer.getJobPackage` tells which package (ID, version, digest) a job runs,
 which workflows record for provenance.
 
 **Host capabilities** are what a host offers beyond packages: e.g. a licensed solver installed on it
@@ -71,6 +77,7 @@ from typing import Iterable, Mapping, Optional
 
 import pydantic
 import Pyro5.api
+import Pyro5.errors
 
 from . import modelserverbase
 from . import pyroutil
@@ -110,6 +117,8 @@ class ExecutionServer(ModelServer):
     :param pixi: pixi executable (default: see :meth:`mupif.launcher.PixiLauncher.findPixi`)
     :param maxCacheBytes: size of the cache above which least recently used packages are removed
     :param failureTimeout: seconds a package which could not be prepared is not tried again
+    :param prefetch: models to prepare in the background when the server starts (:meth:`runServer`
+                     or :meth:`startPrefetch`): ``<id>`` (latest version) or ``<id>@<version>``
     :param workDir: see :class:`mupif.ModelServer`
     :param maxJobs: see :class:`mupif.ModelServer`
     :param instance: see :class:`mupif.ModelServer`
@@ -128,6 +137,7 @@ class ExecutionServer(ModelServer):
             pixi: Optional[str] = None,
             maxCacheBytes: Optional[int] = None,
             failureTimeout: float = 600.,
+            prefetch: Iterable[str] = (),
             workDir=None,
             maxJobs: int = 1,
             instance=None,
@@ -153,12 +163,86 @@ class ExecutionServer(ModelServer):
         self._launchersLock = threading.Lock()
         #: job ID -> package the job runs (kept for finished jobs, too)
         self._jobPackages: dict[str, PackageRef] = {}
+        self.prefetch = list(prefetch)
+        #: ready packages: digest -> ``<ID>@<Version>``; advertised as nameserver tags. Packages
+        #: prepared by earlier runs of the server are ready at once.
+        self._ready: dict[str, str] = self.cache.readyPackages()
+        self._readyLock = threading.Lock()
         log.info(f'Execution server {appName}: registry {registry.describe()}, cache {cacheDir}, runtimes {sorted(self.runtimes) or "none"}, host capabilities {sorted(self.hostCapabilities) or "none"}')
         if not self.runtimes:
             log.warning(f'Execution server {appName} supports no package runtime: it will refuse every model (is pixi installed?)')
 
     def runServer(self):
-        return pyroutil.runExecutionServer(ns=self.ns, server=self)
+        """Register the server in the nameserver (see :func:`mupif.pyroutil.runExecutionServer`) and start the prefetch."""
+        uri = pyroutil.runExecutionServer(ns=self.ns, server=self)
+        self.startPrefetch()
+        return uri
+
+    def readyModels(self) -> list[str]:
+        """Return the ready packages, ``<ID>@<Version>``, sorted (advertised as nameserver tags)."""
+        with self._readyLock:
+            return sorted(set(self._ready.values()))
+
+    def _setReady(self, ready: dict[str, str]) -> None:
+        """
+        Replace the set of ready packages; update the nameserver tags if it changed.
+
+        The registration is updated in place (``set_metadata``), through a nameserver proxy of the
+        calling thread. Not registered yet (no URI): the tags are registered with the server.
+        Never raises: a failed update is logged and repaired at the next change (the registration
+        watch re-registers with the current tags if the entry disappears).
+        """
+        with self._readyLock:
+            if ready == self._ready:
+                return
+            self._ready = dict(ready)
+        if getattr(self, 'pyroURI', None) is None:
+            return
+        try:
+            ns = Pyro5.api.Proxy(self.ns._pyroUri)
+            ns._pyroTimeout = 10
+            name = self.getNSName()
+            try:
+                current = ns.lookup(name)
+            except Pyro5.errors.NamingError:
+                log.debug(f'{name} is not in the nameserver (yet): tags not updated')
+                return
+            # only if the entry is still ours (not taken over by another instance meanwhile)
+            if str(current) == str(self.pyroURI):
+                ns.set_metadata(name, pyroutil.executionServerTags(self))
+        except Exception:
+            log.exception(f'Updating the nameserver tags of {self.getNSName()} failed')
+
+    def _markReady(self, ref: PackageRef) -> None:
+        """Advertise a package as ready (see :meth:`_setReady`)."""
+        with self._readyLock:
+            ready = dict(self._ready)
+        ready[ref.digest] = ref.manifest.key()
+        self._setReady(ready)
+
+    def startPrefetch(self) -> Optional[threading.Thread]:
+        """
+        Prepare the packages of the prefetch list in a background thread; return the thread.
+
+        Failures (unknown model, not runnable here, preparation failed) are logged; the server works
+        on. Nothing is done (None returned) for an empty list.
+        """
+        if not self.prefetch:
+            return None
+
+        def run():
+            for item in self.prefetch:
+                modelID, _, version = item.partition('@')
+                try:
+                    ref = self.registry.resolve(modelID, version or None)
+                    self._checkRunnable(ref.manifest)
+                    self._getPackage(ref)
+                    log.info(f'Prefetched model package {ref.manifest.key()}')
+                except Exception as e:
+                    log.error(f'Prefetching model package {item} failed: {e}')
+        th = threading.Thread(target=run, daemon=True, name=f'prefetch:{self.getName()}')
+        th.start()
+        return th
 
     def getApplicationSignature(self):
         return 'Mupif.ExecutionServer'
@@ -208,9 +292,11 @@ class ExecutionServer(ModelServer):
         def prepare(packageDir: Path, manifest: ModelPackageManifest):
             self._launcherFor(ref, packageDir).prepare()
         try:
-            return self.cache.get(ref, self.registry.download, prepare)
+            packageDir = self.cache.get(ref, self.registry.download, prepare)
         except PackageBuildError as e:
             raise modelserverbase.ModelServerCannotRunException(f'{self.getNSName()}: {e}') from e
+        self._markReady(ref)
+        return packageDir
 
     def allocateJob(self, user, *, remoteLogUri=None, ticket=None, modelID: Optional[str] = None, modelVersion: Optional[str] = None):
         """
@@ -260,6 +346,10 @@ class ExecutionServer(ModelServer):
             self._updateActiveJobs()
             with self.lock:
                 active = {self._jobPackages[j].digest for j in self.activeJobs if j in self._jobPackages}
-            self.cache.prune(keep=active)
+            removed = self.cache.prune(keep=active)
+            if removed:
+                with self._readyLock:
+                    ready = {d: k for d, k in self._ready.items() if d not in removed}
+                self._setReady(ready)
         except Exception:
             log.exception('Pruning the package cache failed')
