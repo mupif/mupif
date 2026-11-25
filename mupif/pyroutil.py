@@ -60,6 +60,9 @@ from typing import Optional
 # pyro5 nameserver metadata
 class _NS_METADATA:
     jobmanager = "type:jobmanager"
+    #: execution servers (mupif.executionserver): run any model of a registry, given by its ID; not
+    #: tagged as jobmanager, so that clients unaware of them never ask them for a job without a model ID
+    executionserver = "type:executionserver"
     appserver = "type:appserver"
     #: the model server's preAllocate tickets work remotely (they expire, and are recognised when sent
     #: back over Pyro); clients must not call preAllocate remotely on servers without this tag
@@ -628,7 +631,7 @@ def runModelServer(*, ns, jobman):
                      watchInterval=getattr(jobman, 'registrationCheckInterval', 30.), fallbackName=fallbackName)
 
 
-def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list[str]:
+def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5., typeTag: str = _NS_METADATA.jobmanager) -> list[str]:
     """
     Remove nameserver entries of model servers of base name *baseName* which do not answer.
 
@@ -641,11 +644,13 @@ def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list
     :param ns: nameserver proxy
     :param baseName: base name of the model server (its tag in the nameserver)
     :param aliveTimeout: seconds to wait for each server to answer
+    :param typeTag: type tag of the servers (``type:jobmanager``; ``type:executionserver`` for
+                    execution servers)
     :return: names of the removed entries
     """
     removed = []
     try:
-        entries = ns.yplookup(meta_all={_NS_METADATA.jobmanager, baseName}, return_metadata=True)
+        entries = ns.yplookup(meta_all={typeTag, baseName}, return_metadata=True)
     except Exception:
         log.exception(f'Cannot list the model servers {baseName} in the nameserver')
         return removed
@@ -656,6 +661,43 @@ def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list
             log.warning(f'Removed {name} from the nameserver: the model server registered there ({uri}) does not answer')
             removed.append(name)
     return removed
+
+
+def runExecutionServer(*, ns, server):
+    """
+    Register and run an execution server (see :mod:`mupif.executionserver`).
+
+    Like :func:`runModelServer` (instance names, removal of stale entries, the registration
+    watched and restored), but registered with the tags of :func:`executionServerTags`.
+
+    :param ns: nameserver proxy
+    :param server: the execution server
+    :return: URI of the server
+    """
+    removeStaleModelServers(ns, server.getName(), typeTag=_NS_METADATA.executionserver)
+    name = modelServerNSName(ns, server)
+    fallbackName = _hostPidInstanceName(name) if name == server.getName() else None
+    return runServer(ns=ns, appName=name, app=server, metadata=executionServerTags(server),
+                     watchInterval=getattr(server, 'registrationCheckInterval', 30.), fallbackName=fallbackName)
+
+
+def executionServerTags(server) -> set[str]:
+    """
+    Return the nameserver tags of an execution server registration.
+
+    * ``type:executionserver`` (not ``type:jobmanager``: an execution server needs the model ID
+      with every job request, which clients unaware of execution servers do not send);
+    * the base name of the server;
+    * ``runtime:<type>`` for every package runtime it supports (``pixi``, ``python``);
+    * ``host:<name>`` for every host capability it offers (e.g. a licensed solver);
+    * ``mupif:tickets-v2``.
+
+    :param server: the execution server (:class:`mupif.executionserver.ExecutionServer`)
+    """
+    tags = {_NS_METADATA.executionserver, server.getName(), _NS_METADATA.tickets}
+    tags |= {f'runtime:{r}' for r in server.runtimes}
+    tags |= {f'host:{c}' for c in server.hostCapabilities}
+    return tags
 
 
 def modelServerTags(jobman) -> set[str]:

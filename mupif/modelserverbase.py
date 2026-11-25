@@ -66,6 +66,19 @@ class ModelServerNoResourcesException(ModelServerException):
     pass
 
 
+@Pyro5.api.expose
+class ModelServerCannotRunException(ModelServerException):
+    """
+    The server cannot run the requested model at all (unlike :class:`ModelServerNoResourcesException`,
+    trying again later does not help).
+
+    Raised by execution servers (:mod:`mupif.executionserver`) when the model is not in their
+    registry, needs a runtime or host capability the server does not have, or its package cannot be
+    prepared there. Clients try another server (see :mod:`mupif.modelplacement`).
+    """
+    pass
+
+
 
 
 def _registerExceptionWithPyro(c):
