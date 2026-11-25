@@ -1,0 +1,13 @@
+# Manifest of the model package (see mupif.modelpackage): what execution servers need to run it.
+ID = "mupif-example15"
+Version = "1.0"
+# the mupif.Model subclass, importable from this directory
+Entrypoint = "ex15model.model:Example15Model"
+Description = "Example 15: cumulates time steps with numpy, in its own pixi environment"
+# host capabilities the model needs (none: everything comes with the environment)
+RequiresHost = []
+
+[Runtime]
+# the environment of pixi.toml/pixi.lock of this directory, installed by the execution server
+Type = "pixi"
+Environment = "default"

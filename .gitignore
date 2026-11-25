@@ -9,3 +9,6 @@ dist
 /.pydevproject
 *.log
 .vscode
+# environments installed into pixi projects (model packages), package cache of example 15
+.pixi/
+examples/15-executionServer/cache/

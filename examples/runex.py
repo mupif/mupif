@@ -37,6 +37,9 @@ allEx=[
     ExCfg('11d','11',['dist-ex11.py','dist-m1.py','dist-m2.py'],skip=True),
     ExCfg('13','13',['main.py','server.py','application13.py']),
     ExCfg('14','14-multipleModelServers',['test.py','server.py','server.py','server1.py']),
+    # needs pixi and network (conda-forge, PyPI, GitHub) for the environment of the model package:
+    # run explicitly ("runex.py 15")
+    ExCfg('15','15-executionServer',['Example15.py','server.py'],skip=True),
 ]
 
 
