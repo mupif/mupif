@@ -661,7 +661,8 @@ A model package is a directory with the model code, its environment and a manife
    RequiresHost = []                     # host capabilities, see below
 
    [Runtime]
-   Type = "pixi"                         # or "python": the execution server's own environment
+   Type = "pixi"                         # or "apptainer" (a container image, see below), or
+                                         # "python": the execution server's own environment
    Environment = "default"
 
 The environment is a `pixi <https://pixi.sh>`_ project: ``pixi.toml`` lists the dependencies
@@ -684,11 +685,46 @@ account of mupifDB; the API address is ``$MUPIFDB_REST_SERVER``, the account is 
 mupifDB checks the archive as execution servers will unpack it, records its digest and refuses a
 version published before.
 
+Container images (Apptainer)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A package may instead bring a whole container image, run by `Apptainer <https://apptainer.org>`_
+(Singularity), which needs no root and is available on most HPC systems:
+
+.. code-block:: toml
+
+   [Runtime]
+   Type = "apptainer"
+   Image = "oras://ghcr.io/cvut/oofem@sha256:3f9a..."   # pinned by digest
+   # or a SIF file, verified against its digest by the server:
+   # Image = "https://data.example.org/oofem-1.2.sif"   (or "file:///shared/images/oofem-1.2.sif")
+   # ImageDigest = "sha256:..."
+   Gpu = false                                          # true: NVIDIA GPUs (--nv)
+   Python = "python3"                                   # the interpreter in the image
+
+The image must contain Python and mupif (with execution servers); the model code may come with the
+package or be installed in the image. Images are immutable: registry images (``docker://``,
+``oras://``) must be pinned by digest (a tag can be moved), SIF files by ``ImageDigest``. The
+execution server obtains the image once into its package cache (``apptainer pull``, or download and
+verification) and runs each job with ``apptainer exec --contain --cleanenv``:
+
+* the package directory is mounted read-only at ``/mupif/package``, which is ``PYTHONPATH``;
+* the job's work directory is mounted at its own path;
+* only the job's ``MUPIF_*`` variables and the variables, ``PATH`` entries and directories
+  (``Bind``, default: ``Path``) of the host capabilities the model requires are passed in;
+* the network is the host's, so the model is reachable over Pyro as any job.
+
+A package with ``Gpu = true`` runs only on servers declaring the host capability ``gpu``.
+
+Build an image from a definition file without root (``apptainer build --fakeroot image.sif
+image.def``) and publish it to an OCI registry (``apptainer push image.sif oras://...``), or put it
+on a file system shared by the execution servers. See *examples/16-apptainer*.
+
 Running an execution server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The host needs mupif and pixi (not mupifDB), and an account of the mupifDB API (an ordinary one:
-reading packages)::
+The host needs mupif, pixi and/or Apptainer for the runtimes it offers (not mupifDB), and an account
+of the mupifDB API (an ordinary one: reading packages)::
 
    import mupif as mp
    from mupif.mupifdbclient import MupifDBRegistry
@@ -700,7 +736,9 @@ reading packages)::
        cacheDir='/var/cache/mupif-packages',  # packages and their environments (may be large)
        maxCacheBytes=50*2**30,                # least recently used packages removed above this
        hostCapabilities={'abaqus': {'Version': '2024', 'Path': ['/opt/abaqus/bin'],
-                                    'Env': {'LM_LICENSE_FILE': '27000@licsrv'}}},
+                                    'Env': {'LM_LICENSE_FILE': '27000@licsrv'},
+                                    'Bind': ['/opt/abaqus']},   # into containers
+                         'gpu': {}},                            # NVIDIA GPUs for containers
        prefetch=['oofem-thermal'],            # prepared ahead of the first request
    ).runServer()
 
@@ -719,7 +757,8 @@ When a workflow asks for a model, the server
 **Host capabilities** describe what a host offers beyond packages, typically a licensed solver
 which cannot be redistributed: the package contains only the MuPIF wrapper and lists the capability
 in ``RequiresHost``; its jobs get the ``Path`` and ``Env`` of that capability (and only of those
-they require).
+they require). Jobs in containers also get its ``Bind`` directories mounted (the tool must be able to
+run in the container's userland).
 
 Execution servers are registered with the tags ``type:executionserver``, ``runtime:<type>``,
 ``host:<capability>``, and ``ModelID:<id>``, ``ModelID:<id>@<version>`` of the packages *ready* on
@@ -747,10 +786,13 @@ Security
 A client can only name a model ID: the code run is always a published package, verified by its
 digest. Publishing is therefore what gives the right to run code on execution servers: in mupifDB,
 only administrators may publish. Pyro itself has no authentication: as for model servers, the VPN
-is the boundary. Jobs are not sandboxed beyond the account the execution server runs as; run it
-under a dedicated account.
+is the boundary. Jobs of ``pixi`` and ``python`` packages are not sandboxed beyond the account the
+execution server runs as; run it under a dedicated account. Container jobs (``apptainer``) see their
+own userland, a private ``/tmp`` and home, and only the directories mounted for them; they still run
+as that account and share the host's network.
 
-See *examples/15-executionServer* for a complete example.
+See *examples/15-executionServer* (pixi) and *examples/16-apptainer* (container) for complete
+examples.
 
 
 .. _HPC:
