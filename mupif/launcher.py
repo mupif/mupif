@@ -34,8 +34,9 @@ every launcher; a launcher only decides **which interpreter, in which environmen
 
 * :class:`LocalPythonLauncher` -- the interpreter of the model server itself, with the server's
   ``sys.path`` (the model must be importable by the server). This is what model servers always did.
-* other launchers (see :mod:`mupif.executionserver`) run the interpreter of a separate environment
-  of a model package, e.g. a pixi environment, so that the model brings its own dependencies.
+* :class:`PixiLauncher` -- the interpreter of the pixi environment of a model package (see
+  :mod:`mupif.modelpackage`), so that the model brings its own dependencies; used by execution
+  servers (:mod:`mupif.executionserver`).
 
 A launcher may also add environment variables and directories to ``PATH`` of the job: this is how an
 execution server hands *host capabilities* (e.g. the installation directory and licence server of a
@@ -44,9 +45,16 @@ proprietary solver) to a model.
 
 from __future__ import annotations
 
+import json
+import logging
 import os
+import shutil
+import subprocess
 import sys
+from pathlib import Path
 from typing import Mapping, Optional, Sequence
+
+log = logging.getLogger(__name__)
 
 
 class Launcher:
@@ -133,3 +141,110 @@ class LocalPythonLauncher(Launcher):
         env = super().env(base)
         env['PYTHONPATH'] = os.pathsep.join(self.pythonPath + list(sys.path)) + ((os.pathsep + base['PYTHONPATH']) if base.get('PYTHONPATH') else '')
         return env
+
+
+class PixiLauncher(Launcher):
+    """
+    Run a job in the pixi environment of a model package.
+
+    :meth:`prepare` installs the environment exactly as locked (``pixi install --locked``) and reads
+    its *activation* (``pixi shell-hook --json``: ``PATH``, ``CONDA_PREFIX`` and the variables set by
+    activation scripts of the packages). Jobs then run the environment's own ``python`` directly,
+    with that activation applied: the job process is the model's interpreter itself, not ``pixi
+    run`` in front of it, so that terminating the job (SIGTERM from the model server) reaches the
+    model and nothing is left running.
+
+    The job environment does not inherit ``PYTHONPATH``/``PYTHONHOME`` of the server (they would
+    mix the server's packages into the model's environment); ``PYTHONPATH`` is the package directory,
+    from which the model's entry point is imported.
+
+    The pixi executable is taken from *pixi*, else ``$PIXI_EXE``, else ``pixi`` in ``PATH``, else
+    ``~/.pixi/bin/pixi`` (the default installation).
+
+    :param packageDir: the package directory, containing ``pixi.toml`` (or ``pyproject.toml`` with
+                       a pixi section) and ``pixi.lock``
+    :param environment: name of the pixi environment
+    :param pixi: path of the pixi executable
+    :param installTimeout: seconds ``pixi install`` may take
+    :param extraEnv: see :class:`Launcher` (host capabilities)
+    :param extraPath: see :class:`Launcher` (host capabilities)
+    """
+    name = 'pixi'
+
+    def __init__(self, packageDir, *, environment: str = 'default', pixi: Optional[str] = None, installTimeout: float = 3600., **kw):
+        super().__init__(**kw)
+        self.packageDir = Path(packageDir)
+        self.environment = environment
+        self.pixi = pixi or self.findPixi()
+        self.installTimeout = installTimeout
+        #: activation variables of the environment (set by :meth:`prepare`)
+        self.activation: Optional[dict[str, str]] = None
+
+    @staticmethod
+    def findPixi() -> Optional[str]:
+        """Return the pixi executable (see the class documentation), or None if there is none."""
+        for cand in (os.environ.get('PIXI_EXE'), shutil.which('pixi'), str(Path.home() / '.pixi' / 'bin' / 'pixi')):
+            if cand and os.path.isfile(cand) and os.access(cand, os.X_OK):
+                return cand
+        return None
+
+    def describe(self) -> str:
+        return f'pixi environment {self.environment!r} of {self.packageDir}'
+
+    def _manifest(self) -> Path:
+        for name in ('pixi.toml', 'pyproject.toml'):
+            if (self.packageDir / name).is_file():
+                return self.packageDir / name
+        raise RuntimeError(f'{self.packageDir} has no pixi.toml (nor pyproject.toml)')
+
+    def _run(self, args: list[str], timeout: float) -> str:
+        """Run pixi with *args*; return its standard output; raise with its output if it fails."""
+        if not self.pixi:
+            raise RuntimeError('pixi not found (set PIXI_EXE, or put pixi into PATH)')
+        cmd = [self.pixi, *args, '--manifest-path', str(self._manifest())]
+        log.debug(f'Running {cmd}')
+        # pixi must not see the server's Python setup either
+        env = {k: v for k, v in os.environ.items() if k not in ('PYTHONPATH', 'PYTHONHOME')}
+        res = subprocess.run(cmd, cwd=self.packageDir, env=env, capture_output=True, text=True, timeout=timeout)
+        if res.returncode != 0:
+            raise RuntimeError(f'{" ".join(cmd[:2])} failed with exit status {res.returncode}:\n{res.stderr[-4000:]}')
+        return res.stdout
+
+    def prepare(self) -> None:
+        """
+        Install the environment as locked and read its activation; does nothing once done.
+
+        ``--locked``: the lock file must be up to date with ``pixi.toml``; the environment is never
+        re-solved on the server, so that every server runs exactly what was published.
+        """
+        if self.activation is not None:
+            return
+        self._run(['install', '--locked', '-e', self.environment], timeout=self.installTimeout)
+        out = self._run(['shell-hook', '--json', '--locked', '-e', self.environment], timeout=300.)
+        try:
+            activation = json.loads(out)['environment_variables']
+        except (ValueError, KeyError, TypeError) as e:
+            raise RuntimeError(f'Unexpected output of pixi shell-hook --json: {out[:1000]!r}') from e
+        if not activation.get('CONDA_PREFIX'):
+            raise RuntimeError(f'pixi shell-hook gave no CONDA_PREFIX for {self.describe()}')
+        self.activation = {str(k): str(v) for k, v in activation.items()}
+        log.info(f'Prepared {self.describe()}: {self.activation["CONDA_PREFIX"]}')
+
+    def python(self) -> str:
+        """Return the interpreter of the environment (after :meth:`prepare`)."""
+        if self.activation is None:
+            raise RuntimeError('PixiLauncher.prepare() must be called first')
+        prefix = Path(self.activation['CONDA_PREFIX'])
+        return str(prefix / 'python.exe') if sys.platform.startswith('win') else str(prefix / 'bin' / 'python')
+
+    def command(self, bootstrap: Sequence[str]) -> list[str]:
+        return [self.python(), *bootstrap]
+
+    def env(self, base: Mapping[str, str]) -> dict[str, str]:
+        if self.activation is None:
+            raise RuntimeError('PixiLauncher.prepare() must be called first')
+        env = {k: v for k, v in base.items() if k not in ('PYTHONPATH', 'PYTHONHOME')}
+        env.update(self.activation)
+        env['PYTHONPATH'] = str(self.packageDir)
+        # host capabilities last, so that they are not overridden by the activation
+        return super().env(env)
