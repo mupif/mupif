@@ -40,6 +40,9 @@ allEx=[
     # needs pixi and network (conda-forge, PyPI, GitHub) for the environment of the model package:
     # run explicitly ("runex.py 15")
     ExCfg('15','15-executionServer',['Example15.py','server.py'],skip=True),
+    # needs Apptainer (unprivileged user namespaces to build the image) and network on the first
+    # run, which builds the image (minutes): run explicitly ("runex.py 16")
+    ExCfg('16','16-apptainer',['Example16.py','server.py'],skip=True),
 ]
 
 

@@ -1,0 +1,16 @@
+# The container image of the model of example 16 (Apptainer definition file).
+#
+# The image brings the whole userland of the model: here Debian with Python 3.12 and mupif (the
+# job imports mupif in the container; it must be a mupif with execution servers). A real model
+# would install its solver here (apt-get, conda, compiled from source, ...).
+#
+# Built by make_package.py: apptainer build --fakeroot image.sif image.def (no root needed).
+Bootstrap: docker
+From: python:3.12-slim
+
+%post
+    # mupif of the feature/execution-server branch, pinned (a release once merged)
+    pip install --no-cache-dir "https://github.com/mupif/mupif/archive/ec833d427fe8079bad3c36889b52f97f9a94f4cf.tar.gz"
+
+%labels
+    org.mupif.example 16
