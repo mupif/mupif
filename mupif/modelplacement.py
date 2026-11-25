@@ -51,10 +51,22 @@ no required or optional tags: any compatible server, the least loaded first. A w
 profiles, whose models give only ``Jobmanager``, behaves as before when a single server of that
 name runs.
 
-**Ranking** (:func:`rankCandidates`): servers with a free slot before full ones, then by the number
-of optional tags matched (more first), then by load (the used share of its job slots, lower
-first), random among equal ones, so that workflows starting at the same time spread over equally
-loaded servers.
+**Execution servers** (:mod:`mupif.executionserver`) run any model package of a registry, given by
+its model ID. A model with ``ModelID`` (optionally pinned by ``ModelVersion``) may run on every
+execution server carrying the required tags, besides the model servers above. Execution servers do
+not carry the profile's model tags (``Accuracy_*`` etc. describe one model; an execution server runs
+many), so a profile *requiring* such tags excludes them. Whether an execution server can really run
+the model (runtime, host capabilities) it decides itself: if not, it refuses at once
+(:class:`~mupif.modelserverbase.ModelServerCannotRunException`) and the next server is tried. An
+execution server on which the model is *ready* (prepared before) carries ``ModelID:<id>`` (and
+``ModelID:<id>@<version>``): the model starts there at once, elsewhere its package is downloaded and
+its environment installed first.
+
+**Ranking** (:func:`rankCandidates`): servers with a free slot before full ones; then model servers
+before execution servers on which the model is ready, before other execution servers (where the
+model would be prepared first); then by the number of optional tags matched (more first), then by
+load (the used share of its job slots, lower first), random among equal ones, so that workflows
+starting at the same time spread over equally loaded servers.
 
 **Allocation** (:func:`allocateOnCandidates`): the model is allocated on the first server of the
 ranking which accepts it. A server which is full (another client took the last slot meanwhile) or
@@ -87,9 +99,13 @@ JOBMANAGER_TAG = 'type:jobmanager'
 MODEL_ID_TAG = 'ModelID:'
 #: tag of model servers whose preAllocate tickets work remotely
 TICKETS_TAG = 'mupif:tickets-v2'
+#: nameserver tag of execution server registrations (see :mod:`mupif.executionserver`)
+EXECUTION_SERVER_TAG = 'type:executionserver'
 
 #: fully qualified name of the exception a model server raises when it has no free job slot
 NO_RESOURCES_EXCEPTION = 'mupif.modelserverbase.ModelServerNoResourcesException'
+#: fully qualified name of the exception an execution server raises when it cannot run a model
+CANNOT_RUN_EXCEPTION = 'mupif.modelserverbase.ModelServerCannotRunException'
 
 
 def _get(obj: Any, key: str, default: Any = None) -> Any:
@@ -119,6 +135,10 @@ class ModelRequirement:
     instantiate: bool = True
     #: execution profile the requirement comes from, for messages: ``default`` or ``#1 "name"``
     profile: str = 'default'
+    #: model ID (``ModelID``): execution servers are compatible too, and are asked for this model
+    modelID: Optional[str] = None
+    #: model package version (``ModelVersion``); None: the latest one
+    modelVersion: Optional[str] = None
 
     def key(self) -> tuple:
         """
@@ -126,11 +146,19 @@ class ModelRequirement:
 
         Models with equal keys have the same compatible servers; used to cache lookups.
         """
-        return (self.identity, self.required, self.fallbackName)
+        return (self.identity, self.required, self.fallbackName, self.modelID, self.modelVersion)
+
+    def readyTag(self) -> Optional[str]:
+        """Return the tag of execution servers on which the model is ready (None without a model ID)."""
+        if not self.modelID:
+            return None
+        return MODEL_ID_TAG + self.modelID + (f'@{self.modelVersion}' if self.modelVersion else '')
 
     def describe(self) -> str:
         """Return a short human-readable description, for logs."""
         parts = ['any of ' + ', '.join(sorted(self.identity))]
+        if self.modelID:
+            parts.append(f'or an execution server running {self.modelID}' + (f'@{self.modelVersion}' if self.modelVersion else ''))
         if self.required:
             parts.append('required ' + ', '.join(sorted(self.required)))
         if self.optional:
@@ -173,6 +201,7 @@ def modelRequirements(metadata: Any, profileIndex: int = -1) -> dict[str, ModelR
         name = _get(m, 'Name', '')
         jobmanager = _get(m, 'Jobmanager', '') or ''
         modelID = _get(m, 'ModelID', '') or ''
+        modelVersion = _get(m, 'ModelVersion', '') or ''
         if not jobmanager and not modelID:
             continue
         identity = set()
@@ -190,6 +219,8 @@ def modelRequirements(metadata: Any, profileIndex: int = -1) -> dict[str, ModelR
             fallbackName=jobmanager or None,
             instantiate=True if instantiate is None else bool(instantiate),
             profile=profile,
+            modelID=str(modelID) if modelID else None,
+            modelVersion=str(modelVersion) if modelVersion else None,
         )
     return ret
 
@@ -205,6 +236,23 @@ class Candidate:
     tags: frozenset[str]
     #: number of optional tags of the requirement the server carries
     score: int = 0
+    #: an execution server (asked for the model by its ID), not a model server of the model
+    isExecutionServer: bool = False
+    #: (execution servers) the model is ready there: it starts at once
+    ready: bool = False
+
+    @property
+    def tier(self) -> int:
+        """Preference by kind of server (lower first): model server 0, execution server with the model ready 1, other execution server 2."""
+        if not self.isExecutionServer:
+            return 0
+        return 1 if self.ready else 2
+
+    def describe(self) -> str:
+        """Return the name, marked if it is an execution server, for logs."""
+        if not self.isExecutionServer:
+            return self.nsName
+        return f'{self.nsName} [execution server, model {"ready" if self.ready else "to be prepared"}]'
 
     @property
     def remoteTickets(self) -> bool:
@@ -217,9 +265,10 @@ def findModelServers(ns, req: ModelRequirement) -> list[Candidate]:
     Find the registered model servers compatible with a model.
 
     A server is compatible if its registration carries ``type:jobmanager``, one of the identity
-    tags and all required tags. If no server is found by tags and the requirement has no required
-    tags, the exact name :attr:`ModelRequirement.fallbackName` is looked up, so that a server
-    registered without tags is found as before.
+    tags and all required tags. If no such server is found by tags and the requirement has no
+    required tags, the exact name :attr:`ModelRequirement.fallbackName` is looked up, so that a
+    server registered without tags is found as before. If the model has a model ID, every execution
+    server carrying the required tags is compatible too (see the module documentation).
 
     :param ns: nameserver proxy (owned by the calling thread)
     :param req: requirement of the model
@@ -239,6 +288,14 @@ def findModelServers(ns, req: ModelRequirement) -> list[Candidate]:
         else:
             tags = frozenset(tags or ())
             found[req.fallbackName] = Candidate(nsName=req.fallbackName, uri=str(uri), tags=tags, score=len(tags & req.optional))
+    if req.modelID:
+        readyTag = req.readyTag()
+        res = ns.yplookup(meta_all={EXECUTION_SERVER_TAG, *req.required}, return_metadata=True)
+        for name, (uri, tags) in res.items():
+            if name in found:
+                continue
+            tags = frozenset(tags or ())
+            found[name] = Candidate(nsName=name, uri=str(uri), tags=tags, score=len(tags & req.optional), isExecutionServer=True, ready=readyTag in tags)
     return list(found.values())
 
 
@@ -296,9 +353,11 @@ def rankCandidates(candidates: Iterable[Candidate], loads: dict[str, Optional[Lo
     """
     Order compatible servers from the best to the worst choice; unreachable ones are left out.
 
-    Order: servers with a free slot first; then by :attr:`Candidate.score` (optional tags matched,
-    more first); then by the used share of job slots (lower first; servers not reporting their
-    capacity after those which do, the more free slots first); random among equal ones.
+    Order: servers with a free slot first; then by :attr:`Candidate.tier` (model servers, execution
+    servers with the model ready, other execution servers); then by :attr:`Candidate.score`
+    (optional tags matched, more first); then by the used share of job slots (lower first; servers
+    not reporting their capacity after those which do, the more free slots first); random among
+    equal ones.
 
     :param candidates: compatible servers
     :param loads: server name -> load, None if unreachable (servers missing here are left out too)
@@ -310,28 +369,46 @@ def rankCandidates(candidates: Iterable[Candidate], loads: dict[str, Optional[Lo
     def key(c: Candidate):
         load = loads[c.nsName]
         assert load is not None
-        return (load.free <= 0, -c.score, load.used if load.used is not None else 1., -load.free, rnd.random())
+        return (load.free <= 0, c.tier, -c.score, load.used if load.used is not None else 1., -load.free, rnd.random())
     return sorted((c for c in candidates if loads.get(c.nsName) is not None), key=key)
 
 
-def isNoResourcesError(err: BaseException | None) -> bool:
+def _isRemoteError(err: BaseException | None, cls: type, qualName: str) -> bool:
     """
-    Tell whether *err* (or an exception it was raised from) means "model server has no free slot".
+    Tell whether *err* (or an exception it was raised from) is *cls*, also in the form it may arrive over Pyro.
 
-    Over Pyro, :class:`~mupif.modelserverbase.ModelServerNoResourcesException` may arrive as a
-    generic :class:`Pyro5.errors.PyroError` (Pyro fails to serialize it) whose message or remote
-    traceback names the class; both forms are recognized, also when chained.
+    Over Pyro, the exception may arrive as a generic :class:`Pyro5.errors.PyroError` (Pyro fails to
+    serialize it) whose message or remote traceback names the class (*qualName*); both forms are
+    recognized, also when chained.
     """
     seen = set()
     while err is not None and id(err) not in seen:
         seen.add(id(err))
-        if isinstance(err, modelserverbase.ModelServerNoResourcesException):
+        if isinstance(err, cls):
             return True
         remoteTraceback = ''.join(getattr(err, '_pyroTraceback', None) or [])
-        if NO_RESOURCES_EXCEPTION in str(err) or NO_RESOURCES_EXCEPTION in remoteTraceback:
+        if qualName in str(err) or qualName in remoteTraceback:
             return True
         err = err.__cause__ or err.__context__
     return False
+
+
+def isNoResourcesError(err: BaseException | None) -> bool:
+    """
+    Tell whether *err* means "model server has no free slot" (:class:`~mupif.modelserverbase.ModelServerNoResourcesException`).
+
+    Recognized also in the forms it arrives over Pyro (see :func:`_isRemoteError`).
+    """
+    return _isRemoteError(err, modelserverbase.ModelServerNoResourcesException, NO_RESOURCES_EXCEPTION)
+
+
+def isCannotRunError(err: BaseException | None) -> bool:
+    """
+    Tell whether *err* means "the server cannot run this model" (:class:`~mupif.modelserverbase.ModelServerCannotRunException`).
+
+    Recognized also in the forms it arrives over Pyro (see :func:`_isRemoteError`).
+    """
+    return _isRemoteError(err, modelserverbase.ModelServerCannotRunException, CANNOT_RUN_EXCEPTION)
 
 
 @dataclasses.dataclass
@@ -368,7 +445,7 @@ def allocateOnCandidates(req: ModelRequirement, ranked: list[Candidate], allocat
             error is chained
     """
     loads = loads or {}
-    ranking = ', '.join(f'{c.nsName} ({loads.get(c.nsName) or "load unknown"}' + (f', {c.score} preferred tag(s)' if req.optional else '') + ')' for c in ranked)
+    ranking = ', '.join(f'{c.describe()} ({loads.get(c.nsName) or "load unknown"}' + (f', {c.score} preferred tag(s)' if req.optional else '') + ')' for c in ranked)
     log.info(f'Model {req.model} ({req.describe()}): compatible model servers, best first: {ranking or "none"}')
     if not ranked:
         raise RuntimeError(f'No model server compatible with model {req.model} is registered or reachable ({req.describe()}).')
@@ -383,6 +460,9 @@ def allocateOnCandidates(req: ModelRequirement, ranked: list[Candidate], allocat
             if isNoResourcesError(e):
                 full = True
                 reason = 'no free slot'
+            elif isCannotRunError(e):
+                # not retryable on this server: the model is unknown or not runnable there
+                reason = f'cannot run the model: {e}'
             else:
                 reason = f'{type(e).__name__}: {e}'
             placement.skipped.append((c.nsName, reason))

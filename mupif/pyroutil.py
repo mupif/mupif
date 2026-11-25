@@ -840,34 +840,46 @@ def connectModelServerWithMetadata(ns, metadata, optionalMetadata=frozenset()):
 def allocateApplicationWithJobManager(*args,**kw):
     return allocateApplicationWithModelServer(*args,**kw)
 
-def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri):
+def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri, modelID=None, modelVersion=None):
     """
     Request new application instance to be spawned by  given jobManager.
     
     :param Pyro5.naming.Nameserver ns: running name server
     :param jobManager jobMan: jobmanager to use
     :param remoteLogUri: remote log URI
+    :param modelID: for an execution server (:mod:`mupif.executionserver`): the model to run
+    :param modelVersion: for an execution server: the version of the model package (None: latest)
 
     :returns: Application instance
     :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
+    from . import modelplacement
 
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        # signature of allocateJob changed, support both versions
-        try:
-            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri)
-        except TypeError:
-            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
-            log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
+        if modelID:
+            # an execution server: may take long the first time (the model's package prepared)
+            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri, modelID=modelID, modelVersion=modelVersion)
+        else:
+            # signature of allocateJob changed, support both versions
+            try:
+                status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri)
+            except TypeError:
+                status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
+                log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
         log.info(f'Allocated job, returned record from modelServer: {status},{jobid},{jobport}')
     except modelserverbase.ModelServerNoResourcesException as e:
         # an expected outcome (the server is busy): the caller retries elsewhere or later, no traceback
         log.warning(f'ModelServerBase allocateJob(): no free job slot ({e})')
         raise
-    except Exception:
+    except Exception as e:
+        if modelplacement.isCannotRunError(e):
+            # an expected outcome too (an execution server without the model's runtime or host
+            # capability): the caller tries another server
+            log.warning(f'allocateJob(): the server cannot run model {modelID} ({e})')
+            raise
         log.exception("ModelServerBase allocateJob() failed")
         print("| ".join(Pyro5.errors.get_pyro_traceback()))
         raise

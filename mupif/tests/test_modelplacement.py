@@ -355,3 +355,82 @@ def test_noResourcesExceptionOverPyro():
     assert type(back) is mp.modelserverbase.ModelServerNoResourcesException
     assert back.args == ('ModelServer: no more resources',) and back._pyroTraceback == ['remote traceback\n']
     assert mpl.isNoResourcesError(back)
+
+
+# --- execution servers -----------------------------------------------------------------------------
+
+EXEC_ENTRIES = dict(NS_ENTRIES, **{
+    # execution server on which demo01 (version 2) is ready
+    'Exec.warm': ('PYRO:w@h5:1', {'type:executionserver', 'Exec.warm', 'runtime:pixi', 'ModelID:demo01', 'ModelID:demo01@2'}),
+    # execution server without it
+    'Exec.cold': ('PYRO:x@h6:1', {'type:executionserver', 'Exec.cold', 'runtime:pixi', 'host:abaqus'}),
+})
+
+
+def test_modelRequirements_modelVersion():
+    md = {'Models': [{'Name': 'm', 'ModelID': 'demo01', 'ModelVersion': '2'}, {'Name': 'n', 'Jobmanager': 'X'}]}
+    reqs = mpl.modelRequirements(md)
+    assert (reqs['m'].modelID, reqs['m'].modelVersion, reqs['m'].readyTag()) == ('demo01', '2', 'ModelID:demo01@2')
+    assert (reqs['n'].modelID, reqs['n'].readyTag()) == (None, None)
+    assert mpl.modelRequirements({'Models': [{'Name': 'm', 'ModelID': 'demo01'}]})['m'].readyTag() == 'ModelID:demo01'
+    assert 'execution server running demo01@2' in reqs['m'].describe()
+
+
+def test_meta_modelVersion_needs_modelID():
+    assert mp.meta.ModelInWorkflowMeta(Name='m', ModelID='demo01', ModelVersion='2').ModelVersion == '2'
+    with pytest.raises(ValueError):
+        mp.meta.ModelInWorkflowMeta(Name='m', Jobmanager='X', ModelVersion='2')
+
+
+def test_findModelServers_executionServers():
+    req = mpl.ModelRequirement(model='m', identity=frozenset({'ModelID:demo01'}), modelID='demo01')
+    found = {c.nsName: c for c in mpl.findModelServers(FakeNS(EXEC_ENTRIES), req)}
+    assert sorted(found) == ['CVUT.demo01', 'CVUT.demo01~node2', 'Exec.cold', 'Exec.warm', 'Other.demo01']
+    assert not found['CVUT.demo01'].isExecutionServer and found['CVUT.demo01'].tier == 0
+    assert found['Exec.warm'].isExecutionServer and found['Exec.warm'].ready and found['Exec.warm'].tier == 1
+    assert found['Exec.cold'].isExecutionServer and not found['Exec.cold'].ready and found['Exec.cold'].tier == 2
+    # a pinned version is ready only where that version is
+    found = {c.nsName: c for c in mpl.findModelServers(FakeNS(EXEC_ENTRIES), dataclasses.replace(req, modelVersion='3'))}
+    assert not found['Exec.warm'].ready
+    # required tags: execution servers must carry them too (here only Exec.cold has the host capability)
+    found = mpl.findModelServers(FakeNS(EXEC_ENTRIES), dataclasses.replace(req, required=frozenset({'host:abaqus'})))
+    assert names(found) == ['Exec.cold']
+    # model tags of a profile (describing one model) exclude execution servers
+    found = mpl.findModelServers(FakeNS(EXEC_ENTRIES), dataclasses.replace(req, required=frozenset({'Runtime_seconds'})))
+    assert names(found) == ['CVUT.demo01', 'CVUT.demo01~node2']
+    # without a model ID, execution servers are not compatible (they could not be asked for the model)
+    assert names(mpl.findModelServers(FakeNS(EXEC_ENTRIES), mpl.modelRequirements(WORKFLOW_MD)['thermal'])) == ['CVUT.demo01', 'CVUT.demo01~node2']
+
+
+def test_findModelServers_executionServersOnly():
+    # only execution servers: still found; the exact-name fallback is not hidden by them
+    ns = FakeNS({'Exec.cold': EXEC_ENTRIES['Exec.cold'], 'Old.server': ('PYRO:o@h:1', set())})
+    req = mpl.ModelRequirement(model='m', identity=frozenset({'Old.server', 'ModelID:demo01'}), fallbackName='Old.server', modelID='demo01')
+    assert names(mpl.findModelServers(ns, req)) == ['Exec.cold', 'Old.server']
+
+
+def test_rank_modelServersThenReadyThenCold():
+    c = lambda name, **kw: mpl.Candidate(nsName=name, uri=f'PYRO:{name}@h:1', tags=frozenset(), **kw)
+    loads = {'ms': mpl.Load(free=1, max=10), 'warm': mpl.Load(free=4, max=4), 'cold': mpl.Load(free=4, max=4), 'msfull': mpl.Load(free=0, max=1)}
+    ranked = mpl.rankCandidates([c('cold', isExecutionServer=True), c('warm', isExecutionServer=True, ready=True), c('ms'), c('msfull')], loads)
+    # a busy model server before idle execution servers; a ready model before one to be prepared; full ones last
+    assert [x.nsName for x in ranked] == ['ms', 'warm', 'cold', 'msfull']
+    assert 'execution server, model to be prepared' in ranked[2].describe() and ranked[0].describe() == 'ms'
+
+
+def test_allocate_skipsServerWhichCannotRun():
+    import Pyro5.errors
+    pyroForm = Pyro5.errors.PyroError('Error serializing exception: mupif.modelserverbase.ModelServerCannotRunException: no abaqus')
+    allocate, tried = allocator({'a': mp.ModelServerCannotRunException('runtime pixi not supported'), 'b': pyroForm, 'c': 'model@c'})
+    model, placement = mpl.allocateOnCandidates(REQ, [cand('a'), cand('b'), cand('c')], allocate)
+    assert model == 'model@c' and tried == ['a', 'b', 'c']
+    assert placement.skipped[0][1].startswith('cannot run the model') and placement.skipped[1][1].startswith('cannot run the model')
+    # only servers which cannot run it: not "retry later" (no slot will help)
+    allocate, _ = allocator({'a': mp.ModelServerCannotRunException('x')})
+    with pytest.raises(RuntimeError):
+        mpl.allocateOnCandidates(REQ, [cand('a')], allocate)
+    # one full, one cannot: retry later
+    allocate, _ = allocator({'a': mp.ModelServerCannotRunException('x'), 'b': mp.ModelServerNoResourcesException('full')})
+    with pytest.raises(mp.ModelServerNoResourcesException):
+        mpl.allocateOnCandidates(REQ, [cand('a'), cand('b')], allocate)
+    assert mpl.isCannotRunError(pyroForm) and not mpl.isNoResourcesError(pyroForm)

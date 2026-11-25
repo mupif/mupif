@@ -84,6 +84,8 @@ class Workflow(model.Model):
         self._jobmans = {}
         #: model name -> registered name of the model server it was allocated on (see getModelServers)
         self._modelServers: dict[str, str] = {}
+        #: model name -> package (ID, Version, Digest) of models allocated on execution servers
+        self._modelPackages: dict[str, dict] = {}
         self._exec_targetTime = 1.*units.U.s
         self._exec_dt = None
 
@@ -146,13 +148,36 @@ class Workflow(model.Model):
 
         def allocate(c: modelplacement.Candidate):
             jobMan = pyroutil.connectModelServer(ns, c.nsName)
-            return jobMan, pyroutil.allocateApplicationWithModelServer(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri)
+            if not c.isExecutionServer:
+                return jobMan, pyroutil.allocateApplicationWithModelServer(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri), None
+            # an execution server runs the model package given by the model ID
+            mod = pyroutil.allocateApplicationWithModelServer(ns=ns, jobMan=jobMan, remoteLogUri=remoteLogUri, modelID=requirement.modelID, modelVersion=requirement.modelVersion)
+            try:
+                package = jobMan.getJobPackage(mod.getJobID())
+            except Exception:
+                log.exception(f'Cannot get the package of model {name} from execution server {c.nsName}')
+                package = None
+            return jobMan, mod, package
 
-        (jobMan, mod), placement = modelplacement.allocateOnCandidates(requirement, ranked, allocate, loads)
+        (jobMan, mod, package), placement = modelplacement.allocateOnCandidates(requirement, ranked, allocate, loads)
         self._jobmans[name] = jobMan
         self._models[name] = mod
         self._modelServers[name] = placement.nsName
+        if package:
+            self._modelPackages[name] = dict(package)
+            log.info(f'Model {name} runs model package {package.get("ID")}@{package.get("Version")} ({package.get("Digest")})')
         return mod
+
+    def getModelPackages(self) -> dict[str, dict]:
+        """
+        Return the model packages run by the models allocated on execution servers.
+
+        Recorded with the execution (provenance: exactly which code and environment produced the
+        results; the digest identifies the package content).
+
+        :return: model name -> ``{'ID', 'Version', 'Digest'}``
+        """
+        return {k: dict(v) for k, v in self._modelPackages.items()}
 
     def getModelServers(self) -> dict[str, str]:
         """

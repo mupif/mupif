@@ -279,3 +279,59 @@ def test_pruned_package_no_longer_advertised(env, server):
         assert server.readyModels() == ['pkg-pixi@1.0']
     finally:
         server.terminateJob(j2)
+
+
+def test_workflow_runs_model_by_id_on_execution_server(env):
+    """
+    A workflow giving only the model ID gets its model from an execution server (none of the model
+    servers serves it); the package run is recorded. A second execution server which cannot run it
+    (runtime) is skipped.
+    """
+    import threading
+    ns = env['ns']
+    # a threaded daemon of its own: allocateJob blocks until the job is up, while the job logs to
+    # the workflow's log receiver in the class daemon (see test_workflowPlacesModelsOnInstances)
+    serverType, Pyro5.config.SERVERTYPE = Pyro5.config.SERVERTYPE, 'thread'
+    try:
+        daemon = Pyro5.api.Daemon(host='127.0.0.1')
+    finally:
+        Pyro5.config.SERVERTYPE = serverType
+    threading.Thread(target=daemon.requestLoop, daemon=True).start()
+    servers = {}
+    for name, kw in (('exec-wf-pixi-only', dict(runtimes=['pixi'])), ('exec-wf', dict(allowPythonRuntime=True))):
+        srv = mp.ExecutionServer(ns=ns, appName=name, registry=env['registry'], cacheDir=env['tmp'] / ('cache-' + name),
+                                 workDir=str(env['tmp']), pixi=env['pixi'], maxJobs=1, **kw)
+        uri = daemon.register(srv)
+        srv.registerPyro(daemon=daemon, ns=ns, uri=uri, appName=name, exclusiveDaemon=False)
+        ns.register(name, uri, metadata=mp.pyroutil.executionServerTags(srv))
+        servers[name] = srv
+
+    class Wf(mp.Workflow):
+        def __init__(self, metadata=None):
+            super().__init__(metadata={'Name': 'wf', 'ID': 'wf', 'Description': '', 'Inputs': [], 'Outputs': [],
+                                       'Models': [{'Name': 'm', 'ModelID': 'pkg-python', 'ModelVersion': '1.0'}]})
+        def generateModelDependencies(self): pass
+
+    nsPrev = os.environ.get('MUPIF_NS')
+    os.environ['MUPIF_NS'] = f'{ns._pyroUri.host}:{ns._pyroUri.port}'
+    wf = Wf()
+    try:
+        wf.initialize(metadata={'Execution': {'ID': '1', 'Use_case_ID': '1', 'Task_ID': '1'}})
+        assert wf.getModelServers() == {'m': 'exec-wf'}
+        ref = env['registry'].resolve('pkg-python', '1.0')
+        assert wf.getModelPackages() == {'m': {'ID': 'pkg-python', 'Version': '1.0', 'Digest': ref.digest}}
+        assert wf.getModel('m').where()['file'].startswith(str(servers['exec-wf'].cache.directory))
+        # the model is ready there now: advertised
+        assert 'ModelID:pkg-python@1.0' in ns.lookup('exec-wf', return_metadata=True)[1]
+    finally:
+        if nsPrev is None:
+            del os.environ['MUPIF_NS']
+        else:
+            os.environ['MUPIF_NS'] = nsPrev
+        try:
+            wf.terminate()
+        except Exception:
+            pass
+        for name, srv in servers.items():
+            srv.terminate(force=True)
+        daemon.shutdown()
