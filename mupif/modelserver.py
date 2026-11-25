@@ -38,6 +38,7 @@ import warnings
 from . import modelserverbase
 from .modelserverbase import ModelServerBase, ModelServerStatus
 from . import pyroutil
+from .launcher import Launcher, LocalPythonLauncher
 from .pyrofile import PyroFile
 from .baredata import BareData
 import os
@@ -95,12 +96,16 @@ class ModelServer (modelserverbase.ModelServerBase):
             daemon=None,
             includeFiles=None,
             instance=None,
+            launcher: Launcher | None = None,
             # overrideNsPort=0
     ):
         """
         Constructor.
 
         See :func:`ModelServerBase.__init__`
+
+        :param launcher: how job processes are started (see :mod:`mupif.launcher`); default:
+                         :class:`~mupif.launcher.LocalPythonLauncher`, the server's own interpreter
         """
         super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs, instance=instance)
         self.ns = ns
@@ -116,6 +121,8 @@ class ModelServer (modelserverbase.ModelServerBase):
         self.server = server
         self.acceptingJobs = True
         self.includeFiles = includeFiles
+        #: starts the job processes (see :mod:`mupif.launcher`)
+        self.launcher = launcher if launcher is not None else LocalPythonLauncher()
 
         app = appClass()
         self.modelMetadata = app.getAllMetadata()
@@ -314,17 +321,21 @@ class ModelServer (modelserverbase.ModelServerBase):
                     jobLogName = targetWorkDir+'/_mupif_job.log'
                     jobLog = open(jobLogName, 'w')
                     log.info(f'Logging into {jobLogName} (+ {remoteLogUri} remotely)')
-                    # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
-                    # the subprocess will be able to import it as well
-                    env = os.environ.copy()
-                    env['PYTHONPATH'] = os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
+                    launcher = self.launcher
+                    # the launcher chooses the interpreter and its environment (the server's own one by
+                    # default, see mupif.launcher.LocalPythonLauncher, which also puts the server's
+                    # sys.path to PYTHONPATH so that the job can import what the server could)
+                    launcher.prepare()
+                    env = launcher.env(os.environ)
                     # this will redirect logs the moment mupif is imported on the remote side
                     if remoteLogUri:
                         env['MUPIF_LOG_PYRO'] = remoteLogUri
                     # to be tuned?
                     env['MUPIF_LOG_LEVEL'] = 'DEBUG'
                     env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
-                    proc = subprocess.Popen([sys.executable, '-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], stdout=jobLog, stderr=subprocess.STDOUT, env=env)
+                    cmd = launcher.command(['-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()])
+                    log.debug(f'Starting job {jobID} with launcher {launcher.describe()}')
+                    proc = subprocess.Popen(cmd, stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
                     tMax = self.jobStartTimeout
                     while time.time()-t0 < tMax:
