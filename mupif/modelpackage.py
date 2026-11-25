@@ -35,7 +35,8 @@ demand. A package is a directory (or a zip archive of it) containing:
       RequiresHost = []                                # host capabilities, e.g. ["abaqus"]
 
       [Runtime]
-      Type = "pixi"            # environment of pixi.toml/pixi.lock of the package; or "python"
+      Type = "pixi"            # environment of pixi.toml/pixi.lock of the package; or "python",
+                               # or "apptainer" (a container image, see RuntimeSpec)
       Environment = "default"  # pixi environment name
 
 * the model code, importable from the package directory (``oofemthermal/model.py`` above);
@@ -88,7 +89,7 @@ MANIFEST_NAME = 'mupif-model.toml'
 
 #: directories and files never put into a package archive: environments installed into the package
 #: directory, caches, version control
-ARCHIVE_EXCLUDE_DIRS = frozenset({'.pixi', '__pycache__', '.git', '.hg', '.svn', '.mypy_cache', '.pytest_cache'})
+ARCHIVE_EXCLUDE_DIRS = frozenset({'.pixi', '.apptainer', '__pycache__', '.git', '.hg', '.svn', '.mypy_cache', '.pytest_cache'})
 ARCHIVE_EXCLUDE_SUFFIXES = ('.pyc', '.pyo', '~')
 
 #: model IDs and versions appear in nameserver tags (``ModelID:<id>@<version>``) and URLs
@@ -105,14 +106,60 @@ class ModelPackageNotFound(ModelPackageError, LookupError):
     """The registry has no package of the requested model ID (and version)."""
 
 
+#: image references pinned by digest: OCI registries (``docker://``, ``oras://``)
+_PINNED_REF = re.compile(r'^(docker|oras)://[^@\s]+@sha256:[0-9a-f]{64}$')
+#: SIF files given by location, verified against ``ImageDigest``
+_SIF_URL = re.compile(r'^(https://|file:///)\S+$')
+_SHA256 = re.compile(r'^sha256:[0-9a-f]{64}$')
+
+
 class RuntimeSpec(pydantic.BaseModel):
-    """How the environment of a model package is made (``[Runtime]`` of the manifest)."""
+    """
+    How the environment of a model package is made (``[Runtime]`` of the manifest).
+
+    * ``pixi`` -- the environment of ``pixi.toml``/``pixi.lock`` of the package (``Environment``);
+    * ``python`` -- the execution server's own environment (package directory on ``PYTHONPATH``);
+    * ``apptainer`` -- a container image (``Image``), run by Apptainer (Singularity); the package
+      directory is mounted into the container at ``/mupif/package`` and put on ``PYTHONPATH``, so the
+      model code may come with the package or be in the image. The image must contain Python and a
+      mupif with execution servers. ``Image`` is immutable:
+
+      - ``docker://<registry>/<name>@sha256:<hex>`` or ``oras://...@sha256:<hex>`` -- an OCI registry
+        image pinned by digest (the registry content is verified by it);
+      - ``https://.../<file>.sif`` or ``file:///<path>.sif`` (e.g. a shared file system of an HPC
+        site) with ``ImageDigest = "sha256:<hex>"`` of the SIF file, verified by the server.
+
+      ``Gpu = true`` gives the container the host's NVIDIA GPUs (``--nv``); ``Python`` is the
+      interpreter in the image (default ``python3``).
+    """
     model_config = pydantic.ConfigDict(extra='forbid')
-    #: ``pixi``: the environment of ``pixi.toml``/``pixi.lock`` of the package;
-    #: ``python``: the execution server's own environment (package directory on ``PYTHONPATH``)
-    Type: Literal['pixi', 'python']
+    Type: Literal['pixi', 'python', 'apptainer']
     #: name of the pixi environment (``pixi`` only)
     Environment: str = 'default'
+    #: the container image (``apptainer`` only); see the class documentation
+    Image: str = ''
+    #: ``sha256:<hex>`` of the SIF file, for ``https://`` and ``file:///`` images
+    ImageDigest: str = ''
+    #: give the container the host's NVIDIA GPUs (``apptainer`` only)
+    Gpu: bool = False
+    #: Python interpreter in the image (``apptainer`` only)
+    Python: str = pydantic.Field('python3', pattern=r'^[A-Za-z0-9_./-]+$')
+
+    @pydantic.model_validator(mode='after')
+    def _imageRules(self):
+        if self.Type != 'apptainer':
+            if self.Image or self.ImageDigest or self.Gpu:
+                raise ValueError(f'Image, ImageDigest and Gpu are for Type = "apptainer", not {self.Type!r}')
+            return self
+        if _PINNED_REF.match(self.Image):
+            if self.ImageDigest:
+                raise ValueError('ImageDigest is for https:// and file:/// images; a registry image is pinned by its @sha256 digest')
+        elif _SIF_URL.match(self.Image):
+            if not _SHA256.match(self.ImageDigest):
+                raise ValueError(f'An https:// or file:/// image needs ImageDigest = "sha256:<64 hex digits>" of the SIF file (got {self.ImageDigest!r})')
+        else:
+            raise ValueError(f'Image must be docker://...@sha256:<hex>, oras://...@sha256:<hex> (pinned by digest), https://... or file:///... (got {self.Image!r})')
+        return self
 
 
 class ModelPackageManifest(pydantic.BaseModel):

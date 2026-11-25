@@ -151,3 +151,44 @@ def test_directory_registry_refuses_duplicates(tmp_path):
     makePackage(tmp_path / 'y', version='1', code='VALUE = 2\n')
     with pytest.raises(mpk.ModelPackageError):
         mpk.DirectoryRegistry(tmp_path).resolve('my-model')
+
+
+H = 'a' * 64
+
+
+@pytest.mark.parametrize('runtime,ok', [
+    (f'Type = "apptainer"\nImage = "docker://ghcr.io/mupif/oofem@sha256:{H}"', True),
+    (f'Type = "apptainer"\nImage = "oras://ghcr.io/mupif/oofem@sha256:{H}"\nGpu = true\nPython = "/opt/conda/bin/python"', True),
+    (f'Type = "apptainer"\nImage = "https://example.org/oofem.sif"\nImageDigest = "sha256:{H}"', True),
+    (f'Type = "apptainer"\nImage = "file:///shared/images/oofem.sif"\nImageDigest = "sha256:{H}"', True),
+    # registry images must be pinned by digest (a tag can be moved)
+    ('Type = "apptainer"\nImage = "docker://ghcr.io/mupif/oofem:1.2"', False),
+    # SIF files need their digest; registry images must not have one (pinned already)
+    ('Type = "apptainer"\nImage = "https://example.org/oofem.sif"', False),
+    (f'Type = "apptainer"\nImage = "file:///x.sif"\nImageDigest = "md5:{H}"', False),
+    (f'Type = "apptainer"\nImage = "docker://ghcr.io/x@sha256:{H}"\nImageDigest = "sha256:{H}"', False),
+    # other schemes: library://, relative paths, plain http
+    ('Type = "apptainer"\nImage = "library://sylabs/x"', False),
+    (f'Type = "apptainer"\nImage = "http://example.org/x.sif"\nImageDigest = "sha256:{H}"', False),
+    (f'Type = "apptainer"\nImage = "file://x.sif"\nImageDigest = "sha256:{H}"', False),
+    ('Type = "apptainer"', False),
+    # image fields only with apptainer
+    (f'Type = "pixi"\nImage = "docker://x@sha256:{H}"', False),
+    ('Type = "python"\nGpu = true', False),
+    # the interpreter is a path, not a command line
+    (f'Type = "apptainer"\nImage = "docker://x/y@sha256:{H}"\nPython = "python3 -c evil"', False),
+])
+def test_manifest_apptainer_runtime(runtime, ok):
+    text = MANIFEST.format(id='m', version='1', requires='[]').replace('Type = "python"', runtime)
+    if ok:
+        assert mpk.ModelPackageManifest.fromToml(text).Runtime.Type == 'apptainer'
+    else:
+        with pytest.raises(mpk.ModelPackageError):
+            mpk.ModelPackageManifest.fromToml(text)
+
+
+def test_archive_excludes_apptainer_images(tmp_path):
+    pkg = makePackage(tmp_path / 'pkg')
+    (pkg / '.apptainer').mkdir()
+    (pkg / '.apptainer' / 'image.sif').write_bytes(b'x' * 100)
+    assert '.apptainer/image.sif' not in zipfile.ZipFile(io.BytesIO(mpk.buildArchive(pkg))).namelist()
