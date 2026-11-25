@@ -102,3 +102,30 @@ def test_pixi_found_by_env_variable(tmp_path, monkeypatch):
     pixi = fakepixi.install(tmp_path)
     monkeypatch.setenv('PIXI_EXE', pixi)
     assert PixiLauncher.findPixi() == pixi
+
+
+def test_model_server_gives_launcher_job_env_and_work_dir(tmp_path):
+    'The model server hands the launcher the job MUPIF_* variables (in env()) and the work directory (in command()).'
+    from mupif.modelserver import ModelServer
+    seen = {}
+
+    class Recording(LocalPythonLauncher):
+        def env(self, base):
+            seen['env'] = {k: v for k, v in base.items() if k.startswith('MUPIF_LOG_')}
+            return super().env(base)
+
+        def command(self, bootstrap, *, workDir=None):
+            seen['workDir'] = workDir
+            # a job which fails at once: only what the launcher received is checked here
+            return [sys.executable, '-c', 'raise SystemExit(3)']
+
+    from mupif.tests import testApp
+    # no nameserver needed: the job fails before anything is registered (only its URI string is used)
+    fakeNS = type('NS', (), {'_pyroUri': 'PYRO:ns@127.0.0.1:1'})()
+    srv = ModelServer(ns=fakeNS, appName='rec', appClass=testApp.testApp, workDir=str(tmp_path), launcher=Recording())
+    srv.jobStartTimeout = 2
+    srv._discardJob = lambda proc, jobID: None
+    with pytest.raises(RuntimeError):
+        srv._allocateJob('user', remoteLogUri='PYRO:log@h:1', spec=ModelServer.JobSpec(appClass=testApp.testApp, launcher=srv.launcher))
+    assert seen['env'] == {'MUPIF_LOG_PYRO': 'PYRO:log@h:1', 'MUPIF_LOG_LEVEL': 'DEBUG', 'MUPIF_LOG_PROCESSNAME': '1@rec'}
+    assert seen['workDir'] == srv.getJobWorkDir('1@rec')

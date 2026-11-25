@@ -85,11 +85,14 @@ class Launcher:
         :raises Exception: if the environment cannot be prepared (the job is not started)
         """
 
-    def command(self, bootstrap: Sequence[str]) -> list[str]:
+    def command(self, bootstrap: Sequence[str], *, workDir: Optional[str] = None) -> list[str]:
         """
         Return the command line of a job process.
 
         :param bootstrap: arguments of the Python interpreter (``-c <code> - <pickled arguments>``)
+        :param workDir: the job's work directory, where the job reports its URI (``_mupif_uri``)
+                        and works; a launcher isolating the job's file system must make it visible
+                        to the job at the same path
         :return: the complete command line (the interpreter first)
         """
         raise NotImplementedError
@@ -101,7 +104,8 @@ class Launcher:
         The base implementation applies :attr:`extraEnv` and prepends :attr:`extraPath` to ``PATH``;
         subclasses calling it may add or remove variables before or after.
 
-        :param base: the environment to start from (normally a copy of ``os.environ``)
+        :param base: the environment to start from: the server's environment with the job's
+                     ``MUPIF_*`` variables (logging: ``MUPIF_LOG_*``) set by the model server
         :return: a new dictionary; *base* is not changed
         """
         env = dict(base)
@@ -134,7 +138,7 @@ class LocalPythonLauncher(Launcher):
         super().__init__(**kw)
         self.pythonPath = list(pythonPath or [])
 
-    def command(self, bootstrap: Sequence[str]) -> list[str]:
+    def command(self, bootstrap: Sequence[str], *, workDir: Optional[str] = None) -> list[str]:
         return [sys.executable, *bootstrap]
 
     def env(self, base: Mapping[str, str]) -> dict[str, str]:
@@ -237,7 +241,7 @@ class PixiLauncher(Launcher):
         prefix = Path(self.activation['CONDA_PREFIX'])
         return str(prefix / 'python.exe') if sys.platform.startswith('win') else str(prefix / 'bin' / 'python')
 
-    def command(self, bootstrap: Sequence[str]) -> list[str]:
+    def command(self, bootstrap: Sequence[str], *, workDir: Optional[str] = None) -> list[str]:
         return [self.python(), *bootstrap]
 
     def env(self, base: Mapping[str, str]) -> dict[str, str]:

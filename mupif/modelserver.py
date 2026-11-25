@@ -398,17 +398,20 @@ class ModelServer (modelserverbase.ModelServerBase):
                     jobLogName = targetWorkDir+'/_mupif_job.log'
                     jobLog = open(jobLogName, 'w')
                     log.info(f'Logging into {jobLogName} (+ {remoteLogUri} remotely)')
-                    # the launcher chooses the interpreter and its environment (the server's own one by
-                    # default, see mupif.launcher.LocalPythonLauncher, which also puts the server's
-                    # sys.path to PYTHONPATH so that the job can import what the server could)
-                    env = launcher.env(os.environ)
+                    base = dict(os.environ)
                     # this will redirect logs the moment mupif is imported on the remote side
                     if remoteLogUri:
-                        env['MUPIF_LOG_PYRO'] = remoteLogUri
+                        base['MUPIF_LOG_PYRO'] = remoteLogUri
                     # to be tuned?
-                    env['MUPIF_LOG_LEVEL'] = 'DEBUG'
-                    env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
-                    cmd = launcher.command(['-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()])
+                    base['MUPIF_LOG_LEVEL'] = 'DEBUG'
+                    base['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
+                    # the launcher chooses the interpreter and its environment (the server's own one by
+                    # default, see mupif.launcher.LocalPythonLauncher, which also puts the server's
+                    # sys.path to PYTHONPATH so that the job can import what the server could). It
+                    # gets the MUPIF_* variables of the job set above (a container launcher passes
+                    # them into the container) and the job's work directory (to be made visible there)
+                    env = launcher.env(base)
+                    cmd = launcher.command(['-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], workDir=targetWorkDir)
                     log.debug(f'Starting job {jobID} with launcher {launcher.describe()}')
                     proc = subprocess.Popen(cmd, stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
