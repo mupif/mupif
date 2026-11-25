@@ -379,3 +379,53 @@ class DirectoryRegistry(ModelRegistry):
     def _archive(path: Path) -> bytes:
         """Return the archive of a package directory (built) or archive file (read)."""
         return path.read_bytes() if path.is_file() else buildArchive(path)
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    """
+    Command line: ``python -m mupif.modelpackage {build,publish,show} ...``.
+
+    * ``build <dir> [-o <zip>]`` -- check a package directory, pack it, print its digest;
+    * ``publish <dir|zip>`` -- publish a package to mupifDB (an administrator account, see
+      :mod:`mupif.mupifdbclient` for the connection settings);
+    * ``show <id> [<version>]`` -- the package an execution server would run.
+    """
+    import argparse
+    import json
+    parser = argparse.ArgumentParser(prog='python -m mupif.modelpackage', description='MuPIF model packages (see mupif.modelpackage).')
+    parser.add_argument('--server', help='mupifDB API (default: $MUPIFDB_REST_SERVER)')
+    sub = parser.add_subparsers(dest='cmd', required=True)
+    b = sub.add_parser('build', help='check and pack a package directory; print its digest')
+    b.add_argument('directory')
+    b.add_argument('-o', '--output', help='write the archive to this file')
+    p = sub.add_parser('publish', help='publish a package (directory or zip) to mupifDB')
+    p.add_argument('package')
+    s = sub.add_parser('show', help='show a published package')
+    s.add_argument('id')
+    s.add_argument('version', nargs='?')
+    args = parser.parse_args(argv)
+    try:
+        if args.cmd == 'build':
+            data = buildArchive(args.directory)
+            manifest = readArchiveManifest(data)
+            if args.output:
+                Path(args.output).write_bytes(data)
+            print(f'{manifest.key()} {digest(data)} ({len(data)} bytes)')
+            return 0
+        from .mupifdbclient import MupifDBClient, MupifDBRegistry
+        registry = MupifDBRegistry(MupifDBClient(args.server))
+        if args.cmd == 'publish':
+            rec = registry.publish(args.package)
+            print(f'Published {rec["ID"]}@{rec["Version"]} {rec["Digest"]}')
+        else:
+            ref = registry.resolve(args.id, args.version)
+            print(json.dumps({**ref.describe(), 'Manifest': ref.manifest.model_dump()}, indent=2))
+        return 0
+    except Exception as e:  # a message, not a traceback, for the command line
+        print(f'Error: {e}')
+        return 1
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main())
