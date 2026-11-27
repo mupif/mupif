@@ -38,6 +38,7 @@ import warnings
 from . import modelserverbase
 from .modelserverbase import ModelServerBase, ModelServerStatus
 from . import pyroutil
+from .launcher import Launcher, LocalPythonLauncher
 from .pyrofile import PyroFile
 from .baredata import BareData
 import os
@@ -51,6 +52,29 @@ Pyro5.config.DETAILED_TRACEBACK = False
 
 log = logging.getLogger(__name__)
 
+
+def resolveEntrypoint(entrypoint: str) -> type:
+    """
+    Import and return the class named by an entry point ``"package.module:Class"``.
+
+    The part after the colon may be a dotted path (``"module:Outer.Inner"``). This is how a job
+    finds its model class when the model server cannot hand it over as a class object: the server
+    of a model package (see :mod:`mupif.executionserver`) never imports the model itself, the model
+    and its dependencies exist only in the environment of the job.
+
+    :param entrypoint: ``"<module>:<class>"``
+    :return: the class
+    :raises ValueError: if *entrypoint* is not of the form ``<module>:<class>``
+    :raises ImportError, AttributeError: if the module or the class does not exist
+    """
+    import importlib
+    moduleName, sep, qualName = entrypoint.partition(':')
+    if not sep or not moduleName or not qualName:
+        raise ValueError(f'Entry point must be "<module>:<class>", not {entrypoint!r}')
+    obj = importlib.import_module(moduleName)
+    for attr in qualName.split('.'):
+        obj = getattr(obj, attr)
+    return obj
 
 
 @Pyro5.api.expose
@@ -74,6 +98,21 @@ class ModelServer (modelserverbase.ModelServerBase):
         jobLogName: str
         remoteLogUri: str
 
+    @dataclass
+    class JobSpec:
+        """
+        What a job runs and how it is started (see :meth:`ModelServer._jobSpec`).
+
+        Exactly one of :attr:`appClass` and :attr:`entrypoint` is given.
+        """
+        #: the model class, handed to the job by reference (the job must be able to import it too)
+        appClass: object = None
+        #: the model class as ``"module:Class"`` (see :func:`resolveEntrypoint`); for jobs whose
+        #: model is importable only in the job's environment, not in the server
+        entrypoint: typing.Optional[str] = None
+        #: starts the job process (see :mod:`mupif.launcher`)
+        launcher: typing.Optional[Launcher] = None
+
     ticketExpireTimeout = 10
     #: seconds allocateJob waits for a spawned job to report its URI; a job not ready by then is killed
     jobStartTimeout = 10
@@ -95,12 +134,20 @@ class ModelServer (modelserverbase.ModelServerBase):
             daemon=None,
             includeFiles=None,
             instance=None,
+            launcher: Launcher | None = None,
             # overrideNsPort=0
     ):
         """
         Constructor.
 
         See :func:`ModelServerBase.__init__`
+
+        :param appClass: the model class served; None only in subclasses which give the model of
+                         every job themselves (they override :meth:`_jobSpec` or call
+                         :meth:`_allocateJob`, and register with their own tags since there is no
+                         model metadata; see :class:`mupif.ExecutionServer`)
+        :param launcher: how job processes are started (see :mod:`mupif.launcher`); default:
+                         :class:`~mupif.launcher.LocalPythonLauncher`, the server's own interpreter
         """
         super().__init__(appName=appName, workDir=workDir, maxJobs=maxJobs, instance=instance)
         self.ns = ns
@@ -116,9 +163,15 @@ class ModelServer (modelserverbase.ModelServerBase):
         self.server = server
         self.acceptingJobs = True
         self.includeFiles = includeFiles
+        #: starts the job processes (see :mod:`mupif.launcher`)
+        self.launcher = launcher if launcher is not None else LocalPythonLauncher()
 
-        app = appClass()
-        self.modelMetadata = app.getAllMetadata()
+        if appClass is not None:
+            # instantiated once only to read the metadata, which is published as nameserver tags
+            app = appClass()
+            self.modelMetadata = app.getAllMetadata()
+        else:
+            self.modelMetadata = {}
 
         threading.Thread(target=self._childMonitorLoop, daemon=True).start()
 
@@ -139,7 +192,10 @@ class ModelServer (modelserverbase.ModelServerBase):
         appName: str
         jobID: str
         cwd: str
-        appClass: object
+        #: the model class (pickled by reference); None if given by :attr:`entrypoint`
+        appClass: object = None
+        #: the model class as ``"module:Class"``, imported by the job (see :func:`resolveEntrypoint`)
+        entrypoint: typing.Optional[str] = None
 
         def pickle(self):
             # protocol=0 so that there are no NULLs
@@ -156,7 +212,8 @@ class ModelServer (modelserverbase.ModelServerBase):
         args = ModelServer.SpawnedProcessArgs.unpickle(sys.argv[-1])
         log.info(f'New subprocess: nameserver {args.nsUri}, cwd {args.cwd}')
         os.chdir(args.cwd)
-        app = args.appClass()
+        appClass = args.appClass if args.appClass is not None else resolveEntrypoint(args.entrypoint)
+        app = appClass()
         app.setJobID(args.jobID)
         uri=mupif.pyroutil.runAppServer(
             app=app,
@@ -261,6 +318,32 @@ class ModelServer (modelserverbase.ModelServerBase):
         :except: unable to start a thread, no more resources
 
         """
+        return self._allocateJob(user, remoteLogUri=remoteLogUri, ticket=ticket, spec=self._jobSpec())
+
+    def _jobSpec(self) -> 'ModelServer.JobSpec':
+        """
+        Return what the next job runs and how it is started: the served class with :attr:`launcher`.
+
+        Subclasses serving more models choose the model per job and call :meth:`_allocateJob` with
+        a spec of their own.
+        """
+        return ModelServer.JobSpec(appClass=self.applicationClass, launcher=self.launcher)
+
+    def _allocateJob(self, user, *, remoteLogUri=None, ticket=None, spec: 'ModelServer.JobSpec'):
+        """
+        Allocate a job running *spec*; the implementation of :meth:`allocateJob`.
+
+        The launcher of the spec is prepared (:meth:`~mupif.launcher.Launcher.prepare`) before a
+        job slot is taken and before the server starts waiting for the job (``jobStartTimeout``).
+
+        :param spec: model and launcher of the job
+        :return: ``(JOBMAN_OK, jobID, port)``
+        """
+        if (spec.appClass is None) == (spec.entrypoint is None):
+            raise ValueError('Exactly one of JobSpec.appClass and JobSpec.entrypoint must be given.')
+        launcher = spec.launcher if spec.launcher is not None else self.launcher
+        # may take long (an environment being installed): not under the lock, not timed
+        launcher.prepare()
         self._updateActiveJobs()
         if not self.acceptingJobs:
             raise RuntimeError('Not accepting any new jobs (soft-terminate has been called already).')
@@ -309,22 +392,28 @@ class ModelServer (modelserverbase.ModelServerBase):
                         jobID=jobID,
                         cwd=targetWorkDir,
                         appName=self.applicationName,
-                        appClass=self.applicationClass,
+                        appClass=spec.appClass,
+                        entrypoint=spec.entrypoint,
                     )
                     jobLogName = targetWorkDir+'/_mupif_job.log'
                     jobLog = open(jobLogName, 'w')
                     log.info(f'Logging into {jobLogName} (+ {remoteLogUri} remotely)')
-                    # this env trickery add sys.path to PYTHONPATH so that if some module is only importable because of modified sys.path
-                    # the subprocess will be able to import it as well
-                    env = os.environ.copy()
-                    env['PYTHONPATH'] = os.pathsep.join(sys.path)+((os.pathsep+env['PYTHONPATH']) if 'PYTHONPATH' in env else '')
+                    base = dict(os.environ)
                     # this will redirect logs the moment mupif is imported on the remote side
                     if remoteLogUri:
-                        env['MUPIF_LOG_PYRO'] = remoteLogUri
+                        base['MUPIF_LOG_PYRO'] = remoteLogUri
                     # to be tuned?
-                    env['MUPIF_LOG_LEVEL'] = 'DEBUG'
-                    env['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
-                    proc = subprocess.Popen([sys.executable, '-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], stdout=jobLog, stderr=subprocess.STDOUT, env=env)
+                    base['MUPIF_LOG_LEVEL'] = 'DEBUG'
+                    base['MUPIF_LOG_PROCESSNAME'] = f'{jobID}'
+                    # the launcher chooses the interpreter and its environment (the server's own one by
+                    # default, see mupif.launcher.LocalPythonLauncher, which also puts the server's
+                    # sys.path to PYTHONPATH so that the job can import what the server could). It
+                    # gets the MUPIF_* variables of the job set above (a container launcher passes
+                    # them into the container) and the job's work directory (to be made visible there)
+                    env = launcher.env(base)
+                    cmd = launcher.command(['-c', 'import mupif; mupif.ModelServer._spawnedProcessPopen()', '-', args.pickle()], workDir=targetWorkDir)
+                    log.debug(f'Starting job {jobID} with launcher {launcher.describe()}')
+                    proc = subprocess.Popen(cmd, stdout=jobLog, stderr=subprocess.STDOUT, env=env)
                     t0 = time.time()
                     tMax = self.jobStartTimeout
                     while time.time()-t0 < tMax:

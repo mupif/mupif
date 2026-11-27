@@ -87,7 +87,10 @@ MuPIF has been developped at Czech Technical University by Borek Patzak and cowo
     install_requires=[
         'numpy', 'scipy', 'setuptools', 'config', 'pytest', 'pytest-cov', 'Pyro5', 'jsonpickle',
         'jsonschema', 'matplotlib', 'pydantic', 'serpent', 'meshio', 'h5py', 'asyncssh', 'astropy',
-        'appdirs', 'setproctitle', 'deprecated', 'tqdm', 'typer', 'rich'
+        'appdirs', 'setproctitle', 'deprecated', 'tqdm', 'typer', 'rich',
+        # imported when mupif is imported (ndtypes, pyrofile, field, util): without them, "import mupif"
+        # fails in an environment installed from this file alone (e.g. a model package environment)
+        'numpydantic', 'requests', 'typing_extensions', 'colorlog',
     ],
     include_package_data=True,
     zip_safe=False, # until importlib.resource works flawlessly with certs (does not currently)

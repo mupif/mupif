@@ -60,6 +60,9 @@ from typing import Optional
 # pyro5 nameserver metadata
 class _NS_METADATA:
     jobmanager = "type:jobmanager"
+    #: execution servers (mupif.executionserver): run any model of a registry, given by its ID; not
+    #: tagged as jobmanager, so that clients unaware of them never ask them for a job without a model ID
+    executionserver = "type:executionserver"
     appserver = "type:appserver"
     #: the model server's preAllocate tickets work remotely (they expire, and are recognised when sent
     #: back over Pyro); clients must not call preAllocate remotely on servers without this tag
@@ -181,32 +184,70 @@ def connectNameserver(nshost: Optional[str] = None, nsport: int = 0, timeOut: fl
     return ns
 
 
-# global variable holding daemon objects, keyed by hostname (local IP address)
-_daemons = {}
+#: shared daemons (see :func:`getDaemon`), keyed by host name (local IP address): (daemon, thread
+#: running its request loop). Exclusive daemons are never stored here.
+_daemons: dict[str, tuple[Pyro5.api.Daemon, threading.Thread]] = {}
+#: guards :data:`_daemons`: threads asking for the shared daemon at the same moment get the same one
+_daemonsLock = threading.Lock()
+
+
+def _daemonRunning(daemon: Pyro5.api.Daemon, thread: threading.Thread) -> bool:
+    """
+    Tell whether a daemon still serves requests: its request loop runs and it is not closed.
+
+    ``Daemon.shutdown()`` waits for the request loop to end and then closes the daemon, which sets
+    its ``transportServer`` to None.
+    """
+    return thread.is_alive() and daemon.transportServer is not None
 
 
 def getDaemon(proxy: Pyro5.api.Proxy = None, exclusive=False) -> Pyro5.api.Daemon:
     """
-    Returns a daemon which is bound to this process lifetime (running in a separate thread, which will terminate automatically when the main process exits) and which can talk to given *proxy* object. The *proxy* object is used to find out the local network address the daemon will listen on; the remote object must connectible when this function is called. The daemons are cached, based on the local network address, i.e. the first call for the network address will construct the daemon and subsequent calls will only return the already running daemon.
+    Return a daemon running its request loop in a thread, listening on the local address from which
+    *proxy* (normally the nameserver) is reached.
 
-    Passing *proxy=None* will return the (possibly cached) daemon listening on the IPv4 loopback interface.
+    The *proxy* object is used to find out the local network address the daemon will listen on; the
+    remote object must be connectible when this function is called. Passing *proxy=None* gives a
+    daemon listening on the IPv4 loopback interface.
 
-    Do *not* call ``shutdown`` on the daemon returned as this would break the caching involved.
+    * **Shared** (default): one daemon per local address and process, created by the first call and
+      returned by the following ones (its thread is a daemon thread: it ends with the process). Do
+      *not* call ``shutdown`` on it: other code of the process uses it too. Should it be shut down
+      nevertheless, the next call starts a new one instead of returning the dead daemon.
+    * **Exclusive**: a new daemon owned by the caller, who may shut it down (servers do, when they
+      terminate: :func:`runServer`); its thread keeps the process alive. It is never returned to
+      other callers.
+
+      Exclusive daemons used to be stored as the shared daemon of their address: every later call
+      of the process then got the daemon of a server, and once that server terminated (shutting its
+      daemon down), a dead daemon -- objects registered on it were unreachable.
+
+    :param proxy: a proxy of a remote object reachable from this process (or None: loopback)
+    :param exclusive: return a new daemon owned by the caller
     """
     if proxy is not None:
         proxy._pyroBind()
         host = proxy._pyroConnection.sock.getsockname()[0]
     else:
         host = '127.0.0.1'
-    global _daemons
-    if not exclusive and ((d := _daemons.get(host, None)) is not None):
-        log.debug(f're-using existing daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
+    if exclusive:
+        d = Pyro5.api.Daemon(host=host)
+        threading.Thread(target=d.requestLoop, daemon=False, name=f'pyro-daemon-exclusive:{d.locationStr}').start()
+        log.debug(f'started new exclusive daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
         return d
-    dNew = _daemons[host] = Pyro5.api.Daemon(host=host)
-    th = threading.Thread(target=dNew.requestLoop, daemon=(not exclusive))
-    th.start()
-    log.debug(f'started new {"NON-" if exclusive else ""}exclusive daemon for {host}: {dNew.locationStr} [pid={os.getpid()}]')
-    return dNew
+    with _daemonsLock:
+        cached = _daemons.get(host)
+        if cached is not None:
+            if _daemonRunning(*cached):
+                log.debug(f're-using existing daemon for {host}: {cached[0].locationStr} [pid={os.getpid()}]')
+                return cached[0]
+            log.warning(f'The shared daemon for {host} ({cached[0].locationStr}) was shut down: starting a new one [pid={os.getpid()}]')
+        d = Pyro5.api.Daemon(host=host)
+        th = threading.Thread(target=d.requestLoop, daemon=True, name=f'pyro-daemon:{d.locationStr}')
+        th.start()
+        _daemons[host] = (d, th)
+        log.debug(f'started new shared daemon for {host}: {d.locationStr} [pid={os.getpid()}]')
+        return d
 
 
 def getNSmetadata(ns, name):
@@ -377,7 +418,9 @@ def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, in
     :param nsUri: URI of the nameserver (a proxy of its own is used: proxies belong to one thread)
     :param name: registered name
     :param uri: URI of the server
-    :param metadata: tags to register with
+    :param metadata: tags to register with, or a function returning them (called at every
+                     registration, so that a server whose tags change is registered with the current
+                     ones; see :mod:`mupif.executionserver`)
     :param stop: set when the server leaves the nameserver itself, so that it is not registered again
     :param interval: seconds between two checks
     """
@@ -400,7 +443,7 @@ def watchRegistration(nsUri, name: str, uri, metadata, stop: threading.Event, in
                 continue
             if stop.is_set():
                 break
-            ns.register(name, uri, metadata=metadata)
+            ns.register(name, uri, metadata=metadata() if callable(metadata) else metadata)
             log.warning(f'{name} was missing in the nameserver (or registered by a server which does not answer): registered again')
         except Exception as e:
             log.debug(f'Checking the registration of {name} failed (nameserver unreachable?): {e}')
@@ -414,7 +457,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :param str appName: Name of registered application
     :param instance app: Application instance
     :param daemon: Reference to already running daemon, if available. Optional parameter.
-    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated.
+    :param metadata: set of strings that will be the metadata tags associated with the object registration. See pyroutil.py for valid tags. The metadata string "network:[JSON dictionary with host, port, nathost, natport]" will be automatically generated. May be a function returning the tags: called at every (re-)registration, for servers whose tags change while they run.
     :param watchInterval: if positive, check the registration every so many seconds and register again when it is missing (see :func:`watchRegistration`); the check stops when the server leaves the nameserver (process exit, SIGTERM, or ``app._nsWatchStop`` set by the server)
     :param fallbackName: if given, *appName* is registered only if nobody holds it (atomically, in the
         nameserver: ``register(..., safe=True)``); if it is taken, the server is registered as
@@ -426,6 +469,10 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     :returns: URI
     """
     if ns is None: ns = connectNameserver()
+    # a function: the watch (below) calls it at every re-registration, to register the current tags
+    watchMetadata = metadata
+    if callable(metadata):
+        metadata = metadata()
 
     exclusiveDaemon = False
     if not daemon:
@@ -479,7 +526,7 @@ def runServer(*, appName, app, ns: Optional[Pyro5.api.Proxy]=None, daemon=None, 
     watchStop = threading.Event()
     if watchInterval > 0:
         app._nsWatchStop = watchStop
-        threading.Thread(target=watchRegistration, args=(ns._pyroUri, appName, uri, metadata, watchStop, watchInterval),
+        threading.Thread(target=watchRegistration, args=(ns._pyroUri, appName, uri, watchMetadata, watchStop, watchInterval),
                          daemon=True, name=f'ns-watch:{appName}').start()
 
     def _remove_from_ns(sig=None, stack=None):
@@ -628,7 +675,7 @@ def runModelServer(*, ns, jobman):
                      watchInterval=getattr(jobman, 'registrationCheckInterval', 30.), fallbackName=fallbackName)
 
 
-def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list[str]:
+def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5., typeTag: str = _NS_METADATA.jobmanager) -> list[str]:
     """
     Remove nameserver entries of model servers of base name *baseName* which do not answer.
 
@@ -641,11 +688,13 @@ def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list
     :param ns: nameserver proxy
     :param baseName: base name of the model server (its tag in the nameserver)
     :param aliveTimeout: seconds to wait for each server to answer
+    :param typeTag: type tag of the servers (``type:jobmanager``; ``type:executionserver`` for
+                    execution servers)
     :return: names of the removed entries
     """
     removed = []
     try:
-        entries = ns.yplookup(meta_all={_NS_METADATA.jobmanager, baseName}, return_metadata=True)
+        entries = ns.yplookup(meta_all={typeTag, baseName}, return_metadata=True)
     except Exception:
         log.exception(f'Cannot list the model servers {baseName} in the nameserver')
         return removed
@@ -656,6 +705,51 @@ def removeStaleModelServers(ns, baseName: str, aliveTimeout: float = 5.) -> list
             log.warning(f'Removed {name} from the nameserver: the model server registered there ({uri}) does not answer')
             removed.append(name)
     return removed
+
+
+def runExecutionServer(*, ns, server):
+    """
+    Register and run an execution server (see :mod:`mupif.executionserver`).
+
+    Like :func:`runModelServer` (instance names, removal of stale entries, the registration
+    watched and restored), but registered with the tags of :func:`executionServerTags`.
+
+    :param ns: nameserver proxy
+    :param server: the execution server
+    :return: URI of the server
+    """
+    removeStaleModelServers(ns, server.getName(), typeTag=_NS_METADATA.executionserver)
+    name = modelServerNSName(ns, server)
+    fallbackName = _hostPidInstanceName(name) if name == server.getName() else None
+    # tags change while the server runs (models becoming ready): the registration watch re-registers
+    # with the current ones
+    return runServer(ns=ns, appName=name, app=server, metadata=lambda: executionServerTags(server),
+                     watchInterval=getattr(server, 'registrationCheckInterval', 30.), fallbackName=fallbackName)
+
+
+def executionServerTags(server) -> set[str]:
+    """
+    Return the nameserver tags of an execution server registration.
+
+    * ``type:executionserver`` (not ``type:jobmanager``: an execution server needs the model ID
+      with every job request, which clients unaware of execution servers do not send);
+    * the base name of the server;
+    * ``runtime:<type>`` for every package runtime it supports (``pixi``, ``python``);
+    * ``host:<name>`` for every host capability it offers (e.g. a licensed solver);
+    * ``mupif:tickets-v2``;
+    * ``ModelID:<id>`` and ``ModelID:<id>@<version>`` for every model package *ready* on the server
+      (in its cache, environment installed): a job of it starts at once, so clients prefer such
+      servers (see :mod:`mupif.modelplacement`). These tags change while the server runs.
+
+    :param server: the execution server (:class:`mupif.executionserver.ExecutionServer`)
+    """
+    tags = {_NS_METADATA.executionserver, server.getName(), _NS_METADATA.tickets}
+    tags |= {f'runtime:{r}' for r in server.runtimes}
+    tags |= {f'host:{c}' for c in server.hostCapabilities}
+    for key in server.readyModels():
+        tags.add(_NS_METADATA.modelID + key.split('@', 1)[0])
+        tags.add(_NS_METADATA.modelID + key)
+    return tags
 
 
 def modelServerTags(jobman) -> set[str]:
@@ -784,34 +878,46 @@ def connectModelServerWithMetadata(ns, metadata, optionalMetadata=frozenset()):
 def allocateApplicationWithJobManager(*args,**kw):
     return allocateApplicationWithModelServer(*args,**kw)
 
-def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri):
+def allocateApplicationWithModelServer(*, ns, jobMan, remoteLogUri, modelID=None, modelVersion=None):
     """
     Request new application instance to be spawned by  given jobManager.
     
     :param Pyro5.naming.Nameserver ns: running name server
     :param jobManager jobMan: jobmanager to use
     :param remoteLogUri: remote log URI
+    :param modelID: for an execution server (:mod:`mupif.executionserver`): the model to run
+    :param modelVersion: for an execution server: the version of the model package (None: latest)
 
     :returns: Application instance
     :rtype: model.RemoteModel
     :raises Exception: if allocation of job fails
     """
+    from . import modelplacement
 
     log.debug('Trying to connect to JobManager')
     try:
         (username, hostname) = getUserInfo()
-        # signature of allocateJob changed, support both versions
-        try:
-            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri)
-        except TypeError:
-            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
-            log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
+        if modelID:
+            # an execution server: may take long the first time (the model's package prepared)
+            status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri, modelID=modelID, modelVersion=modelVersion)
+        else:
+            # signature of allocateJob changed, support both versions
+            try:
+                status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname, remoteLogUri=remoteLogUri)
+            except TypeError:
+                status, jobid, jobport = jobMan.allocateJob(user=username+"@"+hostname)
+                log.warning('ModelServerBase.allocateJob failed with remoteLogUri, remote logging disabled.')
         log.info(f'Allocated job, returned record from modelServer: {status},{jobid},{jobport}')
     except modelserverbase.ModelServerNoResourcesException as e:
         # an expected outcome (the server is busy): the caller retries elsewhere or later, no traceback
         log.warning(f'ModelServerBase allocateJob(): no free job slot ({e})')
         raise
-    except Exception:
+    except Exception as e:
+        if modelplacement.isCannotRunError(e):
+            # an expected outcome too (an execution server without the model's runtime or host
+            # capability): the caller tries another server
+            log.warning(f'allocateJob(): the server cannot run model {modelID} ({e})')
+            raise
         log.exception("ModelServerBase allocateJob() failed")
         print("| ".join(Pyro5.errors.get_pyro_traceback()))
         raise

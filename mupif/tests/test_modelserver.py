@@ -276,6 +276,32 @@ class ModelServer_TestCase(unittest.TestCase):
             for p in jobs(): p.kill()
             srv.terminate(force=True)
 
+    def test_entrypointJob(self):
+        'A job may get its model class as "module:Class" (imported by the job): a server without appClass runs it.'
+        cls=self.__class__
+        class EntrypointServer(mp.ModelServer):
+            def _jobSpec(self):
+                return mp.ModelServer.JobSpec(entrypoint='mupif.tests.testApp:testApp',launcher=self.launcher)
+        srv=EntrypointServer(ns=cls.ns,appName='appEntry',workDir=cls.tmp,appClass=None,maxJobs=1)
+        self.assertEqual(srv.getModelMetadata(),{})
+        uri=cls.daemon.register(srv)
+        srv.registerPyro(daemon=cls.daemon,ns=cls.ns,uri=uri,appName='appEntry',exclusiveDaemon=False)
+        try:
+            (retCode,jobId,port)=srv.allocateJob(user='user')
+            self.assertEqual(retCode,mp.jobmanager.JOBMAN_OK)
+            mod=Pyro5.api.Proxy(srv.getStatus()[0].uri)
+            self.assertEqual(mod.getMetadata('ID'),'mupif-tests-testApp')
+            srv.terminateJob(jobId)
+        finally:
+            srv.terminate(force=True)
+
+    def test_jobSpecNeedsOneModel(self):
+        'A job spec with both or neither of appClass and entrypoint is refused before anything starts.'
+        spec=mp.ModelServer.JobSpec
+        for bad in (spec(),spec(appClass=testApp.testApp,entrypoint='mupif.tests.testApp:testApp')):
+            with self.assertRaises(ValueError): self.jobMan._allocateJob('user',spec=bad)
+        self.assertEqual(self.jobMan.getStatus(),[])
+
     def test_jobIdUsesRegisteredName(self):
         'Jobs of a server registered under an instance name are named after that name, so that jobs of two instances do not collide.'
         cls=self.__class__
@@ -515,6 +541,69 @@ class ModelServer_TestCase(unittest.TestCase):
             stop.set()
             if current() is not None: cls.ns.remove('appWatch')
 
+    def test_watchRegistrationCurrentTags(self):
+        'Given a function, the watch registers again with the tags current at that moment (execution servers: models ready meanwhile).'
+        import threading
+        cls=self.__class__
+        own='PYRO:own@127.0.0.1:3'
+        tags={'type:executionserver','appWatchTags'}
+        cls.ns.register('appWatchTags',own,metadata=tags)
+        stop=threading.Event()
+        t=threading.Thread(target=mp.pyroutil.watchRegistration,args=(cls.ns._pyroUri,'appWatchTags',own,lambda: set(tags),stop,0.1),daemon=True)
+        t.start()
+        try:
+            tags.add('ModelID:m')
+            cls.ns.remove('appWatchTags')
+            t0=time.time()
+            while 'appWatchTags' not in cls.ns.list() and time.time()-t0<5: time.sleep(0.05)
+            self.assertEqual(set(cls.ns.lookup('appWatchTags',return_metadata=True)[1]),{'type:executionserver','appWatchTags','ModelID:m'})
+        finally:
+            stop.set()
+            t.join(2)
+            try: cls.ns.remove('appWatchTags')
+            except Exception: pass
+
+    def test_exclusiveDaemonNotShared(self):
+        'An exclusive daemon (a server owns it, and shuts it down when terminating) is never returned as the shared daemon.'
+        cls=self.__class__
+        shared=mp.pyroutil.getDaemon(proxy=cls.ns)
+        excl=mp.pyroutil.getDaemon(proxy=cls.ns,exclusive=True)
+        self.assertIsNot(excl,shared)
+        # it used to replace the shared daemon of its address: later callers got it ...
+        self.assertIs(mp.pyroutil.getDaemon(proxy=cls.ns),shared)
+        # ... and after its owner shut it down, a dead daemon
+        excl.shutdown()
+        d=mp.pyroutil.getDaemon(proxy=cls.ns)
+        self.assertIs(d,shared)
+        uri=d.register(testApp.testApp())
+        try: self.assertEqual(Pyro5.api.Proxy(uri).getMetadata('ID'),'mupif-tests-testApp')
+        finally: d.unregister(uri.object)
+
+    def test_sharedDaemonShutDownIsReplaced(self):
+        'A shared daemon shut down nevertheless is not returned any more: a new one is started.'
+        import threading
+        cache=mp.pyroutil._daemons
+        saved=cache.get('127.0.0.1')
+        # the daemon cached for the address is used by the other tests of this class: put one of our
+        # own in its place, shut it down, and put the original back at the end
+        d=Pyro5.api.Daemon(host='127.0.0.1')
+        th=threading.Thread(target=d.requestLoop,daemon=True)
+        th.start()
+        cache['127.0.0.1']=(d,th)
+        d2=None
+        try:
+            d.shutdown()
+            d2=mp.pyroutil.getDaemon()
+            self.assertIsNot(d2,d)
+            self.assertIs(mp.pyroutil.getDaemon(),d2)
+            uri=d2.register(testApp.testApp())
+            try: self.assertEqual(Pyro5.api.Proxy(uri).getMetadata('ID'),'mupif-tests-testApp')
+            finally: d2.unregister(uri.object)
+        finally:
+            if d2 is not None: d2.shutdown()
+            if saved is None: cache.pop('127.0.0.1',None)
+            else: cache['127.0.0.1']=saved
+
     def test_removeOwnRegistration(self):
         'A server leaving the nameserver does not remove an entry another server registered under the same name meanwhile.'
         cls=self.__class__
@@ -534,3 +623,14 @@ class ModelServer_TestCase(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
+
+def test_resolveEntrypoint():
+    'Entry points "module:Class", also nested classes; malformed ones are refused.'
+    from mupif.modelserver import resolveEntrypoint
+    assert resolveEntrypoint('mupif.tests.testApp:testApp') is testApp.testApp
+    assert resolveEntrypoint('mupif.modelserver:ModelServer.JobSpec') is mp.ModelServer.JobSpec
+    for bad in ('mupif.tests.testApp','mupif.tests.testApp:',':testApp',''):
+        with pytest.raises(ValueError): resolveEntrypoint(bad)
+    with pytest.raises(AttributeError): resolveEntrypoint('mupif.tests.testApp:NoSuchClass')
+    with pytest.raises(ImportError): resolveEntrypoint('mupif.no_such_module:X')

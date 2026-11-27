@@ -213,6 +213,10 @@ class ModelInWorkflowMeta(BaseMeta):
     ``ModelID:<ModelID>`` (servers registered under any name which serve the model with this ID).
     Execution profiles may add further requirements; see :mod:`mupif.modelplacement`.
 
+    A model with ``ModelID`` may also run on an *execution server* (:mod:`mupif.executionserver`),
+    which runs the model package of that ID published to its registry; ``ModelVersion`` pins the
+    package version (default: the latest one).
+
     ``Instantiate`` false marks a template: the model is not allocated when the workflow is
     initialized; the workflow allocates copies of it itself (``Workflow._allocateModelByName``),
     e.g. one per loop iteration. The key used to be ignored: it was not declared here, and the
@@ -223,13 +227,15 @@ class ModelInWorkflowMeta(BaseMeta):
     Module: str = ''
     Class: str = ''
     Jobmanager: str = Field('', description='Base name of the model server(s) offering the model.')
-    ModelID: str = Field('', description='ID of the model (its metadata ID): any model server serving a model with this ID is compatible, whatever its name.')
+    ModelID: str = Field('', description='ID of the model (its metadata ID): any model server serving a model with this ID is compatible, whatever its name; so is any execution server, which runs the model package of this ID.')
+    ModelVersion: str = Field('', description='Version of the model package an execution server runs (with ModelID only); empty: the latest one.')
     # None (as stored by mupifDB for workflows registered without the key) means the default
     Instantiate: Annotated[bool, BeforeValidator(lambda v: True if v is None else v)] = Field(True, description='Allocate the model when the workflow is initialized; false: a template the workflow allocates itself later (Workflow._allocateModelByName), e.g. once per loop iteration.')
 
     @pydantic.model_validator(mode='after')
     def _moduleClass_or_jobmanager(self):
         if self.Jobmanager == '' and self.ModelID == '' and (self.Module == '' or self.Name == ''): raise ValueError(f'For metadata without Jobmanager or ModelID, Module and Name must not be empty ({self.Module=}, {self.Name=})')
+        if self.ModelVersion != '' and self.ModelID == '': raise ValueError(f'ModelVersion ({self.ModelVersion}) needs ModelID (model {self.Name})')
         return self
 
 

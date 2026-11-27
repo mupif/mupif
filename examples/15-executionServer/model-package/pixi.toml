@@ -1,0 +1,16 @@
+# The environment of the model package: execution servers install it exactly as locked in pixi.lock
+# (pixi install --locked). After changing this file, run "pixi lock" here and publish a new version.
+[workspace]
+name = "mupif-example15-model"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.12.*"
+# the model's own dependency, which the execution server does not need to have
+numpy = ">=2.0"
+
+[pypi-dependencies]
+# the job imports mupif in this environment: it must be a mupif with execution servers (this branch;
+# a release once merged)
+mupif = { git = "https://github.com/mupif/mupif.git", branch = "feature/execution-server" }

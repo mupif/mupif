@@ -1,0 +1,24 @@
+Example 15: execution server and model packages.
+
+The workflow (Example15.py) gives its model only by ID ("mupif-example15"); no model server of it
+runs. The execution server (server.py) gets the model package (model-package/: mupif-model.toml,
+the model code, pixi.toml + pixi.lock) from its registry, installs its pixi environment on the first
+request and runs the model in it.
+
+Requirements: pixi (https://pixi.sh), network access to conda-forge, PyPI and GitHub on the first run.
+
+Without a database (the registry is model-package/ itself):
+
+    python ../runns.py &          # nameserver (or use an existing one: MUPIF_NS)
+    python server.py &
+    python Example15.py           # the first run installs the environment (minutes)
+
+With mupifDB as the registry (MUPIFDB_REST_SERVER, API_CREDENTIALS_FILE of an admin account for
+publishing, of any account for the server):
+
+    python -m mupif.modelpackage publish model-package
+    python server.py &
+    python Example15.py
+
+Changing the environment: edit model-package/pixi.toml, run "pixi lock" in model-package/, raise
+Version in mupif-model.toml (published versions are immutable) and publish again.

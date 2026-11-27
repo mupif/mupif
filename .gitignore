@@ -9,3 +9,11 @@ dist
 /.pydevproject
 *.log
 .vscode
+# environments installed into pixi projects (model packages), package cache of example 15
+.pixi/
+examples/15-executionServer/cache/
+# example 16: the image and the package built by make_package.py, the package cache
+examples/16-apptainer/image.sif
+examples/16-apptainer/image.sif.tmp
+examples/16-apptainer/package/
+examples/16-apptainer/cache/

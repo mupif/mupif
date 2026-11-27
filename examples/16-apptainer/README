@@ -1,0 +1,23 @@
+Example 16: a model in an Apptainer container, run by an execution server.
+
+The workflow (Example16.py) gives its model only by ID ("mupif-example16"). Its package names a
+container image (Runtime Type = "apptainer"): the execution server (server.py) copies the image into
+its package cache, verifies it against the digest in the manifest, and runs the model with
+"apptainer exec": the package is mounted at /mupif/package, the job's work directory at its own
+path, the network is the host's.
+
+Requirements: Apptainer (or Singularity) on the server host, with unprivileged user namespaces for
+building the image (apptainer build --fakeroot); network access on the first build.
+
+    python make_package.py        # image.sif (a few minutes the first time) and package/
+    python ../runns.py &          # nameserver (or use an existing one: MUPIF_NS)
+    python server.py &
+    python Example16.py
+
+With mupifDB as the registry: python -m mupif.modelpackage publish package (admin account in
+API_CREDENTIALS_FILE, MUPIFDB_REST_SERVER), then start server.py with MUPIFDB_REST_SERVER set.
+
+The image is referenced by its file path (a shared file system on several hosts). In a real
+deployment it would be pushed to an OCI registry and referenced pinned by digest:
+    apptainer push image.sif oras://ghcr.io/<org>/<name>:1.0
+    Image = "oras://ghcr.io/<org>/<name>@sha256:<digest>"

@@ -624,6 +624,177 @@ The status of the all model servers can be shown on-line from any computer by ru
 
 
 
+.. _sect-execution-servers:
+
+Execution servers and model packages
+----------------------------------------
+
+A model server (above) serves one model, which must be installed on its host beforehand, by hand.
+An **execution server** (:obj:`mupif.ExecutionServer`) is a generic compute node: it runs **any
+model package published to a registry**, on demand, and each package brings its own environment.
+Nothing has to be installed or copied to the host for a new model: it is published once, and every
+execution server can run it.
+
+The registry is mupifDB (collection ``Models``, archives in GridFS); a local directory can be used
+instead (:obj:`mupif.modelpackage.DirectoryRegistry`), e.g. for tests.
+
+Model packages
+~~~~~~~~~~~~~~~~~~~~
+
+A model package is a directory with the model code, its environment and a manifest
+``mupif-model.toml`` (:obj:`mupif.modelpackage`)::
+
+   oofem-thermal/
+       mupif-model.toml
+       pixi.toml            # the environment: Python, mupif, the solver (conda-forge, PyPI)
+       pixi.lock            # ... exactly as locked (reproducible)
+       oofemthermal/
+           __init__.py
+           model.py         # class ThermalModel(mupif.Model)
+
+.. code-block:: toml
+
+   ID = "oofem-thermal"                  # the model ID workflows ask for (ModelID)
+   Version = "1.2"                       # immutable once published
+   Entrypoint = "oofemthermal.model:ThermalModel"
+   Description = "Stationary heat transfer, OOFEM"
+   RequiresHost = []                     # host capabilities, see below
+
+   [Runtime]
+   Type = "pixi"                         # or "apptainer" (a container image, see below), or
+                                         # "python": the execution server's own environment
+   Environment = "default"
+
+The environment is a `pixi <https://pixi.sh>`_ project: ``pixi.toml`` lists the dependencies
+(conda-forge packages including compiled solvers and their libraries, PyPI packages including
+mupif), ``pixi.lock`` pins them exactly. Execution servers install it with ``pixi install --locked``:
+the environment is never re-solved, so every server runs exactly what was published. Create the
+lock file with ``pixi lock`` (or ``pixi install``) in the package directory before publishing.
+
+A package is identified by the **digest** (``sha256``) of its archive, packed deterministically (the
+same files always give the same digest). Pack and check a package, and publish it (an administrator
+account of mupifDB; the API address is ``$MUPIFDB_REST_SERVER``, the account is in the JSON file
+``$API_CREDENTIALS_FILE``)::
+
+   $ python -m mupif.modelpackage build oofem-thermal/
+   oofem-thermal@1.2 sha256:3f9a... (5321 bytes)
+   $ python -m mupif.modelpackage publish oofem-thermal/
+   Published oofem-thermal@1.2 sha256:3f9a...
+   $ python -m mupif.modelpackage show oofem-thermal
+
+mupifDB checks the archive as execution servers will unpack it, records its digest and refuses a
+version published before.
+
+Container images (Apptainer)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A package may instead bring a whole container image, run by `Apptainer <https://apptainer.org>`_
+(Singularity), which needs no root and is available on most HPC systems:
+
+.. code-block:: toml
+
+   [Runtime]
+   Type = "apptainer"
+   Image = "oras://ghcr.io/cvut/oofem@sha256:3f9a..."   # pinned by digest
+   # or a SIF file, verified against its digest by the server:
+   # Image = "https://data.example.org/oofem-1.2.sif"   (or "file:///shared/images/oofem-1.2.sif")
+   # ImageDigest = "sha256:..."
+   Gpu = false                                          # true: NVIDIA GPUs (--nv)
+   Python = "python3"                                   # the interpreter in the image
+
+The image must contain Python and mupif (with execution servers); the model code may come with the
+package or be installed in the image. Images are immutable: registry images (``docker://``,
+``oras://``) must be pinned by digest (a tag can be moved), SIF files by ``ImageDigest``. The
+execution server obtains the image once into its package cache (``apptainer pull``, or download and
+verification) and runs each job with ``apptainer exec --contain --cleanenv``:
+
+* the package directory is mounted read-only at ``/mupif/package``, which is ``PYTHONPATH``;
+* the job's work directory is mounted at its own path;
+* only the job's ``MUPIF_*`` variables and the variables, ``PATH`` entries and directories
+  (``Bind``, default: ``Path``) of the host capabilities the model requires are passed in;
+* the network is the host's, so the model is reachable over Pyro as any job.
+
+A package with ``Gpu = true`` runs only on servers declaring the host capability ``gpu``.
+
+Build an image from a definition file without root (``apptainer build --fakeroot image.sif
+image.def``) and publish it to an OCI registry (``apptainer push image.sif oras://...``), or put it
+on a file system shared by the execution servers. See *examples/16-apptainer*.
+
+Running an execution server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The host needs mupif, pixi and/or Apptainer for the runtimes it offers (not mupifDB), and an account
+of the mupifDB API (an ordinary one: reading packages)::
+
+   import mupif as mp
+   from mupif.mupifdbclient import MupifDBRegistry
+
+   ns = mp.pyroutil.connectNameserver()
+   mp.ExecutionServer(
+       ns=ns, appName='CVUT.exec01', maxJobs=4,
+       registry=MupifDBRegistry(),            # $MUPIFDB_REST_SERVER, $API_CREDENTIALS_FILE
+       cacheDir='/var/cache/mupif-packages',  # packages and their environments (may be large)
+       maxCacheBytes=50*2**30,                # least recently used packages removed above this
+       hostCapabilities={'abaqus': {'Version': '2024', 'Path': ['/opt/abaqus/bin'],
+                                    'Env': {'LM_LICENSE_FILE': '27000@licsrv'},
+                                    'Bind': ['/opt/abaqus']},   # into containers
+                         'gpu': {}},                            # NVIDIA GPUs for containers
+       prefetch=['oofem-thermal'],            # prepared ahead of the first request
+   ).runServer()
+
+When a workflow asks for a model, the server
+
+1. refuses at once (:obj:`~mupif.modelserverbase.ModelServerCannotRunException`) if the model is
+   not in the registry, its runtime is not supported, or a host capability it requires is not
+   configured; the workflow tries another server;
+2. on the first request for the package (*on demand*): downloads it, verifies it against the
+   recorded digest, extracts it into its cache and installs its environment -- this may take
+   minutes and does not count into the job start timeout; later requests start at once. A package
+   which cannot be prepared is refused quickly for a while (no repeated long builds);
+3. starts the job: the model class is imported from the package by the environment's own
+   interpreter.
+
+**Host capabilities** describe what a host offers beyond packages, typically a licensed solver
+which cannot be redistributed: the package contains only the MuPIF wrapper and lists the capability
+in ``RequiresHost``; its jobs get the ``Path`` and ``Env`` of that capability (and only of those
+they require). Jobs in containers also get its ``Bind`` directories mounted (the tool must be able to
+run in the container's userland).
+
+Execution servers are registered with the tags ``type:executionserver``, ``runtime:<type>``,
+``host:<capability>``, and ``ModelID:<id>``, ``ModelID:<id>@<version>`` of the packages *ready* on
+them (prepared, so that a job starts at once).
+
+Workflows
+~~~~~~~~~~~~~
+
+A workflow model given by ``ModelID`` may run on any execution server; ``ModelVersion`` pins the
+package version (default: the latest one)::
+
+   'Models': [{'Name': 'thermal', 'ModelID': 'oofem-thermal', 'ModelVersion': '1.2'}]
+
+The model is placed (see :obj:`mupif.modelplacement`) on a model server of that model if one has a
+free slot, else on an execution server where the model is ready, else on another execution server
+(which prepares it first). :obj:`mupif.Workflow.getModelPackages` returns the package each model
+ran (ID, version, digest); mupifDB stores it with the execution (``ModelPackages``).
+
+Execution servers do not carry the model tags of execution profiles (``Accuracy_*`` etc. describe
+one model, an execution server runs many): a profile *requiring* such tags excludes them.
+
+Security
+~~~~~~~~~~~~
+
+A client can only name a model ID: the code run is always a published package, verified by its
+digest. Publishing is therefore what gives the right to run code on execution servers: in mupifDB,
+only administrators may publish. Pyro itself has no authentication: as for model servers, the VPN
+is the boundary. Jobs of ``pixi`` and ``python`` packages are not sandboxed beyond the account the
+execution server runs as; run it under a dedicated account. Container jobs (``apptainer``) see their
+own userland, a private ``/tmp`` and home, and only the directories mounted for them; they still run
+as that account and share the host's network.
+
+See *examples/15-executionServer* (pixi) and *examples/16-apptainer* (container) for complete
+examples.
+
+
 .. _HPC:
 
 HPC integration
